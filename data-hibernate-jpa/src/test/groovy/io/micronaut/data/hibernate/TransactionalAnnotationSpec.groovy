@@ -18,13 +18,13 @@ package io.micronaut.data.hibernate
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import io.micronaut.transaction.interceptor.TransactionalInterceptor
-import io.micronaut.transaction.support.TransactionSynchronizationManager
+import io.micronaut.transaction.TransactionOperations
+import org.hibernate.Session
 import spock.lang.Specification
 
 import jakarta.inject.Inject
 import jakarta.persistence.EntityManager
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @MicronautTest(packages = "io.micronaut.data.tck.entities", transactional = false)
 @Property(name = "datasources.default.name", value = "mydb")
@@ -33,13 +33,15 @@ class TransactionalAnnotationSpec extends Specification {
 
     @Inject BookService bookService
 
+    @Inject TransactionOperations<Session> transactionOperations
+
     void "test transactional annotation"() {
         when:
         bookService.saveAndSuccess()
 
         then:
         bookService.listBooks().size() == 1
-        !TransactionSynchronizationManager.isSynchronizationActive()
+        transactionOperations.findTransactionStatus().isEmpty()
 
         when:
         bookService.saveAndError()
@@ -47,7 +49,7 @@ class TransactionalAnnotationSpec extends Specification {
         then:
         thrown(RuntimeException)
         bookService.listBooks().size() == 1
-        !TransactionSynchronizationManager.isSynchronizationActive()
+        transactionOperations.findTransactionStatus().isEmpty()
 
         when:
         bookService.saveAndChecked()
@@ -55,19 +57,20 @@ class TransactionalAnnotationSpec extends Specification {
         then:
         thrown(Exception)
         bookService.listBooks().size() == 1
-        !TransactionSynchronizationManager.isSynchronizationActive()
+        transactionOperations.findTransactionStatus().isEmpty()
 
         when:
         bookService.saveAndManualRollback()
 
         then:
         bookService.listBooks().size() == 1
-        !TransactionSynchronizationManager.isSynchronizationActive()
+        transactionOperations.findTransactionStatus().isEmpty()
     }
 
     @Transactional
     static class BookService {
         @Inject EntityManager entityManager
+        @Inject TransactionOperations<Session> transactionOperations
 
         List<Book> listBooks() {
             entityManager.createQuery("from Book").resultList
@@ -84,9 +87,8 @@ class TransactionalAnnotationSpec extends Specification {
         }
 
         void saveAndManualRollback() {
-
             entityManager.persist(new Book(title: "Stuff", totalPages: 500))
-            TransactionalInterceptor.currentTransactionStatus().setRollbackOnly()
+            transactionOperations.findTransactionStatus().get().setRollbackOnly()
         }
 
         void saveAndSuccess() {

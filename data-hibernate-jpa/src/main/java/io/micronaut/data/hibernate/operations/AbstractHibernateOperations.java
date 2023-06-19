@@ -82,11 +82,12 @@ import java.util.stream.Collectors;
  *
  * @param <S> The session type
  * @param <Q> The query type
+ * @param <P> The selection query
  * @author Denis Stepaov
  * @since 3.5.0
  */
 @Internal
-public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableRepository, PreparedQueryDecorator, StoredQueryDecorator {
+public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements HintsCapableRepository, PreparedQueryDecorator, StoredQueryDecorator {
 
     private static final JpaQueryBuilder QUERY_BUILDER = new JpaQueryBuilder();
     private static final String ENTITY_GRAPH_FETCH = "jakarta.persistence.fetchgraph";
@@ -177,7 +178,7 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
      * @param value         The value
      * @param argument      The argument
      */
-    protected abstract void setParameter(Q query, String parameterName, Object value, Argument argument);
+    protected abstract void setParameter(Q query, String parameterName, Object value, Argument<?> argument);
 
     /**
      * Sets a list parameter into query.
@@ -196,7 +197,7 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
      * @param value         The value
      * @param argument      The argument
      */
-    protected abstract void setParameterList(Q query, String parameterName, Collection<Object> value, Argument argument);
+    protected abstract void setParameterList(Q query, String parameterName, Collection<Object> value, Argument<?> argument);
 
     /**
      * Sets a hint.
@@ -205,7 +206,7 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
      * @param hintName The hint name
      * @param value    The value
      */
-    protected abstract void setHint(Q query, String hintName, Object value);
+    protected abstract void setHint(P query, String hintName, Object value);
 
     /**
      * Sets the max results value.
@@ -213,7 +214,7 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
      * @param query The query
      * @param max   The max value
      */
-    protected abstract void setMaxResults(Q query, int max);
+    protected abstract void setMaxResults(P query, int max);
 
     /**
      * Sets the offset value.
@@ -221,7 +222,7 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
      * @param query  The query
      * @param offset The offset value
      */
-    protected abstract void setOffset(Q query, int offset);
+    protected abstract void setOffset(P query, int offset);
 
     /**
      * Gets an entity graph.
@@ -252,7 +253,7 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
      * @param resultType The result type
      * @return new query
      */
-    protected abstract Q createQuery(S session, String query, @Nullable Class<?> resultType);
+    protected abstract P createQuery(S session, String query, @Nullable Class<?> resultType);
 
     /**
      * Create a new native query.
@@ -262,7 +263,7 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
      * @param resultType The result type
      * @return new query
      */
-    protected abstract Q createNativeQuery(S session, String query, Class<?> resultType);
+    protected abstract P createNativeQuery(S session, String query, Class<?> resultType);
 
     /**
      * Create a native query.
@@ -271,7 +272,7 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
      * @param criteriaQuery The criteriaQuery
      * @return new query
      */
-    protected abstract Q createQuery(S session, CriteriaQuery<?> criteriaQuery);
+    protected abstract P createQuery(S session, CriteriaQuery<?> criteriaQuery);
 
     /**
      * Collect one result.
@@ -308,12 +309,12 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
 
     private <T, R> void collectResults(S session, String queryStr, PreparedQuery<T, R> preparedQuery, ResultCollector<R> resultCollector) {
         if (preparedQuery.isDtoProjection()) {
-            Q q;
+            P q;
             if (preparedQuery.isNative()) {
                 q = createNativeQuery(session, queryStr, Tuple.class);
             } else if (queryStr.toLowerCase(Locale.ENGLISH).startsWith("select new ")) {
                 @SuppressWarnings("unchecked") Class<R> wrapperType = (Class<R>) ReflectionUtils.getWrapperType(preparedQuery.getResultType());
-                Q query = createQuery(session, queryStr, wrapperType);
+                P query = createQuery(session, queryStr, wrapperType);
                 bindPreparedQuery(query, preparedQuery, session);
                 resultCollector.collect(query);
                 return;
@@ -341,11 +342,11 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
             });
         } else {
             @SuppressWarnings("unchecked") Class<R> wrapperType = (Class<R>) ReflectionUtils.getWrapperType(preparedQuery.getResultType());
-            Q q;
+            P q;
             if (preparedQuery.isNative()) {
                 Class<T> rootEntity = preparedQuery.getRootEntity();
                 if (wrapperType != rootEntity) {
-                    Q nativeQuery = createNativeQuery(session, queryStr, Tuple.class);
+                    P nativeQuery = createNativeQuery(session, queryStr, Tuple.class);
                     bindPreparedQuery(nativeQuery, preparedQuery, session);
                     resultCollector.collectTuple(nativeQuery, tuple -> {
                         Object o = tuple.get(0);
@@ -427,13 +428,13 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
         });
     }
 
-    private <T, R> void bindPreparedQuery(Q q, @NonNull PreparedQuery<T, R> preparedQuery, S currentSession) {
+    private <T, R> void bindPreparedQuery(P q, @NonNull PreparedQuery<T, R> preparedQuery, S currentSession) {
         bindParameters(q, preparedQuery);
         bindPageable(q, preparedQuery.getPageable());
         bindQueryHints(q, preparedQuery, currentSession);
     }
 
-    private <T> void bindQueryHints(Q q, @NonNull PagedQuery<T> preparedQuery, @NonNull S session) {
+    private <T> void bindQueryHints(P q, @NonNull PagedQuery<T> preparedQuery, @NonNull S session) {
         Map<String, Object> queryHints = preparedQuery.getQueryHints();
         if (CollectionUtils.isNotEmpty(queryHints)) {
             for (Map.Entry<String, Object> entry : queryHints.entrySet()) {
@@ -444,8 +445,7 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
                     if (graphName != null) {
                         jakarta.persistence.EntityGraph<?> entityGraph = getEntityGraph(session, preparedQuery.getRootEntity(), graphName);
                         setHint(q, hintName, entityGraph);
-                    } else if (value instanceof String[]) {
-                        String[] pathsDefinitions = (String[]) value;
+                    } else if (value instanceof String[] pathsDefinitions) {
                         if (ArrayUtils.isNotEmpty(pathsDefinitions)) {
                             RootGraph<T> entityGraph = createGraph(pathsDefinitions, session, preparedQuery.getRootEntity());
                             setHint(q, hintName, entityGraph);
@@ -465,7 +465,7 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
      * @param paths      Array of paths to add to the EntityGraph
      * @param session    The hibernate session
      * @param rootEntity The root entity class
-     * @param <T>
+     * @param <T>        The entity type
      * @return A RootGraph created from the paths
      */
     private <T> RootGraph<T> createGraph(@NonNull String[] paths, @NonNull S session, @NonNull Class<T> rootEntity) {
@@ -524,7 +524,7 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
         return annotationMetadata.getAnnotationValuesByType(QueryHint.class).stream().filter(av -> FlushModeType.class.getName().equals(av.stringValue("name").orElse(null))).map(av -> av.enumValue("value", FlushModeType.class)).findFirst().orElse(Optional.empty()).orElse(null);
     }
 
-    private void bindPageable(Q q, @NonNull Pageable pageable) {
+    private void bindPageable(P q, @NonNull Pageable pageable) {
         if (pageable == Pageable.UNPAGED) {
             // no pagination
             return;
@@ -546,7 +546,7 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
         CriteriaQuery<T> query = criteriaBuilder.createQuery(pagedQuery.getRootEntity());
         Root<T> root = query.from(entity);
         bindCriteriaSort(query, root, criteriaBuilder, pageable);
-        Q q = createQuery(session, query);
+        P q = createQuery(session, query);
         bindPageable(q, pageable);
         bindQueryHints(q, pagedQuery, session);
         resultCollector.collect(q);
@@ -555,7 +555,7 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
     protected final <R> void collectCountOf(CriteriaBuilder criteriaBuilder, S session, Class<R> entity, @Nullable Pageable pageable, ResultCollector<Long> resultCollector) {
         CriteriaQuery<Long> countQuery = criteriaBuilder.createQuery(Long.class);
         countQuery.select(criteriaBuilder.count(countQuery.from(entity)));
-        Q countQ = createQuery(session, countQuery);
+        P countQ = createQuery(session, countQuery);
         if (pageable != null) {
             bindPageable(countQ, pageable);
         }
@@ -567,14 +567,10 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
         for (Sort.Order order : sort.getOrderBy()) {
             Path<String> path = root.get(order.getProperty());
             Expression expression = order.isIgnoreCase() ? builder.lower(path) : path;
-            switch (order.getDirection()) {
-
-                case DESC:
-                    orders.add(builder.desc(expression));
-                    continue;
-                default:
-                case ASC:
-                    orders.add(builder.asc(expression));
+            if (order.getDirection() == Sort.Order.Direction.DESC) {
+                orders.add(builder.desc(expression));
+            } else {
+                orders.add(builder.asc(expression));
             }
         }
         criteriaQuery.orderBy(orders);
@@ -602,14 +598,14 @@ public abstract class AbstractHibernateOperations<S, Q> implements HintsCapableR
          * @param query The query
          * @param fn    The map function
          */
-        protected abstract void collectTuple(Q query, Function<Tuple, R> fn);
+        protected abstract void collectTuple(P query, Function<Tuple, R> fn);
 
         /**
          * Collect a value from the query.
          *
          * @param query The query
          */
-        protected abstract void collect(Q query);
+        protected abstract void collect(P query);
 
     }
 

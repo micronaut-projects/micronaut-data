@@ -22,6 +22,9 @@ The following table summarizes the repository interfaces that come with Micronau
 |api:data.repository.CrudRepository[]
 |Extends api:data.repository.GenericRepository[] and adds methods to perform CRUD
 
+|api:data.jpa.repository.JpaRepository[]
+|Extends api:data.repository.CrudRepository[] and adds JPA specific methods like `merge` and `flush`. (requires JPA implementation)
+
 |api:data.repository.PageableRepository[]
 |Extends api:data.repository.CrudRepository[] and adds methods for pagination
 

@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-@MicronautTest(transactional = false, rollback = false)
+@MicronautTest(transactional = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ProductRepositorySpec {
 
@@ -21,6 +21,8 @@ class ProductRepositorySpec {
 
     @BeforeAll
     void setupTest() {
+        productRepository.deleteAll();
+        manufacturerRepository.deleteAll();
         Manufacturer apple = manufacturerRepository.save("Apple");
         productRepository.saveAll(Arrays.asList(
                 new Product(

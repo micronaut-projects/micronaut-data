@@ -1,0 +1,5 @@
+Repositories can have the entity and the ID values validated.
+To add the validation, annotate the repository's generic type argument with Jakarta Validation annotations:
+
+snippet::example.AccountRepository[project-base="doc-examples/hibernate-example", source="main"]
+

@@ -22,7 +22,6 @@ package io.micronaut.transaction.exceptions;
  * @author Juergen Hoeller
  * @since 1.1
  */
-@SuppressWarnings("serial")
 public class TransactionSuspensionNotSupportedException extends CannotCreateTransactionException {
 
     /**

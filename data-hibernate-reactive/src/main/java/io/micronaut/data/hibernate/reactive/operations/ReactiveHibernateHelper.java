@@ -26,7 +26,6 @@ import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 import java.util.concurrent.CompletionStage;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -51,7 +50,7 @@ final class ReactiveHibernateHelper {
         return monoFromCompletionStage(() -> session.find(entityClass, id));
     }
 
-    <T> Flux<T> list(Stage.Query<T> query) {
+    <T> Flux<T> list(Stage.SelectionQuery<T> query) {
         return monoFromCompletionStage(query::getResultList).flatMapMany(Flux::fromIterable);
     }
 
@@ -70,28 +69,28 @@ final class ReactiveHibernateHelper {
     <T> Flux<T> mergeAll(Stage.Session session, Iterable<T> entities) {
         List<T> list = CollectionUtils.iterableToList(entities);
         return monoFromCompletionStage(() -> session.merge(list.toArray()))
-                .thenReturn(list)
-                .flatMapMany(Flux::fromIterable);
+            .thenReturn(list)
+            .flatMapMany(Flux::fromIterable);
     }
 
     <T> Flux<T> persistAll(Stage.Session session, Iterable<T> entities) {
         List<T> list = CollectionUtils.iterableToList(entities);
         return monoFromCompletionStage(() -> session.persist(list.toArray()))
-                .thenReturn(list)
-                .flatMapMany(Flux::fromIterable);
+            .thenReturn(list)
+            .flatMapMany(Flux::fromIterable);
     }
 
     <T> Mono<Number> removeAll(Stage.Session session, Iterable<T> entities) {
         List<T> list = CollectionUtils.iterableToList(entities);
         return monoFromCompletionStage(() -> session.remove(list.toArray()))
-                .thenReturn(list.size());
+            .thenReturn(list.size());
     }
 
     Mono<Void> flush(Stage.Session session) {
         return monoFromCompletionStage(session::flush);
     }
 
-    <T> Mono<T> singleResult(Stage.Query<T> query) {
+    <T> Mono<T> singleResult(Stage.SelectionQuery<T> query) {
         return monoFromCompletionStage(query::getSingleResult);
     }
 
@@ -107,16 +106,13 @@ final class ReactiveHibernateHelper {
         return monoFromCompletionStage(session::close);
     }
 
-    <T> Mono<T> withSession(Function<Stage.Session, Mono<T>> work) {
-        return Mono.usingWhen(openSession(), work, this::closeSession);
+    <T> Flux<T> withTransactionFlux(Stage.Session session, Function<Stage.Transaction, Flux<T>> work) {
+        return monoFromCompletionStage(() -> session.withTransaction(tx -> work.apply(tx).collectList().publishOn(contextScheduler).toFuture()))
+            .flatMapIterable(it -> it);
     }
 
-    <T> Mono<T> withTransaction(Stage.Session session, Function<Stage.Transaction, Mono<T>> work) {
+    <T> Mono<T> withTransactionMono(Stage.Session session, Function<Stage.Transaction, Mono<T>> work) {
         return monoFromCompletionStage(() -> session.withTransaction(tx -> work.apply(tx).publishOn(contextScheduler).toFuture()));
-    }
-
-    <T> Mono<T> withSessionAndTransaction(BiFunction<Stage.Session, Stage.Transaction, Mono<T>> work) {
-        return withSession(session -> withTransaction(session, transaction -> work.apply(session, transaction).publishOn(contextScheduler)));
     }
 
     <T> Mono<T> monoFromCompletionStage(Supplier<CompletionStage<T>> supplier) {

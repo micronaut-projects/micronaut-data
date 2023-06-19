@@ -6,7 +6,7 @@ pluginManagement {
 }
 
 plugins {
-    id 'io.micronaut.build.shared.settings' version '6.4.4'
+    id 'io.micronaut.build.shared.settings' version '6.5.0'
 }
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
@@ -14,13 +14,13 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
-        maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
     }
 }
 
 rootProject.name = 'data-parent'
 
 micronautBuild {
+    useStandardizedProjectNames = true
     importMicronautCatalog()
     importMicronautCatalog("micronaut-reactor")
     importMicronautCatalog("micronaut-rxjava2")
@@ -32,6 +32,8 @@ micronautBuild {
     importMicronautCatalog("micronaut-multitenancy")
     importMicronautCatalog("micronaut-testresources")
     importMicronautCatalog("micronaut-validation")
+    importMicronautCatalog("micronaut-mongo")
+    importMicronautCatalog("micronaut-flyway")
 }
 
 include 'data-bom'
@@ -40,7 +42,9 @@ include 'data-processor'
 include 'data-document-processor'
 include 'data-runtime'
 include 'data-tx'
+include 'data-connection'
 include 'data-document-model'
+include 'data-jpa'
 
 // Test Compatibility Kit
 include 'data-tck'
@@ -48,23 +52,33 @@ include 'data-document-tck'
 
 // implementations
 
+// Hibernate
+
 include 'data-hibernate-jpa'
 include 'data-hibernate-reactive'
-
 include 'data-tx-hibernate'
+include 'data-connection-hibernate'
+
+// JDBC
+
 include 'data-jdbc'
+include 'data-connection-jdbc'
+include 'data-tx-jdbc'
+
 include 'data-r2dbc'
 include 'data-mongodb'
 include 'data-azure-cosmos'
 
 // Spring compatibility
 include 'data-spring'
+include 'data-spring-jdbc'
 include 'data-spring-jpa'
 
 // documentation samples
 include 'doc-examples:hibernate-example-java'
 include 'doc-examples:hibernate-example-groovy'
 include 'doc-examples:hibernate-example-kotlin'
+include 'doc-examples:hibernate-example-kotlin-ksp'
 
 include 'doc-examples:hibernate-reactive-example-java'
 include 'doc-examples:hibernate-reactive-example-kotlin'
@@ -95,6 +109,7 @@ include 'doc-examples:r2dbc-multitenancy-schema-example-java'
 include 'doc-examples:mongo-example-java'
 include 'doc-examples:mongo-example-groovy'
 include 'doc-examples:mongo-example-kotlin'
+include 'doc-examples:mongo-example-kotlin-ksp'
 include 'doc-examples:mongo-reactive-example-kotlin'
 include 'doc-examples:mongo-example-records-java'
 include 'doc-examples:mongo-jackson-example-java'
@@ -105,6 +120,11 @@ include 'doc-examples:mongo-multitenancy-datasource-example-java'
 include 'doc-examples:azure-cosmos-example-java'
 include 'doc-examples:azure-cosmos-example-groovy'
 include 'doc-examples:azure-cosmos-example-kotlin'
+
+include 'doc-examples:jdbc-spring-tx-example-java'
+include 'doc-examples:hibernate-spring-tx-example-java'
+
+include 'doc-examples:jooq-r2dbc-postgres'
 
 // benchmarks
 include 'benchmarks:benchmark-micronaut-data-jpa'

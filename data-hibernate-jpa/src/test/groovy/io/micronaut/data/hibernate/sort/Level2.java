@@ -1,7 +1,5 @@
 package io.micronaut.data.hibernate.sort;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -19,7 +17,6 @@ public class Level2 {
 
     private String name2;
 
-    @JsonBackReference
     @OneToOne
     private Level1 parent;
 

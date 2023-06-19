@@ -8,12 +8,11 @@ dependencies {
     annotationProcessor mn.micronaut.graal
     annotationProcessor mnSerde.micronaut.serde.processor
 
-    api projects.dataTx
     api mn.micronaut.inject
-    api mnValidation.micronaut.validation
     api mn.micronaut.aop
+    api mn.micronaut.core.reactive
 
-    implementation libs.reactor
+    implementation mn.reactor
 
     compileOnly libs.jakarta.persistence.api
     compileOnly mnRxjava2.rxjava2

@@ -2,7 +2,7 @@ package example
 
 import io.micronaut.data.annotation.Repository
 import io.micronaut.data.repository.kotlin.CoroutineCrudRepository
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @Repository
 interface StudentRepository : CoroutineCrudRepository<Student, Long> {

@@ -23,7 +23,6 @@ import io.micronaut.data.intercept.reactive.FindPageReactiveInterceptor;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
-import io.micronaut.transaction.support.TransactionSynchronizationManager;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 
@@ -50,16 +49,12 @@ public class DefaultFindPageReactiveInterceptor extends AbstractPublisherInterce
             PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context);
             PreparedQuery<?, Number> countQuery = prepareCountQuery(methodKey, context);
 
-            TransactionSynchronizationManager.TransactionSynchronizationState state = TransactionSynchronizationManager.getState();
-
             return Flux.from(reactiveOperations.findOne(countQuery))
                 .flatMap(total -> {
-                    try (TransactionSynchronizationManager.TransactionSynchronizationStateOp ignore = TransactionSynchronizationManager.withState(state)) {
-                        Flux<Object> resultList = Flux.from(reactiveOperations.findAll(preparedQuery));
-                        return resultList.collectList().map(list ->
-                            Page.of(list, preparedQuery.getPageable(), total.longValue())
-                        );
-                    }
+                    Flux<Object> resultList = Flux.from(reactiveOperations.findAll(preparedQuery));
+                    return resultList.collectList().map(list ->
+                        Page.of(list, preparedQuery.getPageable(), total.longValue())
+                    );
                 });
         }
         return reactiveOperations.findPage(getPagedQuery(context));

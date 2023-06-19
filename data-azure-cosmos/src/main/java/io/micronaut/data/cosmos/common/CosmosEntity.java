@@ -19,23 +19,19 @@ import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.beans.BeanIntrospection;
-import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.Transient;
 import io.micronaut.data.cosmos.annotation.ETag;
 import io.micronaut.data.cosmos.annotation.PartitionKey;
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -54,7 +50,7 @@ public final class CosmosEntity {
     private static final Map<RuntimePersistentEntity<?>, CosmosEntity> COSMOS_ENTITY_BY_PERSISTENT_ENTITY = new ConcurrentHashMap<>();
 
     static {
-        IDENTITY_DATA_TYPES = Collections.unmodifiableList(Arrays.asList(DataType.SHORT, DataType.INTEGER, DataType.LONG, DataType.STRING, DataType.UUID));
+        IDENTITY_DATA_TYPES = List.of(DataType.SHORT, DataType.INTEGER, DataType.LONG, DataType.STRING, DataType.UUID);
     }
 
     private final String containerName;
@@ -115,18 +111,13 @@ public final class CosmosEntity {
         String containerName = runtimePersistentEntity.getPersistedName();
         String partitionKey = getPartitionKey(runtimePersistentEntity, cosmosContainerSettings);
         String versionField = null;
-        BeanIntrospection<?> beanIntrospection = runtimePersistentEntity.getIntrospection();
-        Collection<? extends BeanProperty<?, Object>> beanProperties = beanIntrospection.getBeanProperties();
-        for (BeanProperty<?, Object> bp : beanProperties) {
-            if (bp.hasStereotype(Transient.class)) {
-                continue;
-            }
-            if (bp.hasStereotype(ETag.class)) {
+        for (RuntimePersistentProperty<?> property : runtimePersistentEntity.getPersistentProperties()) {
+            if (property.getAnnotationMetadata().hasStereotype(ETag.class)) {
                 // If already found @ETag on one of previous field
                 if (versionField != null) {
                     throw new IllegalStateException("Multiple @ETag annotations declared on " + runtimePersistentEntity.getPersistedName());
                 }
-                versionField = bp.getName();
+                versionField = property.getName();
             }
         }
         return new CosmosEntity(containerName, partitionKey, versionField);

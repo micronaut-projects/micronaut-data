@@ -30,6 +30,5 @@ public class BothJpaAndJdbcTest {
         );
 
         assertEquals(1, bookJdbcRepository.count());
-
     }
 }

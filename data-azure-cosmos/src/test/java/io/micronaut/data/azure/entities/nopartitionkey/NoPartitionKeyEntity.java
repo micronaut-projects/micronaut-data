@@ -1,6 +1,5 @@
 package io.micronaut.data.azure.entities.nopartitionkey;
 
-import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Transient;

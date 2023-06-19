@@ -15,14 +15,16 @@
  */
 package io.micronaut.data.hibernate.reactive.operations;
 
+import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.QueryHint;
+import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
+import io.micronaut.data.hibernate.conf.RequiresReactiveHibernate;
 import io.micronaut.data.hibernate.operations.AbstractHibernateOperations;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
@@ -39,29 +41,19 @@ import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.runtime.convert.DataConversionService;
-import io.micronaut.transaction.TransactionDefinition;
-import io.micronaut.transaction.exceptions.NoTransactionException;
-import io.micronaut.transaction.exceptions.TransactionSystemException;
-import io.micronaut.transaction.exceptions.TransactionUsageException;
-import io.micronaut.transaction.reactive.ReactiveTransactionOperations;
-import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
-import org.hibernate.SessionFactory;
-import org.hibernate.reactive.stage.Stage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.util.context.ContextView;
-
 import jakarta.persistence.EntityGraph;
 import jakarta.persistence.FlushModeType;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
+import org.hibernate.SessionFactory;
+import org.hibernate.reactive.stage.Stage;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -71,92 +63,67 @@ import java.util.function.Function;
  * @author Denis Stepanov
  * @since 3.5.0
  */
+@RequiresReactiveHibernate
+@EachBean(SessionFactory.class)
 @Internal
-final class DefaultHibernateReactiveRepositoryOperations extends AbstractHibernateOperations<Stage.Session, Stage.Query<?>>
-        implements HibernateReactorRepositoryOperations, ReactorReactiveTransactionOperations<Stage.Session> {
+final class DefaultHibernateReactiveRepositoryOperations extends AbstractHibernateOperations<Stage.Session, Stage.AbstractQuery, Stage.SelectionQuery<?>>
+        implements HibernateReactorRepositoryOperations {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultHibernateReactiveRepositoryOperations.class);
-
-    private static final String MANAGER_NAME = "HibernateReactive";
     private final SessionFactory sessionFactory;
     private final Stage.SessionFactory stageSessionFactory;
     private final ReactiveHibernateHelper helper;
-    private final String txStatusKey;
-    private final String txDefinitionKey;
-    private final String currentSessionKey;
-    private final String name;
+    private final ReactorConnectionOperations<Stage.Session> connectionOperations;
+    private final ReactorReactiveTransactionOperations<Stage.Session> transactionOperations;
 
     DefaultHibernateReactiveRepositoryOperations(SessionFactory sessionFactory,
                                                  RuntimeEntityRegistry runtimeEntityRegistry,
                                                  DataConversionService dataConversionService,
-                                                 @Parameter String name) {
+                                                 @Parameter ReactorConnectionOperations<Stage.Session> connectionOperations,
+                                                 @Parameter ReactorReactiveTransactionOperations<Stage.Session> transactionOperations) {
         super(runtimeEntityRegistry, dataConversionService);
         this.sessionFactory = sessionFactory;
         this.stageSessionFactory = sessionFactory.unwrap(Stage.SessionFactory.class);
+        this.connectionOperations = connectionOperations;
+        this.transactionOperations = transactionOperations;
         this.helper = new ReactiveHibernateHelper(stageSessionFactory);
-        if (name == null) {
-            name = "default";
-        }
-        this.name = name;
-        this.txStatusKey = ReactorReactiveTransactionOperations.TRANSACTION_STATUS_KEY_PREFIX + "." + MANAGER_NAME + "." + name;
-        this.txDefinitionKey = ReactorReactiveTransactionOperations.TRANSACTION_DEFINITION_KEY_PREFIX + "." + MANAGER_NAME + "." + name;
-        this.currentSessionKey = "io.micronaut.hibernate.reactive.session." + name;
     }
 
     @Override
-    public ReactiveTransactionStatus<Stage.Session> getTransactionStatus(ContextView contextView) {
-        return contextView.getOrDefault(txStatusKey, null);
-    }
-
-    @Override
-    public TransactionDefinition getTransactionDefinition(ContextView contextView) {
-        return contextView.getOrDefault(txDefinitionKey, null);
-    }
-
-    private Stage.Session getSession(ContextView contextView) {
-        return contextView.getOrDefault(currentSessionKey, null);
-    }
-
-    @Override
-    protected void setParameter(Stage.Query<?> query, String parameterName, Object value) {
+    protected void setParameter(Stage.AbstractQuery query, String parameterName, Object value) {
         query.setParameter(parameterName, value);
     }
 
     @Override
-    protected void setParameter(Stage.Query<?> query, String parameterName, Object value, Argument argument) {
-        if (value == null) {
-            query.setParameter(parameterName, null, argument.getType());
-        } else {
-            query.setParameter(parameterName, value);
-        }
+    protected void setParameter(Stage.AbstractQuery query, String parameterName, Object value, Argument<?> argument) {
+        query.setParameter(parameterName, value);
     }
 
     @Override
-    protected void setParameterList(Stage.Query<?> query, String parameterName, Collection<Object> value) {
-        query.setParameterList(parameterName, value);
+    protected void setParameterList(Stage.AbstractQuery query, String parameterName, Collection<Object> value) {
+        query.setParameter(parameterName, value);
     }
 
     @Override
-    protected void setParameterList(Stage.Query<?> query, String parameterName, Collection<Object> value, Argument argument) {
-        query.setParameterList(parameterName, value, argument.getType());
+    protected void setParameterList(Stage.AbstractQuery query, String parameterName, Collection<Object> value, Argument<?> argument) {
+        query.setParameter(parameterName, value);
     }
 
     @Override
-    protected void setHint(Stage.Query<?> query, String hintName, Object value) {
-        if (value instanceof EntityGraph) {
-            query.setHint(hintName, value);
+    protected void setHint(Stage.SelectionQuery<?> query, String hintName, Object value) {
+        if (value instanceof EntityGraph plan) {
+            query.setPlan(plan);
             return;
         }
         throw new IllegalStateException("Unrecognized parameter: " + hintName + " with value: " + value);
     }
 
     @Override
-    protected void setMaxResults(Stage.Query<?> query, int max) {
+    protected void setMaxResults(Stage.SelectionQuery<?> query, int max) {
         query.setMaxResults(max);
     }
 
     @Override
-    protected void setOffset(Stage.Query<?> query, int offset) {
+    protected void setOffset(Stage.SelectionQuery<?> query, int offset) {
         query.setFirstResult(offset);
     }
 
@@ -201,7 +168,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     }
 
     @Override
-    protected Stage.Query<?> createNativeQuery(Stage.Session session, String query, Class<?> resultType) {
+    protected Stage.SelectionQuery<?> createNativeQuery(Stage.Session session, String query, Class<?> resultType) {
         if (resultType == null) {
             return session.createNativeQuery(query);
         }
@@ -209,7 +176,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     }
 
     @Override
-    protected Stage.Query<?> createQuery(Stage.Session session, String query, Class<?> resultType) {
+    protected Stage.SelectionQuery<?> createQuery(Stage.Session session, String query, Class<?> resultType) {
         if (resultType == null) {
             return session.createQuery(query);
         }
@@ -217,7 +184,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     }
 
     @Override
-    protected Stage.Query<?> createQuery(Stage.Session session, CriteriaQuery<?> criteriaQuery) {
+    protected Stage.SelectionQuery<?> createQuery(Stage.Session session, CriteriaQuery<?> criteriaQuery) {
         return session.createQuery(criteriaQuery);
     }
 
@@ -399,132 +366,21 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     }
 
     private <T> Mono<T> operation(Function<Stage.Session, Mono<T>> work) {
-        return withTransactionMono(tx -> work.apply(tx.getConnection()));
+        return transactionOperations.withTransactionMono(tx -> work.apply(tx.getConnection()));
     }
 
     private <T> Flux<T> operationFlux(Function<Stage.Session, Flux<T>> work) {
-        return withTransactionFlux(tx -> work.apply(tx.getConnection()));
+        return transactionOperations.withTransactionFlux(tx -> work.apply(tx.getConnection()));
     }
 
     @Override
     public <T> Mono<T> withSession(Function<Stage.Session, Mono<T>> work) {
-        return Mono.deferContextual(contextView -> {
-            Stage.Session currentSession = getSession(contextView);
-            if (currentSession != null) {
-                LOG.debug("Reusing existing session for configuration: {}", name);
-                return work.apply(currentSession);
-            }
-            LOG.debug("Opening a new session for configuration: {}", name);
-            return helper.withSession(session -> work.apply(session).contextWrite(ctx -> ctx.put(currentSessionKey, session)));
-        });
+        return connectionOperations.withConnectionMono(status -> work.apply(status.getConnection()));
     }
 
     @Override
     public <T> Flux<T> withSessionFlux(Function<Stage.Session, Flux<T>> work) {
-        return Flux.deferContextual(contextView -> {
-            Stage.Session currentSession = getSession(contextView);
-            if (currentSession != null) {
-                LOG.debug("Reusing existing session for configuration: {}", name);
-                return work.apply(currentSession);
-            }
-            LOG.debug("Opening a new session for configuration: {}", name);
-            return helper.withSession(session -> work.apply(session).contextWrite(ctx -> ctx.put(currentSessionKey, session)).collectList())
-                    .flatMapMany(Flux::fromIterable);
-        });
-    }
-
-    @Override
-    public <T> Flux<T> withTransactionFlux(@NonNull TransactionDefinition definition, @NonNull Function<ReactiveTransactionStatus<Stage.Session>, Flux<T>> handler) {
-        return withTransactionMono(definition, status -> handler.apply(status).collectList()).flatMapMany(Flux::fromIterable);
-    }
-
-    @Override
-    public <T> Flux<T> withTransactionFlux(@NonNull Function<ReactiveTransactionStatus<Stage.Session>, Flux<T>> handler) {
-        return withTransactionFlux(TransactionDefinition.DEFAULT, handler);
-    }
-
-    @Override
-    public <T> Flux<T> withTransaction(@NonNull TransactionDefinition definition, @NonNull ReactiveTransactionOperations.TransactionalCallback<Stage.Session, T> handler) {
-        return withTransactionFlux(definition, status -> {
-            try {
-                return Flux.from(handler.doInTransaction(status));
-            } catch (Exception e) {
-                return Flux.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
-            }
-        });
-    }
-
-    @Override
-    public <T> Mono<T> withTransactionMono(@NonNull Function<ReactiveTransactionStatus<Stage.Session>, Mono<T>> handler) {
-        return withTransactionMono(TransactionDefinition.DEFAULT, handler);
-    }
-
-    @Override
-    public <T> Mono<T> withTransactionMono(@NonNull TransactionDefinition definition, @NonNull Function<ReactiveTransactionStatus<Stage.Session>, Mono<T>> handler) {
-        Objects.requireNonNull(definition, "Transaction definition cannot be null");
-        Objects.requireNonNull(handler, "Callback handler cannot be null");
-
-        return Mono.deferContextual(contextView -> {
-            ReactiveTransactionStatus<Stage.Session> currentTx = getTransactionStatus(contextView);
-            if (currentTx != null && definition.getPropagationBehavior() != TransactionDefinition.Propagation.REQUIRES_NEW) {
-                LOG.debug("Reusing existing transaction for configuration: {}", name);
-                TransactionDefinition.Propagation propagationBehavior = definition.getPropagationBehavior();
-                if (propagationBehavior == TransactionDefinition.Propagation.NOT_SUPPORTED || propagationBehavior == TransactionDefinition.Propagation.NEVER) {
-                    return Mono.error(new TransactionUsageException("Found an existing transaction but propagation behaviour doesn't support it: " + propagationBehavior));
-                }
-                return doInTransaction(handler, currentTx);
-            }
-            Stage.Session session = getSession(contextView);
-            return newTransaction(session, definition, handler);
-        });
-    }
-
-    private <T> Mono<T> newTransaction(@Nullable Stage.Session session, TransactionDefinition definition, Function<ReactiveTransactionStatus<Stage.Session>, Mono<T>> handler) {
-        if (session != null && definition.getPropagationBehavior() != TransactionDefinition.Propagation.REQUIRES_NEW) {
-            Stage.Transaction currentTransaction = session.currentTransaction();
-            if (currentTransaction != null) {
-                LOG.debug("Found existing transaction in session for configuration: {}", name);
-                DefaultReactiveTransactionStatus status = new DefaultReactiveTransactionStatus(session, currentTransaction, false);
-                return doInTransaction(handler, status)
-                        .contextWrite(context -> context.put(txStatusKey, status).put(txDefinitionKey, definition));
-            }
-        }
-        if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.MANDATORY) {
-            return Mono.error(new NoTransactionException("Expected an existing transaction, but none was found in the Reactive context."));
-        }
-        if (definition.getIsolationLevel() != TransactionDefinition.DEFAULT.getIsolationLevel()) {
-            return Mono.error(new TransactionUsageException("Isolation level not supported"));
-        }
-        if (definition.getTimeout() != TransactionDefinition.TIMEOUT_DEFAULT) {
-            return Mono.error(new TransactionUsageException("Timeout not supported"));
-        }
-        if (session != null && definition.getPropagationBehavior() != TransactionDefinition.Propagation.REQUIRES_NEW) {
-            LOG.debug("Creating a new transaction for configuration: {} with definition: {}", name, definition);
-            return helper.withTransaction(session, transaction -> {
-                        DefaultReactiveTransactionStatus status = new DefaultReactiveTransactionStatus(session, transaction, true);
-                        return doInTransaction(handler, status)
-                                .contextWrite(context -> context.put(currentSessionKey, session).put(txStatusKey, status).put(txDefinitionKey, definition));
-                    }
-            );
-        }
-        LOG.debug("Creating a new session and transaction for configuration: {} with definition: {}", name, definition);
-        return helper.withSessionAndTransaction((newSession, transaction) -> {
-                    DefaultReactiveTransactionStatus status = new DefaultReactiveTransactionStatus(newSession, transaction, true);
-                    return doInTransaction(handler, status)
-                            .contextWrite(context -> context.put(currentSessionKey, newSession).put(txStatusKey, status).put(txDefinitionKey, definition));
-                }
-        );
-    }
-
-    private <T> Mono<T> doInTransaction(Function<ReactiveTransactionStatus<Stage.Session>, Mono<T>> handler, ReactiveTransactionStatus<Stage.Session> status) {
-        try {
-            return Mono.from(handler.apply(status));
-        } catch (Exception e) {
-            if (e instanceof TransactionSystemException) {
-                return Mono.error(e);
-            }
-            return Mono.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
-        }
+        return connectionOperations.withConnectionFlux(status -> work.apply(status.getConnection()));
     }
 
     @Override
@@ -537,13 +393,13 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
         private Flux<R> result;
 
         @Override
-        protected void collectTuple(Stage.Query<?> query, Function<Tuple, R> fn) {
+        protected void collectTuple(Stage.SelectionQuery<?> query, Function<Tuple, R> fn) {
             Flux<Tuple> tuples = (Flux<Tuple>) helper.list(query);
             result = tuples.map(fn);
         }
 
         @Override
-        protected void collect(Stage.Query<?> query) {
+        protected void collect(Stage.SelectionQuery<?> query) {
             result = (Flux<R>) helper.list(query);
         }
     }
@@ -553,12 +409,12 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
         private Mono<R> result;
 
         @Override
-        protected void collectTuple(Stage.Query<?> query, Function<Tuple, R> fn) {
+        protected void collectTuple(Stage.SelectionQuery<?> query, Function<Tuple, R> fn) {
             result = ((Mono<Tuple>) helper.singleResult(query)).map(fn);
         }
 
         @Override
-        protected void collect(Stage.Query<?> query) {
+        protected void collect(Stage.SelectionQuery<?> query) {
             result = (Mono<R>) helper.singleResult(query);
         }
 
@@ -574,62 +430,22 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
         }
 
         @Override
-        protected void collectTuple(Stage.Query<?> query, Function<Tuple, R> fn) {
-            result = getFirst((Stage.Query<Tuple>) query).map(fn);
+        protected void collectTuple(Stage.SelectionQuery<?> query, Function<Tuple, R> fn) {
+            result = getFirst((Stage.SelectionQuery<Tuple>) query).map(fn);
         }
 
         @Override
-        protected void collect(Stage.Query<?> query) {
-            result = getFirst((Stage.Query<R>) query);
+        protected void collect(Stage.SelectionQuery<?> query) {
+            result = getFirst((Stage.SelectionQuery<R>) query);
         }
 
-        private <T> Mono<T> getFirst(Stage.Query<T> q) {
+        private <T> Mono<T> getFirst(Stage.SelectionQuery<T> q) {
             if (limitOne) {
                 q.setMaxResults(1);
             }
             return helper.list(q).next();
         }
 
-    }
-
-    /**
-     * Represents the current reactive transaction status.
-     */
-    private static final class DefaultReactiveTransactionStatus implements ReactiveTransactionStatus<Stage.Session> {
-        private final Stage.Session session;
-        private final Stage.Transaction transaction;
-        private final boolean isNew;
-
-        private DefaultReactiveTransactionStatus(Stage.Session session, Stage.Transaction transaction, boolean isNew) {
-            this.session = session;
-            this.transaction = transaction;
-            this.isNew = isNew;
-        }
-
-        @Override
-        public Stage.Session getConnection() {
-            return session;
-        }
-
-        @Override
-        public boolean isNewTransaction() {
-            return isNew;
-        }
-
-        @Override
-        public void setRollbackOnly() {
-            transaction.markForRollback();
-        }
-
-        @Override
-        public boolean isRollbackOnly() {
-            return transaction.isMarkedForRollback();
-        }
-
-        @Override
-        public boolean isCompleted() {
-            return false;
-        }
     }
 
 }

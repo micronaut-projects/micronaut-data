@@ -43,36 +43,38 @@ public interface ReactorReactiveRepositoryOperations extends ReactiveRepositoryO
     @SingleResult
     <T> Mono<T> findOne(@NonNull Class<T> type, @NonNull Serializable id);
 
+    @NonNull
+    @SingleResult
     <T> Mono<Boolean> exists(@NonNull PreparedQuery<T, Boolean> preparedQuery);
 
-    @SingleResult
     @NonNull
+    @SingleResult
     <T, R> Mono<R> findOne(@NonNull PreparedQuery<T, R> preparedQuery);
 
     @NonNull
     @SingleResult
     <T> Mono<T> findOptional(@NonNull Class<T> type, @NonNull Serializable id);
 
-    @SingleResult
     @NonNull
+    @SingleResult
     <T, R> Mono<R> findOptional(@NonNull PreparedQuery<T, R> preparedQuery);
 
     @NonNull
     <T> Flux<T> findAll(PagedQuery<T> pagedQuery);
 
-    @SingleResult
     @NonNull
+    @SingleResult
     <T> Mono<Long> count(PagedQuery<T> pagedQuery);
 
     @NonNull
     <T, R> Flux<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery);
 
-    @SingleResult
     @NonNull
+    @SingleResult
     <T> Mono<T> persist(@NonNull InsertOperation<T> operation);
 
-    @SingleResult
     @NonNull
+    @SingleResult
     <T> Mono<T> update(@NonNull UpdateOperation<T> operation);
 
     @NonNull
@@ -89,16 +91,16 @@ public interface ReactorReactiveRepositoryOperations extends ReactiveRepositoryO
     @SingleResult
     Mono<Number> executeDelete(@NonNull PreparedQuery<?, Number> preparedQuery);
 
-    @SingleResult
     @NonNull
+    @SingleResult
     <T> Mono<Number> delete(@NonNull DeleteOperation<T> operation);
 
-    @SingleResult
     @NonNull
+    @SingleResult
     <T> Mono<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation);
 
-    @SingleResult
     @NonNull
+    @SingleResult
     <R> Mono<Page<R>> findPage(@NonNull PagedQuery<R> pagedQuery);
 
 }

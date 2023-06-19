@@ -16,15 +16,12 @@
 package io.micronaut.transaction.async;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionStatus;
-import io.micronaut.transaction.interceptor.CoroutineTxHelper;
-import io.micronaut.transaction.interceptor.KotlinInterceptedMethodAsyncResultSupplier;
-import io.micronaut.transaction.support.TransactionSynchronizationManager;
 
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
@@ -40,27 +37,19 @@ import java.util.function.Function;
 public final class AsyncUsingSyncTransactionOperations<C> implements AsyncTransactionOperations<C> {
 
     private final SynchronousTransactionManager<C> synchronousTransactionManager;
-    @Nullable
-    private final CoroutineTxHelper coroutineTxHelper;
 
-    public AsyncUsingSyncTransactionOperations(SynchronousTransactionManager<C> synchronousTransactionManager,
-                                               @Nullable
-                                               CoroutineTxHelper coroutineTxHelper) {
+    public AsyncUsingSyncTransactionOperations(SynchronousTransactionManager<C> synchronousTransactionManager) {
         this.synchronousTransactionManager = synchronousTransactionManager;
-        this.coroutineTxHelper = coroutineTxHelper;
     }
 
     @Override
     public <T> CompletionStage<T> withTransaction(TransactionDefinition definition,
                                                   Function<AsyncTransactionStatus<C>, CompletionStage<T>> handler) {
-        try (TransactionSynchronizationManager.TransactionSynchronizationStateOp op = TransactionSynchronizationManager.withGuardedState()) {
-            TransactionSynchronizationManager.TransactionSynchronizationState state = op.getOrCreateState();
-            if (coroutineTxHelper != null && handler instanceof KotlinInterceptedMethodAsyncResultSupplier) {
-                Objects.requireNonNull(coroutineTxHelper).setupTxState(
-                        ((KotlinInterceptedMethodAsyncResultSupplier) handler).getKotlinInterceptedMethod(), state);
-            }
-
+        CompletableFuture<T> newResult = new CompletableFuture<>();
+        PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
+        try (PropagatedContext.Scope scope = propagatedContext.propagate()) { // Propagate to cleanup the scope
             TransactionStatus<C> status = synchronousTransactionManager.getTransaction(definition);
+            PropagatedContext txPropagatedContext = PropagatedContext.get();
             CompletionStage<T> result;
             try {
                 result = handler.apply(new DefaultAsyncTransactionStatus<>(status));
@@ -70,34 +59,26 @@ public final class AsyncUsingSyncTransactionOperations<C> implements AsyncTransa
                 result = r;
             }
 
-            CompletableFuture<T> newResult = new CompletableFuture<>();
             // Last step to complete the TX, we need to use `withState` to properly setup thread-locals for the TX manager
             result.whenComplete((o, throwable) -> {
-                try (TransactionSynchronizationManager.TransactionSynchronizationStateOp ignore = TransactionSynchronizationManager.withState(state)) {
-                    if (throwable == null) {
-                        synchronousTransactionManager.commit(status);
-                        newResult.complete(o);
-                    } else {
-                        try {
-                            synchronousTransactionManager.rollback(status);
-                        } catch (Exception e) {
-                            // Ignore rethrow
-                        }
-                        newResult.completeExceptionally(throwable);
+                if (throwable == null) {
+                    synchronousTransactionManager.commit(status);
+                    newResult.complete(o);
+                } else {
+                    try {
+                        synchronousTransactionManager.rollback(status);
+                    } catch (Exception e) {
+                        // Ignore rethrow
                     }
+                    newResult.completeExceptionally(throwable);
                 }
             });
-            return newResult;
         }
+        return newResult;
     }
 
-    private static final class DefaultAsyncTransactionStatus<T> implements AsyncTransactionStatus<T> {
-
-        private final TransactionStatus<T> status;
-
-        private DefaultAsyncTransactionStatus(TransactionStatus<T> status) {
-            this.status = status;
-        }
+    private record DefaultAsyncTransactionStatus<T>(
+        TransactionStatus<T> status) implements AsyncTransactionStatus<T> {
 
         @Override
         public boolean isNewTransaction() {
@@ -120,6 +101,12 @@ public final class AsyncUsingSyncTransactionOperations<C> implements AsyncTransa
         }
 
         @Override
+        public TransactionDefinition getTransactionDefinition() {
+            return status.getTransactionDefinition();
+        }
+
+        @Override
+        @NonNull
         public T getConnection() {
             return status.getConnection();
         }

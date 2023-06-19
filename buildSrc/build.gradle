@@ -7,11 +7,16 @@ repositories {
     mavenCentral()
 }
 
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
+
 dependencies {
     implementation libs.gradle.micronaut
     implementation libs.gradle.kotlin
     implementation libs.gradle.kotlin.allopen
     implementation libs.gradle.kotlin.noarg
+    implementation libs.gradle.ksp
     implementation libs.gradle.jmh
     implementation libs.gradle.spring.boot
     implementation libs.gradle.spring.dependencies

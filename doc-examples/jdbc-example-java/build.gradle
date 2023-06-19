@@ -13,18 +13,18 @@ micronaut {
 }
 
 dependencies {
-    annotationProcessor projects.dataProcessor
-    annotationProcessor libs.hibernate.jpamodelgen
-    annotationProcessor "io.micronaut.validation:micronaut-validation"
-    implementation project(":data-jdbc")
-    implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
-    implementation "io.micronaut:micronaut-http-client"
-    implementation "io.micronaut.validation:micronaut-validation"
-    implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
+    annotationProcessor projects.micronautDataProcessor
+    annotationProcessor mnSql.hibernate.jpamodelgen
+    annotationProcessor mnValidation.micronaut.validation
+    implementation projects.micronautDataJdbc
+    implementation mnRxjava2.micronaut.rxjava2
+    implementation mn.micronaut.http.client
+    implementation mnValidation.micronaut.validation
     implementation libs.jakarta.persistence.api
-    implementation libs.javax.transaction.api
-    runtimeOnly "ch.qos.logback:logback-classic"
-    runtimeOnly "com.h2database:h2"
+
+    runtimeOnly mnSql.micronaut.jdbc.tomcat
+    runtimeOnly mnLogging.logback.classic
+    runtimeOnly mnSql.h2
 }
 
 sourceSets {

@@ -99,8 +99,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     /**
      * Annotation used to represent join tables.
      */
-    private static final String ANN_JOIN_TABLE = "io.micronaut.data.jdbc.annotation.JoinTable";
-    private static final String ANN_JOIN_COLUMNS = "io.micronaut.data.jdbc.annotation.JoinColumns";
+    private static final String ANN_JOIN_TABLE = "io.micronaut.data.annotation.sql.JoinTable";
+    private static final String ANN_JOIN_COLUMNS = "io.micronaut.data.annotation.sql.JoinColumns";
     private static final String BLANK_SPACE = " ";
     private static final String SEQ_SUFFIX = "_seq";
     private static final String INSERT_INTO = "INSERT INTO ";
@@ -428,8 +428,15 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             traversePersistentProperties(identity, (associations, property) -> {
                 ids.add(PersistentPropertyPath.of(associations, property, ""));
             });
-            if (ids.size() > 1) {
+            int idFieldCount = ids.size();
+            if (idFieldCount > 1) {
                 generatePkAfterColumns = true;
+            } else if (idFieldCount > 0 && !identity.isGenerated()) {
+                // Need to define primary key if id not generated (otherwise defined in column definition)
+                // but can't do if id field is byte array (BLOB) and it expects length for MySQL
+                if (!(dialect == Dialect.MYSQL && ids.get(0).getProperty().getDataType() == DataType.BYTE_ARRAY)) {
+                    generatePkAfterColumns = true;
+                }
             }
             boolean finalGeneratePkAfterColumns = generatePkAfterColumns;
             for (PersistentPropertyPath pp : ids) {

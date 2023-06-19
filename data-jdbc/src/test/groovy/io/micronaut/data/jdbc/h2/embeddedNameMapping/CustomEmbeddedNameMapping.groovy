@@ -70,7 +70,7 @@ class CustomEmbeddedNameMapping extends Specification implements H2TestPropertyP
             def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(MyBook))
 
         then:
-            statements.join("\n") == 'CREATE TABLE "MyBook" ("id" VARCHAR(255) NOT NULL,"authorFirstName" VARCHAR(255) NOT NULL,"authorLastName" VARCHAR(255) NOT NULL,"authorDetailsIncludedNumberAge" INT NOT NULL);'
+            statements.join("\n") == 'CREATE TABLE "MyBook" ("id" VARCHAR(255) NOT NULL,"authorFirstName" VARCHAR(255) NOT NULL,"authorLastName" VARCHAR(255) NOT NULL,"authorDetailsIncludedNumberAge" INT NOT NULL, PRIMARY KEY("id"));'
     }
 
     void "test build insert"() {

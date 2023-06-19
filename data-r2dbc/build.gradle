@@ -12,26 +12,26 @@ dependencies {
 
     api mn.micronaut.runtime
     api mnReactor.micronaut.reactor
-    api projects.dataModel
-    api projects.dataRuntime
+    api projects.micronautDataModel
+    api projects.micronautDataRuntime
     api mnR2dbc.micronaut.r2dbc.core
-    api libs.r2dbc.spi
+    api mnR2dbc.r2dbc.spi
 
     implementation mn.micronaut.context
     implementation mn.micronaut.json.core
     compileOnly mnSerde.micronaut.serde.oracle.jdbc.json
     implementation mnReactor.micronaut.reactor
 
-    compileOnly libs.drivers.r2dbc.oracle
+    compileOnly mnR2dbc.r2dbc.oracle
 
-    testImplementation projects.dataTck
+    testImplementation projects.micronautDataTck
     testImplementation mnTest.micronaut.test.spock
-    testImplementation libs.r2dbc.pool
+    testImplementation mnR2dbc.r2dbc.pool
     testImplementation mnRxjava2.micronaut.rxjava2
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor mnValidation.micronaut.validation.processor
-    testAnnotationProcessor projects.dataProcessor
+    testAnnotationProcessor projects.micronautDataProcessor
 
     testImplementation mn.jackson.databind
     testImplementation libs.javax.persistence.api
@@ -47,46 +47,50 @@ dependencies {
 
     testImplementation libs.testcontainers.r2dbc
 
-    testImplementation libs.drivers.r2dbc.oracle
-    testImplementation libs.testcontainers.oracle
+    // oracle
+    testImplementation mnR2dbc.r2dbc.oracle
 
     // mariadb
-    testImplementation libs.drivers.r2dbc.mariadb
-    testImplementation libs.drivers.jdbc.mariadb
+    testImplementation mnR2dbc.r2dbc.mariadb
+    testImplementation mnSql.mariadb.java.client
 
     // mysql
-    testImplementation libs.drivers.r2dbc.mysql
-    testImplementation libs.drivers.jdbc.mysql
+    testImplementation mnR2dbc.r2dbc.mysql
+    testImplementation mnSql.mysql.connector.java
 
     // h2
-    testImplementation libs.drivers.r2dbc.h2
+    testImplementation mnR2dbc.r2dbc.h2
     testRuntimeOnly mnSql.h2
 
     // sqlserver
-    testImplementation libs.drivers.r2dbc.mssql
-    testImplementation libs.drivers.jdbc.mssql
+    testImplementation mnR2dbc.r2dbc.mssql
+    testImplementation mnSql.mssql.jdbc
 
     // postgres
-    testImplementation libs.drivers.r2dbc.postgresql
-    testImplementation libs.drivers.jdbc.postgresql
+    testImplementation mnR2dbc.r2dbc.postgresql
+    testImplementation mnSql.postgresql
 
     testImplementation mnMultitenancy.micronaut.multitenancy
 
     testImplementation mn.micronaut.http.netty
 
     testCompileOnly mn.micronaut.inject.groovy
-    testCompileOnly projects.dataProcessor
+    testCompileOnly projects.micronautDataProcessor
 
-    testResourcesService libs.drivers.jdbc.mariadb
+    testResourcesService mnSql.mariadb.java.client
     testResourcesService libs.drivers.jdbc.oracle
-    testResourcesService libs.drivers.jdbc.mysql
-    testResourcesService libs.drivers.jdbc.postgresql
-    testResourcesService libs.drivers.jdbc.mssql
+    testResourcesService mnSql.mysql.connector.java
+    testResourcesService mnSql.postgresql
+    testResourcesService mnSql.mssql.jdbc
 
     testImplementation mnTestResources.micronaut.test.resources.extensions.junit.platform
     testImplementation mnSerde.micronaut.serde.support
     testRuntimeOnly mn.snakeyaml
     testRuntimeOnly mnSerde.micronaut.serde.oracle.jdbc.json
+
+    testRuntimeOnly mnFlyway.micronaut.flyway
+    testRuntimeOnly mnFlyway.flyway.oracle
+    testRuntimeOnly mnSql.micronaut.jdbc.hikari
 }
 
 micronaut {
@@ -106,15 +110,9 @@ micronaut {
 
 tasks.withType(Test).configureEach {
     jvmArgs '-Xmx3072m'
-//
     systemProperty "oracle.jdbc.timezoneAsRegion", "false"
     systemProperty "java.net.preferIPv4Stack", "true"
     systemProperty "java.util.concurrent.ForkJoinPool.common.parallelism", "2"
-
-    if (micronautBuild.environment.githubAction.get()) {
-        // Let JDBC checks tests first so the test containers don't eat all the memory
-        mustRunAfter ":data-jdbc:test"
-    }
 }
 
 micronautBuild {

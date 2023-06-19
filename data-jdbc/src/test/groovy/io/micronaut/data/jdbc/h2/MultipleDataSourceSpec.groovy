@@ -8,9 +8,9 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import io.micronaut.transaction.annotation.TransactionalAdvice
+import io.micronaut.transaction.annotation.Transactional
 import io.micronaut.transaction.annotation.TransactionalEventListener
-import io.micronaut.transaction.jdbc.TransactionalConnection
+import io.micronaut.data.connection.jdbc.advice.ContextualConnection
 import jakarta.inject.Inject
 import jakarta.inject.Named
 import jakarta.inject.Singleton
@@ -125,7 +125,7 @@ class MultipleDataSourceSpec extends Specification {
             assert personsSaved[1].name == "One"
         }
 
-        @TransactionalAdvice
+        @Transactional
         void saveTx1() {
             def person = new Person(name: "One")
             personRepository.save(person)
@@ -135,7 +135,7 @@ class MultipleDataSourceSpec extends Specification {
             assert personsSaved[0].name == "Two"
         }
 
-        @TransactionalAdvice("other")
+        @Transactional("other")
         void saveTx2() {
             def person = new Person(name: "Two")
             otherPersonRepository.save(person)
@@ -163,16 +163,16 @@ class MultipleDataSourceSpec extends Specification {
             this.jdbcOperations = jdbcOperations
             this.defaultConnection = defaultConnection
             this.otherConnection = otherConnection
-            assert defaultConnection instanceof TransactionalConnection
-            assert otherConnection instanceof TransactionalConnection
+            assert defaultConnection instanceof ContextualConnection
+            assert otherConnection instanceof ContextualConnection
         }
 
-        @TransactionalAdvice("other")
+        @Transactional("other")
         void saveTwoOtherDb(Person one, Person two) {
             saveTwo(one, two)
         }
 
-        @TransactionalAdvice(transactionManager = "other")
+        @Transactional(transactionManager = "other")
         void saveTwoOtherDb2(Person one, Person two) {
             saveTwo(one, two)
         }

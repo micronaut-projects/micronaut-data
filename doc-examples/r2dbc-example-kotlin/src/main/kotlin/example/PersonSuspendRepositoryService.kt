@@ -1,9 +1,7 @@
 package example
 
 import io.micronaut.transaction.TransactionExecution
-import io.micronaut.transaction.annotation.TransactionalAdvice
-import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations
-import io.micronaut.transaction.support.TransactionSynchronizationManager
+import io.micronaut.transaction.async.AsyncTransactionOperations
 import io.r2dbc.spi.Connection
 import jakarta.inject.Named
 import jakarta.inject.Singleton
@@ -11,19 +9,18 @@ import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
-import reactor.util.context.ContextView
 import java.lang.Thread.currentThread
 import java.util.*
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @Singleton
 open class PersonSuspendRepositoryService(
-        private val txManager: ReactorReactiveTransactionOperations<Connection>,
-        @Named("custom") private val txCustomManager: ReactorReactiveTransactionOperations<Connection>,
-        private val parentSuspendRepository: ParentSuspendRepository,
-        private val parentSuspendRepositoryForCustomDb: ParentSuspendRepositoryForCustomDb,
-        private val parentRepository: ParentRepository,
-        private val parentRepositoryForCustomDb: ParentRepositoryForCustomDb) {
+    private val txManager: AsyncTransactionOperations<Connection>,
+    @Named("custom") private val txCustomManager: AsyncTransactionOperations<Connection>,
+    private val parentSuspendRepository: ParentSuspendRepository,
+    private val parentSuspendRepositoryForCustomDb: ParentSuspendRepositoryForCustomDb,
+    private val parentRepository: ParentRepository,
+    private val parentRepositoryForCustomDb: ParentRepositoryForCustomDb) {
 
     open fun saveOne() {
         parentRepository.save(Parent("xyz", Collections.emptyList()))
@@ -77,7 +74,7 @@ open class PersonSuspendRepositoryService(
         parentSuspendRepositoryForCustomDb.save(p)
     }
 
-    @TransactionalAdvice("custom")
+    @io.micronaut.transaction.annotation.Transactional("custom")
     open suspend fun deleteAllForCustomDb2(): TransactionExecution {
         val txStatus: TransactionExecution = getCustomTxStatus()
         if (txStatus.isCompleted || !txStatus.isNewTransaction) {
@@ -87,7 +84,7 @@ open class PersonSuspendRepositoryService(
         return txStatus
     }
 
-    @TransactionalAdvice("custom")
+    @io.micronaut.transaction.annotation.Transactional("custom")
     open suspend fun saveForCustomDb2(p: Parent): TransactionExecution {
         val txStatus: TransactionExecution = getCustomTxStatus()
         if (txStatus.isCompleted || !txStatus.isNewTransaction) {
@@ -143,7 +140,7 @@ open class PersonSuspendRepositoryService(
         coroutinesStoreWithCustomDBTransactional2()
     }
 
-    @TransactionalAdvice("custom") // Create a new method because @Transactional is not repeatable
+    @io.micronaut.transaction.annotation.Transactional("custom") // Create a new method because @Transactional is not repeatable
     open suspend fun coroutinesStoreWithCustomDBTransactional2() {
         saveOneSuspended()
         saveOneSuspendedForCustomDb()
@@ -170,14 +167,14 @@ open class PersonSuspendRepositoryService(
 
     suspend fun suspendCountForCustomDb(): Long {
         val count = parentSuspendRepositoryForCustomDb.count()
-        LoggerFactory.getLogger(this::class.java).info("Stored $count records")
+        LoggerFactory.getLogger(this::class.java).info("Stored custom $count records")
         return count
     }
 
     private fun getTxStatus() =
-            txManager.getTransactionStatus(TransactionSynchronizationManager.getResource(ContextView::class.java) as ContextView)
+            txManager.findTransactionStatus().orElse(null)
 
     private fun getCustomTxStatus() =
-            txCustomManager.getTransactionStatus(TransactionSynchronizationManager.getResource(ContextView::class.java) as ContextView)
+            txCustomManager.findTransactionStatus().orElse(null)
 
 }

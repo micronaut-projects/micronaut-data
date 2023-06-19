@@ -29,7 +29,7 @@ import io.micronaut.data.tck.entities.Author;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.repositories.AuthorRepository;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.util.Collection;
 import java.util.List;
 

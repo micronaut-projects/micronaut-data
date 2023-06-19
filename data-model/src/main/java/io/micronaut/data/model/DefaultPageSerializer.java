@@ -22,7 +22,6 @@ import io.micronaut.serde.Encoder;
 import io.micronaut.serde.Serializer;
 
 import java.io.IOException;
-import java.util.List;
 
 /**
  * Custom serializer for {@link DefaultPage} as a workaround for https://github.com/micronaut-projects/micronaut-serialization/issues/307.
@@ -36,23 +35,6 @@ final class DefaultPageSerializer implements Serializer<DefaultPage<Object>> {
 
     @Override
     public void serialize(Encoder encoder, EncoderContext context, Argument<? extends DefaultPage<Object>> type, DefaultPage<Object> page) throws IOException {
-        Encoder e = encoder.encodeObject(type);
-
-        e.encodeKey("content");
-        Argument<List<Object>> contentType = Argument.listOf((Argument<Object>) type.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT));
-        context.findSerializer(contentType)
-            .createSpecific(context, contentType)
-            .serialize(e, context, contentType, page.getContent());
-
-        e.encodeKey("pageable");
-        Argument<Pageable> pageable = Argument.of(Pageable.class);
-        context.findSerializer(pageable)
-            .createSpecific(context, pageable)
-            .serialize(e, context, pageable, page.getPageable());
-
-        e.encodeKey("totalSize");
-        e.encodeLong(page.getTotalSize());
-
-        e.finishStructure();
+        PageSerializer.serializePage(encoder, context, type, page);
     }
 }

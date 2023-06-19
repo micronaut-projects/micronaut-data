@@ -20,7 +20,6 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.convert.value.ConvertibleValues;
 import io.micronaut.core.type.Argument;
-import io.micronaut.transaction.TransactionDefinition;
 
 import java.util.Optional;
 
@@ -70,9 +69,4 @@ public abstract class AbstractPreparedDataOperation<R> implements PreparedDataOp
         return storedDataOperation.getAnnotationMetadata();
     }
 
-    @NonNull
-    @Override
-    public final Optional<TransactionDefinition> getTransactionDefinition() {
-        return storedDataOperation.getTransactionDefinition();
-    }
 }

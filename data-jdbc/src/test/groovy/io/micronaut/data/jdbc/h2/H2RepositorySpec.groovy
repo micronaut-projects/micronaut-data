@@ -230,7 +230,7 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
         saveSampleBooks()
 
         when:
-        def author = br.findByName("Stephen King")
+        def author = context.getBean(H2BookService).findByName("Stephen King")
 
         then:
         author != null
