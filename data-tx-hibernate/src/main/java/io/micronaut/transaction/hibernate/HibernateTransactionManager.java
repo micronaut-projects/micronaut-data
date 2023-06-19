@@ -71,11 +71,6 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
     }
 
     @Override
-    protected Function<DefaultTransactionStatus<Session>, Object> transactionSupplier() {
-        return status -> status.getConnection().getTransaction();
-    }
-
-    @Override
     protected void doBegin(DefaultTransactionStatus<Session> txStatus) {
         Session session = txStatus.getConnection();
         TransactionDefinition definition = txStatus.getTransactionDefinition();
@@ -162,7 +157,8 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
             });
         }
 
-        session.beginTransaction();
+        Transaction transaction = session.beginTransaction();
+        txStatus.setTransaction(transaction);
     }
 
     @Override
