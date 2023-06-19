@@ -8,13 +8,12 @@ application {
 }
 
 dependencies {
-    ksp projects.dataProcessor
+    ksp projects.micronautDataProcessor
 
     implementation mnRxjava2.micronaut.rxjava2
     implementation mnReactor.micronaut.reactor
     implementation mn.micronaut.http.client
-    implementation projects.dataHibernateJpa
-
+    implementation projects.micronautDataHibernateJpa
     implementation mnKotlin.micronaut.kotlin.runtime
     implementation libs.jakarta.persistence.api
     implementation libs.jakarta.transaction.api

@@ -24,12 +24,12 @@ micronaut {
 }
 
 dependencies {
-    compileOnly projects.dataProcessor // Override app plugin version
-    compileOnly projects.dataDocumentProcessor
+    compileOnly projects.micronautDataProcessor // Override app plugin version
+    compileOnly projects.micronautDataDocumentProcessor
 
     implementation mnReactor.micronaut.reactor
     implementation mn.micronaut.http.client
-    implementation projects.dataMongodb
+    implementation projects.micronautDataMongodb
     implementation mnMongo.mongo.driver
 
     implementation libs.jakarta.persistence.api

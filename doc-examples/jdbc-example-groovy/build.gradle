@@ -14,9 +14,9 @@ micronaut {
 }
 
 dependencies {
-    compileOnly projects.dataProcessor
+    compileOnly projects.micronautDataProcessor
     implementation mnRxjava2.micronaut.rxjava2
-    implementation projects.dataJdbc
+    implementation projects.micronautDataJdbc
     implementation mn.micronaut.http.client
     implementation mnValidation.micronaut.validation
     implementation libs.jakarta.persistence.api

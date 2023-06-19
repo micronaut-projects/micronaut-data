@@ -23,12 +23,12 @@ micronaut {
 }
 
 dependencies {
-    ksp projects.dataDocumentProcessor
+    ksp projects.micronautDataDocumentProcessor
     implementation mnRxjava2.micronaut.rxjava2
     implementation mnReactor.micronaut.reactor
 
     implementation mn.micronaut.http.client
-    implementation projects.dataMongodb
+    implementation projects.micronautDataMongodb
     implementation mnMongo.mongo.driver
     implementation mnKotlin.micronaut.kotlin.runtime
 

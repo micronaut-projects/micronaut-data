@@ -13,14 +13,13 @@ micronaut {
 }
 
 dependencies {
-    annotationProcessor projects.dataProcessor
+    annotationProcessor projects.micronautDataProcessor
     implementation mn.micronaut.http.client
-    implementation projects.dataHibernateReactive
+    implementation projects.micronautDataHibernateReactive
     implementation mnReactor.micronaut.reactor
     compileOnly mnSerde.micronaut.serde.api
     runtimeOnly mnLogging.logback.classic
     runtimeOnly mnSql.vertx.mysql.client
-
     // Testcontainers wait function needs the driver
     runtimeOnly mnSql.mysql.connector.java
 }

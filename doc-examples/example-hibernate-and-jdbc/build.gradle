@@ -13,10 +13,10 @@ micronaut {
 }
 
 dependencies {
-    annotationProcessor projects.dataProcessor
+    annotationProcessor projects.micronautDataProcessor
     annotationProcessor mnValidation.micronaut.validation
-    implementation projects.dataHibernateJpa
-    implementation projects.dataJdbc
+    implementation projects.micronautDataHibernateJpa
+    implementation projects.micronautDataJdbc
 
     runtimeOnly mnSql.micronaut.jdbc.tomcat
     runtimeOnly mnLogging.logback.classic

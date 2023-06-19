@@ -4,12 +4,12 @@ plugins {
 
 dependencies {
     annotationProcessor mn.micronaut.inject.java
-    annotationProcessor projects.dataDocumentProcessor
+    annotationProcessor projects.micronautDataDocumentProcessor
     annotationProcessor mnValidation.micronaut.validation.processor
 
-    implementation projects.dataModel
+    implementation projects.micronautDataModel
     implementation mnValidation.micronaut.validation
-    implementation projects.dataTx
+    implementation projects.micronautDataTx
     implementation mnTest.micronaut.test.spock
     implementation mnTest.micronaut.test.core
     implementation libs.jakarta.persistence.api

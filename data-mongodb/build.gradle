@@ -12,14 +12,14 @@ micronaut {
 }
 
 dependencies {
-    annotationProcessor projects.dataDocumentProcessor
+    annotationProcessor projects.micronautDataDocumentProcessor
     annotationProcessor mn.micronaut.inject.java
     annotationProcessor mn.micronaut.graal
     annotationProcessor libs.micronaut.docs
 
-    api projects.dataRuntime
-    api projects.dataDocumentModel
-    api projects.dataConnection
+    api projects.micronautDataRuntime
+    api projects.micronautDataDocumentModel
+    api projects.micronautDataConnection
 
     api mnSerde.micronaut.serde.bson
     api mnSerde.micronaut.serde.support
@@ -36,14 +36,14 @@ dependencies {
     compileOnly mnMongo.mongo.reactive
     compileOnly mnReactor.micronaut.reactor
 
-    testAnnotationProcessor projects.dataDocumentProcessor
+    testAnnotationProcessor projects.micronautDataDocumentProcessor
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor libs.jakarta.persistence.api
 
     testImplementation mnMongo.mongo.driver
     testImplementation mnMongo.mongo.reactive
-    testImplementation projects.dataDocumentProcessor
-    testImplementation projects.dataDocumentTck
+    testImplementation projects.micronautDataDocumentProcessor
+    testImplementation projects.micronautDataDocumentTck
     testImplementation libs.jakarta.persistence.api
     testImplementation mnRxjava2.micronaut.rxjava2
     testImplementation mnReactor.micronaut.reactor

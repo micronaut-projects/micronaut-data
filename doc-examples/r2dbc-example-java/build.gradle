@@ -21,8 +21,8 @@ micronaut {
 
 dependencies {
     annotationProcessor mn.micronaut.graal
-    annotationProcessor projects.dataProcessor
-    implementation projects.dataR2dbc
+    annotationProcessor projects.micronautDataProcessor
+    implementation projects.micronautDataR2dbc
     implementation mnSql.micronaut.jdbc.hikari
     implementation libs.jakarta.transaction.api
     implementation mnSerde.micronaut.serde.jackson

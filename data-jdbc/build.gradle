@@ -10,24 +10,24 @@ dependencies {
     annotationProcessor mn.micronaut.graal
     annotationProcessor libs.micronaut.docs
 
-    api projects.dataRuntime
-    api projects.dataTxJdbc
-    api projects.dataConnectionJdbc
+    api projects.micronautDataRuntime
+    api projects.micronautDataTxJdbc
+    api projects.micronautDataConnectionJdbc
 
     implementation mn.micronaut.json.core
     compileOnly mnSerde.micronaut.serde.oracle.jdbc.json
     implementation mnSql.micronaut.jdbc
 
     compileOnly mnRxjava2.micronaut.rxjava2
-    compileOnly projects.dataHibernateJpa
+    compileOnly projects.micronautDataHibernateJpa
     compileOnly libs.drivers.jdbc.oracle
 
     testAnnotationProcessor mn.micronaut.inject.java
-    testAnnotationProcessor projects.dataProcessor
+    testAnnotationProcessor projects.micronautDataProcessor
     testAnnotationProcessor mnValidation.micronaut.validation.processor
 
-    testImplementation projects.dataTck
-    testImplementation projects.dataProcessor
+    testImplementation projects.micronautDataTck
+    testImplementation projects.micronautDataProcessor
     testImplementation mnRxjava2.micronaut.rxjava2
     testImplementation mnReactor.micronaut.reactor
     testImplementation libs.jackson.databind

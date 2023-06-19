@@ -14,12 +14,12 @@ micronaut {
 }
 
 dependencies {
-    compileOnly projects.dataProcessor
+    compileOnly projects.micronautDataProcessor
     compileOnly mnValidation.micronaut.validation.processor
 
-    implementation projects.dataModel
+    implementation projects.micronautDataModel
     implementation mnValidation.micronaut.validation
-    implementation projects.dataHibernateJpa
+    implementation projects.micronautDataHibernateJpa
     implementation mn.micronaut.http.client
     implementation mnRxjava2.micronaut.rxjava2
 

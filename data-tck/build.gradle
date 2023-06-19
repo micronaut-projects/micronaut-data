@@ -7,12 +7,12 @@ dependencies {
 
     annotationProcessor mn.micronaut.inject.java
     annotationProcessor mnValidation.micronaut.validation.processor
-    annotationProcessor projects.dataProcessor
+    annotationProcessor projects.micronautDataProcessor
 
     implementation mnValidation.micronaut.validation
     implementation mn.micronaut.http.client
     implementation mn.micronaut.http.server.netty
-    implementation projects.dataModel
+    implementation projects.micronautDataModel
     implementation mnRxjava2.rxjava2
     implementation mn.reactor
     implementation mnTest.micronaut.test.spock
@@ -22,6 +22,6 @@ dependencies {
     implementation libs.javax.persistence.api
     implementation libs.jakarta.persistence.api
 
-    compileOnly projects.dataJdbc
+    compileOnly projects.micronautDataJdbc
     compileOnly mn.micronaut.inject.groovy
 }

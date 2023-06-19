@@ -22,7 +22,7 @@ micronaut {
 }
 
 dependencies {
-    annotationProcessor projects.dataDocumentProcessor
+    annotationProcessor projects.micronautDataDocumentProcessor
 
     implementation mnRxjava2.micronaut.rxjava2
     implementation mnReactor.micronaut.reactor
@@ -31,7 +31,7 @@ dependencies {
     implementation mnSerde.micronaut.serde.jackson
 
     implementation mn.micronaut.http.client
-    implementation projects.dataMongodb
+    implementation projects.micronautDataMongodb
     implementation mnMongo.mongo.driver
 
     runtimeOnly mnLogging.logback.classic

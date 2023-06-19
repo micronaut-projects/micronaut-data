@@ -24,8 +24,8 @@ micronaut {
 }
 
 dependencies {
-    kapt projects.dataProcessor
-    implementation projects.dataR2dbc
+    kapt projects.micronautDataProcessor
+    implementation projects.micronautDataR2dbc
     implementation mnSql.micronaut.jdbc.hikari
     implementation libs.kotlin.coroutines
     implementation libs.kotlin.coroutines.reactive

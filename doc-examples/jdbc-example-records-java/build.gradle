@@ -13,10 +13,10 @@ micronaut {
 }
 
 dependencies {
-    annotationProcessor projects.dataProcessor
+    annotationProcessor projects.micronautDataProcessor
     annotationProcessor mnValidation.micronaut.validation
 
-    implementation projects.dataJdbc
+    implementation projects.micronautDataJdbc
     implementation mn.micronaut.http.client
     implementation mnValidation.micronaut.validation
     implementation libs.jakarta.persistence.api

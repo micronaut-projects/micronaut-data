@@ -13,14 +13,14 @@ micronaut {
 }
 
 dependencies {
-    annotationProcessor projects.dataProcessor
+    annotationProcessor projects.micronautDataProcessor
     annotationProcessor mnValidation.micronaut.validation
     annotationProcessor mnSql.hibernate.jpamodelgen
     compileOnly mnSerde.micronaut.serde.api
     implementation mn.micronaut.http.client
     implementation mnRxjava2.micronaut.rxjava2
     implementation mnSql.micronaut.hibernate.jpa
-    implementation projects.dataHibernateJpa
+    implementation projects.micronautDataHibernateJpa
 
     runtimeOnly mnSql.micronaut.jdbc.tomcat
     runtimeOnly mnLogging.logback.classic

@@ -16,14 +16,14 @@ micronaut {
 dependencies {
     implementation mnRxjava2.micronaut.rxjava2
     implementation mn.micronaut.http.client
-    implementation projects.dataHibernateJpa
-    implementation projects.dataTx
+    implementation projects.micronautDataHibernateJpa
+    implementation projects.micronautDataTx
     implementation mnKotlin.micronaut.kotlin.runtime
     implementation mnValidation.micronaut.validation
     implementation libs.kotlin.coroutines
 
     kapt mnValidation.micronaut.validation
-    kapt projects.dataProcessor
+    kapt projects.micronautDataProcessor
 
     runtimeOnly mnSql.micronaut.jdbc.tomcat
     runtimeOnly mnLogging.logback.classic

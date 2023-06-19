@@ -9,7 +9,7 @@ micronaut {
 }
 
 dependencies {
-    annotationProcessor projects.dataProcessor
+    annotationProcessor projects.micronautDataProcessor
     annotationProcessor mn.micronaut.inject.java
     runtimeOnly mnLogging.logback.classic
 

@@ -20,12 +20,12 @@ micronaut {
 }
 
 dependencies {
-    annotationProcessor projects.dataDocumentProcessor
+    annotationProcessor projects.micronautDataDocumentProcessor
 
     implementation mnMultitenancy.micronaut.multitenancy
     implementation mnReactor.micronaut.reactor
     implementation mn.micronaut.http.client
-    implementation projects.dataR2dbc
+    implementation projects.micronautDataR2dbc
     implementation mnSerde.micronaut.serde.jackson
 
     implementation libs.jakarta.persistence.api

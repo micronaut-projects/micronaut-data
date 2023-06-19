@@ -3,8 +3,8 @@ plugins {
 }
 
 dependencies {
-    annotationProcessor projects.dataProcessor
-    implementation projects.dataHibernateJpa
+    annotationProcessor projects.micronautDataProcessor
+    implementation projects.micronautDataHibernateJpa
     runtimeOnly mnSql.micronaut.jdbc.hikari
     runtimeOnly mnSql.h2
     runtimeOnly mn.snakeyaml

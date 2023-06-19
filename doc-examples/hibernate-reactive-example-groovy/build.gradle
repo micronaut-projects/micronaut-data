@@ -24,9 +24,9 @@ micronaut {
 }
 
 dependencies {
-    compileOnly projects.dataProcessor // because it's Groovy
+    compileOnly projects.micronautDataProcessor // because it's Groovy
     implementation mn.micronaut.http.validation
-    implementation projects.dataHibernateReactive
+    implementation projects.micronautDataHibernateReactive
     implementation mnReactor.micronaut.reactor
     runtimeOnly mnLogging.logback.classic
     runtimeOnly mnSql.vertx.pg.client

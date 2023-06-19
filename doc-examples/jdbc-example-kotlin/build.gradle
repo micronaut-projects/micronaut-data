@@ -16,7 +16,7 @@ micronaut {
 }
 
 dependencies {
-    kapt projects.dataProcessor
+    kapt projects.micronautDataProcessor
 
     implementation mnRxjava2.micronaut.rxjava2
     implementation mnReactor.micronaut.reactor
@@ -24,7 +24,7 @@ dependencies {
     implementation mnKotlin.micronaut.kotlin.runtime
 
     implementation mn.micronaut.http.client
-    implementation projects.dataJdbc
+    implementation projects.micronautDataJdbc
     implementation libs.jakarta.persistence.api
     implementation libs.kotlin.coroutines
     implementation libs.kotlin.coroutines.reactive

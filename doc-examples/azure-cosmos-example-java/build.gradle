@@ -14,11 +14,11 @@ micronaut {
 }
 
 dependencies {
-    annotationProcessor projects.dataDocumentProcessor
-
-    implementation projects.dataAzureCosmos
+    annotationProcessor projects.micronautDataDocumentProcessor
 
     compileOnly libs.javax.persistence.api
+
+    implementation projects.micronautDataAzureCosmos
     implementation libs.jakarta.persistence.api
 
     runtimeOnly mnLogging.logback.classic

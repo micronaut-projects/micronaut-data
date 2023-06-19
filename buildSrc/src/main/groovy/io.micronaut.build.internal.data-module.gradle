@@ -5,7 +5,7 @@ plugins {
 
 micronautBuild {
     binaryCompatibility {
-        baselineVersion = "4.0.0-M9"
+        baselineVersion = "4.0.0-M10"
         enabled = true
     }
 }

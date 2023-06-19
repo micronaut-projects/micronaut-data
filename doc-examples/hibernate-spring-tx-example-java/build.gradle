@@ -13,12 +13,12 @@ micronaut {
 }
 
 dependencies {
-    annotationProcessor projects.dataProcessor
+    annotationProcessor projects.micronautDataProcessor
     implementation mn.micronaut.http.client
     implementation mnRxjava2.micronaut.rxjava2
     implementation mnSql.micronaut.hibernate.jpa
-    implementation projects.dataHibernateJpa
-    implementation projects.dataSpringJpa
+    implementation projects.micronautDataHibernateJpa
+    implementation projects.micronautDataSpringJpa
 
     runtimeOnly mnSql.micronaut.jdbc.tomcat
     runtimeOnly mnLogging.logback.classic

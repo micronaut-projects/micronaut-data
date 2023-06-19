@@ -22,8 +22,8 @@ micronaut {
 }
 
 dependencies {
-    compileOnly projects.dataProcessor
-    implementation projects.dataR2dbc
+    compileOnly projects.micronautDataProcessor
+    implementation projects.micronautDataR2dbc
     implementation mnSql.micronaut.jdbc.hikari
     implementation libs.jakarta.transaction.api
 
