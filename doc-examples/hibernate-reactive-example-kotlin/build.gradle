@@ -39,6 +39,5 @@ dependencies {
     runtimeOnly mnSql.vertx.pg.client
 
     testResourcesService mnSql.postgresql
-    // See https://github.com/eclipse-vertx/vertx-sql-client/issues/1059
-    testRuntimeOnly "com.ongres.scram:client:2.1"
+    testRuntimeOnly mnSql.ongres.scram.client
 }
