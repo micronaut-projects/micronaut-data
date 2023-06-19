@@ -139,7 +139,7 @@ implements <a href="InternalTransaction.html" title="interface in io.micronaut.t
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="DefaultTransactionStatus.html" title="type parameter in DefaultTransactionStatus">C</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getConnectionStatus()" class="member-name-link">getConnectionStatus</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getTransaction()" class="member-name-link">getTransaction</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></code></div>
@@ -152,19 +152,14 @@ implements <a href="InternalTransaction.html" title="interface in io.micronaut.t
  <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static &lt;C&gt;&nbsp;<a href="DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;C&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#newTx(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,java.util.function.Function)" class="member-name-link">newTx</a><wbr>(<a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;C&gt;&nbsp;connectionStatus,
- <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
- @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;C&gt;,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;transactionSupplier)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static &lt;C&gt;&nbsp;<a href="DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;C&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#noTx(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)" class="member-name-link">noTx</a><wbr>(<a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;C&gt;&nbsp;connectionStatus,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#noTx(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)" class="member-name-link">noTx</a><wbr>(<a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;C&gt;&nbsp;connectionStatus,
  <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static &lt;C&gt;&nbsp;<a href="DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;C&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#noTx(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,java.util.function.Function)" class="member-name-link">noTx</a><wbr>(<a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;C&gt;&nbsp;connectionStatus,
- <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
- @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;C&gt;,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;transactionSupplier)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setTransaction(java.lang.Object)" class="member-name-link">setTransaction</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;transaction)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Sets the transaction representation object.</div>
+</div>
 </div>
 </div>
 </div>
@@ -216,28 +211,10 @@ implements <a href="InternalTransaction.html" title="interface in io.micronaut.t
 </section>
 </li>
 <li>
-<section class="detail" id="newTx(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,java.util.function.Function)">
-<h3>newTx</h3>
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="type-parameters">&lt;C&gt;</span>&nbsp;<span class="return-type"><a href="DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;C&gt;</span>&nbsp;<span class="element-name">newTx</span><wbr><span class="parameters">(<a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;C&gt;&nbsp;connectionStatus,
- <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
- @Nullable
- @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;C&gt;,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;transactionSupplier)</span></div>
-</section>
-</li>
-<li>
 <section class="detail" id="noTx(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)">
 <h3>noTx</h3>
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="type-parameters">&lt;C&gt;</span>&nbsp;<span class="return-type"><a href="DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;C&gt;</span>&nbsp;<span class="element-name">noTx</span><wbr><span class="parameters">(<a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;C&gt;&nbsp;connectionStatus,
  <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</span></div>
-</section>
-</li>
-<li>
-<section class="detail" id="noTx(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,java.util.function.Function)">
-<h3>noTx</h3>
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="type-parameters">&lt;C&gt;</span>&nbsp;<span class="return-type"><a href="DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;C&gt;</span>&nbsp;<span class="element-name">noTx</span><wbr><span class="parameters">(<a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;C&gt;&nbsp;connectionStatus,
- <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
- @Nullable
- @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;C&gt;,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;transactionSupplier)</span></div>
 </section>
 </li>
 <li>
@@ -248,9 +225,21 @@ implements <a href="InternalTransaction.html" title="interface in io.micronaut.t
 </section>
 </li>
 <li>
+<section class="detail" id="setTransaction(java.lang.Object)">
+<h3>setTransaction</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setTransaction</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;transaction)</span></div>
+<div class="block">Sets the transaction representation object.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>transaction</code> - The transaction object</dd>
+</dl>
+</section>
+</li>
+<li>
 <section class="detail" id="getTransaction()">
 <h3>getTransaction</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">getTransaction</span>()</div>
+<div class="member-signature"><span class="annotations">@Nullable
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">getTransaction</span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code><a href="../TransactionStatus.html#getTransaction()">getTransaction</a></code>&nbsp;in interface&nbsp;<code><a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="DefaultTransactionStatus.html" title="type parameter in DefaultTransactionStatus">C</a>&gt;</code></dd>
