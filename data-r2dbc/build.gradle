@@ -117,7 +117,7 @@ tasks.withType(Test).configureEach {
 
     if (micronautBuild.environment.githubAction.get()) {
         // Let JDBC checks tests first so the test containers don't eat all the memory
-        mustRunAfter ":data-jdbc:test"
+        mustRunAfter ":micronaut-data-jdbc:test"
     }
 }
 

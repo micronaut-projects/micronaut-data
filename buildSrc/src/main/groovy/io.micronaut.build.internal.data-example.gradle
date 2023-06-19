@@ -19,10 +19,10 @@ tasks.withType(JavaCompile).configureEach {
 
 if (micronautBuild.environment.githubAction.get()) {
     def waitForTasks = [
-            ":data-hibernate-jpa:test",
-            ":data-jdbc:test",
-            ":data-r2dbc:test",
-            ":data-mongodb:test"
+            ":micronaut-data-hibernate-jpa:test",
+            ":micronaut-data-jdbc:test",
+            ":micronaut-data-r2dbc:test",
+            ":micronaut-data-mongodb:test"
     ] as Object[]
     // Let core modules tests pass first so the test containers don't eat all the memory
     tasks.named("compileJava") {

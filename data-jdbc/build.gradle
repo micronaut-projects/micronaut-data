@@ -94,12 +94,12 @@ tasks.withType(Test).configureEach {
 
     if (micronautBuild.environment.githubAction.get()) {
         // Let some of the checks tests first so the test containers don't eat all the memory
-        mustRunAfter ":data-processor:test"
-        mustRunAfter ":data-document-processor:test"
-        mustRunAfter ":data-hibernate-jpa:test"
-        mustRunAfter ":data-hibernate-reactive:test"
-        mustRunAfter ":data-mongodb:test"
-        mustRunAfter ":data-azure-cosmos:test"
+        mustRunAfter ":micronaut-data-processor:test"
+        mustRunAfter ":micronaut-data-document-processor:test"
+        mustRunAfter ":micronaut-data-hibernate-jpa:test"
+        mustRunAfter ":micronaut-data-hibernate-reactive:test"
+        mustRunAfter ":micronaut-data-mongodb:test"
+        mustRunAfter ":micronaut-data-azure-cosmos:test"
     }
 }
 
