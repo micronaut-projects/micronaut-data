@@ -1,3 +1,5 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
 plugins {
     id "io.micronaut.build.internal.data-native-example"
 }
@@ -11,6 +13,9 @@ micronaut {
     runtime "netty"
     testRuntime "junit5"
     testResources {
+        enabled = true
+        inferClasspath = false
+        additionalModules.add(KnownModules.MONGODB)
         clientTimeout = 300
         version = libs.versions.micronaut.testresources.get()
     }
@@ -19,11 +24,11 @@ micronaut {
 dependencies {
     annotationProcessor projects.dataDocumentProcessor
 
-    implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
-    implementation 'io.micronaut.reactor:micronaut-reactor'
+    implementation mnRxjava2.micronaut.rxjava2
+    implementation mnReactor.micronaut.reactor
 
-    implementation "io.micronaut:micronaut-http-client"
-    implementation 'io.micronaut.data:micronaut-data-mongodb'
+    implementation mn.micronaut.http.client
+    implementation projects.dataMongodb
     implementation mnMongo.mongo.driver
 
     implementation libs.jakarta.persistence.api
