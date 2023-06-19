@@ -10,23 +10,23 @@ dependencies {
     annotationProcessor libs.micronaut.docs
 
     api libs.spring.data.commons
-    api projects.dataSpring
+    api projects.micronautDataSpring
     api mnSpring.spring.jdbc
 
-    implementation projects.dataConnectionJdbc
-    implementation projects.dataRuntime
+    implementation projects.micronautDataConnectionJdbc
+    implementation projects.micronautDataRuntime
     implementation mnSpring.micronaut.spring
     implementation mnSql.micronaut.jdbc
 
     compileOnly mn.micronaut.http
 
     testAnnotationProcessor mn.micronaut.inject.java
-    testAnnotationProcessor projects.dataProcessor
+    testAnnotationProcessor projects.micronautDataProcessor
 
     testImplementation mn.micronaut.inject.groovy
-    testImplementation projects.dataProcessor
-    testImplementation projects.dataJdbc
-    testImplementation projects.dataTck
+    testImplementation projects.micronautDataProcessor
+    testImplementation projects.micronautDataJdbc
+    testImplementation projects.micronautDataTck
 
     testRuntimeOnly mnSql.h2
     testRuntimeOnly mnSql.micronaut.jdbc.tomcat

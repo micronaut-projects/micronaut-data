@@ -3,9 +3,9 @@ plugins {
 }
 
 dependencies {
-    annotationProcessor project(":data-processor")
-    implementation project(":data-hibernate-jpa")
-    implementation "io.micronaut.sql:micronaut-jdbc-hikari"
-    runtimeOnly "com.h2database:h2"
+    annotationProcessor projects.micronautDataProcessor
+    implementation projects.micronautDataHibernateJpa
+    runtimeOnly mnSql.micronaut.jdbc.hikari
+    runtimeOnly mnSql.h2
     runtimeOnly mn.snakeyaml
 }

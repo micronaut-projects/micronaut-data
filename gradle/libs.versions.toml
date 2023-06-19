@@ -1,6 +1,6 @@
 [versions]
 micronaut = "4.0.0-RC1"
-micronaut-platform = "4.0.0-M3"
+micronaut-platform = "4.0.0-M4"
 micronaut-docs = "2.0.0"
 micronaut-gradle-plugin = "4.0.0-M4"
 micronaut-testresources = "2.0.0-M10"
@@ -10,7 +10,7 @@ micronaut-reactor = "3.0.0-M8"
 micronaut-rxjava2 = "2.0.0-M6"
 micronaut-r2dbc = "5.0.0-M11"
 micronaut-serde = "2.0.0-M12"
-micronaut-sql = "5.0.0-M11"
+micronaut-sql = "5.0.0-M12"
 micronaut-spring = "5.0.0-M6"
 micronaut-test = "4.0.0-M7"
 micronaut-mongo = "5.0.0-M5"
@@ -109,6 +109,7 @@ micronaut-azure-cosmos = { module = "io.micronaut.azure:micronaut-azure-cosmos",
 # Test
 
 jupiter-engine = { module = 'org.junit.jupiter:junit-jupiter-engine' }
+jupiter-api = { module = 'org.junit.jupiter:junit-jupiter-api' }
 groovy-sql = { module = "org.apache.groovy:groovy-sql" }
 groovy-dateutil = { module = "org.apache.groovy:groovy-dateutil", version.ref = "groovy" }
 

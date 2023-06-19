@@ -23,12 +23,12 @@ micronaut {
 
 dependencies {
     implementation mnMultitenancy.micronaut.multitenancy
-    annotationProcessor projects.dataDocumentProcessor
+    annotationProcessor projects.micronautDataDocumentProcessor
 
     implementation mnRxjava2.micronaut.rxjava2
     implementation mnReactor.micronaut.reactor
     implementation mn.micronaut.http.client
-    implementation projects.dataMongodb
+    implementation projects.micronautDataMongodb
     implementation mnSerde.micronaut.serde.jackson
 
     implementation mnMongo.mongo.driver

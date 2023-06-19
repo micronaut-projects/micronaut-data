@@ -25,13 +25,13 @@ micronaut {
 
 dependencies {
     kapt mnValidation.micronaut.validation
-    kapt projects.dataProcessor
+    kapt projects.micronautDataProcessor
 
     implementation libs.kotlin.coroutines
     implementation libs.kotlin.coroutines.reactive
     implementation libs.kotlin.coroutines.reactor
     implementation mn.micronaut.http.client
-    implementation projects.dataHibernateReactive
+    implementation projects.micronautDataHibernateReactive
     implementation mnReactor.micronaut.reactor
     implementation mnKotlin.micronaut.kotlin.runtime
 
@@ -39,6 +39,5 @@ dependencies {
     runtimeOnly mnSql.vertx.pg.client
 
     testResourcesService mnSql.postgresql
-    // See https://github.com/eclipse-vertx/vertx-sql-client/issues/1059
-    testRuntimeOnly "com.ongres.scram:client:2.1"
+    testRuntimeOnly mnSql.ongres.scram.client
 }
