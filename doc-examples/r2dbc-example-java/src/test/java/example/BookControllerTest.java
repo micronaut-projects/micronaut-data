@@ -61,8 +61,7 @@ public class BookControllerTest {
 
     @AfterAll
     static void cleanup(AuthorRepository authorRepository, BookRepository bookRepository) {
-        authorRepository.deleteAll();
-        bookRepository.deleteAll();
+        Flux.from(bookRepository.deleteAll()).thenMany(Flux.from(authorRepository.deleteAll())).collectList().block();
     }
 
     @Test
