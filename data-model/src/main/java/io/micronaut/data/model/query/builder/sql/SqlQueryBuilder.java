@@ -1377,6 +1377,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         findOwner(joinAssociationsPath, association).orElseGet(queryState::getEntity),
                         currentJoinAlias);
 
+                String additionalWhere = resolveWhereForAnnotationMetadata(currentJoinAlias, associatedEntity.getAnnotationMetadata());
+                if (StringUtils.isNotEmpty(additionalWhere)) {
+                    target.append(LOGICAL_AND).append(additionalWhere);
+                }
+
                 joinAlias = currentJoinAlias;
             }
             joinAssociationsPath.clear();
