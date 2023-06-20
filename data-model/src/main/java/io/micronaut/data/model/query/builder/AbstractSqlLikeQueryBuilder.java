@@ -115,6 +115,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     protected static final String EQUALS = " = ";
     protected static final String NOT_EQUALS = " != ";
     protected static final String ALIAS_REPLACE_QUOTED = "@\\.";
+    protected static final String ALIAS_REPLACE = "@.";
     protected static final String JSON_COLUMN = "column";
     protected final Map<Class, CriterionHandler> queryHandlers = new HashMap<>(30);
 
