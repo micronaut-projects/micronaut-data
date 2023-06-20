@@ -1264,6 +1264,20 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/criteria/UpdateCriteriaMethodMatch.html#build(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">build(MethodMatchContext)</a> - Method in class io.micronaut.data.processor.visitors.finders.criteria.<a href="io/micronaut/data/processor/visitors/finders/criteria/UpdateCriteriaMethodMatch.html" title="class in io.micronaut.data.processor.visitors.finders.criteria">UpdateCriteriaMethodMatch</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#buildAdditionalWhereClause(io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.QueryState,io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">buildAdditionalWhereClause(AbstractSqlLikeQueryBuilder.QueryState, AnnotationMetadata)</a> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
+<dd>
+<div class="block">Builds additional where clause if there is <a href="io/micronaut/data/annotation/Where.html" title="annotation interface in io.micronaut.data.annotation"><code>Where</code></a> annotation on the entity.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/query/builder/jpa/JpaQueryBuilder.html#buildAdditionalWhereClause(io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.QueryState,io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">buildAdditionalWhereClause(AbstractSqlLikeQueryBuilder.QueryState, AnnotationMetadata)</a> - Method in class io.micronaut.data.model.query.builder.jpa.<a href="io/micronaut/data/model/query/builder/jpa/JpaQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.jpa">JpaQueryBuilder</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#buildAdditionalWhereString(io.micronaut.data.model.query.JoinPath,io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">buildAdditionalWhereString(JoinPath, AnnotationMetadata)</a> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
+<dd>
+<div class="block">Builds WHERE clause based on <a href="io/micronaut/data/annotation/Where.html" title="annotation interface in io.micronaut.data.annotation"><code>Where</code></a> annotation on the metadata.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#buildAdditionalWhereString(java.lang.String,io.micronaut.data.model.PersistentEntity,io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">buildAdditionalWhereString(String, PersistentEntity, AnnotationMetadata)</a> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
+<dd>
+<div class="block">Builds WHERE clause for the entity and given alias if <a href="io/micronaut/data/annotation/IgnoreWhere.html" title="annotation interface in io.micronaut.data.annotation"><code>IgnoreWhere</code></a> is not present.</div>
+</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/options/MongoOptionsUtils.html#buildAggregateOptions(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">buildAggregateOptions(AnnotationMetadata)</a> - Static method in class io.micronaut.data.mongodb.operations.options.<a href="io/micronaut/data/mongodb/operations/options/MongoOptionsUtils.html" title="class in io.micronaut.data.mongodb.operations.options">MongoOptionsUtils</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#buildBatchCreateTableStatement(io.micronaut.data.model.PersistentEntity...)" class="member-name-link">buildBatchCreateTableStatement(PersistentEntity...)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
@@ -14968,6 +14982,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/runtime/multitenancy/SchemaTenantResolver.html#resolveTenantSchemaName()" class="member-name-link">resolveTenantSchemaName()</a> - Method in interface io.micronaut.data.runtime.multitenancy.<a href="io/micronaut/data/runtime/multitenancy/SchemaTenantResolver.html" title="interface in io.micronaut.data.runtime.multitenancy">SchemaTenantResolver</a></dt>
 <dd>
 <div class="block">Resolves the tenant data source name.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#resolveWhereForAnnotationMetadata(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">resolveWhereForAnnotationMetadata(String, AnnotationMetadata)</a> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
+<dd>
+<div class="block">Resolves where clause if there is <a href="io/micronaut/data/annotation/Where.html" title="annotation interface in io.micronaut.data.annotation"><code>Where</code></a> annotation on the entity.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/query/factory/Restrictions.html" class="type-name-link" title="class in io.micronaut.data.model.query.factory">Restrictions</a> - Class in <a href="io/micronaut/data/model/query/factory/package-summary.html">io.micronaut.data.model.query.factory</a></dt>
 <dd>
