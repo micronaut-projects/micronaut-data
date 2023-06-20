@@ -478,6 +478,13 @@ interface MyRepository {
 
         where:
             queryModel << [
+                    {
+                        def entity = getRuntimePersistentEntity(Meal)
+                        def qm = QueryModel.from(entity)
+                        qm.join("foods", null, Join.Type.FETCH, null)
+                        qm.idEq(new QueryParameter("xyz"))
+                        qm
+                    }.call(),
                     QueryModel.from(getRuntimePersistentEntity(Shipment)).idEq(new QueryParameter("xyz")),
                     QueryModel.from(getRuntimePersistentEntity(Shipment)).eq("shipmentId.country", new QueryParameter("xyz")),
                     {
@@ -510,16 +517,10 @@ interface MyRepository {
                         qm.join("role", null, Join.Type.FETCH, null)
                         qm.eq("user", new QueryParameter("xyz"))
                         qm
-                    }.call(),
-                    {
-                        def entity = getRuntimePersistentEntity(Meal)
-                        def qm = QueryModel.from(entity)
-                        qm.join("foods", null, Join.Type.FETCH, null)
-                        qm.idEq(new QueryParameter("xyz"))
-                        qm
                     }.call()
             ]
             query << [
+                    'SELECT meal_."mid",meal_."current_blood_glucose",meal_."created_on",meal_."updated_on",meal_."actual",meal_foods_."fid" AS foods_fid,meal_foods_."key" AS foods_key,meal_foods_."carbohydrates" AS foods_carbohydrates,meal_foods_."portion_grams" AS foods_portion_grams,meal_foods_."created_on" AS foods_created_on,meal_foods_."updated_on" AS foods_updated_on,meal_foods_."fk_meal_id" AS foods_fk_meal_id,meal_foods_."fk_alt_meal" AS foods_fk_alt_meal,meal_foods_."loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name" AS ln,meal_foods_."fresh" AS foods_fresh FROM "meal" meal_ INNER JOIN "food" meal_foods_ ON meal_."mid"=meal_foods_."fk_meal_id" AND meal_foods_.fresh = \'Y\' WHERE (meal_."mid" = ? AND (meal_.actual = \'Y\'))',
                     'SELECT shipment_."sp_country",shipment_."sp_city",shipment_."field" FROM "Shipment1" shipment_ WHERE (shipment_."sp_country" = ? AND shipment_."sp_city" = ?)',
                     'SELECT shipment_."sp_country",shipment_."sp_city",shipment_."field" FROM "Shipment1" shipment_ WHERE (shipment_."sp_country" = ?)',
                     'SELECT user_role_."id_user_id",user_role_."id_role_id" FROM "user_role_composite" user_role_ INNER JOIN "role_composite" user_role_id_role_ ON user_role_."id_role_id"=user_role_id_role_."id"',
@@ -527,8 +528,7 @@ interface MyRepository {
                     'SELECT uidx."uuid",uidx."name",uidx."child_id",uidx."xyz",uidx."embedded_child_embedded_child2_id",uidx."nullable_value" FROM "uuid_entity" uidx WHERE (uidx."uuid" = ?)',
                     'SELECT user_role_."id_user_id",user_role_."id_role_id" FROM "user_role_composite" user_role_ WHERE (user_role_."id_user_id" = ? AND user_role_."id_role_id" = ?)',
                     'SELECT challenge_."id",challenge_."token",challenge_."authentication_id",challenge_authentication_device_."NAME" AS authentication_device_NAME,challenge_authentication_device_."USER_ID" AS authentication_device_USER_ID,challenge_authentication_device_user_."NAME" AS authentication_device_user_NAME,challenge_authentication_."DESCRIPTION" AS authentication_DESCRIPTION,challenge_authentication_."DEVICE_ID" AS authentication_DEVICE_ID FROM "challenge" challenge_ INNER JOIN "AUTHENTICATION" challenge_authentication_ ON challenge_."authentication_id"=challenge_authentication_."ID" INNER JOIN "DEVICE" challenge_authentication_device_ ON challenge_authentication_."DEVICE_ID"=challenge_authentication_device_."ID" INNER JOIN "USER" challenge_authentication_device_user_ ON challenge_authentication_device_."USER_ID"=challenge_authentication_device_user_."ID" WHERE (challenge_."id" = ?)',
-                    'SELECT user_role_id_role_."id",user_role_id_role_."name" FROM "user_role_composite" user_role_ INNER JOIN "role_composite" user_role_id_role_ ON user_role_."id_role_id"=user_role_id_role_."id" WHERE (user_role_."id_user_id" = ?)',
-                    'SELECT meal_."mid",meal_."current_blood_glucose",meal_."created_on",meal_."updated_on",meal_."actual",meal_foods_."fid" AS foods_fid,meal_foods_."key" AS foods_key,meal_foods_."carbohydrates" AS foods_carbohydrates,meal_foods_."portion_grams" AS foods_portion_grams,meal_foods_."created_on" AS foods_created_on,meal_foods_."updated_on" AS foods_updated_on,meal_foods_."fk_meal_id" AS foods_fk_meal_id,meal_foods_."fk_alt_meal" AS foods_fk_alt_meal,meal_foods_."loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name" AS ln,meal_foods_."fresh" AS foods_fresh FROM "meal" meal_ INNER JOIN "food" meal_foods_ ON meal_."mid"=meal_foods_."fk_meal_id" WHERE (meal_."mid" = ? AND (meal_.actual = \'Y\' AND meal_foods_.fresh = \'Y\'))'
+                    'SELECT user_role_id_role_."id",user_role_id_role_."name" FROM "user_role_composite" user_role_ INNER JOIN "role_composite" user_role_id_role_ ON user_role_."id_role_id"=user_role_id_role_."id" WHERE (user_role_."id_user_id" = ?)'
             ]
     }
 

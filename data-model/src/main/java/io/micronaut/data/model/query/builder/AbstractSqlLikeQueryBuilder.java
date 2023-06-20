@@ -58,14 +58,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
@@ -116,7 +114,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     protected static final String GREATER_THAN = " > ";
     protected static final String EQUALS = " = ";
     protected static final String NOT_EQUALS = " != ";
-    protected static final String ALIAS_REPLACE = "@.";
     protected static final String ALIAS_REPLACE_QUOTED = "@\\.";
     protected static final String JSON_COLUMN = "column";
     protected final Map<Class, CriterionHandler> queryHandlers = new HashMap<>(30);
@@ -1064,40 +1061,28 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             queryClause.append(OPEN_BRACKET);
             handleJunction(ctx, criteria);
 
-            StringBuilder additionalWhereBuff = buildAdditionalWhereClause(queryState, annotationMetadata);
-            appendAdditionalWhere(queryClause, queryState, additionalWhereBuff.toString());
+            String additionalWhere = buildAdditionalWhereClause(queryState, annotationMetadata);
+            appendAdditionalWhere(queryClause, queryState, additionalWhere);
 
         } else {
-            StringBuilder additionalWhereBuff = buildAdditionalWhereClause(queryState, annotationMetadata);
-            if (additionalWhereBuff.length() > 0) {
+            String additionalWhere = buildAdditionalWhereClause(queryState, annotationMetadata);
+            if (StringUtils.isNotEmpty(additionalWhere)) {
                 queryClause.append(WHERE_CLAUSE)
                     .append(OPEN_BRACKET);
-                appendAdditionalWhere(queryClause, queryState, additionalWhereBuff.toString());
+                appendAdditionalWhere(queryClause, queryState, additionalWhere);
             }
         }
     }
 
-    private StringBuilder buildAdditionalWhereClause(QueryState queryState, AnnotationMetadata annotationMetadata) {
-        StringBuilder additionalWhereBuff = new StringBuilder(buildAdditionalWhereString(queryState.getRootAlias(), queryState.getEntity(), annotationMetadata));
-        List<JoinPath> joinPaths = queryState.getJoinPaths();
-        if (CollectionUtils.isNotEmpty(joinPaths)) {
-            Set<String> addedJoinPaths = new HashSet<>();
-            for (JoinPath joinPath : joinPaths) {
-                String path = joinPath.getPath();
-                if (addedJoinPaths.contains(path)) {
-                    continue;
-                }
-                addedJoinPaths.add(path);
-                String joinAdditionalWhere = buildAdditionalWhereString(joinPath, annotationMetadata);
-                if (StringUtils.isNotEmpty(joinAdditionalWhere)) {
-                    if (additionalWhereBuff.length() > 0) {
-                        additionalWhereBuff.append(SPACE).append(AND).append(SPACE);
-                    }
-                    additionalWhereBuff.append(joinAdditionalWhere);
-                }
-            }
-        }
-        return additionalWhereBuff;
+    /**
+     * Builds additional where clause if there is {@link Where} annotation on the entity.
+     *
+     * @param queryState the query state
+     * @param annotationMetadata the annotation metadata
+     * @return where clause if there was {@link Where} annotation on the entity (or joins for JPA implementation)
+     */
+    protected String buildAdditionalWhereClause(QueryState queryState, AnnotationMetadata annotationMetadata) {
+        return buildAdditionalWhereString(queryState.getRootAlias(), queryState.getEntity(), annotationMetadata);
     }
 
     private void appendAdditionalWhere(StringBuilder queryClause, QueryState queryState, String additionalWhere) {
@@ -1126,7 +1111,15 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
     }
 
-    private String buildAdditionalWhereString(String alias, PersistentEntity entity, AnnotationMetadata annotationMetadata) {
+    /**
+     * Builds WHER clause for the entity and given alias if {@link IgnoreWhere} is not present.
+     *
+     * @param alias the entity alias
+     * @param entity the entity
+     * @param annotationMetadata the entity metadata
+     * @return the WHERE clause
+     */
+    protected String buildAdditionalWhereString(String alias, PersistentEntity entity, AnnotationMetadata annotationMetadata) {
         if (annotationMetadata.hasAnnotation(IgnoreWhere.class)) {
             return "";
         }
@@ -1138,7 +1131,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
     }
 
-    private String buildAdditionalWhereString(JoinPath joinPath, AnnotationMetadata annotationMetadata) {
+    /**
+     * Builds WHERE clause based on {@link Where} annotation on the metadata.
+     *
+     * @param joinPath the join path
+     * @param annotationMetadata the annotation metadata
+     * @return WHERE clause if {@link Where} annotation is declared and {@link IgnoreWhere} is not present, otherwise empty string
+     */
+    protected final String buildAdditionalWhereString(JoinPath joinPath, AnnotationMetadata annotationMetadata) {
         if (annotationMetadata.hasAnnotation(IgnoreWhere.class)) {
             return "";
         }
@@ -1150,7 +1150,13 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         return resolveWhereForAnnotationMetadata(alias, association.getAssociatedEntity().getAnnotationMetadata());
     }
 
-    private String resolveWhereForAnnotationMetadata(String alias, AnnotationMetadata annotationMetadata) {
+    /**
+     * Resolves where clause if there is {@link Where} annotation on the entity.
+     * @param alias the entity alias
+     * @param annotationMetadata the entity annotation metadata
+     * @return where clause with entity alias if entity has declared where annotation
+     */
+    protected final String resolveWhereForAnnotationMetadata(String alias, AnnotationMetadata annotationMetadata) {
         return annotationMetadata.getAnnotationValuesByType(Where.class)
             .stream()
             .map(av -> av.stringValue().orElse(null))
