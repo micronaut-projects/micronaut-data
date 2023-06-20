@@ -1112,7 +1112,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     }
 
     /**
-     * Builds WHER clause for the entity and given alias if {@link IgnoreWhere} is not present.
+     * Builds WHERE clause for the entity and given alias if {@link IgnoreWhere} is not present.
      *
      * @param alias the entity alias
      * @param entity the entity
