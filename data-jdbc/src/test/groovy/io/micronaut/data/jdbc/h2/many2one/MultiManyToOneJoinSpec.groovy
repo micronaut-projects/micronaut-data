@@ -70,7 +70,7 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
         given:
             def customAuthor = new CustomAuthor()
             customAuthor.name = "author1"
-            customAuthor.id2 = 1
+            customAuthor.id2 = 10
             def customBook = new CustomBook()
             customBook.title = "book1"
             customBook.pages = 100
@@ -80,7 +80,7 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
             def books = customBookRepository.findAll()
         then:
             books.size() == 1
-            books[0].author.id2 == 1
+            books[0].author.id2 == 10
         cleanup:
             customBookRepository.deleteAll()
     }
