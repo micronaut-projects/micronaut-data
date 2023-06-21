@@ -60,7 +60,7 @@ public final class CountMethodMatcher extends AbstractPatternMethodMatcher {
                         query.multiselect(count);
                     } else {
                         // TODO: correct distinct
-                        Expression<Long> count = distinct ? cb.count(root) : cb.count(root);
+                        Expression<Long> count = cb.count(root);
                         query.multiselect(count);
                     }
                     return "";

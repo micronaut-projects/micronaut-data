@@ -43,7 +43,6 @@ import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.serde.config.annotation.SerdeConfig;
 
-import javax.validation.constraints.NotNull;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -90,6 +89,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
     public static final String QUERY_PARAMETER_PLACEHOLDER = "$mn_qp";
     public static final String MONGO_DATE_IDENTIFIER = "$date";
     public static final String MONGO_ID_FIELD = "_id";
+    private static final String REGEX = "$regex";
+    private static final String NOT = "$not";
+    private static final String OPTIONS = "$options";
 
     private final Map<Class, CriterionHandler> queryHandlers = new HashMap<>(30);
 
@@ -97,13 +99,11 @@ public final class MongoQueryBuilder implements QueryBuilder {
         addCriterionHandler(QueryModel.Negation.class, (ctx, obj, negation) -> {
             if (negation.getCriteria().size() == 1) {
                 QueryModel.Criterion criterion = negation.getCriteria().iterator().next();
-                if (criterion instanceof QueryModel.In) {
-                    QueryModel.In in = (QueryModel.In) criterion;
+                if (criterion instanceof QueryModel.In in) {
                     handleCriterion(ctx, obj, new QueryModel.NotIn(in.getName(), in.getValue()));
                     return;
                 }
-                if (criterion instanceof QueryModel.NotIn) {
-                    QueryModel.NotIn notIn = (QueryModel.NotIn) criterion;
+                if (criterion instanceof QueryModel.NotIn notIn) {
                     handleCriterion(ctx, obj, new QueryModel.In(notIn.getName(), notIn.getValue()));
                     return;
                 }
@@ -127,12 +127,10 @@ public final class MongoQueryBuilder implements QueryBuilder {
         addCriterionHandler(QueryModel.Disjunction.class, (ctx, sb, disjunction) -> handleJunction(ctx, sb, disjunction, "$or"));
         addCriterionHandler(QueryModel.IsTrue.class, (context, sb, criterion) -> handleCriterion(context, sb, new QueryModel.Equals(criterion.getProperty(), true)));
         addCriterionHandler(QueryModel.IsFalse.class, (context, sb, criterion) -> handleCriterion(context, sb, new QueryModel.Equals(criterion.getProperty(), false)));
-        addCriterionHandler(QueryModel.Equals.class, propertyOperatorExpression("$eq"));
         addCriterionHandler(QueryModel.IdEquals.class, (context, sb, criterion) -> handleCriterion(context, sb, new QueryModel.Equals("id", criterion.getValue())));
         addCriterionHandler(QueryModel.VersionEquals.class, (context, sb, criterion) -> {
             handleCriterion(context, sb, new QueryModel.Equals(context.getPersistentEntity().getVersion().getName(), criterion.getValue()));
         });
-        addCriterionHandler(QueryModel.NotEquals.class, propertyOperatorExpression("$ne"));
         addCriterionHandler(QueryModel.GreaterThan.class, propertyOperatorExpression("$gt"));
         addCriterionHandler(QueryModel.GreaterThanEquals.class, propertyOperatorExpression("$gte"));
         addCriterionHandler(QueryModel.LessThan.class, propertyOperatorExpression("$lt"));
@@ -194,6 +192,111 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 obj.put(criterionPropertyName, singletonMap("$nin", singletonList(valueRepresentation(context, propertyPath, value))));
             }
         });
+        addCriterionHandler(QueryModel.Equals.class, (context, obj, criterion) -> {
+            if (criterion.isIgnoreCase()) {
+                handleRegexPropertyExpression(context, obj, criterion, true, false, true, true);
+                return;
+            }
+            handlePropertyOperatorExpression(context, obj, criterion, "$eq", null);
+        });
+        addCriterionHandler(QueryModel.NotEquals.class, (context, obj, criterion) -> {
+            if (criterion.isIgnoreCase()) {
+                handleRegexPropertyExpression(context, obj, criterion, true, true, true, true);
+                return;
+            }
+            handlePropertyOperatorExpression(context, obj, criterion, "$ne", null);
+        });
+        addCriterionHandler(QueryModel.StartsWith.class, (context, obj, criterion) -> {
+            handleRegexPropertyExpression(context, obj, criterion, criterion.isIgnoreCase(), false, true, false);
+        });
+        addCriterionHandler(QueryModel.EndsWith.class, (context, obj, criterion) -> {
+            handleRegexPropertyExpression(context, obj, criterion, criterion.isIgnoreCase(), false, false, true);
+        });
+        addCriterionHandler(QueryModel.Contains.class, (context, obj, criterion) -> {
+            handleRegexPropertyExpression(context, obj, criterion, criterion.isIgnoreCase(), false, false, false);
+        });
+        addCriterionHandler(QueryModel.ArrayContains.class, (context, obj, criterion) -> {
+            PersistentPropertyPath propertyPath = context.getRequiredProperty(criterion);
+            Object value = criterion.getValue();
+            String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
+            Object criteriaValue;
+            if (value instanceof Iterable) {
+                List<?> values = CollectionUtils.iterableToList((Iterable) value);
+                criteriaValue = values.stream().map(val -> valueRepresentation(context, propertyPath, val)).collect(Collectors.toList());
+            } else {
+                criteriaValue = singletonList(valueRepresentation(context, propertyPath, value));
+            }
+            obj.put(criterionPropertyName, singletonMap("$all", criteriaValue));
+        });
+    }
+
+    private <T extends QueryModel.PropertyCriterion> CriterionHandler<T> propertyOperatorExpression(String op) {
+        return propertyOperatorExpression(op, null);
+    }
+
+    private <T extends QueryModel.PropertyCriterion> CriterionHandler<T> propertyOperatorExpression(String op, Function<Object, Object> mapper) {
+        return (context, obj, criterion) -> handlePropertyOperatorExpression(context, obj, criterion, op, mapper);
+    }
+
+    private <T extends QueryModel.PropertyCriterion> void handlePropertyOperatorExpression(CriteriaContext context, Map<String, Object> obj,
+                                                                                           T criterion, String op, Function<Object, Object> mapper) {
+        Object value = criterion.getValue();
+        if (mapper != null) {
+            value = mapper.apply(value);
+        }
+        PersistentPropertyPath propertyPath = context.getRequiredProperty(criterion);
+        Object finalValue = value;
+        traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), (associations, property) -> {
+            String path = asPath(associations, property);
+            obj.put(path, singletonMap(op, valueRepresentation(context, propertyPath, PersistentPropertyPath.of(associations, property), finalValue)));
+        });
+    }
+
+    /**
+     * Handles criteria by string value using $regex in MongoDB. It supports case ignore, negation, whole world matching, starts with, contains and ends with.
+     *
+     * @param context the criterion context
+     * @param obj the object to populate with criteria
+     * @param criterion the criterion
+     * @param ignoreCase whether to regex search using ignore case
+     * @param negate used with not equal, to negate regex search
+     * @param startsWith whether to search regex starting with
+     * @param endsWith whether to search regex ending with
+     * @param <T> the criterion type
+     */
+    private <T extends QueryModel.PropertyCriterion> void handleRegexPropertyExpression(CriteriaContext context, Map<String, Object> obj, T criterion,
+                                                                                        boolean ignoreCase, boolean negate, boolean startsWith, boolean endsWith) {
+        PersistentPropertyPath propertyPath = context.getRequiredProperty(criterion);
+        Object value = criterion.getValue();
+        Object filterValue;
+        Map<String, Object> regexCriteria = new HashMap<>(2);
+        regexCriteria.put(OPTIONS, ignoreCase ? "i" : "");
+        String regexValue;
+        if (value instanceof BindingParameter) {
+            int index = context.pushParameter(
+                (BindingParameter) value,
+                newBindingContext(propertyPath, propertyPath)
+            );
+            regexValue = QUERY_PARAMETER_PLACEHOLDER + ":" + index;
+        } else {
+            regexValue = value.toString();
+        }
+        StringBuilder regexValueBuff = new StringBuilder();
+        if (startsWith) {
+            regexValueBuff.append("^");
+        }
+        regexValueBuff.append(regexValue);
+        if (endsWith) {
+            regexValueBuff.append("$");
+        }
+        regexCriteria.put(REGEX, regexValueBuff.toString());
+        if (negate) {
+            filterValue = singletonMap(NOT, regexCriteria);
+        } else {
+            filterValue = regexCriteria;
+        }
+        String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
+        obj.put(criterionPropertyName, filterValue);
     }
 
     /**
@@ -213,32 +316,13 @@ public final class MongoQueryBuilder implements QueryBuilder {
         return name;
     }
 
-    private <T extends QueryModel.PropertyCriterion> CriterionHandler<T> propertyOperatorExpression(String op) {
-        return propertyOperatorExpression(op, null);
-    }
-
-    private <T extends QueryModel.PropertyCriterion> CriterionHandler<T> propertyOperatorExpression(String op, Function<Object, Object> mapper) {
-        return (context, obj, criterion) -> {
-            Object value = criterion.getValue();
-            if (mapper != null) {
-                value = mapper.apply(value);
-            }
-            PersistentPropertyPath propertyPath = context.getRequiredProperty(criterion);
-            Object finalValue = value;
-            traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), (associations, property) -> {
-                String path = asPath(associations, property);
-                obj.put(path, singletonMap(op, valueRepresentation(context, propertyPath, PersistentPropertyPath.of(associations, property), finalValue)));
-            });
-        };
-    }
-
     private String getPropertyPersistName(PersistentProperty property) {
-        if (property.getOwner() != null && property.getOwner().getIdentity() == property) {
+        if (property.getOwner().getIdentity() == property) {
             return MONGO_ID_FIELD;
         }
         return property.getAnnotationMetadata()
-                .stringValue(SerdeConfig.class, SerdeConfig.PROPERTY)
-                .orElseGet(property::getName);
+            .stringValue(SerdeConfig.class, SerdeConfig.PROPERTY)
+            .orElseGet(property::getName);
     }
 
     private Object valueRepresentation(CriteriaContext context, PersistentPropertyPath propertyPath, Object value) {
@@ -425,10 +509,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
                 PersistentPropertyPath propertyPath = currentLookup.persistentEntity.getPropertyPath(thisPath);
                 PersistentProperty property = propertyPath.getProperty();
-                if (!(property instanceof Association)) {
+                if (!(property instanceof Association association)) {
                     continue;
                 }
-                Association association = (Association) property;
                 if (association.getKind() == Relation.Kind.EMBEDDED) {
                     continue;
                 }
@@ -700,8 +783,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
                                  Map<String, Object> countObj) {
         if (!projectionList.isEmpty()) {
             for (QueryModel.Projection projection : projectionList) {
-                if (projection instanceof QueryModel.LiteralProjection) {
-                    QueryModel.LiteralProjection literalProjection = (QueryModel.LiteralProjection) projection;
+                if (projection instanceof QueryModel.LiteralProjection literalProjection) {
                     projectionObj.put("val", singletonMap("$literal", asLiteral(literalProjection.getValue())));
                 } else if (projection instanceof QueryModel.CountProjection) {
                     countObj.put("$count", "result");
@@ -709,35 +791,35 @@ public final class MongoQueryBuilder implements QueryBuilder {
                     throw new UnsupportedOperationException("Not implemented yet");
                 } else if (projection instanceof QueryModel.IdProjection) {
                     projectionObj.put(MONGO_ID_FIELD, 1);
-                } else if (projection instanceof QueryModel.PropertyProjection) {
-                    QueryModel.PropertyProjection pp = (QueryModel.PropertyProjection) projection;
+                } else if (projection instanceof QueryModel.PropertyProjection pp) {
+                    String propertyName = pp.getPropertyName();
+                    PersistentPropertyPath propertyPath = entity.getPropertyPath(propertyName);
+                    if (propertyPath == null) {
+                        throw new IllegalArgumentException("Cannot project on non-existent property: " + propertyName);
+                    }
+                    String propertyPersistName = getPropertyPersistName(propertyPath.getProperty());
                     if (projection instanceof QueryModel.AvgProjection) {
-                        addProjection(groupObj, pp, "$avg");
+                        addProjection(groupObj, pp, "$avg", propertyPersistName);
                     } else if (projection instanceof QueryModel.DistinctPropertyProjection) {
                         throw new UnsupportedOperationException("Not implemented yet");
                     } else if (projection instanceof QueryModel.SumProjection) {
-                        addProjection(groupObj, pp, "$sum");
+                        addProjection(groupObj, pp, "$sum", propertyPersistName);
                     } else if (projection instanceof QueryModel.MinProjection) {
-                        addProjection(groupObj, pp, "$min");
+                        addProjection(groupObj, pp, "$min", propertyPersistName);
                     } else if (projection instanceof QueryModel.MaxProjection) {
-                        addProjection(groupObj, pp, "$max");
+                        addProjection(groupObj, pp, "$max", propertyPersistName);
                     } else if (projection instanceof QueryModel.CountDistinctProjection) {
                         throw new UnsupportedOperationException("Not implemented yet");
                     } else {
-                        String propertyName = pp.getPropertyName();
-                        PersistentPropertyPath propertyPath = entity.getPropertyPath(propertyName);
-                        if (propertyPath == null) {
-                            throw new IllegalArgumentException("Cannot project on non-existent property: " + propertyName);
-                        }
-                        projectionObj.put(getPropertyPersistName(propertyPath.getProperty()), 1);
+                        projectionObj.put(propertyPersistName, 1);
                     }
                 }
             }
         }
     }
 
-    private void addProjection(Map<String, Object> groupBy, QueryModel.PropertyProjection pr, String op) {
-        groupBy.put(pr.getAlias().orElse(pr.getPropertyName()), singletonMap(op, "$" + pr.getPropertyName()));
+    private void addProjection(Map<String, Object> groupBy, QueryModel.PropertyProjection pr, String op, String persistentPropertyName) {
+        groupBy.put(pr.getAlias().orElse(pr.getPropertyName()), singletonMap(op, "$" + persistentPropertyName));
     }
 
     @NonNull
@@ -847,15 +929,16 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
         Map<String, Object> sets = new LinkedHashMap<>();
         for (Map.Entry<String, Object> e : propertiesToUpdate.entrySet()) {
+            PersistentPropertyPath propertyPath = findProperty(queryState, e.getKey(), null);
+            String propertyPersistName = getPropertyPersistName(propertyPath.getProperty());
             if (e.getValue() instanceof BindingParameter) {
-                PersistentPropertyPath propertyPath = findProperty(queryState, e.getKey(), null);
                 int index = queryState.pushParameter(
                         (BindingParameter) e.getValue(),
                         newBindingContext(propertyPath)
                 );
-                sets.put(e.getKey(), singletonMap(QUERY_PARAMETER_PLACEHOLDER, index));
+                sets.put(propertyPersistName, singletonMap(QUERY_PARAMETER_PLACEHOLDER, index));
             } else {
-                sets.put(e.getKey(), e.getValue());
+                sets.put(propertyPersistName, e.getValue());
             }
         }
 
@@ -992,9 +1075,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
         } else if (obj instanceof Number) {
             sb.append(obj);
         } else {
-            sb.append("\'");
+            sb.append("'");
             sb.append(obj);
-            sb.append("\'");
+            sb.append("'");
         }
     }
 
@@ -1081,7 +1164,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
         PersistentPropertyPath getRequiredProperty(String name, Class<?> criterionClazz);
 
-        default int pushParameter(@NotNull BindingParameter bindingParameter, @NotNull BindingParameter.BindingContext bindingContext) {
+        default int pushParameter(@NonNull BindingParameter bindingParameter, @NonNull BindingParameter.BindingContext bindingContext) {
             return getQueryState().pushParameter(bindingParameter, bindingContext);
         }
 
@@ -1160,7 +1243,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
          *
          * @return The parameters
          */
-        public @NotNull Map<String, String> getAdditionalRequiredParameters() {
+        public @NonNull Map<String, String> getAdditionalRequiredParameters() {
             return this.additionalRequiredParameters;
         }
 
@@ -1174,7 +1257,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         }
 
         @Override
-        public int pushParameter(@NotNull BindingParameter bindingParameter, @NotNull BindingParameter.BindingContext bindingContext) {
+        public int pushParameter(@NonNull BindingParameter bindingParameter, @NonNull BindingParameter.BindingContext bindingContext) {
             int index = position.getAndIncrement();
             bindingContext = bindingContext.index(index);
             parameterBindings.add(
@@ -1186,8 +1269,8 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
     private interface PropertyParameterCreator {
 
-        int pushParameter(@NotNull BindingParameter bindingParameter,
-                          @NotNull BindingParameter.BindingContext bindingContext);
+        int pushParameter(@NonNull BindingParameter bindingParameter,
+                          @NonNull BindingParameter.BindingContext bindingContext);
 
     }
 

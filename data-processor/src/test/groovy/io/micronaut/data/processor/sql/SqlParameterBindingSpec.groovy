@@ -50,9 +50,9 @@ interface SaleRepository extends CrudRepository<Sale, Long> {
     void "test compile repository"() {
         given:
         def repository = buildRepository('test.ProjectRepository', """
-import javax.persistence.Entity;
-import javax.persistence.EmbeddedId;
-import javax.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Column;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
 ${TestEntities.compositePrimaryKeyEntities()}
@@ -75,9 +75,9 @@ interface ProjectRepository extends CrudRepository<Project, ProjectId> {
     void "test non-sql compile repository"() {
         given:
         def repository = buildRepository('test.ProjectRepository', """
-import javax.persistence.Entity;
-import javax.persistence.EmbeddedId;
-import javax.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Column;
 import io.micronaut.context.annotation.Parameter;
 ${TestEntities.compositePrimaryKeyEntities()}
 

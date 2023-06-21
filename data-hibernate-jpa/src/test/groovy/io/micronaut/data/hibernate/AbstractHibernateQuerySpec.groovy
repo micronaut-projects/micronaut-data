@@ -33,7 +33,7 @@ import org.hibernate.LazyInitializationException
 import spock.lang.Issue
 import spock.lang.Shared
 
-import javax.persistence.OptimisticLockException
+import jakarta.persistence.OptimisticLockException
 
 abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
 
@@ -88,8 +88,29 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
             !found.isPresent()
     }
 
+    void "test merge"() {
+        given:
+            studentRepository.deleteAll()
+            def student = new Student("Denis")
+            student = studentRepository.save(student)
+        when:
+            Student newStudent = studentRepository.findById(student.id).get()
+        then:
+            newStudent
+        when:
+            newStudent.setName("Denis 2")
+            Student newStudent2 = studentRepository.merge(newStudent)
+        then:
+            newStudent2.name == "Denis 2"
+        when:
+            Student newStudent3 = studentRepository.findById(student.id).get()
+        then:
+            newStudent3.name == "Denis 2"
+    }
+
     void "test optimistic locking"() {
         given:
+            studentRepository.deleteAll()
             def student = new Student("Denis")
         when:
             studentRepository.save(student)
@@ -443,6 +464,16 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
             def books6 = bookRepository.listNativeBooksWithTitleInArray(new String[0])
         then:
             books6.size() == 0
+        when:
+            def books7 = bookRepository.listNativeBooksWithTitleInCollection(Collections.singletonList("The Stand"))
+            def books7a = bookRepository.listNativeBooksWithTitleInArray(new String[] {"The Stand"})
+            def books8 = bookRepository.listNativeBooksWithTitleInCollection(Collections.singletonList("FFF"))
+            def books8a = bookRepository.listNativeBooksWithTitleInArray(new String[] {"FFF"})
+        then:
+            books7.size() == 1
+            books7a.size() == 1
+            books8.size() == 0
+            books8a.size() == 0
     }
 
     @Issue('https://github.com/micronaut-projects/micronaut-data/issues/1131')

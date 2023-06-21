@@ -28,6 +28,7 @@ import io.micronaut.core.order.OrderUtil;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.EntityRepresentation;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
@@ -36,6 +37,7 @@ import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.intercept.annotation.DataMethodQueryParameter;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
@@ -93,12 +95,12 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     private ClassElement currentClass;
     private ClassElement currentRepository;
     private QueryBuilder queryEncoder;
-    private Map<String, String> typeRoles = new HashMap<>();
-    private List<MethodMatcher> methodsMatchers;
+    private final Map<String, String> typeRoles = new HashMap<>();
+    private final List<MethodMatcher> methodsMatchers;
     private boolean failing = false;
-    private Set<String> visitedRepositories = new HashSet<>();
+    private final Set<String> visitedRepositories = new HashSet<>();
     private Map<String, DataType> dataTypes = Collections.emptyMap();
-    private Map<String, SourcePersistentEntity> entityMap = new HashMap<>(50);
+    private final Map<String, SourcePersistentEntity> entityMap = new HashMap<>(50);
     private Function<ClassElement, SourcePersistentEntity> entityResolver;
 
     {
@@ -147,8 +149,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
         entityResolver = new Function<ClassElement, SourcePersistentEntity>() {
 
-            MappedEntityVisitor mappedEntityVisitor = new MappedEntityVisitor();
-            MappedEntityVisitor embeddedMappedEntityVisitor = new MappedEntityVisitor(false);
+            final MappedEntityVisitor mappedEntityVisitor = new MappedEntityVisitor();
+            final MappedEntityVisitor embeddedMappedEntityVisitor = new MappedEntityVisitor(false);
 
             @Override
             public SourcePersistentEntity apply(ClassElement classElement) {
@@ -196,6 +198,10 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                         typeRoles.put(ce.getName(), TypeRole.SORT)
                 );
             }
+
+            // Annotate repository with EntityRepresentation if present on entity class
+            annotateEntityRepresentationIfPresent(element);
+
             if (queryEncoder == null) {
                 context.fail("QueryEncoder not present on annotation processor path", element);
                 failing = true;
@@ -373,6 +379,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             throw new MatchFailedException("Unable to implement Repository method: " + currentRepository.getSimpleName() + "." + element.getName() + "(..). No possible runtime implementations found.", element);
         }
 
+        annotateQueryResultIfApplicable(element, methodInfo, entity);
+
         boolean finalEncodeEntityParameters = encodeEntityParameters;
         List<QueryParameterBinding> finalParameterBinding = parameterBinding;
         element.annotate(DataMethod.class, annotationBuilder -> {
@@ -459,6 +467,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             if (!supportsImplicitQueries && !finalEncodeEntityParameters) {
                 builder.member(DataMethodQueryParameter.META_MEMBER_DATA_TYPE, p.getDataType());
             }
+            builder.member(DataMethodQueryParameter.META_MEMBER_JSON_DATA_TYPE, p.getJsonDataType());
             if (p.getConverterClassName() != null) {
                 builder.member(DataMethodQueryParameter.META_MEMBER_CONVERTER, new AnnotationClassValue<>(p.getConverterClassName()));
             }
@@ -586,4 +595,42 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         return null;
     }
 
+    /**
+     * Annotates repository element with {@link EntityRepresentation} if an entity is marked with it.
+     *
+     * @param classElement the repository class element
+     */
+    private void annotateEntityRepresentationIfPresent(ClassElement classElement) {
+        SourcePersistentEntity entity = resolveEntityForCurrentClass();
+        if (entity != null) {
+            AnnotationValue<EntityRepresentation> entityRepresentationAnnotationValue = entity.getAnnotation(EntityRepresentation.class);
+            if (entityRepresentationAnnotationValue != null) {
+                classElement.annotate(entityRepresentationAnnotationValue);
+            }
+        }
+    }
+
+    /**
+     * Annotates method element with {@link io.micronaut.data.annotation.QueryResult} if root entity is {@link EntityRepresentation} of JSON type
+     * and method is {@link io.micronaut.data.intercept.annotation.DataMethod.OperationType#QUERY}.
+     *
+     * @param element the method element
+     * @param methodInfo the method match info
+     * @param entity the root entity
+     */
+    private void annotateQueryResultIfApplicable(MethodElement element, MethodMatchInfo methodInfo, SourcePersistentEntity entity) {
+        if (methodInfo.getOperationType() == DataMethod.OperationType.QUERY && methodInfo.getResultType().equals(entity.getType())) {
+            AnnotationValue<EntityRepresentation> entityRepresentationAnnotationValue = entity.getAnnotation(EntityRepresentation.class);
+            if (entityRepresentationAnnotationValue != null) {
+                EntityRepresentation.Type type = entityRepresentationAnnotationValue.getRequiredValue("type", EntityRepresentation.Type.class);
+                String column = entityRepresentationAnnotationValue.getRequiredValue("column", String.class);
+                JsonDataType jsonDataType = JsonDataType.DEFAULT;
+                io.micronaut.data.annotation.QueryResult.Type queryResultType = type == EntityRepresentation.Type.TABULAR ? io.micronaut.data.annotation.QueryResult.Type.TABULAR : io.micronaut.data.annotation.QueryResult.Type.JSON;
+                element.annotate(io.micronaut.data.annotation.QueryResult.class, builder -> builder
+                    .member("type", queryResultType)
+                    .member("jsonDataType", jsonDataType)
+                    .member("column", column));
+            }
+        }
+    }
 }

@@ -17,7 +17,6 @@ package io.micronaut.data.jdbc.h2;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Id;
-import io.micronaut.data.jdbc.TableRatings;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;

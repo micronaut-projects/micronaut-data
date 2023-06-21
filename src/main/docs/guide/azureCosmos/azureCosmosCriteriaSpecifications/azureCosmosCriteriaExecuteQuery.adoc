@@ -1,0 +1,84 @@
+To find an entity or multiple entities you can use one of the following methods from api:data.jpa.repository.JpaSpecificationExecutor[] interface:
+
+snippet::example.PersonRepository[project-base="doc-examples/azure-cosmos-example",source="main" tags="find",indent="0"]
+
+As you can see, there are two variations of `findOne`/`findAll` methods.
+
+First method is expecting api:data.repository.criteria.PredicateSpecification[] which is a simple specification interface that can be implemented to return a predicate:
+
+[source,java]
+----
+import static jakarta.persistence.criteria.*;
+
+public interface PredicateSpecification<T> {
+
+    // <1>
+    @Nullable
+    Predicate toPredicate(@NonNull Root<T> root, // <2>
+                          @NonNull CriteriaBuilder criteriaBuilder // <3>
+    );
+
+}
+----
+
+<1> The specification is producing a query limiting predicate
+<2> The entity root
+<3> The criteria builder
+
+This interface can also be used for update and delete methods, and it provides `or` and `and` methods for combining multiple predicates.
+
+The second interface is intended only for query criteria because it includes `jakarta.persistence.criteria.CriteriaQuery` as a parameter.
+
+[source,java]
+----
+import static jakarta.persistence.criteria.*;
+
+public interface QuerySpecification<T> {
+
+    // <1>
+    @Nullable
+    Predicate toPredicate(@NonNull Root<T> root, // <2>
+                          @NonNull CriteriaQuery<?> query, // <3>
+                          @NonNull CriteriaBuilder criteriaBuilder // <4>
+    );
+
+}
+----
+
+<1> The specification is producing a query limiting predicate
+<2> The entity root
+<3> The criteria query instance
+<4> The criteria builder
+
+For implementing counting queries following methods can be used:
+
+snippet::example.PersonRepository[project-base="doc-examples/azure-cosmos-example",source="main" tags="count",indent="0"]
+
+You can define criteria specification methods that will help you to create a query:
+
+snippet::example.PersonRepository[project-base="doc-examples/azure-cosmos-example",source="main" tags="specifications",indent="0"]
+
+Then you can combine them for `find` or `count` queries:
+
+snippet::example.PersonRepositorySpec[project-base="doc-examples/azure-cosmos-example",source="test" tags="find",indent="0"]
+
+Specific criteria supported by Micronaut Azure Cosmos Data is `ArrayContains` or `CollectionContains` and for a class having an array or list of strings field named `tags` it can be used either via custom repository method like this:
+
+snippet::example.FamilyRepository[project-base="doc-examples/azure-cosmos-example",source="main" tags="method_array_contains",indent="0"]
+
+or predicate specification:
+
+snippet::example.FamilyRepository[project-base="doc-examples/azure-cosmos-example",source="main" tags="predicate_array_contains",indent="0"]
+
+Please note that Microsoft Data Azure Cosmos Db supports searching for list or array containing only against single element.
+For partial search using `ArrayContains` generic repository methods cannot be used but custom methods with raw query like this:
+
+snippet::example.FamilyRepository[project-base="doc-examples/azure-cosmos-example",source="main" tags="array_contains_partial",indent="0"]
+and then pass map entry with "gender" as key and gender as value, basically any object that will serialize to `{"gender": "<gender_value>"}` for this example.
+This will perform search against `children` array in the `Family` class using just `gender` field.
+It can be also achieved by using predicate specification:
+
+snippet::example.FamilyRepository[project-base="doc-examples/azure-cosmos-example",source="main" tags="predicate_array_contains_partial",indent="0"]
+
+NOTE: The examples use compile-known values, and in this case, it would be better to create custom repository methods which would come with compile-time generates queries and eliminate runtime overhead.
+It's recommended to use criteria only for dynamic queries where the query structure is not known at the build-time.

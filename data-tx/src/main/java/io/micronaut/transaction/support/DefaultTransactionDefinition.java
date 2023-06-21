@@ -24,6 +24,7 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
+import java.util.Optional;
 
 
 /**
@@ -36,45 +37,16 @@ import java.util.Objects;
  */
 public class DefaultTransactionDefinition implements TransactionDefinition, Serializable {
 
-    /**
-     * Prefix for the propagation constants defined in TransactionDefinition.
-     *
-     * @deprecated not used field will be removed in the future major version
-     */
-    @Deprecated
-    public static final String PREFIX_PROPAGATION = "PROPAGATION_";
-
-    /**
-     * Prefix for the isolation constants defined in TransactionDefinition.
-     *
-     * @deprecated not used field will be removed in the future major version
-     */
-    @Deprecated
-    public static final String PREFIX_ISOLATION = "ISOLATION_";
-
-    /**
-     *  Prefix for transaction timeout values in description strings.
-     *
-     * @deprecated not used field will be removed in the future major version
-     */
-    @Deprecated
-    public static final String PREFIX_TIMEOUT = "timeout_";
-
-    /**
-     * Marker for read-only transactions in description strings.
-     *
-     * @deprecated not used field will be removed in the future major version
-     */
-    @Deprecated
-    public static final String READ_ONLY_MARKER = "readOnly";
-
     private Propagation propagationBehavior = Propagation.REQUIRED;
 
-    private Isolation isolationLevel = Isolation.DEFAULT;
+    @Nullable
+    private Isolation isolationLevel;
 
-    private Duration timeout = TIMEOUT_DEFAULT;
+    @Nullable
+    private Duration timeout;
 
-    private boolean readOnly = false;
+    @Nullable
+    private Boolean readOnly;
 
     @Nullable
     private String name;
@@ -106,9 +78,9 @@ public class DefaultTransactionDefinition implements TransactionDefinition, Seri
      */
     public DefaultTransactionDefinition(TransactionDefinition other) {
         this.propagationBehavior = other.getPropagationBehavior();
-        this.isolationLevel = other.getIsolationLevel();
-        this.timeout = other.getTimeout();
-        this.readOnly = other.isReadOnly();
+        this.isolationLevel = other.getIsolationLevel().orElse(null);
+        this.timeout = other.getTimeout().orElse(null);
+        this.readOnly = other.isReadOnly().orElse(null);
         this.name = other.getName();
         this.rollbackOn = other.getRollbackOn();
         this.dontRollbackOn = other.getDontRollbackOn();
@@ -179,13 +151,16 @@ public class DefaultTransactionDefinition implements TransactionDefinition, Seri
         if (isolationLevel == null) {
             throw new IllegalArgumentException("Only values of isolation constants allowed");
         }
+        if (isolationLevel == Isolation.DEFAULT) {
+            isolationLevel = null;
+        }
         this.isolationLevel = isolationLevel;
     }
 
     @Override
     @NonNull
-    public final Isolation getIsolationLevel() {
-        return this.isolationLevel;
+    public final Optional<Isolation> getIsolationLevel() {
+        return Optional.ofNullable(isolationLevel);
     }
 
     /**
@@ -210,11 +185,8 @@ public class DefaultTransactionDefinition implements TransactionDefinition, Seri
 
     @Override
     @NonNull
-    public final Duration getTimeout() {
-        if (timeout != null) {
-            return this.timeout;
-        }
-        return TransactionDefinition.TIMEOUT_DEFAULT;
+    public final Optional<Duration> getTimeout() {
+        return Optional.ofNullable(timeout);
     }
 
     /**
@@ -238,8 +210,8 @@ public class DefaultTransactionDefinition implements TransactionDefinition, Seri
     }
 
     @Override
-    public final boolean isReadOnly() {
-        return this.readOnly;
+    public final Optional<Boolean> isReadOnly() {
+        return Optional.ofNullable(readOnly);
     }
 
     /**
@@ -314,13 +286,13 @@ public class DefaultTransactionDefinition implements TransactionDefinition, Seri
         if (propagationBehavior != Propagation.REQUIRED) {
             sb.append(", propagationBehavior=").append(propagationBehavior);
         }
-        if (isolationLevel != Isolation.DEFAULT) {
+        if (isolationLevel != null) {
             sb.append(", isolationLevel=").append(isolationLevel);
         }
-        if (this.timeout != TIMEOUT_DEFAULT) {
+        if (this.timeout != null) {
             sb.append(", timeout=").append(timeout);
         }
-        if (readOnly) {
+        if (readOnly != null) {
             sb.append(", readOnly=").append(readOnly);
         }
         if (!rollbackOn.isEmpty()) {

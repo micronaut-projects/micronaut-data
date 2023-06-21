@@ -32,7 +32,7 @@ import io.micronaut.inject.writer.BeanDefinitionVisitor
 import spock.lang.Unroll
 
 import javax.annotation.processing.SupportedAnnotationTypes
-import javax.persistence.Entity
+import jakarta.persistence.Entity
 
 class JpaOrderBySpec extends AbstractTypeElementSpec {
 
@@ -56,11 +56,11 @@ import java.net.URL;
 interface MyInterface extends GenericRepository<Person, Long> {
 
     List<Person> queryByNameOrderByName(String n);
-    
+
     List<Person> listOrderByName();
-    
+
     List<String> listNameOrderByName();
-    
+
     List<Person> listTop3OrderByName();
 
     List<Person> findByCompanyUrlOrderByCompanyUrl(URL url);
@@ -119,7 +119,7 @@ import io.micronaut.data.repository.GenericRepository;
 
 @Repository
 interface MyInterface extends GenericRepository<Person, Long>{
-    List<$returnType.simpleName> $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')});    
+    List<$returnType.simpleName> $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')});
 }
 
 

@@ -1,5 +1,8 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
 plugins {
     id "io.micronaut.build.internal.data-module"
+    id 'io.micronaut.test-resources'
 }
 
 dependencies {
@@ -7,28 +10,34 @@ dependencies {
     annotationProcessor mn.micronaut.graal
     annotationProcessor libs.micronaut.docs
 
-    api projects.dataRuntime
+    api projects.micronautDataRuntime
+    api projects.micronautDataTxJdbc
+    api projects.micronautDataConnectionJdbc
 
-    implementation mn.micronaut.http
-    implementation mn.micronaut.sql.jdbc
+    implementation mn.micronaut.json.core
+    compileOnly mnSerde.micronaut.serde.oracle.jdbc.json
+    implementation mnSql.micronaut.jdbc
 
-    compileOnly libs.micronaut.rxjava2
-    compileOnly projects.dataHibernateJpa
+    compileOnly mnRxjava2.micronaut.rxjava2
+    compileOnly projects.micronautDataHibernateJpa
     compileOnly libs.drivers.jdbc.oracle
 
     testAnnotationProcessor mn.micronaut.inject.java
-    testAnnotationProcessor projects.dataProcessor
+    testAnnotationProcessor projects.micronautDataProcessor
+    testAnnotationProcessor mnValidation.micronaut.validation.processor
 
-    testImplementation projects.dataTck
-    testImplementation projects.dataProcessor
-    testImplementation libs.micronaut.rxjava2
-    testImplementation libs.micronaut.reactor
+    testImplementation projects.micronautDataTck
+    testImplementation projects.micronautDataProcessor
+    testImplementation mnRxjava2.micronaut.rxjava2
+    testImplementation mnReactor.micronaut.reactor
     testImplementation libs.jackson.databind
     testImplementation libs.javax.persistence.api
     testImplementation libs.jakarta.persistence.api
     testImplementation libs.groovy.sql
-    testImplementation mn.micronaut.validation
+    testImplementation mnValidation.micronaut.validation
+    testImplementation mnValidation.micronaut.validation.processor
 
+    testImplementation platform(libs.testcontainers.bom)
     testImplementation libs.testcontainers.spock
     testImplementation libs.testcontainers.mysql
     testImplementation libs.testcontainers.mariadb
@@ -38,21 +47,50 @@ dependencies {
 
     testCompileOnly mn.micronaut.inject.groovy
 
-    testRuntimeOnly libs.micronaut.sql.jdbc.tomcat
-    testRuntimeOnly libs.h2
-    testRuntimeOnly libs.drivers.jdbc.mariadb
+    testImplementation mnMultitenancy.micronaut.multitenancy
+
+    testImplementation mn.micronaut.http.netty
+    testRuntimeOnly mnSql.micronaut.jdbc.tomcat
+    testRuntimeOnly mnSql.h2
+    testRuntimeOnly mnSql.mariadb.java.client
     testRuntimeOnly libs.drivers.jdbc.oracle
-    testRuntimeOnly libs.drivers.jdbc.mysql
-    testRuntimeOnly libs.drivers.jdbc.postgresql
-    testRuntimeOnly libs.drivers.jdbc.mssql
+    testRuntimeOnly mnSql.mysql.connector.java
+    testRuntimeOnly mnSql.postgresql
+    testRuntimeOnly mnSql.mssql.jdbc
+    testRuntimeOnly mn.snakeyaml
+
+    testResourcesService mnSql.mariadb.java.client
+    testResourcesService libs.drivers.jdbc.oracle
+    testResourcesService mnSql.mysql.connector.java
+    testResourcesService mnSql.postgresql
+    testResourcesService mnSql.mssql.jdbc
+
+    testImplementation mnSerde.micronaut.serde.support
+    testImplementation mnTestResources.micronaut.test.resources.extensions.junit.platform
+
+    testRuntimeOnly mnSerde.micronaut.serde.oracle.jdbc.json
+    testRuntimeOnly mnFlyway.micronaut.flyway
+    testRuntimeOnly mnFlyway.flyway.oracle
 }
 
-tasks.named("test") {
-    systemProperty "oracle.jdbc.timezoneAsRegion", "false"
-    // Disable MySql hanging tests on GraalVM
-    if (System.getProperty("java.vendor").toLowerCase().contains("graal")) {
-        exclude "**/jdbc/mysql/**"
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    testResources {
+        enabled = true
+        inferClasspath = false
+        additionalModules.add(KnownModules.JDBC_POSTGRESQL)
+        additionalModules.add(KnownModules.JDBC_MYSQL)
+        additionalModules.add(KnownModules.JDBC_MARIADB)
+        additionalModules.add(KnownModules.JDBC_ORACLE_XE)
+        additionalModules.add(KnownModules.JDBC_MSSQL)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
     }
+}
+
+tasks.withType(Test).configureEach {
+    jvmArgs '-Xmx1024m'
+    systemProperty "oracle.jdbc.timezoneAsRegion", "false"
 }
 
 micronautBuild {

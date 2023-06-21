@@ -1,8 +1,6 @@
 package io.micronaut.data.r2dbc.h2
 
 
-import io.micronaut.data.r2dbc.ImmutablePet
-import io.micronaut.data.r2dbc.ImmutablePetRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
 

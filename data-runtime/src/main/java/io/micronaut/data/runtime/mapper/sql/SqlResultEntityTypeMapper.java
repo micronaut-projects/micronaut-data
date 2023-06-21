@@ -29,17 +29,9 @@ import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.Embeddable;
-import io.micronaut.data.annotation.EmbeddedId;
-import io.micronaut.data.annotation.MappedProperty;
-import io.micronaut.data.annotation.Relation;
-import io.micronaut.data.annotation.TypeDef;
+import io.micronaut.data.annotation.*;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.model.Association;
-import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.Embedded;
-import io.micronaut.data.model.PersistentAssociationPath;
-import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.*;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
@@ -48,9 +40,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.ResultReader;
-import io.micronaut.http.codec.MediaTypeCodec;
 
-import javax.validation.constraints.NotNull;
 import java.sql.Array;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -79,8 +69,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
     private final ResultReader<RS, String> resultReader;
     private final Map<String, JoinPath> joinPaths;
     private final String startingPrefix;
-    private final MediaTypeCodec jsonCodec;
-    private final DataConversionService<?> conversionService;
+    private final SqlJsonColumnReader<RS> jsonColumnReader;
+    private final DataConversionService conversionService;
     private final BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener;
     private boolean callNext = true;
 
@@ -90,15 +80,15 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      * @param prefix            The prefix to startup from.
      * @param entity            The entity
      * @param resultReader      The result reader
-     * @param jsonCodec         The JSON codec
+     * @param jsonColumnReader  The json column reader
      * @param conversionService The conversion service
      */
     public SqlResultEntityTypeMapper(
             String prefix,
             @NonNull RuntimePersistentEntity<R> entity,
             @NonNull ResultReader<RS, String> resultReader,
-            @Nullable MediaTypeCodec jsonCodec, DataConversionService<?> conversionService) {
-        this(entity, resultReader, Collections.emptySet(), prefix, jsonCodec, conversionService, null);
+            @Nullable SqlJsonColumnReader<RS> jsonColumnReader, DataConversionService conversionService) {
+        this(entity, resultReader, Collections.emptySet(), prefix, jsonColumnReader, conversionService, null);
     }
 
     /**
@@ -107,15 +97,15 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      * @param entity            The entity
      * @param resultReader      The result reader
      * @param joinPaths         The join paths
-     * @param jsonCodec         The JSON codec
+     * @param jsonColumnReader  The json column reader
      * @param conversionService The conversion service
      */
     public SqlResultEntityTypeMapper(
             @NonNull RuntimePersistentEntity<R> entity,
             @NonNull ResultReader<RS, String> resultReader,
             @Nullable Set<JoinPath> joinPaths,
-            @Nullable MediaTypeCodec jsonCodec, DataConversionService<?> conversionService) {
-        this(entity, resultReader, joinPaths, null, jsonCodec, conversionService, null);
+            @Nullable SqlJsonColumnReader<RS> jsonColumnReader, DataConversionService conversionService) {
+        this(entity, resultReader, joinPaths, null, jsonColumnReader, conversionService, null);
     }
 
     /**
@@ -124,7 +114,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      * @param entity            The entity
      * @param resultReader      The result reader
      * @param joinPaths         The join paths
-     * @param jsonCodec         The JSON codec
+     * @param jsonColumnReader  The json column reader
      * @param loadListener      The event listener
      * @param conversionService The conversion service
      */
@@ -132,9 +122,9 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             @NonNull RuntimePersistentEntity<R> entity,
             @NonNull ResultReader<RS, String> resultReader,
             @Nullable Set<JoinPath> joinPaths,
-            @Nullable MediaTypeCodec jsonCodec,
-            @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener, DataConversionService<?> conversionService) {
-        this(entity, resultReader, joinPaths, null, jsonCodec, conversionService, loadListener);
+            @Nullable SqlJsonColumnReader<RS> jsonColumnReader,
+            @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener, DataConversionService conversionService) {
+        this(entity, resultReader, joinPaths, null, jsonColumnReader, conversionService, loadListener);
     }
 
     /**
@@ -143,6 +133,9 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      * @param entity            The entity
      * @param resultReader      The result reader
      * @param joinPaths         The join paths
+     * @param startingPrefix    The starting prefix
+     * @param jsonColumnReader  The json column reader
+     * @param eventListener     The event listener used for trigger post load if configured
      * @param conversionService The conversion service
      */
     private SqlResultEntityTypeMapper(
@@ -150,13 +143,13 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             @NonNull ResultReader<RS, String> resultReader,
             @Nullable Set<JoinPath> joinPaths,
             String startingPrefix,
-            @Nullable MediaTypeCodec jsonCodec,
-            DataConversionService<?> conversionService, @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener) {
+            @Nullable SqlJsonColumnReader<RS> jsonColumnReader,
+            DataConversionService conversionService, @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener) {
         this.conversionService = conversionService;
         ArgumentUtils.requireNonNull("entity", entity);
         ArgumentUtils.requireNonNull("resultReader", resultReader);
         this.entity = entity;
-        this.jsonCodec = jsonCodec;
+        this.jsonColumnReader = jsonColumnReader;
         this.resultReader = resultReader;
         this.eventListener = eventListener;
         if (CollectionUtils.isNotEmpty(joinPaths)) {
@@ -171,7 +164,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
     }
 
     @Override
-    public DataConversionService<?> getConversionService() {
+    public DataConversionService getConversionService() {
         return conversionService;
     }
 
@@ -353,8 +346,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         } else if (ctx.associations != null) {
             for (Map.Entry<Association, MappingContext> e : ctx.associations.entrySet()) {
                 MappingContext associationCtx = e.getValue();
-                RuntimeAssociation runtimeAssociation = (RuntimeAssociation) e.getKey();
-                BeanProperty beanProperty = runtimeAssociation.getProperty();
+                RuntimeAssociation<Object> runtimeAssociation = (RuntimeAssociation<Object>) e.getKey();
+                BeanProperty<Object, Object> beanProperty = runtimeAssociation.getProperty();
                 if (runtimeAssociation.getKind().isSingleEnded() && (associationCtx.manyAssociations == null || associationCtx.manyAssociations.isEmpty())) {
                     Object value = beanProperty.get(instance);
                     Object newValue = setChildrenAndTriggerPostLoad(value, associationCtx, instance);
@@ -491,7 +484,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
 
             if (id != null && identity != null) {
                 @SuppressWarnings("unchecked")
-                BeanProperty<K, Object> idProperty = (BeanProperty<K, Object>) identity.getProperty();
+                BeanProperty<K, Object> idProperty = identity.getProperty();
                 entity = (K) convertAndSetWithValue(entity, identity, idProperty, id);
             }
             RuntimePersistentProperty<K> version = persistentEntity.getVersion();
@@ -505,8 +498,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                 if (rpp.isReadOnly()) {
                     continue;
                 } else if (rpp.isConstructorArgument()) {
-                    if (rpp instanceof Association) {
-                        Association a = (Association) rpp;
+                    if (rpp instanceof Association a) {
                         final Relation.Kind kind = a.getKind();
                         if (kind.isSingleEnded()) {
                             continue;
@@ -516,9 +508,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                     }
                 }
                 @SuppressWarnings("unchecked")
-                BeanProperty<K, Object> property = (BeanProperty<K, Object>) rpp.getProperty();
-                if (rpp instanceof Association) {
-                    Association entityAssociation = (Association) rpp;
+                BeanProperty<K, Object> property = rpp.getProperty();
+                if (rpp instanceof Association entityAssociation) {
                     if (rpp instanceof Embedded) {
                         Object value = readEntity(rs, ctx.embedded((Embedded) rpp), parent == null ? entity : parent, null);
                         entity = setProperty(property, entity, value);
@@ -577,10 +568,17 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         } else if (ctx.prefix != null && ctx.prefix.length() != 0) {
             columnName = ctx.prefix + columnName;
         }
-        Object result = resultReader.readDynamic(rs, columnName, prop.getDataType());
+        DataType dataType = prop.getDataType();
+        Object result;
+        if (dataType == DataType.JSON && jsonColumnReader != null) {
+            JsonDataType jsonDataType = prop.getJsonDataType();
+            result = jsonColumnReader.readJsonColumn(resultReader, rs, columnName, jsonDataType, prop.getArgument());
+        } else {
+            result = resultReader.readDynamic(rs, columnName, dataType);
+        }
         AttributeConverter<Object, Object> converter = prop.getConverter();
         if (converter != null) {
-            return converter.convertToEntityValue(result, ConversionContext.of((Argument) prop.getArgument()));
+            return converter.convertToEntityValue(result, ConversionContext.of(prop.getArgument()));
         }
         return result;
     }
@@ -622,13 +620,6 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         }
         if (propertyType.isInstance(v)) {
             return v;
-        }
-        if (jsonCodec != null && rpp.getDataType() == DataType.JSON) {
-            try {
-                return jsonCodec.decode(rpp.getArgument(), v.toString());
-            } catch (Exception e) {
-                // Ignore and try basic convert
-            }
         }
         return resultReader.convertRequired(v, rpp.getArgument());
     }
@@ -738,7 +729,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             return associations.computeIfAbsent(association, a -> joinAssociation(joinPaths, association));
         }
 
-        public <K> MappingContext<K> associate(MappingContext<K> ctx, @NotNull Object associationId, @NotNull Object entity) {
+        public <K> MappingContext<K> associate(MappingContext<K> ctx, @NonNull Object associationId, @NonNull Object entity) {
             ctx.entity = (K) entity;
             if (manyAssociations == null) {
                 manyAssociations = new LinkedHashMap<>();

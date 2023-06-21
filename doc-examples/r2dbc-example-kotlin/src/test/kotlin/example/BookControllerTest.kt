@@ -25,7 +25,7 @@ class BookControllerTest : AbstractTest(true) {
     @BeforeAll
     fun setupData(operations: R2dbcOperations, authorRepository: AuthorRepository, bookRepository: BookReactiveRepository) {
         // tag::programmatic-tx[]
-        Mono.fromDirect(operations.withTransaction {
+        Flux.from(operations.withTransaction {
             Flux.from(authorRepository.save(Author("Stephen King")))
                     .flatMap { author: Author ->
                         bookRepository.saveAll(listOf(
@@ -35,7 +35,7 @@ class BookControllerTest : AbstractTest(true) {
                     }
                     .thenMany(Flux.from(authorRepository.save(Author("James Patterson"))))
                     .flatMap { author: Author -> bookRepository.save(Book("Along Came a Spider", 300, author)) }.then()
-        }).block()
+        }).collectList().block()
         // end::programmatic-tx[]
 
         // tag::programmatic-tx-status[]

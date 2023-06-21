@@ -35,12 +35,20 @@ class H2EmbeddedSpec extends Specification {
         when:"An entity is saved"
         restaurantRepository.save(new Restaurant("Fred's Cafe", new Address("High St.", "7896")))
         def restaurant = restaurantRepository.save(new Restaurant("Joe's Cafe", new Address("Smith St.", "1234")))
+        restaurantRepository.save(new Restaurant("Fred's Cafe", new Address("Main St.", "2201")))
 
         then:"The entity was saved"
         restaurant
         restaurant.id
         restaurant.address.street == 'Smith St.'
         restaurant.address.zipCode == '1234'
+
+        when:"Max by embedded property"
+        def maxStreet = restaurantRepository.getMaxAddressStreetByName("Fred's Cafe")
+        def minStreet = restaurantRepository.getMinAddressStreetByName("Fred's Cafe")
+        then:
+        maxStreet == "Main St."
+        minStreet == "High St."
 
         when:"The entity is retrieved"
         restaurant = restaurantRepository.findById(restaurant.id).orElse(null)

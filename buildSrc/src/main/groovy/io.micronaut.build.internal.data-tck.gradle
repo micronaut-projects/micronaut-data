@@ -3,6 +3,12 @@ plugins {
     id "io.micronaut.build.internal.data-base"
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
 ext {
     skipDocumentation = true
 }

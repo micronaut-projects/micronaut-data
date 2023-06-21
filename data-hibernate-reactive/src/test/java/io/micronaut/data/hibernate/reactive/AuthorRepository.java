@@ -26,7 +26,7 @@ import io.micronaut.data.tck.entities.Author;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @Repository
 public interface AuthorRepository extends ReactorCrudRepository<Author, Long> {

@@ -1,11 +1,12 @@
 plugins {
-    id "io.micronaut.application"
     id "io.micronaut.build.internal.data-micronaut-benchmark"
 }
 
 dependencies {
-    annotationProcessor projects.dataDocumentProcessor
-    implementation projects.dataMongodb
-    implementation libs.mongodb.driver.sync
+    annotationProcessor projects.micronautDataDocumentProcessor
+    implementation projects.micronautDataMongodb
+    implementation mnMongo.mongo.driver
+    testImplementation platform(libs.testcontainers.bom)
     testImplementation libs.testcontainers.mongodb
+    runtimeOnly mn.snakeyaml
 }

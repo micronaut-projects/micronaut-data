@@ -16,13 +16,14 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.annotation.DataMethod;
-import io.micronaut.data.processor.visitors.AnnotationMetadataHierarchy;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MatchFailedException;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
+import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ParameterElement;
 
@@ -80,8 +81,9 @@ public class SaveEntityMethodMatcher extends AbstractPrefixPatternMethodMatcher 
                             mc.getRepositoryClass().getAnnotationMetadata(),
                             mc.getAnnotationMetadata()
                     );
+                    boolean encodeEntityParameters = !DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(matchContext.getAnnotationMetadata());
                     methodMatchInfo
-                            .encodeEntityParameters(true)
+                            .encodeEntityParameters(encodeEntityParameters)
                             .queryResult(
                                     mc.getQueryBuilder().buildInsert(annotationMetadataHierarchy, mc.getRootEntity())
                             );

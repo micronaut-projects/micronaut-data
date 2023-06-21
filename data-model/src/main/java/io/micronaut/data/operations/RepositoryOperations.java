@@ -18,7 +18,7 @@ package io.micronaut.data.operations;
 import io.micronaut.context.ApplicationContextProvider;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.convert.ConversionServiceProvider;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
@@ -42,7 +42,7 @@ import java.util.stream.Stream;
  * @author graemerocher
  * @since 1.0
  */
-public interface RepositoryOperations extends HintsCapableRepository, ApplicationContextProvider {
+public interface RepositoryOperations extends HintsCapableRepository, ApplicationContextProvider, ConversionServiceProvider {
 
     /**
      * Retrieves the entity for the given type.
@@ -217,12 +217,4 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * @return The number of entities deleted
      */
     <T> Optional<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation);
-
-    /**
-     * Get conversion service.
-     * @return the instance of {@link ConversionService}
-     */
-    default ConversionService<?> getConversionService() {
-        return ConversionService.SHARED;
-    }
 }

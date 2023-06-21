@@ -49,9 +49,9 @@ public class VersionGeneratingEntityEventListener implements EntityEventListener
     private static final List<Class<? extends Annotation>> SUPPORTED_EVENTS = Arrays.asList(PrePersist.class, PreUpdate.class, PreRemove.class);
 
     private final DateTimeProvider dateTimeProvider;
-    private final DataConversionService<?> conversionService;
+    private final DataConversionService conversionService;
 
-    public VersionGeneratingEntityEventListener(DateTimeProvider dateTimeProvider, DataConversionService<?> conversionService) {
+    public VersionGeneratingEntityEventListener(DateTimeProvider dateTimeProvider, DataConversionService conversionService) {
         this.dateTimeProvider = dateTimeProvider;
         this.conversionService = conversionService;
     }
@@ -70,7 +70,7 @@ public class VersionGeneratingEntityEventListener implements EntityEventListener
         if (shouldSkip(context)) {
             return true;
         }
-        final BeanProperty<Object, Object> property = (BeanProperty<Object, Object>) context.getPersistentEntity().getVersion().getProperty();
+        final BeanProperty<Object, Object> property = context.getPersistentEntity().getVersion().getProperty();
         Object newVersion = init(property.getType());
         context.setProperty(property, newVersion);
         return true;
@@ -82,7 +82,7 @@ public class VersionGeneratingEntityEventListener implements EntityEventListener
             return true;
         }
         final Object entity = context.getEntity();
-        final BeanProperty<Object, Object> property = (BeanProperty<Object, Object>) context.getPersistentEntity().getVersion().getProperty();
+        final BeanProperty<Object, Object> property = context.getPersistentEntity().getVersion().getProperty();
         Object newVersion = increment(property.get(entity), property.getType());
         context.setProperty(property, newVersion);
         return true;

@@ -37,7 +37,7 @@ class MappedEntityCodec<T> extends MappedCodec<T> implements CollectibleCodec<T>
     private final boolean isGeneratedId;
     private final boolean isGeneratedObjectIdAsString;
     private final boolean isGeneratedObjectId;
-    private final BeanProperty identityProperty;
+    private final BeanProperty<T, Object> identityProperty;
 
     /**
      * Default constructor.
@@ -66,9 +66,9 @@ class MappedEntityCodec<T> extends MappedCodec<T> implements CollectibleCodec<T>
     public T generateIdIfAbsentFromDocument(T document) {
         if (isGeneratedId) {
             if (isGeneratedObjectId) {
-                return (T) identityProperty.withValue(document, new ObjectId());
+                return identityProperty.withValue(document, new ObjectId());
             } else if (isGeneratedObjectIdAsString) {
-                return (T) identityProperty.withValue(document, new ObjectId().toHexString());
+                return identityProperty.withValue(document, new ObjectId().toHexString());
             }
             throw new IllegalStateException("Cannot generate id for entity: " + persistentEntity);
         }

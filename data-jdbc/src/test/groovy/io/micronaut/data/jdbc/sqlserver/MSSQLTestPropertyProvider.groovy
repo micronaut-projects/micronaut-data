@@ -16,10 +16,10 @@
 package io.micronaut.data.jdbc.sqlserver
 
 
-import io.micronaut.data.jdbc.SharedDatabaseContainerTestPropertyProvider
+import io.micronaut.data.jdbc.TestResourcesDatabaseTestPropertyProvider
 import io.micronaut.data.model.query.builder.sql.Dialect
 
-trait MSSQLTestPropertyProvider implements SharedDatabaseContainerTestPropertyProvider {
+trait MSSQLTestPropertyProvider implements TestResourcesDatabaseTestPropertyProvider {
 
     @Override
     Dialect dialect() {
@@ -27,7 +27,11 @@ trait MSSQLTestPropertyProvider implements SharedDatabaseContainerTestPropertyPr
     }
 
     @Override
-    int sharedSpecsCount() {
-        return 8
+    Map<String, String> getProperties() {
+        def properties = super.getProperties()
+        // note: we use a Boolean which is in conflict with the return type of the method
+        // but that's the only thing which works
+        properties['test-resources.containers.mssql.accept-license'] = true
+        return properties
     }
 }

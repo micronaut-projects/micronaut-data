@@ -189,10 +189,7 @@ public final class MongoFindOptions {
         if (showRecordId != null) {
             return false;
         }
-        if (allowDiskUse != null) {
-            return false;
-        }
-        return true;
+        return allowDiskUse == null;
     }
 
     @Nullable

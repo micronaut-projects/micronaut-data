@@ -3,15 +3,17 @@ package example
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import spock.lang.Specification
 
 import static example.PersonRepository.Specifications.ageIsLessThan
+import static example.PersonRepository.Specifications.interestsContains
 import static example.PersonRepository.Specifications.nameEquals
 import static example.PersonRepository.Specifications.setNewName
 import static io.micronaut.data.repository.jpa.criteria.PredicateSpecification.not
 import static io.micronaut.data.repository.jpa.criteria.PredicateSpecification.where
 
 @MicronautTest
-class PersonRepositorySpec extends AbstractMongoSpec {
+class PersonRepositorySpec extends Specification {
 
     @Inject
     PersonRepository personRepository
@@ -25,7 +27,7 @@ class PersonRepositorySpec extends AbstractMongoSpec {
                 new Person(
                         "Josh",
                         22
-                )
+                ).withInterests(Arrays.asList("sports", "music", "hiking"))
         ))
     }
 
@@ -97,4 +99,20 @@ class PersonRepositorySpec extends AbstractMongoSpec {
             all.stream().anyMatch(p -> p.getName() == "Josh")
     }
 
+    void "array contains"() {
+        when:
+            List<Person> people = personRepository.findByInterestsCollectionContains("sports")
+        then:
+            people.size() == 1
+            people[0].name == "Josh"
+        when:
+            people = personRepository.findByInterestsCollectionContains("flying")
+        then:
+            people.size() == 0
+        when:"Using specification"
+            people = personRepository.findAll(interestsContains("hiking"))
+        then:
+            people.size() == 1
+            people[0].name == "Josh"
+    }
 }

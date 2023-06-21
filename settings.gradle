@@ -1,7 +1,4 @@
 pluginManagement {
-    plugins {
-        id 'io.micronaut.build.shared.settings' version '5.4.9'
-    }
     repositories {
         gradlePluginPortal()
         mavenCentral()
@@ -9,7 +6,7 @@ pluginManagement {
 }
 
 plugins {
-    id 'io.micronaut.build.shared.settings'
+    id 'io.micronaut.build.shared.settings' version '6.5.0'
 }
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
@@ -23,7 +20,20 @@ dependencyResolutionManagement {
 rootProject.name = 'data-parent'
 
 micronautBuild {
+    useStandardizedProjectNames = true
     importMicronautCatalog()
+    importMicronautCatalog("micronaut-reactor")
+    importMicronautCatalog("micronaut-rxjava2")
+    importMicronautCatalog("micronaut-r2dbc")
+    importMicronautCatalog("micronaut-spring")
+    importMicronautCatalog("micronaut-serde")
+    importMicronautCatalog("micronaut-sql")
+    importMicronautCatalog("micronaut-kotlin")
+    importMicronautCatalog("micronaut-multitenancy")
+    importMicronautCatalog("micronaut-testresources")
+    importMicronautCatalog("micronaut-validation")
+    importMicronautCatalog("micronaut-mongo")
+    importMicronautCatalog("micronaut-flyway")
 }
 
 include 'data-bom'
@@ -32,60 +42,86 @@ include 'data-processor'
 include 'data-document-processor'
 include 'data-runtime'
 include 'data-tx'
+include 'data-connection'
 include 'data-document-model'
+include 'data-jpa'
 
 // Test Compatibility Kit
 include 'data-tck'
 include 'data-document-tck'
 
 // implementations
+
+// Hibernate
+
 include 'data-hibernate-jpa'
-if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_11)) {
-    include 'data-hibernate-reactive'
-}
+include 'data-hibernate-reactive'
 include 'data-tx-hibernate'
+include 'data-connection-hibernate'
+
+// JDBC
+
 include 'data-jdbc'
+include 'data-connection-jdbc'
+include 'data-tx-jdbc'
+
 include 'data-r2dbc'
 include 'data-mongodb'
+include 'data-azure-cosmos'
 
 // Spring compatibility
 include 'data-spring'
+include 'data-spring-jdbc'
 include 'data-spring-jpa'
 
 // documentation samples
 include 'doc-examples:hibernate-example-java'
 include 'doc-examples:hibernate-example-groovy'
 include 'doc-examples:hibernate-example-kotlin'
+include 'doc-examples:hibernate-example-kotlin-ksp'
 
-if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_11)) {
-    include 'doc-examples:hibernate-reactive-example-java'
-    include 'doc-examples:hibernate-reactive-example-kotlin'
-    include 'doc-examples:hibernate-reactive-example-groovy'
-    include 'doc-examples:hibernate-sync-and-reactive-example-java'
-}
+include 'doc-examples:hibernate-reactive-example-java'
+include 'doc-examples:hibernate-reactive-example-kotlin'
+include 'doc-examples:hibernate-reactive-example-groovy'
+include 'doc-examples:hibernate-sync-and-reactive-example-java'
 
 include 'doc-examples:example-hibernate-and-jdbc'
 
 include 'doc-examples:jdbc-example-java'
 include 'doc-examples:jdbc-example-groovy'
 include 'doc-examples:jdbc-example-kotlin'
-if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_15)) {
-    include 'doc-examples:jdbc-example-records-java'
-}
+include 'doc-examples:jdbc-example-records-java'
+
+include 'doc-examples:jdbc-multitenancy-datasource-example-java'
+include 'doc-examples:jdbc-multitenancy-schema-example-java'
 
 include 'doc-examples:jdbc-and-r2dbc-example-java'
 
 include 'doc-examples:r2dbc-example-java'
 include 'doc-examples:r2dbc-example-groovy'
 include 'doc-examples:r2dbc-example-kotlin'
+include 'doc-examples:r2dbc-multitenancy-datasource-example-java'
+include 'doc-examples:r2dbc-multitenancy-schema-example-java'
 
 include 'doc-examples:mongo-example-java'
 include 'doc-examples:mongo-example-groovy'
 include 'doc-examples:mongo-example-kotlin'
+include 'doc-examples:mongo-example-kotlin-ksp'
 include 'doc-examples:mongo-reactive-example-kotlin'
-if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_15)) {
-    include 'doc-examples:mongo-example-records-java'
-}
+include 'doc-examples:mongo-example-records-java'
+include 'doc-examples:mongo-jackson-example-java'
+
+include 'doc-examples:mongo-multitenancy-database-example-java'
+include 'doc-examples:mongo-multitenancy-datasource-example-java'
+
+include 'doc-examples:azure-cosmos-example-java'
+include 'doc-examples:azure-cosmos-example-groovy'
+include 'doc-examples:azure-cosmos-example-kotlin'
+
+include 'doc-examples:jdbc-spring-tx-example-java'
+include 'doc-examples:hibernate-spring-tx-example-java'
+
+include 'doc-examples:jooq-r2dbc-postgres'
 
 // benchmarks
 include 'benchmarks:benchmark-micronaut-data-jpa'

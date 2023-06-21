@@ -29,6 +29,7 @@ import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface PersonRepository extends CrudRepository<Person, String>, PageableRepository<Person, String>, JpaSpecificationExecutor<Person> {
 
@@ -104,6 +105,24 @@ public interface PersonRepository extends CrudRepository<Person, String>, Pageab
     List<Person> findByIdIn(List<String> ids);
 
     List<Person> findByIdNotIn(List<String> ids);
+
+    List<Person> findByNameIn(List<String> names);
+
+    Optional<Person> findByNameEqualIgnoreCase(String name);
+
+    List<Person> findByNameNotEqualIgnoreCase(String name);
+
+    List<Person> findByNameStartsWith(String name);
+
+    List<Person> findByNameStartsWithIgnoreCase(String name);
+
+    List<Person> findByNameEndsWith(String name);
+
+    List<Person> findByNameEndsWithIgnoreCase(String name);
+
+    List<Person> findByNameContains(String name);
+
+    List<Person> findByNameContainsIgnoreCase(String name);
 
     class Specifications {
 

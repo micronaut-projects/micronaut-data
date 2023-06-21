@@ -42,7 +42,7 @@ public final class ExistsSpecificationMethodMatcher extends AbstractSpecificatio
 
     @Override
     protected MethodMatch match(MethodMatchContext matchContext, Matcher matcher) {
-        if (TypeUtils.isValidExistsReturnType(matchContext)) {
+        if (TypeUtils.doesMethodProducesABoolean(matchContext.getMethodElement())) {
             Map.Entry<ClassElement, ClassElement> e = FindersUtils.pickExistsSpecInterceptor(matchContext, matchContext.getReturnType());
             return mc -> new MethodMatchInfo(DataMethod.OperationType.EXISTS, e.getKey(), e.getValue());
         }

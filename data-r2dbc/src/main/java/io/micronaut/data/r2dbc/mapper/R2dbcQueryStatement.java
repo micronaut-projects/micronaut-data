@@ -37,7 +37,7 @@ import java.util.UUID;
  * @since 1.0.0
  */
 public class R2dbcQueryStatement implements QueryStatement<Statement, Integer> {
-    private final ConversionService<?> conversionService;
+    private final ConversionService conversionService;
 
     public R2dbcQueryStatement() {
         this(null);
@@ -49,13 +49,13 @@ public class R2dbcQueryStatement implements QueryStatement<Statement, Integer> {
      * @param conversionService The data conversion service
      * @since 3.1
      */
-    public R2dbcQueryStatement(DataConversionService<?> conversionService) {
+    public R2dbcQueryStatement(DataConversionService conversionService) {
         // Backwards compatibility should be removed in the next version
         this.conversionService = conversionService == null ? ConversionService.SHARED : conversionService;
     }
 
     @Override
-    public ConversionService<?> getConversionService() {
+    public ConversionService getConversionService() {
         return conversionService;
     }
 
@@ -67,14 +67,12 @@ public class R2dbcQueryStatement implements QueryStatement<Statement, Integer> {
                     statement.bindNull(index, UUID.class);
                     break;
                 case STRING:
+                case CHARACTER:
                 case JSON:
                     statement.bindNull(index, String.class);
                     break;
                 case BYTE:
                     statement.bindNull(index, Byte.class);
-                break;
-                case CHARACTER:
-                    statement.bindNull(index, Character.class);
                 break;
                 case INTEGER:
                     statement.bindNull(index, Integer.class);

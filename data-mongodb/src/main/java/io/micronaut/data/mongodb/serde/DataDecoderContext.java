@@ -45,6 +45,7 @@ import org.bson.types.ObjectId;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * The Micronaut Data's Serde's {@link io.micronaut.serde.Deserializer.DecoderContext}.
@@ -57,7 +58,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
 
     private final Argument<ObjectId> OBJECT_ID = Argument.of(ObjectId.class);
 
-    private MongoDataConfiguration mongoDataConfiguration;
+    private final MongoDataConfiguration mongoDataConfiguration;
     private final AttributeConverterRegistry attributeConverterRegistry;
     private final Argument argument;
     private final RuntimePersistentEntity<Object> runtimePersistentEntity;
@@ -187,7 +188,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
         if (codec instanceof MappedCodec) {
             return ((MappedCodec<? extends T>) codec).deserializer;
         }
-        if (codec != null && !(codec instanceof IterableCodec)) {
+        if (codec != null && !(codec instanceof IterableCodec) && !(Map.class.isAssignableFrom(codec.getEncoderClass())) && !(Collection.class.isAssignableFrom(codec.getEncoderClass()))) {
             return new CodecBsonDecoder<T>((Codec<T>) codec);
         }
         return parent.findDeserializer(type);

@@ -17,9 +17,9 @@ package io.micronaut.data.tck.entities;
 
 import io.micronaut.data.annotation.MappedEntity;
 
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 
 @MappedEntity(value = "CustomBooK")
 public class CustomBook {

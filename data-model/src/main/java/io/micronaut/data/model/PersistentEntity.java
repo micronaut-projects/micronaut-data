@@ -373,8 +373,7 @@ public interface PersistentEntity extends PersistentElement {
             for (int i = 0; i < propertyPath.length - 1; i++) {
                 String propertyName = propertyPath[i];
                 PersistentProperty prop = startingEntity.getPropertyByName(propertyName);
-                if (prop instanceof Association) {
-                    Association association = (Association) prop;
+                if (prop instanceof Association association) {
                     startingEntity = association.getAssociatedEntity();
                     associations.add(association);
                 } else {

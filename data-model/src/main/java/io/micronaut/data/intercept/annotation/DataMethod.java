@@ -28,7 +28,7 @@ import java.lang.annotation.Target;
 import java.lang.annotation.Inherited;
 
 /**
- * Internal annotation used to configure execution handling for {@link io.micronaut.data.intercept.DataIntroductionAdvice}.
+ * Internal annotation used to configure execution handling for io.micronaut.data.runtime.intercept.DataIntroductionAdvice.
  *
  * @author graemerocher
  * @since 1.0

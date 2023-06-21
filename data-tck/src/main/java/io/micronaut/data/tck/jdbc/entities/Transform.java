@@ -16,10 +16,10 @@
 package io.micronaut.data.tck.jdbc.entities;
 
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.data.jdbc.annotation.ColumnTransformer;
+import io.micronaut.data.annotation.sql.ColumnTransformer;
 
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
 
 @Entity
 public class Transform {
@@ -27,7 +27,7 @@ public class Transform {
     private ProjectId projectId;
     @ColumnTransformer(
             read = "UPPER(xyz@abc)",
-            write = "LOWER(xyz@abc)"
+            write = "LOWER(?)"
     )
     @Nullable
     private String xyz;

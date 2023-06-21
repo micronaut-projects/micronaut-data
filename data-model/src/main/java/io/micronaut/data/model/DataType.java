@@ -166,7 +166,7 @@ public enum DataType {
      * Default constructor.
      * @param javaTypes Associated data types.
      */
-    DataType(Class<?>...javaTypes) {
+    DataType(Class<?>... javaTypes) {
         this(false, javaTypes);
     }
 
@@ -175,7 +175,7 @@ public enum DataType {
      * @param isArray Is an array type.
      * @param javaTypes Associated data types.
      */
-    DataType(boolean isArray, Class<?>...javaTypes) {
+    DataType(boolean isArray, Class<?>... javaTypes) {
         this.isArray = isArray;
         this.javaTypes = CollectionUtils.setOf(javaTypes);
     }
@@ -202,5 +202,16 @@ public enum DataType {
         } else {
             return CLASS_DATA_TYPE_MAP.getOrDefault(wrapper, DataType.OBJECT);
         }
+    }
+
+    /**
+     * Gets an indicator telling whether data type is numeric.
+     * @return true if data type is numeric
+     */
+    public boolean isNumeric() {
+        return switch (this) {
+            case BYTE, BIGDECIMAL, LONG, DOUBLE, FLOAT, INTEGER, SHORT -> true;
+            default -> false;
+        };
     }
 }

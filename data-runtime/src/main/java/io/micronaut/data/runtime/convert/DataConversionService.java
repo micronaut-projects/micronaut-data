@@ -20,9 +20,8 @@ import io.micronaut.core.convert.ConversionService;
 /**
  * The type of {@link ConversionService} that also include the Data project only registered converters.
  *
- * @param <Impl> The self type
  * @author Denis Stepanov
  * @since 3.1
  */
-public interface DataConversionService<Impl extends DataConversionService> extends ConversionService<Impl> {
+public interface DataConversionService extends ConversionService {
 }

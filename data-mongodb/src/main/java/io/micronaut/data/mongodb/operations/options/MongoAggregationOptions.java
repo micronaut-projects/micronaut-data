@@ -93,10 +93,7 @@ public final class MongoAggregationOptions {
         if (comment != null) {
             return false;
         }
-        if (hint != null) {
-            return false;
-        }
-        return true;
+        return hint == null;
     }
 
     @Nullable

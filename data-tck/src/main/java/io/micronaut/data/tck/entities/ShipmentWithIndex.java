@@ -18,11 +18,11 @@ package io.micronaut.data.tck.entities;
 import io.micronaut.core.annotation.Creator;
 import io.micronaut.data.annotation.GeneratedValue;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Index;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import java.util.Objects;
 
 @Entity

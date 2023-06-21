@@ -18,12 +18,10 @@ package io.micronaut.data.r2dbc.transaction;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Parameter;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.transaction.async.AsyncUsingReactiveTransactionOperations;
-import io.micronaut.transaction.interceptor.CoroutineTxHelper;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
-import io.micronaut.transaction.sync.SynchronousFromReactiveTransactionManager;
+import io.micronaut.transaction.sync.SynchronousTransactionOperationsFromReactiveTransactionOperations;
 import io.r2dbc.spi.ConnectionFactory;
 import jakarta.inject.Named;
 
@@ -39,17 +37,16 @@ import java.util.concurrent.ExecutorService;
 final class R2dbcTransactionManagerFactory {
 
     @EachBean(ConnectionFactory.class)
-    <T> SynchronousFromReactiveTransactionManager<T> buildSynchronousTransactionManager(@Parameter String dataSourceName,
-                                                                                        @Parameter ReactorReactiveTransactionOperations<T> reactiveTransactionOperations,
-                                                                                        @Named(TaskExecutors.IO) ExecutorService executorService) {
-        return new SynchronousFromReactiveTransactionManager<>(reactiveTransactionOperations, executorService);
+    <T> SynchronousTransactionOperationsFromReactiveTransactionOperations<T> buildSynchronousTransactionManager(@Parameter String dataSourceName,
+                                                                                                                @Parameter ReactorReactiveTransactionOperations<T> reactiveTransactionOperations,
+                                                                                                                @Named(TaskExecutors.IO) ExecutorService executorService) {
+        return new SynchronousTransactionOperationsFromReactiveTransactionOperations<>(reactiveTransactionOperations, executorService);
     }
 
     @EachBean(ConnectionFactory.class)
     <T> AsyncUsingReactiveTransactionOperations<T> buildAsyncTransactionOperations(@Parameter String dataSourceName,
-                                                                                   @Parameter ReactorReactiveTransactionOperations<T> reactiveTransactionOperations,
-                                                                                   @Nullable CoroutineTxHelper coroutineTxHelper) {
-        return new AsyncUsingReactiveTransactionOperations<>(reactiveTransactionOperations, coroutineTxHelper);
+                                                                                   @Parameter ReactorReactiveTransactionOperations<T> reactiveTransactionOperations) {
+        return new AsyncUsingReactiveTransactionOperations<>(reactiveTransactionOperations);
     }
 
 }

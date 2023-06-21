@@ -1,7 +1,5 @@
 plugins {
-    id "java"
-    id "io.micronaut.application"
-    id "io.micronaut.build.internal.data-example-java11"
+    id "io.micronaut.build.internal.data-native-example"
 }
 
 application {
@@ -9,19 +7,26 @@ application {
 }
 
 micronaut {
-    version micronautVersion
+    version libs.versions.micronaut.platform.get()
     runtime "netty"
     testRuntime "junit5"
 }
 
 dependencies {
-    annotationProcessor projects.dataProcessor
-    implementation "io.micronaut:micronaut-http-client"
-    implementation projects.dataHibernateReactive
-    implementation "io.micronaut.reactor:micronaut-reactor"
+    annotationProcessor projects.micronautDataProcessor
+    implementation mn.micronaut.http.client
+    implementation projects.micronautDataHibernateReactive
+    implementation mnReactor.micronaut.reactor
+    compileOnly mnSerde.micronaut.serde.api
+    runtimeOnly mnLogging.logback.classic
+    runtimeOnly mnSql.vertx.mysql.client
+    // Testcontainers wait function needs the driver
+    runtimeOnly mnSql.mysql.connector.java
+}
 
-    runtimeOnly "ch.qos.logback:logback-classic"
-    runtimeOnly libs.drivers.vertx.pg
-
-    testImplementation libs.testcontainers.postgresql
+micronaut {
+    testResources {
+        additionalModules.add(HIBERNATE_REACTIVE_MYSQL)
+        version = libs.versions.micronaut.testresources.get()
+    }
 }

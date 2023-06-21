@@ -1,0 +1,19 @@
+plugins {
+    id "io.micronaut.build.internal.data-module"
+}
+
+dependencies {
+    annotationProcessor mn.micronaut.inject.java
+    annotationProcessor mn.micronaut.graal
+
+    api projects.micronautDataRuntime
+    api projects.micronautDataModel
+    api libs.jakarta.persistence.api
+}
+
+micronautBuild {
+    // New module in 4.0
+    binaryCompatibility {
+        enabled = false
+    }
+}

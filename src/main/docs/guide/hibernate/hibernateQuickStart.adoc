@@ -53,9 +53,9 @@ NOTE: When working with JDBC drivers it's required to add a JDBC Connection Pool
 
 Use Micronaut SQL project documentation for more information regarding configuring https://micronaut-projects.github.io/micronaut-sql/latest/guide/index.html#hibernate[Hibernate], https://micronaut-projects.github.io/micronaut-sql/latest/guide/index.html#jdbc[JDBC and pooling].
 
-You need to configure the data source in `application.yml`. For example for H2:
+You need to configure the data source in the application configuration file. For example for H2:
 
-[source,yaml]
+[configuration]
 ----
 datasources:
   default:
@@ -67,9 +67,9 @@ datasources:
     dialect: H2
 ----
 
-And add the following configuration in `application.yml`
+And add the following configuration in the application configuration file.
 
-[source,yaml]
+[configuration]
 ----
 jpa:
   default:
@@ -113,6 +113,14 @@ snippet::example.BookRepositorySpec[project-base="doc-examples/hibernate-example
 To update an instance use `save` again:
 
 snippet::example.BookRepositorySpec[project-base="doc-examples/hibernate-example", tags="update", indent="0"]
+
+For partial entity updates, custom update method like this can be used:
+
+snippet::example.BookRepository[project-base="doc-examples/hibernate-example", source="main" tags="update3", indent="0"]
+
+In this example, in order for update to be propagated in the current session you can add `QueryHint` annotation to force session flush.
+
+For Hibernate 6 instead of `javax.persistence.FlushModeType` need to use `jakarta.persistence.FlushModeType`.
 
 === Deleting an Instance (Delete)
 

@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.tck.entities;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 

@@ -32,7 +32,7 @@ import reactor.core.publisher.Mono;
 @Internal
 public abstract class ReactiveEntityOperations<T, Exc extends Exception> extends EntityOperations<T, Exc> {
 
-    public ReactiveEntityOperations(EntityEventListener<Object> entityEventListener, RuntimePersistentEntity<T> persistentEntity, ConversionService<?> conversionService) {
+    public ReactiveEntityOperations(EntityEventListener<Object> entityEventListener, RuntimePersistentEntity<T> persistentEntity, ConversionService conversionService) {
         super(entityEventListener, persistentEntity, conversionService);
     }
 

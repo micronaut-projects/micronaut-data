@@ -23,6 +23,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.QueryHint;
@@ -44,9 +45,9 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
-import io.micronaut.data.processor.visitors.AnnotationMetadataHierarchy;
 import io.micronaut.data.processor.visitors.MatchFailedException;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
+import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ParameterElement;
 import jakarta.persistence.criteria.Expression;
@@ -161,11 +162,12 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         if (idParameter != null) {
             methodMatchInfo.addParameterRole(TypeRole.ID, idParameter.stringValue(Parameter.class).orElse(idParameter.getName()));
         }
+        boolean encodeEntityParameters = !DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(matchContext.getAnnotationMetadata());
         if (entityParameter != null) {
-            methodMatchInfo.encodeEntityParameters(true);
+            methodMatchInfo.encodeEntityParameters(encodeEntityParameters);
             methodMatchInfo.addParameterRole(TypeRole.ENTITY, entityParameter.getName());
         } else if (entitiesParameter != null) {
-            methodMatchInfo.encodeEntityParameters(true);
+            methodMatchInfo.encodeEntityParameters(encodeEntityParameters);
             methodMatchInfo.addParameterRole(TypeRole.ENTITIES, entitiesParameter.getName());
         }
         return methodMatchInfo;
@@ -533,8 +535,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                 genericType = genericType.getFirstTypeArgument().orElse(genericType);
             }
 
-            if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath) {
-                io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> pp = (io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?>) expression;
+            if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> pp) {
                 PersistentPropertyPath propertyPath = PersistentPropertyPath.of(pp.getAssociations(), pp.getProperty());
                 if (!isValidType(genericType, (SourcePersistentProperty) propertyPath.getProperty())) {
                     SourcePersistentProperty property = (SourcePersistentProperty) propertyPath.getProperty();
@@ -555,6 +556,12 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         PersistentEntity owner = property.getOwner();
         if (TypeUtils.areTypesCompatible(genericType, property.getType()) && !TypeUtils.isObjectClass(genericType)) {
             return true;
+        }
+        if (TypeUtils.isContainerType(property.getType())) {
+            ClassElement genericPropertyType = property.getType().getFirstTypeArgument().orElse(property.getType());
+            if (TypeUtils.areTypesCompatible(genericType, genericPropertyType) && !TypeUtils.isObjectClass(genericType)) {
+                return true;
+            }
         }
         if (owner.hasCompositeIdentity() && property.getOwner().getCompositeIdentity()[0].equals(property)) {
             // Workaround for composite properties
@@ -653,7 +660,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     /**
      * @param matchContext The match context
      * @param isQuery      true if is a query criteria
-     * @return a List of annotations values for {@Join} annotation.
+     * @return a List of annotations values for {@link Join} annotation.
      */
     @NonNull
     protected final List<AnnotationValue<Join>> joinSpecsAtMatchContext(@NonNull MethodMatchContext matchContext, boolean isQuery) {

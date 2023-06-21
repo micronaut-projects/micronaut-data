@@ -33,11 +33,12 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Page;
+import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
@@ -54,7 +55,6 @@ import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.mongodb.conf.RequiresReactiveMongo;
-import io.micronaut.data.mongodb.database.ReactiveMongoDatabaseFactory;
 import io.micronaut.data.mongodb.operations.options.MongoAggregationOptions;
 import io.micronaut.data.mongodb.operations.options.MongoFindOptions;
 import io.micronaut.data.operations.reactive.ReactorReactiveRepositoryOperations;
@@ -65,26 +65,15 @@ import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntitiesOpe
 import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntityOperations;
 import io.micronaut.data.runtime.operations.internal.OperationContext;
 import io.micronaut.data.runtime.operations.internal.ReactiveCascadeOperations;
-import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.inject.qualifiers.Qualifiers;
-import io.micronaut.transaction.TransactionDefinition;
-import io.micronaut.transaction.exceptions.NoTransactionException;
-import io.micronaut.transaction.exceptions.TransactionSystemException;
-import io.micronaut.transaction.exceptions.TransactionUsageException;
-import io.micronaut.transaction.reactive.ReactiveTransactionOperations;
-import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
-import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
-import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.context.ContextView;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
@@ -93,7 +82,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -108,55 +96,44 @@ import java.util.stream.Collectors;
 @RequiresReactiveMongo
 @EachBean(MongoClient.class)
 @Internal
-public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepositoryOperations<MongoDatabase>
+public final class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepositoryOperations<MongoDatabase>
     implements MongoReactorRepositoryOperations,
     ReactorReactiveRepositoryOperations,
-    ReactiveCascadeOperations.ReactiveCascadeOperationsHelper<DefaultReactiveMongoRepositoryOperations.MongoOperationContext>,
-    ReactorReactiveTransactionOperations<ClientSession> {
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultReactiveMongoRepositoryOperations.class);
+    ReactiveCascadeOperations.ReactiveCascadeOperationsHelper<DefaultReactiveMongoRepositoryOperations.MongoOperationContext> {
+
     private static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
-    private static final String NAME = "mongodb.reactive";
-    private final String serverName;
     private final MongoClient mongoClient;
     private final ReactiveCascadeOperations<MongoOperationContext> cascadeOperations;
-    private final ReactiveMongoDatabaseFactory mongoDatabaseFactory;
-    private final String txStatusKey;
-    private final String txDefinitionKey;
-    private final String currentSessionKey;
+    private final ReactorConnectionOperations<ClientSession> connectionOperations;
 
     /**
      * Default constructor.
      *
      * @param serverName                 The server name
      * @param beanContext                The bean context
-     * @param codecs                     The media type codecs
      * @param dateTimeProvider           The date time provider
      * @param runtimeEntityRegistry      The entity registry
      * @param conversionService          The conversion service
      * @param attributeConverterRegistry The attribute converter registry
      * @param mongoClient                The reactive mongo client
+     * @param collectionNameProvider     The collection name provider
+     * @param connectionOperations       The connection operations
      */
     DefaultReactiveMongoRepositoryOperations(@Parameter String serverName,
                                              BeanContext beanContext,
-                                             List<MediaTypeCodec> codecs,
                                              DateTimeProvider<Object> dateTimeProvider,
                                              RuntimeEntityRegistry runtimeEntityRegistry,
-                                             DataConversionService<?> conversionService,
+                                             DataConversionService conversionService,
                                              AttributeConverterRegistry attributeConverterRegistry,
-                                             MongoClient mongoClient) {
-        super(serverName, beanContext, codecs, dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
-        this.serverName = serverName;
+                                             MongoClient mongoClient,
+                                             MongoCollectionNameProvider collectionNameProvider,
+                                             @Parameter ReactorConnectionOperations<ClientSession> connectionOperations) {
+        super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry, collectionNameProvider,
+            beanContext.getBean(MongoDatabaseNameProvider.class, "Primary".equals(serverName) ? null : Qualifiers.byName(serverName))
+        );
         this.mongoClient = mongoClient;
         this.cascadeOperations = new ReactiveCascadeOperations<>(conversionService, this);
-        boolean isPrimary = "Primary".equals(serverName);
-        this.mongoDatabaseFactory = beanContext.getBean(ReactiveMongoDatabaseFactory.class, isPrimary ? null : Qualifiers.byName(serverName));
-        String name = serverName;
-        if (name == null) {
-            name = "default";
-        }
-        this.txStatusKey = ReactorReactiveTransactionOperations.TRANSACTION_STATUS_KEY_PREFIX + "." + NAME + "." + name;
-        this.txDefinitionKey = ReactorReactiveTransactionOperations.TRANSACTION_DEFINITION_KEY_PREFIX + "." + NAME + "." + name;
-        this.currentSessionKey = "io.micronaut." + NAME + ".session." + name;
+        this.connectionOperations = connectionOperations;
     }
 
     @Override
@@ -176,7 +153,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
     @Override
     public <T, R> Mono<R> findOne(PreparedQuery<T, R> preparedQuery) {
         return withClientSession(clientSession -> {
-            MongoPreparedQuery<T, R, MongoDatabase> mongoPreparedQuery = getMongoPreparedQuery(preparedQuery);
+            MongoPreparedQuery<T, R> mongoPreparedQuery = getMongoPreparedQuery(preparedQuery);
             if (mongoPreparedQuery.isCount()) {
                 return getCount(clientSession, mongoPreparedQuery);
             }
@@ -191,7 +168,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
     @Override
     public <T> Mono<Boolean> exists(PreparedQuery<T, Boolean> preparedQuery) {
         return withClientSession(clientSession -> {
-            MongoPreparedQuery<T, Boolean, MongoDatabase> mongoPreparedQuery = getMongoPreparedQuery(preparedQuery);
+            MongoPreparedQuery<T, Boolean> mongoPreparedQuery = getMongoPreparedQuery(preparedQuery);
             if (mongoPreparedQuery.isAggregate()) {
                 return Flux.from(aggregate(clientSession, mongoPreparedQuery, BsonDocument.class)).hasElements();
             } else {
@@ -252,8 +229,8 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
             MongoOperationContext ctx = new MongoOperationContext(clientSession, operation.getRepositoryType(), operation.getAnnotationMetadata());
             StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
             if (storedQuery != null) {
-                MongoStoredQuery<T, ?, MongoDatabase> mongoStoredQuery = getMongoStoredQuery(storedQuery);
-                MongoReactiveEntitiesOperation<T> op = createMongoUpdateOneInBulkOperation(ctx, mongoStoredQuery.getPersistentEntity(),
+                MongoStoredQuery<T, ?> mongoStoredQuery = getMongoStoredQuery(storedQuery);
+                MongoReactiveEntitiesOperation<T> op = createMongoUpdateOneInBulkOperation(ctx, mongoStoredQuery.getRuntimePersistentEntity(),
                     Collections.singletonList(operation.getEntity()), mongoStoredQuery);
                 op.update();
                 return op.getEntities().next();
@@ -268,8 +245,8 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
             MongoOperationContext ctx = new MongoOperationContext(clientSession, operation.getRepositoryType(), operation.getAnnotationMetadata());
             StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
             if (storedQuery != null) {
-                MongoStoredQuery<T, ?, MongoDatabase> mongoStoredQuery = getMongoStoredQuery(storedQuery);
-                MongoReactiveEntitiesOperation<T> op = createMongoUpdateOneInBulkOperation(ctx, mongoStoredQuery.getPersistentEntity(), operation, mongoStoredQuery);
+                MongoStoredQuery<T, ?> mongoStoredQuery = getMongoStoredQuery(storedQuery);
+                MongoReactiveEntitiesOperation<T> op = createMongoUpdateOneInBulkOperation(ctx, mongoStoredQuery.getRuntimePersistentEntity(), operation, mongoStoredQuery);
                 op.update();
                 return op.getEntities();
             }
@@ -283,8 +260,8 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
             MongoOperationContext ctx = new MongoOperationContext(clientSession, operation.getRepositoryType(), operation.getAnnotationMetadata());
             StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
             if (storedQuery != null) {
-                MongoStoredQuery<T, Number, MongoDatabase> mongoStoredQuery = (MongoStoredQuery) getMongoStoredQuery(storedQuery);
-                MongoReactiveEntitiesOperation<T> op = createMongoDeleteOneInBulkOperation(ctx, mongoStoredQuery.getPersistentEntity(),
+                MongoStoredQuery<T, Number> mongoStoredQuery = (MongoStoredQuery) getMongoStoredQuery(storedQuery);
+                MongoReactiveEntitiesOperation<T> op = createMongoDeleteOneInBulkOperation(ctx, mongoStoredQuery.getRuntimePersistentEntity(),
                     Collections.singletonList(operation.getEntity()), mongoStoredQuery);
                 op.update();
                 return op.getRowsUpdated();
@@ -302,8 +279,8 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
             MongoOperationContext ctx = new MongoOperationContext(clientSession, operation.getRepositoryType(), operation.getAnnotationMetadata());
             StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
             if (storedQuery != null) {
-                MongoStoredQuery<T, Number, MongoDatabase> mongoStoredQuery = (MongoStoredQuery) getMongoStoredQuery(storedQuery);
-                MongoReactiveEntitiesOperation<T> op = createMongoDeleteOneInBulkOperation(ctx, mongoStoredQuery.getPersistentEntity(), operation, mongoStoredQuery);
+                MongoStoredQuery<T, Number> mongoStoredQuery = (MongoStoredQuery) getMongoStoredQuery(storedQuery);
+                MongoReactiveEntitiesOperation<T> op = createMongoDeleteOneInBulkOperation(ctx, mongoStoredQuery.getRuntimePersistentEntity(), operation, mongoStoredQuery);
                 op.update();
                 return op.getRowsUpdated();
             }
@@ -321,7 +298,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
     @Override
     public Mono<Number> executeUpdate(PreparedQuery<?, Number> preparedQuery) {
         return withClientSession(clientSession -> {
-            MongoPreparedQuery<?, Number, MongoDatabase> mongoPreparedQuery = getMongoPreparedQuery(preparedQuery);
+            MongoPreparedQuery<?, Number> mongoPreparedQuery = getMongoPreparedQuery(preparedQuery);
             MongoUpdate updateMany = mongoPreparedQuery.getUpdateMany();
             if (QUERY_LOG.isDebugEnabled()) {
                 QUERY_LOG.debug("Executing Mongo 'updateMany' with filter: {} and update: {}", updateMany.getFilter().toBsonDocument().toJson(), updateMany.getUpdate().toBsonDocument().toJson());
@@ -339,7 +316,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
     @Override
     public Mono<Number> executeDelete(PreparedQuery<?, Number> preparedQuery) {
         return withClientSession(clientSession -> {
-            MongoPreparedQuery<?, Number, MongoDatabase> mongoPreparedQuery = getMongoPreparedQuery(preparedQuery);
+            MongoPreparedQuery<?, Number> mongoPreparedQuery = getMongoPreparedQuery(preparedQuery);
             MongoDelete deleteMany = mongoPreparedQuery.getDeleteMany();
             if (QUERY_LOG.isDebugEnabled()) {
                 QUERY_LOG.debug("Executing Mongo 'deleteMany' with filter: {}", deleteMany.getFilter().toBsonDocument().toJson());
@@ -354,15 +331,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
         });
     }
 
-    private <E> MongoCollection<E> getCollection(MongoPreparedQuery<E, ?, MongoDatabase> preparedQuery) {
-        return getCollection(preparedQuery.getDatabase(), preparedQuery.getPersistentEntity(), preparedQuery.getRootEntity());
-    }
-
-    private <E> MongoCollection<E> getCollection(MongoStoredQuery<E, ?, MongoDatabase> storedQuery) {
-        return getCollection(storedQuery.getDatabase(), storedQuery.getPersistentEntity(), storedQuery.getRootEntity());
-    }
-
-    private <T, R> Flux<R> findAll(ClientSession clientSession, MongoPreparedQuery<T, R, MongoDatabase> preparedQuery) {
+    private <T, R> Flux<R> findAll(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
         if (preparedQuery.isCount()) {
             return getCount(clientSession, preparedQuery).flux();
         }
@@ -372,9 +341,9 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
         return Flux.from(find(clientSession, preparedQuery));
     }
 
-    private <T, R> Mono<R> getCount(ClientSession clientSession, MongoPreparedQuery<T, R, MongoDatabase> preparedQuery) {
+    private <T, R> Mono<R> getCount(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
         Class<R> resultType = preparedQuery.getResultType();
-        MongoDatabase database = preparedQuery.getDatabase();
+        MongoDatabase database = getDatabase(preparedQuery);
         RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
         if (preparedQuery.isAggregate()) {
             MongoAggregation aggregation = preparedQuery.getAggregation();
@@ -398,7 +367,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
         }
     }
 
-    private <T, R> Mono<R> findOneFiltered(ClientSession clientSession, MongoPreparedQuery<T, R, MongoDatabase> preparedQuery) {
+    private <T, R> Mono<R> findOneFiltered(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
         return Mono.from(find(clientSession, preparedQuery).limit(1).first())
             .map(r -> {
                 Class<T> type = preparedQuery.getRootEntity();
@@ -410,12 +379,13 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
             });
     }
 
-    private <T, R> Mono<R> findOneAggregated(ClientSession clientSession, MongoPreparedQuery<T, R, MongoDatabase> preparedQuery) {
+    private <T, R> Mono<R> findOneAggregated(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
         Class<R> resultType = preparedQuery.getResultType();
         Class<T> type = preparedQuery.getRootEntity();
         if (!resultType.isAssignableFrom(type)) {
+            MongoDatabase database = getDatabase(preparedQuery);
             return Mono.from(aggregate(clientSession, preparedQuery, BsonDocument.class).first())
-                .map(bsonDocument -> convertResult(preparedQuery.getDatabase().getCodecRegistry(), resultType, bsonDocument, preparedQuery.isDtoProjection()));
+                .map(bsonDocument -> convertResult(database.getCodecRegistry(), resultType, bsonDocument, preparedQuery.isDtoProjection()));
         }
         return Mono.from(aggregate(clientSession, preparedQuery).first())
             .map(r -> {
@@ -427,31 +397,33 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
             });
     }
 
-    private <T, R> Flux<R> findAllAggregated(ClientSession clientSession, MongoPreparedQuery<T, R, MongoDatabase> preparedQuery, boolean isDtoProjection) {
+    private <T, R> Flux<R> findAllAggregated(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery, boolean isDtoProjection) {
         Class<T> type = preparedQuery.getRootEntity();
         Class<R> resultType = preparedQuery.getResultType();
         Flux<R> aggregate;
         if (!resultType.isAssignableFrom(type)) {
+            MongoDatabase database = getDatabase(preparedQuery);
             aggregate = Flux.from(aggregate(clientSession, preparedQuery, BsonDocument.class))
-                .map(result -> convertResult(preparedQuery.getDatabase().getCodecRegistry(), resultType, result, isDtoProjection));
+                .map(result -> convertResult(database.getCodecRegistry(), resultType, result, isDtoProjection));
         } else {
             aggregate = Flux.from(aggregate(clientSession, preparedQuery));
         }
         return aggregate;
     }
 
-    private <T, R> FindPublisher<R> find(ClientSession clientSession, MongoPreparedQuery<T, R, MongoDatabase> preparedQuery) {
+    private <T, R> FindPublisher<R> find(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
         return find(clientSession, preparedQuery, preparedQuery.getResultType());
     }
 
     private <T, R, MR> FindPublisher<MR> find(ClientSession clientSession,
-                                              MongoPreparedQuery<T, R, MongoDatabase> preparedQuery,
+                                              MongoPreparedQuery<T, R> preparedQuery,
                                               Class<MR> resultType) {
         MongoFind find = preparedQuery.getFind();
         if (QUERY_LOG.isDebugEnabled()) {
             logFind(find);
         }
-        MongoCollection<MR> collection = getCollection(preparedQuery.getDatabase(), preparedQuery.getPersistentEntity(), resultType);
+        MongoDatabase database = getDatabase(preparedQuery);
+        MongoCollection<MR> collection = getCollection(database, preparedQuery.getPersistentEntity(), resultType);
         FindPublisher<MR> findIterable = collection.find(clientSession, resultType);
         return applyFindOptions(find.getOptions(), findIterable);
     }
@@ -540,9 +512,10 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
     }
 
     private <T, R, MR> AggregatePublisher<MR> aggregate(ClientSession clientSession,
-                                                        MongoPreparedQuery<T, R, MongoDatabase> preparedQuery,
+                                                        MongoPreparedQuery<T, R> preparedQuery,
                                                         Class<MR> resultType) {
-        MongoCollection<MR> collection = getCollection(preparedQuery.getDatabase(), preparedQuery.getPersistentEntity(), resultType);
+        MongoDatabase database = getDatabase(preparedQuery);
+        MongoCollection<MR> collection = getCollection(database, preparedQuery.getPersistentEntity(), resultType);
         MongoAggregation aggregation = preparedQuery.getAggregation();
         if (QUERY_LOG.isDebugEnabled()) {
             logAggregate(aggregation);
@@ -552,7 +525,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
     }
 
     private <T, R> AggregatePublisher<R> aggregate(ClientSession clientSession,
-                                                   MongoPreparedQuery<T, R, MongoDatabase> preparedQuery) {
+                                                   MongoPreparedQuery<T, R> preparedQuery) {
         return aggregate(clientSession, preparedQuery, preparedQuery.getResultType());
     }
 
@@ -595,8 +568,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
             entity = triggerPostLoad(entity, persistentEntity, annotationMetadata);
         }
         for (PersistentProperty pp : persistentEntity.getPersistentProperties()) {
-            if (pp instanceof RuntimeAssociation) {
-                RuntimeAssociation runtimeAssociation = (RuntimeAssociation) pp;
+            if (pp instanceof RuntimeAssociation runtimeAssociation) {
                 Object o = runtimeAssociation.getProperty().get(entity);
                 if (o == null) {
                     continue;
@@ -658,19 +630,29 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
         return op.getEntities();
     }
 
-    private <T, R> MongoCollection<R> getCollection(MongoDatabase database, RuntimePersistentEntity<T> persistentEntity, Class<R> resultType) {
-        return database.getCollection(persistentEntity.getPersistedName(), resultType);
+    @Override
+    protected MongoDatabase getDatabase(PersistentEntity persistentEntity, Class<?> repository) {
+        return mongoClient.getDatabase(databaseNameProvider.provide(persistentEntity, repository));
     }
 
-    @Override
-    protected MongoDatabase getDatabase(RuntimePersistentEntity<?> persistentEntity, Class<?> repositoryClass) {
-        if (repositoryClass != null) {
-            String database = repoDatabaseConfig.get(repositoryClass);
-            if (database != null) {
-                return mongoClient.getDatabase(database);
-            }
-        }
-        return mongoDatabaseFactory.getDatabase(persistentEntity);
+    private MongoDatabase getDatabase(MongoPreparedQuery<?, ?> preparedQuery) {
+        return getDatabase(preparedQuery.getPersistentEntity(), preparedQuery.getRepositoryType());
+    }
+
+    private <E> MongoCollection<E> getCollection(MongoPreparedQuery<E, ?> preparedQuery) {
+        return getCollection(getDatabase(preparedQuery), preparedQuery.getPersistentEntity(), preparedQuery.getRootEntity());
+    }
+
+    private <E> MongoCollection<E> getCollection(MongoOperationContext ctx, RuntimePersistentEntity<E> persistentEntity) {
+        return getCollection(persistentEntity, ctx.repositoryType, persistentEntity.getIntrospection().getBeanType());
+    }
+
+    private <T, R> MongoCollection<R> getCollection(MongoDatabase database, RuntimePersistentEntity<T> persistentEntity, Class<R> resultType) {
+        return database.getCollection(collectionNameProvider.provide(persistentEntity), resultType);
+    }
+
+    private <T, R> MongoCollection<R> getCollection(RuntimePersistentEntity<T> persistentEntity, Class<?> repositoryClass, Class<R> resultType) {
+        return getDatabase(persistentEntity, repositoryClass).getCollection(collectionNameProvider.provide(persistentEntity), resultType);
     }
 
     @Override
@@ -705,49 +687,13 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
     }
 
     @Override
-    public <T> Mono<T> withClientSession(Function<ClientSession, Mono<? extends T>> function) {
-        Objects.requireNonNull(function, "Handler cannot be null");
-        return Mono.deferContextual(contextView -> {
-            ClientSession clientSession = contextView.getOrDefault(currentSessionKey, null);
-            if (clientSession != null) {
-                LOG.debug("Reusing client session for MongoDB configuration: {}", serverName);
-                return function.apply(clientSession);
-            }
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Creating a new client session for MongoDB configuration: {}", serverName);
-            }
-            return Mono.usingWhen(mongoClient.startSession(), cs -> function.apply(cs)
-                .contextWrite(ctx -> ctx.put(currentSessionKey, cs)), connection -> {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Closing Connection for MongoDB configuration: {}", serverName);
-                }
-                connection.close();
-                return Mono.empty();
-            });
-        });
+    public <T> Mono<T> withClientSession(Function<ClientSession, Mono<T>> function) {
+        return connectionOperations.withConnectionMono(status -> function.apply(status.getConnection()));
     }
 
     @Override
-    public <T> Flux<T> withClientSessionMany(Function<ClientSession, Flux<? extends T>> function) {
-        Objects.requireNonNull(function, "Handler cannot be null");
-        return Flux.deferContextual(contextView -> {
-            ClientSession clientSession = contextView.getOrDefault(currentSessionKey, null);
-            if (clientSession != null) {
-                return Flux.from(function.apply(clientSession));
-            }
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Creating a new client session for MongoDB configuration: {}", serverName);
-            }
-            return Flux.usingWhen(mongoClient.startSession(),
-                cs -> function.apply(cs).contextWrite(ctx -> ctx.put(currentSessionKey, cs)),
-                connection -> {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Closing Connection for MongoDB configuration: {}", serverName);
-                    }
-                    connection.close();
-                    return Mono.empty();
-                });
-        });
+    public <T> Flux<T> withClientSessionMany(Function<ClientSession, Flux<T>> function) {
+        return connectionOperations.withConnectionFlux(status -> function.apply(status.getConnection()));
     }
 
     private <T> MongoReactiveEntityOperation<T> createMongoInsertOneOperation(MongoOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, T entity) {
@@ -764,7 +710,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
                     }
                     return Mono.from(collection.insertOne(ctx.clientSession, d.entity, getInsertOneOptions(ctx.annotationMetadata))).map(insertOneResult -> {
                         BsonValue insertedId = insertOneResult.getInsertedId();
-                        BeanProperty<T, Object> property = (BeanProperty<T, Object>) persistentEntity.getIdentity().getProperty();
+                        BeanProperty<T, Object> property = persistentEntity.getIdentity().getProperty();
                         if (property.get(d.entity) == null) {
                             d.entity = updateEntityId(property, d.entity, insertedId);
                         }
@@ -820,20 +766,22 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
 
             @Override
             protected void collectAutoPopulatedPreviousValues() {
-                entities = entities.map(d -> {
-                    if (d.vetoed) {
-                        return d;
+                entities = entities.map(list -> {
+                    for (Data d : list) {
+                        if (d.vetoed) {
+                            continue;
+                        }
+                        d.filter = createFilterIdAndVersion(persistentEntity, d.entity, collection.getCodecRegistry());
                     }
-                    d.filter = createFilterIdAndVersion(persistentEntity, d.entity, collection.getCodecRegistry());
-                    return d;
+                    return list;
                 });
             }
 
             @Override
             protected void execute() throws RuntimeException {
-                Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities.collectList().flatMap(data -> {
-                    List<ReplaceOneModel<BsonDocument>> replaces = new ArrayList<>(data.size());
-                    for (Data d : data) {
+                Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities.flatMap(list -> {
+                    List<ReplaceOneModel<BsonDocument>> replaces = new ArrayList<>(list.size());
+                    for (Data d : list) {
                         if (d.vetoed) {
                             continue;
                         }
@@ -849,10 +797,10 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
                         if (persistentEntity.getVersion() != null) {
                             checkOptimisticLocking(replaces.size(), bulkWriteResult.getModifiedCount());
                         }
-                        return Tuples.of(data, (long) bulkWriteResult.getModifiedCount());
+                        return Tuples.of(list, (long) bulkWriteResult.getModifiedCount());
                     });
                 }).cache();
-                entities = entitiesWithRowsUpdated.flatMapMany(t -> Flux.fromIterable(t.getT1()));
+                entities = entitiesWithRowsUpdated.flatMap(t -> Mono.just(t.getT1()));
                 rowsUpdated = entitiesWithRowsUpdated.map(Tuple2::getT2);
             }
         };
@@ -861,29 +809,29 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
     private <T> MongoReactiveEntitiesOperation<T> createMongoUpdateOneInBulkOperation(MongoOperationContext ctx,
                                                                                       RuntimePersistentEntity<T> persistentEntity,
                                                                                       Iterable<T> entities,
-                                                                                      MongoStoredQuery<T, ?, MongoDatabase> storedQuery) {
+                                                                                      MongoStoredQuery<T, ?> storedQuery) {
         return new MongoReactiveEntitiesOperation<T>(ctx, persistentEntity, entities, false) {
 
             @Override
             protected void execute() throws RuntimeException {
-                Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities.collectList().flatMap(data -> {
-                    List<UpdateOneModel<T>> updates = new ArrayList<>(data.size());
-                    for (Data d : data) {
+                Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities.flatMap(list -> {
+                    List<UpdateOneModel<T>> updates = new ArrayList<>(list.size());
+                    for (Data d : list) {
                         if (d.vetoed) {
                             continue;
                         }
                         MongoUpdate updateOne = storedQuery.getUpdateOne(d.entity);
                         updates.add(new UpdateOneModel<>(updateOne.getFilter(), updateOne.getUpdate(), updateOne.getOptions()));
                     }
-                    Mono<Long> modifiedCount = Mono.from(getCollection(storedQuery).bulkWrite(ctx.clientSession, updates)).map(result -> {
+                    Mono<Long> modifiedCount = Mono.from(getCollection(ctx, persistentEntity).bulkWrite(ctx.clientSession, updates)).map(result -> {
                         if (storedQuery.isOptimisticLock()) {
                             checkOptimisticLocking(updates.size(), result.getModifiedCount());
                         }
                         return (long) result.getModifiedCount();
                     });
-                    return modifiedCount.map(count -> Tuples.of(data, count));
+                    return modifiedCount.map(count -> Tuples.of(list, count));
                 }).cache();
-                entities = entitiesWithRowsUpdated.flatMapMany(t -> Flux.fromIterable(t.getT1()));
+                entities = entitiesWithRowsUpdated.flatMap(t -> Mono.just(t.getT1()));
                 rowsUpdated = entitiesWithRowsUpdated.map(Tuple2::getT2);
             }
         };
@@ -935,19 +883,21 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
 
             @Override
             protected void collectAutoPopulatedPreviousValues() {
-                entities = entities.map(d -> {
-                    if (d.vetoed) {
-                        return d;
+                entities = entities.map(list -> {
+                    for (Data d : list) {
+                        if (d.vetoed) {
+                            continue;
+                        }
+                        d.filter = createFilterIdAndVersion(persistentEntity, d.entity, collection.getCodecRegistry());
                     }
-                    d.filter = createFilterIdAndVersion(persistentEntity, d.entity, collection.getCodecRegistry());
-                    return d;
+                    return list;
                 });
             }
 
             @Override
             protected void execute() throws RuntimeException {
-                Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities.collectList().flatMap(data -> {
-                    List<Bson> filters = data.stream().filter(d -> !d.vetoed).map(d -> ((Bson) d.filter)).collect(Collectors.toList());
+                Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities.flatMap(list -> {
+                    List<Bson> filters = list.stream().filter(d -> !d.vetoed).map(d -> ((Bson) d.filter)).collect(Collectors.toList());
                     Mono<Long> modifiedCount;
                     if (!filters.isEmpty()) {
                         Bson filter = Filters.or(filters);
@@ -964,9 +914,9 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
                             return count;
                         });
                     }
-                    return modifiedCount.map(count -> Tuples.of(data, count));
+                    return modifiedCount.map(count -> Tuples.of(list, count));
                 }).cache();
-                entities = entitiesWithRowsUpdated.flatMapMany(t -> Flux.fromIterable(t.getT1()));
+                entities = entitiesWithRowsUpdated.flatMap(t -> Mono.just(t.getT1()));
                 rowsUpdated = entitiesWithRowsUpdated.map(Tuple2::getT2);
             }
         };
@@ -975,28 +925,28 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
     private <T> MongoReactiveEntitiesOperation<T> createMongoDeleteOneInBulkOperation(MongoOperationContext ctx,
                                                                                       RuntimePersistentEntity<T> persistentEntity,
                                                                                       Iterable<T> entities,
-                                                                                      MongoStoredQuery<T, Number, MongoDatabase> storedQuery) {
+                                                                                      MongoStoredQuery<T, Number> storedQuery) {
         return new MongoReactiveEntitiesOperation<T>(ctx, persistentEntity, entities, false) {
 
             @Override
             protected void execute() throws RuntimeException {
-                Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities.collectList().flatMap(data -> {
-                    List<DeleteOneModel<T>> deletes = new ArrayList<>(data.size());
-                    for (Data d : data) {
+                Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities.flatMap(list -> {
+                    List<DeleteOneModel<T>> deletes = new ArrayList<>(list.size());
+                    for (Data d : list) {
                         if (d.vetoed) {
                             continue;
                         }
                         MongoDelete deleteOne = storedQuery.getDeleteOne(d.entity);
                         deletes.add(new DeleteOneModel<>(deleteOne.getFilter(), deleteOne.getOptions()));
                     }
-                    return Mono.from(getCollection(storedQuery).bulkWrite(ctx.clientSession, deletes)).map(bulkWriteResult -> {
+                    return Mono.from(getCollection(ctx, persistentEntity).bulkWrite(ctx.clientSession, deletes)).map(bulkWriteResult -> {
                         if (storedQuery.isOptimisticLock()) {
                             checkOptimisticLocking(deletes.size(), bulkWriteResult.getDeletedCount());
                         }
-                        return Tuples.of(data, (long) bulkWriteResult.getDeletedCount());
+                        return Tuples.of(list, (long) bulkWriteResult.getDeletedCount());
                     });
                 }).cache();
-                entities = entitiesWithRowsUpdated.flatMapMany(t -> Flux.fromIterable(t.getT1()));
+                entities = entitiesWithRowsUpdated.flatMap(t -> Mono.just(t.getT1()));
                 rowsUpdated = entitiesWithRowsUpdated.map(Tuple2::getT2);
             }
         };
@@ -1007,23 +957,23 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
 
             @Override
             protected void execute() throws RuntimeException {
-                entities = entities.collectList().flatMapMany(data -> {
-                    List<T> toInsert = data.stream().filter(d -> !d.vetoed).map(d -> d.entity).collect(Collectors.toList());
+                entities = entities.flatMap(list -> {
+                    List<T> toInsert = list.stream().filter(d -> !d.vetoed).map(d -> d.entity).collect(Collectors.toList());
                     if (toInsert.isEmpty()) {
-                        return Flux.fromIterable(data);
+                        return Mono.just(list);
                     }
 
                     MongoCollection<T> collection = getCollection(persistentEntity, ctx.repositoryType);
                     if (QUERY_LOG.isDebugEnabled()) {
                         QUERY_LOG.debug("Executing Mongo 'insertMany' for collection: {} with documents: {}", collection.getNamespace().getFullName(), toInsert);
                     }
-                    return Mono.from(collection.insertMany(ctx.clientSession, toInsert, getInsertManyOptions(ctx.annotationMetadata))).flatMapMany(insertManyResult -> {
+                    return Mono.from(collection.insertMany(ctx.clientSession, toInsert, getInsertManyOptions(ctx.annotationMetadata))).flatMap(insertManyResult -> {
                         if (hasGeneratedId) {
                             Map<Integer, BsonValue> insertedIds = insertManyResult.getInsertedIds();
                             RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
-                            BeanProperty<T, Object> idProperty = (BeanProperty<T, Object>) identity.getProperty();
+                            BeanProperty<T, Object> idProperty = identity.getProperty();
                             int index = 0;
-                            for (Data d : data) {
+                            for (Data d : list) {
                                 if (!d.vetoed) {
                                     BsonValue id = insertedIds.get(index);
                                     if (id == null) {
@@ -1034,7 +984,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
                                 index++;
                             }
                         }
-                        return Flux.fromIterable(data);
+                        return Mono.just(list);
                     });
 
                 });
@@ -1042,175 +992,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
         };
     }
 
-    @Override
-    public ReactiveTransactionStatus<ClientSession> getTransactionStatus(ContextView contextView) {
-        return contextView.getOrDefault(txStatusKey, null);
-    }
-
-    @Override
-    public TransactionDefinition getTransactionDefinition(ContextView contextView) {
-        return contextView.getOrDefault(txDefinitionKey, null);
-    }
-
-    @Override
-    @NonNull
-    public <T> Flux<T> withTransaction(@NonNull TransactionDefinition definition,
-                                       @NonNull ReactiveTransactionOperations.TransactionalCallback<ClientSession, T> handler) {
-        Objects.requireNonNull(definition, "Transaction definition cannot be null");
-        Objects.requireNonNull(handler, "Callback handler cannot be null");
-
-        return Flux.deferContextual(contextView -> {
-            ReactiveTransactionStatus<ClientSession> transactionStatus = getTransactionStatus(contextView);
-            TransactionDefinition.Propagation propagationBehavior = definition.getPropagationBehavior();
-            if (transactionStatus != null) {
-                // existing transaction, use it
-                if (propagationBehavior == TransactionDefinition.Propagation.NOT_SUPPORTED || propagationBehavior == TransactionDefinition.Propagation.NEVER) {
-                    return Flux.error(new TransactionUsageException("Found an existing transaction but propagation behaviour doesn't support it: " + propagationBehavior));
-                }
-                ReactiveTransactionStatus<ClientSession> existingTransaction = existingTransaction(transactionStatus);
-                try {
-                    return Flux.from(handler.doInTransaction(existingTransaction))
-                        .contextWrite(ctx -> ctx.put(txStatusKey, existingTransaction));
-                } catch (Exception e) {
-                    return Flux.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
-                }
-            } else {
-
-                if (propagationBehavior == TransactionDefinition.Propagation.MANDATORY) {
-                    return Flux.error(new NoTransactionException("Expected an existing transaction, but none was found in the Reactive context."));
-                }
-                return withClientSessionMany(clientSession -> {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Transaction Begin for MongoDB configuration: {}", serverName);
-                    }
-                    DefaultReactiveTransactionStatus status = new DefaultReactiveTransactionStatus(clientSession, true);
-                    if (definition.getIsolationLevel() != TransactionDefinition.DEFAULT.getIsolationLevel()) {
-                        throw new TransactionUsageException("Isolation level not supported");
-                    } else {
-                        clientSession.startTransaction();
-                    }
-
-                    return Flux.usingWhen(Mono.just(status), sts -> {
-                        try {
-                            return Flux.from(handler.doInTransaction(status)).contextWrite(context -> context.put(txStatusKey, status).put(txDefinitionKey, definition));
-                        } catch (Exception e) {
-                            return Flux.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
-                        }
-                    }, this::doCommit, (sts, throwable) -> {
-                        if (LOG.isWarnEnabled()) {
-                            LOG.warn("Rolling back transaction on error: " + throwable.getMessage(), throwable);
-                        }
-                        Flux<Void> abort;
-                        if (definition.rollbackOn(throwable)) {
-                            abort = Flux.from(sts.getConnection().abortTransaction());
-                        } else {
-                            abort = Flux.error(throwable);
-                        }
-                        return abort.onErrorResume((rollbackError) -> {
-                            if (rollbackError != throwable && LOG.isWarnEnabled()) {
-                                LOG.warn("Error occurred during transaction rollback: " + rollbackError.getMessage(), rollbackError);
-                            }
-                            return Mono.error(throwable);
-                        }).as(flux -> doFinish(flux, status));
-
-                    }, this::doCommit);
-                });
-            }
-        });
-
-    }
-
-    private ReactiveTransactionStatus<ClientSession> existingTransaction(ReactiveTransactionStatus<ClientSession> existing) {
-        return new ReactiveTransactionStatus<ClientSession>() {
-            @Override
-            public ClientSession getConnection() {
-                return existing.getConnection();
-            }
-
-            @Override
-            public boolean isNewTransaction() {
-                return false;
-            }
-
-            @Override
-            public void setRollbackOnly() {
-                existing.setRollbackOnly();
-            }
-
-            @Override
-            public boolean isRollbackOnly() {
-                return existing.isRollbackOnly();
-            }
-
-            @Override
-            public boolean isCompleted() {
-                return existing.isCompleted();
-            }
-        };
-    }
-
-    private Publisher<Void> doCommit(DefaultReactiveTransactionStatus status) {
-        if (status.isRollbackOnly()) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Rolling back transaction on MongoDB configuration {}.", status);
-            }
-            return Flux.from(status.getConnection().abortTransaction()).as(flux -> doFinish(flux, status));
-        } else {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Committing transaction for MongoDB configuration {}.", status);
-            }
-            return Flux.from(status.getConnection().commitTransaction()).as(flux -> doFinish(flux, status));
-        }
-    }
-
-    private <T> Publisher<Void> doFinish(Flux<T> flux, DefaultReactiveTransactionStatus status) {
-        return flux.hasElements().map(ignore -> {
-                status.completed = true;
-                return ignore;
-            }).then();
-    }
-
-    /**
-     * Represents the current reactive transaction status.
-     */
-    private static final class DefaultReactiveTransactionStatus implements ReactiveTransactionStatus<ClientSession> {
-        private final ClientSession connection;
-        private final boolean isNew;
-        private boolean rollbackOnly;
-        private boolean completed;
-
-        public DefaultReactiveTransactionStatus(ClientSession connection, boolean isNew) {
-            this.connection = connection;
-            this.isNew = isNew;
-        }
-
-        @Override
-        public ClientSession getConnection() {
-            return connection;
-        }
-
-        @Override
-        public boolean isNewTransaction() {
-            return isNew;
-        }
-
-        @Override
-        public void setRollbackOnly() {
-            this.rollbackOnly = true;
-        }
-
-        @Override
-        public boolean isRollbackOnly() {
-            return rollbackOnly;
-        }
-
-        @Override
-        public boolean isCompleted() {
-            return completed;
-        }
-    }
-
-    abstract class MongoReactiveEntityOperation<T> extends AbstractReactiveEntityOperations<MongoOperationContext, T, RuntimeException> {
+    private abstract class MongoReactiveEntityOperation<T> extends AbstractReactiveEntityOperations<MongoOperationContext, T, RuntimeException> {
 
         /**
          * Create a new instance.
@@ -1229,7 +1011,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
         }
     }
 
-    abstract class MongoReactiveEntitiesOperation<T> extends AbstractReactiveEntitiesOperations<MongoOperationContext, T, RuntimeException> {
+    private abstract class MongoReactiveEntitiesOperation<T> extends AbstractReactiveEntitiesOperations<MongoOperationContext, T, RuntimeException> {
 
         protected MongoReactiveEntitiesOperation(MongoOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, Iterable<T> entities, boolean insert) {
             super(ctx, DefaultReactiveMongoRepositoryOperations.this.cascadeOperations, DefaultReactiveMongoRepositoryOperations.this.conversionService, DefaultReactiveMongoRepositoryOperations.this.entityEventRegistry, persistentEntity, entities, insert);
@@ -1241,7 +1023,7 @@ public class DefaultReactiveMongoRepositoryOperations extends AbstractMongoRepos
 
     }
 
-    protected static class MongoOperationContext extends OperationContext {
+    protected static final class MongoOperationContext extends OperationContext {
 
         private final ClientSession clientSession;
 

@@ -17,6 +17,7 @@ package io.micronaut.data.r2dbc.postgres;
 
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeDef;
+import io.micronaut.data.annotation.Where;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
@@ -40,4 +41,10 @@ public abstract class PostgresBookRepository extends BookRepository {
 
     @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title IN (:arg0) ELSE true END)", nativeQuery = true)
     public abstract List<Book> listNativeBooksNullableArraySearch(@TypeDef(type = DataType.STRING) @Nullable String[] arg0);
+
+    @Where(value = "total_pages > :pages")
+    public abstract List<Book> findByTitleStartsWith(String title, int pages);
+
+    @Query(value = "select count(*) from book b where b.title like :title and b.total_pages > :pages", nativeQuery = true)
+    public abstract int countNativeByTitleWithPagesGreaterThan(String title, int pages);
 }

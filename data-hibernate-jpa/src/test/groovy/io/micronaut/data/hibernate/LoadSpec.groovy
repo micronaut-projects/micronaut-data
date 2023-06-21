@@ -10,7 +10,7 @@ import spock.lang.Specification
 import spock.lang.Stepwise
 
 import jakarta.inject.Inject
-import javax.validation.ConstraintViolationException
+import jakarta.validation.ConstraintViolationException
 
 @MicronautTest(rollback = false, packages = "io.micronaut.data.tck.entities")
 @Property(name = "datasources.default.name", value = "mydb")
@@ -61,6 +61,14 @@ class LoadSpec extends Specification {
     def "retrieving a proxy with null id throws an exception"() {
         when:
         childrenRepository.load(null)
+
+        then:
+        thrown(ConstraintViolationException)
+    }
+
+    def "retrieving an entity with null id throws an exception"() {
+        when:
+        childrenRepository.findById(null)
 
         then:
         thrown(ConstraintViolationException)

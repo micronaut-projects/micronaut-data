@@ -15,10 +15,12 @@
  */
 package io.micronaut.data.mongodb.serde;
 
+import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.order.Ordered;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.document.serde.IdPropertyNamingStrategy;
@@ -32,11 +34,17 @@ import io.micronaut.data.mongodb.conf.MongoDataConfiguration;
 import io.micronaut.data.mongodb.operations.MongoUtils;
 import io.micronaut.serde.Deserializer;
 import io.micronaut.serde.Encoder;
+import io.micronaut.serde.Serde;
+import io.micronaut.serde.SerdeIntrospections;
 import io.micronaut.serde.SerdeRegistry;
 import io.micronaut.serde.Serializer;
+import io.micronaut.serde.config.DeserializationConfiguration;
+import io.micronaut.serde.config.SerializationConfiguration;
 import io.micronaut.serde.config.naming.PropertyNamingStrategy;
 import io.micronaut.serde.exceptions.SerdeException;
 import io.micronaut.serde.support.DefaultSerdeRegistry;
+import io.micronaut.serde.support.deserializers.ObjectDeserializer;
+import io.micronaut.serde.support.serializers.ObjectSerializer;
 import jakarta.inject.Singleton;
 import org.bson.codecs.configuration.CodecRegistry;
 
@@ -50,7 +58,7 @@ import java.util.Collection;
  * @since 3.3
  */
 @Singleton
-@Order(Ordered.HIGHEST_PRECEDENCE)
+@Order(Ordered.LOWEST_PRECEDENCE)
 @Internal
 final class DataSerdeRegistry implements SerdeRegistry {
 
@@ -65,16 +73,28 @@ final class DataSerdeRegistry implements SerdeRegistry {
     /**
      * Default constructor.
      *
-     * @param defaultSerdeRegistry       The DefaultSerdeRegistry
-     * @param runtimeEntityRegistry      The runtimeEntityRegistry
-     * @param attributeConverterRegistry The attributeConverterRegistry
-     * @param mongoDataConfiguration     The Mongo configuration
+     * @param beanContext                  The bean context
+     * @param serializationConfiguration   The serializationConfiguration
+     * @param deserializationConfiguration The deserializationConfiguration
+     * @param objectArraySerde             The object array Serde
+     * @param introspections               The introspections
+     * @param runtimeEntityRegistry        The runtimeEntityRegistry
+     * @param attributeConverterRegistry   The attributeConverterRegistry
+     * @param mongoDataConfiguration       The Mongo configuration
+     * @param conversionService            The conversion service
      */
-    public DataSerdeRegistry(DefaultSerdeRegistry defaultSerdeRegistry,
+    public DataSerdeRegistry(BeanContext beanContext,
+                             SerializationConfiguration serializationConfiguration,
+                             DeserializationConfiguration deserializationConfiguration,
+                             Serde<Object[]> objectArraySerde,
+                             SerdeIntrospections introspections,
                              RuntimeEntityRegistry runtimeEntityRegistry,
                              AttributeConverterRegistry attributeConverterRegistry,
-                             MongoDataConfiguration mongoDataConfiguration) {
-        this.defaultSerdeRegistry = defaultSerdeRegistry;
+                             MongoDataConfiguration mongoDataConfiguration,
+                             ConversionService conversionService) {
+        ObjectSerializer objectSerializer = new ObjectSerializer(introspections, serializationConfiguration, beanContext);
+        ObjectDeserializer objectDeserializer = new ObjectDeserializer(introspections, deserializationConfiguration, null);
+        this.defaultSerdeRegistry = new DefaultSerdeRegistry(beanContext, objectSerializer, objectDeserializer, objectArraySerde, introspections, conversionService);
         this.runtimeEntityRegistry = runtimeEntityRegistry;
         this.attributeConverterRegistry = attributeConverterRegistry;
         this.mongoDataConfiguration = mongoDataConfiguration;
@@ -137,11 +157,11 @@ final class DataSerdeRegistry implements SerdeRegistry {
 
                 @Override
                 public Serializer<Object> createSpecific(EncoderContext encoderContext, Argument<?> type) throws SerdeException {
-                    RuntimePersistentEntity entity = runtimeEntityRegistry.getEntity(type.getType());
+                    RuntimePersistentEntity<Object> entity = runtimeEntityRegistry.getEntity((Class<Object>) type.getType());
                     if (entity.getIdentity() == null) {
                         throw new SerdeException("Cannot find ID of entity type: " + type);
                     }
-                    BeanProperty property = entity.getIdentity().getProperty();
+                    BeanProperty<Object, Object> property = entity.getIdentity().getProperty();
                     Argument<?> idType = entity.getIdentity().getArgument();
                     Serializer<Object> idSerializer = encoderContext.findCustomSerializer(IdSerializer.class).createSpecific(encoderContext, idType);
                     return new Serializer<Object>() {
@@ -204,5 +224,10 @@ final class DataSerdeRegistry implements SerdeRegistry {
     @Override
     public <D extends PropertyNamingStrategy> D findNamingStrategy(Class<? extends D> namingStrategyClass) throws SerdeException {
         return defaultSerdeRegistry.findNamingStrategy(namingStrategyClass);
+    }
+
+    @Override
+    public ConversionService getConversionService() {
+        return defaultSerdeRegistry.getConversionService();
     }
 }

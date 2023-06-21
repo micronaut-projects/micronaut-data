@@ -23,7 +23,20 @@ package io.micronaut.data.exceptions;
  */
 public class OptimisticLockException extends DataAccessException {
 
+    /**
+     * Default constructor.
+     * @param message The message
+     */
     public OptimisticLockException(String message) {
         super(message);
+    }
+
+    /**
+     * Default constructor with the cause.
+     * @param message The message
+     * @param cause The cause
+     */
+    public OptimisticLockException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

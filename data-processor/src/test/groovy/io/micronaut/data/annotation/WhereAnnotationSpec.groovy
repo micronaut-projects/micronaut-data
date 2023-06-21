@@ -107,11 +107,11 @@ class Category {
         repository.getRequiredMethod("countByIdGreaterThan", Long)
                 .stringValue(Query).get() == "SELECT COUNT(user_) FROM test.User AS user_ WHERE (user_.id > :p1 AND (user_.enabled = true))"
         repository.getRequiredMethod("list")
-                .stringValue(Query).get() == "SELECT user_ FROM test.User AS user_ JOIN FETCH user_.category user_category_ WHERE (user_.enabled = true)"
+                .stringValue(Query).get() == "SELECT user_ FROM test.User AS user_ JOIN FETCH user_.category user_category_ WHERE (user_.enabled = true AND user_category_.archived = true)"
         repository.getRequiredMethod("findAll")
                 .stringValue(Query).get() == "SELECT user_ FROM test.User AS user_ WHERE (user_.enabled = true)"
         repository.getRequiredMethod("findByIdIsNotNull")
-                .stringValue(Query).get() == "SELECT user_ FROM test.User AS user_ JOIN FETCH user_.category user_category_ WHERE (user_.id IS NOT NULL AND (user_.xyz = true AND user_.abc > 12))"
+                .stringValue(Query).get() == "SELECT user_ FROM test.User AS user_ JOIN FETCH user_.category user_category_ WHERE (user_.id IS NOT NULL AND (user_.xyz = true AND user_.abc > 12 AND user_category_.archived = true))"
         repository.getRequiredMethod("findByIdIsNull")
                 .stringValue(Query).get() == "SELECT user_ FROM test.User AS user_ JOIN FETCH user_.category user_category_ WHERE (user_.id IS NULL)"
     }
@@ -187,8 +187,8 @@ interface TestRepository extends CrudRepository<Person, Long> {
 import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.repository.reactive.*;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import java.util.UUID;
 
 @Entity
@@ -247,8 +247,8 @@ interface TestRepository extends ReactiveStreamsCrudRepository<UserWithWhere, UU
             def repository = buildRepository('test.TestRepository', '''
 import io.micronaut.data.repository.reactive.*;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import java.util.UUID;
 
 @Entity
@@ -306,15 +306,15 @@ interface TestRepository extends ReactorCrudRepository<UserWithWhere, UUID> {
             def repository = buildRepository('test.TestRepository', '''
 import io.micronaut.data.repository.async.*;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import java.util.UUID;
 
 @Entity
 @Table(name = "users")
 @Where(value = "@.deleted = false")
 class UserWithWhere {
-    @javax.persistence.Id
+    @jakarta.persistence.Id
     private UUID id;
     private String email;
     private Boolean deleted;

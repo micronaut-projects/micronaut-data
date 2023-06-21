@@ -1,0 +1,8 @@
+micronaut:
+  data:
+    multi-tenancy:
+      mode: SCHEMA
+  multitenancy:
+    tenantresolver:
+      httpheader:
+        enabled: true

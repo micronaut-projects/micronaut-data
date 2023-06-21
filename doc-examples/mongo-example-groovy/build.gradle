@@ -1,12 +1,9 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
 plugins {
     id "groovy"
-    id "io.micronaut.application"
     id "io.micronaut.build.internal.data-example"
-}
-
-repositories {
-    mavenCentral()
-    maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
+    id 'io.micronaut.test-resources'
 }
 
 application {
@@ -14,25 +11,29 @@ application {
 }
 
 micronaut {
-    version micronautVersion
+    version libs.versions.micronaut.platform.get()
     runtime "netty"
     testRuntime "spock"
+    testResources {
+        enabled = true
+        inferClasspath = false
+        additionalModules.add(KnownModules.MONGODB)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
 }
 
 dependencies {
-    compileOnly projects.dataProcessor // Override app plugin version
-    compileOnly projects.dataDocumentProcessor
+    compileOnly projects.micronautDataProcessor // Override app plugin version
+    compileOnly projects.micronautDataDocumentProcessor
 
-    implementation 'io.micronaut.reactor:micronaut-reactor'
-    implementation "io.micronaut:micronaut-http-client"
-    implementation projects.dataMongodb
-    implementation libs.mongodb.driver.sync
+    implementation mnReactor.micronaut.reactor
+    implementation mn.micronaut.http.client
+    implementation projects.micronautDataMongodb
+    implementation mnMongo.mongo.driver
 
-    compileOnly libs.javax.persistence.api
     implementation libs.jakarta.persistence.api
     implementation libs.jakarta.transaction.api
 
-    runtimeOnly "ch.qos.logback:logback-classic"
-
-    testImplementation "org.testcontainers:mongodb"
+    runtimeOnly mnLogging.logback.classic
 }

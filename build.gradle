@@ -4,8 +4,8 @@ plugins {
     id "io.micronaut.build.internal.data-dependencies"
 }
 
-micronautBuild {
-    sourceCompatibility = "11"
+repositories {
+    mavenCentral()
 }
 
 if (System.getenv("SONAR_TOKEN") != null) {

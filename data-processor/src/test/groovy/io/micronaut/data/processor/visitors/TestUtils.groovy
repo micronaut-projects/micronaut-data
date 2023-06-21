@@ -47,12 +47,16 @@ class TestUtils {
         return metadata.getAnnotation(Query).stringValue().get()
     }
 
+    static String getCountQuery(AnnotationMetadataProvider metadata) {
+        return metadata.getAnnotation(Query).stringValue(DataMethod.META_MEMBER_COUNT_QUERY).get()
+    }
+
     static String[] getQueryParts(AnnotationMetadataProvider metadata) {
         return metadata.getAnnotationMetadata().stringValues(DataMethod.class, DataMethod.META_MEMBER_EXPANDABLE_QUERY)
     }
 
     static String getRawQuery(AnnotationMetadataProvider metadata) {
-        return metadata.getAnnotation(Query).stringValue( "rawQuery").get()
+        return metadata.getAnnotation(Query).stringValue( DataMethod.META_MEMBER_RAW_QUERY).get()
     }
 
     static String getDataInterceptor(AnnotationMetadataProvider metadata) {

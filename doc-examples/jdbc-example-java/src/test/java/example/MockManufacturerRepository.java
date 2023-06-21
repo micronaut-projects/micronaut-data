@@ -1,6 +1,5 @@
 package example;
 
-import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
 
@@ -25,5 +24,10 @@ public class MockManufacturerRepository implements ManufacturerRepository {
         Manufacturer manufacturer = new Manufacturer(name);
         map.put(name, manufacturer);
         return manufacturer;
+    }
+
+    @Override
+    public void deleteAll() {
+        map.clear();
     }
 }

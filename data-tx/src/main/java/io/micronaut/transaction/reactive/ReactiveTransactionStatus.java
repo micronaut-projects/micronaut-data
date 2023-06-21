@@ -16,6 +16,7 @@
 package io.micronaut.transaction.reactive;
 
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.transaction.TransactionExecution;
 
 /**
@@ -26,22 +27,18 @@ import io.micronaut.transaction.TransactionExecution;
  * @since 2.2.0
  */
 public interface ReactiveTransactionStatus<T> extends TransactionExecution {
-    /**
-     * Attribute that can be used to store this status within context propagation services.
-     * @deprecated The key cannot be constant in multi-tx environments. Replaced with {@link ReactorReactiveTransactionOperations#getTransactionStatus(reactor.util.context.ContextView)}.
-     */
-    @Deprecated
-    String ATTRIBUTE = "io.micronaut.tx.ATTRIBUTE";
-
-    /**
-     * Attribute that can be used to store the transaction status.
-     * @deprecated The key cannot be constant in multi-tx environments. Replaced with {@link ReactorReactiveTransactionOperations#getTransactionDefinition(reactor.util.context.ContextView)}.
-     */
-    @Deprecated
-    String STATUS = "io.micronaut.tx.STATUS";
 
     /**
      * @return The current connection.
      */
-    @NonNull T getConnection();
+    default @NonNull T getConnection() {
+        return getConnectionStatus().getConnection();
+    }
+
+    /**
+     * @return The connection status.
+     */
+    @NonNull
+    ConnectionStatus<T> getConnectionStatus();
+
 }

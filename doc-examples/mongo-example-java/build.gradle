@@ -1,11 +1,7 @@
-plugins {
-    id "java"
-    id "io.micronaut.application"
-    id "io.micronaut.build.internal.data-example"
-}
+import io.micronaut.testresources.buildtools.KnownModules
 
-repositories {
-    mavenCentral()
+plugins {
+    id "io.micronaut.build.internal.data-native-example"
 }
 
 application {
@@ -13,26 +9,30 @@ application {
 }
 
 micronaut {
-    version micronautVersion
+    version libs.versions.micronaut.platform.get()
     runtime "netty"
     testRuntime "junit5"
+    testResources {
+        enabled = true
+        inferClasspath = false
+        additionalModules.add(KnownModules.MONGODB)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
 }
 
 dependencies {
-    annotationProcessor projects.dataDocumentProcessor
+    annotationProcessor projects.micronautDataDocumentProcessor
 
-    implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
-    implementation 'io.micronaut.reactor:micronaut-reactor'
+    implementation mnRxjava2.micronaut.rxjava2
+    implementation mnReactor.micronaut.reactor
 
-    implementation "io.micronaut:micronaut-http-client"
-    implementation projects.dataMongodb
-    implementation libs.mongodb.driver.sync
+    implementation mn.micronaut.http.client
+    implementation projects.micronautDataMongodb
+    implementation mnMongo.mongo.driver
 
-    compileOnly libs.javax.persistence.api
     implementation libs.jakarta.persistence.api
     implementation libs.jakarta.transaction.api
 
-    runtimeOnly "ch.qos.logback:logback-classic"
-
-    testImplementation "org.testcontainers:mongodb"
+    runtimeOnly mnLogging.logback.classic
 }

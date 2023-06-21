@@ -163,7 +163,13 @@ class MongoCriteriaSpec extends Specification {
                     } as Specification,
                     { root, query, cb ->
                         root.get("name").in("A", "B", "C").not()
-                    } as Specification
+                    } as Specification,
+                    {
+                        root, query, cb ->
+                            def colors = Arrays.asList("red", "white")
+                            def parameter = cb.literal(colors)
+                            ((PersistentEntityCriteriaBuilder)cb).arrayContains(root.get("colors"), parameter)
+                    } as Specification,
             ]
             expectedWhereQuery << [
                     '{$and:[{enabled:{$gte:{$mn_qp:0}}},{enabled:{$lte:{$mn_qp:1}}}]}',
@@ -174,6 +180,7 @@ class MongoCriteriaSpec extends Specification {
                     '{$and:[{enabled:{$eq:true}},{enabled:{$eq:true}}]}',
                     '''{name:{$in:[{$mn_qp:0}]}}''',
                     '''{name:{$nin:[{$mn_qp:0}]}}''',
+                    '{colors:{$all:[{$mn_qp:0}]}}'
             ]
     }
 

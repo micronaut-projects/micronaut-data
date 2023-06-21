@@ -58,6 +58,11 @@ public interface DelegatePreparedQuery<E, R> extends PreparedQuery<E, R>, Delega
     }
 
     @Override
+    default boolean isRawQuery() {
+        return getPreparedQueryDelegate().isRawQuery();
+    }
+
+    @Override
     default <RT1> Optional<RT1> getParameterInRole(@NonNull String role, @NonNull Class<RT1> type) {
         return getPreparedQueryDelegate().getParameterInRole(role, type);
     }

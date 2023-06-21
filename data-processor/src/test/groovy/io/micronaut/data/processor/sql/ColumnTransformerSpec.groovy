@@ -32,8 +32,7 @@ class ColumnTransformerSpec extends AbstractDataSpec {
     void "test mapping"() {
         given:
         def entity = buildJpaEntity('test.Project', '''
-import java.time.LocalDateTime;
-import io.micronaut.data.jdbc.annotation.ColumnTransformer;
+import io.micronaut.data.annotation.sql.ColumnTransformer;
 
 @Entity
 class Project {
@@ -96,7 +95,7 @@ class Project {
         def sql = builder.buildQuery(QueryModel.from(entity).eq("name", new QueryParameter("xyz"))).query
 
         expect:
-        sql == 'SELECT project_."project_id_department_id",project_."project_id_project_id",LOWER(project_.name) AS name,project_.name AS db_name,UPPER(project_.org) AS org FROM "project" project_ WHERE (LOWER(project_.name) = ?)'
+        sql == 'SELECT project_."project_id_department_id",project_."project_id_project_id",LOWER(project_.name) AS name,project_.name AS db_name,UPPER(project_.org) AS org FROM "project" project_ WHERE (project_."name" = UPPER(?))'
     }
 
     void "test update query with column readers and writers"() {
@@ -111,7 +110,7 @@ class Project {
         ).query
 
         expect:
-        sql == 'UPDATE "project" SET "name"=UPPER(?),"org"=? WHERE (LOWER(name) = ? AND UPPER(org) = ?)'
+        sql == 'UPDATE "project" SET "name"=UPPER(?),"org"=? WHERE ("name" = UPPER(?) AND "org" = ?)'
     }
 
 
@@ -122,7 +121,7 @@ class Project {
             def sql = builder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity).query
 
         expect:
-            sql == 'INSERT INTO "transform" ("xyz","project_id_department_id","project_id_project_id") VALUES (LOWER(xyz@abc),?,?)'
+            sql == 'INSERT INTO "transform" ("xyz","project_id_department_id","project_id_project_id") VALUES (LOWER(?),?,?)'
 
     }
 
@@ -133,7 +132,7 @@ class Project {
             def sql = builder.buildUpdate(QueryModel.from(entity), Collections.singletonList("xyz")).query
 
         expect:
-            sql == 'UPDATE "transform" SET "xyz"=LOWER(xyz@abc)'
+            sql == 'UPDATE "transform" SET "xyz"=LOWER(?)'
     }
 
     void "test build query with column reader2"() {
@@ -153,6 +152,6 @@ class Project {
             def sql = builder.buildQuery(QueryModel.from(entity).eq("xyz", new QueryParameter("xyz"))).query
 
         expect:
-            sql == 'SELECT transform_."project_id_department_id",transform_."project_id_project_id",UPPER(xyz@abc) AS xyz FROM "transform" transform_ WHERE (UPPER(xyz@abc) = ?)'
+            sql == 'SELECT transform_."project_id_department_id",transform_."project_id_project_id",UPPER(xyz@abc) AS xyz FROM "transform" transform_ WHERE (transform_."xyz" = LOWER(?))'
     }
 }

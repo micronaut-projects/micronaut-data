@@ -42,7 +42,7 @@ public final class ExistsMethodMatcher extends AbstractPatternMethodMatcher {
 
     @Override
     protected MethodMatch match(MethodMatchContext matchContext, java.util.regex.Matcher matcher) {
-        if (TypeUtils.isValidExistsReturnType(matchContext)) {
+        if (TypeUtils.doesMethodProducesABoolean(matchContext.getMethodElement())) {
             return new QueryCriteriaMethodMatch(matcher) {
 
                 @Override

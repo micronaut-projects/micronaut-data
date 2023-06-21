@@ -1,0 +1,21 @@
+As seen in the <<azureCosmosQuickStart, Quick Start>> Azure Cosmos Data repositories in Micronaut Data are defined as interfaces that are annotated with the ann:io.micronaut.data.cosmos.annotation.CosmosRepository[].
+
+For example:
+[source,java]
+----
+@CosmosRepository // <1>
+public interface BookRepository extends CrudRepository<Book, String> {
+    Optional<Book> findByAuthorId(@NotNull String authorId);
+}
+----
+<1> @CosmosRepository marking the interface to access Azure Cosmos Db
+
+The entity to treat as the root entity for the purposes of querying is established either from the method signature or from the generic type parameter specified to the api:data.repository.GenericRepository[] interface.
+
+If no root entity can be established then a compilation error will occur.
+
+The same interfaces supported by the JPA implementation are supported by Azure Cosmos Data.
+
+Note that in addition to interfaces you can also define repositories as abstract classes:
+
+snippet::example.AbstractBookRepository[project-base="doc-examples/azure-cosmos-example", source="main"]

@@ -29,6 +29,7 @@ import io.micronaut.data.document.tck.entities.Student
 import io.micronaut.data.document.tck.repositories.AuthorRepository
 import io.micronaut.data.document.tck.repositories.BasicTypesRepository
 import io.micronaut.data.document.tck.repositories.BookRepository
+import io.micronaut.data.document.tck.repositories.DocumentRepository
 import io.micronaut.data.document.tck.repositories.DomainEventsRepository
 import io.micronaut.data.document.tck.repositories.PersonRepository
 import io.micronaut.data.document.tck.repositories.SaleRepository
@@ -58,7 +59,6 @@ import java.util.stream.Stream
 
 import static io.micronaut.data.document.tck.repositories.PersonRepository.Specifications.dateOfBirthEquals
 import static io.micronaut.data.document.tck.repositories.PersonRepository.Specifications.nameEquals
-import static io.micronaut.data.repository.jpa.criteria.QuerySpecification.where
 
 abstract class AbstractDocumentRepositorySpec extends Specification {
 
@@ -75,6 +75,8 @@ abstract class AbstractDocumentRepositorySpec extends Specification {
     abstract SaleRepository getSaleRepository()
 
     abstract DomainEventsRepository getEventsRepository()
+
+    abstract DocumentRepository getDocumentRepository()
 
     @AutoCleanup
     @Shared
@@ -109,9 +111,9 @@ abstract class AbstractDocumentRepositorySpec extends Specification {
                 ))])
     }
 
-    protected void savePersons(List<String> names) {
+    protected List<Person> savePersons(List<String> names) {
         int i = 0
-        personRepository.saveAll(names.collect { new Person(name: it, dateOfBirth: LocalDate.of(1986, 6, 1 + i++)) })
+        return personRepository.saveAll(names.collect { new Person(name: it, dateOfBirth: LocalDate.of(1986, 6, 1 + i++)) })
     }
 
     protected void setup() {
@@ -886,11 +888,11 @@ abstract class AbstractDocumentRepositorySpec extends Specification {
             personRepository.findOne(dateOfBirthEquals(LocalDate.of(1986, 6, 2))).get().name == "James"
             personRepository.findOne(nameEquals("Jeff")).isPresent()
             !personRepository.findOne(nameEquals("Denis")).isPresent()
-            personRepository.findOne(where(nameEquals("Jeff"))).isPresent()
-            !personRepository.findOne(where(nameEquals("Denis"))).isPresent()
+            personRepository.findOne(QuerySpecification.where(nameEquals("Jeff"))).isPresent()
+            !personRepository.findOne(QuerySpecification.where(nameEquals("Denis"))).isPresent()
         then:
             personRepository.findAll(nameEquals("Jeff")).size() == 1
-            personRepository.findAll(where(nameEquals("Jeff"))).size() == 1
+            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff"))).size() == 1
             personRepository.findAll(nameEquals("Denis")).size() == 0
             personRepository.findAll(null as QuerySpecification).size() == 2
             personRepository.findAll(null as PredicateSpecification).size() == 2
@@ -898,12 +900,12 @@ abstract class AbstractDocumentRepositorySpec extends Specification {
             personRepository.findAll(nameEquals("Jeff").and(nameEquals("Denis"))).size() == 0
             personRepository.findAll(nameEquals("Jeff").and(nameEquals("Jeff"))).size() == 1
             personRepository.findAll(nameEquals("Jeff").or(nameEquals("James"))).size() == 2
-            personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("Denis"))).size() == 1
-            personRepository.findAll(where(nameEquals("Jeff")).and(nameEquals("Denis"))).size() == 0
-            personRepository.findAll(where(nameEquals("Jeff")).and(nameEquals("Jeff"))).size() == 1
-            personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James"))).size() == 2
-            personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.desc("name")))[1].name == "James"
-            personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.asc("name")))[1].name == "Jeff"
+            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("Denis"))).size() == 1
+            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).and(nameEquals("Denis"))).size() == 0
+            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).and(nameEquals("Jeff"))).size() == 1
+            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("James"))).size() == 2
+            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.desc("name")))[1].name == "James"
+            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.asc("name")))[1].name == "Jeff"
         when:
             def unpaged = personRepository.findAll(nameEquals("Jeff").or(nameEquals("James")), Pageable.UNPAGED)
         then:
@@ -933,7 +935,7 @@ abstract class AbstractDocumentRepositorySpec extends Specification {
             pagedSortedDesc.totalPages == 2
             pagedSortedDesc.totalSize == 2
         when:
-            def pagedSortedAsc = personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James")), Pageable.from(0, 1).order(Sort.Order.asc("name")))
+            def pagedSortedAsc = personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("James")), Pageable.from(0, 1).order(Sort.Order.asc("name")))
         then:
             pagedSortedAsc.content.size() == 1
             pagedSortedAsc.content[0].name == "James"
@@ -949,11 +951,11 @@ abstract class AbstractDocumentRepositorySpec extends Specification {
         then:
             countOneByPredicateSpec == 1
         when:
-            def countAllByQuerySpec = personRepository.count(where(nameEquals("Jeff").or(nameEquals("James"))))
+            def countAllByQuerySpec = personRepository.count(QuerySpecification.where(nameEquals("Jeff").or(nameEquals("James"))))
         then:
             countAllByQuerySpec == 2
         when:
-            def countOneByQuerySpec = personRepository.count(where(nameEquals("Jeff")))
+            def countOneByQuerySpec = personRepository.count(QuerySpecification.where(nameEquals("Jeff")))
         then:
             countOneByQuerySpec == 1
         when:
@@ -1231,4 +1233,63 @@ abstract class AbstractDocumentRepositorySpec extends Specification {
             emptyAuthors.size() == 0
     }
 
+    void "test find (not)equal/partial case (in)sensitive"() {
+        given:
+        savePersons(["John", "Michael", "Hellen"])
+        when:
+        def people = personRepository.findAll()
+        then:
+        people.size() == 3
+        when:
+        def optPerson = personRepository.findByNameEqualIgnoreCase("michael")
+        def otherPeople = personRepository.findByNameNotEqualIgnoreCase("HELLEN")
+        then:
+        optPerson.present
+        optPerson.get().name == "Michael"
+        otherPeople.size() == 2
+        otherPeople.every{ it.name != 'Hellen'}
+        when:
+        people = personRepository.findByNameStartsWith("Mich")
+        otherPeople = personRepository.findByNameStartsWith("he")
+        then:
+        people.size() == 1
+        people[0].name == "Michael"
+        otherPeople.size() == 0
+        when:
+        people = personRepository.findByNameStartsWithIgnoreCase("jo")
+        otherPeople = personRepository.findByNameStartsWithIgnoreCase("Heel")
+        then:
+        people.size() == 1
+        people[0].name == "John"
+        otherPeople.size() == 0
+        when:
+        people = personRepository.findByNameEndsWith("hael")
+        otherPeople = personRepository.findByNameEndsWith("ELLEN")
+        then:
+        people.size() == 1
+        people[0].name == "Michael"
+        otherPeople.size() == 0
+        when:
+        people = personRepository.findByNameEndsWithIgnoreCase("ellen")
+        otherPeople = personRepository.findByNameEndsWithIgnoreCase("hael1")
+        then:
+        people.size() == 1
+        people[0].name == "Hellen"
+        otherPeople.size() == 0
+        when:
+        people = personRepository.findByNameContains("oh")
+        otherPeople = personRepository.findByNameContains("OH")
+        then:
+        people.size() == 1
+        people[0].name == "John"
+        otherPeople.size() == 0
+        when:
+        people = personRepository.findByNameContainsIgnoreCase("oh")
+        otherPeople = personRepository.findByNameContainsIgnoreCase("OH")
+        then:
+        people.size() == 1
+        people[0].name == "John"
+        otherPeople.size() == 1
+        otherPeople[0].name == "John"
+    }
 }

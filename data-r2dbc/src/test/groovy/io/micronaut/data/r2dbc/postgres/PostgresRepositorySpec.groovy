@@ -158,4 +158,16 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
         return true
     }
 
+    void "test @Where annotation"() {
+        given:
+        setupBooks()
+
+        when:
+        def size = bookRepository.countNativeByTitleWithPagesGreaterThan("The%", 300)
+        def books = bookRepository.findByTitleStartsWith("The", 300)
+
+        then:
+        books.size() == size
+    }
+
 }

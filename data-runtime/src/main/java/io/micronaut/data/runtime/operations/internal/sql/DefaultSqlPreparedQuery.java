@@ -15,9 +15,12 @@
  */
 package io.micronaut.data.runtime.operations.internal.sql;
 
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.annotation.QueryResult;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
@@ -25,6 +28,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
+import io.micronaut.data.model.runtime.QueryResultInfo;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.runtime.operations.internal.query.DefaultBindableParametersPreparedQuery;
@@ -46,10 +50,11 @@ import java.util.Map;
  * @since 3.5.0
  */
 @Internal
-public final class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPreparedQuery<E, R> implements SqlPreparedQuery<E, R>, DelegatePreparedQuery<E, R> {
+public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPreparedQuery<E, R> implements SqlPreparedQuery<E, R>, DelegatePreparedQuery<E, R> {
 
-    private final SqlStoredQuery<E, R> sqlStoredQuery;
-    private String query;
+    protected final SqlStoredQuery<E, R> sqlStoredQuery;
+    protected String query;
+    protected final QueryResultInfo queryResultInfo;
 
     public DefaultSqlPreparedQuery(PreparedQuery<E, R> preparedQuery) {
         this(preparedQuery, (SqlStoredQuery<E, R>) ((DelegateStoredQuery<Object, Object>) preparedQuery).getStoredQueryDelegate());
@@ -59,12 +64,14 @@ public final class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParamete
         super(preparedQuery);
         this.sqlStoredQuery = sqlStoredQuery;
         this.query = sqlStoredQuery.getQuery();
+        this.queryResultInfo = createQueryResultInfo();
     }
 
     public DefaultSqlPreparedQuery(SqlStoredQuery<E, R> sqlStoredQuery) {
         super(new DummyPreparedQuery<>(sqlStoredQuery), null, sqlStoredQuery);
         this.sqlStoredQuery = sqlStoredQuery;
         this.query = sqlStoredQuery.getQuery();
+        this.queryResultInfo = createQueryResultInfo();
     }
 
     @Override
@@ -132,7 +139,13 @@ public final class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParamete
         }
     }
 
-    private int getQueryParameterValueSize(QueryParameterBinding parameter) {
+    /**
+     * Gets number of parameter values for the query parameter binding (used for IN for example).
+     *
+     * @param parameter the query binding parameter
+     * @return number of parameter values in query parameter binding
+     */
+    protected int getQueryParameterValueSize(QueryParameterBinding parameter) {
         int parameterIndex = parameter.getParameterIndex();
         Object value;
         if (parameterIndex == -1) {
@@ -143,6 +156,7 @@ public final class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParamete
         return sizeOf(value);
     }
 
+    @Override
     public void attachPageable(Pageable pageable, boolean isSingleResult) {
         if (pageable != Pageable.UNPAGED) {
             RuntimePersistentEntity<E> persistentEntity = getPersistentEntity();
@@ -150,11 +164,11 @@ public final class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParamete
             StringBuilder added = new StringBuilder();
             Sort sort = pageable.getSort();
             if (sort.isSorted()) {
-                added.append(queryBuilder.buildOrderBy(persistentEntity, sort).getQuery());
+                added.append(queryBuilder.buildOrderBy("", persistentEntity, sqlStoredQuery.getAnnotationMetadata(), sort).getQuery());
             } else if (isSqlServerWithoutOrderBy(query, sqlStoredQuery.getDialect())) {
                 // SQL server requires order by
                 sort = sortById(persistentEntity);
-                added.append(queryBuilder.buildOrderBy(persistentEntity, sort).getQuery());
+                added.append(queryBuilder.buildOrderBy("", persistentEntity, sqlStoredQuery.getAnnotationMetadata(), sort).getQuery());
             }
             if (isSingleResult && pageable.getOffset() > 0) {
                 pageable = Pageable.from(pageable.getNumber(), 1);
@@ -170,6 +184,11 @@ public final class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParamete
                 query += added;
             }
         }
+    }
+
+    @Override
+    public QueryResultInfo getQueryResultInfo() {
+        return queryResultInfo;
     }
 
     /**
@@ -207,7 +226,7 @@ public final class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParamete
      * @param value The value
      * @return The size
      */
-    private int sizeOf(Object value) {
+    protected int sizeOf(Object value) {
         if (value == null) {
             return 1;
         }
@@ -227,4 +246,14 @@ public final class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParamete
         return 1;
     }
 
+    private QueryResultInfo createQueryResultInfo() {
+        if (!sqlStoredQuery.getAnnotationMetadata().hasAnnotation(QueryResult.class)) {
+            return null;
+        }
+        AnnotationValue<QueryResult> queryResultAnn = sqlStoredQuery.getAnnotationMetadata().getAnnotation(QueryResult.class);
+        QueryResult.Type type =  queryResultAnn.enumValue("type", QueryResult.Type.class).orElse(QueryResult.Type.JSON);
+        String columnName = queryResultAnn.getRequiredValue("column", String.class);
+        JsonDataType jsonDataType = type == QueryResult.Type.JSON ? queryResultAnn.enumValue("jsonDataType", JsonDataType.class).orElse(JsonDataType.DEFAULT) : null;
+        return new QueryResultInfo(type, columnName, jsonDataType);
+    }
 }

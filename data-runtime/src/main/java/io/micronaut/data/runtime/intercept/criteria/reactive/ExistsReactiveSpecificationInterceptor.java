@@ -44,6 +44,7 @@ public class ExistsReactiveSpecificationInterceptor extends AbstractReactiveSpec
     public Publisher<Boolean> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Publisher<Boolean>> context) {
         PreparedQuery<?, Boolean> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.EXISTS);
         return Publishers.convertPublisher(
+            conversionService,
             reactiveOperations.exists(preparedQuery),
             context.getReturnType().getType()
         );

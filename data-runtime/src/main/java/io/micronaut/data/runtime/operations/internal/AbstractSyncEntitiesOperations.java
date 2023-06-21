@@ -49,7 +49,7 @@ public abstract class AbstractSyncEntitiesOperations<Ctx extends OperationContex
 
     protected final Ctx ctx;
     protected final SyncCascadeOperations<Ctx> cascadeOperations;
-    protected final ConversionService<?> conversionService;
+    protected final ConversionService conversionService;
     protected final List<Data> entities;
     protected final boolean insert;
     protected final boolean hasGeneratedId;
@@ -67,7 +67,7 @@ public abstract class AbstractSyncEntitiesOperations<Ctx extends OperationContex
      */
     protected AbstractSyncEntitiesOperations(Ctx ctx,
                                              SyncCascadeOperations<Ctx> cascadeOperations,
-                                             ConversionService<?> conversionService,
+                                             ConversionService conversionService,
                                              EntityEventListener<Object> entityEventListener,
                                              RuntimePersistentEntity<T> persistentEntity,
                                              Iterable<T> entities,

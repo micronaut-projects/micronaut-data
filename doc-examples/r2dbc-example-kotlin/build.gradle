@@ -1,13 +1,11 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
 plugins {
     id "org.jetbrains.kotlin.jvm"
     id "org.jetbrains.kotlin.kapt"
     id "org.jetbrains.kotlin.plugin.allopen"
-    id "io.micronaut.application"
+    id "io.micronaut.test-resources"
     id "io.micronaut.build.internal.data-kotlin-example"
-}
-
-repositories {
-    mavenCentral()
 }
 
 application {
@@ -15,28 +13,34 @@ application {
 }
 
 micronaut {
-    project.ext.micronautVersion
-    version project.ext.micronautVersion
+    version libs.versions.micronaut.platform.get()
     runtime "netty"
     testRuntime "junit5"
+    testResources {
+        additionalModules.add(KnownModules.R2DBC_MARIADB)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
 }
 
 dependencies {
-    kapt project(":data-processor")
-    implementation project(":data-r2dbc")
-    implementation("io.micronaut.flyway:micronaut-flyway")
-    implementation "io.micronaut.sql:micronaut-jdbc-hikari"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactive"
-    implementation libs.micronaut.serde.support
+    kapt projects.micronautDataProcessor
+    implementation projects.micronautDataR2dbc
+    implementation mnSql.micronaut.jdbc.hikari
+    implementation libs.kotlin.coroutines
+    implementation libs.kotlin.coroutines.reactive
+    implementation libs.kotlin.coroutines.reactor
+    implementation mnSerde.micronaut.serde.support
+    implementation mnKotlin.micronaut.kotlin.runtime
+    implementation libs.jakarta.persistence.api
 
-    runtimeOnly libs.drivers.r2dbc.postgresql
-    runtimeOnly libs.drivers.jdbc.postgresql
+    runtimeOnly mnR2dbc.r2dbc.mariadb
+    runtimeOnly mnSql.mariadb.java.client
+    runtimeOnly mnFlyway.micronaut.flyway
+    runtimeOnly mnFlyway.flyway.mysql
 
-    testImplementation "io.micronaut:micronaut-http-client"
-    testImplementation "org.testcontainers:postgresql"
+    testImplementation mn.micronaut.http.client
+    compileOnly mnSerde.micronaut.serde.api
 
-    // h2
-    testImplementation 'io.r2dbc:r2dbc-h2'
-    testRuntimeOnly "com.h2database:h2"
+    testResourcesService mnSql.mariadb.java.client
 }

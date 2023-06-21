@@ -22,6 +22,7 @@ import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.runtime.DelegatingQueryParameterBinding;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
@@ -93,7 +94,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
         RuntimePersistentEntity<E> persistentEntity = getPersistentEntity();
         Class<?> parameterConverter = binding.getParameterConverterClass();
         Object value = binding.getValue();
-        RuntimePersistentProperty<?> persistentProperty = null;
+        RuntimePersistentProperty<Object> persistentProperty = null;
         Argument<?> argument = null;
         if (value == null) {
             if (binding.getParameterIndex() != -1) {
@@ -102,7 +103,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
                 argument = invocationContext.getArguments()[binding.getParameterIndex()];
             } else if (binding.isAutoPopulated()) {
                 PersistentPropertyPath pp = getRequiredPropertyPath(binding, persistentEntity);
-                persistentProperty = (RuntimePersistentProperty) pp.getProperty();
+                persistentProperty = (RuntimePersistentProperty<Object>) pp.getProperty();
                 if (binding.isRequiresPreviousPopulatedValue()) {
                     if (previousValues != null) {
                         value = previousValues.get(binding);
@@ -126,9 +127,13 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
                 value = binder.convert(value, persistentProperty);
                 parameterConverter = null;
             } else if (entity != null) {
-                PersistentPropertyPath pp = getRequiredPropertyPath(binding, persistentEntity);
-                value = pp.getPropertyValue(entity);
-                persistentProperty = (RuntimePersistentProperty<?>) pp.getProperty();
+                if (isJsonEntity() && binding.getDataType() == DataType.JSON) {
+                    value = entity;
+                } else {
+                    PersistentPropertyPath pp = getRequiredPropertyPath(binding, persistentEntity);
+                    value = pp.getPropertyValue(entity);
+                    persistentProperty = (RuntimePersistentProperty<Object>) pp.getProperty();
+                }
             } else {
                 int currentIndex = binder.currentIndex();
                 if (currentIndex != -1) {
@@ -149,6 +154,11 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
                     public DataType getDataType() {
                         return finalPersistentProperty.getDataType();
                     }
+
+                    @Override
+                    public JsonDataType getJsonDataType() {
+                        return finalPersistentProperty.getJsonDataType();
+                    }
                 };
             }
         }
@@ -157,10 +167,6 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
         if (values != null && values.isEmpty()) {
             // Empty collections / array should always set at least one value
             value = null;
-            values = null;
-        } else if (values != null && values.size() == 1) {
-            // Bind as one if the expanded collections is just one item
-            value = values.iterator().next();
             values = null;
         }
         if (values == null) {

@@ -1,23 +1,20 @@
 package io.micronaut.data.jdbc.mariadb
 
+import groovy.transform.Memoized
 import io.micronaut.data.jdbc.AbstractManualSchemaSpec
 import io.micronaut.data.jdbc.mysql.MySqlPatientRepository
-import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.data.tck.repositories.PatientRepository
 
 
-class MariaManualSchemaSpec extends AbstractManualSchemaSpec {
+class MariaManualSchemaSpec extends AbstractManualSchemaSpec implements MariaTestPropertyProvider {
 
     @Override
-    Dialect dialect() {
-        Dialect.MYSQL
+    SchemaGenerate schemaGenerate() {
+        SchemaGenerate.NONE
     }
 
-    @Override
-    String driverName() {
-        "mariadb"
-    }
-
+    @Memoized
     @Override
     PatientRepository getPatientRepository() {
         return context.getBean(MySqlPatientRepository)

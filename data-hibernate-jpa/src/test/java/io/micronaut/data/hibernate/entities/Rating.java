@@ -3,7 +3,7 @@ package io.micronaut.data.hibernate.entities;
 import io.micronaut.data.tck.entities.Author;
 import io.micronaut.data.tck.entities.Book;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.UUID;
 
 @NamedEntityGraph(
@@ -26,6 +26,7 @@ import java.util.UUID;
 public class Rating {
     @Id
     @GeneratedValue
+    @Column(columnDefinition = "uuid")
     UUID id;
 
     @Column(nullable = false)

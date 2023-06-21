@@ -33,7 +33,7 @@ import java.util.List;
 @Internal
 public abstract class SyncEntitiesOperations<T, Exc extends Exception> extends EntitiesOperations<T, Exc> {
 
-    public SyncEntitiesOperations(EntityEventListener<Object> entityEventListener, RuntimePersistentEntity<T> persistentEntity, ConversionService<?> conversionService) {
+    public SyncEntitiesOperations(EntityEventListener<Object> entityEventListener, RuntimePersistentEntity<T> persistentEntity, ConversionService conversionService) {
         super(entityEventListener, persistentEntity, conversionService);
     }
 

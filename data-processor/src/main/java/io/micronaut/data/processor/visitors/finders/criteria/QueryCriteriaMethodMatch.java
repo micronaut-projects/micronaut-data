@@ -24,6 +24,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
@@ -38,7 +39,6 @@ import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaQuery;
 import io.micronaut.data.processor.model.criteria.impl.MethodMatchSourcePersistentEntityCriteriaBuilderImpl;
-import io.micronaut.data.processor.visitors.AnnotationMetadataHierarchy;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MatchFailedException;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
@@ -46,6 +46,7 @@ import io.micronaut.data.processor.visitors.finders.AbstractCriteriaMethodMatch;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.data.processor.visitors.finders.Projections;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
+import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.PrimitiveElement;
 import jakarta.persistence.criteria.Order;
@@ -229,7 +230,14 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             for (QueryModel.Criterion criterion : junction.getCriteria()) {
                 countQuery.add(criterion);
             }
+            // Joins are skipped for count query for OneToMany, ManyToMany
+            // however skipping joins from criteria could cause issues (in many to many?)
             for (JoinPath joinPath : queryModel.getJoinPaths()) {
+                Association association = joinPath.getAssociation();
+                if (association != null && !association.getKind().isSingleEnded()) {
+                    // skip OneToMany and ManyToMany
+                    continue;
+                }
                 Join.Type joinType = joinPath.getJoinType();
                 switch (joinType) {
                     case INNER:
@@ -262,10 +270,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
     }
 
     private boolean isDtoType(ClassElement classElement) {
-        if (classElement.getName().equals("org.bson.BsonDocument")) {
-            return true;
-        }
-        return false;
+        return classElement.getName().equals("org.bson.BsonDocument");
     }
 
     private List<SourcePersistentProperty> getDtoProjectionProperties(SourcePersistentEntity entity,
@@ -367,12 +372,12 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         return querySequence;
     }
 
-    private <T> io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<Object> findOrderProperty(PersistentEntityRoot<T> root, String propertyName) {
+    private <T> io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> findOrderProperty(PersistentEntityRoot<T> root, String propertyName) {
         if (root.getPersistentEntity().getPropertyByName(propertyName) != null) {
             return root.get(propertyName);
         }
         // Look at association paths
-        io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<Object> property = findProperty(root, propertyName);
+        io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> property = findProperty(root, propertyName);
         if (property != null) {
             return property;
         }
@@ -404,7 +409,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                 if (propertyPath != null) {
                     selectionList.add(propertyPath);
                 } else {
-                    Selection<?> selection = Projections.find(root, cb, projection);
+                    Selection<?> selection = Projections.find(root, cb, projection, this::findProperty);
                     if (selection != null) {
                         selectionList.add(selection);
                     }

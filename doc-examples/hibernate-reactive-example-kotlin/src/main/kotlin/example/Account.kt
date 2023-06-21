@@ -2,7 +2,7 @@ package example
 
 import java.nio.charset.StandardCharsets
 import java.util.*
-import javax.persistence.*
+import jakarta.persistence.*
 
 @Entity
 data class Account(@GeneratedValue @Id

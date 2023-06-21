@@ -15,12 +15,9 @@
  */
 package io.micronaut.data.model.runtime;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
-import io.micronaut.transaction.TransactionDefinition;
-
-import java.util.Optional;
 
 /**
  * Common super interface for all stored operations.
@@ -32,14 +29,6 @@ import java.util.Optional;
  * @param <R> the result type
  */
 public interface StoredDataOperation<R> extends AnnotationMetadataProvider {
-
-    /**
-     * @return If the operation defines a transaction this method returned it.
-     * @since 2.2.0
-     */
-    default @NonNull Optional<TransactionDefinition> getTransactionDefinition() {
-        return Optional.empty();
-    }
 
     /**
      * @return The query result type

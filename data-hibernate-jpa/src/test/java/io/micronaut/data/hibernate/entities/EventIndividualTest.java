@@ -4,7 +4,7 @@ import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.DateCreated;
 import io.micronaut.data.annotation.DateUpdated;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -17,6 +17,7 @@ public class EventIndividualTest {
     @GeneratedValue
     private Long id;
     @AutoPopulated
+    @Column(columnDefinition = "uuid")
     private UUID uuid;
 
     @DateCreated
@@ -25,6 +26,7 @@ public class EventIndividualTest {
     @DateUpdated
     private LocalDateTime dateUpdated;
 
+    @Column(name = "int_value")
     private int value;
 
     public EventIndividualTest(int value) {

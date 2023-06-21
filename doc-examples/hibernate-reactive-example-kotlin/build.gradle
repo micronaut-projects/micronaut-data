@@ -1,10 +1,9 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
 plugins {
-    id "org.jetbrains.kotlin.jvm"
-    id "org.jetbrains.kotlin.kapt"
-    id "org.jetbrains.kotlin.plugin.allopen"
     id "org.jetbrains.kotlin.plugin.jpa"
-    id "io.micronaut.application"
     id "io.micronaut.build.internal.data-kotlin-example"
+    id "io.micronaut.test-resources"
 }
 
 application {
@@ -12,23 +11,33 @@ application {
 }
 
 micronaut {
-    version micronautVersion
+    version libs.versions.micronaut.platform.get()
     runtime "netty"
     testRuntime "junit5"
+    testResources {
+        enabled = true
+        inferClasspath = false
+        additionalModules.add(KnownModules.HIBERNATE_REACTIVE_POSTGRESQL)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
 }
 
 dependencies {
-    kapt "io.micronaut:micronaut-validation"
-    annotationProcessor projects.dataProcessor
+    kapt mnValidation.micronaut.validation
+    kapt projects.micronautDataProcessor
 
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactive"
-    implementation "io.micronaut:micronaut-http-client"
-    implementation projects.dataHibernateReactive
-    implementation "io.micronaut.reactor:micronaut-reactor"
+    implementation libs.kotlin.coroutines
+    implementation libs.kotlin.coroutines.reactive
+    implementation libs.kotlin.coroutines.reactor
+    implementation mn.micronaut.http.client
+    implementation projects.micronautDataHibernateReactive
+    implementation mnReactor.micronaut.reactor
+    implementation mnKotlin.micronaut.kotlin.runtime
 
-    runtimeOnly "ch.qos.logback:logback-classic"
-    runtimeOnly libs.drivers.vertx.pg
+    runtimeOnly mnLogging.logback.classic
+    runtimeOnly mnSql.vertx.pg.client
 
-    testImplementation libs.testcontainers.postgresql
+    testResourcesService mnSql.postgresql
+    testRuntimeOnly mnSql.ongres.scram.client
 }

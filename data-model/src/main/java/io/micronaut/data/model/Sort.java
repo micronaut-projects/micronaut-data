@@ -16,13 +16,17 @@
 package io.micronaut.data.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.micronaut.context.annotation.DefaultImplementation;
+import io.micronaut.core.annotation.Creator;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.serde.annotation.Serdeable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -35,6 +39,8 @@ import java.util.Objects;
  * @since 1.0
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Serdeable
+@DefaultImplementation(DefaultSort.class)
 public interface Sort {
 
     /**
@@ -45,6 +51,7 @@ public interface Sort {
     /**
      * @return Is sorting applied
      */
+    @JsonIgnore
     boolean isSorted();
 
     /**
@@ -117,6 +124,7 @@ public interface Sort {
     /**
      * The ordering of results.
      */
+    @Serdeable
     class Order {
         private final String property;
         private final Direction direction;
@@ -137,6 +145,7 @@ public interface Sort {
          * @param ignoreCase Whether to ignore case
          */
         @JsonCreator
+        @Creator
         public Order(
                 @JsonProperty("property") @NonNull String property,
                 @JsonProperty("direction") @NonNull Direction direction,

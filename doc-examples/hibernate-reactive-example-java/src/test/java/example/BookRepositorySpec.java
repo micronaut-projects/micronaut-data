@@ -7,7 +7,6 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 
 import java.util.Arrays;
 import java.util.List;
@@ -17,8 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MicronautTest(transactional = false)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class BookRepositorySpec implements PostgresHibernateReactiveProperties {
+class BookRepositorySpec {
 
     // tag::inject[]
     @Inject

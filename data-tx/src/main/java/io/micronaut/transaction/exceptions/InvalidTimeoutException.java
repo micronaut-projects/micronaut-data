@@ -27,7 +27,6 @@ import java.time.Duration;
  * @author graemerocher
  * @since 12.05.2003
  */
-@SuppressWarnings("serial")
 public class InvalidTimeoutException extends TransactionUsageException {
 
     private final Duration timeout;

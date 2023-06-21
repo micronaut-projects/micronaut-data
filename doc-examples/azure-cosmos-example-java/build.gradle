@@ -1,0 +1,27 @@
+plugins {
+    id "java"
+    id "io.micronaut.build.internal.data-example"
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "junit5"
+}
+
+dependencies {
+    annotationProcessor projects.micronautDataDocumentProcessor
+
+    compileOnly libs.javax.persistence.api
+
+    implementation projects.micronautDataAzureCosmos
+    implementation libs.jakarta.persistence.api
+
+    runtimeOnly mnLogging.logback.classic
+
+    testImplementation libs.testcontainers.azure
+}

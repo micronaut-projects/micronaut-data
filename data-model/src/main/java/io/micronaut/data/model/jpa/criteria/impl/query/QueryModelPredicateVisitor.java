@@ -66,8 +66,7 @@ public class QueryModelPredicateVisitor implements PredicateVisitor {
     private void visit(IExpression<Boolean> expression) {
         if (expression instanceof PredicateVisitable) {
             ((PredicateVisitable) expression).accept(this);
-        } else if (expression instanceof PersistentPropertyPath) {
-            PersistentPropertyPath<?> propertyPath = (PersistentPropertyPath<?>) expression;
+        } else if (expression instanceof PersistentPropertyPath<?> propertyPath) {
             // TODO
             add(Restrictions.isTrue(getPropertyPath(propertyPath)));
         } else {
@@ -223,6 +222,8 @@ public class QueryModelPredicateVisitor implements PredicateVisitor {
                 return Restrictions.startsWith(leftProperty, rightProperty).ignoreCase(true);
             case ENDS_WITH_IGNORE_CASE:
                 return Restrictions.endsWith(leftProperty, rightProperty).ignoreCase(true);
+            case ARRAY_CONTAINS:
+                return Restrictions.arrayContains(leftProperty, rightProperty);
             default:
                 throw new IllegalStateException("Unsupported property to value operation: " + op);
         }

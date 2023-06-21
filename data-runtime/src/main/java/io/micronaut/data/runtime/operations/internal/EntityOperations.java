@@ -31,7 +31,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 @Internal
 public abstract class EntityOperations<T, Exc extends Exception> extends BaseOperations<T, Exc> {
 
-    public EntityOperations(EntityEventListener<Object> entityEventListener, RuntimePersistentEntity<T> persistentEntity, ConversionService<?> conversionService) {
+    public EntityOperations(EntityEventListener<Object> entityEventListener, RuntimePersistentEntity<T> persistentEntity, ConversionService conversionService) {
         super(entityEventListener, persistentEntity, conversionService);
     }
 

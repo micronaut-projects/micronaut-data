@@ -21,14 +21,12 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.Query;
-import io.micronaut.data.annotation.QueryHint;
-import io.micronaut.data.annotation.RepositoryConfiguration;
-import io.micronaut.data.annotation.TypeRole;
+import io.micronaut.data.annotation.*;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.intercept.annotation.DataMethodQueryParameter;
 import io.micronaut.data.model.AssociationUtils;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.DefaultStoredDataOperation;
@@ -78,6 +76,8 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     private Map<String, Object> queryHints;
     private Set<JoinPath> joinFetchPaths = null;
     private final List<StoredQueryParameter> queryParameters;
+    private final boolean rawQuery;
+    private final boolean jsonEntity;
 
     /**
      * The default constructor.
@@ -97,7 +97,8 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
             boolean isCount,
             HintsCapableRepository repositoryOperations) {
         super(method);
-        this.resultType = ReflectionUtils.getWrapperType(resultType);
+        //noinspection unchecked
+        this.resultType = (Class<RT>) ReflectionUtils.getWrapperType(resultType);
         this.rootEntity = rootEntity;
         this.annotationMetadata = method.getAnnotationMetadata();
         this.isNative = method.isTrue(Query.class, "nativeQuery");
@@ -110,10 +111,14 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
                 method.intValue(DATA_METHOD_ANN_NAME, META_MEMBER_PAGE_SIZE).orElse(-1) > -1;
 
         if (isCount) {
-            this.query = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_COUNT_QUERY).orElse(query);
+            Optional<String> rawCountQueryString = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_COUNT_QUERY);
+            this.rawQuery = rawCountQueryString.isPresent();
+            this.query = rawCountQueryString.orElse(query);
             this.queryParts = method.stringValues(DataMethod.class, DataMethod.META_MEMBER_EXPANDABLE_COUNT_QUERY);
         } else {
-            this.query = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).orElse(query);
+            Optional<String> rawQueryString = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY);
+            this.rawQuery = rawQueryString.isPresent();
+            this.query = rawQueryString.orElse(query);
             this.queryParts = method.stringValues(DataMethod.class, DataMethod.META_MEMBER_EXPANDABLE_QUERY);
         }
         this.method = method;
@@ -166,10 +171,13 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
                 if (parameterBindingPath.length == 0) {
                     parameterBindingPath = null;
                 }
+                DataType dataType = isNumericPlaceHolder ? av.enumValue(DataMethodQueryParameter.META_MEMBER_DATA_TYPE, DataType.class).orElse(DataType.OBJECT) : null;
+                JsonDataType jsonDataType = dataType != null ? av.enumValue(DataMethodQueryParameter.META_MEMBER_JSON_DATA_TYPE, JsonDataType.class).orElse(JsonDataType.DEFAULT) : null;
                 queryParameters.add(
                         new StoredQueryParameter(
                                 av.stringValue(DataMethodQueryParameter.META_MEMBER_NAME).orElse(null),
-                                isNumericPlaceHolder ? av.enumValue(DataMethodQueryParameter.META_MEMBER_DATA_TYPE, DataType.class).orElse(DataType.OBJECT) : null,
+                                dataType,
+                                jsonDataType,
                                 av.intValue(DataMethodQueryParameter.META_MEMBER_PARAMETER_INDEX).orElse(-1),
                                 parameterBindingPath,
                                 propertyPath,
@@ -182,6 +190,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
             }
             this.queryParameters = queryParameters;
         }
+        this.jsonEntity = DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(annotationMetadata);
     }
 
     @Override
@@ -337,6 +346,16 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     @Override
     public boolean isOptimisticLock() {
         return isOptimisticLock;
+    }
+
+    @Override
+    public boolean isRawQuery() {
+        return this.rawQuery;
+    }
+
+    @Override
+    public boolean isJsonEntity() {
+        return jsonEntity;
     }
 
     @Override

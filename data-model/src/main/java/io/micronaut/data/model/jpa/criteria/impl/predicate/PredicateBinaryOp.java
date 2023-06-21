@@ -44,6 +44,7 @@ public enum PredicateBinaryOp {
     ENDS_WITH,
     STARTS_WITH_IGNORE_CASE,
     ENDS_WITH_IGNORE_CASE,
+    ARRAY_CONTAINS,
     ;
 
     @Nullable

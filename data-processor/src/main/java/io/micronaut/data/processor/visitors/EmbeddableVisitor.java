@@ -29,7 +29,7 @@ import io.micronaut.inject.visitor.VisitorContext;
  */
 public class EmbeddableVisitor implements TypeElementVisitor<Embeddable, Object> {
 
-    private MappedEntityVisitor mappedEntityVisitor = new MappedEntityVisitor(false);
+    private final MappedEntityVisitor mappedEntityVisitor = new MappedEntityVisitor(false);
 
     @Override
     public void visitClass(ClassElement element, VisitorContext context) {

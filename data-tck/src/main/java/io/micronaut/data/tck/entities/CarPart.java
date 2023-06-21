@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.tck.entities;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "car_parts", schema = "ford", catalog = "ford_cat")

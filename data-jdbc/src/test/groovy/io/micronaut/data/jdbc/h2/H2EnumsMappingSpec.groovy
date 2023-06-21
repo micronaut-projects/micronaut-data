@@ -20,10 +20,10 @@ import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
-import javax.persistence.Entity
-import javax.persistence.EnumType
-import javax.persistence.Enumerated
-import javax.transaction.Transactional
+import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
+import jakarta.transaction.Transactional
 
 @MicronautTest
 class H2EnumsMappingSpec extends Specification implements H2TestPropertyProvider {

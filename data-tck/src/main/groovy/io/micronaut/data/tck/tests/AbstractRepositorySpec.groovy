@@ -69,7 +69,6 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.stream.Collectors
 
-import static io.micronaut.data.repository.jpa.criteria.QuerySpecification.where
 import static io.micronaut.data.tck.repositories.BookSpecifications.hasChapter
 import static io.micronaut.data.tck.repositories.BookSpecifications.titleEquals
 import static io.micronaut.data.tck.repositories.BookSpecifications.titleEqualsWithJoin
@@ -110,6 +109,10 @@ abstract class AbstractRepositorySpec extends Specification {
     @Shared
     Optional<SynchronousTransactionManager<Connection>> transactionManager = context.findBean(SynchronousTransactionManager)
 
+    ApplicationContext getApplicationContext() {
+        return context
+    }
+
     boolean isOracle() {
         return false
     }
@@ -118,7 +121,7 @@ abstract class AbstractRepositorySpec extends Specification {
         return false
     }
 
-    protected void savePersons(List<String> names) {
+    protected List<Person> savePersons(List<String> names) {
         personRepository.saveAll(names.collect { new Person(name: it) })
     }
 
@@ -288,6 +291,19 @@ abstract class AbstractRepositorySpec extends Specification {
         retrievedBookProj.offsetDateTime == book.offsetDateTime
         retrievedBookProj.dateCreated == book.dateCreated
         retrievedBookProj.dateUpdated == book.dateUpdated
+
+        if (supportsNullCharacter()) {
+            when: "Loading character as null"
+            book.wrapperChar = null
+            book = basicTypeRepository.update(book)
+            retrievedBook = basicTypeRepository.findById(book.myId).orElse(null)
+            then: "Object loaded without errors"
+            book.wrapperChar == null
+            retrievedBook
+            // Since default field value is 'c', db value will be null and won't be set and will remain 'c'
+            // The point of test is that it won't throw error when field value is null
+            retrievedBook.wrapperChar == 'c'
+        }
     }
 
     void "test save and retrieve timezone basic types"() {
@@ -465,7 +481,7 @@ abstract class AbstractRepositorySpec extends Specification {
             "James",
             ["Onur"],
             ["Cemo","Deniz","Olcay"],
-            "Utku");
+            "Utku")
 
         then:"The result is correct"
         persons != null
@@ -598,20 +614,20 @@ abstract class AbstractRepositorySpec extends Specification {
         savePersons(["Jeff", "James"])
 
         when:
-        def people = personRepository.findAll().toList()
+        def people = personRepository.findAll()
         people.forEach() { it.name = it.name + " updated" }
         personRepository.updateAll(people)
-        people = personRepository.findAll().toList()
+        people = personRepository.findAll()
 
         then:
         people.get(0).name.endsWith(" updated")
         people.get(1).name.endsWith(" updated")
 
         when:
-        people = personRepository.findAll().toList()
+        people = personRepository.findAll()
         people.forEach() { it.name = it.name + " X" }
         def peopleUpdated = personRepository.updatePeople(people)
-        people = personRepository.findAll().toList()
+        people = personRepository.findAll()
 
         then:
         peopleUpdated.size() == 2
@@ -644,7 +660,7 @@ abstract class AbstractRepositorySpec extends Specification {
         personRepository.saveCustom([new Person(name: "Abc", age: 12), new Person(name: "Xyz", age: 22)])
 
         when:
-        def people = personRepository.findAll().toList()
+        def people = personRepository.findAll()
 
         then:
         people.size() == 2
@@ -659,7 +675,7 @@ abstract class AbstractRepositorySpec extends Specification {
         personRepository.saveCustomSingle(new Person(name: "Abc", age: 12))
 
         when:
-        def people = personRepository.findAll().toList()
+        def people = personRepository.findAll()
 
         then:
         people.size() == 1
@@ -672,7 +688,7 @@ abstract class AbstractRepositorySpec extends Specification {
 
         when:
         personRepository.updateNamesCustom("Denis", "Dennis")
-        def people = personRepository.findAll().toList()
+        def people = personRepository.findAll()
 
         then:
         people.count { it.name == "Dennis"} == 0
@@ -682,10 +698,10 @@ abstract class AbstractRepositorySpec extends Specification {
     void "test custom update only names"() {
         when:
         savePersons(["Dennis", "Jeff", "James", "Dennis"])
-        def people = personRepository.findAll().toList()
+        def people = personRepository.findAll()
         people.forEach {it.age = 100 }
         personRepository.updateAll(people)
-        people = personRepository.findAll().toList()
+        people = personRepository.findAll()
 
         then:
         people.size() == 4
@@ -697,7 +713,7 @@ abstract class AbstractRepositorySpec extends Specification {
             it.age = -1
         }
         int updated = personRepository.updateCustomOnlyNames(people)
-        people = personRepository.findAll().toList()
+        people = personRepository.findAll()
 
         then:
         updated == 4
@@ -711,10 +727,10 @@ abstract class AbstractRepositorySpec extends Specification {
         savePersons(["Dennis", "Jeff", "James", "Dennis"])
 
         when:
-        def people = personRepository.findAll().toList()
+        def people = personRepository.findAll()
         people.findAll {it.name == "Dennis"}.forEach{ it.name = "DoNotDelete"}
         def deleted = personRepository.deleteCustom(people)
-        people = personRepository.findAll().toList()
+        people = personRepository.findAll()
 
         then:
         deleted == 2
@@ -727,10 +743,10 @@ abstract class AbstractRepositorySpec extends Specification {
         savePersons(["Dennis", "Jeff", "James", "Dennis"])
 
         when:
-        def people = personRepository.findAll().toList()
+        def people = personRepository.findAll()
         def jeff = people.find {it.name == "Jeff"}
         def deleted = personRepository.deleteCustomSingle(jeff)
-        people = personRepository.findAll().toList()
+        people = personRepository.findAll()
 
         then:
         deleted == 1
@@ -740,7 +756,7 @@ abstract class AbstractRepositorySpec extends Specification {
         def james = people.find {it.name == "James"}
         james.name = "DoNotDelete"
         deleted = personRepository.deleteCustomSingle(james)
-        people = personRepository.findAll().toList()
+        people = personRepository.findAll()
 
         then:
         deleted == 0
@@ -752,10 +768,10 @@ abstract class AbstractRepositorySpec extends Specification {
         savePersons(["Dennis", "Jeff", "James", "Dennis"])
 
         when:
-        def people = personRepository.findAll().toList()
+        def people = personRepository.findAll()
         def jeff = people.find {it.name == "Jeff"}
         def deleted = personRepository.deleteCustomSingleNoEntity(jeff.getName())
-        people = personRepository.findAll().toList()
+        people = personRepository.findAll()
 
         then:
         deleted == 1
@@ -862,6 +878,21 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
         personRepository.findByName("Jack") == null
         personRepository.findByName("Jeffrey").age == 30
+    }
+
+    void "test update by multiple fields"() {
+        given:
+        savePersons(["Jeff", "James"])
+        def jeff = personRepository.findByName("Jeff")
+
+        when: "The person is updated by name and age"
+        def optPerson = personRepository.findById(jeff.id)
+        optPerson.present
+        def person = optPerson.get()
+        person.enabled = false
+        def updatedPerson = personRepository.updateByNameAndAge(person.name, person.age, person)
+        then: "the person is updated and update returns updated entity"
+        updatedPerson && !updatedPerson.enabled
     }
 
     void "test delete all"() {
@@ -1214,9 +1245,10 @@ abstract class AbstractRepositorySpec extends Specification {
         when:
         def spain = new Country("Spain")
         def france = new Country("France")
-        countryRepository.saveAll(Arrays.asList(spain, france))
-        def countries = countryRepository.findAll().toList()
+        def saved = countryRepository.saveAll(Arrays.asList(spain, france))
+        def countries = countryRepository.findAll()
         then:
+        saved.size() == 2
         countries.size() == 2
         countries[0].uuid
         countries[1].uuid
@@ -1376,7 +1408,7 @@ abstract class AbstractRepositorySpec extends Specification {
         when:"Sorting by date created"
         def results = companyRepository.findAll(Sort.of(
                 Sort.Order.desc("name")
-        )).toList()
+        ))
 
         then:"no error occurs"
         results.size() == 2
@@ -1948,10 +1980,11 @@ abstract class AbstractRepositorySpec extends Specification {
             student1.version == 0
             student2.version == 0
         when:
-            studentRepository.updateAll([student1, student2])
+            def updated = studentRepository.updateAll([student1, student2])
             student1 = studentRepository.findById(student1.getId()).get()
             student2 = studentRepository.findById(student2.getId()).get()
         then:
+            updated.size() == 2
             student1.version == 1
             student2.version == 1
         when:
@@ -2010,11 +2043,11 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
             personRepository.findOne(nameEquals("Jeff")).isPresent()
             !personRepository.findOne(nameEquals("Denis")).isPresent()
-            personRepository.findOne(where(nameEquals("Jeff"))).isPresent()
-            !personRepository.findOne(where(nameEquals("Denis"))).isPresent()
+            personRepository.findOne(QuerySpecification.where(nameEquals("Jeff"))).isPresent()
+            !personRepository.findOne(QuerySpecification.where(nameEquals("Denis"))).isPresent()
         then:
             personRepository.findAll(nameEquals("Jeff")).size() == 1
-            personRepository.findAll(where(nameEquals("Jeff"))).size() == 1
+            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff"))).size() == 1
             personRepository.findAll(nameEquals("Denis")).size() == 0
             personRepository.findAll(null as QuerySpecification).size() == 2
             personRepository.findAll(null as PredicateSpecification).size() == 2
@@ -2024,12 +2057,12 @@ abstract class AbstractRepositorySpec extends Specification {
             personRepository.findAll(nameEquals("Jeff").and(nameEquals("Denis"))).size() == 0
             personRepository.findAll(nameEquals("Jeff").and(nameEquals("Jeff"))).size() == 1
             personRepository.findAll(nameEquals("Jeff").or(nameEquals("James"))).size() == 2
-            personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("Denis"))).size() == 1
-            personRepository.findAll(where(nameEquals("Jeff")).and(nameEquals("Denis"))).size() == 0
-            personRepository.findAll(where(nameEquals("Jeff")).and(nameEquals("Jeff"))).size() == 1
-            personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James"))).size() == 2
-            personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.desc("name")))[1].name == "James"
-            personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.asc("name")))[1].name == "Jeff"
+            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("Denis"))).size() == 1
+            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).and(nameEquals("Denis"))).size() == 0
+            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).and(nameEquals("Jeff"))).size() == 1
+            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("James"))).size() == 2
+            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.desc("name")))[1].name == "James"
+            personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("James")), Sort.of(Sort.Order.asc("name")))[1].name == "Jeff"
         when:
             def pred1 = nameEquals("Jeff").or(nameEquals("Denis"))
             def pred2 = pred1.or(nameEquals("Abc"))
@@ -2065,7 +2098,7 @@ abstract class AbstractRepositorySpec extends Specification {
             pagedSortedDesc.totalPages == 2
             pagedSortedDesc.totalSize == 2
         when:
-            def pagedSortedAsc = personRepository.findAll(where(nameEquals("Jeff")).or(nameEquals("James")), Pageable.from(0, 1).order(Sort.Order.asc("name")))
+            def pagedSortedAsc = personRepository.findAll(QuerySpecification.where(nameEquals("Jeff")).or(nameEquals("James")), Pageable.from(0, 1).order(Sort.Order.asc("name")))
         then:
             pagedSortedAsc.content.size() == 1
             pagedSortedAsc.content[0].name == "James"
@@ -2081,11 +2114,11 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
             countOneByPredicateSpec == 1
         when:
-            def countAllByQuerySpec = personRepository.count(where(nameEquals("Jeff").or(nameEquals("James"))))
+            def countAllByQuerySpec = personRepository.count(QuerySpecification.where(nameEquals("Jeff").or(nameEquals("James"))))
         then:
             countAllByQuerySpec == 2
         when:
-            def countOneByQuerySpec = personRepository.count(where(nameEquals("Jeff")))
+            def countOneByQuerySpec = personRepository.count(QuerySpecification.where(nameEquals("Jeff")))
         then:
             countOneByQuerySpec == 1
         when:
@@ -2107,14 +2140,14 @@ abstract class AbstractRepositorySpec extends Specification {
             jeffPerson.getId() == foundByIdPerson.getId() && jeffPerson.getName() == foundByIdPerson.getName()
         when:
             def deleted = personRepository.deleteAll(nameEquals("Jeff"))
-            def all = personRepository.findAll().toList()
+            def all = personRepository.findAll()
         then:
             deleted == 1
             all.size() == 1
             all[0].name == "James"
         when:
             deleted = personRepository.deleteAll(null as DeleteSpecification)
-            all = personRepository.findAll().toList()
+            all = personRepository.findAll()
         then:
             deleted == 1
             all.size() == 0
@@ -2156,8 +2189,8 @@ abstract class AbstractRepositorySpec extends Specification {
             savePersons(["Jeff"])
             def existsPredicateSpec = personRepository.exists(nameEquals("Jeff"))
             def existsNotPredicateSpec = personRepository.exists(nameEquals("NotJeff"))
-            def existsQuerySpec = personRepository.exists(where(nameEquals("Jeff")))
-        def existsNotQuerySpec = personRepository.exists(where(nameEquals("NotJeff")))
+            def existsQuerySpec = personRepository.exists(QuerySpecification.where(nameEquals("Jeff")))
+        def existsNotQuerySpec = personRepository.exists(QuerySpecification.where(nameEquals("NotJeff")))
         then:
             existsPredicateSpec
             !existsNotPredicateSpec
@@ -2348,10 +2381,78 @@ abstract class AbstractRepositorySpec extends Specification {
         bookRepository.delete(book2)
     }
 
+    void "test @Where and joins"() {
+        given:
+        def meal = mealRepository.save(new Meal(10))
+        def food = foodRepository.save(new Food("food", 80, 200, meal))
+        def food1 = foodRepository.save(new Food("food1", 50, 150, meal))
+        when:
+        def loadedMeal = mealRepository.searchById(meal.mid)
+        def optFood = foodRepository.findById(food.fid)
+        def optFood1 = foodRepository.findById(food1.fid)
+        then:
+        loadedMeal
+        loadedMeal.foods.size() == 2
+        optFood.present
+        optFood.get().meal.mid == loadedMeal.mid
+        optFood1.present
+        optFood1.get().meal.mid == loadedMeal.mid
+        when:
+        food.fresh = 'N'
+        foodRepository.update(food)
+        loadedMeal = mealRepository.searchById(meal.mid)
+        optFood = foodRepository.findById(food.fid)
+        optFood1 = foodRepository.findById(food1.fid)
+        then:
+        loadedMeal
+        loadedMeal.foods.size() == 1
+        !optFood.present
+        optFood1.present
+        when:
+        meal.actual = 'N'
+        mealRepository.update(meal)
+        loadedMeal = mealRepository.searchById(meal.mid)
+        optFood1 = foodRepository.findById(food1.fid)
+        then:
+        !loadedMeal
+        !optFood1.present
+        cleanup:
+        foodRepository.deleteById(food.fid)
+        foodRepository.deleteById(food1.fid)
+        mealRepository.deleteById(meal.mid)
+    }
+
+    void "test author page total size"() {
+        given:
+        def author = new Author()
+        author.name = "author"
+        authorRepository.save(author)
+        def book = new Book()
+        book.title = "book"
+        book.author = author
+        def book2 = new Book()
+        book2.title = "book2"
+        book2.author = author
+        bookRepository.save(book)
+        bookRepository.save(book2)
+        when:
+        def authorPage = authorRepository.findAll(Pageable.UNPAGED)
+        def bookPage = bookRepository.findAll(Pageable.from(0, 10, Sort.of(Sort.Order.asc("title"))))
+        then:
+        authorPage.totalSize == 1
+        authorPage.content.size() == 1
+        authorPage.content[0].books.size() == 2
+        bookPage.totalSize == 2
+    }
+
     private GregorianCalendar getYearMonthDay(Date dateCreated) {
         def cal = dateCreated.toCalendar()
         def localDate = LocalDate.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH))
         GregorianCalendar calendar = new GregorianCalendar(localDate.year, localDate.month.value, localDate.dayOfMonth)
         calendar
+    }
+
+    boolean supportsNullCharacter() {
+        true
     }
 }

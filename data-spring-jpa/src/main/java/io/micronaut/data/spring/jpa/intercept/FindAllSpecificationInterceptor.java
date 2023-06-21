@@ -23,10 +23,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.query.QueryUtils;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Order;
-import javax.persistence.criteria.Root;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Order;
+import jakarta.persistence.criteria.Root;
 import java.util.List;
 
 /**
@@ -36,14 +36,14 @@ import java.util.List;
  * @since 1.0
  */
 @Internal
-public class FindAllSpecificationInterceptor extends io.micronaut.data.jpa.repository.intercept.FindAllSpecificationInterceptor {
+public final class FindAllSpecificationInterceptor extends io.micronaut.data.jpa.repository.intercept.FindAllSpecificationInterceptor {
 
     /**
      * Default constructor.
      *
      * @param operations The operations
      */
-    protected FindAllSpecificationInterceptor(@NonNull RepositoryOperations operations) {
+    FindAllSpecificationInterceptor(@NonNull RepositoryOperations operations) {
         super(operations);
     }
 

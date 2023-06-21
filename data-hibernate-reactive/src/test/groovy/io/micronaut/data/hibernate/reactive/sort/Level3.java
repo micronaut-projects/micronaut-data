@@ -1,12 +1,10 @@
 package io.micronaut.data.hibernate.reactive.sort;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.OneToOne;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
 
 @Entity
 public class Level3 {
@@ -17,7 +15,6 @@ public class Level3 {
 
     private String name3;
 
-    @JsonBackReference
     @OneToOne
     private Level2 parent;
 

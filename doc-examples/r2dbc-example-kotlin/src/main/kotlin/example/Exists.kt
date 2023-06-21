@@ -16,13 +16,13 @@ data class Record(
     val bar: UUID
 )
 
-@R2dbcRepository(dialect = Dialect.POSTGRES)
+@R2dbcRepository(dialect = Dialect.MYSQL)
 interface RecordCoroutineRepository : CoroutineCrudRepository<Record, UUID> {
     suspend fun existsByFoo(foo: UUID): Boolean?
     suspend fun existsByBar(bar: UUID): Boolean
 }
 
-@R2dbcRepository(dialect = Dialect.POSTGRES)
+@R2dbcRepository(dialect = Dialect.MYSQL)
 interface RecordReactiveRepository : ReactorCrudRepository<Record, UUID> {
     fun existsByFoo(foo: UUID): Mono<Boolean?>
     fun existsByBar(bar: UUID): Mono<Boolean>

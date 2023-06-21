@@ -4,7 +4,7 @@ import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 
-import javax.persistence.Column;
+import jakarta.persistence.Column;
 import java.util.UUID;
 
 @MappedEntity

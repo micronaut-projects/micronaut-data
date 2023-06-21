@@ -6,8 +6,8 @@ import io.micronaut.data.mongodb.annotation.MongoUpdateOptions;
 import io.micronaut.data.repository.CrudRepository;
 import org.bson.types.ObjectId;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 @MongoRepository
 public abstract class SongRepository2 implements CrudRepository<SongEntity2, ObjectId> {

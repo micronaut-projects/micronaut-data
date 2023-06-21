@@ -20,13 +20,16 @@ import io.micronaut.context.BeanRegistration;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.convert.MutableConversionService;
 import io.micronaut.core.convert.TypeConverter;
 import io.micronaut.core.convert.TypeConverterRegistrar;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.exceptions.DataAccessException;
 import jakarta.inject.Singleton;
 
 import java.math.BigDecimal;
+import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -55,10 +58,12 @@ import java.util.function.Function;
 @Factory
 final class DataConversionServiceFactory {
 
+    private static final String SQL_ARRAY_READ_ERROR = "Unable to read SQL array";
+
     @Singleton
     @Bean(typed = DataConversionService.class)
-    DataConversionServiceImpl build(@Nullable BeanContext beanContext) {
-        DataConversionServiceImpl conversionService = new DataConversionServiceImpl();
+    DataConversionServiceImpl build(@NonNull BeanContext beanContext) {
+        DataConversionServiceImpl conversionService = new DataConversionServiceImpl(beanContext.getConversionService());
         conversionService.addConverter(Enum.class, Number.class, Enum::ordinal);
         conversionService.addConverter(Number.class, Enum.class, (index, targetType, context) -> {
             Enum[] enumConstants = targetType.getEnumConstants();
@@ -352,6 +357,274 @@ final class DataConversionServiceFactory {
             }
             return booleans;
         });
+        // java.sql.Array arrays (needed for Postgres PgArray)
+        conversionService.addConverter(java.sql.Array.class, String[].class, sqlArray -> {
+            Object[] array;
+            try {
+                array = (Object[]) sqlArray.getArray();
+            } catch (SQLException e) {
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
+            }
+            String[] strings = new String[array.length];
+            int i = 0;
+            for (Object value : array) {
+                strings[i++] = value != null ? value.toString() : null;
+            }
+            return strings;
+        });
+        conversionService.addConverter(java.sql.Array.class, Integer[].class, sqlArray -> {
+            Object[] array;
+            try {
+                array = (Object[]) sqlArray.getArray();
+            } catch (SQLException e) {
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
+            }
+            Integer[] integers = new Integer[array.length];
+            int i = 0;
+            for (Object value : array) {
+                integers[i++] = asInteger(value, conversionService);
+            }
+            return integers;
+        });
+        conversionService.addConverter(java.sql.Array.class, int[].class, sqlArray -> {
+            Object[] array;
+            try {
+                array = (Object[]) sqlArray.getArray();
+            } catch (SQLException e) {
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
+            }
+            int[] ints = new int[array.length];
+            int i = 0;
+            for (Object value : array) {
+                ints[i++] = asInteger(value, conversionService);
+            }
+            return ints;
+        });
+        conversionService.addConverter(java.sql.Array.class, Short[].class, sqlArray -> {
+            Object[] array;
+            try {
+                array = (Object[]) sqlArray.getArray();
+            } catch (SQLException e) {
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
+            }
+            Short[] shorts = new Short[array.length];
+            int i = 0;
+            for (Object value : array) {
+                shorts[i++] = asShort(value, conversionService);
+            }
+            return shorts;
+        });
+        conversionService.addConverter(java.sql.Array.class, short[].class, sqlArray -> {
+            Object[] array;
+            try {
+                array = (Object[]) sqlArray.getArray();
+            } catch (SQLException e) {
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
+            }
+            short[] shorts = new short[array.length];
+            int i = 0;
+            for (Object value : array) {
+                shorts[i++] = asShort(value, conversionService);
+            }
+            return shorts;
+        });
+        conversionService.addConverter(java.sql.Array.class, Long[].class, sqlArray -> {
+            Object[] array;
+            try {
+                array = (Object[]) sqlArray.getArray();
+            } catch (SQLException e) {
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
+            }
+            Long[] longs = new Long[array.length];
+            int i = 0;
+            for (Object value : array) {
+                longs[i++] = asLong(value, conversionService);
+            }
+            return longs;
+        });
+        conversionService.addConverter(java.sql.Array.class, long[].class, sqlArray -> {
+            Object[] array;
+            try {
+                array = (Object[]) sqlArray.getArray();
+            } catch (SQLException e) {
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
+            }
+            long[] longs = new long[array.length];
+            int i = 0;
+            for (Object value : array) {
+                longs[i++] = asLong(value, conversionService);
+            }
+            return longs;
+        });
+        conversionService.addConverter(java.sql.Array.class, Float[].class, sqlArray -> {
+            Object[] array;
+            try {
+                array = (Object[]) sqlArray.getArray();
+            } catch (SQLException e) {
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
+            }
+            Float[] floats = new Float[array.length];
+            int i = 0;
+            for (Object value : array) {
+                floats[i++] = asFloat(value, conversionService);
+            }
+            return floats;
+        });
+        conversionService.addConverter(java.sql.Array.class, float[].class, sqlArray -> {
+            Object[] array;
+            try {
+                array = (Object[]) sqlArray.getArray();
+            } catch (SQLException e) {
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
+            }
+            float[] floats = new float[array.length];
+            int i = 0;
+            for (Object value : array) {
+                floats[i++] = asFloat(value, conversionService);
+            }
+            return floats;
+        });
+        conversionService.addConverter(java.sql.Array.class, Double[].class, sqlArray -> {
+            Object[] array;
+            try {
+                array = (Object[]) sqlArray.getArray();
+            } catch (SQLException e) {
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
+            }
+            Double[] doubles = new Double[array.length];
+            int i = 0;
+            for (Object value : array) {
+                doubles[i++] = asDouble(value, conversionService);
+            }
+            return doubles;
+        });
+        conversionService.addConverter(java.sql.Array.class, double[].class, sqlArray -> {
+            Object[] array;
+            try {
+                array = (Object[]) sqlArray.getArray();
+            } catch (SQLException e) {
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
+            }
+            double[] doubles = new double[array.length];
+            int i = 0;
+            for (Object value : array) {
+                doubles[i++] = asDouble(value, conversionService);
+            }
+            return doubles;
+        });
+        conversionService.addConverter(java.sql.Array.class, Boolean[].class, sqlArray -> {
+            Object[] array;
+            try {
+                array = (Object[]) sqlArray.getArray();
+            } catch (SQLException e) {
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
+            }
+            Boolean[] booleans = new Boolean[array.length];
+            int i = 0;
+            for (Object value : array) {
+                booleans[i++] = asBoolean(value, conversionService);
+            }
+            return booleans;
+        });
+        conversionService.addConverter(java.sql.Array.class, boolean[].class, sqlArray -> {
+            Object[] array;
+            try {
+                array = (Object[]) sqlArray.getArray();
+            } catch (SQLException e) {
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
+            }
+            boolean[] booleans = new boolean[array.length];
+            int i = 0;
+            for (Object value : array) {
+                booleans[i++] = asBoolean(value, conversionService);
+            }
+            return booleans;
+        });
+        conversionService.addConverter(java.sql.Array.class, Character[].class, sqlArray -> {
+            Object[] array;
+            try {
+                array = (Object[]) sqlArray.getArray();
+            } catch (SQLException e) {
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
+            }
+            Character[] characters = new Character[array.length];
+            int i = 0;
+            for (Object value : array) {
+                characters[i++] = asCharacter(value, conversionService);
+            }
+            return characters;
+        });
+        conversionService.addConverter(java.sql.Array.class, char[].class, sqlArray -> {
+            Object[] array;
+            try {
+                array = (Object[]) sqlArray.getArray();
+            } catch (SQLException e) {
+                throw new DataAccessException(SQL_ARRAY_READ_ERROR, e);
+            }
+            char[] chars = new char[array.length];
+            int i = 0;
+            for (Object value : array) {
+                chars[i++] = asCharacter(value, conversionService);
+            }
+            return chars;
+        });
+        // Conversions needed for r2dbc since arrays are returned as Object[] and not converted to expected types
+        conversionService.addConverter(Object[].class, short[].class, array -> {
+           short[] shorts = new short[array.length];
+            int i = 0;
+            for (Object value : array) {
+                shorts[i++] = asShort(value, conversionService);
+            }
+            return shorts;
+        });
+        conversionService.addConverter(Object[].class, int[].class, array -> {
+            int[] ints = new int[array.length];
+            int i = 0;
+            for (Object value : array) {
+                ints[i++] = asInteger(value, conversionService);
+            }
+            return ints;
+        });
+        conversionService.addConverter(Object[].class, long[].class, array -> {
+            long[] longs = new long[array.length];
+            int i = 0;
+            for (Object value : array) {
+                longs[i++] = asLong(value, conversionService);
+            }
+            return longs;
+        });
+        conversionService.addConverter(Object[].class, float[].class, array -> {
+            float[] floats = new float[array.length];
+            int i = 0;
+            for (Object value : array) {
+                floats[i++] = asFloat(value, conversionService);
+            }
+            return floats;
+        });
+        conversionService.addConverter(Object[].class, double[].class, array -> {
+            double[] doubles = new double[array.length];
+            int i = 0;
+            for (Object value : array) {
+                doubles[i++] = asDouble(value, conversionService);
+            }
+            return doubles;
+        });
+        conversionService.addConverter(Object[].class, boolean[].class, array -> {
+            boolean[] booleans = new boolean[array.length];
+            int i = 0;
+            for (Object value : array) {
+                booleans[i++] = asBoolean(value, conversionService);
+            }
+            return booleans;
+        });
+        conversionService.addConverter(Object[].class, char[].class, array -> {
+            char[] chars = new char[array.length];
+            int i = 0;
+            for (Object value : array) {
+                chars[i++] = asCharacter(value, conversionService);
+            }
+            return chars;
+        });
 
         // Instant
         Function<Instant, ZonedDateTime> instantToZonedDateTime = instant -> instant.atZone(ZoneId.systemDefault());
@@ -407,15 +680,16 @@ final class DataConversionServiceFactory {
                 }
             }
             Collection<TypeConverterRegistrar> registrars = beanContext.getBeansOfType(TypeConverterRegistrar.class);
+            MutableConversionService mutableConversionService = conversionService.getMutableConversionService();
             for (TypeConverterRegistrar registrar : registrars) {
-                registrar.register(conversionService);
+                registrar.register(mutableConversionService);
             }
         }
 
         return conversionService;
     }
 
-    private <T> void addZonedConvertorsConvertors(DataConversionService<?> conversionService, Class<T> dateType, Function<T, ZonedDateTime> dateToZonedDateTime) {
+    private <T> void addZonedConvertorsConvertors(DataConversionServiceImpl conversionService, Class<T> dateType, Function<T, ZonedDateTime> dateToZonedDateTime) {
         conversionService.addConverter(dateType, ZonedDateTime.class, dateToZonedDateTime);
         conversionService.addConverter(dateType, OffsetDateTime.class, dateToZonedDateTime.andThen(ZonedDateTime::toOffsetDateTime));
         conversionService.addConverter(dateType, LocalDateTime.class, dateToZonedDateTime.andThen(ZonedDateTime::toLocalDateTime));
@@ -426,7 +700,7 @@ final class DataConversionServiceFactory {
         conversionService.addConverter(dateType, Timestamp.class, dateToZonedDateTime.andThen(zonedDateTime -> Timestamp.from(zonedDateTime.toInstant())));
     }
 
-    private Integer asInteger(Object value, DataConversionService<?> dataConversionService) {
+    private Integer asInteger(Object value, DataConversionService dataConversionService) {
         if (value instanceof Integer) {
             return (Integer) value;
         }
@@ -436,7 +710,7 @@ final class DataConversionServiceFactory {
         return dataConversionService.convertRequired(value, Integer.class);
     }
 
-    private Long asLong(Object value, DataConversionService<?> dataConversionService) {
+    private Long asLong(Object value, DataConversionService dataConversionService) {
         if (value instanceof Long) {
             return (Long) value;
         }
@@ -446,7 +720,7 @@ final class DataConversionServiceFactory {
         return dataConversionService.convertRequired(value, Long.class);
     }
 
-    private Double asDouble(Object value, DataConversionService<?> dataConversionService) {
+    private Double asDouble(Object value, DataConversionService dataConversionService) {
         if (value instanceof Double) {
             return (Double) value;
         }
@@ -456,14 +730,14 @@ final class DataConversionServiceFactory {
         return dataConversionService.convertRequired(value, Double.class);
     }
 
-    private Boolean asBoolean(Object value, DataConversionService<?> dataConversionService) {
+    private Boolean asBoolean(Object value, DataConversionService dataConversionService) {
         if (value instanceof Boolean) {
             return (Boolean) value;
         }
         return dataConversionService.convertRequired(value, Boolean.class);
     }
 
-    private Float asFloat(Object value, DataConversionService<?> dataConversionService) {
+    private Float asFloat(Object value, DataConversionService dataConversionService) {
         if (value instanceof Float) {
             return (Float) value;
         }
@@ -473,7 +747,7 @@ final class DataConversionServiceFactory {
         return dataConversionService.convertRequired(value, Float.class);
     }
 
-    private Short asShort(Object value, DataConversionService<?> dataConversionService) {
+    private Short asShort(Object value, DataConversionService dataConversionService) {
         if (value instanceof Short) {
             return (Short) value;
         }
@@ -483,7 +757,7 @@ final class DataConversionServiceFactory {
         return dataConversionService.convertRequired(value, Short.class);
     }
 
-    private Character asCharacter(Object value, DataConversionService<?> dataConversionService) {
+    private Character asCharacter(Object value, DataConversionService dataConversionService) {
         if (value instanceof Character) {
             return (Character) value;
         }

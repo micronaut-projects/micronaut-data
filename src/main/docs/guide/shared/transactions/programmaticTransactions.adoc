@@ -1,22 +1,22 @@
-You can use the api:transaction.SynchronousTransactionManager[] API to perform programmatic transactions.
+You can use the api:transaction.TransactionOperations[] API to perform programmatic transactions.
 
 The following demonstrates an example:
 
 snippet::example.ProductManager[project-base="doc-examples/hibernate-example", source="main", indent="0"]
 
-<1> The constructor is injected with the api:transaction.SynchronousTransactionManager[] and a transaction-aware `EntityManager`
+<1> The constructor is injected with the api:transaction.TransactionOperations[] and a session-aware `EntityManager`
 <2> The `save` method uses the `executeWrite` method to execute a write transaction within the context of the passed lambda.
-<3> The `find` method uses the `executeRead` method to execute a read-only transaction within the context of the passed lambda.
+<3> The `find` method uses the `executeRead` method to execute a read-only transaction within the context of the passed lambda. This example is accessing the session using the status provided by the transaction manager.
 
-Note that if you are using Micronaut Data JDBC then instead of an `EntityManager` you should inject a transaction-aware JDBC `Connection` object.
+Note that if you are using Micronaut Data JDBC then instead of an `EntityManager` you should inject a contextual-connection-aware JDBC `Connection` object.
 
 The following presents an example:
 
 snippet::example.ProductManager[project-base="doc-examples/jdbc-example", source="main", indent="0"]
 
-<1> The constructor is injected with the api:transaction.SynchronousTransactionManager[] and a transaction-aware `Connection`
+<1> The constructor is injected with the api:transaction.TransactionOperations[] and a contextual-connection-aware `Connection`
 <2> The `save` method uses the `executeWrite` method to execute a write transaction within the context of the passed lambda.
-<3> The `find` method uses the `executeRead` method to execute a read-only transaction within the context of the passed lambda.
+<3> The `find` method uses the `executeRead` method to execute a read-only transaction within the context of the passed lambda. This example is accessing the connection using the status provided by the transaction manager.
 
 Note that it is important that you always use the injected connection as Micronaut Data makes available a transaction-aware implementation that uses the connection associated with the underlying transaction.
 

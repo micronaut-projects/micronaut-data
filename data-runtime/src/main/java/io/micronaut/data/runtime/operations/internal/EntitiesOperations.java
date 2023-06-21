@@ -33,7 +33,7 @@ abstract class EntitiesOperations<T, Ext extends Exception> extends BaseOperatio
 
     EntitiesOperations(EntityEventListener<Object> entityEventListener,
                        RuntimePersistentEntity<T> persistentEntity,
-                       ConversionService<?> conversionService) {
+                       ConversionService conversionService) {
         super(entityEventListener, persistentEntity, conversionService);
     }
 

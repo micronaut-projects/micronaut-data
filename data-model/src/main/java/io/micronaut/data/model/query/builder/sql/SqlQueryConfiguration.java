@@ -42,10 +42,21 @@ public @interface SqlQueryConfiguration {
         /**
          * A String format (see {@link String#format(String, Object...)} to format the appearance
          * of position parameters. It receives exactly one parameter which is the parameter index (starting from 1).
+         * <p>
+         * NOTE: If {@link #positionalParameterName()} is specified, the formatter will receive the custom name.
          *
          * @return The position parameter format.
          */
         String positionalParameterFormat() default "?";
+
+        /**
+         * A String format (see {@link String#format(String, Object...)} to format the parameter name.
+         * It receives exactly one parameter which is the parameter index (starting from 1).
+         *
+         * @return The position parameter name.
+         * @since 3.8.0
+         */
+        String positionalParameterName() default "?";
 
         /**
          * @return Whether automatically escape queries.

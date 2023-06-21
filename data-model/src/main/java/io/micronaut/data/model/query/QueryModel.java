@@ -287,9 +287,7 @@ public interface QueryModel extends Criteria {
      * @return The query
      */
     @NonNull
-    default JoinPath join(String path, @NonNull Join.Type joinType, @Nullable String alias) {
-        return join(path, joinType, alias);
-    }
+    JoinPath join(String path, @NonNull Join.Type joinType, @Nullable String alias);
 
     /**
      * Join on the given association.
@@ -1050,7 +1048,7 @@ public interface QueryModel extends Criteria {
      * Used for exists subquery.
      */
     class Exists implements Criterion {
-        private QueryModel subquery;
+        private final QueryModel subquery;
 
         /**
          * Constructor for a subquery.
@@ -1072,7 +1070,7 @@ public interface QueryModel extends Criteria {
      * Used for exists subquery.
      */
     class NotExists implements Criterion {
-        private QueryModel subquery;
+        private final QueryModel subquery;
 
         /**
          * Constructor for a subquery.
@@ -1150,9 +1148,9 @@ public interface QueryModel extends Criteria {
      * Criterion used to restrict the result to be between values (range query).
      */
     class Between extends PropertyCriterion {
-        private String property;
-        private Object from;
-        private Object to;
+        private final String property;
+        private final Object from;
+        private final Object to;
 
         /**
          * Default constructor.
@@ -1385,6 +1383,9 @@ public interface QueryModel extends Criteria {
             this.value = value;
         }
 
+        /**
+         * @return the literal value
+         */
         public Object getValue() {
             return value;
         }
@@ -1408,7 +1409,7 @@ public interface QueryModel extends Criteria {
      * A projection that obtains the value of a property of an entity.
      */
     class PropertyProjection extends Projection {
-        private String propertyName;
+        private final String propertyName;
         private String alias;
 
         /**
@@ -1435,6 +1436,10 @@ public interface QueryModel extends Criteria {
             return this;
         }
 
+        /**
+         * Sets the alias.
+         * @param alias the alias
+         */
         public void setAlias(String alias) {
             this.alias = alias;
         }
@@ -1538,4 +1543,44 @@ public interface QueryModel extends Criteria {
         }
     }
 
+    /**
+     * Criterion used to restrict the results based on belonging to an array.
+     */
+    class ArrayContains extends PropertyCriterion {
+        private QueryModel subquery;
+
+        /**
+         * Constructor for an individual parameter.
+         * @param name The name
+         * @param parameter The parameter
+         */
+        public ArrayContains(String name, Object parameter) {
+            super(name, parameter);
+        }
+
+        /**
+         * Constructor for a subquery.
+         * @param name The name
+         * @param subquery The subquery
+         */
+        public ArrayContains(String name, QueryModel subquery) {
+            super(name, subquery);
+            this.subquery = subquery;
+        }
+
+        /**
+         * @return The name
+         */
+        public String getName() {
+            return getProperty();
+        }
+
+        /**
+         * @return The subquery
+         */
+        public @Nullable
+        QueryModel getSubquery() {
+            return subquery;
+        }
+    }
 }

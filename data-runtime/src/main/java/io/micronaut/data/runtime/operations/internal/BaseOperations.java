@@ -46,11 +46,11 @@ abstract class BaseOperations<T, Exc extends Exception> {
 
     protected final EntityEventListener<Object> entityEventListener;
     protected final RuntimePersistentEntity<T> persistentEntity;
-    protected final ConversionService<?> conversionService;
+    protected final ConversionService conversionService;
 
     BaseOperations(EntityEventListener<Object> entityEventListener,
                    RuntimePersistentEntity<T> persistentEntity,
-                   ConversionService<?> conversionService) {
+                   ConversionService conversionService) {
         this.entityEventListener = entityEventListener;
         this.persistentEntity = persistentEntity;
         this.conversionService = conversionService;
@@ -77,10 +77,15 @@ abstract class BaseOperations<T, Exc extends Exception> {
             if (vetoed) {
                 return;
             }
-            cascadePre(Relation.Cascade.PERSIST);
+            boolean cascades = persistentEntity.cascadesPersist();
+            if (cascades) {
+                cascadePre(Relation.Cascade.PERSIST);
+            }
             execute();
             triggerPostPersist();
-            cascadePost(Relation.Cascade.PERSIST);
+            if (cascades) {
+                cascadePost(Relation.Cascade.PERSIST);
+            }
         } catch (Exception e) {
             failed(e, "PERSIST");
         }
@@ -116,10 +121,15 @@ abstract class BaseOperations<T, Exc extends Exception> {
             return;
         }
         try {
-            cascadePre(Relation.Cascade.UPDATE);
+            boolean cascades = persistentEntity.cascadesUpdate();
+            if (cascades) {
+                cascadePre(Relation.Cascade.UPDATE);
+            }
             execute();
             triggerPostUpdate();
-            cascadePost(Relation.Cascade.UPDATE);
+            if (cascades) {
+                cascadePost(Relation.Cascade.UPDATE);
+            }
         } catch (OptimisticLockException ex) {
             throw ex;
         } catch (Exception e) {

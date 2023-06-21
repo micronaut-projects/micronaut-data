@@ -23,6 +23,7 @@ import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentProperty;
 
 import java.lang.annotation.Annotation;
@@ -58,17 +59,17 @@ final class SqlQueryBuilderUtils {
         if (definition != null) {
             return column + " " + definition;
         }
-        OptionalInt precision = annotationMetadata.intValue("javax.persistence.Column", "precision");
-        OptionalInt scale = annotationMetadata.intValue("javax.persistence.Column", "scale");
+        OptionalInt precision = findPersistenceColumnValue(annotationMetadata, "precision");
+        OptionalInt scale = findPersistenceColumnValue(annotationMetadata, "scale");
 
         switch (dataType) {
             case STRING:
-                int stringLength = annotationMetadata.findAnnotation("javax.validation.constraints.Size$List")
+                int stringLength = annotationMetadata.findAnnotation("jakarta.validation.constraints.Size$List")
                     .flatMap(v -> {
                         Optional value = v.getValue(AnnotationValue.class);
                         return (Optional<AnnotationValue<Annotation>>) value;
                     }).map(v -> v.intValue("max"))
-                    .orElseGet(() -> annotationMetadata.intValue("javax.persistence.Column", "length"))
+                    .orElseGet(() -> findPersistenceColumnValue(annotationMetadata, "length"))
                     .orElse(255);
 
                 column += " VARCHAR(" + stringLength + ")";
@@ -253,39 +254,17 @@ final class SqlQueryBuilderUtils {
                 }
                 break;
             case JSON:
-                switch (dialect) {
-                    case POSTGRES:
-                        column += " JSONB";
-                        break;
-                    case SQL_SERVER:
-                        column += " NVARCHAR(MAX)";
-                        break;
-                    case ORACLE:
-                        column += " CLOB";
-                        break;
-                    default:
-                        column += " JSON";
-                        break;
-                }
-                if (required) {
-                    column += " NOT NULL";
-                }
+                column = column + jsonColumnDefinition(prop, dialect, required);
                 break;
             case STRING_ARRAY:
             case CHARACTER_ARRAY:
-                if (dialect == Dialect.H2) {
-                    column += " ARRAY";
-                } else {
-                    column += " VARCHAR(255) ARRAY";
-                }
+                column += " VARCHAR(255) ARRAY";
                 if (required) {
                     column += " NOT NULL";
                 }
                 break;
             case SHORT_ARRAY:
-                if (dialect == Dialect.H2) {
-                    column += " ARRAY";
-                } else if (dialect == Dialect.POSTGRES) {
+                if (dialect == Dialect.POSTGRES) {
                     column += " SMALLINT ARRAY";
                 } else {
                     column += " TINYINT ARRAY";
@@ -295,9 +274,7 @@ final class SqlQueryBuilderUtils {
                 }
                 break;
             case INTEGER_ARRAY:
-                if (dialect == Dialect.H2) {
-                    column += " ARRAY";
-                } else if (dialect == Dialect.POSTGRES) {
+                if (dialect == Dialect.POSTGRES || dialect == Dialect.H2) {
                     column += " INTEGER ARRAY";
                 } else {
                     column += " INT ARRAY";
@@ -307,19 +284,13 @@ final class SqlQueryBuilderUtils {
                 }
                 break;
             case LONG_ARRAY:
-                if (dialect == Dialect.H2) {
-                    column += " ARRAY";
-                } else {
-                    column += " BIGINT ARRAY";
-                }
+                column += " BIGINT ARRAY";
                 if (required) {
                     column += " NOT NULL";
                 }
                 break;
             case FLOAT_ARRAY:
-                if (dialect == Dialect.H2) {
-                    column += " ARRAY";
-                } else if (dialect == Dialect.POSTGRES) {
+                if (dialect == Dialect.H2 || dialect == Dialect.POSTGRES) {
                     column += " REAL ARRAY";
                 } else {
                     column += " FLOAT ARRAY";
@@ -329,9 +300,7 @@ final class SqlQueryBuilderUtils {
                 }
                 break;
             case DOUBLE_ARRAY:
-                if (dialect == Dialect.H2) {
-                    column += " ARRAY";
-                } else if (dialect == Dialect.POSTGRES) {
+                if (dialect == Dialect.POSTGRES || dialect == Dialect.H2) {
                     column += " DOUBLE PRECISION ARRAY";
                 } else {
                     column += " DOUBLE ARRAY";
@@ -341,11 +310,7 @@ final class SqlQueryBuilderUtils {
                 }
                 break;
             case BOOLEAN_ARRAY:
-                if (dialect == Dialect.H2) {
-                    column += " ARRAY";
-                } else {
-                    column += " BOOLEAN ARRAY";
-                }
+                column += " BOOLEAN ARRAY";
                 if (required) {
                     column += " NOT NULL";
                 }
@@ -382,5 +347,51 @@ final class SqlQueryBuilderUtils {
                 }
         }
         return column;
+    }
+
+    private static String jsonColumnDefinition(PersistentProperty prop, Dialect dialect, boolean required) {
+        JsonDataType jsonDataType = prop.getJsonDataType();
+        String result = "";
+        switch (dialect) {
+            case POSTGRES:
+                result += " JSONB";
+                break;
+            case SQL_SERVER:
+                result += " NVARCHAR(MAX)";
+                break;
+            case ORACLE:
+                if (jsonDataType == JsonDataType.DEFAULT) {
+                    result += " JSON";
+                } else if (jsonDataType == JsonDataType.BLOB) {
+                    result += " BLOB";
+                } else {
+                    result += " CLOB";
+                }
+                break;
+            default:
+                result += " JSON";
+                break;
+        }
+        if (required) {
+            result += " NOT NULL";
+        }
+        return result;
+    }
+
+    /**
+     * Finds int value for javax.persistence.Column given value, if not present falls back to jakarta.persistence.Column.
+     *
+     * @param annotationMetadata the annotation metadata
+     * @param value the annotation value to be looked at
+     * @return OptionalInt for given annotation value
+     */
+    private static OptionalInt findPersistenceColumnValue(AnnotationMetadata annotationMetadata, String value) {
+        String annotationName = "javax.persistence.Column";
+        OptionalInt optionalInt = annotationMetadata.intValue(annotationName, value);
+        if (optionalInt.isEmpty()) {
+            annotationName = "jakarta.persistence.Column";
+            optionalInt = annotationMetadata.intValue(annotationName, value);
+        }
+        return optionalInt;
     }
 }

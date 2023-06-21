@@ -1,7 +1,9 @@
 package example;
 
 import io.micronaut.data.annotation.*;
+import io.micronaut.serde.annotation.Serdeable;
 
+@Serdeable
 @MappedEntity
 public class Author {
     @GeneratedValue

@@ -1,11 +1,6 @@
 plugins {
     id "groovy"
-    id "io.micronaut.application"
     id "io.micronaut.build.internal.data-example"
-}
-
-repositories {
-    mavenCentral()
 }
 
 application {
@@ -13,21 +8,20 @@ application {
 }
 
 micronaut {
-    version micronautVersion
+    version libs.versions.micronaut.platform.get()
     runtime "netty"
     testRuntime "spock"
 }
 
 dependencies {
-    compileOnly project(":data-processor")
-    compileOnly "io.micronaut:micronaut-validation"
-    implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
-    implementation project(":data-jdbc")
-    implementation "io.micronaut:micronaut-http-client"
-    implementation "io.micronaut:micronaut-validation"
-    implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
+    compileOnly projects.micronautDataProcessor
+    implementation mnRxjava2.micronaut.rxjava2
+    implementation projects.micronautDataJdbc
+    implementation mn.micronaut.http.client
+    implementation mnValidation.micronaut.validation
     implementation libs.jakarta.persistence.api
-    implementation libs.javax.transaction.api
-    runtimeOnly "ch.qos.logback:logback-classic"
-    runtimeOnly "com.h2database:h2"
+
+    runtimeOnly mnSql.micronaut.jdbc.tomcat
+    runtimeOnly mnLogging.logback.classic
+    runtimeOnly mnSql.h2
 }

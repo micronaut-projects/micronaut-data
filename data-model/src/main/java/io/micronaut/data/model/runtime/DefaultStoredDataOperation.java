@@ -19,11 +19,6 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
 import io.micronaut.inject.ExecutableMethod;
-import io.micronaut.transaction.TransactionDefinition;
-import io.micronaut.transaction.support.DefaultTransactionDefinition;
-import io.micronaut.transaction.support.TransactionUtil;
-
-import java.util.Optional;
 
 /**
  * Used as a super class to resolve and potentially cache data about a method.
@@ -33,29 +28,10 @@ import java.util.Optional;
  * @author graemerocher
  */
 public class DefaultStoredDataOperation<R> implements StoredDataOperation<R> {
-    /**
-     * @deprecated Not needed anymore
-     */
-    @Deprecated
-    public static final DefaultTransactionDefinition NO_TRANSACTION = new DefaultTransactionDefinition();
     private final ExecutableMethod<?, ?> method;
-    private TransactionDefinition transactionDefinition;
 
     public DefaultStoredDataOperation(ExecutableMethod<?, ?> method) {
         this.method = method;
-    }
-
-    @NonNull
-    @Override
-    public final Optional<TransactionDefinition> getTransactionDefinition() {
-        if (transactionDefinition == null) {
-            transactionDefinition = TransactionUtil.getTransactionDefinition(
-                    method.getDeclaringType().getSimpleName() + "." + method.getMethodName(), method);
-        }
-        if (transactionDefinition == TransactionDefinition.DEFAULT) {
-            return Optional.empty();
-        }
-        return Optional.of(transactionDefinition);
     }
 
     @NonNull

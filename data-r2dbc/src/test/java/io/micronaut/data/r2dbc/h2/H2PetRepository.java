@@ -8,9 +8,9 @@ import io.micronaut.data.tck.entities.Pet;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
-import javax.transaction.Transactional;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 
 @R2dbcRepository(dialect = Dialect.H2)

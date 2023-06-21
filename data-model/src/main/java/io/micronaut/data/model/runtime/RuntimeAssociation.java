@@ -43,7 +43,7 @@ public class RuntimeAssociation<T> extends RuntimePersistentProperty<T> implemen
      * @param property The property
      * @param constructorArg Whether it is a constructor arg
      */
-    RuntimeAssociation(RuntimePersistentEntity<T> owner, BeanProperty<T, ?> property, boolean constructorArg) {
+    RuntimeAssociation(RuntimePersistentEntity<T> owner, BeanProperty<T, Object> property, boolean constructorArg) {
         super(owner, property, constructorArg);
         this.kind = Association.super.getKind();
         this.aliasName = Association.super.getAliasName();

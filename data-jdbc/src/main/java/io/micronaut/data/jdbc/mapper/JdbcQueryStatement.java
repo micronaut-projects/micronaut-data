@@ -35,7 +35,7 @@ import java.util.Date;
  */
 public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Integer> {
 
-    private final ConversionService<?> conversionService;
+    private final ConversionService conversionService;
 
     public JdbcQueryStatement() {
         this(null);
@@ -47,13 +47,13 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
      * @param conversionService The data conversion service
      * @since 3.1
      */
-    public JdbcQueryStatement(DataConversionService<?> conversionService) {
+    public JdbcQueryStatement(DataConversionService conversionService) {
         // Backwards compatibility should be removed in the next version
         this.conversionService = conversionService == null ? ConversionService.SHARED : conversionService;
     }
 
     @Override
-    public ConversionService<?> getConversionService() {
+    public ConversionService getConversionService() {
         return conversionService;
     }
 
@@ -109,6 +109,9 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
                         return this;
                     case SHORT:
                         statement.setNull(index, Types.TINYINT);
+                        return this;
+                    case UUID:
+                        statement.setNull(index, Types.OTHER, "uuid");
                         return this;
 
                     default:

@@ -65,6 +65,6 @@ abstract class AbstractCountOrEntityPublisherInterceptor extends AbstractReactiv
                 publisher = Flux.from(publisher).map(result -> convertOne(result, argument));
             }
         }
-        return Publishers.convertPublisher(publisher, context.getReturnType().getType());
+        return Publishers.convertPublisher(conversionService, publisher, context.getReturnType().getType());
     }
 }

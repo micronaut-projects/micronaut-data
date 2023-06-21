@@ -16,7 +16,19 @@
 package io.micronaut.data.model.query.builder.sql;
 
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.DataType;
+
+import java.util.EnumSet;
+
+import static io.micronaut.data.annotation.Join.Type.ALL_TYPES;
+import static io.micronaut.data.annotation.Join.Type.DEFAULT;
+import static io.micronaut.data.annotation.Join.Type.FETCH;
+import static io.micronaut.data.annotation.Join.Type.INNER;
+import static io.micronaut.data.annotation.Join.Type.LEFT;
+import static io.micronaut.data.annotation.Join.Type.LEFT_FETCH;
+import static io.micronaut.data.annotation.Join.Type.RIGHT;
+import static io.micronaut.data.annotation.Join.Type.RIGHT_FETCH;
 
 /**
  * The SQL dialect to use.
@@ -28,46 +40,81 @@ public enum Dialect {
     /**
      * H2 database.
      */
-    H2(true, false, true),
+    H2(true, false,
+        EnumSet.of(
+            DEFAULT,
+            LEFT,
+            LEFT_FETCH,
+            RIGHT,
+            RIGHT_FETCH,
+            FETCH,
+            INNER
+        )),
     /**
      * MySQL 5.5 or above.
      */
-    MYSQL(true, true, false),
+    MYSQL(true, true, EnumSet.of(
+        DEFAULT,
+        LEFT,
+        LEFT_FETCH,
+        RIGHT,
+        RIGHT_FETCH,
+        FETCH,
+        INNER
+    )),
     /**
      * Postgres 9.5 or later.
      */
-    POSTGRES(true, false, true),
+    POSTGRES(true, false, ALL_TYPES),
     /**
      * SQL server 2012 or above.
      */
-    SQL_SERVER(false, false, false),
+    SQL_SERVER(false, false, ALL_TYPES),
     /**
      * Oracle 12c or above.
      */
-    ORACLE(true, true, false),
+    ORACLE(true, true, ALL_TYPES, true),
     /**
      * Ansi compliant SQL.
      */
-    ANSI(true, false, true);
+    ANSI(true, false, ALL_TYPES);
 
     private final boolean supportsBatch;
     private final boolean stringUUID;
-    private final boolean supportsArrays;
+
+    private final boolean supportsJsonEntity;
+
+    private final EnumSet<Join.Type> joinTypesSupported;
 
     /**
      * Allows customization of batch support.
-     * @param supportsBatch If batch is supported
-     * @param stringUUID Does the dialect require a string UUID
-     * @param supportsArrays Does the dialect supports arrays
+     *
+     * @param supportsBatch      If batch is supported
+     * @param stringUUID         Does the dialect require a string UUID
+     * @param joinTypesSupported EnumSet of supported join types.
      */
-    Dialect(boolean supportsBatch, boolean stringUUID, boolean supportsArrays) {
+    Dialect(boolean supportsBatch, boolean stringUUID, EnumSet<Join.Type> joinTypesSupported) {
+        this(supportsBatch, stringUUID, joinTypesSupported, false);
+    }
+
+    /**
+     * The constructor with all parameters.
+     *
+     * @param supportsBatch      If batch is supported
+     * @param stringUUID         Does the dialect require a string UUID
+     * @param joinTypesSupported EnumSet of supported join types.
+     * @param supportsJsonEntity Whether JSON entity is supported
+     */
+    Dialect(boolean supportsBatch, boolean stringUUID, EnumSet<Join.Type> joinTypesSupported, boolean supportsJsonEntity) {
         this.supportsBatch = supportsBatch;
         this.stringUUID = stringUUID;
-        this.supportsArrays = supportsArrays;
+        this.joinTypesSupported = joinTypesSupported;
+        this.supportsJsonEntity = supportsJsonEntity;
     }
 
     /**
      * Some drivers and dialects do not support JDBC batching. This allows customization.
+     *
      * @return True if batch is supported.
      */
     public final boolean allowBatch() {
@@ -75,15 +122,8 @@ public enum Dialect {
     }
 
     /**
-     * Some databases support arrays and the use of {@link java.sql.Connection#createArrayOf(String, Object[])}.
-     * @return True if arrays are supported.
-     */
-    public final boolean supportsArrays() {
-        return supportsArrays;
-    }
-
-    /**
      * Returns compatible dialect dataype.
+     *
      * @param type the type
      * @return The dialect compatible DataType
      * @since 2.0.1
@@ -105,5 +145,25 @@ public enum Dialect {
      */
     public final boolean requiresStringUUID(@NonNull DataType type) {
         return type == DataType.UUID && this.stringUUID;
+    }
+
+    /**
+     * Determines whether the join type is supported this dialect.
+     *
+     * @param joinType the join type
+     * @return True if the type is supported by this dialect.
+     */
+    public final boolean supportsJoinType(@NonNull Join.Type joinType) {
+        return this.joinTypesSupported.contains(joinType);
+    }
+
+    /**
+     * Gets an indicator whether JSON entity is supported by the database.
+     *
+     * @return true if JSON entity is supported
+     * @since 4.0.0
+     */
+    public boolean supportsJsonEntity() {
+        return supportsJsonEntity;
     }
 }

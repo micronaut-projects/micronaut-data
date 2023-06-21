@@ -21,11 +21,15 @@ import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.transaction.reactive.ReactiveTransactionOperations
 import io.r2dbc.spi.Connection
 import io.r2dbc.spi.ConnectionFactory
+import io.r2dbc.spi.Result
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
+
+import java.util.stream.Collectors
+import java.util.stream.LongStream
 
 abstract class PlainR2dbcSpec extends Specification {
 
@@ -36,6 +40,10 @@ abstract class PlainR2dbcSpec extends Specification {
     ConnectionFactory connectionFactory = context.getBean(ConnectionFactory)
 
     ReactiveTransactionOperations<Connection> reactiveTransactionOperations = context.getBean(ReactiveTransactionOperations)
+
+    ApplicationContext getApplicationContext() {
+        return context
+    }
 
     protected abstract AuthorRepository getAuthorRepository()
 
@@ -64,6 +72,44 @@ abstract class PlainR2dbcSpec extends Specification {
             result.size() == 1
             result[0] == 1
             authorRepository.findByNameContains("Denis").size() == 1
+    }
+
+    def "save many"() {
+        given:
+            authorRepository.deleteAll()
+            long recordsCount = 10_000
+        when:
+            def authors = LongStream.range(0, recordsCount)
+                    .mapToObj(id -> new Author(name: "Name " + id))
+                    .toList()
+            def result = Flux.usingWhen(connectionFactory.create(), connection -> {
+                return Flux.usingWhen(Mono.from(connection.beginTransaction()).then(Mono.just(connection)),
+                        (b) -> {
+                            def stmt = connection.createStatement(getInsertQuery())
+                            def it = authors.iterator()
+                            boolean isFirst = true
+                            while (it.hasNext()) {
+                                if (isFirst) {
+                                    isFirst = false
+                                } else {
+                                    // https://github.com/r2dbc/r2dbc-spi/issues/259
+                                    stmt = stmt.add()
+                                }
+                                def author = it.next()
+                                stmt = stmt.bind(0, author.getName())
+                            }
+                            return Flux.from(stmt.execute()).flatMap { Result r -> r.getRowsUpdated() }
+                        },
+                        (b) -> connection.commitTransaction(),
+                        (b, throwable) -> connection.rollbackTransaction(),
+                        (b) -> connection.commitTransaction())
+
+            }, { it -> it.close() })
+                    .collectList()
+                    .block()
+        then:
+            result.size() == recordsCount
+            authorRepository.count() == recordsCount
     }
 
     def "save one - convert flux to mono"() {

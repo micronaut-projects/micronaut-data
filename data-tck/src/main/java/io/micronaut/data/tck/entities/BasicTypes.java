@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.tck.entities;
 
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.DateCreated;
 import io.micronaut.data.annotation.DateUpdated;
 import io.micronaut.data.annotation.GeneratedValue;
@@ -58,6 +59,7 @@ public class BasicTypes {
     private Integer wrapperInteger = 1;
     private Long wrapperLong = 2L;
     private Boolean wrapperBoolean = true;
+    @Nullable
     private Character wrapperChar = 'c';
     private Short wrapperShort = 3;
     private Double wrapperDouble = 1.1d;

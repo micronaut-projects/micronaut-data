@@ -29,6 +29,8 @@ class Test {
     @Relation(value = Relation.Kind.MANY_TO_ONE)
     private OtherEntity manyToOneOther;
 
+    private List<String> colors;
+
     public Test(String name) {
         this.name = name;
     }
@@ -107,5 +109,13 @@ class Test {
 
     public void setManyToOneOther(OtherEntity manyToOneOther) {
         this.manyToOneOther = manyToOneOther;
+    }
+
+    public List<String> getColors() {
+        return colors;
+    }
+
+    public void setColors(List<String> colors) {
+        this.colors = colors;
     }
 }

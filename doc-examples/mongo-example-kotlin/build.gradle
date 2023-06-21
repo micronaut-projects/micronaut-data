@@ -1,13 +1,11 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
 plugins {
     id "org.jetbrains.kotlin.jvm"
     id "org.jetbrains.kotlin.kapt"
     id "org.jetbrains.kotlin.plugin.allopen"
-    id "io.micronaut.application"
+    id "io.micronaut.test-resources"
     id "io.micronaut.build.internal.data-kotlin-example"
-}
-
-repositories {
-    mavenCentral()
 }
 
 application {
@@ -15,28 +13,35 @@ application {
 }
 
 micronaut {
-    version project.ext.micronautVersion
+    version libs.versions.micronaut.platform.get()
     runtime "netty"
     testRuntime "junit5"
+    testResources {
+        enabled = true
+        inferClasspath = false
+        additionalModules.add(KnownModules.MONGODB)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
 }
 
 dependencies {
-    kapt projects.dataDocumentProcessor
+    kapt projects.micronautDataDocumentProcessor
 
-    implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
-    implementation 'io.micronaut.reactor:micronaut-reactor'
+    implementation mnRxjava2.micronaut.rxjava2
+    implementation mnReactor.micronaut.reactor
 
-    implementation "io.micronaut:micronaut-http-client"
-    implementation projects.dataMongodb
-    implementation libs.mongodb.driver.sync
+    implementation mn.micronaut.http.client
+    implementation projects.micronautDataMongodb
+    implementation projects.micronautDataTx
+    implementation mnMongo.mongo.driver
+    implementation mnKotlin.micronaut.kotlin.runtime
 
     compileOnly libs.javax.persistence.api
     implementation libs.jakarta.persistence.api
     implementation libs.jakarta.transaction.api
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactive"
+    implementation libs.kotlin.coroutines
+    implementation libs.kotlin.coroutines.reactive
 
-    runtimeOnly "ch.qos.logback:logback-classic"
-
-    testImplementation "org.testcontainers:mongodb"
+    runtimeOnly mnLogging.logback.classic
 }

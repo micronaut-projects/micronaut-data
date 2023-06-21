@@ -6,19 +6,22 @@ plugins {
 dependencies {
     annotationProcessor mn.micronaut.inject.java
     annotationProcessor mn.micronaut.graal
+    annotationProcessor mnSerde.micronaut.serde.processor
 
-    api projects.dataTx
     api mn.micronaut.inject
-    api mn.micronaut.validation
     api mn.micronaut.aop
+    api mn.micronaut.core.reactive
 
-    implementation libs.reactor
+    implementation mn.reactor
 
     compileOnly libs.jakarta.persistence.api
-    compileOnly libs.rxjava2
+    compileOnly mnRxjava2.rxjava2
     compileOnly mn.jackson.annotations
     compileOnly mn.jackson.databind
+    compileOnly mnSerde.micronaut.serde.api
 
+    testCompileOnly mnSerde.micronaut.serde.processor
     testImplementation mn.micronaut.inject.java.test
+    testImplementation mnSerde.micronaut.serde.jackson
     testImplementation mn.micronaut.jackson.databind
 }

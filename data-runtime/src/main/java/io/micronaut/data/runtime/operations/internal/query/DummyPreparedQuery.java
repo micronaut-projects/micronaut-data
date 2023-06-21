@@ -54,6 +54,11 @@ public final class DummyPreparedQuery<E, R> implements PreparedQuery<E, R>, Dele
     }
 
     @Override
+    public boolean isRawQuery() {
+        return storedQuery.isRawQuery();
+    }
+
+    @Override
     public Class<?> getRepositoryType() {
         return Object.class;
     }

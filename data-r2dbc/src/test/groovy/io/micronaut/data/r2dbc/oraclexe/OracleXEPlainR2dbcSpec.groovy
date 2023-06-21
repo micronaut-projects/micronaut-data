@@ -20,7 +20,6 @@ import io.micronaut.data.r2dbc.PlainR2dbcSpec
 import io.micronaut.data.tck.repositories.AuthorRepository
 import spock.lang.IgnoreIf
 
-@IgnoreIf({ !jvm.isJava11Compatible() })
 class OracleXEPlainR2dbcSpec extends PlainR2dbcSpec implements OracleXETestPropertyProvider {
 
     @Memoized

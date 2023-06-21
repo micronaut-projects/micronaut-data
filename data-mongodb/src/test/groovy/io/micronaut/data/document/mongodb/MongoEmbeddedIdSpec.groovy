@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.document.mongodb
 
-import io.micronaut.core.annotation.Introspected
 import io.micronaut.data.annotation.Embeddable
 import io.micronaut.data.annotation.EmbeddedId
 import io.micronaut.data.annotation.Id
@@ -31,7 +30,7 @@ import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification
 
-import javax.validation.constraints.NotNull
+import jakarta.validation.constraints.NotNull
 
 @MicronautTest
 class MongoEmbeddedIdSpec extends Specification implements MongoTestPropertyProvider {
@@ -191,7 +190,6 @@ class Item {
     }
 }
 
-@Introspected
 @Embeddable
 class ItemGroupId {
 

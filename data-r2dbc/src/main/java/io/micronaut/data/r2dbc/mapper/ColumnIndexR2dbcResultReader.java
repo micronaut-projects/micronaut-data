@@ -23,6 +23,7 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.ResultReader;
+import io.r2dbc.spi.R2dbcTransientResourceException;
 import io.r2dbc.spi.Row;
 
 import java.math.BigDecimal;
@@ -39,7 +40,7 @@ import java.util.Date;
  * @since 1.0.0
  */
 public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> {
-    private final ConversionService<?> conversionService;
+    private final ConversionService conversionService;
 
     public ColumnIndexR2dbcResultReader() {
         this(null);
@@ -51,13 +52,13 @@ public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> 
      * @param conversionService The data conversion service
      * @since 3.1
      */
-    public ColumnIndexR2dbcResultReader(DataConversionService<?> conversionService) {
+    public ColumnIndexR2dbcResultReader(DataConversionService conversionService) {
         // Backwards compatibility should be removed in the next version
         this.conversionService = conversionService == null ? ConversionService.SHARED : conversionService;
     }
 
     @Override
-    public ConversionService<?> getConversionService() {
+    public ConversionService getConversionService() {
         return conversionService;
     }
 
@@ -229,7 +230,8 @@ public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> 
     public <T> T getRequiredValue(Row resultSet, Integer name, Class<T> type) throws DataAccessException {
         try {
             return resultSet.get(name, type);
-        } catch (IllegalArgumentException | ConversionErrorException e) {
+        } catch (IllegalArgumentException | ConversionErrorException |
+                 R2dbcTransientResourceException e) {
             try {
                 return conversionService.convertRequired(resultSet.get(name), type);
             } catch (Exception exception) {

@@ -2,9 +2,10 @@ package io.micronaut.data.hibernate.entities;
 
 import io.micronaut.data.annotation.Where;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.util.UUID;
 
 @Entity
@@ -12,6 +13,7 @@ import java.util.UUID;
 @Where(value = "@.deleted = false")
 public class UserWithWhere {
     @Id
+    @Column(columnDefinition = "uuid")
     private UUID id;
     private String email;
     private Boolean deleted;

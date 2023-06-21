@@ -52,17 +52,24 @@ import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonObjectId;
+import org.bson.BsonRegularExpression;
 import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
+import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -70,21 +77,21 @@ import java.util.stream.Collectors;
  *
  * @param <E>   The entity type
  * @param <R>   The result type
- * @param <Dtb> The database type
  * @author Denis Stepanov
  * @since 3.3.
  */
 @Internal
-final class DefaultMongoStoredQuery<E, R, Dtb> extends DefaultBindableParametersStoredQuery<E, R> implements DelegateStoredQuery<E, R>, MongoStoredQuery<E, R, Dtb> {
+final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStoredQuery<E, R> implements DelegateStoredQuery<E, R>, MongoStoredQuery<E, R> {
 
+    private static final Pattern MONGO_PARAM_PATTERN = Pattern.compile("\\W*(\\" + MongoQueryBuilder.QUERY_PARAMETER_PLACEHOLDER + ":(\\d)+)\\W*");
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultMongoStoredQuery.class);
     private static final BsonDocument EMPTY = new BsonDocument();
 
     private final StoredQuery<E, R> storedQuery;
-    private final CodecRegistry codecRegistry;
+    private final Supplier<CodecRegistry> codecRegistry;
     private final AttributeConverterRegistry attributeConverterRegistry;
     private final RuntimeEntityRegistry runtimeEntityRegistry;
-    private final ConversionService<?> conversionService;
-    private final Dtb database;
+    private final ConversionService conversionService;
     private final RuntimePersistentEntity<E> persistentEntity;
     private final UpdateData updateData;
     private final FindData findData;
@@ -93,31 +100,28 @@ final class DefaultMongoStoredQuery<E, R, Dtb> extends DefaultBindableParameters
     private final boolean isCount;
 
     DefaultMongoStoredQuery(StoredQuery<E, R> storedQuery,
-                            CodecRegistry codecRegistry,
+                            Supplier<CodecRegistry> codecRegistry,
                             AttributeConverterRegistry attributeConverterRegistry,
                             RuntimeEntityRegistry runtimeEntityRegistry,
-                            ConversionService<?> conversionService,
-                            RuntimePersistentEntity<E> persistentEntity,
-                            Dtb database) {
+                            ConversionService conversionService,
+                            RuntimePersistentEntity<E> persistentEntity) {
         this(storedQuery,
                 codecRegistry,
                 attributeConverterRegistry,
                 runtimeEntityRegistry,
                 conversionService,
                 persistentEntity,
-                database,
                 storedQuery.getAnnotationMetadata().enumValue(DataMethod.NAME, DataMethod.META_MEMBER_OPERATION_TYPE, DataMethod.OperationType.class)
                         .orElseThrow(IllegalStateException::new),
                 storedQuery.getAnnotationMetadata().stringValue(Query.class, "update").orElse(null));
     }
 
     DefaultMongoStoredQuery(StoredQuery<E, R> storedQuery,
-                            CodecRegistry codecRegistry,
+                            Supplier<CodecRegistry> codecRegistry,
                             AttributeConverterRegistry attributeConverterRegistry,
                             RuntimeEntityRegistry runtimeEntityRegistry,
-                            ConversionService<?> conversionService,
+                            ConversionService conversionService,
                             RuntimePersistentEntity<E> persistentEntity,
-                            Dtb database,
                             DataMethod.OperationType operationType,
                             String updateJson) {
         super(storedQuery, persistentEntity);
@@ -126,7 +130,6 @@ final class DefaultMongoStoredQuery<E, R, Dtb> extends DefaultBindableParameters
         this.attributeConverterRegistry = attributeConverterRegistry;
         this.runtimeEntityRegistry = runtimeEntityRegistry;
         this.conversionService = conversionService;
-        this.database = database;
         this.persistentEntity = persistentEntity;
         if (operationType == DataMethod.OperationType.QUERY || operationType == DataMethod.OperationType.EXISTS || operationType == DataMethod.OperationType.COUNT) {
             String query = storedQuery.getQuery();
@@ -221,8 +224,8 @@ final class DefaultMongoStoredQuery<E, R, Dtb> extends DefaultBindableParameters
     }
 
     @Override
-    public Dtb getDatabase() {
-        return database;
+    public RuntimePersistentEntity<E> getRuntimePersistentEntity() {
+        return persistentEntity;
     }
 
     @Override
@@ -302,8 +305,7 @@ final class DefaultMongoStoredQuery<E, R, Dtb> extends DefaultBindableParameters
     }
 
     private boolean needsProcessingValue(BsonValue value) {
-        if (value instanceof BsonDocument) {
-            BsonDocument bsonDocument = (BsonDocument) value;
+        if (value instanceof BsonDocument bsonDocument) {
             BsonInt32 queryParameterIndex = bsonDocument.getInt32(MongoQueryBuilder.QUERY_PARAMETER_PLACEHOLDER, null);
             if (queryParameterIndex != null) {
                 return true;
@@ -315,13 +317,17 @@ final class DefaultMongoStoredQuery<E, R, Dtb> extends DefaultBindableParameters
                 }
             }
             return false;
-        } else if (value instanceof BsonArray) {
-            BsonArray bsonArray = (BsonArray) value;
+        }
+        if (value instanceof BsonArray bsonArray) {
             for (BsonValue bsonValue : bsonArray) {
                 if (needsProcessingValue(bsonValue)) {
                     return true;
                 }
             }
+        }
+        if (value instanceof BsonRegularExpression bsonRegularExpression) {
+            String pattern = bsonRegularExpression.getPattern();
+            return MONGO_PARAM_PATTERN.matcher(pattern).matches();
         }
         return false;
     }
@@ -398,8 +404,7 @@ final class DefaultMongoStoredQuery<E, R, Dtb> extends DefaultBindableParameters
     }
 
     private BsonValue replaceQueryParametersInBsonValue(BsonValue value, @Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
-        if (value instanceof BsonDocument) {
-            BsonDocument bsonDocument = (BsonDocument) value;
+        if (value instanceof BsonDocument bsonDocument) {
             BsonInt32 queryParameterIndex = bsonDocument.getInt32(MongoQueryBuilder.QUERY_PARAMETER_PLACEHOLDER, null);
             if (queryParameterIndex != null) {
                 int index = queryParameterIndex.getValue();
@@ -418,8 +423,7 @@ final class DefaultMongoStoredQuery<E, R, Dtb> extends DefaultBindableParameters
                 }
             }
             return bsonDocument;
-        } else if (value instanceof BsonArray) {
-            BsonArray bsonArray = (BsonArray) value;
+        } else if (value instanceof BsonArray bsonArray) {
             for (int i = 0; i < bsonArray.size(); i++) {
                 BsonValue bsonValue = bsonArray.get(i);
                 BsonValue newValue = replaceQueryParametersInBsonValue(bsonValue, invocationContext, entity);
@@ -437,35 +441,73 @@ final class DefaultMongoStoredQuery<E, R, Dtb> extends DefaultBindableParameters
                     }
                 }
             }
+        } else if (value instanceof BsonRegularExpression bsonRegularExpression) {
+            String pattern = bsonRegularExpression.getPattern();
+            Matcher matcher = MONGO_PARAM_PATTERN.matcher(pattern);
+            if (matcher.matches()) {
+                Integer queryParamIndex = null;
+                try {
+                    String queryParamIndexStr = matcher.group(2);
+                    queryParamIndex = Integer.parseInt(queryParamIndexStr);
+                } catch (Exception e) {
+                    LOG.info("Failed to get mongo parameter for regex {}", e);
+                }
+                if (queryParamIndex != null) {
+                    QueryParameterBinding queryParameterBinding = getQueryBindings().get(queryParamIndex);
+                    Map.Entry<QueryParameterBinding, Object> e = bind(queryParameterBinding, invocationContext, entity);
+                    if (e == null) {
+                        throw new DataAccessException("Cannot bind a value at index: " + queryParamIndex);
+                    }
+                    pattern = pattern.replace(matcher.group(1), e.getValue().toString());
+                    return new BsonRegularExpression(pattern, bsonRegularExpression.getOptions());
+                }
+            }
         }
         return value;
     }
 
     private BsonValue getValue(QueryParameterBinding queryParameterBinding, Object value) {
         // Check if the parameter is not an id which might be represented as String but needs to mapped as ObjectId
-        if (value instanceof String && queryParameterBinding.getPropertyPath() != null) {
-            // TODO: improve id recognition
+        boolean isIdentity = false;
+        // TODO: improve id recognition
+        if (queryParameterBinding.getPropertyPath() != null) {
             PersistentPropertyPath pp = getRequiredPropertyPath(queryParameterBinding, persistentEntity);
             RuntimePersistentProperty<?> persistentProperty = (RuntimePersistentProperty) pp.getProperty();
-            if (persistentProperty instanceof RuntimeAssociation) {
-                RuntimeAssociation runtimeAssociation = (RuntimeAssociation) persistentProperty;
+            if (persistentProperty instanceof RuntimeAssociation runtimeAssociation) {
                 RuntimePersistentProperty identity = runtimeAssociation.getAssociatedEntity().getIdentity();
-                if (identity != null && identity.getType() == String.class && identity.isGenerated()) {
-                    return new BsonObjectId(new ObjectId((String) value));
-                }
+                isIdentity = identity != null && identity.getType() == String.class && identity.isGenerated();
+            } else {
+                isIdentity = persistentProperty.getOwner().getIdentity() == persistentProperty && persistentProperty.getType() == String.class && persistentProperty.isGenerated();
             }
-            if (persistentProperty.getOwner().getIdentity() == persistentProperty && persistentProperty.getType() == String.class && persistentProperty.isGenerated()) {
-                return new BsonObjectId(new ObjectId((String) value));
-            }
+        }
+
+        if (isIdentity && value instanceof String) {
+            return new BsonObjectId(new ObjectId((String) value));
         }
         if (value instanceof Object[]) {
-            value = Arrays.asList((Object[]) value);
+            List<Object> valueList = Arrays.asList((Object[]) value);
+            if (isIdentity) {
+                for (ListIterator<Object> iterator = valueList.listIterator(); iterator.hasNext(); ) {
+                    Object item = iterator.next();
+                    if (item instanceof String) {
+                        item = new BsonObjectId(new ObjectId((String) item));
+                    }
+                    iterator.set(item);
+                }
+            }
+            value = valueList;
         }
         if (value instanceof Collection) {
+            final boolean isIdentityField = isIdentity;
             Collection<?> values = (Collection) value;
-            return new BsonArray(values.stream().map(val -> MongoUtils.toBsonValue(conversionService, val, codecRegistry)).collect(Collectors.toList()));
+            return new BsonArray(values.stream().map(val -> {
+                if (isIdentityField && val instanceof String) {
+                    return new BsonObjectId(new ObjectId((String) val));
+                }
+                return MongoUtils.toBsonValue(conversionService, val, codecRegistry.get());
+            }).collect(Collectors.toList()));
         }
-        return MongoUtils.toBsonValue(conversionService, value, codecRegistry);
+        return MongoUtils.toBsonValue(conversionService, value, codecRegistry.get());
     }
 
     @Override

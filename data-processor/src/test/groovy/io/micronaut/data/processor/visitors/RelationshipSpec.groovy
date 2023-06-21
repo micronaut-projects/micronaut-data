@@ -32,7 +32,7 @@ import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import java.util.*;
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Repository
 @RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
@@ -55,15 +55,15 @@ class Authority {
     public Long getId() {
         return id;
     }
-    
+
     public void setId(Long id) {
         this.id = id;
     }
-    
+
     public String getName() {
         return name;
     }
-    
+
     public void setName(String name) {
         this.name = name;
     }
@@ -71,7 +71,7 @@ class Authority {
     public User getUser() {
         return user;
     }
-    
+
     public void setUser(User user) {
         this.user = user;
     }
@@ -85,11 +85,11 @@ class User {
     private Long id;
     $annotated2
     private Authority authority;
-    
+
     public Long getId() {
         return id;
     }
-    
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -97,7 +97,7 @@ class User {
     public Authority getAuthority() {
         return authority;
     }
-    
+
     public void setAuthority(Authority authority) {
         this.authority = authority;
     }
@@ -138,7 +138,7 @@ import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import java.util.*;
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Repository
 @RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
@@ -161,15 +161,15 @@ class Authority {
     public Long getId() {
         return id;
     }
-    
+
     public void setId(Long id) {
         this.id = id;
     }
-    
+
     public String getName() {
         return name;
     }
-    
+
     public void setName(String name) {
         this.name = name;
     }
@@ -181,7 +181,7 @@ class Authority {
     public void setUsers(List<User> users) {
         this.users = users;
     }
-    
+
 }
 
 @Entity
@@ -192,11 +192,11 @@ class User {
     private Long id;
     $usersAnnotated
     private Set<Authority> authorities = new HashSet<>();
-    
+
     public Long getId() {
         return id;
     }
-    
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -204,7 +204,7 @@ class User {
     public Set<Authority> getAuthorities() {
         return authorities;
     }
-    
+
     public void setAuthorities(Set<Authority> authorities) {
         this.authorities = authorities;
     }
@@ -258,7 +258,7 @@ import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import java.util.*;
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Repository
 @RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
@@ -281,15 +281,15 @@ class Authority {
     public Long getId() {
         return id;
     }
-    
+
     public void setId(Long id) {
         this.id = id;
     }
-    
+
     public String getName() {
         return name;
     }
-    
+
     public void setName(String name) {
         this.name = name;
     }
@@ -301,7 +301,7 @@ class Authority {
     public void setUser(User user) {
         this.user = user;
     }
-    
+
 }
 
 @Entity
@@ -312,11 +312,11 @@ class User {
     private Long id;
     $userAnnotated
     private Set<Authority> authorities = new HashSet<>();
-    
+
     public Long getId() {
         return id;
     }
-    
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -324,7 +324,7 @@ class User {
     public Set<Authority> getAuthorities() {
         return authorities;
     }
-    
+
     public void setAuthorities(Set<Authority> authorities) {
         this.authorities = authorities;
     }

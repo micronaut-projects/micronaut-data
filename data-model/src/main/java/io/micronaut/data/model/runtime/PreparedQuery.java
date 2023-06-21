@@ -53,18 +53,16 @@ public interface PreparedQuery<E, R> extends PagedQuery<E>, StoredQuery<E, R>, P
      */
     Argument[] getArguments();
 
-    /**
-     * @return The last updated type.
-     */
-    @Deprecated
-    default Class<?> getLastUpdatedType() {
-        throw new IllegalStateException("Not supported anymore");
-    }
-
     @NonNull
     @Override
     default Map<String, Object> getQueryHints() {
         return Collections.emptyMap();
     }
 
+    /**
+     * Gets an indicator telling whether underlying query is raw query.
+     *
+     * @return true if it is raw query
+     */
+    boolean isRawQuery();
 }

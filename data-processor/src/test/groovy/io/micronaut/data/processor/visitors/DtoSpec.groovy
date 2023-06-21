@@ -41,7 +41,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
 @Introspected
 class TotalDto {
     private long total;
-    
+
     public long getTotal() {
         return total;
     }
@@ -49,7 +49,7 @@ class TotalDto {
     public void setTotal(long total) {
         this.total = total;
     }
-    
+
 }
 """)
 
@@ -74,7 +74,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
 @Introspected
 class FullNameDto {
     private String fullName;
-    
+
     public String getFullName() {
         return fullName;
     }
@@ -82,7 +82,7 @@ class FullNameDto {
     public void setFullName(String fullName) {
         this.fullName = fullName;
     }
-    
+
 }
 """)
 
@@ -106,7 +106,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
 @Introspected
 class PersonDto {
     private int name;
-    
+
     public int getName() {
         return name;
     }
@@ -114,7 +114,7 @@ class PersonDto {
     public void setName(int name) {
         this.name = name;
     }
-    
+
 }
 """)
         then:
@@ -135,13 +135,13 @@ import io.micronaut.core.annotation.Introspected;
 interface MyInterface extends GenericRepository<Person, Long> {
 
     List<PersonDto> list(String name);
-    
+
     PersonDto find(String name);
-    
+
     Page<PersonDto> searchByNameLike(String title, Pageable pageable);
-    
+
     java.util.stream.Stream<PersonDto> queryByNameLike(String title, Pageable pageable);
-    
+
     @Query("select * from person p where p.name = :name")
     Optional<PersonDto> findByNameWithQuery(String name);
 }
@@ -149,7 +149,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
 @Introspected
 class PersonDto {
     private String name;
-    
+
     public String getName() {
         return name;
     }
@@ -157,7 +157,7 @@ class PersonDto {
     public void setName(String name) {
         this.name = name;
     }
-    
+
 }
 """)
         def alias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Person))
@@ -194,7 +194,7 @@ class PersonDto {
         def repository = buildJpaRepository('test.MyInterface', """
 
 import io.micronaut.core.annotation.Introspected;
-import javax.persistence.*;
+import jakarta.persistence.*;
 import io.micronaut.data.repository.*;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.Join;
@@ -204,10 +204,10 @@ import io.micronaut.data.annotation.Join;
 interface MyInterface extends GenericRepository<Author, Long> {
 
     List<AuthorDto> listAll();
-    
+
     @Join(value = "books", type = Join.Type.LEFT)
     List<AuthorDto> findAll();
-    
+
 }
 
 @Entity
@@ -275,7 +275,7 @@ class Book {
 class AuthorDto {
     private String name;
     private Set<Book> books;
-    
+
     public String getName() {
         return name;
     }
@@ -283,7 +283,7 @@ class AuthorDto {
     public void setName(String name) {
         this.name = name;
     }
-    
+
     public Set<Book> getBooks() {
         return books;
     }
@@ -291,7 +291,7 @@ class AuthorDto {
     public void setBooks(Set<Book> books) {
         this.books = books;
     }
-    
+
 }
 """)
         then:
@@ -313,7 +313,7 @@ class AuthorDto {
             def repository = buildJpaRepository('test.MyInterface', """
 
 import io.micronaut.core.annotation.Introspected;
-import javax.persistence.*;
+import jakarta.persistence.*;
 import io.micronaut.data.repository.*;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.Join;
@@ -323,7 +323,7 @@ import io.micronaut.data.annotation.Join;
 interface MyInterface extends GenericRepository<Author, Long> {
 
     AuthorDto findFirstNameAndLastNameByIdAndEmailIn(Long id, Collection<String> email);
-    
+
 }
 
 @Entity
@@ -343,7 +343,7 @@ class Author {
     public void setId(Long id) {
         this.id = id;
     }
-    
+
     public String getFirstName() {
         return firstName;
     }
@@ -351,19 +351,19 @@ class Author {
     public void setFirstName(String firstName) {
         this.firstName = firstName;
     }
-    
+
     public String getLastName() {
         return lastName;
     }
-    
+
       public void setLastName(String lastName) {
         this.lastName = lastName;
     }
-    
+
     public String getEmail() {
         return email;
     }
-    
+
     public void setEmail(String email) {
         this.email = email;
     }
@@ -375,7 +375,7 @@ class Author {
 class AuthorDto {
     private String firstName;
     private String lastName;
-    
+
     public String getFirstName() {
         return firstName;
     }
@@ -383,15 +383,15 @@ class AuthorDto {
     public void setFirstName(String firstName) {
         this.firstName = firstName;
     }
-    
+
     public String getLastName() {
         return lastName;
     }
-    
+
     public void setLastName(String lastName) {
         this.lastName = lastName;
     }
-    
+
 }
 """)
         then:

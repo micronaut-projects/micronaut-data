@@ -16,7 +16,7 @@
 package io.micronaut.data.processor.mappers
 
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
-import io.micronaut.transaction.annotation.TransactionalAdvice
+import io.micronaut.transaction.annotation.Transactional
 
 class TransactionalAnnotationMapperSpec extends AbstractTypeElementSpec {
 
@@ -28,18 +28,18 @@ package test;
 @jakarta.inject.Singleton
 class Test {
 
-    @javax.transaction.Transactional(rollbackOn = RuntimeException.class, dontRollbackOn=java.io.IOException.class)
+    @jakarta.transaction.Transactional(rollbackOn = RuntimeException.class, dontRollbackOn=java.io.IOException.class)
     void one() {
-    
+
     }
 }
 
 ''')
         expect:
         definition.getRequiredMethod("one")
-                .classValue(TransactionalAdvice, "noRollbackFor").get() == IOException
+                .classValue(Transactional, "noRollbackFor").get() == IOException
         definition.getRequiredMethod("one")
-                .classValue(TransactionalAdvice, "rollbackFor").get() == RuntimeException
+                .classValue(Transactional, "rollbackFor").get() == RuntimeException
     }
 
     void "test transactional mapper - jakarta"() {
@@ -52,15 +52,15 @@ class Test {
 
     @jakarta.transaction.Transactional(rollbackOn = RuntimeException.class, dontRollbackOn=java.io.IOException.class)
     void one() {
-    
+
     }
 }
 
 ''')
         expect:
         definition.getRequiredMethod("one")
-                .classValue(TransactionalAdvice, "noRollbackFor").get() == IOException
+                .classValue(Transactional, "noRollbackFor").get() == IOException
         definition.getRequiredMethod("one")
-                .classValue(TransactionalAdvice, "rollbackFor").get() == RuntimeException
+                .classValue(Transactional, "rollbackFor").get() == RuntimeException
     }
 }

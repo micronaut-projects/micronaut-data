@@ -34,7 +34,7 @@ import spock.lang.PendingFeature
 import spock.lang.Shared
 import spock.lang.Specification
 
-import javax.persistence.OptimisticLockException
+import jakarta.persistence.OptimisticLockException
 
 @MicronautTest(packages = "io.micronaut.data.tck.entities", transactional = false)
 class HibernateQuerySpec extends Specification implements PostgresHibernateReactiveProperties {
@@ -411,6 +411,16 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
             def books6 = bookRepository.listNativeBooksWithTitleInArray(new String[0]).collectList().block()
         then:
             books6.size() == 0
+        when:
+            def books7 = bookRepository.listNativeBooksWithTitleInCollection(Collections.singletonList("The Stand")).collectList().block()
+            def books7a = bookRepository.listNativeBooksWithTitleInArray(new String[] {"The Stand"}).collectList().block()
+            def books8 = bookRepository.listNativeBooksWithTitleInCollection(Collections.singletonList("FFF")).collectList().block()
+            def books8a = bookRepository.listNativeBooksWithTitleInArray(new String[] {"FFF"}).collectList().block()
+        then:
+            books7.size() == 1
+            books7a.size() == 1
+            books8.size() == 0
+            books8a.size() == 0
     }
 
     @PendingFeature(reason = "setParameterList method is missing")
@@ -590,7 +600,7 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
 
     void "test specification and pageable"() {
         when:
-            def value = bookRepository.findAll(testJoin("Stephen King"), Pageable.from(0)).block();
+            def value = bookRepository.findAll(testJoin("Stephen King"), Pageable.from(0)).block()
         then:
             value.totalSize == 2
             value.content.size() == 2

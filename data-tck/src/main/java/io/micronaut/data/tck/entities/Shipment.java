@@ -16,10 +16,10 @@
 package io.micronaut.data.tck.entities;
 
 import io.micronaut.core.annotation.Creator;
-import javax.persistence.Column;
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import java.util.Objects;
 
 @Entity

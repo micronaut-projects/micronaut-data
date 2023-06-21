@@ -103,11 +103,9 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
             } else {
                 join(associationPath);
             }
-        } else if (path instanceof PersistentPropertyPath) {
-            PersistentPropertyPath persistentPropertyPath = (PersistentPropertyPath) path;
+        } else if (path instanceof PersistentPropertyPath persistentPropertyPath) {
             Path parentPath = persistentPropertyPath.getParentPath();
-            if (parentPath instanceof PersistentAssociationPath) {
-                PersistentAssociationPath parent = (PersistentAssociationPath) parentPath;
+            if (parentPath instanceof PersistentAssociationPath parent) {
                 if (parent.getAssociation().getAssociatedEntity().getIdentity() == persistentPropertyPath.getProperty()) {
                     // We don't need a join to access the ID
                     return;
@@ -143,8 +141,7 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
 
     private void visitJoins(Set<? extends jakarta.persistence.criteria.Join<?, ?>> joins) {
         for (jakarta.persistence.criteria.Join<?, ?> join : joins) {
-            if (join instanceof PersistentAssociationPath) {
-                PersistentAssociationPath persistentAssociationPath = (PersistentAssociationPath) join;
+            if (join instanceof PersistentAssociationPath persistentAssociationPath) {
                 if (persistentAssociationPath.getAssociationJoinType() == null) {
                     continue;
                 }

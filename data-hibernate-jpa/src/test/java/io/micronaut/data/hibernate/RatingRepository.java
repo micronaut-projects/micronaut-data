@@ -5,8 +5,8 @@ import io.micronaut.data.hibernate.entities.Rating;
 import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.repository.CrudRepository;
 
-import javax.transaction.Transactional;
-import javax.validation.constraints.NotNull;
+import jakarta.transaction.Transactional;
+import jakarta.validation.constraints.NotNull;
 import java.util.Optional;
 import java.util.UUID;
 

@@ -32,7 +32,7 @@ import reactor.core.publisher.Flux;
 @Internal
 public abstract class ReactiveEntitiesOperations<T, Exc extends Exception> extends EntitiesOperations<T, Exc> {
 
-    public ReactiveEntitiesOperations(EntityEventListener<Object> entityEventListener, RuntimePersistentEntity<T> persistentEntity, ConversionService<?> conversionService) {
+    public ReactiveEntitiesOperations(EntityEventListener<Object> entityEventListener, RuntimePersistentEntity<T> persistentEntity, ConversionService conversionService) {
         super(entityEventListener, persistentEntity, conversionService);
     }
 

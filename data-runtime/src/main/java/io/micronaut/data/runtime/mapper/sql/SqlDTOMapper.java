@@ -19,7 +19,6 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.DTOMapper;
 import io.micronaut.data.runtime.mapper.ResultReader;
-import io.micronaut.http.codec.MediaTypeCodec;
 
 /**
  * Subclass of {@link DTOMapper} specifically for SQL.
@@ -38,40 +37,40 @@ public class SqlDTOMapper<T, S, R> extends DTOMapper<T, S, R> implements SqlType
      */
     public SqlDTOMapper(RuntimePersistentEntity<T> persistentEntity,
                         ResultReader<S, String> resultReader,
-                        DataConversionService<?> conversionService) {
+                        DataConversionService conversionService) {
         this(persistentEntity, resultReader, null, conversionService);
     }
 
     /**
      * Default constructor.
      *
-     * @param persistentEntity The entity
-     * @param resultReader     The result reader
-     * @param jsonCodec        The json codec
+     * @param persistentEntity  The entity
+     * @param resultReader      The result reader
+     * @param jsonColumnReader  The json column reader
      * @param conversionService The conversion service
      */
     public SqlDTOMapper(RuntimePersistentEntity<T> persistentEntity,
                         ResultReader<S, String> resultReader,
-                        MediaTypeCodec jsonCodec,
-                        DataConversionService<?> conversionService) {
-        super(persistentEntity, resultReader, jsonCodec, conversionService);
+                        SqlJsonColumnReader<S> jsonColumnReader,
+                        DataConversionService conversionService) {
+        super(persistentEntity, resultReader, jsonColumnReader, conversionService);
     }
 
     /**
      * Default constructor.
      *
-     * @param persistentEntity The entity
-     * @param dtoEntity        The DTO entity
-     * @param resultReader     The result reader
-     * @param jsonCodec        The json codec
+     * @param persistentEntity  The entity
+     * @param dtoEntity         The DTO entity
+     * @param resultReader      The result reader
+     * @param jsonColumnReader  The json column reader
      * @param conversionService The conversion service
      */
     public SqlDTOMapper(RuntimePersistentEntity<T> persistentEntity,
                         RuntimePersistentEntity<?> dtoEntity,
                         ResultReader<S, String> resultReader,
-                        MediaTypeCodec jsonCodec,
-                        DataConversionService<?> conversionService) {
-        super(persistentEntity, dtoEntity, resultReader, jsonCodec, conversionService);
+                        SqlJsonColumnReader<S> jsonColumnReader,
+                        DataConversionService conversionService) {
+        super(persistentEntity, dtoEntity, resultReader, jsonColumnReader, conversionService);
     }
 
     @Override

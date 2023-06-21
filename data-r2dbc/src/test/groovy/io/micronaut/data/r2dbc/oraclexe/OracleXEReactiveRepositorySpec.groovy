@@ -21,7 +21,6 @@ import io.micronaut.data.tck.repositories.StudentReactiveRepository
 import io.micronaut.data.tck.tests.AbstractReactiveRepositorySpec
 import spock.lang.IgnoreIf
 
-@IgnoreIf({ !jvm.isJava11Compatible() })
 class OracleXEReactiveRepositorySpec extends AbstractReactiveRepositorySpec implements OracleXETestPropertyProvider {
 
     @Memoized

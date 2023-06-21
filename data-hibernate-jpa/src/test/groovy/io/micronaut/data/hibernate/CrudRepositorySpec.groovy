@@ -141,17 +141,27 @@ class CrudRepositorySpec extends Specification {
     void "test update one"() {
         when:"A person is retrieved"
         def fred = crudRepository.findByName("Fred")
+        def id = fred.id
+        def jack = crudRepository.findByName("Jack")
 
         then:"The person is present"
         fred != null
+        jack == null
 
-        when:"The person is updated"
-        crudRepository.updatePerson(fred.id, "Jack")
+        when:"The person name is updated"
+        crudRepository.updatePerson(id, "Jack")
+        fred = crudRepository.findByName("Fred")
+        jack = crudRepository.findByName("Jack")
 
-        then:"the person is updated"
-        crudRepository.findByName("Fred") == null
-        crudRepository.findByName("Jack") != null
+        then:"the person name is updated"
+        fred == null
+        jack != null
+        jack.name == "Jack"
 
+        when:"The person age is updated"
+        crudRepository.updatePerson(id, 35)
+        then:
+        crudRepository.findById(id).get().age == 35
     }
 
     void "test delete all"() {

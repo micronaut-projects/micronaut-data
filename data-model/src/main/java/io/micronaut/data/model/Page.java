@@ -19,9 +19,11 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import io.micronaut.context.annotation.DefaultImplementation;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.annotation.TypeHint;
+import io.micronaut.serde.annotation.Serdeable;
 
 import java.util.Collections;
 import java.util.List;
@@ -42,6 +44,8 @@ import java.util.stream.Collectors;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @TypeHint(Page.class)
 @JsonDeserialize(as = DefaultPage.class)
+@Serdeable
+@DefaultImplementation(DefaultPage.class)
 public interface Page<T> extends Slice<T> {
 
     Page<?> EMPTY = new DefaultPage<>(Collections.emptyList(), Pageable.unpaged(), 0);

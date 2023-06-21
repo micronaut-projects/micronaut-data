@@ -139,16 +139,16 @@ public class PersistentPropertyPath {
         }
         Object value = bean;
         for (Association association : associations) {
-            RuntimePersistentProperty<?> property = (RuntimePersistentProperty) association;
-            BeanProperty beanProperty = property.getProperty();
+            RuntimePersistentProperty<Object> property = (RuntimePersistentProperty<Object>) association;
+            BeanProperty<Object, Object> beanProperty = property.getProperty();
             value = beanProperty.get(value);
             if (value == null) {
                 return null;
             }
         }
-        RuntimePersistentProperty<?> p = (RuntimePersistentProperty<?>) property;
+        RuntimePersistentProperty<Object> p = (RuntimePersistentProperty<Object>) property;
         if (value != null) {
-            BeanProperty beanProperty = p.getProperty();
+            BeanProperty<Object, Object> beanProperty = p.getProperty();
             value = beanProperty.get(value);
         }
         return value;
@@ -229,7 +229,7 @@ public class PersistentPropertyPath {
     }
 
     /**
-     * Get naming strategy for thpe property.
+     * Get naming strategy for the property.
      *
      * @return the naming strategy
      */
@@ -254,5 +254,33 @@ public class PersistentPropertyPath {
             }
         }
         return owner.getNamingStrategy();
+    }
+
+    /**
+     * Finds naming strategy for the property.
+     *
+     * @return the naming strategy
+     */
+    public Optional<NamingStrategy> findNamingStrategy() {
+        PersistentEntity owner = property.getOwner();
+        if (!owner.isEmbeddable()) {
+            return owner.findNamingStrategy();
+        }
+        Optional<NamingStrategy> namingStrategy = owner.findNamingStrategy();
+        if (namingStrategy.isPresent()) {
+            return namingStrategy;
+        }
+        ListIterator<Association> listIterator = associations.listIterator(associations.size());
+        while (listIterator.hasPrevious()) {
+            Association association = listIterator.previous();
+            if (!association.getOwner().isEmbeddable()) {
+                return association.getOwner().findNamingStrategy();
+            }
+            Optional<NamingStrategy> embeddedNamingStrategy = owner.findNamingStrategy();
+            if (embeddedNamingStrategy.isPresent()) {
+                return embeddedNamingStrategy;
+            }
+        }
+        return owner.findNamingStrategy();
     }
 }

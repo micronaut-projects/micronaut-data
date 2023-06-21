@@ -1,35 +1,31 @@
 plugins {
     id "io.micronaut.build.internal.data-dependencies"
-    id "io.micronaut.application"
+    id "io.micronaut.minimal.application"
 }
 
-configurations.all {
-    resolutionStrategy.dependencySubstitution { DependencySubstitutions subs ->
-        project.rootProject.subprojects {
-            if (!it.name.startsWith("data") || it.name.startsWith("data-bom")) {
-                return
-            }
-            substitute(module("io.micronaut.data:micronaut-${it.name}")).using(subs.project(it.path))
-        }
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
     }
 }
 
-tasks.named("test") {
-    onlyIf {
-        def disabled = project.path.contains("groovy") && JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_16)
-        !disabled
-    }
-}
-
-tasks.register("testExamples") {
-    dependsOn "test"
+configurations.configureEach {
+    resolutionStrategy.preferProjectModules()
 }
 
 tasks.withType(JavaCompile).configureEach {
     options.fork = true
 }
 
-project.afterEvaluate {
-    nativeCompile.enabled = false
-    testNativeImage.enabled = false
+tasks.register("testExamples") {
+    dependsOn "test"
+}
+
+dependencies {
+    micronautBoms(
+            platform("io.micronaut:micronaut-core-bom:$micronautVersion"),
+            platform(mnTest.micronaut.test.bom)
+    )
+    testRuntimeOnly mnSerde.micronaut.serde.jackson
+    runtimeOnly mn.snakeyaml
 }

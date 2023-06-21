@@ -7,7 +7,7 @@ import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.Challenge;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.util.Optional;
 
 @R2dbcRepository(dialect = Dialect.H2)

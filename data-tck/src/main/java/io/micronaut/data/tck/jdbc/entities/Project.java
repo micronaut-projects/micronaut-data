@@ -16,11 +16,10 @@
 package io.micronaut.data.tck.jdbc.entities;
 
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.data.jdbc.annotation.ColumnTransformer;
+import io.micronaut.data.annotation.sql.ColumnTransformer;
 
-import javax.persistence.Column;
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
 
 @Entity
 public class Project {
@@ -45,6 +44,10 @@ public class Project {
     public Project(ProjectId projectId, String name) {
         this.projectId = projectId;
         this.name = name;
+    }
+
+    public Project() {
+
     }
 
     public ProjectId getProjectId() {

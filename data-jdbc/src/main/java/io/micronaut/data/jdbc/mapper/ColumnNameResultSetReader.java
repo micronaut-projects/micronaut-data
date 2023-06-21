@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.core.reflect.ReflectionUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.runtime.convert.DataConversionService;
@@ -40,7 +41,7 @@ import java.util.Date;
  * @since 1.0.0
  */
 public final class ColumnNameResultSetReader implements ResultReader<ResultSet, String> {
-    private final ConversionService<?> conversionService;
+    private final ConversionService conversionService;
 
     public ColumnNameResultSetReader() {
         this(null);
@@ -52,13 +53,13 @@ public final class ColumnNameResultSetReader implements ResultReader<ResultSet, 
      * @param conversionService The data conversion service
      * @since 3.1
      */
-    public ColumnNameResultSetReader(DataConversionService<?> conversionService) {
+    public ColumnNameResultSetReader(DataConversionService conversionService) {
         // Backwards compatibility should be removed in the next version
         this.conversionService = conversionService == null ? ConversionService.SHARED : conversionService;
     }
 
     @Override
-    public ConversionService<?> getConversionService() {
+    public ConversionService getConversionService() {
         return conversionService;
     }
 
@@ -131,7 +132,11 @@ public final class ColumnNameResultSetReader implements ResultReader<ResultSet, 
     @Override
     public char readChar(ResultSet resultSet, String name) {
         try {
-            return resultSet.getString(name).charAt(0);
+            String strValue = resultSet.getString(name);
+            if (StringUtils.isNotEmpty(strValue)) {
+                return strValue.charAt(0);
+            }
+            return 0;
         } catch (SQLException e) {
             throw exceptionForColumn(name, e);
         }

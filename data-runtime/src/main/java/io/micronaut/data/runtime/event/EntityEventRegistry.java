@@ -60,7 +60,7 @@ public class EntityEventRegistry implements EntityEventListener<Object>, Executa
     private final Map<RuntimePersistentEntity<Object>, Map<Class<? extends
             Annotation>, EntityEventListener<Object>>> entityToEventListeners = new ConcurrentHashMap<>(50);
     private final BeanContext beanContext;
-    private final Map<Class<? extends Annotation>, BeanDefinitionMethodReference<Object, Object>> beanEventHandlers = new HashMap<>(10);
+    private final Map<Class<? extends Annotation>, Collection<BeanDefinitionMethodReference<Object, Object>>> beanEventHandlers = new HashMap<>(10);
 
     /**
      * Default constructor.
@@ -198,7 +198,7 @@ public class EntityEventRegistry implements EntityEventListener<Object>, Executa
                 }
             }
         }
-        beanEventHandlers.forEach((annotation, reference) -> {
+        beanEventHandlers.forEach((annotation, references) -> references.forEach(reference -> {
             if (isApplicableListener(entity, Arrays.asList(reference.getArguments()))) {
                 final Object bean = beanContext.getBean(reference.getBeanDefinition());
                 final Collection<EntityEventListener<Object>> eventListeners =
@@ -256,7 +256,7 @@ public class EntityEventRegistry implements EntityEventListener<Object>, Executa
                     });
                 }
             }
-        });
+        }));
         Map<Class<? extends Annotation>, EntityEventListener<Object>> finalListeners;
         if (listeners.isEmpty()) {
             finalListeners = Collections.emptyMap();
@@ -295,7 +295,7 @@ public class EntityEventRegistry implements EntityEventListener<Object>, Executa
                                 (BeanDefinition<Object>) beanDefinition,
                                 (ExecutableMethod<Object, Object>) method
                         );
-                beanEventHandlers.put(eventType, ref);
+                beanEventHandlers.computeIfAbsent(eventType, (t) -> new ArrayList<>(5)).add(ref);
             }
         }
     }

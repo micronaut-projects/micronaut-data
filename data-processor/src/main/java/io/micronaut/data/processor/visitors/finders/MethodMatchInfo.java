@@ -40,7 +40,7 @@ public final class MethodMatchInfo {
     private final TypedElement resultType;
     private final ClassElement interceptor;
 
-    private Map<String, String> parameterRoles = new HashMap<>(2);
+    private final Map<String, String> parameterRoles = new HashMap<>(2);
     private boolean dto;
     private boolean optimisticLock;
 

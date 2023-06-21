@@ -4,9 +4,10 @@ import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import org.bson.types.ObjectId
 import spock.lang.Shared
+import spock.lang.Specification
 
 @MicronautTest
-class BookRepositorySpec extends AbstractMongoSpec {
+class BookRepositorySpec extends Specification {
 
     // tag::inject[]
     @Inject @Shared BookRepository bookRepository
@@ -51,6 +52,5 @@ class BookRepositorySpec extends AbstractMongoSpec {
         then:"It is gone"
         bookRepository.count() == 0
     }
-
 
 }

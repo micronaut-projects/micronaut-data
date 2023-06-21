@@ -5,12 +5,12 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.TransactionDefinition;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.bson.BsonDocument;
-import org.jetbrains.annotations.NotNull;
 
 @Singleton
 public class MongoTestService {
@@ -51,7 +51,7 @@ public class MongoTestService {
         });
     }
 
-    @NotNull
+    @NonNull
     private MongoDatabase getDatabase() {
         return mongoClient.getDatabase("default");
     }

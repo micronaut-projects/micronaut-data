@@ -12,6 +12,7 @@ Micronaut Data provides a general API for translating a compile time Query model
 * <<hibernate, JPA (Hibernate)>> and <<hibernateReactive, Hibernate Reactive>>
 * <<sql, SQL (JDBC, R2DBC)>>
 * <<mongo, MongoDB>>
+* <<azureCosmos, Azure Cosmos>>
 
 Further implementations for other databases are planned in the future.
 

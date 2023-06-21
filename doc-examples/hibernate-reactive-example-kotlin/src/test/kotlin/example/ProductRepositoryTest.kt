@@ -19,6 +19,8 @@ class ProductRepositoryTest : PostgresHibernateReactiveProperties {
 
     @BeforeAll
     fun setupData(): Unit = runBlocking {
+        productRepository.deleteAll()
+        manufacturerRepository.deleteAll()
         val apple = manufacturerRepository.save("Apple")
         productRepository.saveAll(listOf(
                 Product(null,

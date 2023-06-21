@@ -24,8 +24,7 @@ package io.micronaut.data.annotation.sql;
 public interface SqlMembers {
 
     /**
-     * Meta annotation member to represent the schema. This is not an actual annotation member
-     * because not all database types support the notion of a custom schema.
+     * Meta annotation member to represent the schema. This exists for backward compatibility and should not be used.
      */
     String SCHEMA = "schema";
 

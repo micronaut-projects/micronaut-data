@@ -4,7 +4,7 @@ package example
 import io.micronaut.context.event.ApplicationEventPublisher
 import io.micronaut.transaction.annotation.TransactionalEventListener
 import jakarta.inject.Singleton
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @Singleton
 class BookManager {

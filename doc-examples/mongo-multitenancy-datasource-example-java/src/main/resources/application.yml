@@ -1,0 +1,30 @@
+micronaut:
+  data:
+    multi-tenancy:
+      mode: DATASOURCE
+  multitenancy:
+    tenantresolver:
+      httpheader:
+        enabled: true
+
+test-resources:
+  containers:
+    foo:
+      image-name: mongo:5
+      hostnames:
+        - foo.host
+      exposed-ports:
+        - foo.port: 27017
+    bar:
+      image-name: mongo:5
+      hostnames:
+        - bar.host
+      exposed-ports:
+        - bar.port: 27017
+
+mongodb:
+  servers:
+    foo:
+      uri: mongodb://${foo.host}:${foo.port}/test
+    bar:
+      uri: mongodb://${bar.host}:${bar.port}/test

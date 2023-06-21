@@ -18,6 +18,7 @@ package io.micronaut.data.tck.repositories;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.tck.entities.ArraysDto;
 import io.micronaut.data.tck.entities.ArraysEntity;
 
 import io.micronaut.core.annotation.Nullable;
@@ -36,4 +37,5 @@ public interface ArraysEntityRepository extends CrudRepository<ArraysEntity, Lon
                 @Parameter("integerArrayCollection") @Nullable Collection<Integer> integerArrayCollection
     );
 
+    ArraysDto queryBySomeId(Long someId);
 }

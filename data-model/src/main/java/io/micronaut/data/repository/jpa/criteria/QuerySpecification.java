@@ -25,7 +25,7 @@ import jakarta.persistence.criteria.Root;
 /**
  * Criteria query specification.
  *
- * Based on Spring Data's {@link org.springframework.data.jpa.domain.Specification}.
+ * Based on Spring Data's org.springframework.data.jpa.domain.Specification.
  *
  * @param <T> The entity root type
  * @author Denis Stepanov

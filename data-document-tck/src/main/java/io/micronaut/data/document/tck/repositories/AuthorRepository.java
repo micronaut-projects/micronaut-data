@@ -23,7 +23,7 @@ import io.micronaut.data.annotation.Join;
 import io.micronaut.data.document.tck.entities.Author;
 import io.micronaut.data.repository.CrudRepository;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.util.Optional;
 import java.util.stream.Stream;
 

@@ -1,30 +1,37 @@
 
 package example
 
-import io.micronaut.transaction.SynchronousTransactionManager
-import java.sql.Connection
+import io.micronaut.transaction.reactive.ReactiveTransactionStatus
+import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations
 import jakarta.inject.Singleton
-import javax.persistence.EntityManager
+import org.hibernate.reactive.stage.Stage
+import reactor.core.publisher.Mono
 
 @Singleton
 class ProductManager(
-        private val entityManager: EntityManager,
-        private val transactionManager: SynchronousTransactionManager<Connection>) // <1>
+        private val transactionManager: ReactorReactiveTransactionOperations<Stage.Session>
+) // <1>
 {
 
-    fun save(name: String, manufacturer: Manufacturer): Product {
-        return transactionManager.executeWrite { // <2>
-            val product = Product(0, name, manufacturer)
-            entityManager.persist(product)
-            product
+    fun save(name: String, manufacturer: Manufacturer): Mono<Product> {
+        return transactionManager.withTransactionMono { status: ReactiveTransactionStatus<Stage.Session> -> // <2>
+            val product = Product(null, name, manufacturer)
+            Mono.fromCompletionStage {
+                status.connection.persist(product)
+            }.thenReturn(product)
         }
     }
 
-    fun find(name: String): Product {
-        return transactionManager.executeRead {  // <3>
-            entityManager.createQuery("from Product p where p.name = :name", Product::class.java)
+    fun find(name: String): Mono<Product> {
+        return transactionManager.withTransactionMono { status: ReactiveTransactionStatus<Stage.Session> -> // <3>
+            Mono.fromCompletionStage(
+                status.connection.createQuery(
+                    "from Product p where p.name = :name",
+                    Product::class.java
+                )
                     .setParameter("name", name)
                     .singleResult
+            )
         }
     }
 }

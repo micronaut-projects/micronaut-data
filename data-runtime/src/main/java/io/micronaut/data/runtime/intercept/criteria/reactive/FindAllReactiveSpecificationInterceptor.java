@@ -45,7 +45,7 @@ public class FindAllReactiveSpecificationInterceptor extends AbstractReactiveSpe
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         PreparedQuery<?, ?> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.FIND_ALL);
         Publisher<?> publisher = reactiveOperations.findAll(preparedQuery);
-        return Publishers.convertPublisher(publisher, context.getReturnType().getType());
+        return Publishers.convertPublisher(conversionService, publisher, context.getReturnType().getType());
     }
 
 }

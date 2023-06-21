@@ -46,7 +46,11 @@ public class FindPageAsyncSpecificationInterceptor extends AbstractAsyncSpecific
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        if (context.getParameterValues().length != 2) {
+        if (context.getExecutableMethod().isSuspend()) {
+            if (context.getParameterValues().length != 3) {
+                throw new IllegalStateException("Expected exactly 2 arguments to method");
+            }
+        } else if (context.getParameterValues().length != 2) {
             throw new IllegalStateException("Expected exactly 2 arguments to method");
         }
 

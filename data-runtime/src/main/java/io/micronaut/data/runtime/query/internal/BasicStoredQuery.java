@@ -18,7 +18,9 @@ package io.micronaut.data.runtime.query.internal;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.RepositoryConfiguration;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
@@ -48,6 +50,7 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
     private final boolean isSingleResult;
     private final boolean isCount;
     private final DataType resultDataType;
+    private final boolean rawQuery;
 
     public BasicStoredQuery(String query,
                             String[] expandableQueryParts,
@@ -78,6 +81,7 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
         this.isSingleResult = isSingleResult;
         this.isCount = isCount;
         this.resultDataType = isCount ? DataType.forType(resultType) : DataType.ENTITY;
+        this.rawQuery = annotationMetadata.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
     }
 
     @Override
@@ -151,4 +155,8 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
         return false;
     }
 
+    @Override
+    public boolean isRawQuery() {
+        return this.rawQuery;
+    }
 }

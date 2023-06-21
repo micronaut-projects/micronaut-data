@@ -1,35 +1,33 @@
-
 package example
 
-import io.micronaut.transaction.SynchronousTransactionManager
+import io.micronaut.transaction.TransactionOperations
 import jakarta.inject.Singleton
-import javax.persistence.EntityManager
-import java.sql.Connection
+import jakarta.persistence.EntityManager
+import org.hibernate.Session
 
 @Singleton
 class ProductManager {
 
     private final EntityManager entityManager
-    private final SynchronousTransactionManager<Connection> transactionManager
+    private final TransactionOperations<Session> transactionManager
 
-    ProductManager(
-            EntityManager entityManager,
-            SynchronousTransactionManager<Connection> transactionManager) { // <1>
+    ProductManager(EntityManager entityManager,
+                   TransactionOperations<Session> transactionManager) { // <1>
         this.entityManager = entityManager
         this.transactionManager = transactionManager
     }
 
     Product save(String name, Manufacturer manufacturer) {
         return transactionManager.executeWrite { // <2>
-            final product = new Product(name, manufacturer)
+            Product product = new Product(name, manufacturer)
             entityManager.persist(product)
             return product
         }
     }
 
     Product find(String name) {
-        return transactionManager.executeRead { // <3>
-            entityManager.createQuery("from Product p where p.name = :name", Product)
+        return transactionManager.executeRead { status -> // <3>
+            status.getConnection().createQuery("from Product p where p.name = :name", Product)
                     .setParameter("name", name)
                     .singleResult
         }

@@ -60,10 +60,9 @@ dependency:io.micronaut.data:micronaut-data-processor[scope="annotationProcessor
 
 NOTE: For Kotlin the dependency should be in the `kapt` scope and for Groovy it should be in `compileOnly` scope.
 
-Next up you need to configure at least one data source. The following snippet from `application.yml` is an example of configuring the default JDBC data source:
+Next up you need to configure at least one data source. The following snippet from the application configuration file is an example of configuring the default JDBC data source:
 
-.Example YAML configuration
-[source,yaml]
+[configuration]
 ----
 include::doc-examples/jdbc-example-java/src/main/resources/application.yml[]
 ----
@@ -73,6 +72,12 @@ NOTE: The `schema-generate` setting is only useful for demos and testing trivial
 To retrieve objects from the database you need to define a class annotated with ann:data.annotation.MappedEntity[]. Note that this is a meta annotation and in fact if you prefer you can use JPA annotations (only a subset are supported, more on that later). If you wish to use JPA annotations include the following `compileOnly` scoped dependency:
 
 dependency:jakarta.persistence:jakarta.persistence-api[version="3.0.0", scope="compileOnly"]
+
+To use JPA annotations in the `javax.persistence` package use:
+
+dependency:jakarta.persistence:jakarta.persistence-api[version="2.2.3", scope="compileOnly"]
+
+WARNING: If you want to use JPA annotations in your entities with Micronaut Data JDBC, we strongly recommend you use `jakarta.persistence` annotations.  Micronaut Data will remove support for `javax.persistence` annotations in the future.
 
 As above since only the annotations are used the dependency can be included only for compilation and not at runtime so you don't drag along the rest of the API, reducing your JAR file size.
 

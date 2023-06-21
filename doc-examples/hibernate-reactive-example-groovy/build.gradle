@@ -1,7 +1,9 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
 plugins {
     id "groovy"
-    id "io.micronaut.application"
-    id "io.micronaut.build.internal.data-example-java11"
+    id "io.micronaut.build.internal.data-example"
+    id "io.micronaut.test-resources"
 }
 
 application {
@@ -9,18 +11,26 @@ application {
 }
 
 micronaut {
-    version micronautVersion
+    version libs.versions.micronaut.platform.get()
     runtime "netty"
     testRuntime "spock"
+    testResources {
+        enabled = true
+        inferClasspath = false
+        additionalModules.add(KnownModules.HIBERNATE_REACTIVE_POSTGRESQL)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
 }
 
 dependencies {
-    annotationProcessor projects.dataProcessor
-    implementation "io.micronaut:micronaut-http-client"
-    implementation projects.dataHibernateReactive
-    implementation "io.micronaut.reactor:micronaut-reactor"
-    runtimeOnly "ch.qos.logback:logback-classic"
-    runtimeOnly libs.drivers.vertx.pg
+    compileOnly projects.micronautDataProcessor // because it's Groovy
+    implementation mn.micronaut.http.validation
+    implementation projects.micronautDataHibernateReactive
+    implementation mnReactor.micronaut.reactor
+    runtimeOnly mnLogging.logback.classic
+    runtimeOnly mnSql.vertx.pg.client
 
-    testImplementation libs.testcontainers.postgresql
+    testResourcesService mnSql.postgresql
+    testRuntimeOnly mnSql.ongres.scram.client
 }

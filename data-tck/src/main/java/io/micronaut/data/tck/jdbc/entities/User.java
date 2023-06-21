@@ -19,7 +19,7 @@ import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 
-import javax.validation.constraints.Email;
+import jakarta.validation.constraints.Email;
 
 @MappedEntity("user_composite")
 public class User {

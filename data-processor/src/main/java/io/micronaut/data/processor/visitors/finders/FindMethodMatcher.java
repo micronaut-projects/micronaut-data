@@ -35,6 +35,7 @@ import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.criteria.QueryCriteriaMethodMatch;
 import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.inject.ast.MethodElement;
 
 import java.util.AbstractMap;
 import java.util.Map;
@@ -101,15 +102,20 @@ public final class FindMethodMatcher extends AbstractPatternMethodMatcher {
     }
 
     private boolean isCompatibleReturnType(@NonNull MatchContext matchContext) {
-        ClassElement returnType = matchContext.getMethodElement().getGenericReturnType();
-        if (!returnType.getName().equals("void")) {
+        MethodElement methodElement = matchContext.getMethodElement();
+        ClassElement returnType = TypeUtils.getMethodProducingItemType(methodElement);
+        if (returnType == null) {
+            return false;
+        }
+        if (!TypeUtils.isVoid(returnType)) {
             return returnType.hasStereotype(Introspected.class) ||
                     returnType.isPrimitive() ||
                     ClassUtils.isJavaBasicType(returnType.getName()) ||
                     TypeUtils.isContainerType(returnType);
         }
-        return matchContext.isTypeInRole(matchContext.getReturnType(), TypeRole.PAGE) ||
-                matchContext.isTypeInRole(matchContext.getReturnType(), TypeRole.SLICE);
+        ClassElement genericReturnType = methodElement.getGenericReturnType();
+        return matchContext.isTypeInRole(genericReturnType, TypeRole.PAGE) ||
+                matchContext.isTypeInRole(genericReturnType, TypeRole.SLICE);
     }
 
 }

@@ -402,4 +402,167 @@ interface PersonRepository extends GenericRepository<Person, String> {
             findByIdIsEmptyQuery == '{$or:[{_id:{$eq:\'\'}},{_id:{$exists:false}}]}'
             findByIdEqualQuery == '{_id:{$eq:{$mn_qp:0}}}'
     }
+
+    void "test equal/not equal ignore case"() {
+        given:
+        def repository = buildRepository('test.PersonRepository', """
+import io.micronaut.data.mongodb.annotation.*;
+import io.micronaut.data.document.tck.entities.Person;
+import java.util.Optional;
+
+@MongoRepository
+interface PersonRepository extends GenericRepository<Person, String> {
+
+    Optional<Person> findByNameEqualIgnoreCase(String name);
+
+    List<Person> findByNameNotEqualIgnoreCase(String name);
+
+    List<Person> findByNameStartsWith(String name);
+
+    List<Person> findByNameStartsWithIgnoreCase(String name);
+
+    List<Person> findByNameEndsWith(String name);
+
+    List<Person> findByNameEndsWithIgnoreCase(String name);
+
+    List<Person> findByNameContains(String name);
+
+    List<Person> findByNameContainsIgnoreCase(String name);
+}
+"""
+        )
+
+        when:
+        def findByNameEqualIgnoreCaseQuery = repository.getRequiredMethod("findByNameEqualIgnoreCase", String).getAnnotation(Query).stringValue().get()
+        def findByNameNotEqualIgnoreCaseQuery = repository.getRequiredMethod("findByNameEqualIgnoreCase", String).getAnnotation(Query).stringValue().get()
+        def findByNameStartsWithQuery = repository.getRequiredMethod("findByNameStartsWith", String).getAnnotation(Query).stringValue().get()
+        def findByNameStartsWithIgnoreCaseQuery = repository.getRequiredMethod("findByNameStartsWithIgnoreCase", String).getAnnotation(Query).stringValue().get()
+        def findByNameEndsWithQuery = repository.getRequiredMethod("findByNameEndsWith", String).getAnnotation(Query).stringValue().get()
+        def findByNameEndsWithIgnoreCaseQuery = repository.getRequiredMethod("findByNameEndsWithIgnoreCase", String).getAnnotation(Query).stringValue().get()
+        def findByNameContainsQuery = repository.getRequiredMethod("findByNameContains", String).getAnnotation(Query).stringValue().get()
+        def findByNameContainsIgnoreCaseQuery = repository.getRequiredMethod("findByNameContainsIgnoreCase", String).getAnnotation(Query).stringValue().get()
+        then:
+        findByNameEqualIgnoreCaseQuery == '{name:{$options:\'i\',$regex:\'^$mn_qp:0$\'}}'
+        findByNameNotEqualIgnoreCaseQuery == '{name:{$options:\'i\',$regex:\'^$mn_qp:0$\'}}'
+        findByNameStartsWithQuery == '{name:{$options:\'\',$regex:\'^$mn_qp:0\'}}'
+        findByNameStartsWithIgnoreCaseQuery == '{name:{$options:\'i\',$regex:\'^$mn_qp:0\'}}'
+        findByNameEndsWithQuery == '{name:{$options:\'\',$regex:\'$mn_qp:0$\'}}'
+        findByNameEndsWithIgnoreCaseQuery == '{name:{$options:\'i\',$regex:\'$mn_qp:0$\'}}'
+        findByNameContainsQuery == '{name:{$options:\'\',$regex:\'$mn_qp:0\'}}'
+        findByNameContainsIgnoreCaseQuery == '{name:{$options:\'i\',$regex:\'$mn_qp:0\'}}'
+    }
+
+    void "test array contains query"() {
+        given:
+        def repository = buildRepository('test.DocumentRepository', """
+import io.micronaut.data.mongodb.annotation.*;
+import io.micronaut.data.document.tck.entities.Document;
+import java.util.List;
+
+@MongoRepository
+interface DocumentRepository extends GenericRepository<Document, String> {
+
+    List<Document> findByTagsArrayContains(String tag);
+
+    List<Document> findByTagsArrayContains(List<String> tags);
+}
+"""
+        )
+
+        when:
+        def findByTagsArrayContainsQuery = repository.getRequiredMethod("findByTagsArrayContains", String).getAnnotation(Query).stringValue().get()
+        def findByTagsArrayContainsListQuery = repository.getRequiredMethod("findByTagsArrayContains", List<String>).getAnnotation(Query).stringValue().get()
+        then:
+        findByTagsArrayContainsQuery == '{tags:{$all:[{$mn_qp:0}]}}'
+        findByTagsArrayContainsListQuery == '{tags:{$all:[{$mn_qp:0}]}}'
+    }
+
+    void "test query by field in embedded relation"() {
+        given:
+        def repository = buildRepository('test.TestRepository', """
+import io.micronaut.data.annotation.Embeddable;
+import io.micronaut.data.mongodb.annotation.*;
+import org.bson.types.ObjectId;
+
+@MongoRepository
+interface TestRepository extends GenericRepository<TestEntity, String> {
+
+    TestEntity findByParentChildIn(List<String> children);
+
+    TestEntity findByParentChildInList(List<String> children);
+
+    TestEntity findByParentChildEquals(String child);
+
+    TestEntity findByParentChildIsNotEmpty();
+}
+
+@Embeddable
+class ParentObject {
+
+    private String child;
+
+    public String getChild() { return child; }
+
+    public void setChild(String child) { this.child = child; }
+}
+
+@MappedEntity("test")
+class TestEntity {
+
+    @Id
+    private ObjectId id;
+
+    @Relation(value = Relation.Kind.EMBEDDED)
+    private ParentObject parent;
+
+    public ObjectId getId() { return id; }
+
+    public void setId(ObjectId id) { this.id = id; }
+
+    public ParentObject getParent() { return parent; }
+
+    public void setParent(ParentObject parent) { this.parent = parent; }
+}
+"""
+        )
+
+        when:
+        def queryIn = TestUtils.getQuery(repository.getRequiredMethod("findByParentChildIn", List<String>))
+        def queryInList = TestUtils.getQuery(repository.getRequiredMethod("findByParentChildInList", List<String>))
+        def queryEquals = TestUtils.getQuery(repository.getRequiredMethod("findByParentChildEquals", String))
+        def queryIsNotEmpty = TestUtils.getQuery(repository.getRequiredMethod("findByParentChildIsNotEmpty"))
+        then:
+        queryIn == '{\'parent.child\':{$in:[{$mn_qp:0}]}}'
+        queryInList == '{\'parent.child\':{$in:[{$mn_qp:0}]}}'
+        queryEquals == '{\'parent.child\':{$eq:{$mn_qp:0}}}'
+        queryIsNotEmpty == '{$and:[{\'parent.child\':{$ne:\'\'}},{\'parent.child\':{$exists:true}}]}'
+    }
+
+    void "test projections"() {
+        given:
+            def repository = buildRepository('test.PersonRepository', """
+
+import io.micronaut.data.mongodb.annotation.*;
+import java.time.LocalDate;
+import io.micronaut.data.document.tck.entities.Person;
+import java.util.Optional;
+
+@MongoRepository
+interface PersonRepository extends GenericRepository<Person, String> {
+
+    LocalDate findMaxDateOfBirth();
+
+    LocalDate findMinDateOfBirth();
+}
+"""
+            )
+
+        when:
+            def findMaxDateOfBirthQuery = repository.getRequiredMethod("findMaxDateOfBirth").getAnnotation(Query).stringValue().get()
+            def findMinDateOfBirth = repository.getRequiredMethod("findMinDateOfBirth").getAnnotation(Query).stringValue().get()
+
+        then:
+            findMaxDateOfBirthQuery == '[{$group:{dateOfBirth:{$max:\'$dateOfBirth\'},_id:null}}]'
+            findMinDateOfBirth == '[{$group:{dateOfBirth:{$min:\'$dateOfBirth\'},_id:null}}]'
+    }
 }

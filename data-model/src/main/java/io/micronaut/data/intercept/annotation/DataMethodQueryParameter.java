@@ -47,6 +47,11 @@ public @interface DataMethodQueryParameter {
     String META_MEMBER_DATA_TYPE = "dataType";
 
     /**
+     * The member name that holds the JSON data type.
+     */
+    String META_MEMBER_JSON_DATA_TYPE = "jsonDataType";
+
+    /**
      * The member name that holds the parameter index.
      */
     String META_MEMBER_PARAMETER_INDEX = "parameterIndex";

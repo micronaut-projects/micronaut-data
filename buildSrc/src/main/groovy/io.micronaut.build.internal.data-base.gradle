@@ -1,3 +1,6 @@
+import org.gradle.api.services.BuildService
+import org.gradle.api.services.BuildServiceParameters
+
 import java.time.Duration
 
 plugins {
@@ -7,11 +10,6 @@ plugins {
 
 group "io.micronaut.data"
 version projectVersion
-
-java {
-    targetCompatibility = JavaVersion.VERSION_1_8
-    sourceCompatibility = JavaVersion.VERSION_1_8
-}
 
 tasks.withType(JavaCompile).configureEach {
     options.fork = true
@@ -27,10 +25,15 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 tasks.withType(Test).configureEach {
-    jvmArgs '-Xmx2048m'
     systemProperty "micronaut.cloud.platform", "OTHER"
-    if (JavaVersion.current() == JavaVersion.VERSION_15) {
-        jvmArgs "--enable-preview"
-    }
     timeout = Duration.ofHours(1)
+    if (micronautBuild.environment.githubAction.get()) {
+        plugins.withId("io.micronaut.test-resources") {
+            finalizedBy("stopTestResourcesService")
+        }
+    }
+}
+
+configurations.configureEach {
+    resolutionStrategy.preferProjectModules()
 }

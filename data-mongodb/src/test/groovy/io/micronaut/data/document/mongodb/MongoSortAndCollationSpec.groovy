@@ -151,7 +151,7 @@ interface NumbersSortRepository extends CrudRepository<MyNumber, String> {
 
     @MongoCollation("{ locale: 'en_US', numericOrdering: true}")
     @MongoSort("{ n : -1 }")
-    Iterable<MyNumber> findAll();
+    List<MyNumber> findAll();
 
     @MongoCollation("{ locale: 'en_US', numericOrdering: true}")
     @MongoSort("{ n : 1 }")

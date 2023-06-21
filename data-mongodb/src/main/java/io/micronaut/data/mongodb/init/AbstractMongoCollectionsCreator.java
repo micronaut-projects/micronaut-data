@@ -106,8 +106,7 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                     databaseOperations.createCollection(database, persistedName);
                 }
                 for (PersistentProperty persistentProperty : entity.getPersistentProperties()) {
-                    if (persistentProperty instanceof Association) {
-                        Association association = (Association) persistentProperty;
+                    if (persistentProperty instanceof Association association) {
                         Optional<Association> inverseSide = association.getInverseSide().map(Function.identity());
                         if (association.getKind() == Relation.Kind.MANY_TO_MANY || association.isForeignKey() && !inverseSide.isPresent()) {
                             Association owningAssociation = inverseSide.orElse(association);

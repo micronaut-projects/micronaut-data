@@ -18,18 +18,24 @@ package io.micronaut.data.tck.entities;
 import io.micronaut.data.annotation.DateCreated;
 import io.micronaut.data.annotation.DateUpdated;
 
-import javax.persistence.Entity;
-import javax.persistence.ManyToMany;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.Version;
+
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
 public class Student {
-    @javax.persistence.Id
-    @javax.persistence.GeneratedValue
+
+    @Id
+    @GeneratedValue
     private Long id;
-    @javax.persistence.Version
+
+    @Version
     private Long version;
     private String name;
     @DateCreated

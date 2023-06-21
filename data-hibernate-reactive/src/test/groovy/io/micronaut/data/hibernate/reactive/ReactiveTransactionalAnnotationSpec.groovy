@@ -24,7 +24,7 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.Specification
 
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @MicronautTest(packages = "io.micronaut.data.tck.entities", transactional = false)
 class ReactiveTransactionalAnnotationSpec extends Specification implements PostgresHibernateReactiveProperties {
@@ -96,10 +96,12 @@ class ReactiveTransactionalAnnotationSpec extends Specification implements Postg
         }
 
         Mono<Book> saveAndManualRollback() {
+            // Strange Groovy bug doesn't recognized `transactionOperations` as a field
+            ReactorReactiveTransactionOperations ops = transactionOperations
             return bookRepository.save(new Book(title: "Stuff", totalPages: 500)).flatMap(b -> {
                 return Mono.deferContextual(ctx -> {
-                    def txStatus = transactionOperations.getTransactionStatus(ctx)
-                    def txDefinition = transactionOperations.getTransactionDefinition(ctx)
+                    def txStatus = ops.getTransactionStatus(ctx)
+                    def txDefinition = ops.getTransactionDefinition(ctx)
                     assert txStatus
                     assert txDefinition
                     txStatus.setRollbackOnly()

@@ -18,8 +18,8 @@ package io.micronaut.data.tck.entities;
 import io.micronaut.data.annotation.DateCreated;
 
 import io.micronaut.core.annotation.Nullable;
-import javax.persistence.*;
-import javax.validation.constraints.NotBlank;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Objects;

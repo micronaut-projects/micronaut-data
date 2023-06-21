@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.runtime.intercept;
 
+import io.micronaut.aop.InvocationContext;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
@@ -90,6 +91,7 @@ import static io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_PAGE
  * @since 1.0
  */
 public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<T, R> {
+    protected final ConversionService conversionService;
     protected final RepositoryOperations operations;
     protected final PreparedQueryResolver preparedQueryResolver;
     private final ConcurrentMap<RepositoryMethodKey, StoredQuery> countQueries = new ConcurrentHashMap<>(50);
@@ -106,6 +108,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      */
     protected AbstractQueryInterceptor(@NonNull RepositoryOperations operations) {
         ArgumentUtils.requireNonNull("operations", operations);
+        this.conversionService = operations.getConversionService();
         this.operations = operations;
         this.storedQueryResolver = operations instanceof StoredQueryResolver ? (StoredQueryResolver) operations : new DefaultStoredQueryResolver() {
             @Override
@@ -115,8 +118,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         };
         if (operations instanceof MethodContextAwareStoredQueryDecorator) {
             storedQueryDecorator = (MethodContextAwareStoredQueryDecorator) operations;
-        } else if (operations instanceof StoredQueryDecorator) {
-            StoredQueryDecorator decorator = (StoredQueryDecorator) operations;
+        } else if (operations instanceof StoredQueryDecorator decorator) {
             storedQueryDecorator = new MethodContextAwareStoredQueryDecorator() {
                 @Override
                 public <E, K> StoredQuery<E, K> decorate(MethodInvocationContext<?, ?> context, StoredQuery<E, K> storedQuery) {
@@ -273,7 +275,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                 resultType = (Class<RT>) context.classValue(DataMethod.NAME, DataMethod.META_MEMBER_RESULT_TYPE)
                         .orElse(rootEntity);
             }
-            storedQuery = storedQueryResolver.resolveQuery(context, rootEntity, resultType);
+            storedQuery = storedQueryResolver.resolveQuery(context, rootEntity, resultType, isCount);
             storedQuery = storedQueryDecorator.decorate(context, storedQuery);
             queries.put(methodKey, storedQuery);
         }
@@ -538,32 +540,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     }
 
     /**
-     * Convert a number argument if necessary.
-     *
-     * @param number   The number
-     * @param argument The argument
-     * @return The result
-     */
-    @Deprecated
-    @Nullable
-    protected Number convertNumberArgumentIfNecessary(Number number, Argument<?> argument) {
-        Argument<?> firstTypeVar = argument.getFirstTypeVariable().orElse(Argument.of(Long.class));
-        Class<?> type = firstTypeVar.getType();
-        if (type == Object.class || type == Void.class) {
-            return null;
-        }
-        if (number == null) {
-            number = 0;
-        }
-        if (!type.isInstance(number)) {
-            return (Number) operations.getConversionService().convert(number, firstTypeVar)
-                    .orElseThrow(() -> new IllegalStateException("Unsupported number type for return type: " + firstTypeVar));
-        } else {
-            return number;
-        }
-    }
-
-    /**
      * Get the paged query for the given context.
      *
      * @param context The context
@@ -694,7 +670,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      */
     @NonNull
     protected <E> DeleteBatchOperation<E> getDeleteBatchOperation(@NonNull MethodInvocationContext<T, ?> context, @NonNull Iterable<E> iterable) {
-        @SuppressWarnings("unchecked") Class<E> rootEntity = (Class<E>) getRequiredRootEntity(context);
+        @SuppressWarnings("unchecked") Class<E> rootEntity = getRequiredRootEntity(context);
         return getDeleteBatchOperation(context, rootEntity, iterable);
     }
 
@@ -888,6 +864,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         @Override
         public String getName() {
             return method.getDeclaringType().getSimpleName() + "." + method.getMethodName();
+        }
+
+        @Override
+        public InvocationContext<?, ?> getInvocationContext() {
+            return method;
         }
     }
 

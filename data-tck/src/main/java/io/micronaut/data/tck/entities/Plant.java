@@ -19,7 +19,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 
-import javax.persistence.GeneratedValue;
+import jakarta.persistence.GeneratedValue;
 
 @MappedEntity
 public class Plant {

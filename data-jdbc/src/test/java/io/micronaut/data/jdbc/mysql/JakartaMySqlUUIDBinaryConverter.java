@@ -2,7 +2,7 @@ package io.micronaut.data.jdbc.mysql;
 
 import jakarta.persistence.AttributeConverter;
 
-import javax.persistence.Converter;
+import jakarta.persistence.Converter;
 import java.util.UUID;
 
 @Converter

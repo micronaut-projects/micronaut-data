@@ -20,7 +20,6 @@ import io.micronaut.data.tck.repositories.PersonAsyncRepository
 import io.micronaut.data.tck.tests.AbstractAsyncRepositorySpec
 import spock.lang.IgnoreIf
 
-@IgnoreIf({ !jvm.isJava11Compatible() })
 class OracleXEAsyncRepositorySpec extends AbstractAsyncRepositorySpec implements OracleXETestPropertyProvider {
 
     @Memoized

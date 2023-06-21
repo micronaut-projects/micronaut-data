@@ -57,10 +57,11 @@ public class CountSpecificationMethodMatcher extends AbstractSpecificationMethod
                             getInterceptorElement(mc, "io.micronaut.data.spring.jpa.intercept.CountSpecificationInterceptor")
                     );
                 }
+                ClassElement classElement = getInterceptorElement(mc, "io.micronaut.data.jpa.repository.intercept.CountSpecificationInterceptor");
                 return new MethodMatchInfo(
                         DataMethod.OperationType.COUNT,
                         mc.getReturnType(),
-                        getInterceptorElement(mc, "io.micronaut.data.jpa.repository.intercept.CountSpecificationInterceptor")
+                        classElement
                 );
             };
         }

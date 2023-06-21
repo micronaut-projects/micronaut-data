@@ -61,7 +61,7 @@ public abstract class AbstractReactiveEntityOperations<Ctx extends OperationCont
      */
     protected AbstractReactiveEntityOperations(Ctx ctx,
                                                ReactiveCascadeOperations<Ctx> cascadeOperations,
-                                               ConversionService<?> conversionService,
+                                               ConversionService conversionService,
                                                EntityEventListener<Object> entityEventListener,
                                                RuntimePersistentEntity<T> persistentEntity,
                                                T entity,

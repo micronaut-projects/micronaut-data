@@ -25,6 +25,7 @@ class JoinTypeSpec extends Specification {
         Join.Type.FETCH.isFetch()
         Join.Type.LEFT_FETCH.isFetch()
         Join.Type.RIGHT_FETCH.isFetch()
+        Join.Type.OUTER_FETCH.isFetch()
         !Join.Type.LEFT.isFetch()
         !Join.Type.RIGHT.isFetch()
         !Join.Type.DEFAULT.isFetch()

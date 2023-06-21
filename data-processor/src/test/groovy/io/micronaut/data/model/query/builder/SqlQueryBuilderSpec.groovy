@@ -22,6 +22,7 @@ import io.micronaut.data.model.Association
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.entities.Bike
+import io.micronaut.data.model.entities.MappedEntityCar
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.entities.PersonAssignedId
 import io.micronaut.data.model.naming.NamingStrategies
@@ -32,22 +33,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.query.factory.Projections
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
-import io.micronaut.data.tck.entities.Book
-import io.micronaut.data.tck.entities.Car
-import io.micronaut.data.tck.entities.Challenge
-import io.micronaut.data.tck.entities.City
-import io.micronaut.data.tck.entities.CountryRegion
-import io.micronaut.data.tck.entities.Meal
-import io.micronaut.data.tck.entities.Product
-import io.micronaut.data.tck.entities.Restaurant
-import io.micronaut.data.tck.entities.Sale
-import io.micronaut.data.tck.entities.Shipment
-import io.micronaut.data.tck.entities.ShipmentWithIndex
-import io.micronaut.data.tck.entities.ShipmentWithIndexOnClass
-import io.micronaut.data.tck.entities.ShipmentWithIndexOnClassAndFields
-import io.micronaut.data.tck.entities.ShipmentWithIndexOnFields
-import io.micronaut.data.tck.entities.ShipmentWithIndexOnFieldsCompositeIndexes
-import io.micronaut.data.tck.entities.UuidEntity
+import io.micronaut.data.tck.entities.*
 import io.micronaut.data.tck.jdbc.entities.Project
 import io.micronaut.data.tck.jdbc.entities.UserRole
 import spock.lang.Requires
@@ -101,6 +87,52 @@ interface MyRepository {
         builder.buildInsert(annotationMetadata, entity).query == 'INSERT INTO sale (name,data,quantities,extra_data,data_list) VALUES ($1,to_json($2::json),to_json($3::json),to_json($4::json),to_json($5::json))'
     }
 
+    @Requires({ javaVersion >= 1.8 })
+    void 'test where annotation replacement'() {
+        given:
+        def annotationMetadata = buildTypeAnnotationMetadata('''
+package test;
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.model.query.builder.sql.*;
+import java.lang.annotation.*;
+import io.micronaut.data.jdbc.annotation.*;
+import io.micronaut.context.annotation.*;
+
+@MyAnnotation(dialect = Dialect.POSTGRES)
+@Where("@.name = :name")
+interface MyRepository {
+}
+
+@RepositoryConfiguration(
+        queryBuilder = SqlQueryBuilder.class
+)
+@SqlQueryConfiguration(
+    @SqlQueryConfiguration.DialectConfiguration(
+        dialect = Dialect.POSTGRES,
+        positionalParameterFormat = "$%s",
+        escapeQueries = false
+    )
+)
+@Retention(RetentionPolicy.RUNTIME)
+@Repository
+@interface MyAnnotation {
+    @AliasFor(annotation = Repository.class, member = "dialect")
+    Dialect dialect() default Dialect.ANSI;
+}
+''')
+
+        SqlQueryBuilder builder = new SqlQueryBuilder(annotationMetadata)
+        PersistentEntity entity = PersistentEntity.of(Sale)
+        def queryModel = QueryModel.from(entity)
+
+        expect:
+        builder.dialect == Dialect.POSTGRES
+        builder.buildQuery(annotationMetadata, queryModel).query == 'SELECT sale_.id,sale_.name,sale_.data,sale_.quantities,sale_.extra_data,sale_.data_list FROM sale sale_ WHERE (sale_.name =$1)'
+        builder.buildDelete(annotationMetadata, queryModel).query == 'DELETE  FROM sale  WHERE (name =$1)'
+        builder.buildUpdate(annotationMetadata, queryModel, Arrays.asList("name")).query == 'UPDATE sale SET name=$1 WHERE (name =$2)'
+        builder.buildInsert(annotationMetadata, entity).query == 'INSERT INTO sale (name,data,quantities,extra_data,data_list) VALUES ($1,to_json($2::json),to_json($3::json),to_json($4::json),to_json($5::json))'
+    }
+
 
     void "test encode update with JSON and MySQL"() {
         when:"A update is encoded"
@@ -115,13 +147,18 @@ interface MyRepository {
 
     void "test build queries with schema"() {
         when:"A select is encoded"
-        PersistentEntity entity = PersistentEntity.of(Car)
+        PersistentEntity entity = PersistentEntity.of(type)
         QueryModel q = QueryModel.from(entity)
         QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
         def encoded = encoder.buildQuery(q)
 
         then:"The select includes the schema in the table name reference"
-        encoded.query == 'SELECT car_.`id`,car_.`name` FROM `ford`.`cars` car_'
+        encoded.query == query
+
+        where:
+        type            | query
+        Car             | 'SELECT car_.`id`,car_.`name` FROM `ford`.`cars` car_'
+        MappedEntityCar | 'SELECT mapped_entity_car_.`id`,mapped_entity_car_.`name` FROM `ford`.`cars` mapped_entity_car_'
     }
 
     void "test select embedded"() {
@@ -132,7 +169,7 @@ interface MyRepository {
         def encoded = encoder.buildQuery(q)
 
         expect:
-        encoded.query.startsWith('SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`address_street`,restaurant_.`address_zip_code`,restaurant_.`hq_address_street`,restaurant_.`hq_address_zip_code` FROM')
+        encoded.query.startsWith('SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`address_street`,restaurant_.`address_zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM')
 
     }
 
@@ -162,6 +199,94 @@ interface MyRepository {
 
         expect:
         encoded.query == 'SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated`,book_genre_.`genre_name` AS genre_genre_name,book_author_.`name` AS author_name,book_author_.`nick_name` AS author_nick_name FROM `book` book_ LEFT JOIN `genre` book_genre_ ON book_.`genre_id`=book_genre_.`id` INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` = ?)'
+
+    }
+
+    void "test encode to-one join - single level, two join entities, outer joins"() {
+        given:
+        PersistentEntity entity = PersistentEntity.of(Book)
+        QueryModel q = QueryModel.from(entity)
+        q.idEq(new QueryParameter("test"))
+        q.join(entity.getPropertyByName("author") as Association, Join.Type.OUTER)
+        q.join(entity.getPropertyByName("genre") as Association, Join.Type.OUTER_FETCH)
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.POSTGRES)
+        def encoded = encoder.buildQuery(q)
+
+        expect:
+        encoded.query == 'SELECT book_."id",book_."author_id",book_."genre_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated",book_genre_."genre_name" AS genre_genre_name FROM "book" book_ FULL OUTER JOIN "genre" book_genre_ ON book_."genre_id"=book_genre_."id" FULL OUTER JOIN "author" book_author_ ON book_."author_id"=book_author_."id" WHERE (book_."id" = ?)'
+
+    }
+
+
+    void "test encode to-one join - unsupported outer join throws exception for H2 Dialect"() {
+        given:
+        PersistentEntity entity = PersistentEntity.of(Book)
+        QueryModel q = QueryModel.from(entity)
+        q.join(entity.getPropertyByName("author") as Association, Join.Type.OUTER)
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
+
+        when:
+        encoder.buildQuery(q)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+
+        expect:
+        e.message == "Unsupported join type [OUTER] by dialect [H2]"
+
+    }
+
+    void "test encode to-one join - unsupported outer fetch join throws exception for H2 Dialect"() {
+        given:
+        PersistentEntity entity = PersistentEntity.of(Book)
+        QueryModel q = QueryModel.from(entity)
+        q.join(entity.getPropertyByName("author") as Association, Join.Type.OUTER_FETCH)
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
+
+        when:
+        encoder.buildQuery(q)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+
+        expect:
+        e.message == "Unsupported join type [OUTER_FETCH] by dialect [H2]"
+
+    }
+
+    void "test encode to-one join - unsupported outer join throws exception for MYSQL Dialect"() {
+        given:
+        PersistentEntity entity = PersistentEntity.of(Book)
+        QueryModel q = QueryModel.from(entity)
+        q.join(entity.getPropertyByName("author") as Association, Join.Type.OUTER)
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.MYSQL)
+
+        when:
+        encoder.buildQuery(q)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+
+        expect:
+        e.message == "Unsupported join type [OUTER] by dialect [MYSQL]"
+
+    }
+
+    void "test encode to-one join - unsupported outer fetch join throws exception for MYSQL Dialect"() {
+        given:
+        PersistentEntity entity = PersistentEntity.of(Book)
+        QueryModel q = QueryModel.from(entity)
+        q.join(entity.getPropertyByName("author") as Association, Join.Type.OUTER_FETCH)
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.MYSQL)
+
+        when:
+        encoder.buildQuery(q)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+
+        expect:
+        e.message == "Unsupported join type [OUTER_FETCH] by dialect [MYSQL]"
 
     }
 
@@ -221,7 +346,7 @@ interface MyRepository {
         def result = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity)
 
         expect:
-        result.query == 'INSERT INTO "restaurant" ("name","address_street","address_zip_code","hq_address_street","hq_address_zip_code") VALUES (?,?,?,?,?)'
+        result.query == 'INSERT INTO "restaurant" ("name","address_street","address_zip_code","hqaddress_street","hqaddress_zip_code") VALUES (?,?,?,?,?)'
         result.parameters.equals('1': 'name', '2':'address.street', '3':'address.zipCode', '4':'hqAddress.street', '5':'hqAddress.zipCode')
     }
 
@@ -232,7 +357,7 @@ interface MyRepository {
         def result = encoder.buildBatchCreateTableStatement(entity)
 
         expect:
-        result == 'CREATE TABLE "restaurant" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL,"address_street" VARCHAR(255) NOT NULL,"address_zip_code" VARCHAR(255) NOT NULL,"hq_address_street" VARCHAR(255),"hq_address_zip_code" VARCHAR(255));'
+        result == 'CREATE TABLE "restaurant" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL,"address_street" VARCHAR(255) NOT NULL,"address_zip_code" VARCHAR(255) NOT NULL,"hqaddress_street" VARCHAR(255),"hqaddress_zip_code" VARCHAR(255));'
     }
 
     void "test encode insert statement - custom mapping strategy"() {
@@ -399,11 +524,11 @@ interface MyRepository {
                     'SELECT shipment_."sp_country",shipment_."sp_city",shipment_."field" FROM "Shipment1" shipment_ WHERE (shipment_."sp_country" = ?)',
                     'SELECT user_role_."id_user_id",user_role_."id_role_id" FROM "user_role_composite" user_role_ INNER JOIN "role_composite" user_role_id_role_ ON user_role_."id_role_id"=user_role_id_role_."id"',
                     'SELECT user_role_."id_user_id",user_role_."id_role_id" FROM "user_role_composite" user_role_ INNER JOIN "user_composite" user_role_id_user_ ON user_role_."id_user_id"=user_role_id_user_."id" WHERE (user_role_."id_user_id" = ?)',
-                    'SELECT uidx."uuid",uidx."name",uidx."child_id",uidx."xyz",uidx."embedded_child_embedded_child2_id" FROM "uuid_entity" uidx WHERE (uidx."uuid" = ?)',
+                    'SELECT uidx."uuid",uidx."name",uidx."child_id",uidx."xyz",uidx."embedded_child_embedded_child2_id",uidx."nullable_value" FROM "uuid_entity" uidx WHERE (uidx."uuid" = ?)',
                     'SELECT user_role_."id_user_id",user_role_."id_role_id" FROM "user_role_composite" user_role_ WHERE (user_role_."id_user_id" = ? AND user_role_."id_role_id" = ?)',
                     'SELECT challenge_."id",challenge_."token",challenge_."authentication_id",challenge_authentication_device_."NAME" AS authentication_device_NAME,challenge_authentication_device_."USER_ID" AS authentication_device_USER_ID,challenge_authentication_device_user_."NAME" AS authentication_device_user_NAME,challenge_authentication_."DESCRIPTION" AS authentication_DESCRIPTION,challenge_authentication_."DEVICE_ID" AS authentication_DEVICE_ID FROM "challenge" challenge_ INNER JOIN "AUTHENTICATION" challenge_authentication_ ON challenge_."authentication_id"=challenge_authentication_."ID" INNER JOIN "DEVICE" challenge_authentication_device_ ON challenge_authentication_."DEVICE_ID"=challenge_authentication_device_."ID" INNER JOIN "USER" challenge_authentication_device_user_ ON challenge_authentication_device_."USER_ID"=challenge_authentication_device_user_."ID" WHERE (challenge_."id" = ?)',
                     'SELECT user_role_id_role_."id",user_role_id_role_."name" FROM "user_role_composite" user_role_ INNER JOIN "role_composite" user_role_id_role_ ON user_role_."id_role_id"=user_role_id_role_."id" WHERE (user_role_."id_user_id" = ?)',
-                    'SELECT meal_."mid",meal_."current_blood_glucose",meal_."created_on",meal_."updated_on",meal_foods_."fid" AS foods_fid,meal_foods_."key" AS foods_key,meal_foods_."carbohydrates" AS foods_carbohydrates,meal_foods_."portion_grams" AS foods_portion_grams,meal_foods_."created_on" AS foods_created_on,meal_foods_."updated_on" AS foods_updated_on,meal_foods_."fk_meal_id" AS foods_fk_meal_id,meal_foods_."fk_alt_meal" AS foods_fk_alt_meal,meal_foods_."loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name" AS ln FROM "meal" meal_ INNER JOIN "food" meal_foods_ ON meal_."mid"=meal_foods_."fk_meal_id" WHERE (meal_."mid" = ?)'
+                    'SELECT meal_."mid",meal_."current_blood_glucose",meal_."created_on",meal_."updated_on",meal_."actual",meal_foods_."fid" AS foods_fid,meal_foods_."key" AS foods_key,meal_foods_."carbohydrates" AS foods_carbohydrates,meal_foods_."portion_grams" AS foods_portion_grams,meal_foods_."created_on" AS foods_created_on,meal_foods_."updated_on" AS foods_updated_on,meal_foods_."fk_meal_id" AS foods_fk_meal_id,meal_foods_."fk_alt_meal" AS foods_fk_alt_meal,meal_foods_."loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name" AS ln,meal_foods_."fresh" AS foods_fresh FROM "meal" meal_ INNER JOIN "food" meal_foods_ ON meal_."mid"=meal_foods_."fk_meal_id" AND meal_foods_.fresh = \'Y\' WHERE (meal_."mid" = ? AND (meal_.actual = \'Y\'))'
             ]
     }
 
@@ -424,7 +549,7 @@ interface MyRepository {
             ]
             query << [
                     'INSERT INTO "Shipment1" ("field","sp_country","sp_city") VALUES (?,?,?)',
-                    'INSERT INTO "uuid_entity" ("name","child_id","xyz","embedded_child_embedded_child2_id","uuid") VALUES (?,?,?,?,?)',
+                    'INSERT INTO "uuid_entity" ("name","child_id","xyz","embedded_child_embedded_child2_id","nullable_value","uuid") VALUES (?,?,?,?,?,?)',
                     'INSERT INTO "user_role_composite" ("id_user_id","id_role_id") VALUES (?,?)'
             ]
     }
@@ -446,7 +571,7 @@ interface MyRepository {
             ]
             query << [
                     'CREATE TABLE "Shipment1" ("sp_country" VARCHAR(255) NOT NULL,"sp_city" VARCHAR(255) NOT NULL,"field" VARCHAR(255) NOT NULL, PRIMARY KEY("sp_country","sp_city"));',
-                    'CREATE TABLE "uuid_entity" ("uuid" UUID,"name" VARCHAR(255) NOT NULL,"child_id" UUID,"xyz" UUID,"embedded_child_embedded_child2_id" UUID);',
+                    'CREATE TABLE "uuid_entity" ("uuid" UUID,"name" VARCHAR(255) NOT NULL,"child_id" UUID,"xyz" UUID,"embedded_child_embedded_child2_id" UUID,"nullable_value" UUID, PRIMARY KEY("uuid"));',
                     'CREATE TABLE "user_role_composite" ("id_user_id" BIGINT NOT NULL,"id_role_id" BIGINT NOT NULL, PRIMARY KEY("id_user_id","id_role_id"));'
             ]
     }
@@ -458,7 +583,7 @@ interface MyRepository {
 
         then:
         statements[0] == 'CREATE TABLE "shipment_with_index" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
-        statements[1] == 'CREATE UNIQUE INDEX idx_shipment_with_index_field_taxcode ON "shipment_with_index" (field, taxCode);'
+        statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_field_taxcode" ON "shipment_with_index" (field, taxCode);'
 
         when:
         def productStatements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Product))
@@ -475,7 +600,8 @@ interface MyRepository {
 
         then:
         statements[0] == 'CREATE TABLE "shipment_with_index_on_fields" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
-        statements[1] == 'CREATE UNIQUE INDEX idx_shipment_with_index_on_fields_field ON "shipment_with_index_on_fields" (field);CREATE INDEX idx_shipment_with_index_on_fields_taxcode ON "shipment_with_index_on_fields" (taxCode);'
+        statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_on_fields_field" ON "shipment_with_index_on_fields" (field);'
+        statements[2] == 'CREATE INDEX "idx_shipment_with_index_on_fields_taxcode" ON "shipment_with_index_on_fields" (taxCode);'
     }
 
     void "test build create index from field annotation with composite indexes"() {
@@ -485,7 +611,7 @@ interface MyRepository {
 
         then:
         statements[0] == 'CREATE TABLE "shipment_with_index_on_fields_composite_indexes" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
-        statements[1] == 'CREATE UNIQUE INDEX idx_shipment_with_index_on_fields_composite_indexes_field_taxcode ON "shipment_with_index_on_fields_composite_indexes" (field, taxCode);'
+        statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_on_fields_composite_indexes_field_taxcode" ON "shipment_with_index_on_fields_composite_indexes" (field, taxCode);'
     }
 
     void "test build create index from index class annotation"() {
@@ -495,7 +621,8 @@ interface MyRepository {
 
         then:
         statements[0] == 'CREATE TABLE "shipment_with_index_on_class" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
-        statements[1] == 'CREATE UNIQUE INDEX idx_shipment_with_index_on_class_field ON "shipment_with_index_on_class" (field);CREATE INDEX idx_shipment_with_index_on_class_taxcode ON "shipment_with_index_on_class" (taxCode);'
+        statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_on_class_field" ON "shipment_with_index_on_class" (field);'
+        statements[2] == 'CREATE INDEX "idx_shipment_with_index_on_class_taxcode" ON "shipment_with_index_on_class" (taxCode);'
     }
 
     void "test build create index from index class annotation and field annotation"() {
@@ -505,7 +632,9 @@ interface MyRepository {
 
         then:
         statements[0] == 'CREATE TABLE "shipment_with_index_on_class_and_fields" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field2" VARCHAR(255) NOT NULL,"taxCode2" VARCHAR(255) NOT NULL,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
-        statements[1] == 'CREATE UNIQUE INDEX idx_shipment_with_index_on_class_and_fields_field ON "shipment_with_index_on_class_and_fields" (field);CREATE INDEX idx_shipment_with_index_on_class_and_fields_taxcode ON "shipment_with_index_on_class_and_fields" (taxCode);CREATE UNIQUE INDEX idx_shipment_with_index_on_class_and_fields_field2_taxcode2 ON "shipment_with_index_on_class_and_fields" (field2, taxCode2);'
+        statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_on_class_and_fields_field" ON "shipment_with_index_on_class_and_fields" (field);'
+        statements[2] == 'CREATE INDEX "idx_shipment_with_index_on_class_and_fields_taxcode" ON "shipment_with_index_on_class_and_fields" (taxCode);'
+        statements[3] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_on_class_and_fields_field2_taxcode2" ON "shipment_with_index_on_class_and_fields" (field2, taxCode2);'
     }
 
     void "test build composite id query"() {

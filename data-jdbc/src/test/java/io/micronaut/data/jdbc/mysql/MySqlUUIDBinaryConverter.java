@@ -3,7 +3,7 @@ package io.micronaut.data.jdbc.mysql;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 
-import javax.persistence.Converter;
+import jakarta.persistence.Converter;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 

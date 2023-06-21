@@ -1,15 +1,15 @@
-
 package example
 
-import io.micronaut.transaction.SynchronousTransactionManager
-import java.sql.Connection
+import io.micronaut.data.exceptions.EmptyResultException
+import io.micronaut.transaction.TransactionOperations
 import jakarta.inject.Singleton
+import java.sql.Connection
 
 @Singleton
 class ProductManager(
-        private val connection: Connection,
-        private val transactionManager: SynchronousTransactionManager<Connection>) // <1>
-{
+    private val connection: Connection,
+    private val transactionManager: TransactionOperations<Connection> // <1>
+) {
 
     fun save(name: String, manufacturer: Manufacturer): Product {
         return transactionManager.executeWrite { // <2>
@@ -23,21 +23,19 @@ class ProductManager(
         }
     }
 
-    fun find(name: String): Product? {
-        return transactionManager.executeRead { // <3>
-            connection
-                    .prepareStatement("select * from product p where p.name = ?").use { ps ->
-                        ps.setString(1, name)
-                        ps.executeQuery().use { rs ->
-                            if (rs.next()) {
-                                return@executeRead Product(
-                                        rs.getLong("id"),
-                                        rs.getString("name"),
-                                        null)
-                            }
-                            return@executeRead null
+    fun find(name: String): Product {
+        return transactionManager.executeRead { status -> // <3>
+            status.connection.prepareStatement("select * from product p where p.name = ?").use { ps ->
+                    ps.setString(1, name)
+                    ps.executeQuery().use { rs ->
+                        if (rs.next()) {
+                            return@executeRead Product(
+                                rs.getLong("id"), rs.getString("name"), null
+                            )
                         }
+                        throw EmptyResultException()
                     }
+                }
         }
     }
 }

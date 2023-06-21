@@ -45,7 +45,7 @@ public class DeleteAllReactiveSpecificationInterceptor extends AbstractReactiveS
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         PreparedQuery<?, Number> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.DELETE_ALL);
         Publisher<?> publisher = reactiveOperations.executeDelete(preparedQuery);
-        return Publishers.convertPublisher(publisher, context.getReturnType().getType());
+        return Publishers.convertPublisher(conversionService, publisher, context.getReturnType().getType());
     }
 
 }

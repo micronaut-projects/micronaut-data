@@ -95,7 +95,7 @@ public class EventIntegrator implements Integrator {
                     }
 
                     @Override
-                    public boolean requiresPostCommitHanding(EntityPersister persister) {
+                    public boolean requiresPostCommitHandling(EntityPersister persister) {
                         return false;
                     }
                 });
@@ -118,7 +118,7 @@ public class EventIntegrator implements Integrator {
         eventListenerRegistry.getEventListenerGroup(EventType.POST_DELETE)
                 .appendListener(new PostDeleteEventListener() {
                     @Override
-                    public boolean requiresPostCommitHanding(EntityPersister persister) {
+                    public boolean requiresPostCommitHandling(EntityPersister persister) {
                         return false;
                     }
 
@@ -154,7 +154,7 @@ public class EventIntegrator implements Integrator {
         eventListenerRegistry.getEventListenerGroup(EventType.POST_UPDATE)
                 .appendListener(new PostUpdateEventListener() {
                     @Override
-                    public boolean requiresPostCommitHanding(EntityPersister persister) {
+                    public boolean requiresPostCommitHandling(EntityPersister persister) {
                         return false;
                     }
 

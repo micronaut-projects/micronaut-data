@@ -47,7 +47,7 @@ public class UpdateAllReactiveSpecificationInterceptor extends AbstractReactiveS
         PreparedQuery<?, Number> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.UPDATE_ALL);
         ReturnType<Object> returnType = context.getReturnType();
         Publisher<Number> publisher = reactiveOperations.executeUpdate(preparedQuery);
-        return Publishers.convertPublisher(publisher, returnType.getType());
+        return Publishers.convertPublisher(conversionService, publisher, returnType.getType());
     }
 
 }

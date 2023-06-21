@@ -23,6 +23,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.SupplierUtil;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 
@@ -38,11 +39,12 @@ import java.util.function.Supplier;
 public class RuntimePersistentProperty<T> implements PersistentProperty {
     public static final RuntimePersistentProperty<Object>[] EMPTY_PROPERTY_ARRAY = new RuntimePersistentProperty[0];
     private final RuntimePersistentEntity<T> owner;
-    private final BeanProperty<T, ?> property;
+    private final BeanProperty<T, Object> property;
     private final Class<?> type;
     private final DataType dataType;
+    private final JsonDataType jsonDataType;
     private final boolean constructorArg;
-    private final Argument<?> argument;
+    private final Argument<Object> argument;
     private final Supplier<AttributeConverter<Object, Object>> converter;
     private String persistedName;
 
@@ -52,11 +54,12 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
      * @param property The property
      * @param constructorArg whether it is a constructor arg
      */
-    RuntimePersistentProperty(RuntimePersistentEntity<T> owner, BeanProperty<T, ?> property, boolean constructorArg) {
+    RuntimePersistentProperty(RuntimePersistentEntity<T> owner, BeanProperty<T, Object> property, boolean constructorArg) {
         this.owner = owner;
         this.property = property;
         this.type = ReflectionUtils.getWrapperType(property.getType());
         this.dataType = PersistentProperty.super.getDataType();
+        this.jsonDataType = this.dataType == DataType.JSON ? PersistentProperty.super.getJsonDataType() : null;
         this.constructorArg = constructorArg;
         this.argument = property.asArgument();
         this.converter = property.classValue(MappedProperty.class, "converter")
@@ -67,7 +70,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     /**
      * @return The argument for this property.
      */
-    public Argument<?> getArgument() {
+    public Argument<Object> getArgument() {
         return argument;
     }
 
@@ -89,6 +92,11 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     @Override
     public DataType getDataType() {
         return dataType;
+    }
+
+    @Override
+    public JsonDataType getJsonDataType() {
+        return jsonDataType;
     }
 
     @Override
@@ -139,7 +147,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     /**
      * @return The backing bean property
      */
-    public BeanProperty<T, ?> getProperty() {
+    public BeanProperty<T, Object> getProperty() {
         return property;
     }
 

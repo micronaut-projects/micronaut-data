@@ -19,9 +19,10 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.annotation.Introspected;
+import io.micronaut.serde.annotation.Serdeable;
 
 import java.util.List;
 
@@ -32,6 +33,7 @@ import java.util.List;
  * @author graemerocher
  * @since 1.0.0
  */
+@Serdeable
 @Introspected
 @JsonIgnoreProperties(ignoreUnknown = true)
 public interface Pageable extends Sort {
@@ -66,6 +68,7 @@ public interface Pageable extends Sort {
      * Offset in the requested collection. Defaults to zero.
      * @return offset in the requested collection
      */
+    @JsonIgnore
     default long getOffset() {
         int size = getSize();
         if (size < 0) {
@@ -121,6 +124,7 @@ public interface Pageable extends Sort {
     /**
      * @return Is unpaged
      */
+    @JsonIgnore
     default boolean isUnpaged() {
         return getSize() == -1;
     }
@@ -133,6 +137,7 @@ public interface Pageable extends Sort {
     }
 
     @Override
+    @JsonIgnore
     default boolean isSorted() {
         return getSort().isSorted();
     }

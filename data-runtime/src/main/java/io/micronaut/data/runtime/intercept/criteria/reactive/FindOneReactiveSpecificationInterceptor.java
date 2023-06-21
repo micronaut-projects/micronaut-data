@@ -45,6 +45,6 @@ public class FindOneReactiveSpecificationInterceptor extends AbstractReactiveSpe
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         PreparedQuery<Object, Object> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.FIND_ONE);
         Publisher<Object> publisher = reactiveOperations.findOptional(preparedQuery);
-        return Publishers.convertPublisher(publisher, context.getReturnType().getType());
+        return Publishers.convertPublisher(conversionService, publisher, context.getReturnType().getType());
     }
 }

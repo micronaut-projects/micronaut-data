@@ -22,7 +22,7 @@ import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 
 import io.micronaut.core.annotation.Nullable;
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 import java.util.UUID;
 
 @MappedEntity

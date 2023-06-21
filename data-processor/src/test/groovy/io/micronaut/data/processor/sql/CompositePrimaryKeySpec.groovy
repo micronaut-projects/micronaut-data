@@ -56,9 +56,9 @@ interface CompanyRepository extends io.micronaut.data.tck.repositories.CompanyRe
     void "test compile repository"() {
         given:
         def repository = buildRepository('test.ProjectRepository', """
-import javax.persistence.Entity;
-import javax.persistence.EmbeddedId;
-import javax.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Column;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.context.annotation.Parameter;
 ${TestEntities.compositePrimaryKeyEntities()}
@@ -98,9 +98,9 @@ interface ProjectRepository extends CrudRepository<Project, ProjectId>{
     void "test compile repo with composite key relations"() {
         given:
         def repository = buildRepository('test.UserRoleRepository', """
-import javax.persistence.Entity;
-import javax.persistence.EmbeddedId;
-import javax.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Column;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.context.annotation.Parameter;
 ${TestEntities.compositeRelationPrimaryKeyEntities()}
@@ -109,7 +109,7 @@ ${TestEntities.compositeRelationPrimaryKeyEntities()}
 @RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false, namedParameters = false)
 @io.micronaut.context.annotation.Executable
 interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
-        
+
     UserRole save(UserRole entity);
 
     default UserRole save(User user, Role role) {
@@ -150,9 +150,9 @@ interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
     void "test compile repo with composite key relations2"() {
         given:
         def repository = buildRepository('test.EntityWithIdClassRepository', """
-import javax.persistence.Entity;
-import javax.persistence.EmbeddedId;
-import javax.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Column;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
 import io.micronaut.data.tck.entities.*;
 import io.micronaut.data.repository.CrudRepository;

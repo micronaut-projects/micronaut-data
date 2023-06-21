@@ -9,7 +9,7 @@ The build time processor is added by adding the `micronaut-data-processor` modul
 
 dependency:io.micronaut.data:micronaut-data-processor[scope="annotationProcessor"]
 
-For document databases like <<mongo, MongoDB>> instead of dependency above you need to use:
+For document databases like <<mongo, MongoDB>> or <<azureCosmos, Azure Cosmos Data>> instead of dependency above you need to use:
 
 dependency:io.micronaut.data:micronaut-data-document-processor[scope="annotationProcessor"]
 

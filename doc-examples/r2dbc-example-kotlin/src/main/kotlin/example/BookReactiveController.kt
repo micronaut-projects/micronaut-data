@@ -4,7 +4,7 @@ import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.*
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import javax.validation.Valid
+import jakarta.validation.Valid
 
 @Controller("/books2")
 class BookReactiveController(private val bookRepository: BookReactiveRepository) {

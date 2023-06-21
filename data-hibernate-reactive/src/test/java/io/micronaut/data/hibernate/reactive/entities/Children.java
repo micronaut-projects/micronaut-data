@@ -17,8 +17,8 @@ package io.micronaut.data.hibernate.reactive.entities;
 
 import io.micronaut.core.annotation.Nullable;
 
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
 
 @Entity
 public class Children {

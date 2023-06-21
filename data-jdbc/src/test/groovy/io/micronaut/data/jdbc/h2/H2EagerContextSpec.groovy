@@ -29,10 +29,7 @@ class H2EagerContextSpec extends Specification implements H2TestPropertyProvider
 
     @AutoCleanup
     @Shared
-    ApplicationContext context = ApplicationContext.builder(getProperties() + [
-            'eager-test'            : true,
-            'datasources.other.name': 'other'
-    ])
+    ApplicationContext context = ApplicationContext.builder(getProperties() + ['eager-test': true] + getH2DataSourceProperties("other"))
             .eagerInitSingletons(true)
             .build()
             .start()

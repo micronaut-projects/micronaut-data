@@ -1,14 +1,6 @@
 plugins {
-    id "org.jetbrains.kotlin.jvm"
-    id "org.jetbrains.kotlin.kapt"
-    id "org.jetbrains.kotlin.plugin.allopen"
     id "org.jetbrains.kotlin.plugin.jpa"
-    id "io.micronaut.application"
     id "io.micronaut.build.internal.data-kotlin-example"
-}
-
-repositories {
-    mavenCentral()
 }
 
 application {
@@ -16,20 +8,24 @@ application {
 }
 
 micronaut {
-    version micronautVersion
+    version libs.versions.micronaut.platform.get()
     runtime "netty"
     testRuntime "junit5"
 }
 
 dependencies {
-    implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
-    implementation "io.micronaut:micronaut-http-client"
-    implementation project(":data-hibernate-jpa")
-    implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
-    kapt "io.micronaut:micronaut-validation"
-    kapt project(":data-processor")
-    runtimeOnly "ch.qos.logback:logback-classic"
-    runtimeOnly "com.h2database:h2"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactive"
+    implementation mnRxjava2.micronaut.rxjava2
+    implementation mn.micronaut.http.client
+    implementation projects.micronautDataHibernateJpa
+    implementation projects.micronautDataTx
+    implementation mnKotlin.micronaut.kotlin.runtime
+    implementation mnValidation.micronaut.validation
+    implementation libs.kotlin.coroutines
+
+    kapt mnValidation.micronaut.validation
+    kapt projects.micronautDataProcessor
+
+    runtimeOnly mnSql.micronaut.jdbc.tomcat
+    runtimeOnly mnLogging.logback.classic
+    runtimeOnly mnSql.h2
 }

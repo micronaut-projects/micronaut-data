@@ -18,6 +18,7 @@ package io.micronaut.data.runtime.operations;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.model.Page;
@@ -32,7 +33,6 @@ import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
-import io.micronaut.transaction.support.TransactionSynchronizationManager;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -55,18 +55,7 @@ import java.util.function.Supplier;
 public class ExecutorReactiveOperations implements ReactiveRepositoryOperations {
 
     private final ExecutorAsyncOperations asyncOperations;
-    private final ConversionService<?> dataConversionService;
-
-    /**
-     * Default constructor.
-     *
-     * @param datastore The target operations
-     * @param executor  The executor to use.
-     */
-    @Deprecated
-    public ExecutorReactiveOperations(@NonNull RepositoryOperations datastore, @NonNull Executor executor) {
-        this(datastore, executor, null);
-    }
+    private final ConversionService dataConversionService;
 
     /**
      * Default constructor.
@@ -75,18 +64,8 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
      * @param executor              The executor to use.
      * @param dataConversionService The data conversion service
      */
-    public ExecutorReactiveOperations(@NonNull RepositoryOperations datastore, @NonNull Executor executor, DataConversionService<?> dataConversionService) {
+    public ExecutorReactiveOperations(@NonNull RepositoryOperations datastore, @NonNull Executor executor, DataConversionService dataConversionService) {
         this(new ExecutorAsyncOperations(datastore, executor), dataConversionService);
-    }
-
-    /**
-     * Default constructor.
-     *
-     * @param asyncOperations The instance operations instance
-     */
-    @Deprecated
-    public ExecutorReactiveOperations(@NonNull ExecutorAsyncOperations asyncOperations) {
-        this(asyncOperations, null);
     }
 
     /**
@@ -213,8 +192,7 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
     }
 
     private <R> Mono<R> fromCompletableFuture(Supplier<CompletableFuture<R>> futureSupplier) {
-        Supplier<CompletableFuture<R>> decorated = TransactionSynchronizationManager.decorateToPropagateState(futureSupplier);
-        return Mono.fromCompletionStage(decorated);
+        return Mono.fromCompletionStage(PropagatedContext.wrapCurrent(futureSupplier));
     }
 
     /**
@@ -225,7 +203,7 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
      * @return The result
      */
     private @Nullable Number convertNumberArgumentIfNecessary(Number number, Argument<?> argument) {
-        Argument<?> firstTypeVar = argument.getFirstTypeVariable().orElse(Argument.of(Long.class));
+        Argument<?> firstTypeVar = argument.getFirstTypeVariable().orElse(Argument.LONG);
         Class<?> type = firstTypeVar.getType();
         if (type == Object.class || type == Void.class) {
             return null;
@@ -239,5 +217,10 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
         } else {
             return number;
         }
+    }
+
+    @Override
+    public ConversionService getConversionService() {
+        return dataConversionService;
     }
 }

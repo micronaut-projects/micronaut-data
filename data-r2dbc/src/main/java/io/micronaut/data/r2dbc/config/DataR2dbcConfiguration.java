@@ -18,12 +18,14 @@ package io.micronaut.data.r2dbc.config;
 import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.naming.Named;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.operations.R2dbcOperations;
 import io.micronaut.data.runtime.config.SchemaGenerate;
 import io.micronaut.r2dbc.BasicR2dbcProperties;
 import io.r2dbc.spi.ConnectionFactory;
+import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +45,11 @@ public class DataR2dbcConfiguration implements Named {
     private List<String> packages = new ArrayList<>(3);
     private final String name;
     private final ConnectionFactory connectionFactory;
-    private final R2dbcOperations r2dbcOperations;
+    private final Provider<R2dbcOperations> r2dbcOperations;
+    @Nullable
+    private String schemaGenerateName;
+    @Nullable
+    private List<String> schemaGenerateNames;
 
     /**
      * The configuration.
@@ -54,7 +60,7 @@ public class DataR2dbcConfiguration implements Named {
      */
     public DataR2dbcConfiguration(@Parameter String name,
                                   @Parameter ConnectionFactory connectionFactory,
-                                  @Parameter R2dbcOperations r2dbcOperations) {
+                                  @Parameter Provider<R2dbcOperations> r2dbcOperations) {
         this.name = name;
         this.connectionFactory = connectionFactory;
         this.r2dbcOperations = r2dbcOperations;
@@ -64,7 +70,7 @@ public class DataR2dbcConfiguration implements Named {
      * @return The R2DBC operations.
      */
     public R2dbcOperations getR2dbcOperations() {
-        return r2dbcOperations;
+        return r2dbcOperations.get();
     }
 
     /**
@@ -144,5 +150,35 @@ public class DataR2dbcConfiguration implements Named {
     @Override
     public String getName() {
         return name;
+    }
+
+    /**
+     * @return The schema name that should be used for generating
+     */
+    @Nullable
+    public String getSchemaGenerateName() {
+        return schemaGenerateName;
+    }
+
+    /**
+     * @param schemaGenerateName The schema name that should be used for generating
+     */
+    public void setSchemaGenerateName(@Nullable String schemaGenerateName) {
+        this.schemaGenerateName = schemaGenerateName;
+    }
+
+    /**
+     * @return The schema names that should be used for generating
+     */
+    @Nullable
+    public List<String> getSchemaGenerateNames() {
+        return schemaGenerateNames;
+    }
+
+    /**
+     * @param schemaGenerateNames The schema names that should be used for generating
+     */
+    public void setSchemaGenerateNames(@Nullable List<String> schemaGenerateNames) {
+        this.schemaGenerateNames = schemaGenerateNames;
     }
 }

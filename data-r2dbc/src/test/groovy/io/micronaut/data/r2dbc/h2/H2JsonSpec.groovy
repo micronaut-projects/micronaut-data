@@ -16,12 +16,11 @@
 package io.micronaut.data.r2dbc.h2
 
 import groovy.transform.Memoized
+import io.micronaut.data.tck.repositories.JsonEntityRepository
 import io.micronaut.data.tck.repositories.SaleItemRepository
 import io.micronaut.data.tck.repositories.SaleRepository
 import io.micronaut.data.tck.tests.AbstractJSONSpec
-import spock.lang.Ignore
 
-@Ignore("https://github.com/r2dbc/r2dbc-h2/issues/180")
 class H2JsonSpec extends AbstractJSONSpec implements H2TestPropertyProvider {
 
     @Memoized
@@ -34,5 +33,11 @@ class H2JsonSpec extends AbstractJSONSpec implements H2TestPropertyProvider {
     @Override
     SaleItemRepository getSaleItemRepository() {
         return applicationContext.getBean(H2SaleItemRepository)
+    }
+
+    @Memoized
+    @Override
+    JsonEntityRepository getJsonEntityRepository() {
+        return applicationContext.getBean(H2JsonEntityRepository)
     }
 }

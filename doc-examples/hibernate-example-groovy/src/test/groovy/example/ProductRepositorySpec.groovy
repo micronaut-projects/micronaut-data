@@ -19,6 +19,8 @@ class ProductRepositorySpec extends Specification {
     ManufacturerRepository manufacturerRepository
 
     void setupSpec() {
+        productRepository.deleteAll()
+        manufacturerRepository.deleteAll()
         Manufacturer apple = manufacturerRepository.save("Apple")
         productRepository.saveAll(Arrays.asList(
                 new Product(name: "MacBook",

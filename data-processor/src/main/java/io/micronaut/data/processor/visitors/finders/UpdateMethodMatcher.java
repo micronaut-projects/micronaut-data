@@ -16,8 +16,11 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.context.annotation.Parameter;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.AutoPopulated;
+import io.micronaut.data.annotation.DataAnnotationUtils;
+import io.micronaut.data.annotation.EntityRepresentation;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Version;
@@ -87,7 +90,7 @@ public final class UpdateMethodMatcher extends AbstractPatternMethodMatcher {
     private UpdateCriteriaMethodMatch entityUpdate(java.util.regex.Matcher matcher, ParameterElement entityParameter, ParameterElement entitiesParameter) {
         return new UpdateCriteriaMethodMatch(matcher) {
 
-            ParameterElement entityParam = entityParameter == null ? entitiesParameter : entityParameter;
+            final ParameterElement entityParam = entityParameter == null ? entitiesParameter : entityParameter;
 
             @Override
             protected <T> void applyPredicates(List<ParameterElement> parameters,
@@ -115,6 +118,14 @@ public final class UpdateMethodMatcher extends AbstractPatternMethodMatcher {
                                                      SourcePersistentEntityCriteriaBuilder cb) {
                 final SourcePersistentEntity rootEntity = matchContext.getRootEntity();
 
+                // for JSON entity representation we don't update all entity fields but all fields at once via JSON update
+                if (DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(matchContext.getAnnotationMetadata())) {
+                    AnnotationValue<EntityRepresentation> entityRepresentationAnnotationValue = rootEntity.getAnnotationMetadata().getAnnotation(EntityRepresentation.class);
+                    String columnName = entityRepresentationAnnotationValue.getRequiredValue("column", String.class);
+                    query.set(columnName, cb.parameter(entityParameter));
+                    return;
+                }
+
                 Stream.concat(rootEntity.getPersistentProperties().stream(), Stream.of(rootEntity.getVersion()))
                         .filter(p -> p != null && !((p instanceof Association) && ((Association) p).isForeignKey()) && !p.isGenerated() &&
                                 p.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATEABLE, Boolean.class)).orElse(true))
@@ -133,6 +144,7 @@ public final class UpdateMethodMatcher extends AbstractPatternMethodMatcher {
 
             @Override
             protected Map.Entry<ClassElement, Class<? extends DataInterceptor>> resolveReturnTypeAndInterceptor(MethodMatchContext matchContext) {
+                MethodElement methodElement = matchContext.getMethodElement();
                 Map.Entry<ClassElement, Class<? extends DataInterceptor>> e = super.resolveReturnTypeAndInterceptor(matchContext);
                 ClassElement returnType = e.getKey();
                 if (returnType != null
@@ -140,7 +152,7 @@ public final class UpdateMethodMatcher extends AbstractPatternMethodMatcher {
                         && !TypeUtils.isNumber(returnType)
                         && !returnType.hasStereotype(MappedEntity.class)
                         && !(TypeUtils.isReactiveOrFuture(matchContext.getReturnType()) && TypeUtils.isObjectClass(returnType))) {
-                    throw new MatchFailedException("Cannot implement update method for specified return type: " + returnType.getName());
+                    throw new MatchFailedException("Cannot implement update method for specified return type: " + returnType.getName() + " " + methodElement.getReturnType() + " " + methodElement.getDescription(false));
                 }
                 return e;
             }

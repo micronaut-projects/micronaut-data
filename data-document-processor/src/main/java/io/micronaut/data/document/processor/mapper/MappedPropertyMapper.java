@@ -62,8 +62,8 @@ public class MappedPropertyMapper implements TypedAnnotationMapper<io.micronaut.
                 }
                 ClassElement converterPersistedType = typeArguments.get("Y");
                 if (converterPersistedType != null) {
-                    builder.member(SerdeConfig.SERIALIZE_AS, new AnnotationClassValue<Object>(converterPersistedType.getName()));
-                    builder.member(SerdeConfig.DESERIALIZE_AS, new AnnotationClassValue<Object>(converterPersistedType.getName()));
+                    builder.member(SerdeConfig.SERIALIZE_AS, new AnnotationClassValue<>(converterPersistedType.getName()));
+                    builder.member(SerdeConfig.DESERIALIZE_AS, new AnnotationClassValue<>(converterPersistedType.getName()));
                 }
             });
             builder.member(SerdeConfig.SERIALIZER_CLASS, CustomConverterSerializer.class);

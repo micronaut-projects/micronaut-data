@@ -25,6 +25,7 @@ import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification;
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -64,7 +65,7 @@ public interface AsyncJpaSpecificationExecutor<T> {
      * @return found results
      */
     @NonNull
-    <S extends T> CompletableFuture<? extends Iterable<S>> findAll(@Nullable QuerySpecification<T> spec);
+    <S extends T> CompletableFuture<? extends List<S>> findAll(@Nullable QuerySpecification<T> spec);
 
     /**
      * Returns all entities matching the given {@link PredicateSpecification}.
@@ -74,7 +75,7 @@ public interface AsyncJpaSpecificationExecutor<T> {
      * @return found results
      */
     @NonNull
-    <S extends T> CompletableFuture<? extends Iterable<S>> findAll(@Nullable PredicateSpecification<T> spec);
+    <S extends T> CompletableFuture<? extends List<S>> findAll(@Nullable PredicateSpecification<T> spec);
 
     /**
      * Returns a {@link Page} of entities matching the given {@link QuerySpecification}.
@@ -105,7 +106,7 @@ public interface AsyncJpaSpecificationExecutor<T> {
      * @return found results
      */
     @NonNull
-    <S extends T> CompletableFuture<? extends Iterable<S>> findAll(@Nullable QuerySpecification<T> spec, Sort sort);
+    <S extends T> CompletableFuture<? extends List<S>> findAll(@Nullable QuerySpecification<T> spec, Sort sort);
 
     /**
      * Returns all entities matching the given {@link QuerySpecification} and {@link Sort}.
@@ -116,7 +117,7 @@ public interface AsyncJpaSpecificationExecutor<T> {
      * @return found results
      */
     @NonNull
-    <S extends T> CompletableFuture<? extends Iterable<S>> findAll(@Nullable PredicateSpecification<T> spec, Sort sort);
+    <S extends T> CompletableFuture<? extends List<S>> findAll(@Nullable PredicateSpecification<T> spec, Sort sort);
 
     /**
      * Returns the number of instances that the given {@link QuerySpecification} will return.

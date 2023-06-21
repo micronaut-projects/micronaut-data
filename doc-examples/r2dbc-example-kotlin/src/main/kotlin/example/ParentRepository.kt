@@ -6,7 +6,7 @@ import io.micronaut.data.r2dbc.annotation.R2dbcRepository
 import io.micronaut.data.repository.CrudRepository
 import java.util.Optional
 
-@R2dbcRepository(dialect = Dialect.POSTGRES)
+@R2dbcRepository(dialect = Dialect.MYSQL)
 abstract class ParentRepository : CrudRepository<Parent, Int> {
 
     @Join(value = "children", type = Join.Type.FETCH)

@@ -273,7 +273,7 @@ class JpaQueryBuilderSpec extends Specification {
                     'SELECT userRole_ FROM io.micronaut.data.tck.jdbc.entities.UserRole AS userRole_ WHERE (userRole_.id = :p1)',
                     'SELECT challenge_ FROM io.micronaut.data.tck.entities.Challenge AS challenge_ JOIN FETCH challenge_.authentication challenge_authentication_ JOIN FETCH challenge_authentication_.device challenge_authentication_device_ JOIN FETCH challenge_authentication_device_.user challenge_authentication_device_user_ WHERE (challenge_.id = :p1)',
                     'SELECT userRole_id_role_ FROM io.micronaut.data.tck.jdbc.entities.UserRole AS userRole_ JOIN FETCH userRole_.role userRole_id_role_ WHERE (userRole_.id.user = :p1)',
-                    'SELECT meal_ FROM io.micronaut.data.tck.entities.Meal AS meal_ JOIN FETCH meal_.foods meal_foods_ WHERE (meal_.mid = :p1)'
+                    'SELECT meal_ FROM io.micronaut.data.tck.entities.Meal AS meal_ JOIN FETCH meal_.foods meal_foods_ WHERE (meal_.mid = :p1 AND (meal_.actual = \'Y\' AND meal_foods_.fresh = \'Y\'))'
             ]
     }
 

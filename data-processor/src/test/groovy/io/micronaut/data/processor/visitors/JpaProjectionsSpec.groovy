@@ -35,7 +35,7 @@ import spock.lang.Shared
 import spock.lang.Unroll
 
 import javax.annotation.processing.SupportedAnnotationTypes
-import javax.persistence.Entity
+import jakarta.persistence.Entity
 
 class JpaProjectionsSpec extends AbstractTypeElementSpec {
 
@@ -131,7 +131,7 @@ import io.micronaut.data.repository.GenericRepository;
 @Repository
 @io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<Person, Long>{
-    $returnType.simpleName $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')});    
+    $returnType.simpleName $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')});
 }
 
 
@@ -153,7 +153,7 @@ import io.micronaut.data.repository.GenericRepository;
 @Repository
 @io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<Person, Long>{
-    List<$returnType.simpleName> $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')});    
+    List<$returnType.simpleName> $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')});
 }
 
 

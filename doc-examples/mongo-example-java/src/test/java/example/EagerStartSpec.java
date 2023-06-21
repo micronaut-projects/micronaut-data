@@ -1,5 +1,6 @@
 package example;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.runtime.Micronaut;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
@@ -10,9 +11,8 @@ import org.junit.jupiter.api.TestInstance;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @MicronautTest(contextBuilder = EagerStartSpec.MyApplicationContextBuilder.class)
-class EagerStartSpec extends AbstractMongoSpec {
+class EagerStartSpec {
 
     @Inject
     BookRepository bookRepository;
@@ -33,6 +33,7 @@ class EagerStartSpec extends AbstractMongoSpec {
         assertNotNull(book);
     }
 
+    @ReflectiveAccess
     public static class MyApplicationContextBuilder extends Micronaut {
 
         {

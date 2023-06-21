@@ -2,11 +2,12 @@ package io.micronaut.data.hibernate.entities;
 
 import io.micronaut.data.tck.entities.Student;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import java.util.List;
 import java.util.UUID;
 
@@ -14,8 +15,9 @@ import java.util.UUID;
 public class FavoriteStudents {
 
     @Id
+    @Column(columnDefinition = "uuid")
     private UUID id;
-    @javax.persistence.Version
+    @jakarta.persistence.Version
     private Integer version;
 
     @OneToOne(cascade = CascadeType.ALL)

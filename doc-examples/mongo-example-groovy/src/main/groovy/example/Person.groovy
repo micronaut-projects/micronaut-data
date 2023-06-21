@@ -1,6 +1,7 @@
 
 package example
 
+import io.micronaut.core.annotation.NonNull
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
@@ -13,6 +14,7 @@ class Person {
     private ObjectId id
     private String name
     private int age
+    private List<String> interests;
 
     Person() {
     }
@@ -49,5 +51,18 @@ class Person {
 
     void setAge(int age) {
         this.age = age
+    }
+
+    List<String> getInterests() {
+        return interests
+    }
+
+    void setInterests(List<String> interests) {
+        this.interests = interests
+    }
+
+    Person withInterests(@NonNull List<String> interests) {
+        this.interests = interests
+        return this
     }
 }
