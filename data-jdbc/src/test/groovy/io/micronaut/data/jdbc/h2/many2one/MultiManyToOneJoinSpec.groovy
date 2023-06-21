@@ -63,7 +63,7 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
         refA.refB.refC.name == "TestXyz"
     }
 
-    void  "test join via non identity join column"() {
+    void "test join via non identity join column"() {
         given:
         def customAuthor = new CustomAuthor()
         customAuthor.name = "author1"
