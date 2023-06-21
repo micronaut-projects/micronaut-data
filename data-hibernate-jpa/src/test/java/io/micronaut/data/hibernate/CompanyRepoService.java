@@ -4,7 +4,7 @@ import io.micronaut.data.tck.entities.Company;
 import jakarta.inject.Singleton;
 import org.hibernate.SessionFactory;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 
 @Singleton
 public class CompanyRepoService {

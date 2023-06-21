@@ -43,7 +43,7 @@ public class JtaTransactionalMapper implements NamedAnnotationMapper {
     @Override
     public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
         AnnotationValueBuilder<Annotation> builder =
-                AnnotationValue.builder("io.micronaut.transaction.annotation.TransactionalAdvice");
+                AnnotationValue.builder("io.micronaut.transaction.annotation.Transactional");
         annotation.getValue(String.class).ifPresent(type ->
                     builder.member("propagation", type)
         );

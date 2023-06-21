@@ -32,8 +32,7 @@ class ColumnTransformerSpec extends AbstractDataSpec {
     void "test mapping"() {
         given:
         def entity = buildJpaEntity('test.Project', '''
-import java.time.LocalDateTime;
-import io.micronaut.data.jdbc.annotation.ColumnTransformer;
+import io.micronaut.data.annotation.sql.ColumnTransformer;
 
 @Entity
 class Project {

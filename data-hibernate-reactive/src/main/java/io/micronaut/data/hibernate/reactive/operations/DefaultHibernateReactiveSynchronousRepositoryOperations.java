@@ -16,9 +16,12 @@
 package io.micronaut.data.hibernate.reactive.operations;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
+import io.micronaut.data.hibernate.conf.RequiresReactiveHibernate;
 import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
@@ -32,8 +35,10 @@ import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.operations.AsyncFromReactiveAsyncRepositoryOperation;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.data.runtime.query.StoredQueryDecorator;
+import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
 import jakarta.annotation.PreDestroy;
 import org.hibernate.SessionFactory;
+import org.hibernate.reactive.stage.Stage;
 import reactor.core.publisher.Mono;
 
 import jakarta.persistence.EntityManager;
@@ -52,6 +57,8 @@ import java.util.function.Function;
  * @author Denis Stepanov
  * @since 3.5.0
  */
+@RequiresReactiveHibernate
+@EachBean(SessionFactory.class)
 @Internal
 final class DefaultHibernateReactiveSynchronousRepositoryOperations implements BlockingExecutorReactorRepositoryOperations,
         JpaRepositoryOperations, AsyncCapableRepository, HintsCapableRepository, Closeable, PreparedQueryDecorator, StoredQueryDecorator {
@@ -63,11 +70,13 @@ final class DefaultHibernateReactiveSynchronousRepositoryOperations implements B
 
     public DefaultHibernateReactiveSynchronousRepositoryOperations(ApplicationContext applicationContext,
                                                                    SessionFactory sessionFactory,
-                                                                   @Parameter String name,
                                                                    RuntimeEntityRegistry runtimeEntityRegistry,
-                                                                   DataConversionService dataConversionService) {
+                                                                   DataConversionService dataConversionService,
+                                                                   @Parameter ReactorConnectionOperations<Stage.Session> connectionOperations,
+                                                                   @Parameter ReactorReactiveTransactionOperations<Stage.Session> transactionOperations) {
         this.applicationContext = applicationContext;
-        this.reactiveRepositoryOperations = new DefaultHibernateReactiveRepositoryOperations(sessionFactory, runtimeEntityRegistry, dataConversionService, name);
+        this.reactiveRepositoryOperations = new DefaultHibernateReactiveRepositoryOperations(sessionFactory,
+            runtimeEntityRegistry, dataConversionService, connectionOperations, transactionOperations);
     }
 
     @Override
@@ -92,6 +101,11 @@ final class DefaultHibernateReactiveSynchronousRepositoryOperations implements B
 
     @Override
     public <T> T load(Class<T> type, Serializable id) {
+        return notSupported();
+    }
+
+    @Override
+    public <T> T merge(T entity) {
         return notSupported();
     }
 

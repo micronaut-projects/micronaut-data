@@ -23,7 +23,6 @@ package io.micronaut.transaction.exceptions;
  * @author Juergen Hoeller
  * @since 21.01.2004
  */
-@SuppressWarnings("serial")
 public class IllegalTransactionStateException extends TransactionUsageException {
 
     /**

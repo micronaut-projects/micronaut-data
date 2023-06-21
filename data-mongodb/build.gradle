@@ -12,46 +12,44 @@ micronaut {
 }
 
 dependencies {
-    annotationProcessor projects.dataDocumentProcessor
+    annotationProcessor projects.micronautDataDocumentProcessor
     annotationProcessor mn.micronaut.inject.java
     annotationProcessor mn.micronaut.graal
     annotationProcessor libs.micronaut.docs
 
-    api projects.dataRuntime
-    api projects.dataDocumentModel
+    api projects.micronautDataRuntime
+    api projects.micronautDataDocumentModel
+    api projects.micronautDataConnection
+
     api mnSerde.micronaut.serde.bson
     api mnSerde.micronaut.serde.support
-    api (libs.micronaut.mongo.reactive) {
+    api (mnMongo.micronaut.mongo.reactive) {
         exclude group: "org.mongodb"
         exclude group: "io.micronaut"
     }
-    api (libs.micronaut.mongo.sync) {
+    api (mnMongo.micronaut.mongo.sync) {
         exclude group: "org.mongodb"
         exclude group: "io.micronaut"
     }
 
-    compileOnly libs.mongodb.driver.sync
-    compileOnly libs.mongodb.driver.reactive
+    compileOnly mnMongo.mongo.driver
+    compileOnly mnMongo.mongo.reactive
     compileOnly mnReactor.micronaut.reactor
 
-    testAnnotationProcessor projects.dataDocumentProcessor
+    testAnnotationProcessor projects.micronautDataDocumentProcessor
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor libs.jakarta.persistence.api
 
-    testImplementation libs.mongodb.driver.sync
-    testImplementation libs.mongodb.driver.reactive
-    testImplementation projects.dataDocumentProcessor
-    testImplementation projects.dataDocumentTck
+    testImplementation mnMongo.mongo.driver
+    testImplementation mnMongo.mongo.reactive
+    testImplementation projects.micronautDataDocumentProcessor
+    testImplementation projects.micronautDataDocumentTck
     testImplementation libs.jakarta.persistence.api
     testImplementation mnRxjava2.micronaut.rxjava2
     testImplementation mnReactor.micronaut.reactor
     testImplementation libs.jakarta.persistence.api
     testImplementation mnValidation.micronaut.validation
-    testImplementation platform(libs.testcontainers.bom)
-
-    // Remove after https://github.com/micronaut-projects/micronaut-test-resources/issues/142
-    testImplementation libs.testcontainers.spock
-    testImplementation libs.testcontainers.mongodb
 
     testCompileOnly mn.micronaut.inject.groovy
+    testCompileOnly mn.jackson.annotations
 }

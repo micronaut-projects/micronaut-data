@@ -47,11 +47,8 @@ class TxTest2 : AbstractTest(false) {
     @Test
     @Order(2)
     fun normal() {
-        val ex = assertThrows<RuntimeException> {
-            service.normalStore()
-        }
-        assertEquals("No backing TransactionOperations configured. Check your configuration and try again", ex.message)
-        assertEquals(0, service.count())
+        service.normalStore()
+        assertEquals(1, service.count())
     }
 
     @Test

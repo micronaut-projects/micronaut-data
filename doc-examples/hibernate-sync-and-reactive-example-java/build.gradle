@@ -1,6 +1,9 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
 plugins {
     id "java"
     id "io.micronaut.build.internal.data-example"
+    id "io.micronaut.test-resources"
 }
 
 application {
@@ -11,18 +14,23 @@ micronaut {
     version libs.versions.micronaut.platform.get()
     runtime "netty"
     testRuntime "junit5"
+    testResources {
+        enabled = true
+        inferClasspath = false
+        additionalModules.add(KnownModules.HIBERNATE_REACTIVE_MYSQL)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
 }
 
 dependencies {
-    annotationProcessor projects.dataProcessor
-    implementation "io.micronaut.reactor:micronaut-reactor"
-    implementation "io.micronaut:micronaut-http-client"
-    implementation projects.dataHibernateReactive
-    runtimeOnly "ch.qos.logback:logback-classic"
-    runtimeOnly libs.drivers.vertx.pg
-    runtimeOnly "io.micronaut.sql:micronaut-jdbc-tomcat"
-    runtimeOnly libs.drivers.jdbc.postgresql
-
-    testImplementation platform(libs.testcontainers.bom)
-    testImplementation libs.testcontainers.postgresql
+    annotationProcessor projects.micronautDataProcessor
+    implementation mnReactor.micronaut.reactor
+    implementation mn.micronaut.http.client
+    implementation projects.micronautDataHibernateReactive
+    runtimeOnly mnLogging.logback.classic
+    runtimeOnly mnSql.micronaut.jdbc.tomcat
+    runtimeOnly mnSql.mysql.connector.java
+    runtimeOnly mnSql.vertx.mysql.client
+    testResourcesService mnSql.mysql.connector.java
 }

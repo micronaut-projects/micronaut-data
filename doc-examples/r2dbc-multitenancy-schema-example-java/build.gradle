@@ -1,3 +1,5 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
 plugins {
     id "io.micronaut.build.internal.data-native-example"
 }
@@ -11,28 +13,26 @@ micronaut {
     runtime "netty"
     testRuntime "junit5"
     testResources {
+        additionalModules.add(KnownModules.R2DBC_MARIADB)
         clientTimeout = 300
         version = libs.versions.micronaut.testresources.get()
     }
 }
 
 dependencies {
-    annotationProcessor projects.dataDocumentProcessor
+    annotationProcessor projects.micronautDataDocumentProcessor
 
     implementation mnMultitenancy.micronaut.multitenancy
-    implementation 'io.micronaut.reactor:micronaut-reactor'
-    implementation 'io.micronaut:micronaut-http-client'
-    implementation 'io.micronaut.data:micronaut-data-r2dbc'
+    implementation mnReactor.micronaut.reactor
+    implementation mn.micronaut.http.client
+    implementation projects.micronautDataR2dbc
     implementation mnSerde.micronaut.serde.jackson
 
     implementation libs.jakarta.persistence.api
     implementation libs.jakarta.transaction.api
 
-    runtimeOnly libs.drivers.r2dbc.mariadb
+    runtimeOnly mnR2dbc.r2dbc.mariadb
+    runtimeOnly mnLogging.logback.classic
 
-    testImplementation "io.micronaut:micronaut-http-client"
-
-    runtimeOnly "ch.qos.logback:logback-classic"
-
-    testResourcesService libs.drivers.jdbc.mariadb
+    testResourcesService mnSql.mariadb.java.client
 }

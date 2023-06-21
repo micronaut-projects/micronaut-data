@@ -253,7 +253,7 @@ interface LikeRepository extends CrudRepository<Like, LikeId> {
     void "test jdbc compile embedded id count query"() {
         given:
         def repository = buildRepository('test.LikeRepository', """
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.Dialect;import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
 @javax.persistence.Entity
 @javax.persistence.Table(name = "likes")
@@ -291,7 +291,7 @@ class LikeId {
     }
 }
 
-@io.micronaut.data.jdbc.annotation.JdbcRepository
+@io.micronaut.data.jdbc.annotation.JdbcRepository(dialect = Dialect.ANSI)
 @io.micronaut.context.annotation.Executable
 interface LikeRepository extends CrudRepository<Like, LikeId> {
     long countByLikeIdImageIdentifier(UUID likeIdImageIdentifier);

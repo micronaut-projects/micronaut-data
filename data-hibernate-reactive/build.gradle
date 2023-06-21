@@ -1,12 +1,15 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
 plugins {
     id "io.micronaut.build.internal.data-module"
+    id "io.micronaut.test-resources"
 }
 
 dependencies {
     annotationProcessor mn.micronaut.inject.java
     annotationProcessor mn.micronaut.graal
 
-    api projects.dataHibernateJpa
+    api projects.micronautDataHibernateJpa
     api (mnSql.micronaut.hibernate.reactive) {
         exclude group: 'io.smallrye.reactive', module: 'mutiny'
     }
@@ -14,21 +17,34 @@ dependencies {
     implementation mnReactor.micronaut.reactor
 
     testAnnotationProcessor mn.micronaut.inject.java
-    testAnnotationProcessor projects.dataProcessor
+    testAnnotationProcessor projects.micronautDataProcessor
 
     testImplementation mn.micronaut.inject.groovy
-    testImplementation projects.dataProcessor
+    testImplementation projects.micronautDataProcessor
     testImplementation mnRxjava2.micronaut.rxjava2
     testImplementation mnReactor.micronaut.reactor
-    testImplementation projects.dataTck
+    testImplementation projects.micronautDataTck
     testImplementation libs.groovy.sql
-    testImplementation platform(libs.testcontainers.bom)
-    testImplementation libs.testcontainers.postgresql
-    testImplementation libs.testcontainers.mysql
 
-    testRuntimeOnly libs.drivers.vertx.pg
-    testRuntimeOnly libs.drivers.vertx.mysql
+    testRuntimeOnly mnSql.vertx.pg.client
+    testRuntimeOnly mnSql.vertx.mysql.client
 
-    // Testcontainers wait function needs the driver
-    testImplementation libs.drivers.jdbc.mysql
+    // Needed for test resources
+    testResourcesService mnSql.mysql.connector.java
+    testResourcesService mnSql.postgresql
+
+    // See https://github.com/eclipse-vertx/vertx-sql-client/issues/1059
+    testRuntimeOnly mnSql.ongres.scram.client
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    testResources {
+        enabled = true
+        inferClasspath = false
+        additionalModules.add(KnownModules.HIBERNATE_REACTIVE_MYSQL)
+        additionalModules.add(KnownModules.HIBERNATE_REACTIVE_POSTGRESQL)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
 }

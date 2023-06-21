@@ -23,6 +23,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.context.ContextView;
 
+import java.util.Optional;
 import java.util.function.Function;
 
 /**
@@ -36,14 +37,12 @@ import java.util.function.Function;
 public interface ReactorReactiveTransactionOperations<C> extends ReactiveTransactionOperations<C> {
 
     /**
-     * The prefix of transaction status Reactor context key.
+     * Retrieve the transaction status associated to the current transaction manager from the Reactor context.
+     *
+     * @param contextView The context view
+     * @return the key
      */
-    String TRANSACTION_STATUS_KEY_PREFIX = "io.micronaut.tx.status";
-
-    /**
-     * The prefix of transaction definition Reactor context key.
-     */
-    String TRANSACTION_DEFINITION_KEY_PREFIX = "io.micronaut.tx.definition";
+    Optional<ReactiveTransactionStatus<C>> findTransactionStatus(@NonNull ContextView contextView);
 
     /**
      * Retrieve the transaction status associated to the current transaction manager from the Reactor context.
@@ -52,7 +51,9 @@ public interface ReactorReactiveTransactionOperations<C> extends ReactiveTransac
      * @return the key
      */
     @Nullable
-    ReactiveTransactionStatus<C> getTransactionStatus(@NonNull ContextView contextView);
+    default ReactiveTransactionStatus<C> getTransactionStatus(@NonNull ContextView contextView) {
+        return findTransactionStatus(contextView).orElse(null);
+    }
 
     /**
      * Retrieve the transaction definition associated to the current transaction from the Reactor context.
@@ -110,6 +111,7 @@ public interface ReactorReactiveTransactionOperations<C> extends ReactiveTransac
     }
 
     @NonNull
+    @Override
     <T> Flux<T> withTransaction(@NonNull TransactionDefinition definition, @NonNull TransactionalCallback<C, T> handler);
 
     @NonNull

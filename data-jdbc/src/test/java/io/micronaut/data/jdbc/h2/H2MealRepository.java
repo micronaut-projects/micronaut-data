@@ -17,9 +17,12 @@ package io.micronaut.data.jdbc.h2;
 
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.tck.entities.Meal;
 import io.micronaut.data.tck.repositories.MealRepository;
 import io.micronaut.validation.Validated;
+import jakarta.validation.Valid;
 
 @JdbcRepository(dialect = Dialect.H2)
-public interface H2MealRepository extends MealRepository {
+public interface H2MealRepository extends MealRepository, CrudRepository<@Valid Meal, Long> {
 }

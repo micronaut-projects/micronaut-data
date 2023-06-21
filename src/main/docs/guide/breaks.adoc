@@ -1,0 +1,36 @@
+This section documents breaking changes between Micronaut versions
+
+== 4.0.0
+
+===== Repositories validation
+
+Default repository interfaces no longer have Jakarta Validation annotations to validate the entity and the ID.
+To add the validation, annotate the repository's generic type argument with Jakarta Validation annotations:
+
+[source,java]
+----
+@Repository
+public interface BookRepository implements CrudRepository<@jakarta.validation.Valid Book, @jakarta.validation.constraints.NotNull Long> {
+}
+----
+
+===== Hibernate transaction manager
+
+The signature of the Hibernate transaction manager has changed to include `org.hibernate.Session` instead of a data source connection:
+
+[source,java]
+----
+@Inject
+public TransactionOperations<org.hibernate.Session> hibernateTransactionOperations;
+----
+
+===== Transaction manager
+
+Micronaut 4 comes with a rewritten transaction propagation and management. It replaces the previous implementation forked form Spring Framework.
+The new implementation has a newly added connection management, allowing to share a connection between multiple repositories and services without an open transaction. The are new method supporting extracting the current transaction status `TransactionOperations#findTransactionStatus`. The `TransactionStatus` now includes information about the connection and the transaction definition.
+
+===== Async and Reactive repositories
+
+Async and reactive repositories are no longer throw `EmptyResultException` if the entity is not found.
+
+

@@ -27,6 +27,7 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.model.runtime.InsertOperation
 import io.micronaut.data.model.runtime.StoredQuery
 import io.micronaut.data.mongodb.operations.DefaultMongoRepositoryOperations
+import io.micronaut.data.mongodb.operations.MongoRepositoryOperations
 import io.micronaut.serde.annotation.Serdeable
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
@@ -43,7 +44,7 @@ import spock.lang.Specification
 class MongoIdsSpec extends Specification implements MongoTestPropertyProvider {
 
     @Inject
-    DefaultMongoRepositoryOperations dbRepositoryOperations
+    MongoRepositoryOperations dbRepositoryOperations
 
     @Inject
     MongoClient mongoClient

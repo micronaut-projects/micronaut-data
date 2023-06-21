@@ -36,14 +36,14 @@ import java.util.List;
  * @since 1.0
  */
 @Internal
-public class FindAllSpecificationInterceptor extends io.micronaut.data.jpa.repository.intercept.FindAllSpecificationInterceptor {
+public final class FindAllSpecificationInterceptor extends io.micronaut.data.jpa.repository.intercept.FindAllSpecificationInterceptor {
 
     /**
      * Default constructor.
      *
      * @param operations The operations
      */
-    protected FindAllSpecificationInterceptor(@NonNull RepositoryOperations operations) {
+    FindAllSpecificationInterceptor(@NonNull RepositoryOperations operations) {
         super(operations);
     }
 

@@ -29,15 +29,12 @@ import io.micronaut.data.model.DataType
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.runtime.convert.AttributeConverter
 import io.micronaut.data.repository.PageableRepository
-import io.micronaut.transaction.jdbc.DelegatingDataSource
 import jakarta.inject.Singleton
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
-import javax.sql.DataSource
 import java.sql.Array
-import java.sql.Connection
 
 class PostgresEnumsSpec extends Specification implements PostgresTestPropertyProvider {
 

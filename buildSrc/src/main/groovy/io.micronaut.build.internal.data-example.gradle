@@ -9,50 +9,12 @@ java {
     }
 }
 
-configurations.all {
-    resolutionStrategy.dependencySubstitution { DependencySubstitutions subs ->
-        project.rootProject.subprojects {
-            if (!it.name.startsWith("data") || it.name.startsWith("data-bom")) {
-                return
-            }
-            substitute(module("io.micronaut.data:micronaut-${it.name}")).using(subs.project(it.path))
-        }
-    }
+configurations.configureEach {
+    resolutionStrategy.preferProjectModules()
 }
 
 tasks.withType(JavaCompile).configureEach {
     options.fork = true
-}
-
-if (micronautBuild.environment.githubAction.get()) {
-    def waitForTasks = [
-            ":data-hibernate-jpa:test",
-            ":data-jdbc:test",
-            ":data-r2dbc:test",
-            ":data-mongodb:test"
-    ] as Object[]
-    // Let core modules tests pass first so the test containers don't eat all the memory
-    tasks.named("compileJava") {
-        mustRunAfter waitForTasks
-    }
-    tasks.named("processResources") {
-        mustRunAfter waitForTasks
-    }
-    def compileKotlinTask = tasks.findByName("compileKotlin")
-    if (compileKotlinTask) {
-        compileKotlinTask.mustRunAfter waitForTasks
-    }
-    def internalStartTestResourcesServiceTask = tasks.findByName("internalStartTestResourcesService")
-    if (internalStartTestResourcesServiceTask) {
-        internalStartTestResourcesServiceTask.mustRunAfter waitForTasks
-    }
-    def kaptGenerateStubsKotlinTask = tasks.findByName("kaptGenerateStubsKotlin")
-    if (kaptGenerateStubsKotlinTask) {
-        kaptGenerateStubsKotlinTask.mustRunAfter waitForTasks
-    }
-    tasks.named("test") {
-        mustRunAfter waitForTasks
-    }
 }
 
 tasks.register("testExamples") {
@@ -60,6 +22,10 @@ tasks.register("testExamples") {
 }
 
 dependencies {
+    micronautBoms(
+            platform("io.micronaut:micronaut-core-bom:$micronautVersion"),
+            platform(mnTest.micronaut.test.bom)
+    )
     testRuntimeOnly mnSerde.micronaut.serde.jackson
     runtimeOnly mn.snakeyaml
 }

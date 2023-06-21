@@ -26,7 +26,7 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.Person;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.util.List;
 
 @Repository

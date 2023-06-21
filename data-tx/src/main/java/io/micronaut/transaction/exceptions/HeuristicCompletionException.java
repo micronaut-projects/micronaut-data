@@ -27,7 +27,6 @@ import java.util.Locale;
  * @author graemerocher
  * @since 17.03.2003
  */
-@SuppressWarnings("serial")
 public class HeuristicCompletionException extends TransactionException {
 
     /**

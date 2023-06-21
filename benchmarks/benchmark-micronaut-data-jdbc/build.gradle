@@ -2,15 +2,11 @@ plugins {
     id "io.micronaut.build.internal.data-micronaut-benchmark"
 }
 
-micronaut {
-    version '4.0.0-SNAPSHOT'
-}
-
 dependencies {
-    annotationProcessor project(":data-processor")
-    implementation project(":data-jdbc")
+    annotationProcessor projects.micronautDataProcessor
+    implementation projects.micronautDataJdbc
     implementation libs.jakarta.persistence.api
-    implementation "io.micronaut.sql:micronaut-jdbc-hikari"
-    runtimeOnly "com.h2database:h2"
+    runtimeOnly mnSql.micronaut.jdbc.hikari
+    runtimeOnly mnSql.h2
     runtimeOnly mn.snakeyaml
 }

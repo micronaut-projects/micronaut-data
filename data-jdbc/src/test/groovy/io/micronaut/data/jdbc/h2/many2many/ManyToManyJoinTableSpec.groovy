@@ -5,8 +5,8 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.annotation.*
 import io.micronaut.data.jdbc.annotation.JdbcRepository
-import io.micronaut.data.jdbc.annotation.JoinColumn
-import io.micronaut.data.jdbc.annotation.JoinTable
+import io.micronaut.data.annotation.sql.JoinColumn
+import io.micronaut.data.annotation.sql.JoinTable
 import io.micronaut.data.jdbc.h2.H2DBProperties
 import io.micronaut.data.jdbc.h2.H2TestPropertyProvider
 import io.micronaut.data.model.Association

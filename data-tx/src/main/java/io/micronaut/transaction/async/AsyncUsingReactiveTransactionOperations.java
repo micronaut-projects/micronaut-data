@@ -15,24 +15,20 @@
  */
 package io.micronaut.transaction.async;
 
-import io.micronaut.aop.kotlin.KotlinInterceptedMethod;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.async.propagation.ReactorPropagation;
+import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.transaction.TransactionDefinition;
-import io.micronaut.transaction.interceptor.CoroutineTxHelper;
-import io.micronaut.transaction.interceptor.KotlinInterceptedMethodAsyncResultSupplier;
-import io.micronaut.transaction.interceptor.ReactorCoroutineTxHelper;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
-import io.micronaut.transaction.support.TransactionSynchronizationManager;
-import io.micronaut.transaction.support.TransactionSynchronizationManager.TransactionSynchronizationStateOp;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
 import reactor.core.CoreSubscriber;
 import reactor.core.publisher.Mono;
-import reactor.util.context.ContextView;
+import reactor.util.context.Context;
 
-import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
@@ -48,68 +44,46 @@ import java.util.function.Function;
 public final class AsyncUsingReactiveTransactionOperations<C> implements AsyncTransactionOperations<C> {
 
     private final ReactorReactiveTransactionOperations<C> reactiveTransactionOperations;
-    @Nullable
-    private final CoroutineTxHelper coroutineTxHelper;
-    @Nullable
-    private final ReactorCoroutineTxHelper reactorCoroutineTxHelper;
 
-    public AsyncUsingReactiveTransactionOperations(ReactorReactiveTransactionOperations<C> reactiveTransactionOperations,
-                                                   @Nullable CoroutineTxHelper coroutineTxHelper,
-                                                   @Nullable ReactorCoroutineTxHelper reactorCoroutineTxHelper) {
+    public AsyncUsingReactiveTransactionOperations(ReactorReactiveTransactionOperations<C> reactiveTransactionOperations) {
         this.reactiveTransactionOperations = reactiveTransactionOperations;
-        this.coroutineTxHelper = coroutineTxHelper;
-        this.reactorCoroutineTxHelper = reactorCoroutineTxHelper;
+    }
+
+    @Override
+    public Optional<? extends DefaultAsyncTransactionStatus<?>> findTransactionStatus() {
+        return Optional.ofNullable(
+            reactiveTransactionOperations.getTransactionStatus(
+                ReactorPropagation.addPropagatedContext(Context.empty(), PropagatedContext.getOrEmpty())
+            )
+        ).map(DefaultAsyncTransactionStatus::new);
     }
 
     @Override
     public <T> CompletionStage<T> withTransaction(TransactionDefinition definition,
                                                   Function<AsyncTransactionStatus<C>, CompletionStage<T>> handler) {
-        try (TransactionSynchronizationStateOp op = TransactionSynchronizationManager.withGuardedState()) {
-            TransactionSynchronizationManager.TransactionSynchronizationState state = op.getOrCreateState();
-            ContextView previousContext = null;
-            if (coroutineTxHelper != null && handler instanceof KotlinInterceptedMethodAsyncResultSupplier) {
-                KotlinInterceptedMethod kotlinInterceptedMethod = ((KotlinInterceptedMethodAsyncResultSupplier) handler).getKotlinInterceptedMethod();
-                Objects.requireNonNull(coroutineTxHelper).setupTxState(kotlinInterceptedMethod, state);
-                if (reactorCoroutineTxHelper != null) {
-                    previousContext = reactorCoroutineTxHelper.getReactorContext(kotlinInterceptedMethod);
+        Mono<T> result = Mono.fromDirect(reactiveTransactionOperations.withTransaction(definition,
+            status -> Mono.deferContextual(contextView -> Mono.fromCompletionStage(() -> {
+                try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView)
+                    .orElseGet(PropagatedContext::getOrEmpty)
+                    .propagate()) {
+                    return handler.apply(new DefaultAsyncTransactionStatus<>(status));
                 }
-            }
-            // Reactive transaction manager applied on Kotlin coroutine
-            // Use reactive transaction manager to open a transaction and send the Reactor context in the coroutine context
-            if (previousContext == null) {
-                previousContext = (ContextView) TransactionSynchronizationManager.getResource(ContextView.class);
-            }
-            ContextView finalPreviousContext = previousContext;
-            Mono<T> result = Mono.fromDirect(reactiveTransactionOperations.withTransaction(definition, status -> {
-                return Mono.deferContextual(contextView -> {
-                        try (TransactionSynchronizationStateOp ignore = TransactionSynchronizationManager.withState(state)) {
-                            TransactionSynchronizationManager.rebindResource(ContextView.class, contextView);
-                        }
-                        return Mono.fromCompletionStage(() ->
-                            TransactionSynchronizationManager.decorateCompletionStage(state,
-                                () -> handler.apply(new DefaultAsyncTransactionStatus<>(status))));
-                    })
-                    .doAfterTerminate(() -> {
-                        try (TransactionSynchronizationStateOp ignore = TransactionSynchronizationManager.withState(state)) {
-                            TransactionSynchronizationManager.unbindResourceIfPossible(ContextView.class);
-                        }
-                        if (finalPreviousContext != null) {
-                            TransactionSynchronizationManager.bindResource(ContextView.class, finalPreviousContext);
-                        }
-                    });
-            }));
-            if (previousContext != null) {
-                result = result.contextWrite(previousContext);
-            }
-            return onCompleteCompleteFuture(result);
-        }
+            }))));
+        return onCompleteCompleteFuture(result);
     }
 
     private static <T> CompletableFuture<T> onCompleteCompleteFuture(Publisher<T> publisher) {
+        PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
         CompletableFuture<T> completableFuture = new CompletableFuture<>();
-        publisher.subscribe(new CoreSubscriber<T>() {
+        publisher.subscribe(new CoreSubscriber<>() {
 
             private T result;
+
+            @NonNull
+            @Override
+            public Context currentContext() {
+                return ReactorPropagation.addPropagatedContext(Context.empty(), propagatedContext);
+            }
 
             @Override
             public void onSubscribe(Subscription s) {
@@ -123,24 +97,23 @@ public final class AsyncUsingReactiveTransactionOperations<C> implements AsyncTr
 
             @Override
             public void onError(Throwable t) {
-                completableFuture.completeExceptionally(t);
+                try (PropagatedContext.Scope ignore = propagatedContext.propagate()) {
+                    completableFuture.completeExceptionally(t);
+                }
             }
 
             @Override
             public void onComplete() {
-                completableFuture.complete(result);
+                try (PropagatedContext.Scope ignore = propagatedContext.propagate()) {
+                    completableFuture.complete(result);
+                }
             }
         });
         return completableFuture;
     }
 
-    private static final class DefaultAsyncTransactionStatus<T> implements AsyncTransactionStatus<T> {
-
-        private final ReactiveTransactionStatus<T> status;
-
-        private DefaultAsyncTransactionStatus(ReactiveTransactionStatus<T> status) {
-            this.status = status;
-        }
+    private record DefaultAsyncTransactionStatus<T>(
+        ReactiveTransactionStatus<T> status) implements AsyncTransactionStatus<T> {
 
         @Override
         public boolean isNewTransaction() {
@@ -163,6 +136,12 @@ public final class AsyncUsingReactiveTransactionOperations<C> implements AsyncTr
         }
 
         @Override
+        public TransactionDefinition getTransactionDefinition() {
+            return status.getTransactionDefinition();
+        }
+
+        @Override
+        @NonNull
         public T getConnection() {
             return status.getConnection();
         }

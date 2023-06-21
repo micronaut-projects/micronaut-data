@@ -1,0 +1,24 @@
+datasources:
+  sync:
+    db-type: mysql
+
+jpa:
+  sync:
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: create-drop
+        connection:
+          url: ${datasources.sync.url}
+          username: ${datasources.sync.username}
+          password: ${datasources.sync.password}
+  reactive:
+    reactive: true
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: none
+        connection:
+          url: ${datasources.sync.url}
+          username: ${datasources.sync.username}
+          password: ${datasources.sync.password}

@@ -7,7 +7,7 @@ import io.micronaut.data.r2dbc.annotation.R2dbcRepository
 import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder
 import io.micronaut.data.repository.kotlin.CoroutineCrudRepository
 import kotlinx.coroutines.flow.Flow
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @R2dbcRepository(dialect = Dialect.MYSQL) // <1>
 interface BookRepository : CoroutineCrudRepository<Book, Long> {

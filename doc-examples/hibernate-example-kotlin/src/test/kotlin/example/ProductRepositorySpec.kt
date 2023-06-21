@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit
 
 import jakarta.inject.Inject
 
-@MicronautTest(transactional = false, rollback = false)
+@MicronautTest(transactional = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal class ProductRepositorySpec {
 
@@ -18,6 +18,8 @@ internal class ProductRepositorySpec {
 
     @BeforeAll
     fun setupData() {
+        productRepository.deleteAll()
+        manufacturerRepository.deleteAll()
         val apple = manufacturerRepository.save("Apple")
         productRepository.saveAll(listOf(
                 Product(null,

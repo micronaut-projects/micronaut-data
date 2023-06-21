@@ -28,14 +28,14 @@ import org.springframework.data.jpa.domain.Specification;
  * @since 1.0.0
  */
 @Internal
-public class CountSpecificationInterceptor extends io.micronaut.data.jpa.repository.intercept.CountSpecificationInterceptor {
+public final class CountSpecificationInterceptor extends io.micronaut.data.jpa.repository.intercept.CountSpecificationInterceptor {
 
     /**
      * Default constructor.
      *
      * @param operations The operations
      */
-    protected CountSpecificationInterceptor(@NonNull RepositoryOperations operations) {
+    CountSpecificationInterceptor(@NonNull RepositoryOperations operations) {
         super(operations);
     }
 

@@ -41,7 +41,7 @@ public class JoinColumnAnnotationMapper implements NamedAnnotationMapper {
 
     @Override
     public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
-        AnnotationValueBuilder<Annotation> builder = AnnotationValue.builder("io.micronaut.data.jdbc.annotation.JoinColumn");
+        AnnotationValueBuilder<Annotation> builder = AnnotationValue.builder("io.micronaut.data.annotation.sql.JoinColumn");
         annotation.stringValue("name").ifPresent(name -> builder.member("name", name));
         annotation.stringValue("referencedColumnName").ifPresent(name -> builder.member("referencedColumnName", name));
         annotation.stringValue("columnDefinition").ifPresent(name -> builder.member("columnDefinition", name));

@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.model.Association;
@@ -36,8 +37,10 @@ import io.micronaut.data.model.query.builder.QueryResult;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringJoiner;
 
 /**
@@ -150,6 +153,30 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             joinAssociationsPath.clear();
         }
         return joinAliases;
+    }
+
+    @Override
+    protected String buildAdditionalWhereClause(QueryState queryState, AnnotationMetadata annotationMetadata) {
+        StringBuilder additionalWhereBuff = new StringBuilder(buildAdditionalWhereString(queryState.getRootAlias(), queryState.getEntity(), annotationMetadata));
+        List<JoinPath> joinPaths = queryState.getJoinPaths();
+        if (CollectionUtils.isNotEmpty(joinPaths)) {
+            Set<String> addedJoinPaths = new HashSet<>();
+            for (JoinPath joinPath : joinPaths) {
+                String path = joinPath.getPath();
+                if (addedJoinPaths.contains(path)) {
+                    continue;
+                }
+                addedJoinPaths.add(path);
+                String joinAdditionalWhere = buildAdditionalWhereString(joinPath, annotationMetadata);
+                if (StringUtils.isNotEmpty(joinAdditionalWhere)) {
+                    if (additionalWhereBuff.length() > 0) {
+                        additionalWhereBuff.append(SPACE).append(AND).append(SPACE);
+                    }
+                    additionalWhereBuff.append(joinAdditionalWhere);
+                }
+            }
+        }
+        return additionalWhereBuff.toString();
     }
 
     @Override
