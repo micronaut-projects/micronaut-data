@@ -70,8 +70,8 @@ public final class PersistentEntityUtils {
      * Traverses properties that should be persisted.
      *
      * @param persistentEntity The persistent entity
-     * @param includeIdentity  Should be identifier included
-     * @param includeVersion   Should be version included
+     * @param includeIdentity  Should identifier be included
+     * @param includeVersion   Should version be included
      * @param consumer         The function to invoke on every property
      */
     public static void traversePersistentProperties(PersistentEntity persistentEntity, boolean includeIdentity, boolean includeVersion, BiConsumer<List<Association>, PersistentProperty> consumer) {
@@ -111,27 +111,7 @@ public final class PersistentEntityUtils {
             if (assocIdentity instanceof Association) {
                 traversePersistentProperties(newAssociations, assocIdentity, consumerProperty);
             } else {
-                List<PersistentProperty> identities = new ArrayList<>();
-                AnnotationValue<JoinColumns> joinColumnsHolder = property.getAnnotationMetadata().getAnnotation(JoinColumns.class);
-                if (joinColumnsHolder != null) {
-                    Collection<? extends  PersistentProperty> persistentProperties = associatedEntity.getPersistentProperties();
-                    // If associated entity identity field is not used in this association we shouldn't add it since it's not needed
-                    // but we might add other fields if configured in join column annotation
-                    for (AnnotationValue<Annotation> ann : joinColumnsHolder.getAnnotations("value")) {
-                        String referencedColumnName = ann.stringValue("referencedColumnName").orElse(null);
-                        if (referencedColumnName != null && !referencedColumnName.equals(assocIdentity.getPersistedName())) {
-                            for (PersistentProperty persistentProperty : persistentProperties) {
-                                if (persistentProperty.getPersistedName().equals(referencedColumnName)) {
-                                    identities.add(persistentProperty);
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-                if (identities.isEmpty()) {
-                    identities.add(assocIdentity);
-                }
+                List<PersistentProperty> identities = getAssociationIdentities(association, associatedEntity, assocIdentity);
                 for (PersistentProperty identity : identities) {
                     consumerProperty.accept(newAssociations, identity);
                 }
@@ -141,4 +121,41 @@ public final class PersistentEntityUtils {
         }
     }
 
+    /**
+     * Gets identity field(s) for the association. If there is @{@link JoinColumns} annotation then
+     * will fetch mapped field(s) from the associated entity.
+     *
+     * @param association the association
+     * @param associatedEntity the associated entity
+     * @param assocIdentity the association identity
+     * @return association identity field(s), potentially overridden by @{@link JoinColumns} annotation
+     */
+    private static List<PersistentProperty> getAssociationIdentities(Association association,
+                                                  PersistentEntity associatedEntity,
+                                                  PersistentProperty assocIdentity) {
+        AnnotationValue<JoinColumns> joinColumnsHolder = association.getAnnotationMetadata().getAnnotation(JoinColumns.class);
+        if (joinColumnsHolder == null) {
+            return List.of(assocIdentity);
+        }
+        List<PersistentProperty> identities = new ArrayList<>();
+        Collection<? extends PersistentProperty> persistentProperties = associatedEntity.getPersistentProperties();
+        // If associated entity identity field is not used in this association we shouldn't add it since it's not needed, but
+        // we might add other fields if configured in join column annotation
+        for (AnnotationValue<Annotation> ann : joinColumnsHolder.getAnnotations("value")) {
+            String referencedColumnName = ann.stringValue("referencedColumnName").orElse(null);
+            if (referencedColumnName != null && !referencedColumnName.equals(assocIdentity.getPersistedName())) {
+                for (PersistentProperty persistentProperty : persistentProperties) {
+                    if (persistentProperty.getPersistedName().equals(referencedColumnName)) {
+                        identities.add(persistentProperty);
+                        break;
+                    }
+                }
+            }
+        }
+        // If no override 'identities' defined by @JoinColumn then fallback to default association identity
+        if (identities.isEmpty()) {
+            identities.add(assocIdentity);
+        }
+        return identities;
+    }
 }
