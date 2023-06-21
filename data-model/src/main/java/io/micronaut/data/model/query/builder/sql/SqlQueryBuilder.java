@@ -125,7 +125,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                             annotationMetadata
                                     .enumValue(Repository.class, "dialect", Dialect.class)
                                     .orElse(Dialect.ANSI)
-                );
+                    );
 
             AnnotationValue<SqlQueryConfiguration> annotation = annotationMetadata.getAnnotation(SqlQueryConfiguration.class);
             if (annotation != null) {
@@ -302,7 +302,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     public static boolean isForeignKeyWithJoinTable(@NonNull Association association) {
         return association.isForeignKey() &&
                 !association.getAnnotationMetadata()
-                    .stringValue(Relation.class, "mappedBy").isPresent();
+                        .stringValue(Relation.class, "mappedBy").isPresent();
     }
 
     /**
@@ -393,8 +393,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                             columnName = quote(columnName);
                         }
                         joinTableBuilder
-                            .append(addTypeToColumn(pp.getProperty(), columnName, dialect, true))
-                            .append(',');
+                                .append(addTypeToColumn(pp.getProperty(), columnName, dialect, true))
+                                .append(',');
                     }
                 } else {
                     for (PersistentPropertyPath pp : rightProperties) {
@@ -562,7 +562,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 .append("INDEX ");
         indexBuilder.append(indexName).append(" ON " +
                         Optional.ofNullable(config.tableName)
-                            .orElseThrow(() -> new NullPointerException("Table name cannot be null")) +
+                                .orElseThrow(() -> new NullPointerException("Table name cannot be null")) +
                         " (" +
                         provideColumnList(config));
 
@@ -838,10 +838,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         String columnAlias = getColumnAlias(prop);
 
                         queryBuffer
-                            .append(joinAlias)
-                            .append(DOT)
-                            .append(queryState.shouldEscape() ? quote(columnName) : columnName)
-                            .append(AS_CLAUSE);
+                                .append(joinAlias)
+                                .append(DOT)
+                                .append(queryState.shouldEscape() ? quote(columnName) : columnName)
+                                .append(AS_CLAUSE);
                         if (StringUtils.isNotEmpty(columnAlias)) {
                             queryBuffer.append(columnAlias);
                         } else {
@@ -1388,10 +1388,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 JoinPath joinPathToUse = queryState.getQueryModel().getJoinPath(currentPath)
                         .orElseGet(() ->
                                 new JoinPath(
-                                    currentPath,
-                                    Arrays.copyOfRange(associationPath, 0, finalI + 1),
-                                    joinPath.getJoinType(),
-                                    joinPath.getAlias().orElse(null))
+                                        currentPath,
+                                        Arrays.copyOfRange(associationPath, 0, finalI + 1),
+                                        joinPath.getJoinType(),
+                                        joinPath.getAlias().orElse(null))
                         );
                 joinAliases[i] = getAliasName(joinPathToUse);
                 String currentJoinAlias = joinAliases[i];
@@ -1430,14 +1430,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      * @param currentJoinAlias the current join alias
      */
     protected void buildJoin(String joinType,
-                             StringBuilder sb,
-                             QueryState queryState,
-                             List<Association> joinAssociationsPath,
-                             String joinAlias,
-                             Association association,
-                             PersistentEntity associatedEntity,
-                             PersistentEntity associationOwner,
-                             String currentJoinAlias) {
+                           StringBuilder sb,
+                           QueryState queryState,
+                           List<Association> joinAssociationsPath,
+                           String joinAlias,
+                           Association association,
+                           PersistentEntity associatedEntity,
+                           PersistentEntity associationOwner,
+                           String currentJoinAlias) {
         final boolean escape = shouldEscape(associationOwner);
         String mappedBy = association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").orElse(null);
 
@@ -1484,13 +1484,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             );
             sb.append(SPACE);
             join(sb,
-                queryState.getQueryModel(),
-                joinType,
-                getTableName(associatedEntity),
-                currentJoinAlias,
-                joinTableAlias,
-                associationJoinTableColumns,
-                associationJoinColumns
+                    queryState.getQueryModel(),
+                    joinType,
+                    getTableName(associatedEntity),
+                    currentJoinAlias,
+                    joinTableAlias,
+                    associationJoinTableColumns,
+                    associationJoinColumns
             );
         } else {
             if (StringUtils.isNotEmpty(mappedBy)) {
@@ -1519,16 +1519,16 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     throw new IllegalArgumentException("Associated entity [" + association.getAssociatedEntity().getName() + "] defines no ID. Cannot join.");
                 }
                 join(sb,
-                    joinType,
-                    queryState,
-                    associatedEntity,
-                    associationOwner,
-                    joinAlias,
-                    currentJoinAlias,
-                    joinAssociationsPath,
-                    association,
-                    Collections.emptyList(),
-                    associatedProperty);
+                        joinType,
+                        queryState,
+                        associatedEntity,
+                        associationOwner,
+                        joinAlias,
+                        currentJoinAlias,
+                        joinAssociationsPath,
+                        association,
+                        Collections.emptyList(),
+                        associatedProperty);
             }
         }
     }

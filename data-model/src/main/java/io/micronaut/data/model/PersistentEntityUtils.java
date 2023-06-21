@@ -87,8 +87,8 @@ public final class PersistentEntityUtils {
     }
 
     public static void traversePersistentProperties(List<Association> associations,
-                                                    PersistentProperty property,
-                                                    BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
+                                                     PersistentProperty property,
+                                                     BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
         if (property instanceof Embedded embedded) {
             PersistentEntity embeddedEntity = embedded.getAssociatedEntity();
             Collection<? extends PersistentProperty> embeddedProperties = embeddedEntity.getPersistentProperties();
