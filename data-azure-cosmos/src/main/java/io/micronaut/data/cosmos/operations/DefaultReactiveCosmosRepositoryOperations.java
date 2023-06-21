@@ -96,7 +96,6 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
 import java.sql.Time;
 import java.util.ArrayList;
@@ -189,7 +188,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
 
     @Override
     @NonNull
-    public <T> Mono<T> findOne(@NonNull Class<T> type, Serializable id) {
+    public <T> Mono<T> findOne(@NonNull Class<T> type, Object id) {
         RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(type);
         CosmosAsyncContainer container = getContainer(persistentEntity);
         final SqlParameter param = new SqlParameter("@ROOT_ID", id.toString());
@@ -251,7 +250,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
 
     @Override
     @NonNull
-    public <T> Mono<T> findOptional(@NonNull Class<T> type, @NonNull Serializable id) {
+    public <T> Mono<T> findOptional(@NonNull Class<T> type, @NonNull Object id) {
         return findOne(type, id).onErrorReturn(EmptyResultException.class, (T) Mono.empty());
     }
 

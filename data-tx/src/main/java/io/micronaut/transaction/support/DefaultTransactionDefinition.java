@@ -19,7 +19,6 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.transaction.TransactionDefinition;
 
-import java.io.Serializable;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
@@ -35,7 +34,7 @@ import java.util.Optional;
  * @author Juergen Hoeller
  * @since 08.05.2003
  */
-public class DefaultTransactionDefinition implements TransactionDefinition, Serializable {
+public class DefaultTransactionDefinition implements TransactionDefinition {
 
     private Propagation propagationBehavior = Propagation.REQUIRED;
 

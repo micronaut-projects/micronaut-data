@@ -20,5 +20,5 @@ public interface ChildrenRepository extends JpaRepository<Children, @NotNull Chi
 
     @DataMethod(interceptor = LoadInterceptor.class)
     @Override
-    <S extends Children> S load(@NotNull Serializable id);
+    <S extends Children> S load(@NotNull Object id);
 }

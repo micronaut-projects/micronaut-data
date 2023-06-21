@@ -21,8 +21,6 @@ import io.micronaut.data.intercept.FindByIdInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.operations.RepositoryOperations;
 
-import java.io.Serializable;
-
 /**
  * Default implementation that handles lookup by ID.
  *
@@ -42,12 +40,9 @@ public class DefaultFindByIdInterceptor<T> extends AbstractQueryInterceptor<T, O
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Object> context) {
         Class<?> rootEntity = getRequiredRootEntity(context);
         Object id = context.getParameterValues()[0];
-        if (!(id instanceof Serializable)) {
-            throw new IllegalArgumentException("Entity IDs must be serializable!");
-        }
         return convertOne(
                 context,
-                operations.findOne(rootEntity, (Serializable) id)
+                operations.findOne(rootEntity, id)
         );
     }
 }

@@ -24,7 +24,6 @@ import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.runtime.intercept.AbstractQueryInterceptor;
 
-import java.io.Serializable;
 import java.util.Arrays;
 
 /**
@@ -47,7 +46,7 @@ public final class LoadInterceptor<T> extends AbstractQueryInterceptor<T, T> imp
 
     @Override
     public T intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, T> context) {
-        Serializable id = (Serializable) Arrays.stream(context.getParameterValues())
+        Object id = Arrays.stream(context.getParameterValues())
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("id argument cannot be null"));
 
