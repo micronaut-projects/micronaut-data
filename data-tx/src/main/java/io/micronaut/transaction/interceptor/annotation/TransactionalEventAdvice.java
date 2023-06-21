@@ -15,9 +15,10 @@
  */
 package io.micronaut.transaction.interceptor.annotation;
 
-import io.micronaut.aop.InterceptorBinding;
-import io.micronaut.aop.InterceptorKind;
+import io.micronaut.aop.Around;
+import io.micronaut.context.annotation.Type;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.transaction.interceptor.TransactionalEventInterceptor;
 
 import java.lang.annotation.*;
 
@@ -30,7 +31,8 @@ import java.lang.annotation.*;
  */
 @Target(ElementType.ANNOTATION_TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@InterceptorBinding(kind = InterceptorKind.AROUND)
+@Around
+@Type(TransactionalEventInterceptor.class)
 @Internal
 public @interface TransactionalEventAdvice {
 }

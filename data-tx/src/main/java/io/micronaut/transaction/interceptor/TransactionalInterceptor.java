@@ -17,7 +17,6 @@ package io.micronaut.transaction.interceptor;
 
 import io.micronaut.aop.InterceptPhase;
 import io.micronaut.aop.InterceptedMethod;
-import io.micronaut.aop.InterceptorBean;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
@@ -50,7 +49,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Singleton
 @Internal
-@InterceptorBean(Transactional.class)
 public final class TransactionalInterceptor implements MethodInterceptor<Object, Object> {
 
     private final Map<TenantExecutableMethod, TransactionInvocation> transactionInvocationMap = new ConcurrentHashMap<>(30);

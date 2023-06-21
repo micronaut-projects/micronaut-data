@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.connection.jdbc.advice;
 
-import io.micronaut.aop.InterceptorBean;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.BeanContext;
@@ -37,7 +36,6 @@ import java.sql.Connection;
  * @since 1.0
  */
 @Prototype
-@InterceptorBean(ContextualConnectionAdvice.class)
 public final class ContextualConnectionInterceptor implements MethodInterceptor<Connection, Object> {
 
     private final ConnectionOperations<Connection> connectionOperations;

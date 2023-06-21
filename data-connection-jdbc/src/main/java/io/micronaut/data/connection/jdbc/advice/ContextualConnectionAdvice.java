@@ -15,8 +15,8 @@
  */
 package io.micronaut.data.connection.jdbc.advice;
 
-import io.micronaut.aop.InterceptorBinding;
-import io.micronaut.aop.InterceptorKind;
+import io.micronaut.aop.Introduction;
+import io.micronaut.context.annotation.Type;
 import io.micronaut.core.annotation.Internal;
 import java.lang.annotation.Retention;
 
@@ -30,7 +30,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * @see ContextualConnection
  */
 @Retention(RUNTIME)
+@Introduction
+@Type(ContextualConnectionInterceptor.class)
 @Internal
-@InterceptorBinding(kind = InterceptorKind.INTRODUCTION)
 @interface ContextualConnectionAdvice {
 }

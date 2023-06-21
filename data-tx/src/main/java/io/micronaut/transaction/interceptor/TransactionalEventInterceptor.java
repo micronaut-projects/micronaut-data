@@ -16,7 +16,6 @@
 package io.micronaut.transaction.interceptor;
 
 import io.micronaut.aop.InterceptPhase;
-import io.micronaut.aop.InterceptorBean;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.BeanLocator;
@@ -26,7 +25,6 @@ import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.annotation.TransactionalEventListener;
-import io.micronaut.transaction.interceptor.annotation.TransactionalEventAdvice;
 import io.micronaut.transaction.support.TransactionSynchronization;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
@@ -45,7 +43,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Singleton
 @Internal
-@InterceptorBean(TransactionalEventAdvice.class)
 public class TransactionalEventInterceptor implements MethodInterceptor<Object, Object> {
     private static final Logger LOG = LoggerFactory.getLogger(TransactionalEventListener.class);
 

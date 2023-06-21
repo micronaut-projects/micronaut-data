@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.mongodb.advice;
 
-import io.micronaut.aop.InterceptorBinding;
-import io.micronaut.aop.InterceptorKind;
 import io.micronaut.aop.Introduction;
 import io.micronaut.core.annotation.Internal;
 
@@ -32,7 +30,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * @see ContexualClientSession
  */
 @Retention(RUNTIME)
-@InterceptorBinding(kind = InterceptorKind.INTRODUCTION)
+@Introduction
 @Internal
 @interface ContexualClientSessionAdvice {
 }

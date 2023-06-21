@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.annotation;
 
-import io.micronaut.aop.InterceptorBinding;
-import io.micronaut.aop.InterceptorKind;
 import io.micronaut.aop.Introduction;
 import io.micronaut.context.annotation.DefaultScope;
 import io.micronaut.context.annotation.Prototype;
@@ -34,7 +32,7 @@ import java.lang.annotation.Target;
  * @author graemerocher
  * @since 1.0
  */
-@InterceptorBinding(kind = InterceptorKind.INTRODUCTION)
+@Introduction
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.PARAMETER, ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.FIELD})
 @Documented
