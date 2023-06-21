@@ -18,5 +18,45 @@
     "type": "io.micronaut.data.r2dbc.operations.DefaultR2dbcRepositoryOperations$R2dbcOperationContext",
     "member": "Constructor io.micronaut.data.r2dbc.operations.DefaultR2dbcRepositoryOperations$R2dbcOperationContext(io.micronaut.core.annotation.AnnotationMetadata,java.lang.Class,io.micronaut.data.model.query.builder.sql.Dialect,io.r2dbc.spi.Connection)",
     "reason": "Deprecated"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate6.$MicronautSessionContext$ReflectConfig",
+    "member": "Field $ANNOTATION_METADATA",
+    "reason": "Provide a human readable reason for the change"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate6.$MicronautSessionContext$ReflectConfig",
+    "member": "Constructor io.micronaut.transaction.hibernate6.$MicronautSessionContext$ReflectConfig()",
+    "reason": "Deprecated"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate6.$MicronautSessionContext$ReflectConfig",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationSource",
+    "reason": "Deprecated"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate6.$MicronautSessionContext$ReflectConfig",
+    "member": "Implemented interface io.micronaut.core.annotation.AnnotationMetadataProvider",
+    "reason": "Deprecated"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate6.$MicronautSessionContext$ReflectConfig",
+    "member": "Implemented interface io.micronaut.core.graal.GraalReflectionConfigurer",
+    "reason": "Deprecated"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate6.MicronautSessionContext",
+    "member": "Constructor io.micronaut.transaction.hibernate6.MicronautSessionContext(org.hibernate.engine.spi.SessionFactoryImplementor)",
+    "reason": "Deprecated"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate6.MicronautSessionContext",
+    "member": "Implemented interface org.hibernate.context.spi.CurrentSessionContext",
+    "reason": "Deprecated"
+  },
+  {
+    "type": "io.micronaut.transaction.hibernate6.MicronautSessionContext",
+    "member": "Implemented interface java.io.Serializable",
+    "reason": "Deprecated"
   }
 ]
