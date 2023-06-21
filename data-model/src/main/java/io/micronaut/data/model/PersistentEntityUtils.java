@@ -17,14 +17,13 @@ package io.micronaut.data.model;
 
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.annotation.sql.JoinColumns;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.function.BiConsumer;
 
 /**
@@ -35,8 +34,6 @@ import java.util.function.BiConsumer;
  */
 @Internal
 public final class PersistentEntityUtils {
-
-    private static final String ANN_JOIN_COLUMNS = "io.micronaut.data.jdbc.annotation.JoinColumns";
 
     private PersistentEntityUtils() {
     }
@@ -90,8 +87,8 @@ public final class PersistentEntityUtils {
     }
 
     public static void traversePersistentProperties(List<Association> associations,
-                                                     PersistentProperty property,
-                                                     BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
+                                                    PersistentProperty property,
+                                                    BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
         if (property instanceof Embedded embedded) {
             PersistentEntity embeddedEntity = embedded.getAssociatedEntity();
             Collection<? extends PersistentProperty> embeddedProperties = embeddedEntity.getPersistentProperties();
@@ -115,7 +112,7 @@ public final class PersistentEntityUtils {
                 traversePersistentProperties(newAssociations, assocIdentity, consumerProperty);
             } else {
                 List<PersistentProperty> identities = new ArrayList<>();
-                AnnotationValue<Annotation> joinColumnsHolder = property.getAnnotationMetadata().getAnnotation(ANN_JOIN_COLUMNS);
+                AnnotationValue<JoinColumns> joinColumnsHolder = property.getAnnotationMetadata().getAnnotation(JoinColumns.class);
                 if (joinColumnsHolder != null) {
                     Collection<? extends  PersistentProperty> persistentProperties = associatedEntity.getPersistentProperties();
                     // If associated entity identity field is not used in this association we shouldn't add it since it's not needed
