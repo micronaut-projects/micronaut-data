@@ -15,11 +15,10 @@
  */
 package io.micronaut.transaction.annotation;
 
-import io.micronaut.aop.Around;
+import io.micronaut.aop.InterceptorBinding;
+import io.micronaut.aop.InterceptorKind;
 import io.micronaut.context.annotation.AliasFor;
-import io.micronaut.context.annotation.Type;
 import io.micronaut.transaction.TransactionDefinition;
-import io.micronaut.transaction.interceptor.TransactionalInterceptor;
 
 import java.lang.annotation.*;
 
@@ -32,8 +31,7 @@ import java.lang.annotation.*;
  */
 @Target({ElementType.ANNOTATION_TYPE, ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@Around
-@Type(TransactionalInterceptor.class)
+@InterceptorBinding(kind = InterceptorKind.AROUND)
 public @interface Transactional {
     /**
      * Alias for {@link #transactionManager}.
