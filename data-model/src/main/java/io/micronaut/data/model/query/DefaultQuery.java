@@ -16,7 +16,6 @@
 package io.micronaut.data.model.query;
 
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.*;
@@ -137,12 +136,6 @@ public class DefaultQuery implements QueryModel {
         JoinPath jp = new JoinPath(path, associationPath, joinType, alias);
         joinPaths.put(path, jp);
         return jp;
-    }
-
-    @NonNull
-    @Override
-    public JoinPath join(String path, Association association, @NonNull Join.Type joinType, @Nullable String alias) {
-        return join(path, joinType, alias);
     }
 
     /**

@@ -64,7 +64,6 @@ import org.hibernate.query.MutationQuery;
 import org.hibernate.query.Query;
 
 import javax.sql.DataSource;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -204,13 +203,13 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
 
     @Nullable
     @Override
-    public <T> T findOne(@NonNull Class<T> type, @NonNull Serializable id) {
+    public <T> T findOne(@NonNull Class<T> type, @NonNull Object id) {
         return executeRead(session -> session.byId(type).load(id));
     }
 
     @NonNull
     @Override
-    public <T> T load(@NonNull Class<T> type, @NonNull Serializable id) {
+    public <T> T load(@NonNull Class<T> type, @NonNull Object id) {
         return executeRead(session -> session.getReference(type, id));
     }
 

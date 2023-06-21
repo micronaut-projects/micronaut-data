@@ -22,8 +22,6 @@ import io.micronaut.data.intercept.reactive.FindByIdReactiveInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
 import org.reactivestreams.Publisher;
 
-import java.io.Serializable;
-
 /**
  * Default implementation of {@link FindByIdReactiveInterceptor}.
  * @author graemerocher
@@ -44,9 +42,6 @@ public class DefaultFindByIdReactiveInterceptor extends AbstractPublisherInterce
     public Publisher<?> interceptPublisher(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         Class<?> rootEntity = getRequiredRootEntity(context);
         Object id = context.getParameterValues()[0];
-        if (!(id instanceof Serializable)) {
-            throw new IllegalArgumentException("Entity IDs must be serializable!");
-        }
-        return reactiveOperations.findOne((Class<Object>) rootEntity, (Serializable) id);
+        return reactiveOperations.findOne((Class<Object>) rootEntity, id);
     }
 }

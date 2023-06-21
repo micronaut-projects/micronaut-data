@@ -232,21 +232,6 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
 
     @NonNull
     @Override
-    public DataType[] getIndexedParameterTypes() {
-        if (indexedDataTypes == null) {
-            return DataType.EMPTY_DATA_TYPE_ARRAY;
-        }
-        return this.indexedDataTypes;
-    }
-
-    @NonNull
-    @Override
-    public int[] getIndexedParameterBinding() {
-        return EMPTY_INT_ARRAY;
-    }
-
-    @NonNull
-    @Override
     public Map<String, Object> getQueryHints() {
         if (queryHints != null) {
             return queryHints;

@@ -21,7 +21,6 @@ import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.runtime.*;
 
-import java.io.Serializable;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 
@@ -48,7 +47,7 @@ public interface AsyncRepositoryOperations {
      * @return A completion stage that emits the result
      */
     @NonNull
-    <T> CompletionStage<T> findOne(@NonNull Class<T> type, @NonNull Serializable id);
+    <T> CompletionStage<T> findOne(@NonNull Class<T> type, @NonNull Object id);
 
 
     /**
@@ -78,7 +77,7 @@ public interface AsyncRepositoryOperations {
      * @return A completion stage that emits the result or null if there is no result
      */
     @NonNull
-    <T> CompletionStage<T> findOptional(@NonNull Class<T> type, @NonNull Serializable id);
+    <T> CompletionStage<T> findOptional(@NonNull Class<T> type, @NonNull Object id);
 
     /**
      * Find one by Query.

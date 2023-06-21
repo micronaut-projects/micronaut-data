@@ -72,12 +72,6 @@ public interface DelegatePreparedQuery<E, R> extends PreparedQuery<E, R>, Delega
         return getPreparedQueryDelegate().getRepositoryType();
     }
 
-    @NonNull
-    @Override
-    default Map<String, Object> getParameterValues() {
-        return getPreparedQueryDelegate().getParameterValues();
-    }
-
     @Override
     default Object[] getParameterArray() {
         return getPreparedQueryDelegate().getParameterArray();

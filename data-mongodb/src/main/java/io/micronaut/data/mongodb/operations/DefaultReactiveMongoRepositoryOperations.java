@@ -77,7 +77,6 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -137,7 +136,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
     }
 
     @Override
-    public <T> Mono<T> findOne(Class<T> type, Serializable id) {
+    public <T> Mono<T> findOne(Class<T> type, Object id) {
         return withClientSession(clientSession -> {
             RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(type);
             MongoDatabase database = getDatabase(persistentEntity, null);
@@ -193,7 +192,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
     }
 
     @Override
-    public <T> Mono<T> findOptional(Class<T> type, Serializable id) {
+    public <T> Mono<T> findOptional(Class<T> type, Object id) {
         return findOne(type, id);
     }
 

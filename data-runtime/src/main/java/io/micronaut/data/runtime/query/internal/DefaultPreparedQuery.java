@@ -28,7 +28,6 @@ import io.micronaut.data.model.runtime.DefaultStoredDataOperation;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.StoredQuery;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
@@ -126,12 +125,6 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
     @Override
     public Class<?> getRepositoryType() {
         return context.getTarget().getClass();
-    }
-
-    @NonNull
-    @Override
-    public Map<String, Object> getParameterValues() {
-        return Collections.emptyMap();
     }
 
     @Override
