@@ -483,13 +483,13 @@ interface MyRepository {
                     {
                         def entity = getRuntimePersistentEntity(UserRole)
                         def qm = QueryModel.from(entity)
-                        qm.join("role", entity.getPropertyByPath("id.role").get() as Association, Join.Type.DEFAULT, null)
+                        qm.join("role", Join.Type.DEFAULT, null)
                         qm
                     }.call(),
                     {
                         def entity = getRuntimePersistentEntity(UserRole)
                         def qm = QueryModel.from(entity)
-                        qm.join("user", entity.getPropertyByPath("id.user").get() as Association, Join.Type.DEFAULT, null)
+                        qm.join("user", Join.Type.DEFAULT, null)
                         qm.eq("user", new QueryParameter("xyz"))
                     }.call(),
                     QueryModel.from(getRuntimePersistentEntity(UuidEntity)).idEq(new QueryParameter("xyz")),
@@ -497,9 +497,9 @@ interface MyRepository {
                     {
                         def entity = getRuntimePersistentEntity(Challenge)
                         def qm = QueryModel.from(entity)
-                        qm.join("authentication", null, Join.Type.FETCH, null)
-                        qm.join("authentication.device", null, Join.Type.FETCH, null)
-                        qm.join("authentication.device.user", null, Join.Type.FETCH, null)
+                        qm.join("authentication", Join.Type.FETCH, null)
+                        qm.join("authentication.device", Join.Type.FETCH, null)
+                        qm.join("authentication.device.user", Join.Type.FETCH, null)
                         qm.idEq(new QueryParameter("xyz"))
                         qm
                     }.call(),
@@ -507,14 +507,14 @@ interface MyRepository {
                         def entity = getRuntimePersistentEntity(UserRole)
                         def qm = QueryModel.from(entity)
                         qm.projections().add(Projections.property("role"))
-                        qm.join("role", null, Join.Type.FETCH, null)
+                        qm.join("role", Join.Type.FETCH, null)
                         qm.eq("user", new QueryParameter("xyz"))
                         qm
                     }.call(),
                     {
                         def entity = getRuntimePersistentEntity(Meal)
                         def qm = QueryModel.from(entity)
-                        qm.join("foods", null, Join.Type.FETCH, null)
+                        qm.join("foods", Join.Type.FETCH, null)
                         qm.idEq(new QueryParameter("xyz"))
                         qm
                     }.call()
