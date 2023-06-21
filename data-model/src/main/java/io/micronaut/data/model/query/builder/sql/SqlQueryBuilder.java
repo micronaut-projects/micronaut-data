@@ -823,8 +823,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     List<String> referencedColumnNames = joinColumnsHolder != null ? joinColumnsHolder.getAnnotations("value")
                         .stream()
                         .map(ann -> ann.stringValue("referencedColumnName").orElse(null))
-                        .filter(v -> Objects.nonNull(v))
-                        .collect(Collectors.toList()) : Collections.emptyList();
+                        .filter(Objects::nonNull)
+                        .toList() : Collections.emptyList();
                     traversePersistentProperties(associatedEntity, includeIdentity, true, (propertyAssociations, prop) -> {
                         if (referencedColumnNames.contains(prop.getPersistedName())) {
                             return;
