@@ -103,22 +103,19 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
     @Override
     public <RT1> Optional<RT1> getParameterInRole(@NonNull String role, @NonNull Class<RT1> type) {
         return context.stringValue(DATA_METHOD_ANN_NAME, role).flatMap(name -> {
-            RT1 parameterValue = null;
-            Map<String, MutableArgumentValue<?>> params = context.getParameters();
-            MutableArgumentValue<?> arg = params.get(name);
-            if (arg != null) {
-                Object o = arg.getValue();
-                if (o != null) {
-                    if (type.isInstance(o)) {
-                        //noinspection unchecked
-                        parameterValue = (RT1) o;
-                    } else {
-                        parameterValue = conversionService
-                                .convert(o, type).orElse(null);
-                    }
-                }
+            MutableArgumentValue<?> arg = context.getParameters().get(name);
+            if (arg == null) {
+                return Optional.empty();
             }
-            return Optional.ofNullable(parameterValue);
+            Object o = arg.getValue();
+            if (o == null) {
+                return Optional.empty();
+            }
+            if (type.isInstance(o)) {
+                //noinspection unchecked
+                return Optional.of((RT1) o);
+            }
+            return conversionService.convert(o, type);
         });
     }
 
