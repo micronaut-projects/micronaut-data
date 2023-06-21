@@ -19,6 +19,9 @@ The above examples return a single instance of an entity, the supported return t
 |*Return Type*
 |*Description*
 
+|`Book`
+|If `null` is retrieved only if the return type is nullable otherwise a api:data.exceptions.EmptyResultException[] is thrown
+
 |`List<Book>`
 |A `java.util.List` or any common `Iterable` type
 
@@ -26,7 +29,7 @@ The above examples return a single instance of an entity, the supported return t
 |A Java 8 `java.util.stream.Stream` instance
 
 |`Optional<Book>`
-|An optional value, if `null` is retrieved otherwise a api:data.exceptions.EmptyResultException[] is thrown
+|An optional value
 
 |`Page<Book>`
 |An instance of api:data.model.Page[] for pagination.

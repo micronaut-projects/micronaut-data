@@ -16,65 +16,52 @@
 package io.micronaut.transaction;
 
 import io.micronaut.core.annotation.NonNull;
-
-import java.io.Flushable;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.connection.ConnectionStatus;
+import io.micronaut.transaction.exceptions.TransactionUsageException;
+import io.micronaut.transaction.support.TransactionSynchronization;
 
 /**
- * NOTICE: This is a fork of Spring's {@code TransactionStatus} modernizing it
- * to use enums, Slf4j and decoupling from Spring.
+ * The transaction status.
  *
- * Representation of the status of a transaction.
- *
- * <p>Transactional code can use this to retrieve status information,
- * and to programmatically request a rollback (instead of throwing
- * an exception that causes an implicit rollback).
- *
- * <p>Includes the {@link SavepointManager} interface to provide access
- * to savepoint management facilities. Note that savepoint management
- * is only available if supported by the underlying transaction manager.
- *
- * @author Juergen Hoeller
- * @since 27.03.2003
- * @see #setRollbackOnly()
- * @see SynchronousTransactionManager#getTransaction
  * @param <T> The native transaction type
+ * @author graemerocher
+ * @author Denis Stepanov
+ * @since 1.0.0
  */
-public interface TransactionStatus<T> extends TransactionExecution, SavepointManager, Flushable {
+public interface TransactionStatus<T> extends TransactionExecution {
 
     /**
-     * Return whether this transaction internally carries a savepoint,
-     * that is, has been created as nested transaction based on a savepoint.
-     * <p>This method is mainly here for diagnostic purposes, alongside
-     * {@link #isNewTransaction()}. For programmatic handling of custom
-     * savepoints, use the operations provided by {@link SavepointManager}.
-     * @see #isNewTransaction()
-     * @see #createSavepoint()
-     * @see #rollbackToSavepoint(Object)
-     * @see #releaseSavepoint(Object)
-     * @return Whether a save point is present
+     * @return The underlying transaction object if exists.
      */
-    boolean hasSavepoint();
-
-    /**
-     * Flush the underlying session to the datastore, if applicable:
-     * for example, all affected Hibernate/JPA sessions.
-     * <p>This is effectively just a hint and may be a no-op if the underlying
-     * transaction manager does not have a flush concept. A flush signal may
-     * get applied to the primary resource or to transaction synchronizations,
-     * depending on the underlying resource.
-     */
-    @Override
-    void flush();
-
-    /**
-     * @return The underlying transaction object.
-     */
-    @NonNull Object getTransaction();
+    @Nullable
+    Object getTransaction();
 
     /**
      * @return The associated connection.
      */
-    @NonNull T getConnection();
+    @NonNull
+    default T getConnection() {
+        return getConnectionStatus().getConnection();
+    }
 
+    /**
+     * @return The connection status.
+     * @since 4.0.0
+     */
+    @NonNull
+    ConnectionStatus<T> getConnectionStatus();
+
+    /**
+     * Register a new transaction synchronization for the current state.
+     * <p>Note that synchronizations can implement the
+     * {@link io.micronaut.core.order.Ordered} interface.
+     * They will be executed in an order according to their order value (if any).
+     *
+     * @param synchronization the synchronization object to register
+     */
+    default void registerSynchronization(@NonNull TransactionSynchronization synchronization) {
+        throw new TransactionUsageException("Transaction synchronization is not supported!");
+    }
 }
 

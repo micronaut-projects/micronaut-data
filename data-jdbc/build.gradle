@@ -10,22 +10,24 @@ dependencies {
     annotationProcessor mn.micronaut.graal
     annotationProcessor libs.micronaut.docs
 
-    api projects.dataRuntime
+    api projects.micronautDataRuntime
+    api projects.micronautDataTxJdbc
+    api projects.micronautDataConnectionJdbc
 
     implementation mn.micronaut.json.core
     compileOnly mnSerde.micronaut.serde.oracle.jdbc.json
     implementation mnSql.micronaut.jdbc
 
     compileOnly mnRxjava2.micronaut.rxjava2
-    compileOnly projects.dataHibernateJpa
+    compileOnly projects.micronautDataHibernateJpa
     compileOnly libs.drivers.jdbc.oracle
 
     testAnnotationProcessor mn.micronaut.inject.java
-    testAnnotationProcessor projects.dataProcessor
+    testAnnotationProcessor projects.micronautDataProcessor
     testAnnotationProcessor mnValidation.micronaut.validation.processor
 
-    testImplementation projects.dataTck
-    testImplementation projects.dataProcessor
+    testImplementation projects.micronautDataTck
+    testImplementation projects.micronautDataProcessor
     testImplementation mnRxjava2.micronaut.rxjava2
     testImplementation mnReactor.micronaut.reactor
     testImplementation libs.jackson.databind
@@ -50,26 +52,25 @@ dependencies {
     testImplementation mn.micronaut.http.netty
     testRuntimeOnly mnSql.micronaut.jdbc.tomcat
     testRuntimeOnly mnSql.h2
-    testRuntimeOnly libs.drivers.jdbc.mariadb
+    testRuntimeOnly mnSql.mariadb.java.client
     testRuntimeOnly libs.drivers.jdbc.oracle
-    testRuntimeOnly libs.drivers.jdbc.mysql
-    testRuntimeOnly libs.drivers.jdbc.postgresql
-    testRuntimeOnly libs.drivers.jdbc.mssql
+    testRuntimeOnly mnSql.mysql.connector.java
+    testRuntimeOnly mnSql.postgresql
+    testRuntimeOnly mnSql.mssql.jdbc
     testRuntimeOnly mn.snakeyaml
 
-    testResourcesService libs.drivers.jdbc.mariadb
+    testResourcesService mnSql.mariadb.java.client
     testResourcesService libs.drivers.jdbc.oracle
-    testResourcesService libs.drivers.jdbc.mysql
-    testResourcesService libs.drivers.jdbc.postgresql
-    testResourcesService libs.drivers.jdbc.mssql
+    testResourcesService mnSql.mysql.connector.java
+    testResourcesService mnSql.postgresql
+    testResourcesService mnSql.mssql.jdbc
 
-    // Needed for H2EagerContextSpec
-    testImplementation("org.jetbrains.kotlin:kotlin-reflect:1.8.21")
     testImplementation mnSerde.micronaut.serde.support
-
     testImplementation mnTestResources.micronaut.test.resources.extensions.junit.platform
 
     testRuntimeOnly mnSerde.micronaut.serde.oracle.jdbc.json
+    testRuntimeOnly mnFlyway.micronaut.flyway
+    testRuntimeOnly mnFlyway.flyway.oracle
 }
 
 micronaut {
@@ -90,20 +91,6 @@ micronaut {
 tasks.withType(Test).configureEach {
     jvmArgs '-Xmx1024m'
     systemProperty "oracle.jdbc.timezoneAsRegion", "false"
-
-    if (micronautBuild.environment.githubAction.get()) {
-        // Let some of the checks tests first so the test containers don't eat all the memory
-        mustRunAfter ":data-processor:test"
-        mustRunAfter ":data-document-processor:test"
-        mustRunAfter ":data-hibernate-jpa:test"
-        mustRunAfter ":data-hibernate-reactive:test"
-        mustRunAfter ":data-mongodb:test"
-        mustRunAfter ":data-azure-cosmos:test"
-    }
-}
-
-tasks.named("internalStartTestResourcesService") {
-    //debugServer = true
 }
 
 micronautBuild {

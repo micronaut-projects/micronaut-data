@@ -1,73 +1,35 @@
 package io.micronaut.data.jdbc.oraclexe.jsonview
 
-import io.micronaut.context.ApplicationContext
 import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
-import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.test.support.TestPropertyProvider
-import org.testcontainers.containers.OracleContainer
-import org.testcontainers.utility.DockerImageName
-import spock.lang.AutoCleanup
-import spock.lang.IgnoreIf
-import spock.lang.Shared
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import jakarta.inject.Inject
 import spock.lang.Specification
 
 import java.time.LocalDateTime
 import java.time.LocalTime
 
-@IgnoreIf({ env["GITHUB_WORKFLOW"] })
-class OracleJdbcJsonViewSpec extends Specification implements TestPropertyProvider {
+@MicronautTest(environments = ["oracle-jsonview"])
+class OracleJdbcJsonViewSpec extends Specification {
 
-    @AutoCleanup("stop")
-    @Shared
-    OracleContainer container = createContainer()
+    @Inject
+    StudentClassRepository studentClassRepository
 
-    @AutoCleanup
-    @Shared
-    ApplicationContext context = ApplicationContext.run(properties)
+    @Inject
+    ClassRepository classRepository
 
-    StudentClassRepository getStudentClassRepository() {
-        return context.getBean(StudentClassRepository)
-    }
+    @Inject
+    TeacherRepository teacherRepository
 
-    ClassRepository getClassRepository() {
-        return context.getBean(ClassRepository)
-    }
+    @Inject
+    AddressRepository addressRepository
 
-    TeacherRepository getTeacherRepository() {
-        return context.getBean(TeacherRepository)
-    }
+    @Inject
+    StudentRepository studentRepository
 
-    AddressRepository getAddressRepository() {
-        return context.getBean(AddressRepository)
-    }
-
-    StudentRepository getStudentRepository() {
-        return context.getBean(StudentRepository)
-    }
-
-    StudentViewRepository getStudentViewRepository() {
-        return context.getBean(StudentViewRepository)
-    }
-
-    @Override
-    Map<String, String> getProperties() {
-        if (container == null) {
-            container = createContainer()
-        }
-        container.start()
-        def prefix = 'datasources.default'
-        return [
-                (prefix + '.url')               : container.getJdbcUrl(),
-                (prefix + '.username')          : container.getUsername(),
-                (prefix + '.password')          : container.getPassword(),
-                // Cannot create JSON view during schema creation, works via init script
-                (prefix + '.schema-generate')   : 'NONE',
-                (prefix + '.dialect')           : Dialect.ORACLE,
-                (prefix + '.packages')          : getClass().package.name
-        ] as Map<String, String>
-    }
+    @Inject
+    StudentViewRepository studentViewRepository
 
     def setup() {
         studentClassRepository.deleteAll()
@@ -335,10 +297,5 @@ class OracleJdbcJsonViewSpec extends Specification implements TestPropertyProvid
         // After deleted should not be present
         !optFredStudentView.present
         count == 0
-    }
-
-    static OracleContainer createContainer() {
-        return new OracleContainer(DockerImageName.parse("gvenzl/oracle-free:latest-faststart").asCompatibleSubstituteFor("gvenzl/oracle-xe"))
-                .withDatabaseName("test").withInitScript("./oracle-json-view-init.sql")
     }
 }

@@ -28,14 +28,14 @@ import org.springframework.data.jpa.domain.Specification;
  * @since 1.0
  */
 @Internal
-public class FindOneSpecificationInterceptor extends io.micronaut.data.jpa.repository.intercept.FindOneSpecificationInterceptor {
+public final class FindOneSpecificationInterceptor extends io.micronaut.data.jpa.repository.intercept.FindOneSpecificationInterceptor {
 
     /**
      * Default constructor.
      *
      * @param operations The operations
      */
-    protected FindOneSpecificationInterceptor(@NonNull RepositoryOperations operations) {
+    FindOneSpecificationInterceptor(@NonNull RepositoryOperations operations) {
         super(operations);
     }
 

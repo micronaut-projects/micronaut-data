@@ -22,7 +22,7 @@ import io.micronaut.data.repository.reactive.ReactorCrudRepository;
 import io.micronaut.data.tck.entities.Student;
 import reactor.core.publisher.Mono;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 
 @Repository
 public interface JpaStudentRepository extends ReactorCrudRepository<Student, Long> {

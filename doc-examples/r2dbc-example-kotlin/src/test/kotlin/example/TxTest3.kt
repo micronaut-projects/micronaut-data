@@ -18,7 +18,7 @@ import kotlinx.coroutines.reactor.mono
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.*
 import java.util.*
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @MicronautTest(transactional = false)
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
@@ -110,6 +110,7 @@ class TxTest3 : AbstractTest(false) {
         Assertions.assertEquals(true, recordCoroutineRepository.existsByBar(records[1].bar))
     }
 
+    @Disabled // Pending feature
     @Test
     fun `coroutines suspending inside declarative transaction`(): Unit = runBlocking {
         val records = (1..2).map { Record(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID()) }

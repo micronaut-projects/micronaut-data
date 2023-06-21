@@ -27,6 +27,7 @@ import org.reactivestreams.Publisher;
  * @since 2.2.0
  */
 public interface ReactiveTransactionOperations<C> {
+
     /**
      * Execute the given handler with a new transaction.
      * @param definition The definition

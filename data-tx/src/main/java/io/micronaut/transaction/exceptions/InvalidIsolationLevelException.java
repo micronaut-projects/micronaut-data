@@ -23,7 +23,6 @@ package io.micronaut.transaction.exceptions;
  * @author Juergen Hoeller
  * @since 12.05.2003
  */
-@SuppressWarnings("serial")
 public class InvalidIsolationLevelException extends TransactionUsageException {
 
     /**

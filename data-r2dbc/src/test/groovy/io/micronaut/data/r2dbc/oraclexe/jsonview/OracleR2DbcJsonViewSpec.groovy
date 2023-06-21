@@ -1,73 +1,32 @@
 package io.micronaut.data.r2dbc.oraclexe.jsonview
 
-import io.micronaut.context.ApplicationContext
 import io.micronaut.data.exceptions.OptimisticLockException
-import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.tck.entities.Contact
 import io.micronaut.data.tck.entities.ContactView
-import io.micronaut.test.support.TestPropertyProvider
-import org.testcontainers.containers.OracleContainer
-import org.testcontainers.utility.DockerImageName
-import spock.lang.AutoCleanup
-import spock.lang.IgnoreIf
-import spock.lang.Shared
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import jakarta.inject.Inject
 import spock.lang.Specification
 
-import java.time.Duration
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
-@IgnoreIf({ env["GITHUB_WORKFLOW"] })
-class OracleR2DbcJsonViewSpec extends Specification implements TestPropertyProvider {
+@MicronautTest(environments = ["oracle-jsonview"], transactional = false)
+class OracleR2DbcJsonViewSpec extends Specification {
 
-    @AutoCleanup("stop")
-    @Shared
-    OracleContainer container = createContainer()
+    @Inject
+    OracleXEContactRepository contactRepository
 
-    @AutoCleanup
-    @Shared
-    ApplicationContext context = ApplicationContext.run(properties)
-
-    OracleXEContactRepository getContactRepository() {
-        return context.getBean(OracleXEContactRepository)
-    }
-
-    ContactViewRepository getContactViewRepository() {
-        return context.getBean(ContactViewRepository)
-    }
-
-    @Override
-    Map<String, String> getProperties() {
-        if (container == null) {
-            container = createContainer()
-        }
-        container.start()
-        def prefix = 'r2dbc.datasources.default'
-        def dbType = 'oracle'
-        return [
-                (prefix + '.url')               : "r2dbc:${dbType}://${container.getHost()}:${container.getFirstMappedPort()}/test",
-                (prefix + '.username')          : container.getUsername(),
-                (prefix + '.password')          : container.getPassword(),
-                // Cannot create JSON view during schema creation, works via init script
-                (prefix + '.schema-generate')   : 'NONE',
-                (prefix + '.dialect')           : Dialect.ORACLE,
-                (prefix + '.packages')          : getClass().package.name,
-                (prefix + '.connectTimeout')    : Duration.ofMinutes(1).toString(),
-                (prefix + '.statementTimeout')  : Duration.ofMinutes(1).toString(),
-                (prefix + '.lockTimeout')       : Duration.ofMinutes(1).toString()
-        ] as Map<String, String>
-    }
+    @Inject
+    ContactViewRepository contactViewRepository
 
     def "test CRUD"() {
         when:
-        def id = 10L
         def contact = new Contact()
-        contact.id = id
-        contact.name = "Contact" + id
+        contact.name = "Contact1"
         contact.age = 25
         contact.startDateTime = LocalDateTime.now().minusMonths(10)
         contactRepository.save(contact)
-        def optContactView = contactViewRepository.findById(id)
+        def optContactView = contactViewRepository.findById(contact.id)
         then:
         optContactView.present
 
@@ -75,25 +34,23 @@ class OracleR2DbcJsonViewSpec extends Specification implements TestPropertyProvi
         def contactView = optContactView.get()
         contactView.name = contactView.name + "-Updated"
         contactViewRepository.update(contactView)
-        def optContact = contactRepository.findById(id)
+        def optContact = contactRepository.findById(contact.id)
         then:
         optContact.present
         optContact.get().name == contactView.name
 
         when:
-        contactViewRepository.deleteById(id)
+        contactViewRepository.deleteById(contact.id)
         then:
-        !contactRepository.findById(id).present
-        !contactViewRepository.findById(id).present
+        !contactRepository.findById(contact.id).present
+        !contactViewRepository.findById(contact.id).present
 
         when:
-        id = 20L
         contactView = new ContactView()
-        contactView.id = id
-        contactView.name = "Contact" + id
+        contactView.name = "Contact2"
         contactView.age = 30
         contactViewRepository.save(contactView)
-        optContact = contactRepository.findById(id)
+        optContact = contactRepository.findById(contactView.id)
         then:
         optContact.present
         contactView.name == optContact.get().name
@@ -117,22 +74,29 @@ class OracleR2DbcJsonViewSpec extends Specification implements TestPropertyProvi
         updatedContactView.startDateTime.truncatedTo(ChronoUnit.MILLIS) == startDateTime.truncatedTo(ChronoUnit.MILLIS)
 
         when:"Test optimistic locking"
-        contactView = contactViewRepository.findById(id).get()
+        contactView = contactViewRepository.findById(contactView.id).get()
         contactView.metadata.etag = UUID.randomUUID().toString()
         contactViewRepository.update(contactView)
         then:
         def e = thrown(OptimisticLockException)
         e.message.startsWith("ETAG did not match when updating record")
 
+        when:"Save multiple at once"
+        ContactView contactView1 = new ContactView()
+        contactView1.name = "ContactNew1"
+        contactView1.age = 59
+        ContactView contactView2 = new ContactView()
+        contactView2.name = "ContactNew2"
+        contactView2.age = 60
+        def savedEntities = contactViewRepository.saveAll(Arrays.asList(contactView1, contactView2))
+        then:
+        savedEntities.size() == 2
+        savedEntities[0].id
+        savedEntities[1].id
         when:
         contactViewRepository.deleteAll()
         then:
-        !contactRepository.findById(id).present
-        !contactViewRepository.findById(id).present
-    }
-
-    static OracleContainer createContainer() {
-        return new OracleContainer(DockerImageName.parse("gvenzl/oracle-free:latest-faststart").asCompatibleSubstituteFor("gvenzl/oracle-xe"))
-                .withDatabaseName("test").withInitScript("./oracle-json-view-init.sql")
+        !contactRepository.findById(contactView.id).present
+        !contactViewRepository.findById(contactView.id).present
     }
 }

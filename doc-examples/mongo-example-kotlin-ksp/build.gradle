@@ -1,0 +1,42 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
+plugins {
+    id "io.micronaut.test-resources"
+    id "io.micronaut.build.internal.data-kotlin-ksp-example"
+}
+
+application {
+    mainClass = "example.ApplicationKt"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "junit5"
+    testResources {
+        enabled = true
+        inferClasspath = false
+        additionalModules.add(KnownModules.MONGODB)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
+}
+
+dependencies {
+    ksp projects.micronautDataDocumentProcessor
+    implementation mnRxjava2.micronaut.rxjava2
+    implementation mnReactor.micronaut.reactor
+
+    implementation mn.micronaut.http.client
+    implementation projects.micronautDataMongodb
+    implementation mnMongo.mongo.driver
+    implementation mnKotlin.micronaut.kotlin.runtime
+
+    compileOnly libs.javax.persistence.api
+    implementation libs.jakarta.persistence.api
+    implementation libs.jakarta.transaction.api
+    implementation libs.kotlin.coroutines
+    implementation libs.kotlin.coroutines.reactive
+
+    runtimeOnly mnLogging.logback.classic
+}

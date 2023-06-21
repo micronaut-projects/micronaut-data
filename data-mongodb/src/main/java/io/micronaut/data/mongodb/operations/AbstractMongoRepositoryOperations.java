@@ -67,8 +67,10 @@ import java.util.stream.Collectors;
  * @since 3.3
  */
 @Internal
-abstract class AbstractMongoRepositoryOperations<Dtb> extends AbstractRepositoryOperations
-        implements HintsCapableRepository, PreparedQueryDecorator, MethodContextAwareStoredQueryDecorator {
+abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRepositoryOperations
+    implements HintsCapableRepository, PreparedQueryDecorator, MethodContextAwareStoredQueryDecorator
+    permits DefaultMongoRepositoryOperations, DefaultReactiveMongoRepositoryOperations {
+
     protected static final BsonDocument EMPTY = new BsonDocument();
     protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
 
@@ -146,11 +148,11 @@ abstract class AbstractMongoRepositoryOperations<Dtb> extends AbstractRepository
             String update = resultStoredQuery.getQueryResult().getUpdate();
             if (update != null) {
                 return new DefaultMongoStoredQuery<>(storedQuery, codecRegistry, attributeConverterRegistry,
-                        runtimeEntityRegistry, conversionService, persistentEntity, resultStoredQuery.getOperationType(), update);
+                    runtimeEntityRegistry, conversionService, persistentEntity, resultStoredQuery.getOperationType(), update);
             }
         }
         return new DefaultMongoStoredQuery<>(storedQuery, codecRegistry, attributeConverterRegistry,
-                runtimeEntityRegistry, conversionService, persistentEntity);
+            runtimeEntityRegistry, conversionService, persistentEntity);
     }
 
     protected <R> R convertResult(CodecRegistry codecRegistry,

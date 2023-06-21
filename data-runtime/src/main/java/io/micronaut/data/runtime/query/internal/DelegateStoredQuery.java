@@ -22,7 +22,6 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.StoredQuery;
-import io.micronaut.transaction.TransactionDefinition;
 
 import java.util.List;
 import java.util.Map;
@@ -77,11 +76,6 @@ public interface DelegateStoredQuery<E, R> extends StoredQuery<E, R> {
     @Override
     default Class<R> getResultType() {
         return getStoredQueryDelegate().getResultType();
-    }
-
-    @Override
-    default Optional<TransactionDefinition> getTransactionDefinition() {
-        return getStoredQueryDelegate().getTransactionDefinition();
     }
 
     @Override

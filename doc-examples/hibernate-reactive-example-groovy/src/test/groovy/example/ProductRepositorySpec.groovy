@@ -17,6 +17,8 @@ class ProductRepositorySpec extends Specification implements PostgresHibernateRe
     ManufacturerRepository manufacturerRepository
 
     void setupSpec() {
+        productRepository.deleteAll()
+        manufacturerRepository.deleteAll()
         Manufacturer apple = manufacturerRepository.save("Apple").block()
         productRepository.saveAll(Arrays.asList(
                 new Product(name: "MacBook",

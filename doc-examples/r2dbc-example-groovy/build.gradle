@@ -1,3 +1,5 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
 plugins {
     id "groovy"
     id "io.micronaut.test-resources"
@@ -15,17 +17,19 @@ micronaut {
     testResources {
         clientTimeout = 300
         version = libs.versions.micronaut.testresources.get()
+        additionalModules.add(KnownModules.R2DBC_POSTGRESQL)
     }
 }
 
 dependencies {
-    compileOnly project(":data-processor")
-    implementation('io.micronaut.data:micronaut-data-r2dbc')
-    implementation("io.micronaut.sql:micronaut-jdbc-hikari")
+    compileOnly projects.micronautDataProcessor
+    implementation projects.micronautDataR2dbc
+    implementation mnSql.micronaut.jdbc.hikari
+    implementation libs.jakarta.transaction.api
 
-    runtimeOnly libs.drivers.r2dbc.postgresql
-    runtimeOnly libs.drivers.jdbc.postgresql
+    runtimeOnly mnR2dbc.r2dbc.postgresql
+    runtimeOnly mnSql.postgresql
 
-    testImplementation "io.micronaut:micronaut-http-client"
+    testImplementation mn.micronaut.http.client
     compileOnly mnSerde.micronaut.serde.api
 }

@@ -42,6 +42,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
@@ -64,7 +65,7 @@ import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.mongodb.conf.RequiresSyncMongo;
 import io.micronaut.data.mongodb.operations.options.MongoAggregationOptions;
 import io.micronaut.data.mongodb.operations.options.MongoFindOptions;
-import io.micronaut.data.mongodb.transaction.MongoSynchronousTransactionManagerImpl;
+import io.micronaut.data.mongodb.session.MongoConnectionOperations;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
@@ -111,14 +112,14 @@ import java.util.stream.StreamSupport;
 @RequiresSyncMongo
 @EachBean(MongoClient.class)
 @Internal
-public final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOperations<MongoDatabase> implements
+final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOperations<MongoDatabase> implements
         MongoRepositoryOperations,
         AsyncCapableRepository,
         ReactiveCapableRepository,
         SyncCascadeOperations.SyncCascadeOperationsHelper<DefaultMongoRepositoryOperations.MongoOperationContext> {
     private final MongoClient mongoClient;
     private final SyncCascadeOperations<MongoOperationContext> cascadeOperations;
-    private final MongoSynchronousTransactionManagerImpl transactionManager;
+    private final MongoConnectionOperations connectionOperations;
     private ExecutorAsyncOperations asyncOperations;
     private ExecutorService executorService;
 
@@ -149,7 +150,7 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
         this.mongoClient = mongoClient;
         this.cascadeOperations = new SyncCascadeOperations<>(conversionService, this);
         boolean isPrimary = "Primary".equals(serverName);
-        this.transactionManager = beanContext.getBean(MongoSynchronousTransactionManagerImpl.class, isPrimary ? null : Qualifiers.byName(serverName));
+        this.connectionOperations = beanContext.getBean(MongoConnectionOperations.class, isPrimary ? null : Qualifiers.byName(serverName));
         this.executorService = executorService;
     }
 
@@ -746,17 +747,11 @@ public final class DefaultMongoRepositoryOperations extends AbstractMongoReposit
     }
 
     private <T> T withClientSession(Function<ClientSession, T> function) {
-        ClientSession clientSession = transactionManager.findClientSession();
-        if (clientSession != null) {
-            return function.apply(clientSession);
-        }
-        try (ClientSession cs = mongoClient.startSession()) {
-            return function.apply(cs);
-        }
+        return connectionOperations.execute(ConnectionDefinition.DEFAULT, status -> function.apply(status.getConnection()));
     }
 
     private <T> MongoEntityOperation<T> createMongoInsertOneOperation(MongoOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, T entity) {
-        return new MongoEntityOperation<T>(ctx, persistentEntity, entity, true) {
+        return new MongoEntityOperation<>(ctx, persistentEntity, entity, true) {
 
             @Override
             protected void execute() throws RuntimeException {

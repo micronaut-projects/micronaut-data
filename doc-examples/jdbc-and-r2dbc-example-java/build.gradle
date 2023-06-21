@@ -13,18 +13,17 @@ micronaut {
 }
 
 dependencies {
-    annotationProcessor projects.dataProcessor
-    annotationProcessor "io.micronaut.validation:micronaut-validation"
-    implementation projects.dataJdbc
-    implementation projects.dataR2dbc
-    implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
-    implementation "io.micronaut:micronaut-http-client"
-    implementation "io.micronaut.validation:micronaut-validation"
-    implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
+    annotationProcessor projects.micronautDataProcessor
+    annotationProcessor mnValidation.micronaut.validation
+    implementation projects.micronautDataJdbc
+    implementation projects.micronautDataR2dbc
+    implementation mnRxjava2.micronaut.rxjava2
+    implementation mn.micronaut.http.client
+    implementation mnValidation.micronaut.validation
     implementation libs.jakarta.persistence.api
-    implementation libs.javax.transaction.api
-    runtimeOnly "ch.qos.logback:logback-classic"
-    runtimeOnly mnSql.h2
-    runtimeOnly libs.drivers.r2dbc.h2
 
+    runtimeOnly mnLogging.logback.classic
+    runtimeOnly mnSql.micronaut.jdbc.tomcat
+    runtimeOnly mnSql.h2
+    runtimeOnly mnR2dbc.r2dbc.h2
 }

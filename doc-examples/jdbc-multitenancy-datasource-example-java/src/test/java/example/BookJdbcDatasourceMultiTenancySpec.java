@@ -3,7 +3,6 @@ package example;
 import io.micronaut.http.annotation.Header;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import io.micronaut.transaction.jdbc.DelegatingDataSource;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.AfterEach;
@@ -75,8 +74,8 @@ class BookJdbcDatasourceMultiTenancySpec {
     }
 
     private long getBooksCount(DataSource ds) throws SQLException {
-        if (ds instanceof DelegatingDataSource) {
-            ds = ((DelegatingDataSource) ds).getTargetDataSource();
+        if (ds instanceof io.micronaut.data.connection.jdbc.advice.DelegatingDataSource delegatingDataSource) {
+            ds = delegatingDataSource.getTargetDataSource();
         }
         try (Connection connection = ds.getConnection()) {
             try (PreparedStatement ps = connection.prepareStatement("select count(*) from book")) {
