@@ -35,7 +35,6 @@ loadScripts(document, 'script');</script>
 <li><a href="package-summary.html">Package</a></li>
 <li class="nav-bar-cell1-rev">Class</li>
 <li><a href="package-tree.html">Tree</a></li>
-<li><a href="../../../../../deprecated-list.html">Deprecated</a></li>
 <li><a href="../../../../../index-all.html">Index</a></li>
 <li><a href="../../../../../help-doc.html#class">Help</a></li>
 </ul>
@@ -227,8 +226,8 @@ R&gt;&nbsp;reactor.core.publisher.Mono&lt;R&gt;</code></div>
 <div class="block">Find one by Query.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findOne(java.lang.Class,java.io.Serializable)" class="member-name-link">findOne</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a>&nbsp;id)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findOne(java.lang.Class,java.lang.Object)" class="member-name-link">findOne</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;id)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Find one by ID.</div>
 </div>
@@ -239,8 +238,8 @@ R&gt;&nbsp;reactor.core.publisher.Mono&lt;R&gt;</code></div>
 <div class="block">Find one by Query.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Mono&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findOptional(java.lang.Class,java.io.Serializable)" class="member-name-link">findOptional</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a>&nbsp;id)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findOptional(java.lang.Class,java.lang.Object)" class="member-name-link">findOptional</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;id)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Find one by ID.</div>
 </div>
@@ -411,17 +410,17 @@ R&gt;&nbsp;<a href="MongoStoredQuery.html" title="interface in io.micronaut.data
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="findOne(java.lang.Class,java.io.Serializable)">
+<section class="detail" id="findOne(java.lang.Class,java.lang.Object)">
 <h3>findOne</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Mono&lt;T&gt;</span>&nbsp;<span class="element-name">findOne</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a>&nbsp;id)</span></div>
-<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../../operations/reactive/ReactiveRepositoryOperations.html#findOne(java.lang.Class,java.io.Serializable)">ReactiveRepositoryOperations</a></code></span></div>
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;id)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../../operations/reactive/ReactiveRepositoryOperations.html#findOne(java.lang.Class,java.lang.Object)">ReactiveRepositoryOperations</a></code></span></div>
 <div class="block">Find one by ID.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../../operations/reactive/ReactiveRepositoryOperations.html#findOne(java.lang.Class,java.io.Serializable)">findOne</a></code>&nbsp;in interface&nbsp;<code><a href="../../operations/reactive/ReactiveRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactiveRepositoryOperations</a></code></dd>
+<dd><code><a href="../../operations/reactive/ReactiveRepositoryOperations.html#findOne(java.lang.Class,java.lang.Object)">findOne</a></code>&nbsp;in interface&nbsp;<code><a href="../../operations/reactive/ReactiveRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactiveRepositoryOperations</a></code></dd>
 <dt>Specified by:</dt>
-<dd><code><a href="../../operations/reactive/ReactorReactiveRepositoryOperations.html#findOne(java.lang.Class,java.io.Serializable)">findOne</a></code>&nbsp;in interface&nbsp;<code><a href="../../operations/reactive/ReactorReactiveRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactorReactiveRepositoryOperations</a></code></dd>
+<dd><code><a href="../../operations/reactive/ReactorReactiveRepositoryOperations.html#findOne(java.lang.Class,java.lang.Object)">findOne</a></code>&nbsp;in interface&nbsp;<code><a href="../../operations/reactive/ReactorReactiveRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactorReactiveRepositoryOperations</a></code></dd>
 <dt>Type Parameters:</dt>
 <dd><code>T</code> - The generic type</dd>
 <dt>Parameters:</dt>
@@ -537,17 +536,17 @@ R&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Flux&lt;R&gt;
 </section>
 </li>
 <li>
-<section class="detail" id="findOptional(java.lang.Class,java.io.Serializable)">
+<section class="detail" id="findOptional(java.lang.Class,java.lang.Object)">
 <h3>findOptional</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Mono&lt;T&gt;</span>&nbsp;<span class="element-name">findOptional</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a>&nbsp;id)</span></div>
-<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../../operations/reactive/ReactiveRepositoryOperations.html#findOptional(java.lang.Class,java.io.Serializable)">ReactiveRepositoryOperations</a></code></span></div>
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;id)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../../operations/reactive/ReactiveRepositoryOperations.html#findOptional(java.lang.Class,java.lang.Object)">ReactiveRepositoryOperations</a></code></span></div>
 <div class="block">Find one by ID.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../../operations/reactive/ReactiveRepositoryOperations.html#findOptional(java.lang.Class,java.io.Serializable)">findOptional</a></code>&nbsp;in interface&nbsp;<code><a href="../../operations/reactive/ReactiveRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactiveRepositoryOperations</a></code></dd>
+<dd><code><a href="../../operations/reactive/ReactiveRepositoryOperations.html#findOptional(java.lang.Class,java.lang.Object)">findOptional</a></code>&nbsp;in interface&nbsp;<code><a href="../../operations/reactive/ReactiveRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactiveRepositoryOperations</a></code></dd>
 <dt>Specified by:</dt>
-<dd><code><a href="../../operations/reactive/ReactorReactiveRepositoryOperations.html#findOptional(java.lang.Class,java.io.Serializable)">findOptional</a></code>&nbsp;in interface&nbsp;<code><a href="../../operations/reactive/ReactorReactiveRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactorReactiveRepositoryOperations</a></code></dd>
+<dd><code><a href="../../operations/reactive/ReactorReactiveRepositoryOperations.html#findOptional(java.lang.Class,java.lang.Object)">findOptional</a></code>&nbsp;in interface&nbsp;<code><a href="../../operations/reactive/ReactorReactiveRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactorReactiveRepositoryOperations</a></code></dd>
 <dt>Type Parameters:</dt>
 <dd><code>T</code> - The generic type</dd>
 <dt>Parameters:</dt>
