@@ -9,10 +9,6 @@ java {
     }
 }
 
-configurations.configureEach {
-    resolutionStrategy.preferProjectModules()
-}
-
 tasks.withType(JavaCompile).configureEach {
     options.fork = true
 }
