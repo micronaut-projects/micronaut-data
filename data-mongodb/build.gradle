@@ -40,8 +40,14 @@ dependencies {
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor libs.jakarta.persistence.api
 
-    testImplementation mnMongo.mongo.driver
-    testImplementation mnMongo.mongo.reactive
+    testImplementation (mnMongo.mongo.driver) {
+        exclude group: "org.mongodb", module: "bson-kotlinx"
+        exclude group: "org.mongodb", module: "bson-kotlin"
+    }
+    testImplementation (mnMongo.mongo.reactive) {
+        exclude group: "org.mongodb", module: "bson-kotlinx"
+        exclude group: "org.mongodb", module: "bson-kotlin"
+    }
     testImplementation projects.micronautDataDocumentProcessor
     testImplementation projects.micronautDataDocumentTck
     testImplementation libs.jakarta.persistence.api
