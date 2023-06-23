@@ -105,7 +105,7 @@ class CustomEmbeddedNameMapping extends Specification implements H2TestPropertyP
     void "test build query"() {
         when:
             QueryBuilder encoder = new SqlQueryBuilder()
-            def q = encoder.buildQuery(QueryModel.from(getRuntimePersistentEntity(MyBook)).idEq(new QueryParameter("xyz")))
+            def q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, QueryModel.from(getRuntimePersistentEntity(MyBook)).idEq(new QueryParameter("xyz")))
         then:
             q.query == 'SELECT my_book_."id",my_book_."authorFirstName",my_book_."authorLastName",my_book_."authorDetailsIncludedNumberAge" FROM "MyBook" my_book_ WHERE (my_book_."id" = ?)'
     }

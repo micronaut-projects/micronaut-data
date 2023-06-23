@@ -81,7 +81,7 @@ interface MyRepository {
 
         expect:
         builder.dialect == Dialect.POSTGRES
-        builder.buildQuery(queryModel).query == 'SELECT sale_.id,sale_.name,sale_.data,sale_.quantities,sale_.extra_data,sale_.data_list FROM sale sale_ WHERE (sale_.name = $1)'
+        builder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel).query == 'SELECT sale_.id,sale_.name,sale_.data,sale_.quantities,sale_.extra_data,sale_.data_list FROM sale sale_ WHERE (sale_.name = $1)'
         builder.buildDelete(queryModel).query == 'DELETE  FROM sale  WHERE (name = $1)'
         builder.buildUpdate(queryModel, Arrays.asList("name")).query == 'UPDATE sale SET name=$1 WHERE (name = $2)'
         builder.buildInsert(annotationMetadata, entity).query == 'INSERT INTO sale (name,data,quantities,extra_data,data_list) VALUES ($1,to_json($2::json),to_json($3::json),to_json($4::json),to_json($5::json))'
@@ -150,7 +150,7 @@ interface MyRepository {
         PersistentEntity entity = PersistentEntity.of(type)
         QueryModel q = QueryModel.from(entity)
         QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
-        def encoded = encoder.buildQuery(q)
+        def encoded = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
 
         then:"The select includes the schema in the table name reference"
         encoded.query == query
@@ -166,7 +166,7 @@ interface MyRepository {
         PersistentEntity entity = PersistentEntity.of(Restaurant)
         QueryModel q = QueryModel.from(entity)
         QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
-        def encoded = encoder.buildQuery(q)
+        def encoded = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
 
         expect:
         encoded.query.startsWith('SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`address_street`,restaurant_.`address_zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM')
@@ -180,7 +180,7 @@ interface MyRepository {
         q.idEq(new QueryParameter("test"))
         q.join(entity.getPropertyByName("author") as Association, Join.Type.FETCH)
         QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
-        def encoded = encoder.buildQuery(q)
+        def encoded = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
 
         expect:
         encoded.query == 'SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated`,book_author_.`name` AS author_name,book_author_.`nick_name` AS author_nick_name FROM `book` book_ INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` = ?)'
@@ -195,7 +195,7 @@ interface MyRepository {
         q.join(entity.getPropertyByName("author") as Association, Join.Type.FETCH)
         q.join(entity.getPropertyByName("genre") as Association, Join.Type.LEFT_FETCH)
         QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
-        def encoded = encoder.buildQuery(q)
+        def encoded = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
 
         expect:
         encoded.query == 'SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated`,book_genre_.`genre_name` AS genre_genre_name,book_author_.`name` AS author_name,book_author_.`nick_name` AS author_nick_name FROM `book` book_ LEFT JOIN `genre` book_genre_ ON book_.`genre_id`=book_genre_.`id` INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` = ?)'
@@ -210,7 +210,7 @@ interface MyRepository {
         q.join(entity.getPropertyByName("author") as Association, Join.Type.OUTER)
         q.join(entity.getPropertyByName("genre") as Association, Join.Type.OUTER_FETCH)
         QueryBuilder encoder = new SqlQueryBuilder(Dialect.POSTGRES)
-        def encoded = encoder.buildQuery(q)
+        def encoded = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
 
         expect:
         encoded.query == 'SELECT book_."id",book_."author_id",book_."genre_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated",book_genre_."genre_name" AS genre_genre_name FROM "book" book_ FULL OUTER JOIN "genre" book_genre_ ON book_."genre_id"=book_genre_."id" FULL OUTER JOIN "author" book_author_ ON book_."author_id"=book_author_."id" WHERE (book_."id" = ?)'
@@ -226,7 +226,7 @@ interface MyRepository {
         QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
 
         when:
-        encoder.buildQuery(q)
+        encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
 
         then:
         def e = thrown(IllegalArgumentException)
@@ -244,7 +244,7 @@ interface MyRepository {
         QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
 
         when:
-        encoder.buildQuery(q)
+        encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
 
         then:
         def e = thrown(IllegalArgumentException)
@@ -262,7 +262,7 @@ interface MyRepository {
         QueryBuilder encoder = new SqlQueryBuilder(Dialect.MYSQL)
 
         when:
-        encoder.buildQuery(q)
+        encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
 
         then:
         def e = thrown(IllegalArgumentException)
@@ -280,7 +280,7 @@ interface MyRepository {
         QueryBuilder encoder = new SqlQueryBuilder(Dialect.MYSQL)
 
         when:
-        encoder.buildQuery(q)
+        encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
 
         then:
         def e = thrown(IllegalArgumentException)
@@ -403,7 +403,7 @@ interface MyRepository {
                 .eq("author.nickName", new QueryParameter("test"))
         query.join("author", Join.Type.DEFAULT, null)
 
-        def result = encoder.buildQuery(query)
+        def result = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, query)
 
         expect:
         result.query == "SELECT $columns FROM \"book\" book_ INNER JOIN \"author\" book_author_ ON book_.\"author_id\"=book_author_.\"id\" WHERE (book_author_.\"nick_name\" = ?)"
@@ -419,7 +419,7 @@ interface MyRepository {
         SqlQueryBuilder encoder = new SqlQueryBuilder()
         StringBuilder columns = new StringBuilder()
         encoder.selectAllColumns(entity, "person_", columns)
-        QueryResult encodedQuery = encoder.buildQuery(q)
+        QueryResult encodedQuery = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
         NamingStrategy namingStrategy = NamingStrategies.UnderScoreSeparatedLowerCase.newInstance()
         def mappedName = namingStrategy.mappedName(property)
 
@@ -449,7 +449,7 @@ interface MyRepository {
         q."$method"(property, QueryParameter.of('test'))
         q.projections()."$projection"(property)
         QueryBuilder encoder = new SqlQueryBuilder()
-        QueryResult encodedQuery = encoder.buildQuery(q)
+        QueryResult encodedQuery = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
         def aliasName = encoder.getAliasName(entity)
 
         expect:
@@ -471,7 +471,7 @@ interface MyRepository {
     void "test build query embedded"() {
         when:
             QueryBuilder encoder = new SqlQueryBuilder()
-            QueryResult encodedQuery = encoder.buildQuery(queryModel)
+            QueryResult encodedQuery = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel)
 
         then:
             encodedQuery.query == query
@@ -640,7 +640,7 @@ interface MyRepository {
     void "test build composite id query"() {
         when:
             QueryBuilder encoder = new SqlQueryBuilder()
-            def q = encoder.buildQuery(QueryModel.from(getRuntimePersistentEntity(Project)).idEq(new QueryParameter("projectId")))
+            def q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, QueryModel.from(getRuntimePersistentEntity(Project)).idEq(new QueryParameter("projectId")))
 
         then:
             q.query == 'SELECT project_."project_id_department_id",project_."project_id_project_id",LOWER(project_.name) AS name,project_.name AS db_name,UPPER(project_.org) AS org FROM "project" project_ WHERE (project_."project_id_department_id" = ? AND project_."project_id_project_id" = ?)'

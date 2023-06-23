@@ -58,17 +58,6 @@ public interface QueryBuilder {
     QueryResult buildInsert(AnnotationMetadata repositoryMetadata, PersistentEntity entity);
 
     /**
-     * Encode the given query into the encoded query instance.
-     *
-     * @param query The query
-     * @return The encoded query
-     */
-    @NonNull
-    default QueryResult buildQuery(@NonNull QueryModel query) {
-        return buildQuery(AnnotationMetadata.EMPTY_METADATA, query);
-    }
-
-    /**
      * Encode the given query for the passed annotation metadata and query.
      * @param annotationMetadata The annotation metadata
      * @param query The query model

@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.model.query.builder
 
+import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.model.Association
 import io.micronaut.data.model.DataType
@@ -70,7 +71,7 @@ class JpaQueryBuilderSpec extends Specification {
         q.sort Sort.of(props.collect() { Sort.Order."$direction"(it)})
 
         QueryBuilder encoder = new JpaQueryBuilder()
-        QueryResult encodedQuery = encoder.buildQuery(q)
+        QueryResult encodedQuery = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
 
 
         expect:
@@ -94,7 +95,7 @@ class JpaQueryBuilderSpec extends Specification {
         q."$method"(property, QueryParameter.of('test'))
 
         QueryBuilder encoder = new JpaQueryBuilder()
-        QueryResult encodedQuery = encoder.buildQuery(q)
+        QueryResult encodedQuery = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
         def alias = encoder.getAliasName(entity)
 
         expect:
@@ -122,7 +123,7 @@ class JpaQueryBuilderSpec extends Specification {
         q."$method"(property, QueryParameter.of('test'))
         q.projections()."$projection"(property)
         QueryBuilder encoder = new JpaQueryBuilder()
-        QueryResult encodedQuery = encoder.buildQuery(q)
+        QueryResult encodedQuery = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
         def alias = encoder.getAliasName(entity)
 
         expect:
@@ -148,7 +149,7 @@ class JpaQueryBuilderSpec extends Specification {
         q."$method"(property, QueryParameter.of('test'))
 
         QueryBuilder encoder = new JpaQueryBuilder()
-        QueryResult encodedQuery = encoder.buildQuery(q)
+        QueryResult encodedQuery = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
         def alias = encoder.getAliasName(entity)
 
         expect:
@@ -173,7 +174,7 @@ class JpaQueryBuilderSpec extends Specification {
         q.between(property, QueryParameter.of("from"), QueryParameter.of("to"))
 
         QueryBuilder encoder = new JpaQueryBuilder()
-        QueryResult encodedQuery = encoder.buildQuery(q)
+        QueryResult encodedQuery = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
         def alias = encoder.getAliasName(entity)
 
         expect:
@@ -195,7 +196,7 @@ class JpaQueryBuilderSpec extends Specification {
         q."$method"(property)
 
         QueryBuilder encoder = new JpaQueryBuilder()
-        QueryResult encodedQuery = encoder.buildQuery(q)
+        QueryResult encodedQuery = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
         def alias = encoder.getAliasName(entity)
 
         expect:
@@ -216,7 +217,7 @@ class JpaQueryBuilderSpec extends Specification {
     void "test queries"() {
         when:
             QueryBuilder encoder = new JpaQueryBuilder()
-            QueryResult encodedQuery = encoder.buildQuery(queryModel)
+            QueryResult encodedQuery = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel)
 
         then:
             encodedQuery.query == query
@@ -283,7 +284,7 @@ class JpaQueryBuilderSpec extends Specification {
             def entity = getRuntimePersistentEntity(EntityWithIdClass)
             def qm = QueryModel.from(entity)
             qm.idEq(new QueryParameter("xyz"))
-            def result = encoder.buildQuery(qm)
+            def result = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, qm)
         then:
             result.query == 'SELECT entityWithIdClass_ FROM io.micronaut.data.tck.entities.EntityWithIdClass AS entityWithIdClass_ WHERE (entityWithIdClass_.id1 = :p1 AND entityWithIdClass_.id2 = :p2)'
             result.parameters == ['p1': 'id1', 'p2': 'id2']
