@@ -2445,6 +2445,37 @@ abstract class AbstractRepositorySpec extends Specification {
         bookPage.totalSize == 2
     }
 
+    void 'test @Where and count'() {
+        given:
+        def author = new Author()
+        author.name = "Author1"
+        author.nickName = "A1"
+        def book1 = new Book()
+        book1.title = "Book1"
+        author.getBooks().add(book1)
+        authorRepository.save(author)
+        when:
+        def allByName = authorRepository.findAllByName("Author1", "A1", Pageable.from(0, 10))
+        then:
+        allByName.totalPages == 1
+        allByName.totalSize == 1
+        when:
+        def allByNickName = authorRepository.findAllByNickName("A1", "Author1", Pageable.from(0, 5))
+        then:
+        allByNickName.totalPages == 1
+        allByNickName.totalSize == 1
+        when:"Non matching nickname or name should not return results"
+        allByNickName = authorRepository.findAllByNickName("A2", "Author1", Pageable.from(0, 10))
+        allByName = authorRepository.findAllByName("Author1", "A2", Pageable.from(0, 10))
+        then:
+        allByNickName.totalSize == 0
+        allByNickName.totalPages == 0
+        allByName.totalPages == 0
+        allByName.totalSize == 0
+        cleanup:
+        cleanupData()
+    }
+
     private GregorianCalendar getYearMonthDay(Date dateCreated) {
         def cal = dateCreated.toCalendar()
         def localDate = LocalDate.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH))

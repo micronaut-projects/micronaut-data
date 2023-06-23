@@ -255,7 +255,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                 }
                 countQuery.join(joinPath.getPath(), joinType, null);
             }
-            countQueryResult = queryBuilder.buildQuery(countQuery);
+            countQueryResult = queryBuilder.buildQuery(annotationMetadataHierarchy, countQuery);
         }
 
         return new MethodMatchInfo(
