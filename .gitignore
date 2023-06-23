@@ -30,3 +30,4 @@ src/main/docs/resources/css/*.css
 src/main/docs/resources/js/*.js
 src/main/docs/resources/style/*.html
 src/main/docs/resources/img/micronaut-logo-white.svg
+**/.micronaut/test-resources/
