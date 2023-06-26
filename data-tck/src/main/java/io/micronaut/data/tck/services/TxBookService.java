@@ -13,6 +13,12 @@ public class TxBookService extends AbstractBookService {
         super(beanContext);
     }
 
+    @Transactional(name = "MyTx")
+    public void bookAddedCustomNamedTransaction(Runnable checkTx) {
+        bookRepository.save(newBook("MandatoryBook"));
+        checkTx.run();
+    }
+
     @Transactional(readOnly = true)
     public void bookAddedInReadOnlyTransaction() {
         bookRepository.save(newBook("MandatoryBook"));
