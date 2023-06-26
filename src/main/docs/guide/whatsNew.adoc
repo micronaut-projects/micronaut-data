@@ -1,3 +1,7 @@
+=== Micronaut Data 4.0
+- Hibernate6 Support
+- Oracle JSON-Relational Duality Views Support
+
 === Micronaut Data 3.5
 - Hibernate Reactive
 - Type-safe Java Criteria
