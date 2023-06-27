@@ -82,4 +82,11 @@ public @interface RepositoryConfiguration {
      */
     Class<?>[] queryDtoTypes() default {};
 
+    /**
+     * Custom query return types that this repository supports.
+     * @return The query return types
+     * @since 4.0.0
+     */
+    Class<?>[] queryReturnTypes() default {};
+
 }

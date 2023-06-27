@@ -177,6 +177,8 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                 && !TypeUtils.areTypesCompatible(resultType, queryResultType)
                 && (isDtoType(matchContext.getRepositoryClass(), resultType) || resultType.hasStereotype(Introspected.class) && queryResultType.hasStereotype(MappedEntity.class));
 
+        ClassElement finalResultType = resultType;
+
         if (isDto) {
             if (!isDtoType(matchContext.getRepositoryClass(), resultType)) {
                 List<SourcePersistentProperty> dtoProjectionProperties = getDtoProjectionProperties(matchContext.getRootEntity(), resultType);
@@ -195,7 +197,8 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                     );
                 }
             }
-        } else {
+        } else if (Arrays.stream(matchContext.getRepositoryClass().stringValues(RepositoryConfiguration.class, "queryReturnTypes"))
+            .noneMatch(type -> finalResultType.getName().equals(type))) {
             if (resultType == null || (!resultType.isAssignable(void.class) && !resultType.isAssignable(Void.class))) {
                 if (resultType == null || TypeUtils.areTypesCompatible(resultType, queryResultType)) {
                     if (!queryResultType.isPrimitive() || resultType == null) {
