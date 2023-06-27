@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.reflect.ClassUtils;
+import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.FindByIdInterceptor;
@@ -38,6 +39,7 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 
 import java.util.AbstractMap;
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -106,6 +108,10 @@ public final class FindMethodMatcher extends AbstractPatternMethodMatcher {
         ClassElement returnType = TypeUtils.getMethodProducingItemType(methodElement);
         if (returnType == null) {
             return false;
+        }
+        if (Arrays.stream(matchContext.getRepositoryClass().stringValues(RepositoryConfiguration.class, "queryReturnTypes"))
+            .anyMatch(type -> returnType.getName().equals(type))) {
+            return true;
         }
         if (!TypeUtils.isVoid(returnType)) {
             return returnType.hasStereotype(Introspected.class) ||
