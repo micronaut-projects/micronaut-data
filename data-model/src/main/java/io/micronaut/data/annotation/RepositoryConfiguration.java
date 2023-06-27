@@ -75,4 +75,11 @@ public @interface RepositoryConfiguration {
      */
     boolean namedParameters() default true;
 
+    /**
+     * Custom data-transfer types that this repository supports.
+     * @return The DTO types
+     * @since 4.0.0
+     */
+    Class<?>[] queryDtoTypes() default {};
+
 }

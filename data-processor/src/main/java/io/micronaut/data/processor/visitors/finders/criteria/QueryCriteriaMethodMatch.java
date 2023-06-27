@@ -21,6 +21,7 @@ import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.annotation.DataMethod;
@@ -174,10 +175,10 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
         boolean isDto = resultType != null
                 && !TypeUtils.areTypesCompatible(resultType, queryResultType)
-                && (isDtoType(resultType) || resultType.hasStereotype(Introspected.class) && queryResultType.hasStereotype(MappedEntity.class));
+                && (isDtoType(matchContext.getRepositoryClass(), resultType) || resultType.hasStereotype(Introspected.class) && queryResultType.hasStereotype(MappedEntity.class));
 
         if (isDto) {
-            if (!isDtoType(resultType)) {
+            if (!isDtoType(matchContext.getRepositoryClass(), resultType)) {
                 List<SourcePersistentProperty> dtoProjectionProperties = getDtoProjectionProperties(matchContext.getRootEntity(), resultType);
                 if (!dtoProjectionProperties.isEmpty()) {
                     Root<?> root = query.getRoots().iterator().next();
@@ -269,8 +270,9 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                 .countQueryResult(countQueryResult);
     }
 
-    private boolean isDtoType(ClassElement classElement) {
-        return classElement.getName().equals("org.bson.BsonDocument");
+    private boolean isDtoType(ClassElement repositoryElement, ClassElement classElement) {
+        return Arrays.stream(repositoryElement.stringValues(RepositoryConfiguration.class, "queryDtoTypes"))
+            .anyMatch(type -> classElement.getName().equals(type));
     }
 
     private List<SourcePersistentProperty> getDtoProjectionProperties(SourcePersistentEntity entity,
