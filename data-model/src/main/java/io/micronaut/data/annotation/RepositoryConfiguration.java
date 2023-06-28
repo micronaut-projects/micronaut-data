@@ -83,10 +83,10 @@ public @interface RepositoryConfiguration {
     Class<?>[] queryDtoTypes() default {};
 
     /**
-     * Custom query return types that this repository supports.
+     * Custom find-all container types. Usually the custom type can be converted later using the conversion service.
      * @return The query return types
      * @since 4.0.0
      */
-    Class<?>[] queryReturnTypes() default {};
+    Class<?>[] findAllContainerTypes() default {};
 
 }

@@ -44,6 +44,7 @@ import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MatchFailedException;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.AbstractCriteriaMethodMatch;
+import io.micronaut.data.processor.visitors.finders.FindersUtils;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.data.processor.visitors.finders.Projections;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
@@ -197,8 +198,9 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                     );
                 }
             }
-        } else if (Arrays.stream(matchContext.getRepositoryClass().stringValues(RepositoryConfiguration.class, "queryReturnTypes"))
-            .noneMatch(type -> finalResultType.getName().equals(type))) {
+        } else if (FindersUtils.isFindAllCompatibleReturnType(matchContext)) {
+            resultType = matchContext.getReturnType();
+        } else {
             if (resultType == null || (!resultType.isAssignable(void.class) && !resultType.isAssignable(Void.class))) {
                 if (resultType == null || TypeUtils.areTypesCompatible(resultType, queryResultType)) {
                     if (!queryResultType.isPrimitive() || resultType == null) {

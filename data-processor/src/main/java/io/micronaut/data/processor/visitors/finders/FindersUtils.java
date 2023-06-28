@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.core.reflect.ClassUtils;
+import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.CountInterceptor;
 import io.micronaut.data.intercept.DataInterceptor;
@@ -72,6 +73,7 @@ import io.micronaut.data.intercept.reactive.UpdateAllEntitiesReactiveInterceptor
 import io.micronaut.data.intercept.reactive.UpdateEntityReactiveInterceptor;
 import io.micronaut.data.intercept.reactive.UpdateReactiveInterceptor;
 import io.micronaut.data.model.Slice;
+import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MatchFailedException;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
@@ -81,6 +83,7 @@ import org.reactivestreams.Publisher;
 import java.lang.reflect.Array;
 import java.lang.reflect.Modifier;
 import java.util.AbstractMap;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
@@ -92,6 +95,12 @@ import java.util.stream.Stream;
  */
 @Internal
 public interface FindersUtils {
+
+    static boolean isFindAllCompatibleReturnType(MatchContext matchContext) {
+        ClassElement returnType = matchContext.getReturnType();
+        return Arrays.stream(matchContext.getRepositoryClass().stringValues(RepositoryConfiguration.class, "findAllContainerTypes"))
+            .anyMatch(type -> returnType.getName().equals(type)) ;
+    }
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> resolveInterceptorTypeByOperationType(boolean hasEntityParameter,
                                                                                                            boolean hasMultipleEntityParameter,
@@ -233,7 +242,7 @@ public interface FindersUtils {
             return typeAndInterceptorEntry(firstTypeArgument, FindPageInterceptor.class);
         } else if (isSlice(matchContext, returnType)) {
             return typeAndInterceptorEntry(firstTypeArgument, FindSliceInterceptor.class);
-        } else if (isContainer(returnType, Iterable.class)) {
+        } else if (isContainer(returnType, Iterable.class) || isFindAllCompatibleReturnType(matchContext)) {
             return typeAndInterceptorEntry(firstTypeArgument, FindAllInterceptor.class);
         } else if (isContainer(returnType, Stream.class)) {
             return typeAndInterceptorEntry(firstTypeArgument, FindStreamInterceptor.class);

@@ -109,8 +109,7 @@ public final class FindMethodMatcher extends AbstractPatternMethodMatcher {
         if (returnType == null) {
             return false;
         }
-        if (Arrays.stream(matchContext.getRepositoryClass().stringValues(RepositoryConfiguration.class, "queryReturnTypes"))
-            .anyMatch(type -> returnType.getName().equals(type))) {
+        if (FindersUtils.isFindAllCompatibleReturnType(matchContext)) {
             return true;
         }
         if (!TypeUtils.isVoid(returnType)) {

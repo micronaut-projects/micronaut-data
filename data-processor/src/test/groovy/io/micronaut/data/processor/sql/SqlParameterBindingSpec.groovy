@@ -23,7 +23,7 @@ import static io.micronaut.data.processor.visitors.TestUtils.*
 
 class SqlParameterBindingSpec extends AbstractDataSpec {
 
-    void "test custom repository return type"() {
+    void "test custom find all repository return type"() {
         given:
             def repository = buildRepository('test.SaleRepository', """
 import io.micronaut.data.tck.entities.Sale;
@@ -32,8 +32,7 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import java.util.Map;
 
 @Repository
-@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false, namedParameters = false, queryReturnTypes = MyReturn.class)
-@io.micronaut.context.annotation.Executable
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false, namedParameters = false, findAllContainerTypes = MyReturn.class)
 interface SaleRepository extends CrudRepository<Sale, Long> {
 
     MyReturn findAllById(Long id);
@@ -52,7 +51,9 @@ class MyReturn {
         expect:"The repository compiles"
             repository != null
             getDataTypes(findAllById) == [DataType.LONG]
+            getDataInterceptor(findAllById) == "io.micronaut.data.intercept.FindAllInterceptor"
             getDataTypes(list) == [DataType.LONG]
+            getDataInterceptor(list) == "io.micronaut.data.intercept.FindAllInterceptor"
     }
 
     void "test update binding respects data type"() {
