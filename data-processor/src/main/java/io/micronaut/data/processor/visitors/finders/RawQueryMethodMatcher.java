@@ -23,7 +23,6 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.annotation.TypeRole;
-import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.BindingParameter.BindingContext;
@@ -98,22 +97,22 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                     String query = matchContext.getAnnotationMetadata().stringValue(Query.class).orElseThrow(IllegalStateException::new);
                     DataMethod.OperationType operationType = findOperationType(methodElement.getName(), query, readOnly);
 
-                    Map.Entry<ClassElement, Class<? extends DataInterceptor>> entry = FindersUtils.resolveInterceptorTypeByOperationType(
+                    FindersUtils.InterceptorMatch entry = FindersUtils.resolveInterceptorTypeByOperationType(
                             entityParameter != null,
                             entitiesParameter != null,
                             operationType,
                             matchContext);
-                    ClassElement resultType = entry.getKey();
-                    Class<? extends DataInterceptor> interceptorType = entry.getValue();
+                    ClassElement resultType = entry.returnType();
+                    ClassElement interceptorType = entry.interceptor();
 
                     if (interceptorType.getSimpleName().startsWith("SaveOne")) {
                         // Use `executeUpdate` operation for "insert(String a, String b)" style queries
                         // - custom query doesn't need to use root entity
                         // - we would like to know how many rows were updated
                         operationType = DataMethod.OperationType.UPDATE;
-                        Map.Entry<ClassElement, Class<? extends DataInterceptor>> e = FindersUtils.pickUpdateInterceptor(matchContext, matchContext.getReturnType());
-                        resultType = e.getKey();
-                        interceptorType = e.getValue();
+                        FindersUtils.InterceptorMatch e = FindersUtils.pickUpdateInterceptor(matchContext, matchContext.getReturnType());
+                        resultType = e.returnType();
+                        interceptorType = e.interceptor();
                     }
 
                     if (operationType == DataMethod.OperationType.QUERY) {
@@ -140,7 +139,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                     MethodMatchInfo methodMatchInfo = new MethodMatchInfo(
                             operationType,
                             resultType,
-                            FindersUtils.getInterceptorElement(matchContext, interceptorType)
+                            interceptorType
                     );
 
                     methodMatchInfo.dto(isDto);

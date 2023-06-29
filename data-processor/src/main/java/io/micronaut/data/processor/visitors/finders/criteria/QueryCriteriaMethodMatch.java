@@ -23,7 +23,6 @@ import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.annotation.TypeRole;
-import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
@@ -58,7 +57,6 @@ import jakarta.persistence.criteria.Selection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -154,9 +152,10 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         PersistentEntityCriteriaQuery<Object> criteriaQuery = cb.createQuery();
         apply(matchContext, criteriaQuery.from(matchContext.getRootEntity()), criteriaQuery, cb);
 
-        Map.Entry<ClassElement, Class<? extends DataInterceptor>> entry = resolveReturnTypeAndInterceptor(matchContext);
-        ClassElement resultType = entry.getKey();
-        Class<? extends DataInterceptor> interceptorType = entry.getValue();
+        FindersUtils.InterceptorMatch entry = resolveReturnTypeAndInterceptor(matchContext);
+        ClassElement resultType = entry.returnType();
+        ClassElement interceptorType = entry.interceptor();
+        boolean validateReturnType = entry.validateReturnType();
 
         boolean optimisticLock = ((AbstractPersistentEntityCriteriaQuery<?>) criteriaQuery).hasVersionRestriction();
 
@@ -178,8 +177,6 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                 && !TypeUtils.areTypesCompatible(resultType, queryResultType)
                 && (isDtoType(matchContext.getRepositoryClass(), resultType) || resultType.hasStereotype(Introspected.class) && queryResultType.hasStereotype(MappedEntity.class));
 
-        ClassElement finalResultType = resultType;
-
         if (isDto) {
             if (!isDtoType(matchContext.getRepositoryClass(), resultType)) {
                 List<SourcePersistentProperty> dtoProjectionProperties = getDtoProjectionProperties(matchContext.getRootEntity(), resultType);
@@ -198,9 +195,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                     );
                 }
             }
-        } else if (FindersUtils.isFindAllCompatibleReturnType(matchContext)) {
-            resultType = matchContext.getReturnType();
-        } else {
+        } else if (validateReturnType) {
             if (resultType == null || (!resultType.isAssignable(void.class) && !resultType.isAssignable(Void.class))) {
                 if (resultType == null || TypeUtils.areTypesCompatible(resultType, queryResultType)) {
                     if (!queryResultType.isPrimitive() || resultType == null) {
@@ -267,7 +262,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         return new MethodMatchInfo(
                 DataMethod.OperationType.QUERY,
                 resultType,
-                getInterceptorElement(matchContext, interceptorType)
+                interceptorType
         )
                 .dto(isDto)
                 .optimisticLock(optimisticLock)

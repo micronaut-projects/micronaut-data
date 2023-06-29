@@ -19,9 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.reflect.ClassUtils;
-import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.annotation.TypeRole;
-import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.FindByIdInterceptor;
 import io.micronaut.data.intercept.FindOneInterceptor;
 import io.micronaut.data.intercept.async.FindByIdAsyncInterceptor;
@@ -37,10 +35,6 @@ import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.criteria.QueryCriteriaMethodMatch;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
-
-import java.util.AbstractMap;
-import java.util.Arrays;
-import java.util.Map;
 
 /**
  * Find method matcher.
@@ -74,20 +68,21 @@ public final class FindMethodMatcher extends AbstractPatternMethodMatcher {
                 }
 
                 @Override
-                protected Map.Entry<ClassElement, Class<? extends DataInterceptor>> resolveReturnTypeAndInterceptor(MethodMatchContext matchContext) {
-                    Map.Entry<ClassElement, Class<? extends DataInterceptor>> e = super.resolveReturnTypeAndInterceptor(matchContext);
-                    Class<? extends DataInterceptor> interceptorType = e.getValue();
-                    ClassElement queryResultType = e.getKey();
+                protected FindersUtils.InterceptorMatch resolveReturnTypeAndInterceptor(MethodMatchContext matchContext) {
+                    FindersUtils.InterceptorMatch e = super.resolveReturnTypeAndInterceptor(matchContext);
+                    ClassElement interceptorType = e.interceptor();
+                    ClassElement queryResultType = e.returnType();
                     if (isFindByIdQuery(matchContext, queryResultType)) {
-                        if (interceptorType == FindOneInterceptor.class) {
-                            interceptorType = FindByIdInterceptor.class;
-                        } else if (interceptorType == FindOneAsyncInterceptor.class) {
-                            interceptorType = FindByIdAsyncInterceptor.class;
-                        } else if (interceptorType == FindOneReactiveInterceptor.class) {
-                            interceptorType = FindByIdReactiveInterceptor.class;
+                        if (interceptorType.isAssignable(FindOneInterceptor.class)) {
+                            interceptorType = matchContext.getVisitorContext().getClassElement(FindByIdInterceptor.class).orElseThrow();
+                        } else if (interceptorType.isAssignable(FindOneAsyncInterceptor.class)) {
+                            interceptorType = matchContext.getVisitorContext().getClassElement(FindByIdAsyncInterceptor.class).orElseThrow();
+                        } else if (interceptorType.isAssignable(FindOneReactiveInterceptor.class)) {
+                            interceptorType = matchContext.getVisitorContext().getClassElement(FindByIdReactiveInterceptor.class).orElseThrow();
                         }
+                        return new FindersUtils.InterceptorMatch(queryResultType, interceptorType);
                     }
-                    return new AbstractMap.SimpleEntry<>(queryResultType, interceptorType);
+                    return e;
                 }
 
                 private boolean isFindByIdQuery(@NonNull MethodMatchContext matchContext,

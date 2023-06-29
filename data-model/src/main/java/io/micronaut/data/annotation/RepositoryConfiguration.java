@@ -83,10 +83,10 @@ public @interface RepositoryConfiguration {
     Class<?>[] queryDtoTypes() default {};
 
     /**
-     * Custom find-all container types. Usually the custom type can be converted later using the conversion service.
-     * @return The query return types
+     * Custom find interceptors definition.
+     * @return The interceptor definitions.
      * @since 4.0.0
      */
-    Class<?>[] findAllContainerTypes() default {};
+    FindInterceptorDef[] findInterceptors() default {};
 
 }

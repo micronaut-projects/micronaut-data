@@ -16,11 +16,8 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.criteria.QueryCriteriaMethodMatch;
-
-import java.util.Arrays;
 
 /**
  * List method matcher.

@@ -26,34 +26,61 @@ class SqlParameterBindingSpec extends AbstractDataSpec {
     void "test custom find all repository return type"() {
         given:
             def repository = buildRepository('test.SaleRepository', """
+
+import io.micronaut.data.annotation.FindInterceptorDef;
+import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.tck.entities.Sale;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
 import java.util.Map;
 
 @Repository
-@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false, namedParameters = false, findAllContainerTypes = MyReturn.class)
+@RepositoryConfiguration(
+        queryBuilder=SqlQueryBuilder.class,
+        implicitQueries = false,
+        namedParameters = false,
+        findInterceptors = {
+                @FindInterceptorDef(returnType = MyReturn1.class, isContainer = false, interceptor = MyInterceptor1.class),
+                @FindInterceptorDef(returnType = MyReturn2.class, interceptor = MyInterceptor2.class)
+        }
+)
 interface SaleRepository extends CrudRepository<Sale, Long> {
 
-    MyReturn findAllById(Long id);
+    MyReturn1 findAllById(Long id);
 
-    MyReturn list(Long id);
+    MyReturn2<Sale> findAllByName(String name);
+
+    MyReturn1 list(Long id);
 }
 
-class MyReturn {
+class MyReturn1 {
+}
 
+class MyReturn2<E> {
+}
+
+abstract class MyInterceptor1 implements DataInterceptor<Object, Object> {
+}
+
+abstract class MyInterceptor2 implements DataInterceptor<Object, Object> {
 }
 
 """)
             def findAllById = repository.getRequiredMethod("findAllById", Long)
+            def findAllByName = repository.getRequiredMethod("findAllByName", String)
             def list = repository.getRequiredMethod("list", Long)
 
         expect:"The repository compiles"
             repository != null
             getDataTypes(findAllById) == [DataType.LONG]
-            getDataInterceptor(findAllById) == "io.micronaut.data.intercept.FindAllInterceptor"
-            getDataTypes(list) == [DataType.LONG]
-            getDataInterceptor(list) == "io.micronaut.data.intercept.FindAllInterceptor"
+            getDataInterceptor(findAllById) == "test.MyInterceptor1"
+            getDataResultType(findAllById) == "test.MyReturn1"
+
+            getDataTypes(findAllByName) == [DataType.STRING]
+            getDataInterceptor(findAllByName) == "test.MyInterceptor2"
+            getDataResultType(findAllByName) == "io.micronaut.data.tck.entities.Sale"
+
+            getDataInterceptor(list) == "test.MyInterceptor1"
     }
 
     void "test update binding respects data type"() {
