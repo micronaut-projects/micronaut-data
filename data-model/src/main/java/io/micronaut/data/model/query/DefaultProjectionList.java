@@ -107,12 +107,6 @@ class DefaultProjectionList implements ProjectionList {
     }
 
     @Override
-    public ProjectionList distinct(String property) {
-        add(Projections.distinct(property));
-        return this;
-    }
-
-    @Override
     public ProjectionList rowCount() {
         return count();
     }

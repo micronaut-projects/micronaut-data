@@ -743,4 +743,29 @@ interface AuthorRepository extends GenericRepository<Author, Long> {
         findByNickNameQuery == 'SELECT author_.`id`,author_.`name`,author_.`nick_name` FROM `author` author_ WHERE (author_.`nick_name` = ? AND (author_.name =?))'
         findByNickNameCountQuery == 'SELECT COUNT(*) FROM `author` author_ WHERE (author_.`nick_name` = ? AND (author_.name =?))'
     }
+
+    void "test distinct query"() {
+        given:
+        def repository = buildRepository('test.PersonRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Person;
+import java.util.UUID;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface PersonRepository extends GenericRepository<Person, Long> {
+
+    List<Person> findDistinct();
+
+    List<Person> findDistinctIdAndName();
+}
+""")
+        def distinctQuery = getQuery(repository.getRequiredMethod("findDistinct"))
+        def distinctIdAndNameQuery = getQuery(repository.getRequiredMethod("findDistinctIdAndName"))
+
+        expect:
+        distinctQuery == 'SELECT DISTINCT person_.* FROM `person` person_'
+        distinctIdAndNameQuery == 'SELECT DISTINCT person_.`id`,person_.`name` FROM `person` person_'
+    }
 }

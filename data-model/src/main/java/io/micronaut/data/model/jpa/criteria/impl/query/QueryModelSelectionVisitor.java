@@ -60,11 +60,10 @@ public final class QueryModelSelectionVisitor implements SelectionVisitor {
 
     @Override
     public void visit(PersistentPropertyPath<?> persistentPropertyPath) {
-        if (distinct) {
-            addProjection(Projections.distinct(persistentPropertyPath.getProperty().getName()));
-        } else {
-            addProjection(Projections.property(persistentPropertyPath.getPathAsString()));
+        if (distinct && !hasDistinctProjection()) {
+            addProjection(Projections.distinct());
         }
+        addProjection(Projections.property(persistentPropertyPath.getPathAsString()));
     }
 
     @Override
@@ -141,19 +140,17 @@ public final class QueryModelSelectionVisitor implements SelectionVisitor {
         PersistentEntity persistentEntity = root.getPersistentEntity();
         if (persistentEntity.hasCompositeIdentity()) {
             for (PersistentProperty persistentProperty : persistentEntity.getCompositeIdentity()) {
-                if (distinct) {
-                    addProjection(Projections.distinct(persistentProperty.getName()));
-                } else {
-                    addProjection(Projections.property(persistentProperty.getName()));
+                if (distinct && !hasDistinctProjection()) {
+                    addProjection(Projections.distinct());
                 }
+                addProjection(Projections.property(persistentProperty.getName()));
             }
         } else {
             PersistentProperty identity = persistentEntity.getIdentity();
-            if (distinct) {
-                addProjection(Projections.distinct(identity.getName()));
-            } else {
-                addProjection(Projections.property(identity.getName()));
+            if (distinct && !hasDistinctProjection()) {
+                addProjection(Projections.distinct());
             }
+            addProjection(Projections.property(identity.getName()));
         }
     }
 
@@ -169,5 +166,9 @@ public final class QueryModelSelectionVisitor implements SelectionVisitor {
             ((QueryModel.PropertyProjection) projection).setAlias(alias);
         }
         queryModel.projections().add(projection);
+    }
+
+    private boolean hasDistinctProjection() {
+        return queryModel.getProjections().stream().filter(p -> p instanceof QueryModel.DistinctProjection).findAny().isPresent();
     }
 }

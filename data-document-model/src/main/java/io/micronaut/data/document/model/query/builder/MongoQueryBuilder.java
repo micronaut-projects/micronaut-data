@@ -800,8 +800,6 @@ public final class MongoQueryBuilder implements QueryBuilder {
                     String propertyPersistName = getPropertyPersistName(propertyPath.getProperty());
                     if (projection instanceof QueryModel.AvgProjection) {
                         addProjection(groupObj, pp, "$avg", propertyPersistName);
-                    } else if (projection instanceof QueryModel.DistinctPropertyProjection) {
-                        throw new UnsupportedOperationException("Not implemented yet");
                     } else if (projection instanceof QueryModel.SumProjection) {
                         addProjection(groupObj, pp, "$sum", propertyPersistName);
                     } else if (projection instanceof QueryModel.MinProjection) {

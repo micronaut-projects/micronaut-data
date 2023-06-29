@@ -27,6 +27,7 @@ import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
 import io.micronaut.data.repository.PageableRepository;
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
+import io.micronaut.data.repository.jpa.criteria.QuerySpecification;
 import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.tck.entities.TotalDto;
 import io.reactivex.Single;
@@ -154,6 +155,10 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
 
     Long updatePerson(@Id Long id, @Parameter("age") int age);
 
+    List<Person> findDistinct();
+
+    List<String> findDistinctName();
+
     class Specifications {
 
         public static PredicateSpecification<Person> nameEquals(String name) {
@@ -166,6 +171,13 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
 
         public static PredicateSpecification<Person> idsIn(Long... ids) {
             return (root, criteriaBuilder) -> root.get("id").in(Arrays.asList(ids));
+        }
+
+        public static QuerySpecification<Person> distinct() {
+            return (root, query, criteriaBuilder) -> {
+                query.multiselect(root.get("id"), root.get("name"), root.get("age"), root.get("enabled")).distinct(true);
+                return null;
+            };
         }
     }
 }

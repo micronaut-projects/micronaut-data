@@ -72,6 +72,7 @@ import java.util.stream.Collectors
 import static io.micronaut.data.tck.repositories.BookSpecifications.hasChapter
 import static io.micronaut.data.tck.repositories.BookSpecifications.titleEquals
 import static io.micronaut.data.tck.repositories.BookSpecifications.titleEqualsWithJoin
+import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.distinct
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.idsIn
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEquals
 
@@ -538,6 +539,21 @@ abstract class AbstractRepositorySpec extends Specification {
         personRepository.count() == 3
         personRepository.count("Fred") == 1
         personRepository.findAll().size() == 3
+    }
+
+    void "test distinct"() {
+        given:
+        personRepository.deleteAll()
+        when:"People with same name diff age are saved"
+        personRepository.save(new Person(name: "Fred", age: 50))
+        personRepository.save(new Person(name: "Fred", age: 18))
+        def names = personRepository.findDistinctName()
+
+        then:"Distinct works as expected"
+        personRepository.findDistinct().size() == 2
+        personRepository.findAll(distinct()).size() == 2
+        names.size() == 1
+        names[0] == "Fred"
     }
 
     void "test save many"() {

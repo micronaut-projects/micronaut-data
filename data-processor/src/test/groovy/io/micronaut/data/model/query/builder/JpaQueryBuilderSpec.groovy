@@ -138,7 +138,6 @@ class JpaQueryBuilderSpec extends Specification {
         Person | 'gt'   | 'name'   | '>'      | 'min'
         Person | 'lt'   | 'name'   | '<'      | 'sum'
         Person | 'ge'   | 'name'   | '>='     | 'avg'
-        Person | 'le'   | 'name'   | '<='     | 'distinct'
     }
 
     @Unroll
