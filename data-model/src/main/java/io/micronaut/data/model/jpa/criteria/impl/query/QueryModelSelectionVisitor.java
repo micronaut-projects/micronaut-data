@@ -169,6 +169,6 @@ public final class QueryModelSelectionVisitor implements SelectionVisitor {
     }
 
     private boolean hasDistinctProjection() {
-        return queryModel.getProjections().stream().filter(p -> p instanceof QueryModel.DistinctProjection).findAny().isPresent();
+        return queryModel.getProjections().stream().anyMatch(p -> p instanceof QueryModel.DistinctProjection);
     }
 }
