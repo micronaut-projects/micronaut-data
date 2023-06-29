@@ -38,5 +38,20 @@ class UserRepositorySpec {
         assertNotNull(user.address().id());
         assertEquals("Parizska", user.address().street());
         assertEquals("Prague", user.address().city().name());
+
+        Address newAddress = new Address("Main St", new City("Belgrade"));
+        User newUser = userRepository.save("NewUser", newAddress);
+        assertNotNull(newUser);
+        assertNotNull(newUser.id());
+
+        user = userRepository.findById(newUser.id()).orElse(null);
+
+        assertNotNull(user);
+        assertNotNull(user.id());
+        assertEquals(0, user.version());
+        assertEquals("NewUser", user.name());
+        assertNotNull(user.address().id());
+        assertEquals("Main St", user.address().street());
+        assertEquals("Belgrade", user.address().city().name());
     }
 }
