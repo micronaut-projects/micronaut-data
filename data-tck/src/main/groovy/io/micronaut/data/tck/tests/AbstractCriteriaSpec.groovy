@@ -215,8 +215,10 @@ abstract class AbstractCriteriaSpec extends Specification {
         properties     | distinct        | expectedSelectQuery
         ["age","name"] | true            | 'DISTINCT test_."age",test_."name"'
         ["age"]        | true            | 'DISTINCT test_."age"'
+        []             | true            | 'DISTINCT test_.*'
         ["age","name"] | false           | 'test_."age",test_."name"'
         ["age"]        | false           | 'test_."age"'
+        []             | false           | 'test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget"'
     }
 
     /**
