@@ -52,7 +52,7 @@ shadow-gradle-plugin = "8.0.0"
 
 # Dependency versions which are found in the platform BOM
 # meaning that they should be extracted into their own BOM
-kotlin-coroutines = "1.7.1"
+kotlin-coroutines = "1.7.2"
 
 
 [libraries]
