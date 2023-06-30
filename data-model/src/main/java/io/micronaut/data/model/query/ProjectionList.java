@@ -60,15 +60,6 @@ public interface ProjectionList {
     ProjectionList distinct();
 
     /**
-     * Projection to return only distinct properties.
-     *
-     * @param property The property name to use
-     *
-     * @return The projection list
-     */
-    ProjectionList distinct(String property);
-
-    /**
      * Count the number of records returned.
      * @return The projection list
      */

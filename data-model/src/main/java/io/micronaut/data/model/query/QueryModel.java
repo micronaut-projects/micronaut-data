@@ -1441,19 +1441,6 @@ public interface QueryModel extends Criteria {
     }
 
     /**
-     * Projection to return distinct property names.
-     */
-    class DistinctPropertyProjection extends PropertyProjection {
-        /**
-         * Default constructor.
-         * @param propertyName The property name
-         */
-        public DistinctPropertyProjection(String propertyName) {
-            super(propertyName);
-        }
-    }
-
-    /**
      * Projection to count distinct property names.
      */
     class CountDistinctProjection extends PropertyProjection {

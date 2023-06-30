@@ -201,6 +201,26 @@ abstract class AbstractCriteriaSpec extends Specification {
             "age"    | "countDistinct" | 'COUNT(DISTINCT(test_."age"))'
     }
 
+    @Unroll
+    void "test select distinct #distinct #properties produces selection: #expectedSelectQuery"() {
+        given:
+        PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+        criteriaQuery.multiselect(properties.stream().map {prop -> entityRoot.get(prop)}.toList()).distinct(distinct)
+        String selectSqlQuery = getSelectQueryPart(criteriaQuery)
+
+        expect:
+        selectSqlQuery == expectedSelectQuery
+
+        where:
+        properties     | distinct        | expectedSelectQuery
+        ["age","name"] | true            | 'DISTINCT test_."age",test_."name"'
+        ["age"]        | true            | 'DISTINCT test_."age"'
+        []             | true            | 'DISTINCT test_.*'
+        ["age","name"] | false           | 'test_."age",test_."name"'
+        ["age"]        | false           | 'test_."age"'
+        []             | false           | 'test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget"'
+    }
+
     /**
      * Currently ArrayContains criteria is supported only by Azure Cosmos Db and MongoDB.
      * If we introduce more criteria not supported by default then we can test it here.

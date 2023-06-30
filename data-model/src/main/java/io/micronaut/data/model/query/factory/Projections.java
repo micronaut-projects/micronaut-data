@@ -118,16 +118,6 @@ public class Projections {
      * @param property The name of the property
      * @return Distinct projection
      */
-    public static QueryModel.DistinctPropertyProjection distinct(String property) {
-        return new QueryModel.DistinctPropertyProjection(property);
-    }
-
-    /**
-     * Projection that signifies to return only distinct results.
-     *
-     * @param property The name of the property
-     * @return Distinct projection
-     */
     public static QueryModel.CountDistinctProjection countDistinct(String property) {
         return new QueryModel.CountDistinctProjection(property);
     }
