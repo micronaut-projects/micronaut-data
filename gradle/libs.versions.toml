@@ -5,7 +5,7 @@ micronaut-docs = "2.0.0"
 micronaut-gradle-plugin = "4.0.0-M6"
 micronaut-testresources = "2.0.0-M12"
 
-micronaut-azure = "5.0.0-M6"
+micronaut-azure = "5.0.0-M7"
 micronaut-reactor = "3.0.0-M9"
 micronaut-rxjava2 = "2.0.0-M6"
 micronaut-r2dbc = "5.0.0-M11"
