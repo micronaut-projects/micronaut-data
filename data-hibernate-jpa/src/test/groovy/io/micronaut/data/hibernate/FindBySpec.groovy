@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.hibernate
 
-import io.micronaut.context.annotation.Property
 import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.tck.entities.Person
@@ -27,8 +26,7 @@ import jakarta.inject.Inject
 import javax.sql.DataSource
 
 @MicronautTest(packages = "io.micronaut.data.tck.entities")
-@Property(name = "datasources.default.name", value = "mydb")
-@Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
+@H2DBProperties
 class FindBySpec extends Specification {
 
     @Inject

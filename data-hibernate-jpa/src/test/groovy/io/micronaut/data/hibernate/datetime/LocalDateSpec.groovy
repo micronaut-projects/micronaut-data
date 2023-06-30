@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.hibernate.datetime
 
-import io.micronaut.context.annotation.Property
+import io.micronaut.data.hibernate.H2DBProperties
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
@@ -24,8 +24,7 @@ import spock.lang.Specification
 import jakarta.inject.Inject
 
 @MicronautTest
-@Property(name = "datasources.default.name", value = "mydb")
-@Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
+@H2DBProperties
 class LocalDateSpec extends Specification {
 
     @Inject LocalDateTestRepository repository
