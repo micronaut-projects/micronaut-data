@@ -89,33 +89,33 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Optional Element</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code>boolean</code></div>
-<div class="col-second even-row-color"><code><a href="#implicitQueries()" class="member-name-link">implicitQueries</a></code></div>
+<div class="col-first even-row-color"><code><a href="FindInterceptorDef.html" title="annotation interface in io.micronaut.data.annotation">FindInterceptorDef</a>[]</code></div>
+<div class="col-second even-row-color"><code><a href="#findInterceptors()" class="member-name-link">findInterceptors</a></code></div>
 <div class="col-last even-row-color">
-<div class="block">Does the repository allow implicit queries by type and ID etc.</div>
+<div class="block">Custom find interceptors definition.</div>
 </div>
 <div class="col-first odd-row-color"><code>boolean</code></div>
-<div class="col-second odd-row-color"><code><a href="#namedParameters()" class="member-name-link">namedParameters</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#implicitQueries()" class="member-name-link">implicitQueries</a></code></div>
 <div class="col-last odd-row-color">
+<div class="block">Does the repository allow implicit queries by type and ID etc.</div>
+</div>
+<div class="col-first even-row-color"><code>boolean</code></div>
+<div class="col-second even-row-color"><code><a href="#namedParameters()" class="member-name-link">namedParameters</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">Whether named parameters starting with colon are supported in the query syntax.</div>
 </div>
-<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="../operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations">RepositoryOperations</a>&gt;</code></div>
-<div class="col-second even-row-color"><code><a href="#operations()" class="member-name-link">operations</a></code></div>
-<div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="../model/query/builder/QueryBuilder.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder</a>&gt;</code></div>
-<div class="col-second odd-row-color"><code><a href="#queryBuilder()" class="member-name-link">queryBuilder</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="../operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations">RepositoryOperations</a>&gt;</code></div>
+<div class="col-second odd-row-color"><code><a href="#operations()" class="member-name-link">operations</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="../model/query/builder/QueryBuilder.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder</a>&gt;</code></div>
+<div class="col-second even-row-color"><code><a href="#queryBuilder()" class="member-name-link">queryBuilder</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">The builder to use to encode queries.</div>
 </div>
-<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;[]</code></div>
-<div class="col-second even-row-color"><code><a href="#queryDtoTypes()" class="member-name-link">queryDtoTypes</a></code></div>
-<div class="col-last even-row-color">
-<div class="block">Custom data-transfer types that this repository supports.</div>
-</div>
 <div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;[]</code></div>
-<div class="col-second odd-row-color"><code><a href="#queryReturnTypes()" class="member-name-link">queryReturnTypes</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#queryDtoTypes()" class="member-name-link">queryDtoTypes</a></code></div>
 <div class="col-last odd-row-color">
-<div class="block">Custom query return types that this repository supports.</div>
+<div class="block">Custom data-transfer types that this repository supports.</div>
 </div>
 <div class="col-first even-row-color"><code><a href="TypeRole.html" title="annotation interface in io.micronaut.data.annotation">TypeRole</a>[]</code></div>
 <div class="col-second even-row-color"><code><a href="#typeRoles()" class="member-name-link">typeRoles</a></code></div>
@@ -229,13 +229,13 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="queryReturnTypes()">
-<h3>queryReturnTypes</h3>
-<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;[]</span>&nbsp;<span class="element-name">queryReturnTypes</span></div>
-<div class="block">Custom query return types that this repository supports.</div>
+<section class="detail" id="findInterceptors()">
+<h3>findInterceptors</h3>
+<div class="member-signature"><span class="return-type"><a href="FindInterceptorDef.html" title="annotation interface in io.micronaut.data.annotation">FindInterceptorDef</a>[]</span>&nbsp;<span class="element-name">findInterceptors</span></div>
+<div class="block">Custom find interceptors definition.</div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>The query return types</dd>
+<dd>The interceptor definitions.</dd>
 <dt>Since:</dt>
 <dd>4.0.0</dd>
 </dl>
