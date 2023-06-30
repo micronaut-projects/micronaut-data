@@ -18,7 +18,6 @@ package io.micronaut.data.processor.visitors.finders;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.TypeRole;
-import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MatchFailedException;
@@ -30,9 +29,6 @@ import io.micronaut.inject.ast.ParameterElement;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-
-import static io.micronaut.data.processor.visitors.finders.FindersUtils.getInterceptorElement;
 
 /**
  * A save method for saving a single entity.
@@ -66,15 +62,15 @@ public class SaveEntityMethodMatcher extends AbstractPrefixPatternMethodMatcher 
                 if (entityParameter == null && entitiesParameter == null) {
                     throw new MatchFailedException("Cannot implement save method for specified arguments and return type", mc.getMethodElement());
                 }
-                Map.Entry<ClassElement, Class<? extends DataInterceptor>> entry = FindersUtils.resolveInterceptorTypeByOperationType(
+                FindersUtils.InterceptorMatch entry = FindersUtils.resolveInterceptorTypeByOperationType(
                         entityParameter != null,
                         entitiesParameter != null,
                         DataMethod.OperationType.INSERT, mc
                 );
                 MethodMatchInfo methodMatchInfo = new MethodMatchInfo(
                         DataMethod.OperationType.INSERT,
-                        entry.getKey(),
-                        getInterceptorElement(mc, entry.getValue())
+                        entry.returnType(),
+                        entry.interceptor()
                 );
                 if (!mc.supportsImplicitQueries()) {
                     final AnnotationMetadataHierarchy annotationMetadataHierarchy = new AnnotationMetadataHierarchy(

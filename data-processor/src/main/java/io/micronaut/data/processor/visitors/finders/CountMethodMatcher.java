@@ -17,17 +17,13 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.criteria.QueryCriteriaMethodMatch;
-import io.micronaut.inject.ast.ClassElement;
 import jakarta.persistence.criteria.Expression;
-
-import java.util.Map;
 
 /**
  * Count method match.
@@ -67,7 +63,7 @@ public final class CountMethodMatcher extends AbstractPatternMethodMatcher {
                 }
 
                 @Override
-                protected Map.Entry<ClassElement, Class<? extends DataInterceptor>> resolveReturnTypeAndInterceptor(MethodMatchContext matchContext) {
+                protected FindersUtils.InterceptorMatch resolveReturnTypeAndInterceptor(MethodMatchContext matchContext) {
                     return FindersUtils.pickCountInterceptor(matchContext, matchContext.getReturnType());
                 }
 
