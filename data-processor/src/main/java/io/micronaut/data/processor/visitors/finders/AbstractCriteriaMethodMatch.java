@@ -146,11 +146,11 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     public final MethodMatchInfo buildMatchInfo(MethodMatchContext matchContext) {
         MethodMatchInfo methodMatchInfo;
         if (supportedByImplicitQueries() && matchContext.supportsImplicitQueries() && hasNoWhereAndJoinDeclaration(matchContext)) {
-            Map.Entry<ClassElement, Class<? extends DataInterceptor>> entry = resolveReturnTypeAndInterceptor(matchContext);
+            FindersUtils.InterceptorMatch entry = resolveReturnTypeAndInterceptor(matchContext);
             methodMatchInfo = new MethodMatchInfo(
                     getOperationType(),
-                    entry.getKey(),
-                    getInterceptorElement(matchContext, entry.getValue())
+                    entry.returnType(),
+                    entry.interceptor()
             );
         } else {
             methodMatchInfo = build(matchContext);
@@ -188,7 +188,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
      * @param matchContext The match context
      * @return resolved return type and interceptor
      */
-    protected Map.Entry<ClassElement, Class<? extends DataInterceptor>> resolveReturnTypeAndInterceptor(MethodMatchContext matchContext) {
+    protected FindersUtils.InterceptorMatch resolveReturnTypeAndInterceptor(MethodMatchContext matchContext) {
         ParameterElement entityParameter = getEntityParameter();
         ParameterElement entitiesParameter = getEntitiesParameter();
 

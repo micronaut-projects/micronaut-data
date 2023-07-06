@@ -16,11 +16,8 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.criteria.QueryCriteriaMethodMatch;
-
-import java.util.Arrays;
 
 /**
  * List method matcher.
@@ -37,8 +34,7 @@ public class ListMethodMatcher extends AbstractPatternMethodMatcher {
 
     @Override
     protected MethodMatch match(MethodMatchContext matchContext, java.util.regex.Matcher matcher) {
-        if (TypeUtils.isContainerType(matchContext.getReturnType()) || Arrays.stream(matchContext.getRepositoryClass().stringValues(RepositoryConfiguration.class, "queryReturnTypes"))
-            .anyMatch(type -> matchContext.getReturnType().getName().equals(type))) {
+        if (TypeUtils.isContainerType(matchContext.getReturnType()) || FindersUtils.isFindAllCompatibleReturnType(matchContext)) {
             return new QueryCriteriaMethodMatch(matcher);
         }
         return null;
