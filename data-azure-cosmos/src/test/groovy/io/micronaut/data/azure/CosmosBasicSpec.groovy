@@ -42,6 +42,7 @@ import io.micronaut.data.model.Pageable
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
 import io.micronaut.serde.Decoder
 import io.micronaut.serde.Deserializer
+import io.micronaut.serde.LimitingStream
 import io.micronaut.serde.SerdeRegistry
 import io.micronaut.serde.jackson.JacksonDecoder
 import jakarta.inject.Singleton
@@ -605,7 +606,7 @@ class CosmosBasicSpec extends Specification implements AzureCosmosTestProperties
                 if (!parser.hasCurrentToken()) {
                     parser.nextToken()
                 }
-                final Decoder decoder = JacksonDecoder.create(parser)
+                final Decoder decoder = JacksonDecoder.create(parser, LimitingStream.DEFAULT_LIMITS)
                 Deserializer.DecoderContext decoderContext = registry.newDecoderContext(null)
                 Deserializer<XBook> typeDeserializer = registry.findDeserializer(type)
                 Deserializer<XBook> deserializer = typeDeserializer.createSpecific(decoderContext, type)
