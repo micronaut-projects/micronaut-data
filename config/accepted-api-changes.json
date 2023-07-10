@@ -1,7 +1,2 @@
 [
-  {
-    "type": "io.micronaut.data.model.query.QueryModel$DistinctPropertyProjection",
-    "member": "Constructor io.micronaut.data.model.query.QueryModel$DistinctPropertyProjection(java.lang.String)",
-    "reason": "DistinctPropertyProjection has been removed"
-  }
 ]
