@@ -14,6 +14,10 @@ public interface BookRepository implements CrudRepository<@jakarta.validation.Va
 }
 ----
 
+===== Repositories now return `List`
+
+Find all return type changed to be `List` instead of `Iterable`
+
 ===== Hibernate transaction manager
 
 The signature of the Hibernate transaction manager has changed to include `org.hibernate.Session` instead of a data source connection:
