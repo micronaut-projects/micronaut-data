@@ -105,12 +105,6 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
             }
         } else if (path instanceof PersistentPropertyPath persistentPropertyPath) {
             Path parentPath = persistentPropertyPath.getParentPath();
-            if (parentPath instanceof PersistentAssociationPath parent) {
-                if (parent.getAssociation().getAssociatedEntity().getIdentity() == persistentPropertyPath.getProperty()) {
-                    // We don't need a join to access the ID
-                    return;
-                }
-            }
             joinAssociation(parentPath);
         }
     }

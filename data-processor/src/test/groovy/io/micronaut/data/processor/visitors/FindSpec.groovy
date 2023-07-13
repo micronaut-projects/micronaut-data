@@ -249,7 +249,7 @@ interface PlayerRepository extends GenericRepository<Player, Integer> {
 
         expect:
         findByTeamName.stringValue(Query).get() == 'SELECT player_ FROM test.Player AS player_ JOIN player_.team player_team_ WHERE (player_team_.name = :p1)'
-        findByTeamId.stringValue(Query).get() == 'SELECT player_ FROM test.Player AS player_ WHERE (player_.team.id = :p1)'
+        findByTeamId.stringValue(Query).get() == 'SELECT player_ FROM test.Player AS player_ JOIN player_.team player_team_ WHERE (player_.team.id = :p1)'
     }
 
     void "test find method match"() {
