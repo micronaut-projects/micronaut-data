@@ -109,7 +109,6 @@ import reactor.util.context.Context;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-import java.io.Serializable;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Iterator;
@@ -724,7 +723,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                                                Function<Connection, Publisher<R>> entityOperation) {
             @SuppressWarnings("unchecked")
             ReactiveTransactionStatus<Connection> tx = operation
-                .getParameterInRole(R2dbcRepository.PARAMETER_TX_STATUS, ReactiveTransactionStatus.class).orElse(null);
+                .getParameterInRole(R2dbcRepository.PARAMETER_TX_STATUS_ROLE, ReactiveTransactionStatus.class).orElse(null);
             if (tx != null) {
                 try {
                     return Mono.fromDirect(entityOperation.apply(tx.getConnection()));
@@ -741,7 +740,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                                                Function<Connection, Flux<R>> entityOperation) {
             @SuppressWarnings("unchecked")
             ReactiveTransactionStatus<Connection> tx = operation
-                .getParameterInRole(R2dbcRepository.PARAMETER_TX_STATUS, ReactiveTransactionStatus.class).orElse(null);
+                .getParameterInRole(R2dbcRepository.PARAMETER_TX_STATUS_ROLE, ReactiveTransactionStatus.class).orElse(null);
             if (tx != null) {
                 try {
                     return Flux.from(entityOperation.apply(tx.getConnection()));
@@ -758,7 +757,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             Function<Connection, Publisher<R>> entityOperation) {
             @SuppressWarnings("unchecked")
             ReactiveTransactionStatus<Connection> tx = operation
-                .getParameterInRole(R2dbcRepository.PARAMETER_TX_STATUS, ReactiveTransactionStatus.class).orElse(null);
+                .getParameterInRole(R2dbcRepository.PARAMETER_TX_STATUS_ROLE, ReactiveTransactionStatus.class).orElse(null);
             if (tx != null) {
                 try {
                     return Mono.fromDirect(entityOperation.apply(tx.getConnection()));
@@ -775,7 +774,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             Function<Connection, Flux<R>> entityOperation) {
             @SuppressWarnings("unchecked")
             ReactiveTransactionStatus<Connection> tx = operation
-                .getParameterInRole(R2dbcRepository.PARAMETER_TX_STATUS, ReactiveTransactionStatus.class).orElse(null);
+                .getParameterInRole(R2dbcRepository.PARAMETER_TX_STATUS_ROLE, ReactiveTransactionStatus.class).orElse(null);
             if (tx != null) {
                 try {
                     return Flux.from(entityOperation.apply(tx.getConnection()));
@@ -852,7 +851,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
         @NonNull
         @Override
-        public <T> Mono<T> findOptional(@NonNull Class<T> type, @NonNull Serializable id) {
+        public <T> Mono<T> findOptional(@NonNull Class<T> type, @NonNull Object id) {
             throw new UnsupportedOperationException("The findOptional method by ID is not supported. Execute the SQL query directly");
         }
 
@@ -864,7 +863,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
         @NonNull
         @Override
-        public <T> Mono<T> findOne(@NonNull Class<T> type, @NonNull Serializable id) {
+        public <T> Mono<T> findOne(@NonNull Class<T> type, @NonNull Object id) {
             throw new UnsupportedOperationException("The findOne method by ID is not supported. Execute the SQL query directly");
         }
 
@@ -1197,20 +1196,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         private final Connection connection;
         private final Dialect dialect;
         private final InvocationContext<?, ?> invocationContext;
-
-        /**
-         * The old deprecated constructor.
-         *
-         * @param annotationMetadata the annotation metadata
-         * @param repositoryType     the repository type
-         * @param dialect            the dialect
-         * @param connection         the connection
-         * @deprecated Use constructor with {@link InvocationContext}.
-         */
-        @Deprecated
-        public R2dbcOperationContext(AnnotationMetadata annotationMetadata, Class<?> repositoryType, Dialect dialect, Connection connection) {
-            this(annotationMetadata, null, repositoryType, dialect, connection);
-        }
 
         /**
          * The default constructor.

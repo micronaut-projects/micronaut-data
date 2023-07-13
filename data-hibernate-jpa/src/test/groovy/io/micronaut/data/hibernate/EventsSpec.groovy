@@ -18,8 +18,7 @@ import spock.lang.Stepwise
 import jakarta.inject.Inject
 
 @MicronautTest(transactional = false, packages = "io.micronaut.data.tck.entities")
-@Property(name = "datasources.default.name", value = "mydb")
-@Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
+@H2DBProperties
 @Property(name = "spec.name", value = "EventsSpec")
 @Stepwise
 class EventsSpec extends Specification {

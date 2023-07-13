@@ -22,9 +22,6 @@ import io.micronaut.data.processor.visitors.finders.AbstractSpecificationMethodM
 import io.micronaut.data.processor.visitors.finders.FindersUtils;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
-import io.micronaut.inject.ast.ClassElement;
-
-import java.util.Map;
 
 /**
  * Delete all specification method.
@@ -45,8 +42,8 @@ public class DeleteAllSpecificationMethodMatcher extends AbstractSpecificationMe
     @Override
     protected MethodMatch match(MethodMatchContext matchContext, java.util.regex.Matcher matcher) {
         if (TypeUtils.isValidBatchUpdateReturnType(matchContext.getMethodElement())) {
-            Map.Entry<ClassElement, ClassElement> e = FindersUtils.pickDeleteAllSpecInterceptor(matchContext, matchContext.getReturnType());
-            return mc -> new MethodMatchInfo(DataMethod.OperationType.DELETE, e.getKey(), e.getValue());
+            FindersUtils.InterceptorMatch e = FindersUtils.pickDeleteAllSpecInterceptor(matchContext, matchContext.getReturnType());
+            return mc -> new MethodMatchInfo(DataMethod.OperationType.DELETE, e.returnType(), e.interceptor());
         }
         return null;
     }

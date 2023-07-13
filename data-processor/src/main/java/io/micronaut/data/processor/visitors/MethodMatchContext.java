@@ -56,6 +56,7 @@ public class MethodMatchContext extends MatchContext {
      * @param typeRoles The type roles
      * @param parameters The parameters
      * @param entityResolver function used to resolve entities
+     * @param findInterceptors The interceptors
      */
     MethodMatchContext(
             @NonNull QueryBuilder queryBuilder,
@@ -67,8 +68,9 @@ public class MethodMatchContext extends MatchContext {
             @NonNull Map<String, Element> parametersInRole,
             @NonNull Map<String, String> typeRoles,
             @NonNull ParameterElement[] parameters,
-            @NonNull Function<ClassElement, SourcePersistentEntity> entityResolver) {
-        super(queryBuilder, repositoryClass, visitorContext, methodElement, typeRoles, returnType, parameters);
+            @NonNull Function<ClassElement, SourcePersistentEntity> entityResolver,
+            @NonNull Map<ClassElement, FindInterceptorDef> findInterceptors) {
+        super(queryBuilder, repositoryClass, visitorContext, methodElement, typeRoles, returnType, parameters, findInterceptors);
         this.entity = entity;
         this.parametersInRole = Collections.unmodifiableMap(parametersInRole);
         this.entityResolver = entityResolver;

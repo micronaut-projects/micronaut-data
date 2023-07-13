@@ -22,7 +22,6 @@ import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -41,8 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static io.micronaut.data.processor.visitors.finders.FindersUtils.getInterceptorElement;
 
 /**
  * A save method for saving a single entity.
@@ -145,12 +142,12 @@ public class SaveOneMethodMatcher extends AbstractPrefixPatternMethodMatcher {
                         matchContext.getAnnotationMetadata()
                 );
 
-                Map.Entry<ClassElement, Class<? extends DataInterceptor>> e = FindersUtils.pickSaveOneInterceptor(matchContext, matchContext.getReturnType());
+                FindersUtils.InterceptorMatch e = FindersUtils.pickSaveOneInterceptor(matchContext, matchContext.getReturnType());
                 boolean encodeEntityParameters = !DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(matchContext.getAnnotationMetadata());
                 return new MethodMatchInfo(
                         DataMethod.OperationType.INSERT,
-                        e.getKey(),
-                        getInterceptorElement(matchContext, e.getValue())
+                        e.returnType(),
+                        e.interceptor()
                 )
                         .encodeEntityParameters(encodeEntityParameters)
                         .queryResult(
@@ -160,7 +157,7 @@ public class SaveOneMethodMatcher extends AbstractPrefixPatternMethodMatcher {
 
             private boolean isRequiredProperty(SourcePersistentProperty pp) {
                 return pp.isRequired() &&
-                        !ClassUtils.getPrimitiveType(pp.getTypeName()).isPresent();
+                    ClassUtils.getPrimitiveType(pp.getTypeName()).isEmpty();
             }
 
         };

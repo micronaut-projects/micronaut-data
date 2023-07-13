@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.model.jpa.criteria.impl;
 
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Join;
@@ -83,7 +84,7 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
 
     @Override
     public QueryResult buildQuery(QueryBuilder queryBuilder) {
-        return queryBuilder.buildQuery(getQueryModel());
+        return queryBuilder.buildQuery(AnnotationMetadata.EMPTY_METADATA, getQueryModel());
     }
 
     @NonNull

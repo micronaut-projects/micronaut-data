@@ -29,8 +29,6 @@ import io.micronaut.data.model.runtime.UpdateOperation;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.Serializable;
-
 /**
  * The version of {@link ReactiveRepositoryOperations} which exposes reactor publisher types.
  *
@@ -41,7 +39,7 @@ public interface ReactorReactiveRepositoryOperations extends ReactiveRepositoryO
 
     @NonNull
     @SingleResult
-    <T> Mono<T> findOne(@NonNull Class<T> type, @NonNull Serializable id);
+    <T> Mono<T> findOne(@NonNull Class<T> type, @NonNull Object id);
 
     @NonNull
     @SingleResult
@@ -53,7 +51,7 @@ public interface ReactorReactiveRepositoryOperations extends ReactiveRepositoryO
 
     @NonNull
     @SingleResult
-    <T> Mono<T> findOptional(@NonNull Class<T> type, @NonNull Serializable id);
+    <T> Mono<T> findOptional(@NonNull Class<T> type, @NonNull Object id);
 
     @NonNull
     @SingleResult

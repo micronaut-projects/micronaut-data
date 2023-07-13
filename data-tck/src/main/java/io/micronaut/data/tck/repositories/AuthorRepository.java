@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.Where;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.repository.CrudRepository;
@@ -90,4 +91,11 @@ public interface AuthorRepository extends CrudRepository<Author, Long> {
 
     @Join(value = "books", type = Join.Type.LEFT_FETCH)
     Page<Author> findAll(Pageable pageable);
+
+    @Join(value = "books", type = Join.Type.LEFT_FETCH)
+    @Where("@.nick_name = :nickName")
+    Page<Author> findAllByName(String name, String nickName, Pageable pageable);
+
+    @Where("@.name = :name")
+    Page<Author> findAllByNickName(String nickName, String name, Pageable pageable);
 }

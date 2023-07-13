@@ -13,10 +13,3 @@ dependencies {
     implementation mn.micronaut.context.propagation
     implementation mn.micronaut.core.reactive
 }
-
-micronautBuild {
-    // New module in 4.0
-    binaryCompatibility {
-        enabled = false
-    }
-}

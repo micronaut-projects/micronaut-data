@@ -16,6 +16,7 @@
 package io.micronaut.data.hibernate.reactive
 
 import io.micronaut.context.annotation.Property
+import io.micronaut.data.hibernate.H2DBProperties
 import io.micronaut.data.hibernate.entities.UserWithWhere
 import io.micronaut.data.hibernate.reactive.ReactorPersonRepo
 import io.micronaut.data.hibernate.reactive.ReactorUserWithWhereRepository
@@ -27,8 +28,7 @@ import org.hibernate.SessionFactory
 import spock.lang.Specification
 
 @MicronautTest(rollback = false, packages = "io.micronaut.data.tck.entities")
-@Property(name = "datasources.default.name", value = "mydb")
-@Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
+@H2DBProperties
 @Property(name = 'jpa.default.properties.hibernate.show_sql', value = 'true')
 class ReactorSpec extends Specification{
 

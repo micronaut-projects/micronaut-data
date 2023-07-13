@@ -72,6 +72,7 @@ import java.util.stream.Collectors
 import static io.micronaut.data.tck.repositories.BookSpecifications.hasChapter
 import static io.micronaut.data.tck.repositories.BookSpecifications.titleEquals
 import static io.micronaut.data.tck.repositories.BookSpecifications.titleEqualsWithJoin
+import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.distinct
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.idsIn
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEquals
 
@@ -538,6 +539,21 @@ abstract class AbstractRepositorySpec extends Specification {
         personRepository.count() == 3
         personRepository.count("Fred") == 1
         personRepository.findAll().size() == 3
+    }
+
+    void "test distinct"() {
+        given:
+        personRepository.deleteAll()
+        when:"People with same name diff age are saved"
+        personRepository.save(new Person(name: "Fred", age: 50))
+        personRepository.save(new Person(name: "Fred", age: 18))
+        def names = personRepository.findDistinctName()
+
+        then:"Distinct works as expected"
+        personRepository.findDistinct().size() == 2
+        personRepository.findAll(distinct()).size() == 2
+        names.size() == 1
+        names[0] == "Fred"
     }
 
     void "test save many"() {
@@ -2443,6 +2459,37 @@ abstract class AbstractRepositorySpec extends Specification {
         authorPage.content.size() == 1
         authorPage.content[0].books.size() == 2
         bookPage.totalSize == 2
+    }
+
+    void 'test @Where and count'() {
+        given:
+        def author = new Author()
+        author.name = "Author1"
+        author.nickName = "A1"
+        def book1 = new Book()
+        book1.title = "Book1"
+        author.getBooks().add(book1)
+        authorRepository.save(author)
+        when:
+        def allByName = authorRepository.findAllByName("Author1", "A1", Pageable.from(0, 10))
+        then:
+        allByName.totalPages == 1
+        allByName.totalSize == 1
+        when:
+        def allByNickName = authorRepository.findAllByNickName("A1", "Author1", Pageable.from(0, 5))
+        then:
+        allByNickName.totalPages == 1
+        allByNickName.totalSize == 1
+        when:"Non matching nickname or name should not return results"
+        allByNickName = authorRepository.findAllByNickName("A2", "Author1", Pageable.from(0, 10))
+        allByName = authorRepository.findAllByName("Author1", "A2", Pageable.from(0, 10))
+        then:
+        allByNickName.totalSize == 0
+        allByNickName.totalPages == 0
+        allByName.totalPages == 0
+        allByName.totalSize == 0
+        cleanup:
+        cleanupData()
     }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {

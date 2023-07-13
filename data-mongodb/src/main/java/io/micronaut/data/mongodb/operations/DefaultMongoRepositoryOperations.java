@@ -85,7 +85,6 @@ import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -155,7 +154,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
     }
 
     @Override
-    public <T> T findOne(Class<T> type, Serializable id) {
+    public <T> T findOne(Class<T> type, Object id) {
         return withClientSession(clientSession -> {
             RuntimePersistentEntity<T> persistentEntity = runtimeEntityRegistry.getEntity(type);
             MongoDatabase database = getDatabase(persistentEntity, null);

@@ -16,11 +16,10 @@
 package io.micronaut.data.processor.visitors.finders.criteria;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.annotation.DataMethod;
-import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.impl.QueryModelPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.builder.QueryBuilder;
@@ -29,11 +28,11 @@ import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteria
 import io.micronaut.data.processor.model.criteria.impl.MethodMatchSourcePersistentEntityCriteriaBuilderImpl;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.AbstractCriteriaMethodMatch;
+import io.micronaut.data.processor.visitors.finders.FindersUtils;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
 import io.micronaut.inject.ast.ClassElement;
 
-import java.util.Map;
 import java.util.regex.Matcher;
 
 /**
@@ -88,9 +87,9 @@ public class DeleteCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
         apply(matchContext, criteriaQuery.from(matchContext.getRootEntity()), criteriaQuery, cb);
 
-        Map.Entry<ClassElement, Class<? extends DataInterceptor>> entry = resolveReturnTypeAndInterceptor(matchContext);
-        ClassElement resultType = entry.getKey();
-        Class<? extends DataInterceptor> interceptorType = entry.getValue();
+        FindersUtils.InterceptorMatch entry = resolveReturnTypeAndInterceptor(matchContext);
+        ClassElement resultType = entry.returnType();
+        ClassElement interceptorType = entry.interceptor();
 
         boolean optimisticLock = ((AbstractPersistentEntityCriteriaDelete<?>) criteriaQuery).hasVersionRestriction();
 
@@ -105,7 +104,7 @@ public class DeleteCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         return new MethodMatchInfo(
                 DataMethod.OperationType.DELETE,
                 resultType,
-                getInterceptorElement(matchContext, interceptorType)
+                interceptorType
         )
                 .optimisticLock(optimisticLock)
                 .queryResult(queryResult);

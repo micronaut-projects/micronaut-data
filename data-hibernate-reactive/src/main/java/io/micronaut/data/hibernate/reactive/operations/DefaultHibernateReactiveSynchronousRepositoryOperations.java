@@ -44,7 +44,6 @@ import reactor.core.publisher.Mono;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import java.io.Closeable;
-import java.io.Serializable;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -100,7 +99,7 @@ final class DefaultHibernateReactiveSynchronousRepositoryOperations implements B
     }
 
     @Override
-    public <T> T load(Class<T> type, Serializable id) {
+    public <T> T load(Class<T> type, Object id) {
         return notSupported();
     }
 

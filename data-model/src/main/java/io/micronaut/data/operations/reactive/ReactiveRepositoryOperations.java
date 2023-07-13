@@ -22,8 +22,6 @@ import io.micronaut.data.model.Page;
 import io.micronaut.data.model.runtime.*;
 import org.reactivestreams.Publisher;
 
-import java.io.Serializable;
-
 /**
  * Reactive operations for reading data from a backing implementations.
  *
@@ -42,7 +40,7 @@ public interface ReactiveRepositoryOperations extends ConversionServiceProvider 
      */
     @NonNull
     @SingleResult
-    <T> Publisher<T> findOne(@NonNull Class<T> type, @NonNull Serializable id);
+    <T> Publisher<T> findOne(@NonNull Class<T> type, @NonNull Object id);
 
     /**
      * Check with an record exists for the given query.
@@ -76,7 +74,7 @@ public interface ReactiveRepositoryOperations extends ConversionServiceProvider 
      */
     @NonNull
     @SingleResult
-    <T> Publisher<T> findOptional(@NonNull Class<T> type, @NonNull Serializable id);
+    <T> Publisher<T> findOptional(@NonNull Class<T> type, @NonNull Object id);
 
     /**
      * Find one by Query.

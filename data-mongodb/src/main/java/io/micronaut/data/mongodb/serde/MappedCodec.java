@@ -19,6 +19,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.serde.Deserializer;
+import io.micronaut.serde.LimitingStream;
 import io.micronaut.serde.Serializer;
 import io.micronaut.serde.bson.BsonReaderDecoder;
 import io.micronaut.serde.bson.BsonWriterEncoder;
@@ -80,7 +81,7 @@ class MappedCodec<T> implements Codec<T> {
     @Override
     public T decode(BsonReader reader, DecoderContext decoderContext) {
         try {
-            return deserializer.deserialize(new BsonReaderDecoder(reader), this.decoderContext, argument);
+            return deserializer.deserialize(new BsonReaderDecoder(reader, LimitingStream.DEFAULT_LIMITS), this.decoderContext, argument);
         } catch (IOException e) {
             throw new DataAccessException("Cannot deserialize: " + type, e);
         }
@@ -89,7 +90,7 @@ class MappedCodec<T> implements Codec<T> {
     @Override
     public void encode(BsonWriter writer, T value, EncoderContext encoderContext) {
         try {
-            serializer.serialize(new BsonWriterEncoder(writer), this.encoderContext, argument, value);
+            serializer.serialize(new BsonWriterEncoder(writer, LimitingStream.DEFAULT_LIMITS), this.encoderContext, argument, value);
         } catch (IOException e) {
             throw new DataAccessException("Cannot serialize: " + value, e);
         }

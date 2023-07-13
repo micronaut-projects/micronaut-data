@@ -23,8 +23,6 @@ import io.micronaut.data.processor.visitors.finders.FindersUtils;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.inject.ast.ClassElement;
 
-import java.util.Map;
-
 /**
  * JPA specification findOne.
  *
@@ -44,8 +42,8 @@ public class FindOneSpecificationMethodMatcher extends AbstractSpecificationMeth
     @Override
     protected MethodMatch match(MethodMatchContext matchContext, java.util.regex.Matcher matcher) {
         if (isFirstParameterMicronautDataQuerySpecification(matchContext.getMethodElement())) {
-            Map.Entry<ClassElement, ClassElement> e = FindersUtils.pickFindOneSpecInterceptor(matchContext, matchContext.getMethodElement().getGenericReturnType());
-            return mc -> new MethodMatchInfo(DataMethod.OperationType.QUERY, e.getKey(), e.getValue());
+            FindersUtils.InterceptorMatch e = FindersUtils.pickFindOneSpecInterceptor(matchContext, matchContext.getMethodElement().getGenericReturnType());
+            return mc -> new MethodMatchInfo(DataMethod.OperationType.QUERY, e.returnType(), e.interceptor());
         }
         if (isFirstParameterSpringJpaSpecification(matchContext.getMethodElement())) {
             return mc -> new MethodMatchInfo(

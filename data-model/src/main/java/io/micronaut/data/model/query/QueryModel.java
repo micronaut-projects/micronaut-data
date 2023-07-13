@@ -270,18 +270,6 @@ public interface QueryModel extends Criteria {
     /**
      * Join on the given association.
      * @param path The join path
-     * @param association The association
-     * @param joinType The join type
-     * @param alias The alias to use.
-     * @return The query
-     */
-    @NonNull
-    @Deprecated
-    JoinPath join(String path, Association association, @NonNull Join.Type joinType, @Nullable String alias);
-
-    /**
-     * Join on the given association.
-     * @param path The join path
      * @param joinType The join type
      * @param alias The alias to use.
      * @return The query
@@ -300,7 +288,7 @@ public interface QueryModel extends Criteria {
         if (getPersistentEntity() != association.getOwner()) {
             throw new IllegalArgumentException("The association " + association + " must be owned by: " + getPersistentEntity());
         }
-        return join(association.getName(), association, joinType, null);
+        return join(association.getName(), joinType, null);
     }
 
     /**
@@ -310,7 +298,7 @@ public interface QueryModel extends Criteria {
      */
     @NonNull
     default JoinPath join(@NonNull Association association) {
-        return join(association.getName(), association, Join.Type.DEFAULT, null);
+        return join(association.getName(), Join.Type.DEFAULT, null);
     }
 
     /**
@@ -1449,19 +1437,6 @@ public interface QueryModel extends Criteria {
          */
         public Optional<String> getAlias() {
             return Optional.ofNullable(alias);
-        }
-    }
-
-    /**
-     * Projection to return distinct property names.
-     */
-    class DistinctPropertyProjection extends PropertyProjection {
-        /**
-         * Default constructor.
-         * @param propertyName The property name
-         */
-        public DistinctPropertyProjection(String propertyName) {
-            super(propertyName);
         }
     }
 

@@ -35,6 +35,7 @@ import java.lang.annotation.*;
 @Around
 @Type(TransactionalInterceptor.class)
 public @interface Transactional {
+
     /**
      * Alias for {@link #transactionManager}.
      *
@@ -111,4 +112,11 @@ public @interface Transactional {
      */
     Class<? extends Throwable>[] noRollbackFor() default {};
 
+    /**
+     * The optional name of the transaction.
+     *
+     * @return The transaction name
+     * @since 4.0.0
+     */
+    String name() default "";
 }

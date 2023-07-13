@@ -23,7 +23,6 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.document.mongo.MongoAnnotations;
-import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.BindingParameter.BindingContext;
@@ -123,14 +122,14 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
                     entitiesParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isIterableOfEntity(p.getGenericType())).findFirst().orElse(null);
                 }
 
-                Map.Entry<ClassElement, Class<? extends DataInterceptor>> entry = FindersUtils.resolveInterceptorTypeByOperationType(
+                FindersUtils.InterceptorMatch entry = FindersUtils.resolveInterceptorTypeByOperationType(
                         entityParameter != null,
                         entitiesParameter != null,
                         operationType,
                         matchContext);
 
-                ClassElement resultType = entry.getKey();
-                Class<? extends DataInterceptor> interceptorType = entry.getValue();
+                ClassElement resultType = entry.returnType();
+                ClassElement interceptorType = entry.interceptor();
 
                 boolean isDto = false;
                 if (resultType == null) {
@@ -146,7 +145,7 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
                 MethodMatchInfo methodMatchInfo = new MethodMatchInfo(
                         operationType,
                         resultType,
-                        FindersUtils.getInterceptorElement(matchContext, interceptorType)
+                        interceptorType
                 );
 
                 methodMatchInfo.dto(isDto);

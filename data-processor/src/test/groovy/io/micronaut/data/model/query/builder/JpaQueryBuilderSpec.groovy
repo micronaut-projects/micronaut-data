@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.model.query.builder
 
+import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.model.Association
 import io.micronaut.data.model.DataType
@@ -70,7 +71,7 @@ class JpaQueryBuilderSpec extends Specification {
         q.sort Sort.of(props.collect() { Sort.Order."$direction"(it)})
 
         QueryBuilder encoder = new JpaQueryBuilder()
-        QueryResult encodedQuery = encoder.buildQuery(q)
+        QueryResult encodedQuery = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
 
 
         expect:
@@ -94,7 +95,7 @@ class JpaQueryBuilderSpec extends Specification {
         q."$method"(property, QueryParameter.of('test'))
 
         QueryBuilder encoder = new JpaQueryBuilder()
-        QueryResult encodedQuery = encoder.buildQuery(q)
+        QueryResult encodedQuery = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
         def alias = encoder.getAliasName(entity)
 
         expect:
@@ -122,7 +123,7 @@ class JpaQueryBuilderSpec extends Specification {
         q."$method"(property, QueryParameter.of('test'))
         q.projections()."$projection"(property)
         QueryBuilder encoder = new JpaQueryBuilder()
-        QueryResult encodedQuery = encoder.buildQuery(q)
+        QueryResult encodedQuery = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
         def alias = encoder.getAliasName(entity)
 
         expect:
@@ -137,7 +138,6 @@ class JpaQueryBuilderSpec extends Specification {
         Person | 'gt'   | 'name'   | '>'      | 'min'
         Person | 'lt'   | 'name'   | '<'      | 'sum'
         Person | 'ge'   | 'name'   | '>='     | 'avg'
-        Person | 'le'   | 'name'   | '<='     | 'distinct'
     }
 
     @Unroll
@@ -148,7 +148,7 @@ class JpaQueryBuilderSpec extends Specification {
         q."$method"(property, QueryParameter.of('test'))
 
         QueryBuilder encoder = new JpaQueryBuilder()
-        QueryResult encodedQuery = encoder.buildQuery(q)
+        QueryResult encodedQuery = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
         def alias = encoder.getAliasName(entity)
 
         expect:
@@ -173,7 +173,7 @@ class JpaQueryBuilderSpec extends Specification {
         q.between(property, QueryParameter.of("from"), QueryParameter.of("to"))
 
         QueryBuilder encoder = new JpaQueryBuilder()
-        QueryResult encodedQuery = encoder.buildQuery(q)
+        QueryResult encodedQuery = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
         def alias = encoder.getAliasName(entity)
 
         expect:
@@ -195,7 +195,7 @@ class JpaQueryBuilderSpec extends Specification {
         q."$method"(property)
 
         QueryBuilder encoder = new JpaQueryBuilder()
-        QueryResult encodedQuery = encoder.buildQuery(q)
+        QueryResult encodedQuery = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
         def alias = encoder.getAliasName(entity)
 
         expect:
@@ -216,7 +216,7 @@ class JpaQueryBuilderSpec extends Specification {
     void "test queries"() {
         when:
             QueryBuilder encoder = new JpaQueryBuilder()
-            QueryResult encodedQuery = encoder.buildQuery(queryModel)
+            QueryResult encodedQuery = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel)
 
         then:
             encodedQuery.query == query
@@ -228,13 +228,13 @@ class JpaQueryBuilderSpec extends Specification {
                     {
                         def entity = getRuntimePersistentEntity(UserRole)
                         def qm = QueryModel.from(entity)
-                        qm.join("role", entity.getPropertyByPath("id.role").get() as Association, Join.Type.DEFAULT, null)
+                        qm.join("role", Join.Type.DEFAULT, null)
                         qm
                     }.call(),
                     {
                         def entity = getRuntimePersistentEntity(UserRole)
                         def qm = QueryModel.from(entity)
-                        qm.join("user", entity.getPropertyByPath("id.user").get() as Association, Join.Type.DEFAULT, null)
+                        qm.join("user", Join.Type.DEFAULT, null)
                         qm.eq("user", new QueryParameter("xyz"))
                     }.call(),
                     QueryModel.from(getRuntimePersistentEntity(UuidEntity)).idEq(new QueryParameter("xyz")),
@@ -242,9 +242,9 @@ class JpaQueryBuilderSpec extends Specification {
                     {
                         def entity = getRuntimePersistentEntity(Challenge)
                         def qm = QueryModel.from(entity)
-                        qm.join("authentication", null, Join.Type.FETCH, null)
-                        qm.join("authentication.device", null, Join.Type.FETCH, null)
-                        qm.join("authentication.device.user", null, Join.Type.FETCH, null)
+                        qm.join("authentication", Join.Type.FETCH, null)
+                        qm.join("authentication.device", Join.Type.FETCH, null)
+                        qm.join("authentication.device.user", Join.Type.FETCH, null)
                         qm.idEq(new QueryParameter("xyz"))
                         qm
                     }.call(),
@@ -252,14 +252,14 @@ class JpaQueryBuilderSpec extends Specification {
                         def entity = getRuntimePersistentEntity(UserRole)
                         def qm = QueryModel.from(entity)
                         qm.projections().add(Projections.property("role"))
-                        qm.join("role", null, Join.Type.FETCH, null)
+                        qm.join("role", Join.Type.FETCH, null)
                         qm.eq("user", new QueryParameter("xyz"))
                         qm
                     }.call(),
                     {
                         def entity = getRuntimePersistentEntity(Meal)
                         def qm = QueryModel.from(entity)
-                        qm.join("foods", null, Join.Type.FETCH, null)
+                        qm.join("foods", Join.Type.FETCH, null)
                         qm.idEq(new QueryParameter("xyz"))
                         qm
                     }.call()
@@ -283,7 +283,7 @@ class JpaQueryBuilderSpec extends Specification {
             def entity = getRuntimePersistentEntity(EntityWithIdClass)
             def qm = QueryModel.from(entity)
             qm.idEq(new QueryParameter("xyz"))
-            def result = encoder.buildQuery(qm)
+            def result = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, qm)
         then:
             result.query == 'SELECT entityWithIdClass_ FROM io.micronaut.data.tck.entities.EntityWithIdClass AS entityWithIdClass_ WHERE (entityWithIdClass_.id1 = :p1 AND entityWithIdClass_.id2 = :p2)'
             result.parameters == ['p1': 'id1', 'p2': 'id2']
