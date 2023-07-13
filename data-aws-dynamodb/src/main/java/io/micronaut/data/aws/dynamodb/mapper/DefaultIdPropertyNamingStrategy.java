@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.aws.dynamodb.mapper;
 
+import io.micronaut.context.annotation.Primary;
 import io.micronaut.core.annotation.AnnotatedElement;
 import io.micronaut.data.document.serde.IdPropertyNamingStrategy;
 import jakarta.inject.Singleton;
@@ -26,6 +27,7 @@ import jakarta.inject.Singleton;
  * @since 3.9.0
  */
 @Singleton
+@Primary
 final class DefaultIdPropertyNamingStrategy implements IdPropertyNamingStrategy {
     @Override
     public String translate(AnnotatedElement element) {

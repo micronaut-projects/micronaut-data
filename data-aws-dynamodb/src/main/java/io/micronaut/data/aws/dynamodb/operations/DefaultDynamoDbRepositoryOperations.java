@@ -25,6 +25,7 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.aws.dynamodb.mapper.DynamoDbResultReader;
@@ -48,17 +49,18 @@ import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.mapper.TypeMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlDTOMapper;
+import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlStoredQuery;
+import io.micronaut.data.runtime.operations.internal.sql.SqlJsonColumnMapperProvider;
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.http.codec.MediaTypeCodec;
-import io.micronaut.serde.ObjectMapper;
+import io.micronaut.json.JsonMapper;
 import jakarta.inject.Singleton;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -81,17 +83,21 @@ public class DefaultDynamoDbRepositoryOperations extends AbstractRepositoryOpera
     DynamoDbRepositoryOperations {
 
     private final AmazonDynamoDB amazonDynamoDB;
-    private final ObjectMapper objectMapper;
+    private final JsonMapper jsonMapper;
+    private final SqlJsonColumnReader defaultSqlJsonColumnReader;
+    private final DynamoDbResultReader resultReader;
 
     /**
      * Default constructor.
      *
-     * @param amazonDynamoDB the Amazon DynamoDB client
-     * @param codecs                     The media type codecs
-     * @param dateTimeProvider           The date time provider
-     * @param runtimeEntityRegistry      The entity registry
-     * @param conversionService          The conversion service
-     * @param attributeConverterRegistry The attribute converter registry
+     * @param amazonDynamoDB              The Amazon DynamoDB client
+     * @param codecs                      The media type codecs
+     * @param dateTimeProvider            The date time provider
+     * @param runtimeEntityRegistry       The entity registry
+     * @param conversionService           The conversion service
+     * @param attributeConverterRegistry  The attribute converter registry
+     * @param jsonMapper                  The JSON mapper
+     * @param sqlJsonColumnMapperProvider The SQL JSON column mapper provider
      */
     public DefaultDynamoDbRepositoryOperations(@NonNull AmazonDynamoDB amazonDynamoDB,
                                                List<MediaTypeCodec> codecs,
@@ -99,14 +105,17 @@ public class DefaultDynamoDbRepositoryOperations extends AbstractRepositoryOpera
                                                RuntimeEntityRegistry runtimeEntityRegistry,
                                                DataConversionService conversionService,
                                                AttributeConverterRegistry attributeConverterRegistry,
-                                               ObjectMapper objectMapper) {
-        super(codecs, dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
+                                               @Nullable JsonMapper jsonMapper,
+                                               SqlJsonColumnMapperProvider<Map> sqlJsonColumnMapperProvider) {
+        super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
         this.amazonDynamoDB = amazonDynamoDB;
-        this.objectMapper = objectMapper;
+        this.jsonMapper = jsonMapper;
+        this.defaultSqlJsonColumnReader = () -> jsonMapper;
+        this.resultReader = new DynamoDbResultReader();
     }
 
     @Override
-    public <T> T findOne(Class<T> type, Serializable id) {
+    public <T> T findOne(Class<T> type, Object id) {
         // TODO: When is this used?
         return null;
     }
@@ -143,7 +152,7 @@ public class DefaultDynamoDbRepositoryOperations extends AbstractRepositoryOpera
             Item item = ItemUtils.toItem(result.getItems().get(0));
             String itemString = item.toJSON();
             try {
-                R entity = objectMapper.readValue(itemString, resultType);
+                R entity = jsonMapper.readValue(itemString, resultType);
                 return entity;
             } catch (Exception e) {
                 throw new DataAccessException("Failed to deserialize entity", e);
@@ -162,7 +171,7 @@ public class DefaultDynamoDbRepositoryOperations extends AbstractRepositoryOpera
                     persistentEntity,
                     isRawQuery ? getEntity(preparedQuery.getResultType()) : persistentEntity,
                     resultReader,
-                    jsonCodec,
+                    defaultSqlJsonColumnReader,
                     conversionService
                 );
                 return introspectedDataMapper.map(result.getItems(), resultType);

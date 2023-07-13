@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.aws.dynamodb.mapper;
 
+import io.micronaut.context.annotation.Primary;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.document.serde.IdDeserializer;
 import io.micronaut.serde.Deserializer;
@@ -29,6 +30,7 @@ import jakarta.inject.Singleton;
  * @since 3.9.0
  */
 @Singleton
+@Primary
 final class DefaultIdDeserializer implements IdDeserializer, CustomizableDeserializer<Object> {
 
     @Override
