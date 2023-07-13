@@ -1,5 +1,5 @@
 === Micronaut Data 4.0
-- Hibernate 6
+- https://hibernate.org/orm/documentation/6.0/[Hibernate 6]
 - https://hibernate.org/reactive/releases/2.0/[Hibernate Reactive 2] (Hibernate 6 compatible)
 - New implementation of the transaction and connection management
 - JPA repository `merge` method
