@@ -1,6 +1,6 @@
 === Micronaut Data 4.0
 - Hibernate 6
-- Hibernate Reactive 2 (Hibernate 6 compatible)
+- https://hibernate.org/reactive/releases/2.0/[Hibernate Reactive 2] (Hibernate 6 compatible)
 - New implementation of the transaction and connection management
 - JPA repository `merge` method
 - Oracle JSON-Relational Duality Views Support
