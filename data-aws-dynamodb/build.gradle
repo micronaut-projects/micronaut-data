@@ -18,25 +18,25 @@ micronautBuild {
     }
 }
 dependencies {
-    annotationProcessor projects.dataDocumentProcessor
+    annotationProcessor projects.micronautDataDocumentProcessor
     annotationProcessor mn.micronaut.inject.java
     annotationProcessor mn.micronaut.graal
     annotationProcessor libs.micronaut.docs
 
-    api projects.dataRuntime
-    api projects.dataDocumentModel
+    api projects.micronautDataRuntime
+    api projects.micronautDataDocumentModel
     api libs.aws.dynamodb
     api mnSerde.micronaut.serde.jackson
     api mnSerde.micronaut.serde.support
 
     compileOnly mnReactor.micronaut.reactor
 
-    testAnnotationProcessor projects.dataDocumentProcessor
+    testAnnotationProcessor projects.micronautDataDocumentProcessor
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor libs.jakarta.persistence.api
 
-    testImplementation projects.dataDocumentProcessor
-    testImplementation projects.dataDocumentTck
+    testImplementation projects.micronautDataDocumentProcessor
+    testImplementation projects.micronautDataDocumentTck
     testImplementation libs.jakarta.persistence.api
     testImplementation mnRxjava2.micronaut.rxjava2
     testImplementation mnReactor.micronaut.reactor
