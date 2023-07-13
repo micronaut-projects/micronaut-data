@@ -50,25 +50,29 @@ public class MatchContext implements AnnotationMetadataProvider {
     private final QueryBuilder queryBuilder;
     private final List<String> possibleFailures = new ArrayList<>();
     private boolean failing = false;
+    private final Map<ClassElement, FindInterceptorDef> findInterceptors;
 
     /**
      * Default constructor.
-     * @param queryBuilder The query builder
-     * @param repositoryClass The repository class
-     * @param visitorContext The visitor context
-     * @param methodElement The method element
-     * @param typeRoles The type roles
-     * @param returnType The return type
-     * @param parameters The parameters
+     *
+     * @param queryBuilder     The query builder
+     * @param repositoryClass  The repository class
+     * @param visitorContext   The visitor context
+     * @param methodElement    The method element
+     * @param typeRoles        The type roles
+     * @param returnType       The return type
+     * @param parameters       The parameters
+     * @param findInterceptors The find interceptors
      */
     MatchContext(
-            @NonNull QueryBuilder queryBuilder,
-            @NonNull ClassElement repositoryClass,
-            @NonNull VisitorContext visitorContext,
-            @NonNull MethodElement methodElement,
-            @NonNull Map<String, String> typeRoles,
-            @NonNull ClassElement returnType,
-            @NonNull ParameterElement[] parameters) {
+        @NonNull QueryBuilder queryBuilder,
+        @NonNull ClassElement repositoryClass,
+        @NonNull VisitorContext visitorContext,
+        @NonNull MethodElement methodElement,
+        @NonNull Map<String, String> typeRoles,
+        @NonNull ClassElement returnType,
+        @NonNull ParameterElement[] parameters,
+        @NonNull Map<ClassElement, FindInterceptorDef> findInterceptors) {
         this.queryBuilder = queryBuilder;
         this.repositoryClass = repositoryClass;
         this.visitorContext = visitorContext;
@@ -76,6 +80,7 @@ public class MatchContext implements AnnotationMetadataProvider {
         this.typeRoles = typeRoles;
         this.returnType = returnType;
         this.parameters = parameters;
+        this.findInterceptors = findInterceptors;
     }
 
     /**
@@ -123,10 +128,8 @@ public class MatchContext implements AnnotationMetadataProvider {
 
     /**
      * @return The return type
-     * @deprecated Use {@link #getMethodElement()} and {@link #getReturnType()}.
      */
     @NonNull
-    @Deprecated
     public ClassElement getReturnType() {
         return returnType;
     }
@@ -211,5 +214,12 @@ public class MatchContext implements AnnotationMetadataProvider {
      */
     public String getUnableToImplementMessage() {
         return "Unable to implement Repository method: " + repositoryClass.getSimpleName() + "." + methodElement.getName() + "(" + Arrays.stream(methodElement.getParameters()).map(p -> p.getType().getSimpleName() + " " + p.getName()).collect(Collectors.joining(",")) + "). ";
+    }
+
+    /**
+     * @return The find interceptors
+     */
+    public Map<ClassElement, FindInterceptorDef> getFindInterceptors() {
+        return findInterceptors;
     }
 }

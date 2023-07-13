@@ -60,7 +60,11 @@ class TestUtils {
     }
 
     static String getDataInterceptor(AnnotationMetadataProvider metadata) {
-        return metadata.getAnnotation(DataMethod).stringValue( DataMethod.META_MEMBER_INTERCEPTOR).get()
+        return metadata.getAnnotation(DataMethod).stringValue(DataMethod.META_MEMBER_INTERCEPTOR).get()
+    }
+
+    static String getDataResultType(AnnotationMetadataProvider metadata) {
+        return metadata.getAnnotation(DataMethod).stringValue(DataMethod.META_MEMBER_RESULT_TYPE).get()
     }
 
     static String[] getParameterPropertyPaths(AnnotationMetadataProvider metadata) {

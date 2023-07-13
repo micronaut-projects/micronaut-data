@@ -32,7 +32,6 @@ import io.micronaut.data.operations.RepositoryOperations;
 import reactor.util.context.Context;
 import reactor.util.context.ContextView;
 
-import java.io.Serializable;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -50,7 +49,7 @@ public interface BlockingReactorRepositoryOperations extends RepositoryOperation
     }
 
     @Nullable
-    default <T> T findOne(@NonNull Class<T> type, @NonNull Serializable id) {
+    default <T> T findOne(@NonNull Class<T> type, @NonNull Object id) {
         return reactive().findOne(type, id)
             .contextWrite(getContextView())
             .block();

@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.hibernate
 
-import io.micronaut.context.annotation.Property
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
@@ -33,8 +32,7 @@ import jakarta.persistence.criteria.Root
 import java.util.stream.Collectors
 
 @MicronautTest(transactional = false, packages = "io.micronaut.data.tck.entities")
-@Property(name = "datasources.default.name", value = "mydb")
-@Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
+@H2DBProperties
 @Stepwise
 class JpaSpecificationCrudRepositorySpec extends Specification {
     @Inject

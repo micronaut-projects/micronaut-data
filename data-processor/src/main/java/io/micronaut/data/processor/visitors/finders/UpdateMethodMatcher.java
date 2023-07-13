@@ -24,12 +24,11 @@ import io.micronaut.data.annotation.EntityRepresentation;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Version;
-import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentPropertyPath;
-import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaUpdate;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
@@ -44,7 +43,6 @@ import jakarta.persistence.criteria.Predicate;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -143,10 +141,10 @@ public final class UpdateMethodMatcher extends AbstractPatternMethodMatcher {
             }
 
             @Override
-            protected Map.Entry<ClassElement, Class<? extends DataInterceptor>> resolveReturnTypeAndInterceptor(MethodMatchContext matchContext) {
+            protected FindersUtils.InterceptorMatch resolveReturnTypeAndInterceptor(MethodMatchContext matchContext) {
                 MethodElement methodElement = matchContext.getMethodElement();
-                Map.Entry<ClassElement, Class<? extends DataInterceptor>> e = super.resolveReturnTypeAndInterceptor(matchContext);
-                ClassElement returnType = e.getKey();
+                FindersUtils.InterceptorMatch e = super.resolveReturnTypeAndInterceptor(matchContext);
+                ClassElement returnType = e.returnType();
                 if (returnType != null
                         && !TypeUtils.isVoid(returnType)
                         && !TypeUtils.isNumber(returnType)

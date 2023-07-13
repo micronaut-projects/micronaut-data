@@ -16,11 +16,9 @@
 package io.micronaut.data.model.runtime;
 
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.naming.Named;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
-import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.JoinPath;
 
@@ -47,15 +45,6 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      */
     @NonNull
     Class<E> getRootEntity();
-
-    /**
-     * Does the query contain an in expression.
-     * @return True if it does
-     */
-    @Deprecated
-    default boolean hasInExpression() {
-        return false;
-    }
 
     /**
      * Does the query have a pageable.
@@ -152,58 +141,9 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
     }
 
     /**
-     * The parameter binding. That is the mapping between named query parameters and parameters of the method.
-     *
-     * @return The parameter binding.
-     */
-    @NonNull
-    @Deprecated
-    default Map<String, String> getParameterBinding() {
-        return Collections.emptyMap();
-    }
-
-    /**
      * @return Is this a count query.
      */
     boolean isCount();
-
-    /**
-     * The compute time computed parameter data types for the query indices.
-     * @return The indexed values
-     * @see #useNumericPlaceholders()
-     */
-    @Deprecated
-    default @NonNull DataType[] getIndexedParameterTypes() {
-        return DataType.EMPTY_DATA_TYPE_ARRAY;
-    }
-
-    /**
-     * The parameter binding. That is the mapping between named query parameters and parameters of the method.
-     *
-     * @return The parameter binding.
-     * @see #useNumericPlaceholders()
-     */
-    @NonNull
-    @Deprecated
-    default int[] getIndexedParameterBinding() {
-        return new int[0];
-    }
-
-    /**
-     * @return The parameter names the case where named parameters are supported
-     */
-    @Deprecated
-    default String[] getParameterNames() {
-        return StringUtils.EMPTY_STRING_ARRAY;
-    }
-
-    /**
-     * @return The indexed parameter paths.
-     */
-    @Deprecated
-    default String[] getIndexedParameterPaths() {
-        return StringUtils.EMPTY_STRING_ARRAY;
-    }
 
     /**
      * The parameter binding. That is the mapping between named query parameters and parameters of the method.
@@ -213,46 +153,6 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
     @NonNull
     default Map<String, Object> getQueryHints() {
         return Collections.emptyMap();
-    }
-
-    /**
-     * The name of the last updated property on the entity if any.
-     *
-     * @return The last updated property
-     */
-    @Deprecated
-    default @Nullable String getLastUpdatedProperty() {
-        return null;
-    }
-
-    /**
-     * The mapping between query parameters and auto populated properties that the parameter represents.
-     *
-     * @return The auto populated properties.
-     */
-    @Deprecated
-    default String[] getIndexedParameterAutoPopulatedPropertyPaths() {
-        return StringUtils.EMPTY_STRING_ARRAY;
-    }
-
-    /**
-     * The mapping between query parameters and auto populated previous properties that the parameter represents.
-     *
-     * @return The auto populated properties.
-     */
-    @Deprecated
-    default String[] getIndexedParameterAutoPopulatedPreviousPropertyPaths() {
-        return StringUtils.EMPTY_STRING_ARRAY;
-    }
-
-    /**
-     * The mapping between query parameters and auto populated previous properties that the parameter represents.
-     *
-     * @return The auto populated properties.
-     */
-    @Deprecated
-    default int[] getIndexedParameterAutoPopulatedPreviousPropertyIndexes() {
-        return new int[0];
     }
 
     /**

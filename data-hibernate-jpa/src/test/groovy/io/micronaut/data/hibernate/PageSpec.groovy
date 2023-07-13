@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.hibernate
 
-import io.micronaut.context.annotation.Property
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Slice
@@ -30,8 +29,7 @@ import spock.lang.Specification
 import jakarta.inject.Inject
 
 @MicronautTest(rollback = false, transactional = false, packages = "io.micronaut.data.tck.entities")
-@Property(name = "datasources.default.name", value = "mydb")
-@Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
+@H2DBProperties
 class PageSpec extends Specification {
 
     @Inject

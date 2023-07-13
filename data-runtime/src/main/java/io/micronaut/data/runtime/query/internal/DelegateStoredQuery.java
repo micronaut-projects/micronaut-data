@@ -16,7 +16,6 @@
 package io.micronaut.data.runtime.query.internal;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.JoinPath;
@@ -146,22 +145,6 @@ public interface DelegateStoredQuery<E, R> extends StoredQuery<E, R> {
     @Override
     default String getName() {
         return getStoredQueryDelegate().getName();
-    }
-
-    @Nullable
-    @Override
-    default String[] getIndexedParameterAutoPopulatedPropertyPaths() {
-        return getStoredQueryDelegate().getIndexedParameterAutoPopulatedPropertyPaths();
-    }
-
-    @Override
-    default String[] getIndexedParameterAutoPopulatedPreviousPropertyPaths() {
-        return getStoredQueryDelegate().getIndexedParameterAutoPopulatedPreviousPropertyPaths();
-    }
-
-    @Override
-    default int[] getIndexedParameterAutoPopulatedPreviousPropertyIndexes() {
-        return getStoredQueryDelegate().getIndexedParameterAutoPopulatedPreviousPropertyIndexes();
     }
 
     @Override

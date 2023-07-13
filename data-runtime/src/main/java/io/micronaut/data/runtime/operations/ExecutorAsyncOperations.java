@@ -30,7 +30,6 @@ import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 
-import java.io.Serializable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
@@ -85,7 +84,7 @@ public class ExecutorAsyncOperations implements AsyncRepositoryOperations {
 
     @NonNull
     @Override
-    public <T> CompletableFuture<T> findOne(@NonNull Class<T> type, @NonNull Serializable id) {
+    public <T> CompletableFuture<T> findOne(@NonNull Class<T> type, @NonNull Object id) {
         return supplyAsync(() -> datastore.findOne(type, id)
         );
     }
@@ -103,7 +102,7 @@ public class ExecutorAsyncOperations implements AsyncRepositoryOperations {
 
     @NonNull
     @Override
-    public <T> CompletableFuture<T> findOptional(@NonNull Class<T> type, @NonNull Serializable id) {
+    public <T> CompletableFuture<T> findOptional(@NonNull Class<T> type, @NonNull Object id) {
         return supplyAsync(() -> datastore.findOne(type, id));
     }
 

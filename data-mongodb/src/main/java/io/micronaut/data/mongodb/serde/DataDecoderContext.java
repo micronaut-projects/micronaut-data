@@ -31,6 +31,7 @@ import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.mongodb.conf.MongoDataConfiguration;
 import io.micronaut.serde.Decoder;
 import io.micronaut.serde.Deserializer;
+import io.micronaut.serde.LimitingStream;
 import io.micronaut.serde.bson.BsonReaderDecoder;
 import io.micronaut.serde.bson.custom.CodecBsonDecoder;
 import io.micronaut.serde.config.naming.PropertyNamingStrategy;
@@ -113,7 +114,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
                             if (document == null || document.size() <= 1) {
                                 return null;
                             }
-                            return relationDeser.deserialize(new BsonReaderDecoder(document.asBsonReader()), decoderContext, type);
+                            return relationDeser.deserialize(new BsonReaderDecoder(document.asBsonReader(), LimitingStream.DEFAULT_LIMITS), decoderContext, type);
                         }
                     };
                 }

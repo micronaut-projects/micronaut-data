@@ -217,7 +217,7 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
 
         when:
         SqlQueryBuilder builder = new SqlQueryBuilder()
-        def sql = builder.buildQuery(model).query
+        def sql = builder.buildQuery(AnnotationMetadata.EMPTY_METADATA, model).query
 
         then:
         sql == 'SELECT project_."department_id",project_."project_id_project_id",project_."name" FROM "project" project_ WHERE (project_."department_id" = ? AND project_."project_id_project_id" = ?)'
@@ -233,7 +233,7 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
 
         when:
         SqlQueryBuilder builder = new SqlQueryBuilder()
-        def sql = builder.buildQuery(model).query
+        def sql = builder.buildQuery(AnnotationMetadata.EMPTY_METADATA, model).query
 
         then:
         sql.startsWith('SELECT project_."department_id",project_."project_id_project_id"')
@@ -243,7 +243,7 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
                           .idEq(new QueryParameter("test"))
 
         model.projections().id()
-        sql = builder.buildQuery(model).query
+        sql = builder.buildQuery(AnnotationMetadata.EMPTY_METADATA, model).query
 
         then:
         sql.startsWith('SELECT project_."department_id",project_."project_id_project_id"')

@@ -292,7 +292,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
     void "test build query"() {
         when:
             QueryBuilder encoder = new SqlQueryBuilder()
-            def q = encoder.buildQuery(QueryModel.from(getRuntimePersistentEntity(Settlement)).idEq(new QueryParameter("xyz")))
+            def q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, QueryModel.from(getRuntimePersistentEntity(Settlement)).idEq(new QueryParameter("xyz")))
         then:
 
             q.query == 'SELECT settlement_."code",settlement_."code_id",settlement_."id_county_id_id",settlement_."id_county_id_state_id",settlement_."description",settlement_."settlement_type_id",settlement_."zone_id",settlement_."is_enabled" FROM "comp_settlement" settlement_ WHERE (settlement_."code" = ? AND settlement_."code_id" = ? AND settlement_."id_county_id_id" = ? AND settlement_."id_county_id_state_id" = ?)'
@@ -310,7 +310,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
             def queryModel = QueryModel.from(getRuntimePersistentEntity(Settlement))
             queryModel.join("settlementType", null, Join.Type.FETCH, null)
             queryModel.join("zone", null, Join.Type.FETCH, null)
-            def q = encoder.buildQuery(queryModel.idEq(new QueryParameter("xyz")))
+            def q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel.idEq(new QueryParameter("xyz")))
         then:
             q.query == 'SELECT settlement_."code",settlement_."code_id",settlement_."id_county_id_id",settlement_."id_county_id_state_id",settlement_."description",settlement_."settlement_type_id",settlement_."zone_id",settlement_."is_enabled",settlement_settlement_type_."name" AS settlement_type_name,settlement_zone_."name" AS zone_name FROM "comp_settlement" settlement_ INNER JOIN "comp_sett_type" settlement_settlement_type_ ON settlement_."settlement_type_id"=settlement_settlement_type_."id" INNER JOIN "comp_zone" settlement_zone_ ON settlement_."zone_id"=settlement_zone_."id" WHERE (settlement_."code" = ? AND settlement_."code_id" = ? AND settlement_."id_county_id_id" = ? AND settlement_."id_county_id_state_id" = ?)'
             q.parameters == [
@@ -328,7 +328,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
             queryModel.join("settlementType", null, Join.Type.FETCH, null)
             queryModel.join("zone", null, Join.Type.FETCH, null)
             queryModel.join("id.county", null, Join.Type.FETCH, null)
-            def q = encoder.buildQuery(queryModel.idEq(new QueryParameter("xyz")))
+            def q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel.idEq(new QueryParameter("xyz")))
         then:
             q.query == 'SELECT settlement_."code",settlement_."code_id",settlement_."id_county_id_id",settlement_."id_county_id_state_id",settlement_."description",settlement_."settlement_type_id",settlement_."zone_id",settlement_."is_enabled",settlement_settlement_type_."name" AS settlement_type_name,settlement_zone_."name" AS zone_name,settlement_id_county_."county_name" AS id_county_county_name,settlement_id_county_."is_enabled" AS id_county_is_enabled FROM "comp_settlement" settlement_ INNER JOIN "comp_sett_type" settlement_settlement_type_ ON settlement_."settlement_type_id"=settlement_settlement_type_."id" INNER JOIN "comp_zone" settlement_zone_ ON settlement_."zone_id"=settlement_zone_."id" INNER JOIN "comp_country" settlement_id_county_ ON settlement_."id_county_id_id"=settlement_id_county_."id" AND settlement_."id_county_id_state_id"=settlement_id_county_."state_id" WHERE (settlement_."code" = ? AND settlement_."code_id" = ? AND settlement_."id_county_id_id" = ? AND settlement_."id_county_id_state_id" = ?)'
             q.parameters == [
@@ -345,7 +345,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
             QueryBuilder encoder = new SqlQueryBuilder()
             def queryModel = QueryModel.from(getRuntimePersistentEntity(Citizen))
             queryModel.join("settlements", null, Join.Type.FETCH, null)
-            def q = encoder.buildQuery(queryModel.idEq(new QueryParameter("xyz")))
+            def q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel.idEq(new QueryParameter("xyz")))
         then:
             q.query == 'SELECT citizen_."id",citizen_."name",citizen_settlements_."code" AS settlements_code,citizen_settlements_."code_id" AS settlements_code_id,citizen_settlements_."id_county_id_id" AS settlements_id_county_id_id,citizen_settlements_."id_county_id_state_id" AS settlements_id_county_id_state_id,citizen_settlements_."description" AS settlements_description,citizen_settlements_."settlement_type_id" AS settlements_settlement_type_id,citizen_settlements_."zone_id" AS settlements_zone_id,citizen_settlements_."is_enabled" AS settlements_is_enabled FROM "comp_citizen" citizen_ INNER JOIN "citizen_settlement" citizen_settlements_citizen_settlement_ ON citizen_."id"=citizen_settlements_citizen_settlement_."citizen_id"  INNER JOIN "comp_settlement" citizen_settlements_ ON citizen_settlements_citizen_settlement_."settlement_id_code"=citizen_settlements_."code" AND citizen_settlements_citizen_settlement_."settlement_id_code_id"=citizen_settlements_."code_id" AND citizen_settlements_citizen_settlement_."settlement_id_county_id_id"=citizen_settlements_."id_county_id_id" AND citizen_settlements_citizen_settlement_."settlement_id_county_id_state_id"=citizen_settlements_."id_county_id_state_id" WHERE (citizen_."id" = ?)'
             q.parameters == [

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 original authors
+ * Copyright 2017-2023 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.annotation;
 
+import io.micronaut.data.intercept.DataInterceptor;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -24,18 +25,32 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Repeatable annotation for {@link Index}.
+ * The custom find method interceptor definition.
  *
- * @author Davide Pugliese
- * @since 2.4
+ * @author Denis Stepanov
+ * @since 4.0.0
  */
-@Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE})
+@Target(ElementType.ANNOTATION_TYPE)
+@Documented
 @Inherited
-public @interface Indexes {
+public @interface FindInterceptorDef {
+
     /**
-     * @return A group of indexes
+     * The custom return type of the find-all method.
+     * @return The return type
      */
-    Index[] value() default {};
+    Class<?> returnType();
+
+    /**
+     * Is container type.
+     * @return True if the return type is a container.
+     */
+    boolean isContainer() default true;
+
+    /**
+     * The interceptor type.
+     * @return The interceptor type.
+     */
+    Class<? extends DataInterceptor<?, ?>> interceptor();
 }

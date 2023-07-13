@@ -30,7 +30,6 @@ import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.RepositoryOperations;
 import reactor.core.publisher.Mono;
 
-import java.io.Serializable;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -49,7 +48,7 @@ public interface BlockingExecutorReactorRepositoryOperations extends RepositoryO
     <T> Optional<T> blockOptional(Function<ReactorReactiveRepositoryOperations, Mono<T>> supplier);
 
     @Nullable
-    default <T> T findOne(@NonNull Class<T> type, @NonNull Serializable id) {
+    default <T> T findOne(@NonNull Class<T> type, @NonNull Object id) {
         return block(reactive -> reactive.findOne(type, id));
     }
 

@@ -34,7 +34,7 @@ public class ListMethodMatcher extends AbstractPatternMethodMatcher {
 
     @Override
     protected MethodMatch match(MethodMatchContext matchContext, java.util.regex.Matcher matcher) {
-        if (TypeUtils.isContainerType(matchContext.getReturnType())) {
+        if (TypeUtils.isContainerType(matchContext.getReturnType()) || FindersUtils.isFindAllCompatibleReturnType(matchContext)) {
             return new QueryCriteriaMethodMatch(matcher);
         }
         return null;

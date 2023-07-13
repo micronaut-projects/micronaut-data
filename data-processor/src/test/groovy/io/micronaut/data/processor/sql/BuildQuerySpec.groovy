@@ -701,6 +701,7 @@ interface RestaurantRepository extends GenericRepository<Restaurant, Long> {
         given:
         def repository = buildRepository('test.AuthorRepository', """
 import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.Where;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -710,19 +711,61 @@ import io.micronaut.data.tck.entities.Author;
 @JdbcRepository(dialect = Dialect.H2)
 interface AuthorRepository extends GenericRepository<Author, Long> {
 
+    // With books join, making sure count query doesn't use join
+    @Where("@.nick_name = :nickName")
+    @Join(value = "books", type = Join.Type.FETCH)
+    Page<Author> findByName(String name, String nickName, Pageable pageable);
+
+    @Where("@.name = :name")
+    Page<Author> findByNickName(String nickName, String name, Pageable pageable);
+
     @Join(value = "books", type = Join.Type.FETCH)
     Page<Author> findAll(Pageable pageable);
 }
 
 """)
 
-        def method = repository.getRequiredMethod("findAll", Pageable)
-        def query = getQuery(method)
-        def countQuery = getCountQuery(method)
+        def findAllMethod = repository.getRequiredMethod("findAll", Pageable)
+        def findAllQuery = getQuery(findAllMethod)
+        def findAllCountQuery = getCountQuery(findAllMethod)
+        def findByNameMethod = repository.getRequiredMethod("findByName", String, String, Pageable)
+        def findByNameQuery = getQuery(findByNameMethod)
+        def findByNameCountQuery = getCountQuery(findByNameMethod)
+        def findByNickNameMethod = repository.getRequiredMethod("findByNickName", String, String, Pageable)
+        def findByNickNameQuery = getQuery(findByNickNameMethod)
+        def findByNickNameCountQuery = getCountQuery(findByNickNameMethod)
 
         expect:
-        query == 'SELECT author_.`id`,author_.`name`,author_.`nick_name`,author_books_.`id` AS books_id,author_books_.`author_id` AS books_author_id,author_books_.`genre_id` AS books_genre_id,author_books_.`title` AS books_title,author_books_.`total_pages` AS books_total_pages,author_books_.`publisher_id` AS books_publisher_id,author_books_.`last_updated` AS books_last_updated FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id`'
-        countQuery == 'SELECT COUNT(*) FROM `author` author_'
+        findAllQuery == 'SELECT author_.`id`,author_.`name`,author_.`nick_name`,author_books_.`id` AS books_id,author_books_.`author_id` AS books_author_id,author_books_.`genre_id` AS books_genre_id,author_books_.`title` AS books_title,author_books_.`total_pages` AS books_total_pages,author_books_.`publisher_id` AS books_publisher_id,author_books_.`last_updated` AS books_last_updated FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id`'
+        findAllCountQuery == 'SELECT COUNT(*) FROM `author` author_'
+        findByNameQuery == 'SELECT author_.`id`,author_.`name`,author_.`nick_name`,author_books_.`id` AS books_id,author_books_.`author_id` AS books_author_id,author_books_.`genre_id` AS books_genre_id,author_books_.`title` AS books_title,author_books_.`total_pages` AS books_total_pages,author_books_.`publisher_id` AS books_publisher_id,author_books_.`last_updated` AS books_last_updated FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id` WHERE (author_.`name` = ? AND (author_.nick_name =?))'
+        findByNameCountQuery == 'SELECT COUNT(*) FROM `author` author_ WHERE (author_.`name` = ? AND (author_.nick_name =?))'
+        findByNickNameQuery == 'SELECT author_.`id`,author_.`name`,author_.`nick_name` FROM `author` author_ WHERE (author_.`nick_name` = ? AND (author_.name =?))'
+        findByNickNameCountQuery == 'SELECT COUNT(*) FROM `author` author_ WHERE (author_.`nick_name` = ? AND (author_.name =?))'
+    }
 
+    void "test distinct query"() {
+        given:
+        def repository = buildRepository('test.PersonRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Person;
+import java.util.UUID;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface PersonRepository extends GenericRepository<Person, Long> {
+
+    List<Person> findDistinct();
+
+    List<Person> findDistinctIdAndName();
+}
+""")
+        def distinctQuery = getQuery(repository.getRequiredMethod("findDistinct"))
+        def distinctIdAndNameQuery = getQuery(repository.getRequiredMethod("findDistinctIdAndName"))
+
+        expect:
+        distinctQuery == 'SELECT DISTINCT person_.* FROM `person` person_'
+        distinctIdAndNameQuery == 'SELECT DISTINCT person_.`id`,person_.`name` FROM `person` person_'
     }
 }

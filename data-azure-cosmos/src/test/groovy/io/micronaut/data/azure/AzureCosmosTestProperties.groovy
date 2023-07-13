@@ -10,12 +10,16 @@ import spock.lang.Shared
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.KeyStore
+import java.time.Duration
 
 trait AzureCosmosTestProperties implements TestPropertyProvider {
+
+    static final Duration STARTUP_TIMEOUT = Duration.ofMinutes(5)
 
     @Shared
     @AutoCleanup("stop")
     CosmosDBEmulatorContainer emulator = new CosmosDBEmulatorContainer(DockerImageName.parse("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest"))
+        .withStartupTimeout(STARTUP_TIMEOUT)
 
     @Override
     Map<String, String> getProperties() {

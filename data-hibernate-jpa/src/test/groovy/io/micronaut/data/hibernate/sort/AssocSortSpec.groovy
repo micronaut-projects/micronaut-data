@@ -1,14 +1,13 @@
 package io.micronaut.data.hibernate.sort
 
-import io.micronaut.context.annotation.Property
+import io.micronaut.data.hibernate.H2DBProperties
 import io.micronaut.data.model.Sort
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification
 
 @MicronautTest(packages = "io.micronaut.data.hibernate.sort")
-@Property(name = "datasources.default.name", value = "mydb")
-@Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
+@H2DBProperties
 class AssocSortSpec extends Specification {
 
     @Inject

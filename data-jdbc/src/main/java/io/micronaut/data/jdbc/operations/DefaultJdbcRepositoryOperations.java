@@ -94,7 +94,6 @@ import jakarta.inject.Named;
 
 import jakarta.annotation.PreDestroy;
 import javax.sql.DataSource;
-import java.io.Serializable;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -710,7 +709,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
     @Nullable
     @Override
-    public <T> T findOne(@NonNull Class<T> type, @NonNull Serializable id) {
+    public <T> T findOne(@NonNull Class<T> type, @NonNull Object id) {
         throw new UnsupportedOperationException("The findOne method by ID is not supported. Execute the SQL query directly");
     }
 
@@ -1269,20 +1268,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         public final Connection connection;
         public final Dialect dialect;
         private final InvocationContext<?, ?> invocationContext;
-
-        /**
-         * The old deprecated constructor.
-         *
-         * @param annotationMetadata the annotation metadata
-         * @param repositoryType the repository type
-         * @param dialect the dialect
-         * @param connection the connection
-         * @deprecated Use constructor with {@link InvocationContext}.
-         */
-        @Deprecated
-        public JdbcOperationContext(AnnotationMetadata annotationMetadata, Class<?> repositoryType, Dialect dialect, Connection connection) {
-            this(annotationMetadata, null , repositoryType, dialect, connection);
-        }
 
         /**
          * The default constructor.

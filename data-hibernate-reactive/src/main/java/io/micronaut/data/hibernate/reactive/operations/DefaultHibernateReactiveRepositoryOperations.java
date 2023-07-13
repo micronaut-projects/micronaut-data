@@ -52,7 +52,6 @@ import org.hibernate.reactive.stage.Stage;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.function.Function;
 
@@ -158,7 +157,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     }
 
     @Override
-    public <T> Mono<T> findOne(Class<T> type, Serializable id) {
+    public <T> Mono<T> findOne(Class<T> type, Object id) {
         return operation(session -> helper.find(session, type, id));
     }
 
@@ -201,7 +200,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     }
 
     @Override
-    public <T> Mono<T> findOptional(Class<T> type, Serializable id) {
+    public <T> Mono<T> findOptional(Class<T> type, Object id) {
         return findOne(type, id);
     }
 

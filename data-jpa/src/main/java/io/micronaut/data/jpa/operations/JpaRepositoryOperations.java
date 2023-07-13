@@ -20,8 +20,6 @@ import io.micronaut.data.operations.PrimaryRepositoryOperations;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 
-import java.io.Serializable;
-
 /**
  * Operations interface specific to JPA.
  *
@@ -51,7 +49,7 @@ public interface JpaRepositoryOperations extends PrimaryRepositoryOperations {
      * @return an uninitialized proxy
      */
     @NonNull
-    <T> T load(@NonNull Class<T> type, @NonNull Serializable id);
+    <T> T load(@NonNull Class<T> type, @NonNull Object id);
 
     /**
      * Merges the entity.

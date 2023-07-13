@@ -60,6 +60,20 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
         return false
     }
 
+    void "custom name transaction"() {
+        when:
+            bookService.bookAddedCustomNamedTransaction(new Runnable() {
+                @Override
+                void run() {
+                    if (getTransactionOperations().findTransactionStatus().get().getTransactionDefinition().getName() != "MyTx") {
+                        throw new IllegalStateException("Expected a custom TX name!")
+                    }
+                }
+            })
+        then:
+            assert bookService.countBooksTransactional() == 1
+    }
+
     void "test book added in read only transaction"() {
         if (!supportsReadOnlyFlag()) {
             return

@@ -709,16 +709,22 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         if (projectionList.isEmpty()) {
             selectAllColumns(annotationMetadata, queryState, queryString);
         } else {
+            int projectionCount = projectionList.size();
             for (Iterator i = projectionList.iterator(); i.hasNext(); ) {
+                boolean appendComma = true;
                 QueryModel.Projection projection = (QueryModel.Projection) i.next();
                 if (projection instanceof QueryModel.LiteralProjection) {
                     queryString.append(asLiteral(((QueryModel.LiteralProjection) projection).getValue()));
                 } else if (projection instanceof QueryModel.CountProjection) {
                     appendProjectionRowCount(queryString, tableAlias);
                 } else if (projection instanceof QueryModel.DistinctProjection) {
-                    queryString.append("DISTINCT(")
-                        .append(tableAlias)
-                        .append(CLOSE_BRACKET);
+                    queryString.append("DISTINCT ");
+                    if (projectionCount == 1) {
+                        queryString.append(tableAlias)
+                            .append(DOT)
+                            .append("*");
+                    }
+                    appendComma = false;
                 } else if (projection instanceof QueryModel.IdProjection) {
                     if (entity.hasCompositeIdentity()) {
                         for (PersistentProperty identity : entity.getCompositeIdentity()) {
@@ -739,8 +745,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     String alias = pp.getAlias().orElse(null);
                     if (projection instanceof QueryModel.AvgProjection) {
                         appendFunctionProjection(annotationMetadata, queryState.getEntity(), AVG, pp, tableAlias, queryString);
-                    } else if (projection instanceof QueryModel.DistinctPropertyProjection) {
-                        appendFunctionProjection(annotationMetadata, queryState.getEntity(), DISTINCT, pp, tableAlias, queryString);
                     } else if (projection instanceof QueryModel.SumProjection) {
                         appendFunctionProjection(annotationMetadata, queryState.getEntity(), SUM, pp, tableAlias, queryString);
                     } else if (projection instanceof QueryModel.MinProjection) {
@@ -770,7 +774,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     }
                 }
 
-                if (i.hasNext()) {
+                if (appendComma && i.hasNext()) {
                     queryString.append(COMMA);
                 }
             }

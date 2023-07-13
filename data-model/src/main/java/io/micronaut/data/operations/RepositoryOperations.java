@@ -31,7 +31,6 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 
-import java.io.Serializable;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -63,7 +62,7 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * @param <T> The generic type
      * @return A result or null
      */
-    @Nullable <T> T findOne(@NonNull Class<T> type, @NonNull Serializable id);
+    @Nullable <T> T findOne(@NonNull Class<T> type, @NonNull Object id);
 
     /**
      * Find one by Query.

@@ -235,7 +235,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         QueryResultPersistentEntityCriteriaQuery queryModelCriteriaQuery = (QueryResultPersistentEntityCriteriaQuery) criteriaQuery;
         QueryModel queryModel = queryModelCriteriaQuery.getQueryModel();
         Collection<JoinPath> queryJoinPaths = queryModel.getJoinPaths();
-        QueryResult queryResult = sqlQueryBuilder.buildQuery(queryModel);
+        QueryResult queryResult = sqlQueryBuilder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel);
         Set<JoinPath> joinPaths = mergeJoinPaths(annotationJoinPaths, queryJoinPaths).stream().filter(jp -> jp.getJoinType().isFetch()).collect(Collectors.toSet());
         if (type == Type.FIND_ONE) {
             return QueryResultStoredQuery.single(DataMethod.OperationType.QUERY, context.getName(), context.getAnnotationMetadata(),

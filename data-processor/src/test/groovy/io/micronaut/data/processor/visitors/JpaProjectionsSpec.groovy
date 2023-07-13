@@ -61,9 +61,9 @@ class JpaProjectionsSpec extends AbstractTypeElementSpec {
 
         where:
         rootEntity | returnType       | method                   | arguments      | query                                                                                          | interceptor
-        Person     | Person           | 'findDistinctByName'     | [name: String] | "SELECT DISTINCT(${alias}) FROM $rootEntity.name AS ${alias} WHERE (${alias}.name = :p1)"      | FindOneInterceptor
+        Person     | Person           | 'findDistinctByName'     | [name: String] | "SELECT DISTINCT ${alias}.* FROM $rootEntity.name AS ${alias} WHERE (${alias}.name = :p1)"      | FindOneInterceptor
         Person     | int.class        | 'findAgeByName'          | [name: String] | "SELECT ${alias}.age FROM $rootEntity.name AS ${alias} WHERE (${alias}.name = :p1)"            | FindOneInterceptor
-        Person     | String           | 'findDistinctNameByName' | [name: String] | "SELECT DISTINCT(${alias}.name) FROM $rootEntity.name AS ${alias} WHERE (${alias}.name = :p1)" | FindOneInterceptor.class
+        Person     | String           | 'findDistinctNameByName' | [name: String] | "SELECT DISTINCT ${alias}.name FROM $rootEntity.name AS ${alias} WHERE (${alias}.name = :p1)" | FindOneInterceptor.class
         Person     | PersonProjection | 'searchByName'           | [name: String] | "SELECT ${alias}.id AS id,${alias}.name AS name FROM $rootEntity.name AS ${alias} WHERE (${alias}.name = :p1)" | FindOneInterceptor.class
         Person     | String           | 'findPublicIdByName'     | [name: String] | "SELECT ${alias}.publicId FROM $rootEntity.name AS ${alias} WHERE (${alias}.name = :p1)" | FindOneInterceptor.class
     }
@@ -88,9 +88,9 @@ class JpaProjectionsSpec extends AbstractTypeElementSpec {
 
         where:
         rootEntity | resultType       | method                   | arguments      | query                                                                                          | interceptor
-        Person     | Person           | 'findDistinctByName'     | [name: String] | "SELECT DISTINCT(${alias}) FROM $rootEntity.name AS ${alias} WHERE (${alias}.name = :p1)"      | FindAllInterceptor
+        Person     | Person           | 'findDistinctByName'     | [name: String] | "SELECT DISTINCT ${alias}.* FROM $rootEntity.name AS ${alias} WHERE (${alias}.name = :p1)"      | FindAllInterceptor
         Person     | Integer.class    | 'findAgeByName'          | [name: String] | "SELECT ${alias}.age FROM $rootEntity.name AS ${alias} WHERE (${alias}.name = :p1)"            | FindAllInterceptor
-        Person     | String           | 'findDistinctNameByName' | [name: String] | "SELECT DISTINCT(${alias}.name) FROM $rootEntity.name AS ${alias} WHERE (${alias}.name = :p1)" | FindAllInterceptor.class
+        Person     | String           | 'findDistinctNameByName' | [name: String] | "SELECT DISTINCT ${alias}.name FROM $rootEntity.name AS ${alias} WHERE (${alias}.name = :p1)" | FindAllInterceptor.class
         Person     | PersonProjection | 'searchByName'           | [name: String] | "SELECT ${alias}.id AS id,${alias}.name AS name FROM $rootEntity.name AS ${alias} WHERE (${alias}.name = :p1)" | FindAllInterceptor.class
     }
 
