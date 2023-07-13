@@ -553,7 +553,16 @@ fun testAnnotationMetadata() {
 <div class="ulist">
 <ul>
 <li>
-<p>Hibernate6 Support</p>
+<p><a href="https://hibernate.org/orm/documentation/6.0/">Hibernate 6</a></p>
+</li>
+<li>
+<p><a href="https://hibernate.org/reactive/releases/2.0/">Hibernate Reactive 2</a> (Hibernate 6 compatible)</p>
+</li>
+<li>
+<p>New implementation of the transaction and connection management</p>
+</li>
+<li>
+<p>JPA repository <code>merge</code> method</p>
 </li>
 <li>
 <p>Oracle JSON-Relational Duality Views Support</p>
@@ -714,6 +723,12 @@ To add the validation, annotate the repository&#8217;s generic type argument wit
 public interface BookRepository implements CrudRepository&lt;@jakarta.validation.Valid Book, @jakarta.validation.constraints.NotNull Long&gt; {
 }</code></pre>
 </div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_repositories_now_return_list">Repositories now return <code>List</code></h5>
+<div class="paragraph">
+<p>Find all return type changed to be <code>List</code> instead of <code>Iterable</code></p>
 </div>
 </div>
 <div class="sect4">
