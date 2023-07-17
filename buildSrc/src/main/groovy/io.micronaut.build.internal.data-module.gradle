@@ -3,13 +3,6 @@ plugins {
     id "io.micronaut.build.internal.module"
 }
 
-micronautBuild {
-    binaryCompatibility {
-        baselineVersion = "4.0.0-M15"
-        enabled = true
-    }
-}
-
 dependencies {
     testRuntimeOnly mnSerde.micronaut.serde.jackson
 }
