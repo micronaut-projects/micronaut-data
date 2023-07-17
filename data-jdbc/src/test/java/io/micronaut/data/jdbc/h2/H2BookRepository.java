@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.jdbc.h2;
 
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Where;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
@@ -41,4 +42,10 @@ public abstract class H2BookRepository extends io.micronaut.data.tck.repositorie
 
     @Query(value = "select count(*) from book b where b.title like :title and b.total_pages > :pages", nativeQuery = true)
     abstract int countNativeByTitleWithPagesGreaterThan(String title, int pages);
+
+    @Query("SELECT b.*, p_.id AS p_id, p_.num AS p_num, c_.id AS c_id, c_.title AS c_title, c_.pages AS c_pages" +
+        " FROM book b LEFT JOIN page p_ ON p_.book_id = b.id AND p_.num > :pageNum LEFT JOIN chapter c_ ON c_.book_id = b.id WHERE b.title = :title")
+    @Join(value = "pages", alias = "p_")
+    @Join(value = "chapters", alias = "c_")
+    abstract List<Book> findCustomByTitleAndPageGreaterThanWithPagesAndChapters(String title, int pageNum);
 }
