@@ -19,9 +19,13 @@ import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
+/**
+ * Test for entity that has two one to many collections without mappedBy and joined using custom query.
+ */
 @MicronautTest
 @H2DBProperties
 class DoubleOneToManyJoinSpec extends Specification implements H2TestPropertyProvider {
+
     @AutoCleanup
     @Shared
     ApplicationContext applicationContext = ApplicationContext.run(getProperties())
@@ -65,12 +69,17 @@ class DoubleOneToManyJoinSpec extends Specification implements H2TestPropertyPro
         aItems.size() == 1
         aItems[0].c.size() == 1
         aItems[0].b.size() == 2
+        aItems[0].b[0].bId == 1
+        aItems[0].b[1].bId == 2
         when:
         aItems = entityARepository.findOrderByAscBDescCDesc(a.aId)
         then:
         aItems.size() == 1
         aItems[0].c.size() == 1
         aItems[0].b.size() == 2
+        // b collection ordered descending
+        aItems[0].b[0].bId == 2
+        aItems[0].b[1].bId == 1
     }
 
 }

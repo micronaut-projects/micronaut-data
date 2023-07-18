@@ -41,5 +41,4 @@ public abstract class H2BookRepository extends io.micronaut.data.tck.repositorie
 
     @Query(value = "select count(*) from book b where b.title like :title and b.total_pages > :pages", nativeQuery = true)
     abstract int countNativeByTitleWithPagesGreaterThan(String title, int pages);
-
 }
