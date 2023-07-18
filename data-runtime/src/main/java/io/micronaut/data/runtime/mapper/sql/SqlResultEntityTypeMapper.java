@@ -542,7 +542,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                         Objects.requireNonNull(associatedId);
                                         joinCtx.associate(associatedCtx, associatedId, associatedEntity);
                                     } else if (joinCtx.manyAssociations == null) {
-                                        joinCtx.manyAssociations = new HashMap<>();
+                                        joinCtx.manyAssociations = new LinkedHashMap<>();
                                     }
                                 }
                             } else if (entityAssociation.getKind().isSingleEnded() && !entityAssociation.isForeignKey()) {
