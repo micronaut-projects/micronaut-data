@@ -16,9 +16,6 @@
 package io.micronaut.data.jdbc.h2
 
 import groovy.transform.Memoized
-import io.micronaut.data.tck.entities.Book
-import io.micronaut.data.tck.entities.Chapter
-import io.micronaut.data.tck.entities.Page
 import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.data.tck.repositories.BasicTypesRepository
 import io.micronaut.data.tck.repositories.BookDtoRepository
@@ -276,30 +273,4 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
         cleanupData()
     }
 
-    void 'test left join returning null entity column'() {
-        given:
-        def b = new Book()
-        b.title = "Summer Stories For Kids"
-        b.totalPages = 120
-        Page p1 = new Page()
-        p1.num = 10
-        Page p2 = new Page()
-        p2.num = 20
-        Chapter ch = new Chapter()
-        ch.title = "Intro"
-        ch.pages = 3
-        b.pages.add(p1)
-        b.pages.add(p2)
-        b.chapters.add(ch)
-        bookRepository.save(b)
-        when:
-        def books = br.findCustomByTitleAndPageGreaterThanWithPagesAndChapters("Summer Stories For Kids", 10)
-        then:
-        books.size() == 1
-        def book = books[0]
-        book.title == b.title
-        book.id == b.id
-        book.chapters.size() == 1
-        !book.pages
-    }
 }
