@@ -19,9 +19,13 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
+import io.micronaut.core.beans.BeanIntrospection;
+import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.reflect.InstantiationUtils;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.model.naming.NamingStrategy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Optional;
@@ -34,6 +38,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since 1.0.0
  */
 public abstract class AbstractPersistentEntity implements PersistentEntity {
+
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractPersistentEntity.class);
 
     private static final Map<String, NamingStrategy> NAMING_STRATEGIES = new ConcurrentHashMap<>(3);
 
@@ -70,6 +76,21 @@ public abstract class AbstractPersistentEntity implements PersistentEntity {
         if (namingStrategy != null) {
             return Optional.of(namingStrategy);
         } else {
+            try {
+                Class<?> namingStrategyClass = ClassUtils.forName(className, classLoader).orElse(null);
+                if (namingStrategyClass != null) {
+                    BeanIntrospection<?> beanIntrospection = BeanIntrospection.getIntrospection(namingStrategyClass);
+                    Object o = beanIntrospection.instantiate();
+                    if (o instanceof NamingStrategy ns) {
+                        NAMING_STRATEGIES.put(className, ns);
+                        return Optional.of(ns);
+                    }
+                }
+            } catch (Exception e) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Tried, but could not instantiate naming strategy: {}", className, e);
+                }
+            }
             Object o = InstantiationUtils.tryInstantiate(className, classLoader).orElse(null);
             if (o instanceof NamingStrategy ns) {
                 NAMING_STRATEGIES.put(className, ns);

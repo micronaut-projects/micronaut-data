@@ -32,6 +32,6 @@ class UserRepositorySpec {
 
         final List<User> disabled = userRepository.findDisabled();
         assertEquals(1, disabled.size());
-        assertEquals("Joe", disabled.iterator().next().getName());
+        assertEquals("Joe", disabled.iterator().next().getUserName());
     }
 }
