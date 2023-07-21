@@ -2038,18 +2038,19 @@ Currently Micronaut Data does not parse the JPA-QL AST and perform any further t
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
 
 import io.micronaut.data.annotation.*;
+import io.micronaut.data.model.naming.NamingStrategies;
 
-@MappedEntity
-@Where("@.enabled = true") // <b class="conum">(1)</b>
+@MappedEntity(namingStrategy = NamingStrategies.Raw.class)
+@Where("@.userEnabled = true") // <b class="conum">(1)</b>
 public class User {
     @GeneratedValue
     @Id
     private Long id;
-    private String name;
-    private boolean enabled = true; // <b class="conum">(2)</b>
+    private String userName;
+    private boolean userEnabled = true; // <b class="conum">(2)</b>
 
-    public User(String name) {
-        this.name = name;
+    public User(String userName) {
+        this.userName = userName;
     }
 
     public Long getId() {
@@ -2060,20 +2061,20 @@ public class User {
         this.id = id;
     }
 
-    public String getName() {
-        return name;
+    public String getUserName() {
+        return userName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 
-    public boolean isEnabled() {
-        return enabled;
+    public boolean isUserEnabled() {
+        return userEnabled;
     }
 
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
+    public void setUserEnabled(boolean userEnabled) {
+        this.userEnabled = userEnabled;
     }
 }</code></pre>
 </div>
@@ -2153,10 +2154,10 @@ import java.util.List;
 public interface UserRepository extends CrudRepository&lt;User, Long&gt; { // <b class="conum">(1)</b>
 
     @Override
-    @Query("UPDATE user SET enabled = false WHERE id = :id") // <b class="conum">(2)</b>
+    @Query("UPDATE user SET userEnabled = false WHERE id = :id") // <b class="conum">(2)</b>
     void deleteById(@NonNull @NotNull Long id);
 
-    @Query("SELECT * FROM user WHERE enabled = false") // <b class="conum">(3)</b>
+    @Query("SELECT * FROM user WHERE userEnabled = false") // <b class="conum">(3)</b>
     List&lt;User&gt; findDisabled();
 }</code></pre>
 </div>
@@ -9793,6 +9794,9 @@ public class CountryRegion {
 </div>
 <div class="paragraph">
 <p>Few important things to note. Since Micronaut Data pre-computes the table and column name mappings at compilation time the specified <a href="../api/io/micronaut/data/model/naming/NamingStrategy.html">NamingStrategy</a> implementation must be on the annotation processor classpath (<code>annotationProcessor</code> scope for Java or <code>kapt</code> for Kotlin).</p>
+</div>
+<div class="paragraph">
+<p>If running project in native image, custom naming strategy needs to have <code>io.micronaut.core.annotation.TypeHint(CustomNamingStrategy.class)</code> annotation where custom naming strategy class is <code>CustomNamingStrategy</code>.</p>
 </div>
 <div class="paragraph">
 <p>In addition if you don&#8217;t want to repeat the above annotation definition on every entity it is handy to define a meta-annotation where the above annotation definition is applied to another annotation that you add to your class.</p>
