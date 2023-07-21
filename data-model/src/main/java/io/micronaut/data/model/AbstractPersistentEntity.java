@@ -88,7 +88,7 @@ public abstract class AbstractPersistentEntity implements PersistentEntity {
                 }
             } catch (Exception e) {
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("Tried, but could not instantiate naming strategy: " + className, e);
+                    LOG.debug("Tried, but could not instantiate naming strategy: {}", className, e);
                 }
             }
             Object o = InstantiationUtils.tryInstantiate(className, classLoader).orElse(null);
