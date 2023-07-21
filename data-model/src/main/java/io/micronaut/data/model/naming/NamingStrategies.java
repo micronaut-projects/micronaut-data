@@ -16,6 +16,7 @@
 package io.micronaut.data.model.naming;
 
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.core.naming.NameUtils;
 
 import java.util.Locale;
@@ -30,6 +31,7 @@ public class NamingStrategies {
     /**
      * Example: FOO_BAR.
      */
+    @TypeHint(UnderScoreSeparatedUpperCase.class)
     public static class UnderScoreSeparatedUpperCase implements NamingStrategy {
         @NonNull
         @Override
@@ -40,6 +42,7 @@ public class NamingStrategies {
     /**
      * Example: foo_bar.
      */
+    @TypeHint(UnderScoreSeparatedLowerCase.class)
     public static class UnderScoreSeparatedLowerCase implements NamingStrategy {
         @NonNull
         @Override
@@ -50,6 +53,7 @@ public class NamingStrategies {
     /**
      * Example: foo-bar.
      */
+    @TypeHint(KebabCase.class)
     public static class KebabCase implements NamingStrategy {
         @NonNull
         @Override
@@ -60,6 +64,7 @@ public class NamingStrategies {
     /**
      * Example: foobar.
      */
+    @TypeHint(LowerCase.class)
     public static class LowerCase implements NamingStrategy {
         @NonNull
         @Override
@@ -70,6 +75,7 @@ public class NamingStrategies {
     /**
      * Example: foobar.
      */
+    @TypeHint(UpperCase.class)
     public static class UpperCase implements NamingStrategy {
         @NonNull
         @Override
@@ -80,6 +86,7 @@ public class NamingStrategies {
     /**
      * No naming conversion.
      */
+    @TypeHint(Raw.class)
     public static class Raw implements NamingStrategy {
         @NonNull
         @Override
