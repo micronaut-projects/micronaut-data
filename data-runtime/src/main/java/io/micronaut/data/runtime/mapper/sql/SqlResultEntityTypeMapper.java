@@ -315,14 +315,16 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
     private void readChildren(RS rs, Object instance, Object parent, MappingContext<R> ctx) {
         if (ctx.manyAssociations != null) {
             Object id = readEntityId(rs, ctx);
-            MappingContext associatedCtx = ctx.manyAssociations.get(id);
-            if (associatedCtx == null) {
-                associatedCtx = ctx.copy();
-                R entity = (R) readEntity(rs, associatedCtx, parent, id);
-                Objects.requireNonNull(id);
-                ctx.associate(associatedCtx, id, entity);
-            } else {
-                readChildren(rs, instance, parent, associatedCtx);
+            if (id != null) {
+                MappingContext associatedCtx = ctx.manyAssociations.get(id);
+                if (associatedCtx == null) {
+                    associatedCtx = ctx.copy();
+                    R entity = (R) readEntity(rs, associatedCtx, parent, id);
+                    Objects.requireNonNull(id);
+                    ctx.associate(associatedCtx, id, entity);
+                } else {
+                    readChildren(rs, instance, parent, associatedCtx);
+                }
             }
             return;
         }
@@ -539,6 +541,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                     if (associatedEntity != null) {
                                         Objects.requireNonNull(associatedId);
                                         joinCtx.associate(associatedCtx, associatedId, associatedEntity);
+                                    } else if (joinCtx.manyAssociations == null) {
+                                        joinCtx.manyAssociations = new LinkedHashMap<>();
                                     }
                                 }
                             } else if (entityAssociation.getKind().isSingleEnded() && !entityAssociation.isForeignKey()) {
