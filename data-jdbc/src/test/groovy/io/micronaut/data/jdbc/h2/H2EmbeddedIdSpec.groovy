@@ -18,6 +18,7 @@ package io.micronaut.data.jdbc.h2
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.data.annotation.*
 import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.model.Sort
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.data.tck.entities.Shipment
@@ -129,6 +130,19 @@ class H2EmbeddedIdSpec extends Specification {
         foundAllOrderByCountryCityDesc.size() == 2
         foundAllOrderByCountryCityDesc[0].field == "test3"
         foundAllOrderByCountryCityDesc[1].field == "test4"
+
+        when:
+        def foundAllOrderByDynamic = repository.findAll(Sort.of(Sort.Order.desc("country"), Sort.Order.asc( "city")))
+
+        then:
+        foundAllOrderByDynamic.size() == 2
+        foundAllOrderByDynamic[0].shipmentId.country == "g"
+        foundAllOrderByDynamic[0].shipmentId.city == "h"
+        foundAllOrderByDynamic[1].shipmentId.country == "e"
+        foundAllOrderByDynamic[1].shipmentId.city == "f"
+
+        then:
+        foundAllOrderByDynamic.size() == 2
 
         when:"deleteAll is used with an iterable"
         repository.deleteAll([all.first()])

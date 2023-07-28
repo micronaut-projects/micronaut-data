@@ -1800,21 +1800,27 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (ignoreCase) {
                 buff.append("LOWER(");
             }
-            if (path.getAssociations().isEmpty()) {
+            List<Association> associations = new ArrayList<>(path.getAssociations());
+            int assocCount = associations.size();
+            // If last association is embedded, it does not need to be joined to the alias since it will be in the destination table
+            if (assocCount > 0 && associations.get(assocCount - 1) instanceof Embedded) {
+                associations.remove(assocCount - 1);
+            }
+            if (associations.isEmpty()) {
                 buff.append(getAliasName(entity));
             } else {
                 StringJoiner joiner = new StringJoiner(".");
-                for (Association association : path.getAssociations()) {
+                for (Association association : associations) {
                     joiner.add(association.getName());
                 }
-                String joinAlias = getAliasName(new JoinPath(joiner.toString(), path.getAssociations().toArray(new Association[0]), Join.Type.DEFAULT, null));
+                String joinAlias = getAliasName(new JoinPath(joiner.toString(), associations.toArray(new Association[0]), Join.Type.DEFAULT, null));
                 if (!computePropertyPaths()) {
                     if (!query.contains(" " + joinAlias + " ") && !query.endsWith(" " + joinAlias)) {
                         // Special hack case for JPA, Hibernate can join the relation with cross join automatically when referenced by the property path
                         // This probably should be removed in the future major version
                         buff.append(getAliasName(entity)).append(DOT);
                         StringJoiner pathJoiner = new StringJoiner(".");
-                        for (Association association : path.getAssociations()) {
+                        for (Association association : associations) {
                             pathJoiner.add(association.getName());
                         }
                         buff.append(pathJoiner);
