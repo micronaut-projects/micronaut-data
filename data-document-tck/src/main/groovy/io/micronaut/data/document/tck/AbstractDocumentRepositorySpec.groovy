@@ -59,6 +59,7 @@ import java.util.stream.Stream
 
 import static io.micronaut.data.document.tck.repositories.PersonRepository.Specifications.dateOfBirthEquals
 import static io.micronaut.data.document.tck.repositories.PersonRepository.Specifications.nameEquals
+import static io.micronaut.data.document.tck.repositories.PersonRepository.Specifications.nameLike
 
 abstract class AbstractDocumentRepositorySpec extends Specification {
 
@@ -890,6 +891,8 @@ abstract class AbstractDocumentRepositorySpec extends Specification {
             !personRepository.findOne(nameEquals("Denis")).isPresent()
             personRepository.findOne(QuerySpecification.where(nameEquals("Jeff"))).isPresent()
             !personRepository.findOne(QuerySpecification.where(nameEquals("Denis"))).isPresent()
+            personRepository.findOne(nameLike("Jame.*")).isPresent()
+            !personRepository.findOne(nameLike(".*Enis")).isPresent()
         then:
             personRepository.findAll(nameEquals("Jeff")).size() == 1
             personRepository.findAll(QuerySpecification.where(nameEquals("Jeff"))).size() == 1
@@ -1291,5 +1294,13 @@ abstract class AbstractDocumentRepositorySpec extends Specification {
         people[0].name == "John"
         otherPeople.size() == 1
         otherPeople[0].name == "John"
+        when:
+        people = personRepository.findByNameLike("Micha")
+        otherPeople = personRepository.findByNameLike("Jo.n")
+        then:
+        people.size() == 1
+        people[0].name == 'Michael'
+        otherPeople.size() == 1
+        otherPeople[0].name == 'John'
     }
 }
