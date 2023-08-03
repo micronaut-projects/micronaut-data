@@ -4,7 +4,7 @@ dependency:io.micronaut.data:micronaut-data-spring[]
 
 In addition to this dependency you will need either `spring-orm` (for Hibernate) or `spring-jdbc` (for JDBC) on your classpath to enable support for Spring-based transaction management:
 
-dependency:org.springframework:spring-orm[]
+dependency:org.springframework:spring-orm[version="5.2.0.RELEASE"]
 
 You can then compile existing Spring Data repository interfaces and use Spring annotations such as `org.springframework.transaction.annotation.Transactional` in your application.
 
