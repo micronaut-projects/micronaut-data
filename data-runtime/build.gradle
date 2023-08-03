@@ -17,16 +17,16 @@ dependencies {
 
 	implementation mn.reactor
 
-	compileOnly libs.jakarta.persistence.api
-	compileOnly libs.javax.persistence.api
+	compileOnly(libs.managed.jakarta.persistence.api)
+	compileOnly(libs.managed.javax.persistence.api)
     compileOnly libs.kotlin.coroutines.reactor
     compileOnly mnMultitenancy.micronaut.multitenancy
 
 	testAnnotationProcessor mn.micronaut.inject.java
 	testAnnotationProcessor projects.micronautDataProcessor
 
-	testImplementation libs.jakarta.persistence.api
-	testImplementation libs.javax.persistence.api
+	testImplementation(libs.managed.jakarta.persistence.api)
+	testImplementation(libs.managed.javax.persistence.api)
 	testImplementation projects.micronautDataProcessor
 	testImplementation mn.micronaut.inject.groovy
 	testImplementation mn.micronaut.http

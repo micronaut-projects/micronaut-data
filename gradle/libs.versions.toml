@@ -22,10 +22,9 @@ micronaut-flyway = "6.0.1"
 
 groovy = "4.0.13"
 
-javax-persistence = "2.2"
-jakarta-persistence = "3.1.0"
-jakarta-javax-persistence = "3.1.0"
-jakarta-transaction = "2.0.1"
+managed-javax-persistence = "2.2"
+managed-jakarta-persistence = "3.1.0"
+managed-jakarta-transaction = "2.0.1"
 
 spring-data = "3.1.2"
 
@@ -87,11 +86,10 @@ kotlin-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", 
 kotlin-coroutines-reactor = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactor", version.ref = "kotlin-coroutines" }
 kotlin-coroutines-reactive = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactive", version.ref = "kotlin-coroutines" }
 
-jakarta-transaction-api = { module = "jakarta.transaction:jakarta.transaction-api", version.ref = "jakarta-transaction" }
+managed-jakarta-transaction-api = { module = "jakarta.transaction:jakarta.transaction-api", version.ref = "managed-jakarta-transaction" }
 
-javax-persistence-api = { module = "javax.persistence:javax.persistence-api", version.ref = "javax-persistence" }
-jakarta-persistence-api = { module = "jakarta.persistence:jakarta.persistence-api", version.ref = "jakarta-persistence" }
-jakarta-persistence-api2 = { module = "jakarta.persistence:jakarta.persistence-api", version.ref = "jakarta-javax-persistence" }
+managed-javax-persistence-api = { module = "javax.persistence:javax.persistence-api", version.ref = "managed-javax-persistence" }
+managed-jakarta-persistence-api = { module = "jakarta.persistence:jakarta.persistence-api", version.ref = "managed-jakarta-persistence" }
 
 # JPA
 

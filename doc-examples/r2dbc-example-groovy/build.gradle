@@ -25,7 +25,7 @@ dependencies {
     compileOnly projects.micronautDataProcessor
     implementation projects.micronautDataR2dbc
     implementation mnSql.micronaut.jdbc.hikari
-    implementation libs.jakarta.transaction.api
+    implementation(libs.managed.jakarta.transaction.api)
 
     runtimeOnly mnR2dbc.r2dbc.postgresql
     runtimeOnly mnSql.postgresql
