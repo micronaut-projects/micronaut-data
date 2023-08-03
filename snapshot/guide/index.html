@@ -6240,7 +6240,7 @@ The <code>schema-generate</code> setting is only useful for demos and testing tr
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">compileOnly(<span class="hljs-string">"jakarta.persistence:jakarta.persistence-api:3.0.0")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">compileOnly(<span class="hljs-string">"jakarta.persistence:jakarta.persistence-api")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -6248,7 +6248,6 @@ The <code>schema-generate</code> setting is only useful for demos and testing tr
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;jakarta.persistence&lt;/groupId&gt;
     &lt;artifactId&gt;jakarta.persistence-api&lt;/artifactId&gt;
-    &lt;version&gt;3.0.0&lt;/version&gt;
     &lt;scope&gt;provided&lt;/scope&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
@@ -6261,7 +6260,7 @@ The <code>schema-generate</code> setting is only useful for demos and testing tr
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">compileOnly(<span class="hljs-string">"jakarta.persistence:jakarta.persistence-api:2.2.3")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">compileOnly(<span class="hljs-string">"jakarta.persistence:jakarta.persistence-api:3.0.0")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -6269,7 +6268,7 @@ The <code>schema-generate</code> setting is only useful for demos and testing tr
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;jakarta.persistence&lt;/groupId&gt;
     &lt;artifactId&gt;jakarta.persistence-api&lt;/artifactId&gt;
-    &lt;version&gt;2.2.3&lt;/version&gt;
+    &lt;version&gt;3.0.0&lt;/version&gt;
     &lt;scope&gt;provided&lt;/scope&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
@@ -9238,7 +9237,7 @@ More information about the static metamodel can be found in the <a href="https:/
 
 
 <div class="paragraph">
-<p>As mentioned in the <a href="#dbcQuickStart">Quick Start</a> section, if you need to customize how entities map to the table and column names of the database you can use JPA annotations to do so or Micronaut Datas own annotations in the <code>io.micronaut.data.annotation</code> package.</p>
+<p>As mentioned in the <a href="#dbcQuickStart">Quick Start</a> section, if you need to customize how entities map to the table and column names of the database you can use JPA annotations to do so or Micronaut Data&#8217;s own annotations in the <code>io.micronaut.data.annotation</code> package.</p>
 </div>
 <div class="paragraph">
 <p>An important aspect of Micronaut Data JDBC / R2DBC is that regardless whether you use JPA annotations or Micronaut Data annotations the entity classes must be compiled with Micronaut Data.</p>
@@ -16168,7 +16167,7 @@ You can add additional method candidates by creating a library that depends on <
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-spring:4.1.0.-SNAPSHOT")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-spring")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -16176,7 +16175,6 @@ You can add additional method candidates by creating a library that depends on <
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-data-spring&lt;/artifactId&gt;
-    &lt;version&gt;4.1.0.-SNAPSHOT&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div></p>
@@ -16241,7 +16239,7 @@ You can add additional method candidates by creating a library that depends on <
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-spring:4.1.0.-SNAPSHOT")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-spring")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -16249,7 +16247,6 @@ You can add additional method candidates by creating a library that depends on <
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-data-spring&lt;/artifactId&gt;
-    &lt;version&gt;4.1.0.-SNAPSHOT&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div></p>
@@ -16267,7 +16264,7 @@ You can add additional method candidates by creating a library that depends on <
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-spring-jdbc:4.1.0.-SNAPSHOT")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-spring-jdbc")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -16275,7 +16272,6 @@ You can add additional method candidates by creating a library that depends on <
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-data-spring-jdbc&lt;/artifactId&gt;
-    &lt;version&gt;4.1.0.-SNAPSHOT&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div></p>
@@ -16287,7 +16283,7 @@ You can add additional method candidates by creating a library that depends on <
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-spring-jpa:4.1.0.-SNAPSHOT")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-spring-jpa")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -16295,7 +16291,6 @@ You can add additional method candidates by creating a library that depends on <
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-data-spring-jpa&lt;/artifactId&gt;
-    &lt;version&gt;4.1.0.-SNAPSHOT&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div></p>
