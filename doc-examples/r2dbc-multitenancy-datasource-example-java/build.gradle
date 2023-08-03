@@ -27,8 +27,8 @@ dependencies {
     implementation mn.micronaut.http.client
     implementation projects.micronautDataR2dbc
     implementation mnSerde.micronaut.serde.jackson
-    implementation libs.jakarta.persistence.api
-    implementation libs.jakarta.transaction.api
+    implementation(libs.managed.jakarta.persistence.api)
+    implementation(libs.managed.jakarta.transaction.api)
 
     runtimeOnly mnR2dbc.r2dbc.mariadb
     runtimeOnly mnLogging.logback.classic
