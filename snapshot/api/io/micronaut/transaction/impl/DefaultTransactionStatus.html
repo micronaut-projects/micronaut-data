@@ -139,12 +139,20 @@ implements <a href="InternalTransaction.html" title="interface in io.micronaut.t
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getConnectionStatus()" class="member-name-link">getConnectionStatus</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getTransaction()" class="member-name-link">getTransaction</a>()</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getSavepoint()" class="member-name-link">getSavepoint</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getTransactionDefinition()" class="member-name-link">getTransactionDefinition</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getTransaction()" class="member-name-link">getTransaction</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getTransactionDefinition()" class="member-name-link">getTransactionDefinition</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The transaction definition.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isNestedTransaction()" class="member-name-link">isNestedTransaction</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Check if the current TX is nested.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static &lt;C&gt;&nbsp;<a href="DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;C&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#newTx(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)" class="member-name-link">newTx</a><wbr>(<a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;C&gt;&nbsp;connectionStatus,
@@ -155,8 +163,13 @@ implements <a href="InternalTransaction.html" title="interface in io.micronaut.t
  <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setTransaction(java.lang.Object)" class="member-name-link">setTransaction</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;transaction)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setSavepoint(java.lang.Object)" class="member-name-link">setSavepoint</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;savepoint)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Sets the savepoint for nested the transaction.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setTransaction(java.lang.Object)" class="member-name-link">setTransaction</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;transaction)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Sets the transaction representation object.</div>
 </div>
 </div>
@@ -224,6 +237,20 @@ implements <a href="InternalTransaction.html" title="interface in io.micronaut.t
 </section>
 </li>
 <li>
+<section class="detail" id="isNestedTransaction()">
+<h3>isNestedTransaction</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isNestedTransaction</span>()</div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="InternalTransaction.html#isNestedTransaction()">InternalTransaction</a></code></span></div>
+<div class="block">Check if the current TX is nested.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="InternalTransaction.html#isNestedTransaction()">isNestedTransaction</a></code>&nbsp;in interface&nbsp;<code><a href="InternalTransaction.html" title="interface in io.micronaut.transaction.impl">InternalTransaction</a>&lt;<a href="DefaultTransactionStatus.html" title="type parameter in DefaultTransactionStatus">C</a>&gt;</code></dd>
+<dt>Returns:</dt>
+<dd>true if is nested transaction</dd>
+</dl>
+</section>
+</li>
+<li>
 <section class="detail" id="setTransaction(java.lang.Object)">
 <h3>setTransaction</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setTransaction</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;transaction)</span></div>
@@ -231,6 +258,33 @@ implements <a href="InternalTransaction.html" title="interface in io.micronaut.t
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>transaction</code> - The transaction object</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="setSavepoint(java.lang.Object)">
+<h3>setSavepoint</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setSavepoint</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;savepoint)</span></div>
+<div class="block">Sets the savepoint for nested the transaction.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>savepoint</code> - The savepoint</dd>
+<dt>Since:</dt>
+<dd>4.1.0</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="getSavepoint()">
+<h3>getSavepoint</h3>
+<div class="member-signature"><span class="annotations">@Nullable
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">getSavepoint</span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>The savepoint</dd>
+<dt>Since:</dt>
+<dd>4.1.0</dd>
 </dl>
 </section>
 </li>

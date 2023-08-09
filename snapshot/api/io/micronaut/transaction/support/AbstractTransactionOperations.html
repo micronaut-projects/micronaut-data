@@ -198,41 +198,50 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 <div class="block">Do execute in transaction.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doResume(T)" class="member-name-link">doResume</a><wbr>(<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a>&nbsp;transaction)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doNestedBegin(T)" class="member-name-link">doNestedBegin</a><wbr>(<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a>&nbsp;tx)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Do resume the transaction.</div>
+<div class="block">Alternative of the <a href="#doBegin(T)"><code>doBegin(InternalTransaction)</code></a> intended for a nested transaction.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#doRollback(T)" class="member-name-link">doRollback</a><wbr>(<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a>&nbsp;tx)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
-<div class="block">Perform an actual rollback of the given transaction.</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doNestedCommit(T)" class="member-name-link">doNestedCommit</a><wbr>(<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a>&nbsp;tx)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Alternative of the <a href="#doCommit(T)"><code>doCommit(InternalTransaction)</code></a> intended for a nested transaction.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doSuspend(T)" class="member-name-link">doSuspend</a><wbr>(<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a>&nbsp;transaction)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doNestedRollback(T)" class="member-name-link">doNestedRollback</a><wbr>(<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a>&nbsp;tx)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Alternative of the <a href="#doRollback(T)"><code>doRollback(InternalTransaction)</code></a> intended for a nested transaction.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doResume(T)" class="member-name-link">doResume</a><wbr>(<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a>&nbsp;transaction)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Do resume the transaction.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#doRollback(T)" class="member-name-link">doRollback</a><wbr>(<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a>&nbsp;tx)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Perform an actual rollback of the given transaction.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doSuspend(T)" class="member-name-link">doSuspend</a><wbr>(<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a>&nbsp;transaction)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Do suspend the transaction.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="../../data/connection/ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getConnectionDefinition(io.micronaut.transaction.TransactionDefinition)" class="member-name-link">getConnectionDefinition</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;transactionDefinition)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="../../data/connection/ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getConnectionDefinition(io.micronaut.transaction.TransactionDefinition)" class="member-name-link">getConnectionDefinition</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;transactionDefinition)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns connection definition.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">C</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getTransaction(io.micronaut.transaction.TransactionDefinition)" class="member-name-link">getTransaction</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">C</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getTransaction(io.micronaut.transaction.TransactionDefinition)" class="member-name-link">getTransaction</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Return a currently active transaction or create a new one, according to
  the specified propagation behavior.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hasConnection()" class="member-name-link">hasConnection</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Check if the connection exists.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;R&gt;&nbsp;R</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#nested(T,java.util.function.Supplier)" class="member-name-link">nested</a><wbr>(<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a>&nbsp;existingTransaction,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Supplier.html" title="class or interface in java.util.function" class="external-link">Supplier</a>&lt;R&gt;&nbsp;callback)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hasConnection()" class="member-name-link">hasConnection</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Do execute nested transaction.</div>
+<div class="block">Check if the connection exists.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#rollback(io.micronaut.transaction.TransactionStatus)" class="member-name-link">rollback</a><wbr>(<a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">C</a>&gt;&nbsp;status)</code></div>
@@ -460,6 +469,39 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 </section>
 </li>
 <li>
+<section class="detail" id="doNestedBegin(T)">
+<h3 id="doNestedBegin(io.micronaut.transaction.impl.InternalTransaction)">doNestedBegin</h3>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">doNestedBegin</span><wbr><span class="parameters">(<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a>&nbsp;tx)</span></div>
+<div class="block">Alternative of the <a href="#doBegin(T)"><code>doBegin(InternalTransaction)</code></a> intended for a nested transaction.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>tx</code> - The transaction</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="doNestedCommit(T)">
+<h3 id="doNestedCommit(io.micronaut.transaction.impl.InternalTransaction)">doNestedCommit</h3>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">doNestedCommit</span><wbr><span class="parameters">(<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a>&nbsp;tx)</span></div>
+<div class="block">Alternative of the <a href="#doCommit(T)"><code>doCommit(InternalTransaction)</code></a> intended for a nested transaction.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>tx</code> - The transaction</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="doNestedRollback(T)">
+<h3 id="doNestedRollback(io.micronaut.transaction.impl.InternalTransaction)">doNestedRollback</h3>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">doNestedRollback</span><wbr><span class="parameters">(<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a>&nbsp;tx)</span></div>
+<div class="block">Alternative of the <a href="#doRollback(T)"><code>doRollback(InternalTransaction)</code></a> intended for a nested transaction.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>tx</code> - The transaction</dd>
+</dl>
+</section>
+</li>
+<li>
 <section class="detail" id="determineTimeout(io.micronaut.transaction.TransactionDefinition)">
 <h3>determineTimeout</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&gt;</span>&nbsp;<span class="element-name">determineTimeout</span><wbr><span class="parameters">(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</span></div>
@@ -513,23 +555,6 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 <dd><code>R</code> - The result type</dd>
 <dt>Parameters:</dt>
 <dd><code>transaction</code> - The transaction</dd>
-<dd><code>callback</code> - The callback</dd>
-<dt>Returns:</dt>
-<dd>The callback result</dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="nested(T,java.util.function.Supplier)">
-<h3 id="nested(io.micronaut.transaction.impl.InternalTransaction,java.util.function.Supplier)">nested</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">nested</span><wbr><span class="parameters">(<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a>&nbsp;existingTransaction,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Supplier.html" title="class or interface in java.util.function" class="external-link">Supplier</a>&lt;R&gt;&nbsp;callback)</span></div>
-<div class="block">Do execute nested transaction.</div>
-<dl class="notes">
-<dt>Type Parameters:</dt>
-<dd><code>R</code> - The result type</dd>
-<dt>Parameters:</dt>
-<dd><code>existingTransaction</code> - The transaction</dd>
 <dd><code>callback</code> - The callback</dd>
 <dt>Returns:</dt>
 <dd>The callback result</dd>

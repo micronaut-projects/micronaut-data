@@ -133,18 +133,33 @@ loadScripts(document, 'script');</script>
 <div class="block">Perform an actual commit of the given transaction.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doRollback(io.micronaut.transaction.impl.DefaultTransactionStatus)" class="member-name-link">doRollback</a><wbr>(<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;org.hibernate.Session&gt;&nbsp;tx)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doNestedBegin(io.micronaut.transaction.impl.DefaultTransactionStatus)" class="member-name-link">doNestedBegin</a><wbr>(<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;org.hibernate.Session&gt;&nbsp;status)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Alternative of the <a href="../support/AbstractTransactionOperations.html#doBegin(T)"><code>AbstractTransactionOperations.doBegin(InternalTransaction)</code></a> intended for a nested transaction.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doNestedCommit(io.micronaut.transaction.impl.DefaultTransactionStatus)" class="member-name-link">doNestedCommit</a><wbr>(<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;org.hibernate.Session&gt;&nbsp;status)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Alternative of the <a href="../support/AbstractTransactionOperations.html#doCommit(T)"><code>AbstractTransactionOperations.doCommit(InternalTransaction)</code></a> intended for a nested transaction.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doNestedRollback(io.micronaut.transaction.impl.DefaultTransactionStatus)" class="member-name-link">doNestedRollback</a><wbr>(<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;org.hibernate.Session&gt;&nbsp;status)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Alternative of the <a href="../support/AbstractTransactionOperations.html#doRollback(T)"><code>AbstractTransactionOperations.doRollback(InternalTransaction)</code></a> intended for a nested transaction.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doRollback(io.micronaut.transaction.impl.DefaultTransactionStatus)" class="member-name-link">doRollback</a><wbr>(<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;org.hibernate.Session&gt;&nbsp;tx)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Perform an actual rollback of the given transaction.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull org.hibernate.Session</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getConnection()" class="member-name-link">getConnection</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull org.hibernate.Session</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getConnection()" class="member-name-link">getConnection</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Obtains the connection for the current transaction.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@io.micronaut.core.annotation.NonNull boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hasConnection()" class="member-name-link">hasConnection</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@io.micronaut.core.annotation.NonNull boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hasConnection()" class="member-name-link">hasConnection</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Check if the connection exists.</div>
 </div>
 </div>
@@ -155,7 +170,7 @@ loadScripts(document, 'script');</script>
 <code><a href="../support/AbstractDefaultTransactionOperations.html#createExistingTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.impl.DefaultTransactionStatus)">createExistingTransactionStatus</a>, <a href="../support/AbstractDefaultTransactionOperations.html#createNewTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)">createNewTransactionStatus</a>, <a href="../support/AbstractDefaultTransactionOperations.html#createNoTxTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)">createNoTxTransactionStatus</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.transaction.support.AbstractTransactionOperations">Methods inherited from class&nbsp;io.micronaut.transaction.support.<a href="../support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a></h3>
-<code><a href="../support/AbstractTransactionOperations.html#commit(io.micronaut.transaction.TransactionStatus)">commit</a>, <a href="../support/AbstractTransactionOperations.html#determineTimeout(io.micronaut.transaction.TransactionDefinition)">determineTimeout</a>, <a href="../support/AbstractTransactionOperations.html#doExecute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)">doExecute</a>, <a href="../support/AbstractTransactionOperations.html#doResume(T)">doResume</a>, <a href="../support/AbstractTransactionOperations.html#doSuspend(T)">doSuspend</a>, <a href="../support/AbstractTransactionOperations.html#getConnectionDefinition(io.micronaut.transaction.TransactionDefinition)">getConnectionDefinition</a>, <a href="../support/AbstractTransactionOperations.html#getTransaction(io.micronaut.transaction.TransactionDefinition)">getTransaction</a>, <a href="../support/AbstractTransactionOperations.html#nested(T,java.util.function.Supplier)">nested</a>, <a href="../support/AbstractTransactionOperations.html#rollback(io.micronaut.transaction.TransactionStatus)">rollback</a>, <a href="../support/AbstractTransactionOperations.html#suspend(T,java.util.function.Supplier)">suspend</a></code></div>
+<code><a href="../support/AbstractTransactionOperations.html#commit(io.micronaut.transaction.TransactionStatus)">commit</a>, <a href="../support/AbstractTransactionOperations.html#determineTimeout(io.micronaut.transaction.TransactionDefinition)">determineTimeout</a>, <a href="../support/AbstractTransactionOperations.html#doExecute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)">doExecute</a>, <a href="../support/AbstractTransactionOperations.html#doResume(T)">doResume</a>, <a href="../support/AbstractTransactionOperations.html#doSuspend(T)">doSuspend</a>, <a href="../support/AbstractTransactionOperations.html#getConnectionDefinition(io.micronaut.transaction.TransactionDefinition)">getConnectionDefinition</a>, <a href="../support/AbstractTransactionOperations.html#getTransaction(io.micronaut.transaction.TransactionDefinition)">getTransaction</a>, <a href="../support/AbstractTransactionOperations.html#rollback(io.micronaut.transaction.TransactionStatus)">rollback</a>, <a href="../support/AbstractTransactionOperations.html#suspend(T,java.util.function.Supplier)">suspend</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.transaction.support.AbstractPropagatedStatusTransactionOperations">Methods inherited from class&nbsp;io.micronaut.transaction.support.<a href="../support/AbstractPropagatedStatusTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractPropagatedStatusTransactionOperations</a></h3>
 <code><a href="../support/AbstractPropagatedStatusTransactionOperations.html#execute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)">execute</a>, <a href="../support/AbstractPropagatedStatusTransactionOperations.html#extendCurrentPropagatedContext(io.micronaut.transaction.TransactionStatus)">extendCurrentPropagatedContext</a>, <a href="../support/AbstractPropagatedStatusTransactionOperations.html#findTransactionStatus()">findTransactionStatus</a></code></div>
@@ -227,6 +242,48 @@ loadScripts(document, 'script');</script>
 <dd><code><a href="../support/AbstractTransactionOperations.html#doRollback(T)">doRollback</a></code>&nbsp;in class&nbsp;<code><a href="../support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a>&lt;<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;org.hibernate.Session&gt;,<wbr>org.hibernate.Session&gt;</code></dd>
 <dt>Parameters:</dt>
 <dd><code>tx</code> - The transaction</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="doNestedBegin(io.micronaut.transaction.impl.DefaultTransactionStatus)">
+<h3>doNestedBegin</h3>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">doNestedBegin</span><wbr><span class="parameters">(<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;org.hibernate.Session&gt;&nbsp;status)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from class:&nbsp;<code><a href="../support/AbstractTransactionOperations.html#doNestedBegin(T)">AbstractTransactionOperations</a></code></span></div>
+<div class="block">Alternative of the <a href="../support/AbstractTransactionOperations.html#doBegin(T)"><code>AbstractTransactionOperations.doBegin(InternalTransaction)</code></a> intended for a nested transaction.</div>
+<dl class="notes">
+<dt>Overrides:</dt>
+<dd><code><a href="../support/AbstractTransactionOperations.html#doNestedBegin(T)">doNestedBegin</a></code>&nbsp;in class&nbsp;<code><a href="../support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a>&lt;<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;org.hibernate.Session&gt;,<wbr>org.hibernate.Session&gt;</code></dd>
+<dt>Parameters:</dt>
+<dd><code>status</code> - The transaction</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="doNestedCommit(io.micronaut.transaction.impl.DefaultTransactionStatus)">
+<h3>doNestedCommit</h3>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">doNestedCommit</span><wbr><span class="parameters">(<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;org.hibernate.Session&gt;&nbsp;status)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from class:&nbsp;<code><a href="../support/AbstractTransactionOperations.html#doNestedCommit(T)">AbstractTransactionOperations</a></code></span></div>
+<div class="block">Alternative of the <a href="../support/AbstractTransactionOperations.html#doCommit(T)"><code>AbstractTransactionOperations.doCommit(InternalTransaction)</code></a> intended for a nested transaction.</div>
+<dl class="notes">
+<dt>Overrides:</dt>
+<dd><code><a href="../support/AbstractTransactionOperations.html#doNestedCommit(T)">doNestedCommit</a></code>&nbsp;in class&nbsp;<code><a href="../support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a>&lt;<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;org.hibernate.Session&gt;,<wbr>org.hibernate.Session&gt;</code></dd>
+<dt>Parameters:</dt>
+<dd><code>status</code> - The transaction</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="doNestedRollback(io.micronaut.transaction.impl.DefaultTransactionStatus)">
+<h3>doNestedRollback</h3>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">doNestedRollback</span><wbr><span class="parameters">(<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;org.hibernate.Session&gt;&nbsp;status)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from class:&nbsp;<code><a href="../support/AbstractTransactionOperations.html#doNestedRollback(T)">AbstractTransactionOperations</a></code></span></div>
+<div class="block">Alternative of the <a href="../support/AbstractTransactionOperations.html#doRollback(T)"><code>AbstractTransactionOperations.doRollback(InternalTransaction)</code></a> intended for a nested transaction.</div>
+<dl class="notes">
+<dt>Overrides:</dt>
+<dd><code><a href="../support/AbstractTransactionOperations.html#doNestedRollback(T)">doNestedRollback</a></code>&nbsp;in class&nbsp;<code><a href="../support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a>&lt;<a href="../impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;org.hibernate.Session&gt;,<wbr>org.hibernate.Session&gt;</code></dd>
+<dt>Parameters:</dt>
+<dd><code>status</code> - The transaction</dd>
 </dl>
 </section>
 </li>

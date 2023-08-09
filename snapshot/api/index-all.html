@@ -1784,6 +1784,10 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/support/AbstractTransactionOperations.html#commit(io.micronaut.transaction.TransactionStatus)" class="member-name-link">commit(TransactionStatus&lt;C&gt;)</a> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/spring/tx/AbstractSpringTransactionOperations.html#commit(io.micronaut.transaction.TransactionStatus)" class="member-name-link">commit(TransactionStatus&lt;Connection&gt;)</a> - Method in class io.micronaut.data.spring.tx.<a href="io/micronaut/data/spring/tx/AbstractSpringTransactionOperations.html" title="class in io.micronaut.data.spring.tx">AbstractSpringTransactionOperations</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/spring/jpa/hibernate/SpringHibernateTransactionOperations.html#commit(io.micronaut.transaction.TransactionStatus)" class="member-name-link">commit(TransactionStatus&lt;Session&gt;)</a> - Method in class io.micronaut.data.spring.jpa.hibernate.<a href="io/micronaut/data/spring/jpa/hibernate/SpringHibernateTransactionOperations.html" title="class in io.micronaut.data.spring.jpa.hibernate">SpringHibernateTransactionOperations</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/SynchronousTransactionManager.html#commit(io.micronaut.transaction.TransactionStatus)" class="member-name-link">commit(TransactionStatus&lt;T&gt;)</a> - Method in interface io.micronaut.transaction.<a href="io/micronaut/transaction/SynchronousTransactionManager.html" title="interface in io.micronaut.transaction">SynchronousTransactionManager</a></dt>
 <dd>
 <div class="block">Commit the given transaction, with regard to its status.</div>
@@ -3902,6 +3906,30 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/transaction/reactive/ReactiveTransactionOperations.TransactionalCallback.html#doInTransaction(io.micronaut.transaction.reactive.ReactiveTransactionStatus)" class="member-name-link">doInTransaction(ReactiveTransactionStatus&lt;C&gt;)</a> - Method in interface io.micronaut.transaction.reactive.<a href="io/micronaut/transaction/reactive/ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a></dt>
 <dd>
 <div class="block">Invokes the given code passing the <a href="io/micronaut/transaction/reactive/ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive"><code>ReactiveTransactionStatus</code></a>.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/jdbc/DataSourceTransactionManager.html#doNestedBegin(io.micronaut.transaction.impl.DefaultTransactionStatus)" class="member-name-link">doNestedBegin(DefaultTransactionStatus&lt;Connection&gt;)</a> - Method in class io.micronaut.transaction.jdbc.<a href="io/micronaut/transaction/jdbc/DataSourceTransactionManager.html" title="class in io.micronaut.transaction.jdbc">DataSourceTransactionManager</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/hibernate/HibernateTransactionManager.html#doNestedBegin(io.micronaut.transaction.impl.DefaultTransactionStatus)" class="member-name-link">doNestedBegin(DefaultTransactionStatus&lt;Session&gt;)</a> - Method in class io.micronaut.transaction.hibernate.<a href="io/micronaut/transaction/hibernate/HibernateTransactionManager.html" title="class in io.micronaut.transaction.hibernate">HibernateTransactionManager</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/support/AbstractTransactionOperations.html#doNestedBegin(T)" class="member-name-link">doNestedBegin(T)</a> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a></dt>
+<dd>
+<div class="block">Alternative of the <a href="io/micronaut/transaction/support/AbstractTransactionOperations.html#doBegin(T)"><code>AbstractTransactionOperations.doBegin(InternalTransaction)</code></a> intended for a nested transaction.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/jdbc/DataSourceTransactionManager.html#doNestedCommit(io.micronaut.transaction.impl.DefaultTransactionStatus)" class="member-name-link">doNestedCommit(DefaultTransactionStatus&lt;Connection&gt;)</a> - Method in class io.micronaut.transaction.jdbc.<a href="io/micronaut/transaction/jdbc/DataSourceTransactionManager.html" title="class in io.micronaut.transaction.jdbc">DataSourceTransactionManager</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/hibernate/HibernateTransactionManager.html#doNestedCommit(io.micronaut.transaction.impl.DefaultTransactionStatus)" class="member-name-link">doNestedCommit(DefaultTransactionStatus&lt;Session&gt;)</a> - Method in class io.micronaut.transaction.hibernate.<a href="io/micronaut/transaction/hibernate/HibernateTransactionManager.html" title="class in io.micronaut.transaction.hibernate">HibernateTransactionManager</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/support/AbstractTransactionOperations.html#doNestedCommit(T)" class="member-name-link">doNestedCommit(T)</a> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a></dt>
+<dd>
+<div class="block">Alternative of the <a href="io/micronaut/transaction/support/AbstractTransactionOperations.html#doCommit(T)"><code>AbstractTransactionOperations.doCommit(InternalTransaction)</code></a> intended for a nested transaction.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/jdbc/DataSourceTransactionManager.html#doNestedRollback(io.micronaut.transaction.impl.DefaultTransactionStatus)" class="member-name-link">doNestedRollback(DefaultTransactionStatus&lt;Connection&gt;)</a> - Method in class io.micronaut.transaction.jdbc.<a href="io/micronaut/transaction/jdbc/DataSourceTransactionManager.html" title="class in io.micronaut.transaction.jdbc">DataSourceTransactionManager</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/hibernate/HibernateTransactionManager.html#doNestedRollback(io.micronaut.transaction.impl.DefaultTransactionStatus)" class="member-name-link">doNestedRollback(DefaultTransactionStatus&lt;Session&gt;)</a> - Method in class io.micronaut.transaction.hibernate.<a href="io/micronaut/transaction/hibernate/HibernateTransactionManager.html" title="class in io.micronaut.transaction.hibernate">HibernateTransactionManager</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/support/AbstractTransactionOperations.html#doNestedRollback(T)" class="member-name-link">doNestedRollback(T)</a> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a></dt>
+<dd>
+<div class="block">Alternative of the <a href="io/micronaut/transaction/support/AbstractTransactionOperations.html#doRollback(T)"><code>AbstractTransactionOperations.doRollback(InternalTransaction)</code></a> intended for a nested transaction.</div>
 </dd>
 <dt><a href="io/micronaut/transaction/support/AbstractTransactionOperations.html#doResume(T)" class="member-name-link">doResume(T)</a> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a></dt>
 <dd>
@@ -7821,6 +7849,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns runtime persistent property.</div>
 </dd>
+<dt><a href="io/micronaut/transaction/impl/DefaultTransactionStatus.html#getSavepoint()" class="member-name-link">getSavepoint()</a> - Method in class io.micronaut.transaction.impl.<a href="io/micronaut/transaction/impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html#getSchemaGenerate()" class="member-name-link">getSchemaGenerate()</a> - Method in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/r2dbc/config/DataR2dbcConfiguration.html#getSchemaGenerate()" class="member-name-link">getSchemaGenerate()</a> - Method in class io.micronaut.data.r2dbc.config.<a href="io/micronaut/data/r2dbc/config/DataR2dbcConfiguration.html" title="class in io.micronaut.data.r2dbc.config">DataR2dbcConfiguration</a></dt>
@@ -7966,6 +7996,10 @@ loadScripts(document, 'script');</script>
 <div class="block">Return a currently active transaction or create a new one, according to
  the specified propagation behavior.</div>
 </dd>
+<dt><a href="io/micronaut/data/spring/jpa/hibernate/SpringHibernateTransactionOperations.html#getTransaction(io.micronaut.transaction.TransactionDefinition)" class="member-name-link">getTransaction(TransactionDefinition)</a> - Method in class io.micronaut.data.spring.jpa.hibernate.<a href="io/micronaut/data/spring/jpa/hibernate/SpringHibernateTransactionOperations.html" title="class in io.micronaut.data.spring.jpa.hibernate">SpringHibernateTransactionOperations</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/spring/tx/AbstractSpringTransactionOperations.html#getTransaction(io.micronaut.transaction.TransactionDefinition)" class="member-name-link">getTransaction(TransactionDefinition)</a> - Method in class io.micronaut.data.spring.tx.<a href="io/micronaut/data/spring/tx/AbstractSpringTransactionOperations.html" title="class in io.micronaut.data.spring.tx">AbstractSpringTransactionOperations</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/support/AbstractTransactionOperations.html#getTransaction(io.micronaut.transaction.TransactionDefinition)" class="member-name-link">getTransaction(TransactionDefinition)</a> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/impl/DefaultTransactionStatus.html#getTransactionDefinition()" class="member-name-link">getTransactionDefinition()</a> - Method in class io.micronaut.transaction.impl.<a href="io/micronaut/transaction/impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a></dt>
@@ -9871,6 +9905,12 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/predicate/NegatedPredicate.html#isNegated()" class="member-name-link">isNegated()</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/NegatedPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">NegatedPredicate</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/impl/DefaultTransactionStatus.html#isNestedTransaction()" class="member-name-link">isNestedTransaction()</a> - Method in class io.micronaut.transaction.impl.<a href="io/micronaut/transaction/impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/impl/InternalTransaction.html#isNestedTransaction()" class="member-name-link">isNestedTransaction()</a> - Method in interface io.micronaut.transaction.impl.<a href="io/micronaut/transaction/impl/InternalTransaction.html" title="interface in io.micronaut.transaction.impl">InternalTransaction</a></dt>
+<dd>
+<div class="block">Check if the current TX is nested.</div>
+</dd>
 <dt><a href="io/micronaut/transaction/impl/TransactionManagerConfiguration.html#isNestedTransactionAllowed()" class="member-name-link">isNestedTransactionAllowed()</a> - Method in class io.micronaut.transaction.impl.<a href="io/micronaut/transaction/impl/TransactionManagerConfiguration.html" title="class in io.micronaut.transaction.impl">TransactionManagerConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/connection/ConnectionStatus.html#isNew()" class="member-name-link">isNew()</a> - Method in interface io.micronaut.data.connection.<a href="io/micronaut/data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a></dt>
@@ -11972,10 +12012,6 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/model/query/factory/Restrictions.html#neProperty(java.lang.String,java.lang.String)" class="member-name-link">neProperty(String, String)</a> - Static method in class io.micronaut.data.model.query.factory.<a href="io/micronaut/data/model/query/factory/Restrictions.html" title="class in io.micronaut.data.model.query.factory">Restrictions</a></dt>
 <dd>
 <div class="block">Constraints a property to be not equal to a specified other property.</div>
-</dd>
-<dt><a href="io/micronaut/transaction/support/AbstractTransactionOperations.html#nested(T,java.util.function.Supplier)" class="member-name-link">nested(T, Supplier&lt;R&gt;)</a> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a></dt>
-<dd>
-<div class="block">Do execute nested transaction.</div>
 </dd>
 <dt><a href="io/micronaut/transaction/TransactionDefinition.Propagation.html#NESTED" class="member-name-link">NESTED</a> - Enum constant in enum class io.micronaut.transaction.<a href="io/micronaut/transaction/TransactionDefinition.Propagation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Propagation</a></dt>
 <dd>
@@ -15233,6 +15269,10 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/transaction/support/AbstractTransactionOperations.html#rollback(io.micronaut.transaction.TransactionStatus)" class="member-name-link">rollback(TransactionStatus&lt;C&gt;)</a> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/spring/tx/AbstractSpringTransactionOperations.html#rollback(io.micronaut.transaction.TransactionStatus)" class="member-name-link">rollback(TransactionStatus&lt;Connection&gt;)</a> - Method in class io.micronaut.data.spring.tx.<a href="io/micronaut/data/spring/tx/AbstractSpringTransactionOperations.html" title="class in io.micronaut.data.spring.tx">AbstractSpringTransactionOperations</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/spring/jpa/hibernate/SpringHibernateTransactionOperations.html#rollback(io.micronaut.transaction.TransactionStatus)" class="member-name-link">rollback(TransactionStatus&lt;Session&gt;)</a> - Method in class io.micronaut.data.spring.jpa.hibernate.<a href="io/micronaut/data/spring/jpa/hibernate/SpringHibernateTransactionOperations.html" title="class in io.micronaut.data.spring.jpa.hibernate">SpringHibernateTransactionOperations</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/SynchronousTransactionManager.html#rollback(io.micronaut.transaction.TransactionStatus)" class="member-name-link">rollback(TransactionStatus&lt;T&gt;)</a> - Method in interface io.micronaut.transaction.<a href="io/micronaut/transaction/SynchronousTransactionManager.html" title="interface in io.micronaut.transaction">SynchronousTransactionManager</a></dt>
 <dd>
 <div class="block">Perform a rollback of the given transaction.</div>
@@ -15848,6 +15888,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/transaction/TransactionExecution.html#setRollbackOnly()" class="member-name-link">setRollbackOnly()</a> - Method in interface io.micronaut.transaction.<a href="io/micronaut/transaction/TransactionExecution.html" title="interface in io.micronaut.transaction">TransactionExecution</a></dt>
 <dd>
 <div class="block">Set the transaction rollback-only.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/impl/DefaultTransactionStatus.html#setSavepoint(java.lang.Object)" class="member-name-link">setSavepoint(Object)</a> - Method in class io.micronaut.transaction.impl.<a href="io/micronaut/transaction/impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a></dt>
+<dd>
+<div class="block">Sets the savepoint for nested the transaction.</div>
 </dd>
 <dt><a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html#setSchemaGenerate(io.micronaut.data.runtime.config.SchemaGenerate)" class="member-name-link">setSchemaGenerate(SchemaGenerate)</a> - Method in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a></dt>
 <dd>
