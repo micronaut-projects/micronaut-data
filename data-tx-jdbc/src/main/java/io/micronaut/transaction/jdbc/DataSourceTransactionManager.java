@@ -28,6 +28,7 @@ import io.micronaut.data.connection.SynchronousConnectionManager;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 import io.micronaut.data.connection.support.JdbcConnectionUtils;
 import io.micronaut.transaction.TransactionDefinition;
+import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
 import io.micronaut.transaction.support.AbstractDefaultTransactionOperations;
@@ -35,6 +36,7 @@ import io.micronaut.transaction.support.AbstractDefaultTransactionOperations;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Savepoint;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -170,6 +172,51 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
         }
     }
 
+    @Override
+    protected void doNestedBegin(DefaultTransactionStatus<Connection> status) {
+        try {
+            Connection connection = status.getConnection();
+            Savepoint savepoint = connection.setSavepoint(status.getTransactionDefinition().getName());
+            status.setSavepoint(savepoint);
+        } catch (SQLException e) {
+            throw new CannotCreateTransactionException("Could not create JDBC savepoint", e);
+        }
+    }
+
+    @Override
+    protected void doNestedCommit(DefaultTransactionStatus<Connection> status) {
+        if (status.getSavepoint() != null) {
+            Connection connection = status.getConnection();
+            if (logger.isDebugEnabled()) {
+                logger.debug("Releasing JDBC savepoint on Connection [{}]", connection);
+            }
+            try {
+                connection.releaseSavepoint((Savepoint) status.getSavepoint());
+            } catch (Exception e) {
+                throw new TransactionSystemException("Could release JDBC savepoint", e);
+            }
+        } else {
+            throw new TransactionSystemException("Missing a JDBC savepoint");
+        }
+    }
+
+    @Override
+    protected void doNestedRollback(DefaultTransactionStatus<Connection> status) {
+        if (status.getSavepoint() != null) {
+            Connection connection = status.getConnection();
+            if (logger.isDebugEnabled()) {
+                logger.debug("Rolling back JDBC transaction to the savepoint on Connection [{}]", connection);
+            }
+            try {
+                connection.rollback((Savepoint) status.getSavepoint());
+            } catch (Exception e) {
+                throw new TransactionSystemException("Could not roll back to JDBC savepoint", e);
+            }
+        } else {
+            throw new TransactionSystemException("Missing a JDBC savepoint");
+        }
+    }
+
     /**
      * Prepare the transactional {@code Connection} right after transaction begin.
      * <p>The default implementation executes a "SET TRANSACTION READ ONLY" statement
@@ -186,7 +233,7 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
      * @since 4.3.7
      */
     protected void prepareTransactionalConnection(Connection con, TransactionDefinition definition)
-        throws SQLException {
+            throws SQLException {
 
         if (isEnforceReadOnly() && definition.isReadOnly().orElse(false)) {
             try (Statement stmt = con.createStatement()) {

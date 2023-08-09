@@ -21,10 +21,11 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.spring.tx.AbstractSpringTransactionOperations;
+import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.TransactionCallback;
 import io.micronaut.transaction.TransactionDefinition;
-import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.TransactionStatus;
+import io.micronaut.transaction.exceptions.TransactionException;
 import io.micronaut.transaction.support.TransactionSynchronization;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -44,7 +45,7 @@ import java.util.Optional;
 @EachBean(HibernateTransactionManager.class)
 @Replaces(io.micronaut.transaction.hibernate.HibernateTransactionManager.class)
 @Internal
-public final class SpringHibernateTransactionOperations implements TransactionOperations<Session> {
+public final class SpringHibernateTransactionOperations implements SynchronousTransactionManager<Session> {
 
     private final SpringJdbcConnectionTransactionOperations transactionOperations;
     private final SessionFactory sessionFactory;
@@ -55,6 +56,7 @@ public final class SpringHibernateTransactionOperations implements TransactionOp
      * @param hibernateTransactionManager The hibernate transaction manager.
      */
     SpringHibernateTransactionOperations(HibernateTransactionManager hibernateTransactionManager) {
+        hibernateTransactionManager.setNestedTransactionAllowed(true);
         this.sessionFactory = hibernateTransactionManager.getSessionFactory();
         this.transactionOperations = new SpringJdbcConnectionTransactionOperations(hibernateTransactionManager);
     }
@@ -76,53 +78,24 @@ public final class SpringHibernateTransactionOperations implements TransactionOp
 
     @Override
     public <R> R execute(TransactionDefinition definition, TransactionCallback<Session, R> callback) {
-        return transactionOperations.execute(definition, status -> callback.call(new TransactionStatus<>() {
+        return transactionOperations.execute(definition, status -> callback.call(new SessionTransactionStatus(status, definition)));
+    }
 
-            @Override
-            public Object getTransaction() {
-                return status.getTransaction();
-            }
+    @Override
+    public TransactionStatus<Session> getTransaction(TransactionDefinition definition) throws TransactionException {
+        return new SessionTransactionStatus(transactionOperations.getTransaction(definition), definition);
+    }
 
-            @Override
-            public Session getConnection() {
-                return sessionFactory.getCurrentSession();
-            }
+    @Override
+    public void commit(TransactionStatus<Session> status) throws TransactionException {
+        SessionTransactionStatus sessionTransactionStatus = (SessionTransactionStatus) status;
+        transactionOperations.commit(sessionTransactionStatus.status);
+    }
 
-            @Override
-            public ConnectionStatus<Session> getConnectionStatus() {
-                throw new IllegalStateException("Connection status is not supported for Spring Hibernate TX manager!");
-            }
-
-            @Override
-            public boolean isNewTransaction() {
-                return status.isNewTransaction();
-            }
-
-            @Override
-            public void setRollbackOnly() {
-                status.setRollbackOnly();
-            }
-
-            @Override
-            public boolean isRollbackOnly() {
-                return status.isRollbackOnly();
-            }
-
-            @Override
-            public boolean isCompleted() {
-                return status.isCompleted();
-            }
-
-            @Override
-            public TransactionDefinition getTransactionDefinition() {
-                return definition;
-            }
-
-            @Override
-            public void registerSynchronization(TransactionSynchronization synchronization) {
-                status.registerSynchronization(synchronization);
-            }
-        }));
+    @Override
+    public void rollback(TransactionStatus<Session> status) throws TransactionException {
+        SessionTransactionStatus sessionTransactionStatus = (SessionTransactionStatus) status;
+        transactionOperations.rollback(sessionTransactionStatus.status);
     }
 
     private static final class SpringJdbcConnectionTransactionOperations extends AbstractSpringTransactionOperations {
@@ -153,5 +126,60 @@ public final class SpringHibernateTransactionOperations implements TransactionOp
 
     }
 
+    private final class SessionTransactionStatus implements TransactionStatus<Session> {
+
+        private final TransactionStatus<Connection> status;
+        private final TransactionDefinition definition;
+
+        SessionTransactionStatus(TransactionStatus<Connection> status, TransactionDefinition definition) {
+            this.status = status;
+            this.definition = definition;
+        }
+
+        @Override
+        public Object getTransaction() {
+            return status.getTransaction();
+        }
+
+        @Override
+        public Session getConnection() {
+            return sessionFactory.getCurrentSession();
+        }
+
+        @Override
+        public ConnectionStatus<Session> getConnectionStatus() {
+            throw new IllegalStateException("Connection status is not supported for Spring Hibernate TX manager!");
+        }
+
+        @Override
+        public boolean isNewTransaction() {
+            return status.isNewTransaction();
+        }
+
+        @Override
+        public void setRollbackOnly() {
+            status.setRollbackOnly();
+        }
+
+        @Override
+        public boolean isRollbackOnly() {
+            return status.isRollbackOnly();
+        }
+
+        @Override
+        public boolean isCompleted() {
+            return status.isCompleted();
+        }
+
+        @Override
+        public TransactionDefinition getTransactionDefinition() {
+            return definition;
+        }
+
+        @Override
+        public void registerSynchronization(TransactionSynchronization synchronization) {
+            status.registerSynchronization(synchronization);
+        }
+    }
 }
 

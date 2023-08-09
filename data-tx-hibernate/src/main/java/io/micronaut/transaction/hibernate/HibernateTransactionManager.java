@@ -25,6 +25,7 @@ import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.SynchronousConnectionManager;
 import io.micronaut.data.connection.support.JdbcConnectionUtils;
 import io.micronaut.transaction.TransactionDefinition;
+import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.micronaut.transaction.exceptions.InvalidIsolationLevelException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
@@ -42,6 +43,8 @@ import org.hibernate.resource.jdbc.spi.PhysicalConnectionHandlingMode;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Savepoint;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -200,6 +203,51 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
                 // Necessary for pre-bound Sessions, to avoid inconsistent state.
                 tx.getConnection().clear();
             }
+        }
+    }
+
+    @Override
+    protected void doNestedBegin(DefaultTransactionStatus<Session> status) {
+        try {
+            Session session = status.getConnection();
+            Savepoint savepoint = getConnection(session).setSavepoint(status.getTransactionDefinition().getName());
+            status.setSavepoint(savepoint);
+        } catch (SQLException e) {
+            throw new CannotCreateTransactionException("Could not create JDBC savepoint", e);
+        }
+    }
+
+    @Override
+    protected void doNestedCommit(DefaultTransactionStatus<Session> status) {
+        if (status.getSavepoint() != null) {
+            Session session = status.getConnection();
+            if (logger.isDebugEnabled()) {
+                logger.debug("Releasing JDBC savepoint for Session [{}]", session);
+            }
+            try {
+                getConnection(session).releaseSavepoint((Savepoint) status.getSavepoint());
+            } catch (Exception e) {
+                throw new TransactionSystemException("Could release JDBC savepoint", e);
+            }
+        } else {
+            throw new TransactionSystemException("Missing a JDBC savepoint");
+        }
+    }
+
+    @Override
+    protected void doNestedRollback(DefaultTransactionStatus<Session> status) {
+        if (status.getSavepoint() != null) {
+            Session session = status.getConnection();
+            if (logger.isDebugEnabled()) {
+                logger.debug("Rolling back JDBC transaction to the savepoint for Session [{}]", session);
+            }
+            try {
+                getConnection(session).rollback((Savepoint) status.getSavepoint());
+            } catch (Exception e) {
+                throw new TransactionSystemException("Could not roll back to JDBC savepoint", e);
+            }
+        } else {
+            throw new TransactionSystemException("Missing a JDBC savepoint");
         }
     }
 
