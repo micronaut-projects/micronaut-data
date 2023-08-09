@@ -256,8 +256,6 @@ public class TxBookService extends AbstractBookService {
         TransactionStatus<Object> transaction = transactionManager.getTransaction(TransactionDefinition.of(TransactionDefinition.Propagation.REQUIRES_NEW));
         bookRepository.save(newBook("Book1"));
         transactionManager.commit(transaction);
-        long l = countBooksTransactional();
-        "".trim();
     }
 
     @jakarta.transaction.Transactional(jakarta.transaction.Transactional.TxType.REQUIRES_NEW)
