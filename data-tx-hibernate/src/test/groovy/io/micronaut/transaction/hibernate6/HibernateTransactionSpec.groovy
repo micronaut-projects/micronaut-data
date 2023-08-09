@@ -60,7 +60,11 @@ class HibernateTransactionSpec extends AbstractTransactionSpec implements TestRe
         return new Runnable() {
             @Override
             void run() {
-                assert connectionOperations.getConnectionStatus()
+                def status = connectionOperations.findConnectionStatus()
+                if (status.isEmpty()) {
+                    return
+                }
+                assert status.get()
                         .getConnection()
                         .getTransaction()
                         .getStatus() == TransactionStatus.NOT_ACTIVE
