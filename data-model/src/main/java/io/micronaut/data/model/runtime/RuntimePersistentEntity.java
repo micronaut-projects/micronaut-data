@@ -28,6 +28,8 @@ import io.micronaut.data.annotation.Version;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -40,6 +42,8 @@ import java.util.stream.Collectors;
  * @param <T> The type
  */
 public class RuntimePersistentEntity<T> extends AbstractPersistentEntity implements PersistentEntity {
+
+    private static final Logger LOG = LoggerFactory.getLogger(RuntimePersistentEntity.class);
 
     private final BeanIntrospection<T> introspection;
     private final RuntimePersistentProperty<T>[] identity;
@@ -127,6 +131,11 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
             this.constructorArguments[i] = prop;
         }
         this.aliasName = super.getAliasName();
+    }
+
+    @Override
+    protected void logDebug(String message, Exception e) {
+        LOG.debug(message, e);
     }
 
     private static EnumSet<Relation.Cascade> cascades(RuntimePersistentEntity<?> persistentEntity) {
