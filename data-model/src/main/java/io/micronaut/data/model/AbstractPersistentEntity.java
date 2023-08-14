@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.model;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.AnnotationMetadata;
@@ -24,8 +25,6 @@ import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.reflect.InstantiationUtils;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.model.naming.NamingStrategy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Optional;
@@ -37,9 +36,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author graemerocher
  * @since 1.0.0
  */
+@Internal
 public abstract class AbstractPersistentEntity implements PersistentEntity {
-
-    private static final Logger LOG = LoggerFactory.getLogger(AbstractPersistentEntity.class);
 
     private static final Map<String, NamingStrategy> NAMING_STRATEGIES = new ConcurrentHashMap<>(3);
 
@@ -54,6 +52,16 @@ public abstract class AbstractPersistentEntity implements PersistentEntity {
     protected AbstractPersistentEntity(AnnotationMetadataProvider annotationMetadataProvider) {
         this.annotationMetadataProvider = annotationMetadataProvider;
         this.namingStrategy = getNamingStrategy(annotationMetadataProvider.getAnnotationMetadata());
+    }
+
+    /**
+     * Log error message.
+     *
+     * @param message The message
+     * @param e       The exception
+     */
+    protected void logDebug(String message, Exception e) {
+        System.err.println(message + " " + e.getMessage());
     }
 
     @NonNull
@@ -71,7 +79,7 @@ public abstract class AbstractPersistentEntity implements PersistentEntity {
     }
 
     @NonNull
-    private static Optional<NamingStrategy> getNamingStrategy(String className, ClassLoader classLoader) {
+    private Optional<NamingStrategy> getNamingStrategy(String className, ClassLoader classLoader) {
         NamingStrategy namingStrategy = NAMING_STRATEGIES.get(className);
         if (namingStrategy != null) {
             return Optional.of(namingStrategy);
@@ -87,9 +95,7 @@ public abstract class AbstractPersistentEntity implements PersistentEntity {
                     }
                 }
             } catch (Exception e) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Tried, but could not instantiate naming strategy: {}", className, e);
-                }
+                logDebug("Tried, but could not instantiate naming strategy: " + className, e);
             }
             Object o = InstantiationUtils.tryInstantiate(className, classLoader).orElse(null);
             if (o instanceof NamingStrategy ns) {

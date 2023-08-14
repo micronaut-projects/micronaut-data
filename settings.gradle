@@ -123,6 +123,8 @@ include 'doc-examples:hibernate-spring-tx-example-java'
 
 include 'doc-examples:jooq-r2dbc-postgres'
 
+include 'test-annotation-processor-java'
+
 // benchmarks
 include 'benchmarks:benchmark-micronaut-data-jpa'
 include 'benchmarks:benchmark-micronaut-data-jdbc'
