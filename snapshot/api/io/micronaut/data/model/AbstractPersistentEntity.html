@@ -83,7 +83,8 @@ loadScripts(document, 'script');</script>
 <dd><code><a href="runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a></code>, <code><a href="../processor/model/SourcePersistentEntity.html" title="class in io.micronaut.data.processor.model">SourcePersistentEntity</a></code></dd>
 </dl>
 <hr>
-<div class="type-signature"><span class="modifiers">public abstract class </span><span class="element-name type-name-label">AbstractPersistentEntity</span>
+<div class="type-signature"><span class="annotations">@Internal
+</span><span class="modifiers">public abstract class </span><span class="element-name type-name-label">AbstractPersistentEntity</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>
 implements <a href="PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></span></div>
 <div class="block">Abstract version of the <a href="PersistentEntity.html" title="interface in io.micronaut.data.model"><code>PersistentEntity</code></a> interface.</div>
@@ -160,6 +161,12 @@ implements <a href="PersistentEntity.html" title="interface in io.micronaut.data
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>int</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hashCode()" class="member-name-link">hashCode</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#logDebug(java.lang.String,java.lang.Exception)" class="member-name-link">logDebug</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;message,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a>&nbsp;e)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Log error message.</div>
+</div>
 </div>
 </div>
 </div>
@@ -205,6 +212,19 @@ implements <a href="PersistentEntity.html" title="interface in io.micronaut.data
 <section class="method-details" id="method-detail">
 <h2>Method Details</h2>
 <ul class="member-list">
+<li>
+<section class="detail" id="logDebug(java.lang.String,java.lang.Exception)">
+<h3>logDebug</h3>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">logDebug</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;message,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a>&nbsp;e)</span></div>
+<div class="block">Log error message.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>message</code> - The message</dd>
+<dd><code>e</code> - The exception</dd>
+</dl>
+</section>
+</li>
 <li>
 <section class="detail" id="getAliasName()">
 <h3>getAliasName</h3>
