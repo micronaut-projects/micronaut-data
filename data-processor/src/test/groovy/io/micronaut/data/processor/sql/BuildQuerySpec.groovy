@@ -22,6 +22,7 @@ import io.micronaut.data.model.entities.Invoice
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Restaurant
+import io.micronaut.data.tck.jdbc.entities.EmployeeGroup
 import spock.lang.Issue
 import spock.lang.Unroll
 
@@ -767,5 +768,31 @@ interface PersonRepository extends GenericRepository<Person, Long> {
         expect:
         distinctQuery == 'SELECT DISTINCT person_.* FROM `person` person_'
         distinctIdAndNameQuery == 'SELECT DISTINCT person_.`id`,person_.`name` FROM `person` person_'
+    }
+
+    void "test findBy join query with join column"() {
+        given:
+        def repository = buildRepository('test.EmployeeGroupRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.jdbc.entities.EmployeeGroup;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface EmployeeGroupRepository extends GenericRepository<EmployeeGroup, Long> {
+
+    EmployeeGroup save(EmployeeGroup employeeGroup);
+
+    @Join(value = "employees", alias = "employee_", type = Join.Type.LEFT_FETCH)
+    @Where("@.category_id = :categoryId")
+    List<EmployeeGroup> findByCategoryId(Long categoryId);
+}
+""")
+        def saveQuery = getQuery(repository.getRequiredMethod("save", EmployeeGroup))
+        def findByCategoryIdQuery = getQuery(repository.getRequiredMethod("findByCategoryId", Long))
+
+        expect:"Join does not use join table because of JoinColumn annotation"
+        saveQuery == 'INSERT INTO `employee_group` (`name`,`category_id`,`employer_id`) VALUES (?,?,?)'
+        findByCategoryIdQuery == 'SELECT employee_group_.`id`,employee_group_.`name`,employee_group_.`category_id`,employee_group_.`employer_id`,employee_.`id` AS employee_id,employee_.`name` AS employee_name,employee_.`category_id` AS employee_category_id,employee_.`employer_id` AS employee_employer_id FROM `employee_group` employee_group_ LEFT JOIN `employee` employee_ ON employee_group_.`employer_id`=employee_.`employer_id` AND employee_group_.`category_id`=employee_.`category_id` WHERE (employee_group_.`category_id` = ? AND (employee_group_.category_id =?))'
     }
 }

@@ -34,6 +34,8 @@ import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.sql.JoinColumn;
+import io.micronaut.data.annotation.sql.JoinColumns;
 import io.micronaut.data.annotation.sql.SqlMembers;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
@@ -101,6 +103,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      */
     private static final String ANN_JOIN_TABLE = "io.micronaut.data.annotation.sql.JoinTable";
     private static final String ANN_JOIN_COLUMNS = "io.micronaut.data.annotation.sql.JoinColumns";
+    private static final String VALUE_MEMBER = "value";
     private static final String BLANK_SPACE = " ";
     private static final String SEQ_SUFFIX = "_seq";
     private static final String INSERT_INTO = "INSERT INTO ";
@@ -300,9 +303,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      * @return True if it is.
      */
     public static boolean isForeignKeyWithJoinTable(@NonNull Association association) {
-        return association.isForeignKey() &&
-                !association.getAnnotationMetadata()
-                        .stringValue(Relation.class, "mappedBy").isPresent();
+        if (!association.isForeignKey()) {
+            return false;
+        }
+        if (association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").isPresent()) {
+            return false;
+        }
+        AnnotationValue<JoinColumns> joinColumnsAnnotationValue  = association.getAnnotationMetadata().getAnnotation(JoinColumns.class);
+        return joinColumnsAnnotationValue == null || CollectionUtils.isEmpty(joinColumnsAnnotationValue.getAnnotations(VALUE_MEMBER));
     }
 
     /**
@@ -534,7 +542,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
         final Optional<List<AnnotationValue<Index>>> indexes = entity
                 .findAnnotation(Indexes.class)
-                .map(idxes -> idxes.getAnnotations("value", Index.class));
+                .map(idxes -> idxes.getAnnotations(VALUE_MEMBER, Index.class));
 
         Stream.of(indexes)
                 .flatMap(o -> o.map(Stream::of).orElseGet(Stream::empty))
@@ -1413,8 +1421,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                            String currentJoinAlias) {
         final boolean escape = shouldEscape(associationOwner);
         String mappedBy = association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").orElse(null);
+        AnnotationValue<JoinColumns> joinColumnsAnnotationValue  = association.getAnnotationMetadata().getAnnotation(JoinColumns.class);
+        List<AnnotationValue<JoinColumn>> joinColumnValues = joinColumnsAnnotationValue == null ? null : joinColumnsAnnotationValue.getAnnotations(VALUE_MEMBER);
 
-        if (association.getKind() == Relation.Kind.MANY_TO_MANY || association.isForeignKey() && StringUtils.isEmpty(mappedBy)) {
+        if (association.getKind() == Relation.Kind.MANY_TO_MANY || (association.isForeignKey() && StringUtils.isEmpty(mappedBy) && CollectionUtils.isEmpty(joinColumnValues))) {
             PersistentProperty identity = associatedEntity.getIdentity();
             if (identity == null) {
                 throw new IllegalArgumentException("Associated entity [" + associatedEntity.getName() + "] defines no ID. Cannot join.");
@@ -1535,14 +1545,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             AnnotationValue<Annotation> joinColumnsHolder = owner.getAnnotationMetadata().getAnnotation(ANN_JOIN_COLUMNS);
             if (joinColumnsHolder != null) {
                 onLeftColumns.addAll(
-                        joinColumnsHolder.getAnnotations("value")
+                        joinColumnsHolder.getAnnotations(VALUE_MEMBER)
                                 .stream()
                                 .map(ann -> ann.stringValue(isOwner ? "name" : "referencedColumnName").orElse(null))
                                 .filter(Objects::nonNull)
                                 .collect(Collectors.toList())
                 );
                 onRightColumns.addAll(
-                        joinColumnsHolder.getAnnotations("value")
+                        joinColumnsHolder.getAnnotations(VALUE_MEMBER)
                                 .stream()
                                 .map(ann -> ann.stringValue(isOwner ? "referencedColumnName" : "name").orElse(null))
                                 .filter(Objects::nonNull)
