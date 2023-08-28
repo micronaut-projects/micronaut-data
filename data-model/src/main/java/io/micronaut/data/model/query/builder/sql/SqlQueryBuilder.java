@@ -34,6 +34,8 @@ import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.sql.JoinColumn;
+import io.micronaut.data.annotation.sql.JoinColumns;
 import io.micronaut.data.annotation.sql.SqlMembers;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
@@ -300,9 +302,17 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      * @return True if it is.
      */
     public static boolean isForeignKeyWithJoinTable(@NonNull Association association) {
-        return association.isForeignKey() &&
-                !association.getAnnotationMetadata()
-                        .stringValue(Relation.class, "mappedBy").isPresent();
+        if (!association.isForeignKey()) {
+            return false;
+        }
+        if (association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").isPresent()) {
+            return false;
+        }
+        AnnotationValue<JoinColumns> joinColumnsAnnotationValue  = association.getAnnotationMetadata().getAnnotation(JoinColumns.class);
+        if (joinColumnsAnnotationValue == null || CollectionUtils.isEmpty(joinColumnsAnnotationValue.getAnnotations("value"))) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -1413,8 +1423,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                            String currentJoinAlias) {
         final boolean escape = shouldEscape(associationOwner);
         String mappedBy = association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").orElse(null);
+        AnnotationValue<JoinColumns> joinColumnsAnnotationValue  = association.getAnnotationMetadata().getAnnotation(JoinColumns.class);
+        List<AnnotationValue<JoinColumn>> joinColumnValues = joinColumnsAnnotationValue == null ? null : joinColumnsAnnotationValue.getAnnotations("value");
 
-        if (association.getKind() == Relation.Kind.MANY_TO_MANY || association.isForeignKey() && StringUtils.isEmpty(mappedBy)) {
+        if (association.getKind() == Relation.Kind.MANY_TO_MANY || (association.isForeignKey() && StringUtils.isEmpty(mappedBy) && CollectionUtils.isEmpty(joinColumnValues))) {
             PersistentProperty identity = associatedEntity.getIdentity();
             if (identity == null) {
                 throw new IllegalArgumentException("Associated entity [" + associatedEntity.getName() + "] defines no ID. Cannot join.");
