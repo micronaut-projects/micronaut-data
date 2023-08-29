@@ -25,6 +25,8 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.TypeDef;
+import io.micronaut.data.annotation.sql.JoinColumn;
+import io.micronaut.data.annotation.sql.JoinColumns;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
@@ -205,6 +207,9 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
             String finalConverter = converter;
             propertyElement.annotate(MappedProperty.class, builder -> builder.member("converter", new AnnotationClassValue<>(finalConverter)));
         }
+        if (isRelation) {
+            useJoinColumnNameIfSet(annotationMetadata, propertyElement);
+        }
     }
 
     private DataType getDataTypeFromConverter(ClassElement type, String converter, Map<String, DataType> dataTypes, VisitorContext context) {
@@ -252,5 +257,35 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
             typeArguments = genericType.getTypeArguments("jakarta.persistence.AttributeConverter");
         }
         return typeArguments.get("Y");
+    }
+
+    /**
+     * If property is association and has JoinColumn annotation, we want to use MappedProperty from JoinColumn name
+     * or else query builder will attempt to join with association id which might not be correct join column.
+     *
+     * @param annotationMetadata the annotation metadata
+     * @param propertyElement the property element
+     */
+    private void useJoinColumnNameIfSet(AnnotationMetadata annotationMetadata, PropertyElement propertyElement) {
+        String mappedPropertyValue = annotationMetadata.stringValue(MappedProperty.class, AnnotationMetadata.VALUE_MEMBER).orElse(null);
+        // We do this only if MappedProperty value does not have explicitly set value
+        if (mappedPropertyValue != null) {
+            return;
+        }
+        AnnotationValue<JoinColumns> joinColumnsAnnotationValue = annotationMetadata.getAnnotation(JoinColumns.class);
+        // and if JoinColumn is set
+        if (joinColumnsAnnotationValue == null) {
+            return;
+        }
+        List<AnnotationValue<JoinColumn>> joinColumnsAnnotationValueAnnotations = joinColumnsAnnotationValue.getAnnotations(AnnotationMetadata.VALUE_MEMBER);
+        if (joinColumnsAnnotationValueAnnotations.size() != 1) {
+            // Set MappedProperty value only if just one JoinColumn configured
+            return;
+        }
+        AnnotationValue<JoinColumn> joinColumnAnnotationValue = joinColumnsAnnotationValueAnnotations.get(0);
+        String joinColumnName = joinColumnAnnotationValue.stringValue("name").orElse(null);
+        if (joinColumnName != null) {
+            propertyElement.annotate(MappedProperty.class, builder -> builder.member(AnnotationMetadata.VALUE_MEMBER, joinColumnName));
+        }
     }
 }

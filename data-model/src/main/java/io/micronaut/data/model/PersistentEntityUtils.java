@@ -15,7 +15,11 @@
  */
 package io.micronaut.data.model;
 
+import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.annotation.sql.JoinColumn;
+import io.micronaut.data.annotation.sql.JoinColumns;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -108,11 +112,42 @@ public final class PersistentEntityUtils {
             if (assocIdentity instanceof Association) {
                 traversePersistentProperties(newAssociations, assocIdentity, consumerProperty);
             } else {
-                consumerProperty.accept(newAssociations, assocIdentity);
+                // In case there is JoinColumn defined on property, we might use specified column
+                // instead of association id
+                PersistentProperty joinColumnAssocIdentity = getJoinColumnAssocIdentity(property, associatedEntity);
+                if (joinColumnAssocIdentity != null) {
+                    consumerProperty.accept(newAssociations, joinColumnAssocIdentity);
+                } else {
+                    consumerProperty.accept(newAssociations, assocIdentity);
+                }
             }
         } else {
             consumerProperty.accept(associations, property);
         }
     }
 
+    private static PersistentProperty getJoinColumnAssocIdentity(PersistentProperty property, PersistentEntity associatedEntity) {
+        AnnotationMetadata propertyAnnotationMetadata = property.getAnnotationMetadata();
+        AnnotationValue<JoinColumns> joinColumnsAnnotationValue = propertyAnnotationMetadata.getAnnotation(JoinColumns.class);
+        if (joinColumnsAnnotationValue == null) {
+            return null;
+        }
+        List<AnnotationValue<JoinColumn>> joinColumnsAnnotationValueAnnotations = joinColumnsAnnotationValue.getAnnotations(AnnotationMetadata.VALUE_MEMBER);
+        if (joinColumnsAnnotationValueAnnotations.size() != 1) {
+            // we can match only by one JoinColumn
+            return null;
+        }
+        AnnotationValue<JoinColumn> joinColumnAnnotationValue = joinColumnsAnnotationValueAnnotations.get(0);
+        String fieldName = joinColumnAnnotationValue.stringValue("referencedColumnName").orElse(null);
+        if (fieldName == null) {
+            return null;
+        }
+        Collection<? extends PersistentProperty> assocPersistentProperties = associatedEntity.getPersistentProperties();
+        for (PersistentProperty assocPersistentProperty : assocPersistentProperties) {
+            if (fieldName.equals(assocPersistentProperty.getPersistedName())) {
+                return assocPersistentProperty;
+            }
+        }
+        return null;
+    }
 }
