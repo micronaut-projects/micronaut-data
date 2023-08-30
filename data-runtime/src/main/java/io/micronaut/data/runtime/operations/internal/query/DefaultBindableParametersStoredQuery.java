@@ -135,11 +135,24 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
                     persistentProperty = (RuntimePersistentProperty<Object>) pp.getProperty();
                 }
             } else {
-                int currentIndex = binder.currentIndex();
-                if (currentIndex != -1) {
-                    throw new IllegalStateException("Invalid query [" + getQuery() + "]. Unable to establish parameter value for parameter at position: " + currentIndex);
+                // If this expression below is false that means value was set/provided in binding object, so we
+                // shouldn't throw an error, otherwise we throw an error as we couldn't resolve the value.
+                // This is the case with runtime criteria
+                if (binding.getParameterIndex() != -1 || binding.isAutoPopulated() || entity != null) {
+                    int currentIndex = binder.currentIndex();
+                    if (currentIndex != -1) {
+                        throw new IllegalStateException("Invalid query [" + getQuery() + "]. Unable to establish parameter value for parameter at position: " + currentIndex);
+                    } else {
+                        throw new IllegalStateException("Invalid query [" + getQuery() + "]. Unable to establish parameter value for parameter: " + binding.getName());
+                    }
                 } else {
-                    throw new IllegalStateException("Invalid query [" + getQuery() + "]. Unable to establish parameter value for parameter: " + binding.getName());
+                    // Otherwise, value got from binding object meaning it was set to null, so we can at least check
+                    // since value is null whether the property is nullable
+                    String[] propertyPath = binding.getPropertyPath();
+                    PersistentPropertyPath pp = persistentEntity.getPropertyPath(propertyPath);
+                    if (pp != null && pp.getProperty().isRequired()) {
+                        throw new IllegalStateException("Field [" + pp.getProperty().getName() + "] does not allow null value.");
+                    }
                 }
             }
         }

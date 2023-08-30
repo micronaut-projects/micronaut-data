@@ -16,6 +16,7 @@
 package io.micronaut.data.tck.entities;
 
 
+import io.micronaut.core.annotation.Nullable;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -29,6 +30,9 @@ public class Person {
     private String name;
     private int age;
     private boolean enabled = true;
+
+    @Nullable
+    private Double income;
 
     public Long getId() {
         return id;
@@ -60,6 +64,14 @@ public class Person {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public Double getIncome() {
+        return income;
+    }
+
+    public void setIncome(Double income) {
+        this.income = income;
     }
 
     @Override

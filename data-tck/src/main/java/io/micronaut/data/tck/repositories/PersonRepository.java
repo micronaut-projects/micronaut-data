@@ -28,10 +28,15 @@ import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
 import io.micronaut.data.repository.PageableRepository;
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification;
+import io.micronaut.data.repository.jpa.criteria.UpdateSpecification;
 import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.tck.entities.TotalDto;
 import io.reactivex.Single;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaUpdate;
 import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 
 import java.util.Arrays;
 import java.util.List;
@@ -175,7 +180,21 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
 
         public static QuerySpecification<Person> distinct() {
             return (root, query, criteriaBuilder) -> {
-                query.multiselect(root.get("id"), root.get("name"), root.get("age"), root.get("enabled")).distinct(true);
+                query.multiselect(root.get("id"), root.get("name"), root.get("age"), root.get("enabled"), root.get("income")).distinct(true);
+                return null;
+            };
+        }
+
+        public static UpdateSpecification<Person> setIncome(Double income) {
+            return (root, query, criteriaBuilder) -> {
+                query.set("income", income);
+                return null;
+            };
+        }
+
+        public static UpdateSpecification<Person> setName(String name) {
+            return (root, query, criteriaBuilder) -> {
+                query.set("name", name);
                 return null;
             };
         }
