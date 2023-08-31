@@ -138,7 +138,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
                 // If this expression below is false that means value was set/provided in binding object, so we
                 // shouldn't throw an error, otherwise we throw an error as we couldn't resolve the value.
                 // This is the case with runtime criteria
-                if (binding.getParameterIndex() != -1 || binding.isAutoPopulated() || entity != null) {
+                if (binding.getParameterIndex() != -1 || binding.isAutoPopulated()) {
                     int currentIndex = binder.currentIndex();
                     if (currentIndex != -1) {
                         throw new IllegalStateException("Invalid query [" + getQuery() + "]. Unable to establish parameter value for parameter at position: " + currentIndex);

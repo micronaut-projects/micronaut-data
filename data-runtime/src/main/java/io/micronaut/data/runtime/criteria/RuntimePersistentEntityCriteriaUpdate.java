@@ -77,15 +77,15 @@ final class RuntimePersistentEntityCriteriaUpdate<T> extends AbstractPersistentE
             return parameterExpression;
         }
         Objects.requireNonNull(exp);
-        Class<Object> type;
+        Class<?> type;
         Object value;
-        if (exp instanceof LiteralExpression literalExpression) {
+        if (exp instanceof LiteralExpression<?> literalExpression) {
             type = literalExpression.getJavaType();
             value = literalExpression.getValue();
         } else if (exp instanceof Expression) {
             throw new IllegalStateException("Unexpected expression!");
         } else {
-            type = (Class<Object>) exp.getClass();
+            type = exp.getClass();
             value = exp;
         }
         return criteriaBuilder.parameter(type, null, value);
