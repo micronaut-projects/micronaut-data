@@ -187,14 +187,14 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
 
         public static UpdateSpecification<Person> setIncome(Double income) {
             return (root, query, criteriaBuilder) -> {
-                query.set("income", income);
+                query.set("income", income == null ? criteriaBuilder.nullLiteral(Double.class) : income);
                 return null;
             };
         }
 
         public static UpdateSpecification<Person> setName(String name) {
             return (root, query, criteriaBuilder) -> {
-                query.set("name", name);
+                query.set("name", name == null ? criteriaBuilder.nullLiteral(String.class) : name);
                 return null;
             };
         }

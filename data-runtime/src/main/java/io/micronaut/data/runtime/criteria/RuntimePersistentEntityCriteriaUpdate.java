@@ -76,12 +76,10 @@ final class RuntimePersistentEntityCriteriaUpdate<T> extends AbstractPersistentE
         if (exp instanceof ParameterExpression<?> parameterExpression) {
             return parameterExpression;
         }
+        Objects.requireNonNull(exp);
         Class<Object> type;
         Object value;
-        if (exp == null) {
-            type = Object.class;
-            value = null;
-        } else if (exp instanceof LiteralExpression literalExpression) {
+        if (exp instanceof LiteralExpression literalExpression) {
             type = literalExpression.getJavaType();
             value = literalExpression.getValue();
         } else if (exp instanceof Expression) {
