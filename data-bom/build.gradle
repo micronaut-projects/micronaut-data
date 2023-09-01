@@ -9,6 +9,15 @@ micronautBom {
     excludeProject.set({ p ->
         p.name.contains('benchmark') || p.name.contains('example') || p.name.endsWith('-tck')
     } as Spec<String>)
+
+    suppressions {
+        // Renaming versions for 4.1.1 to fix platform. Can be removed once 4.1.1 is released
+        // https://github.com/micronaut-projects/micronaut-platform/pull/898
+        acceptedVersionRegressions.addAll(
+                "jakarta-transaction",
+                "jakarta-persistence",
+        )
+    }
 }
 
 
