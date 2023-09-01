@@ -141,6 +141,23 @@ class KCriteriaBuilderExtKtTest(var runtimeCriteriaBuilder: RuntimeCriteriaBuild
     }
 
     @Test
+    fun testCriteriaAndJoinWithAssociationId() {
+        val query = query<TestEntity, String> {
+            select(root[TestEntity::name])
+            val others = root.joinMany(TestEntity::others)
+            where {
+                and {
+                    others[OtherEntity::id] gt root[TestEntity::id]
+                }
+            }
+        }
+        val criteriaQuery = query.build(runtimeCriteriaBuilder) as QueryResultPersistentEntityCriteriaQuery
+        val q = criteriaQuery.buildQuery(SqlQueryBuilder()).query
+
+        Assertions.assertEquals("""SELECT test_entity_."name" FROM "test_entity" test_entity_ INNER JOIN "other_entity" test_entity_others_ ON test_entity_."id"=test_entity_others_."test_id" WHERE (test_entity_others_."id">test_entity_."id")""", q)
+    }
+
+    @Test
     fun testMultiselect() {
         val query = query<OtherEntity, Any> {
             multiselect(avg(OtherEntity::age), max(OtherEntity::age), min(OtherEntity::age), greatest(OtherEntity::name), least(OtherEntity::name))
