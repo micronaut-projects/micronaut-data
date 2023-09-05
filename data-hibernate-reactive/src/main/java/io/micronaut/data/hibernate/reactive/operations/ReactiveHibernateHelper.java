@@ -107,12 +107,12 @@ final class ReactiveHibernateHelper {
     }
 
     <T> Flux<T> withTransactionFlux(Stage.Session session, Function<Stage.Transaction, Flux<T>> work) {
-        return monoFromCompletionStage(() -> session.withTransaction(tx -> work.apply(tx).collectList().publishOn(contextScheduler).toFuture()))
-            .flatMapIterable(it -> it);
+        return Flux.deferContextual(contextView -> monoFromCompletionStage(() -> session.withTransaction(tx -> work.apply(tx).collectList().contextWrite(contextView).publishOn(contextScheduler).toFuture()))
+            .flatMapIterable(it -> it));
     }
 
     <T> Mono<T> withTransactionMono(Stage.Session session, Function<Stage.Transaction, Mono<T>> work) {
-        return monoFromCompletionStage(() -> session.withTransaction(tx -> work.apply(tx).publishOn(contextScheduler).toFuture()));
+        return Mono.deferContextual(contextView -> monoFromCompletionStage(() -> session.withTransaction(tx -> work.apply(tx).contextWrite(contextView).publishOn(contextScheduler).toFuture())));
     }
 
     <T> Mono<T> monoFromCompletionStage(Supplier<CompletionStage<T>> supplier) {
