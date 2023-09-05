@@ -17,7 +17,7 @@ micronaut-mongo = "5.0.1"
 micronaut-kotlin = "4.0.1"
 micronaut-multitenancy = "5.0.2"
 micronaut-validation = "4.0.1"
-micronaut-logging = "1.0.0"
+micronaut-logging = "1.1.0"
 micronaut-flyway = "6.0.2"
 
 groovy = "4.0.14"
@@ -37,7 +37,7 @@ oracle-jdbc-driver = "23.2.0.0"
 
 benchmark-spring-data = "2023.0.3"
 spock = "2.2-groovy-4.0"
-testcontainers = "1.18.3"
+testcontainers = "1.19.0"
 jmh = "1.37"
 
 # Gradle plugins
