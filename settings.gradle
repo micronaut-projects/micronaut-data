@@ -121,6 +121,10 @@ include 'doc-examples:azure-cosmos-example-kotlin'
 include 'doc-examples:jdbc-spring-tx-example-java'
 include 'doc-examples:hibernate-spring-tx-example-java'
 
+include 'doc-examples:jdbc-spring-template-example-java'
+include 'doc-examples:jdbc-spring-template-example-groovy'
+include 'doc-examples:jdbc-spring-template-example-kotlin'
+
 include 'doc-examples:jooq-r2dbc-postgres'
 
 include 'test-annotation-processor-java'
