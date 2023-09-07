@@ -736,7 +736,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             int projectionCount = projectionList.size();
             for (Iterator<QueryModel.Projection> i = projectionList.iterator(); i.hasNext(); ) {
                 boolean appendComma = true;
-                boolean booleanRemoveComma = false;
+                boolean removeComma = false;
                 QueryModel.Projection projection = i.next();
                 if (projection instanceof QueryModel.LiteralProjection) {
                     queryString.append(asLiteral(((QueryModel.LiteralProjection) projection).getValue()));
@@ -792,7 +792,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                                 if (queryState.isJoined(propertyPath.getPath())) {
                                     appendCompoundAssociationProjection(queryState, queryString, association, propertyPath, alias);
                                 } else {
-                                    booleanRemoveComma = true;
+                                    removeComma = true;
                                 }
                             } else {
                                 appendCompoundPropertyProjection(queryState, queryString, property, propertyPath, alias);
@@ -808,7 +808,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         }
                     }
                 }
-                if (booleanRemoveComma) {
+                if (removeComma) {
                     queryString.setLength(queryString.length() - 1);
                 }
                 if (appendComma && i.hasNext()) {
