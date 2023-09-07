@@ -44,7 +44,6 @@ import io.micronaut.data.runtime.mapper.ResultReader;
 import java.sql.Array;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -171,16 +170,16 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
     /**
      * @return The entity to be materialized
      */
-    public @NonNull
-    RuntimePersistentEntity<R> getEntity() {
+    @NonNull
+    public RuntimePersistentEntity<R> getEntity() {
         return entity;
     }
 
     /**
      * @return The result reader instance.
      */
-    public @NonNull
-    ResultReader<RS, String> getResultReader() {
+    @NonNull
+    public ResultReader<RS, String> getResultReader() {
         return resultReader;
     }
 
@@ -209,7 +208,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
     @Nullable
     @Override
     public Object read(@NonNull RS resultSet, @NonNull Argument<?> argument) {
-        RuntimePersistentProperty<R> property = entity.getPropertyByName(argument.getName());
+        String name = argument.getName();
+        RuntimePersistentProperty<R> property = entity.getPropertyByName(name);
         DataType dataType;
         String columnName;
         if (property == null) {
@@ -229,11 +229,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         if (callNext) {
             return resultReader.next(resultSet);
         } else {
-            try {
-                return true;
-            } finally {
-                callNext = true;
-            }
+            callNext = true;
+            return true;
         }
     }
 
@@ -243,7 +240,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      * @return The pushing mapper
      */
     public PushingMapper<RS, R> readOneWithJoins() {
-        return new PushingMapper<RS, R>() {
+        return new PushingMapper<>() {
 
             final MappingContext<R> ctx = MappingContext.of(entity, startingPrefix);
             R entityInstance;
@@ -279,31 +276,38 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      * @return The pushing mapper
      */
     public PushingMapper<RS, List<R>> readAllWithJoins() {
-        return new PushingMapper<RS, List<R>>() {
+        return new PushingMapper<>() {
 
-            final Map<Object, MappingContext<R>> processed = new LinkedHashMap<>();
+            final Map<Object, MappingContext<R>> idEntities = new LinkedHashMap<>();
+            final List<MappingContext<R>> allProcessed = new ArrayList<>(20);
+            final boolean hasJoins = !joinPaths.isEmpty();
 
             @Override
             public void processRow(RS row) {
                 MappingContext<R> ctx = MappingContext.of(entity, startingPrefix);
                 Object id = readEntityId(row, ctx);
                 if (id == null) {
-                    throw new IllegalStateException("Entity doesn't have an id!");
-                }
-                MappingContext<R> prevCtx = processed.get(id);
-                if (prevCtx != null) {
-                    readChildren(row, prevCtx.entity, null, prevCtx);
-                } else {
+                    if (hasJoins) {
+                        throw new IllegalStateException("Entity needs to have an ID when JOINs are used!");
+                    }
                     ctx.entity = readEntity(row, ctx, null, id);
-                    processed.put(id, ctx);
+                    allProcessed.add(ctx);
+                } else {
+                    MappingContext<R> prevCtx = idEntities.get(id);
+                    if (prevCtx != null) {
+                        readChildren(row, prevCtx.entity, null, prevCtx);
+                    } else {
+                        ctx.entity = readEntity(row, ctx, null, id);
+                        idEntities.put(id, ctx);
+                        allProcessed.add(ctx);
+                    }
                 }
             }
 
             @Override
             public List<R> getResult() {
-                List<R> values = new ArrayList<>(processed.size());
-                for (Map.Entry<Object, MappingContext<R>> e : processed.entrySet()) {
-                    MappingContext<R> ctx = e.getValue();
+                List<R> values = new ArrayList<>(allProcessed.size());
+                for (MappingContext<R> ctx : allProcessed) {
                     R entityInstance = (R) setChildrenAndTriggerPostLoad(ctx.entity, ctx, null);
                     values.add(entityInstance);
                 }
@@ -369,7 +373,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                 Association association = inverse.getAssociation();
                 if (association.getKind().isSingleEnded()) {
                     Object inverseInstance = inverse.getPropertyValue(instance);
-                    if (inverseInstance != parent) {
+                    if (inverseInstance != parent && ((RuntimeAssociation) inverse.getProperty()).getType().isInstance(parent)) {
                         instance = inverse.setPropertyValue(instance, parent);
                     }
                 }
@@ -412,10 +416,9 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                 for (int i = 0; i < len; i++) {
                     RuntimePersistentProperty<K> prop = constructorArguments[i];
                     if (prop != null) {
-                        if (prop instanceof Association) {
-                            RuntimeAssociation entityAssociation = (RuntimeAssociation) prop;
-                            if (prop instanceof Embedded) {
-                                args[i] = readEntity(rs, ctx.embedded((Embedded) prop), null, null);
+                        if (prop instanceof RuntimeAssociation<K> entityAssociation) {
+                            if (prop instanceof Embedded embedded) {
+                                args[i] = readEntity(rs, ctx.embedded(embedded), null, null);
                             } else {
                                 final Relation.Kind kind = entityAssociation.getKind();
                                 final boolean isInverse = parent != null && isAssociation && ctx.association.getOwner() == entityAssociation.getAssociatedEntity();
@@ -477,7 +480,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                         throw new DataAccessException("Constructor argument [" + constructorArguments[i].getName() + "] must have an associated getter.");
                     }
                 }
-                if (nullableEmbedded && args.length > 0 && Arrays.stream(args).allMatch(Objects::isNull)) {
+                if (nullableEmbedded && args.length > 0 && isAllNulls(args)) {
                     return null;
                 } else {
                     entity = introspection.instantiate(args);
@@ -485,22 +488,21 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             }
 
             if (id != null && identity != null) {
-                @SuppressWarnings("unchecked")
                 BeanProperty<K, Object> idProperty = identity.getProperty();
-                entity = (K) convertAndSetWithValue(entity, identity, idProperty, id);
+                entity = convertAndSetWithValue(entity, identity, idProperty, id);
             }
             RuntimePersistentProperty<K> version = persistentEntity.getVersion();
             if (version != null) {
                 Object v = readProperty(rs, ctx, version);
                 if (v != null) {
-                    entity = (K) convertAndSetWithValue(entity, version, version.getProperty(), v);
+                    entity = convertAndSetWithValue(entity, version, version.getProperty(), v);
                 }
             }
             for (RuntimePersistentProperty<K> rpp : persistentEntity.getPersistentProperties()) {
                 if (rpp.isReadOnly()) {
                     continue;
                 } else if (rpp.isConstructorArgument()) {
-                    if (rpp instanceof Association a) {
+                    if (rpp instanceof RuntimeAssociation<K> a) {
                         final Relation.Kind kind = a.getKind();
                         if (kind.isSingleEnded()) {
                             continue;
@@ -509,9 +511,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                         continue;
                     }
                 }
-                @SuppressWarnings("unchecked")
                 BeanProperty<K, Object> property = rpp.getProperty();
-                if (rpp instanceof Association entityAssociation) {
+                if (rpp instanceof RuntimeAssociation<K> entityAssociation) {
                     if (rpp instanceof Embedded) {
                         Object value = readEntity(rs, ctx.embedded((Embedded) rpp), parent == null ? entity : parent, null);
                         entity = setProperty(property, entity, value);
@@ -554,7 +555,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                 } else {
                     Object v = readProperty(rs, ctx, rpp);
                     if (v != null) {
-                        entity = (K) convertAndSetWithValue(entity, rpp, property, v);
+                        entity = convertAndSetWithValue(entity, rpp, property, v);
                     }
                 }
             }
@@ -564,27 +565,40 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         }
     }
 
+    private boolean isAllNulls(Object[] args) {
+        for (Object arg : args) {
+            if (arg != null) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private <K> Object readProperty(RS rs, MappingContext<K> ctx, RuntimePersistentProperty<K> prop) {
-        String columnName = ctx.namingStrategy.mappedName(ctx.embeddedPath, prop);
-        String columnAlias = prop.getAnnotationMetadata().stringValue(MappedProperty.class, MappedProperty.ALIAS).orElse("");
-        if (StringUtils.isNotEmpty(columnAlias)) {
-            columnName = columnAlias;
-        } else if (ctx.prefix != null && ctx.prefix.length() != 0) {
-            columnName = ctx.prefix + columnName;
+        try {
+            String columnName = ctx.namingStrategy.mappedName(ctx.embeddedPath, prop);
+            String columnAlias = prop.getAnnotationMetadata().stringValue(MappedProperty.class, MappedProperty.ALIAS).orElse("");
+            if (StringUtils.isNotEmpty(columnAlias)) {
+                columnName = columnAlias;
+            } else if (ctx.prefix != null && !ctx.prefix.isEmpty()) {
+                columnName = ctx.prefix + columnName;
+            }
+            DataType dataType = prop.getDataType();
+            Object result;
+            if (dataType == DataType.JSON && jsonColumnReader != null) {
+                JsonDataType jsonDataType = prop.getJsonDataType();
+                result = jsonColumnReader.readJsonColumn(resultReader, rs, columnName, jsonDataType, prop.getArgument());
+            } else {
+                result = resultReader.readDynamic(rs, columnName, dataType);
+            }
+            AttributeConverter<Object, Object> converter = prop.getConverter();
+            if (converter != null) {
+                return converter.convertToEntityValue(result, ConversionContext.of(prop.getArgument()));
+            }
+            return result;
+        } catch (Exception e) {
+            throw e;
         }
-        DataType dataType = prop.getDataType();
-        Object result;
-        if (dataType == DataType.JSON && jsonColumnReader != null) {
-            JsonDataType jsonDataType = prop.getJsonDataType();
-            result = jsonColumnReader.readJsonColumn(resultReader, rs, columnName, jsonDataType, prop.getArgument());
-        } else {
-            result = resultReader.readDynamic(rs, columnName, dataType);
-        }
-        AttributeConverter<Object, Object> converter = prop.getConverter();
-        if (converter != null) {
-            return converter.convertToEntityValue(result, ConversionContext.of(prop.getArgument()));
-        }
-        return result;
     }
 
     private <K> K triggerPostLoad(RuntimePersistentEntity<?> persistentEntity, K entity) {
@@ -597,8 +611,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         return finalEntity;
     }
 
-    private @Nullable
-    <K> Object readEntityId(RS rs, MappingContext<K> ctx) {
+    @Nullable
+    private <K> Object readEntityId(RS rs, MappingContext<K> ctx) {
         RuntimePersistentProperty<K> identity = ctx.persistentEntity.getIdentity();
         if (identity == null) {
             return null;
@@ -609,7 +623,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         return readProperty(rs, ctx, identity);
     }
 
-    private Object convertAndSetWithValue(Object entity, RuntimePersistentProperty<?> rpp, BeanProperty property, Object v) {
+    private <K> K convertAndSetWithValue(K entity, RuntimePersistentProperty<?> rpp, BeanProperty<K, Object> property, Object v) {
         return setProperty(property, entity, convert(rpp, v));
     }
 

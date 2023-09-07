@@ -84,7 +84,7 @@ public interface NamingStrategy {
      * @return The mapped name
      */
     default @NonNull String mappedName(Embedded embedded, PersistentProperty property) {
-        return mappedName(embedded.getName() + NameUtils.capitalize(property.getPersistedName()));
+        return mappedName(embedded.getName() + mappedAssociatedName(property.getPersistedName()));
     }
 
     /**
@@ -119,14 +119,22 @@ public interface NamingStrategy {
             Association owningAssociation = inverseSide.orElse(association);
             return mappedName(owningAssociation.getOwner().getDecapitalizedName() + owningAssociation.getAssociatedEntity().getSimpleName());
         } else {
-            switch (association.getKind()) {
-                case ONE_TO_ONE:
-                case MANY_TO_ONE:
-                    return mappedName(association.getName() + getForeignKeySuffix());
-                default:
-                    return mappedName(association.getName());
-            }
+            return switch (association.getKind()) {
+                case ONE_TO_ONE, MANY_TO_ONE -> mappedName(association.getName() + getForeignKeySuffix());
+                default -> mappedName(association.getName());
+            };
         }
+    }
+
+    /**
+     * Convert the associated name to a proper format to be appended to the path.
+     * @param associatedName The associated name
+     * @return the name in a proper format
+     * @since 4.1.0
+     */
+    @NonNull
+    default String mappedAssociatedName(@NonNull String associatedName) {
+        return NameUtils.capitalize(associatedName);
     }
 
     default @NonNull String mappedName(@NonNull List<Association> associations, @NonNull PersistentProperty property) {
@@ -141,8 +149,8 @@ public interface NamingStrategy {
             }
             final String originalAssocName = association.getName();
             String assocName = association.getKind() == Relation.Kind.EMBEDDED ? association.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(originalAssocName) : originalAssocName;
-            if (sb.length() > 0) {
-                sb.append(NameUtils.capitalize(assocName));
+            if (!sb.isEmpty()) {
+                sb.append(mappedAssociatedName(assocName));
             } else {
                 sb.append(assocName);
             }
@@ -165,8 +173,8 @@ public interface NamingStrategy {
                 return providedName;
             }
         }
-        if (sb.length() > 0) {
-            sb.append(NameUtils.capitalize(property.getName()));
+        if (!sb.isEmpty()) {
+            sb.append(mappedAssociatedName(property.getName()));
         } else {
             sb.append(property.getName());
         }
@@ -177,12 +185,12 @@ public interface NamingStrategy {
         StringBuilder sb = new StringBuilder();
         sb.append(associated.getDecapitalizedName());
         for (Association association : associations) {
-            sb.append(NameUtils.capitalize(association.getName()));
+            sb.append(mappedAssociatedName(association.getName()));
         }
         if (associations.isEmpty()) {
             sb.append(getForeignKeySuffix());
         } else {
-            sb.append(NameUtils.capitalize(property.getName()));
+            sb.append(mappedAssociatedName(property.getName()));
         }
         return mappedName(sb.toString());
     }

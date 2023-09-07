@@ -40,6 +40,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     public static final RuntimePersistentProperty<Object>[] EMPTY_PROPERTY_ARRAY = new RuntimePersistentProperty[0];
     private final RuntimePersistentEntity<T> owner;
     private final BeanProperty<T, Object> property;
+    private final AnnotationMetadata annotationMetadata;
     private final Class<?> type;
     private final DataType dataType;
     private final JsonDataType jsonDataType;
@@ -55,14 +56,28 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
      * @param constructorArg whether it is a constructor arg
      */
     RuntimePersistentProperty(RuntimePersistentEntity<T> owner, BeanProperty<T, Object> property, boolean constructorArg) {
+        this(owner, property, property.asArgument(), property.getAnnotationMetadata(), constructorArg);
+    }
+
+    /**
+     * Default constructor.
+     * @param owner The owner
+     * @param property The property
+     * @param argument The argument
+     * @param annotationMetadata The annotation metadata
+     * @param constructorArg whether it is a constructor arg
+     * @since 4.2.0
+     */
+    RuntimePersistentProperty(RuntimePersistentEntity<T> owner, BeanProperty<T, Object> property, Argument<Object> argument, AnnotationMetadata annotationMetadata, boolean constructorArg) {
         this.owner = owner;
         this.property = property;
+        this.annotationMetadata = annotationMetadata;
         this.type = ReflectionUtils.getWrapperType(property.getType());
         this.dataType = PersistentProperty.super.getDataType();
         this.jsonDataType = this.dataType == DataType.JSON ? PersistentProperty.super.getJsonDataType() : null;
         this.constructorArg = constructorArg;
-        this.argument = property.asArgument();
-        this.converter = property.classValue(MappedProperty.class, "converter")
+        this.argument = argument;
+        this.converter = annotationMetadata.classValue(MappedProperty.class, "converter")
                 .map(converter -> SupplierUtil.memoized(() -> owner.resolveConverter(converter)))
                 .orElse(null);
     }
@@ -141,7 +156,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
 
     @Override
     public AnnotationMetadata getAnnotationMetadata() {
-        return property.getAnnotationMetadata();
+        return annotationMetadata;
     }
 
     /**

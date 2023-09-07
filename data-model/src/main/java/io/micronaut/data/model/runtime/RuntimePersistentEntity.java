@@ -75,14 +75,23 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
      * @param introspection The introspection
      */
     public RuntimePersistentEntity(@NonNull BeanIntrospection<T> introspection) {
+        this(introspection, introspection.getBeanProperties());
+    }
+
+    /**
+     * Default constructor.
+     *
+     * @param introspection The introspection
+     * @param beanProperties The bean properties
+     */
+    public RuntimePersistentEntity(@NonNull BeanIntrospection<T> introspection, Collection<BeanProperty<T, Object>> beanProperties) {
         super(introspection);
         ArgumentUtils.requireNonNull("introspection", introspection);
         this.introspection = introspection;
         Argument<?>[] constructorArguments = introspection.getConstructorArguments();
         Set<String> constructorArgumentNames = Arrays.stream(constructorArguments).map(Argument::getName).collect(Collectors.toSet());
         RuntimePersistentProperty<T> version = null;
-        List<RuntimePersistentProperty<T>> ids = new LinkedList<>();
-        Collection<BeanProperty<T, Object>> beanProperties = introspection.getBeanProperties();
+        List<RuntimePersistentProperty<T>> ids = new ArrayList<>(5);
         this.allPersistentProperties = new RuntimePersistentProperty[beanProperties.size()];
         this.persistentProperties = new RuntimePersistentProperty[beanProperties.size()];
         for (BeanProperty<T, Object> bp : beanProperties) {

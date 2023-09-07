@@ -852,4 +852,32 @@ class CustomBook {
         expect:
         findAllQuery == 'SELECT custom_book_.`id`,custom_book_.`title`,custom_book_.`pages`,custom_book_.`author_id2`,custom_book_author_.`id2` AS author_id2,custom_book_author_.`name` AS author_name FROM `custom_book` custom_book_ INNER JOIN `custom_author` custom_book_author_ ON custom_book_.`author_id2`=custom_book_author_.`id2`'
     }
+
+    void "test DTO with association and join"() {
+        given:
+            def repository = buildRepository('test.AuthorRepository', """
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.Where;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Author;
+import io.micronaut.data.tck.entities.AuthorDtoWithBooks;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface AuthorRepository extends GenericRepository<Author, Long> {
+
+    @Join("books")
+    List<AuthorDtoWithBooks> queryAll();
+}
+
+""")
+
+            def queryAllMethod = repository.getRequiredMethod("queryAll")
+            def queryAllQuery = getQuery(queryAllMethod)
+
+        expect:
+            queryAllQuery == 'SELECT author_.`id`,author_books_.`id` AS books_id,author_books_.`author_id` AS books_author_id,author_books_.`genre_id` AS books_genre_id,author_books_.`title` AS books_title,author_books_.`total_pages` AS books_total_pages,author_books_.`publisher_id` AS books_publisher_id,author_books_.`last_updated` AS books_last_updated FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id`'
+    }
 }

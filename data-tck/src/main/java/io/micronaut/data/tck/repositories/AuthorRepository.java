@@ -27,6 +27,7 @@ import io.micronaut.data.tck.entities.Author;
 
 import io.micronaut.core.annotation.Nullable;
 
+import io.micronaut.data.tck.entities.AuthorDtoWithBooks;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
@@ -78,14 +79,23 @@ public interface AuthorRepository extends CrudRepository<Author, Long> {
     @Join("books")
     List<Author> listAll();
 
+    @Join("books")
+    List<AuthorDtoWithBooks> queryAll();
+
     @Join(value = "books", type = Join.Type.LEFT_FETCH)
     List<Author> findByIdIsNotNull();
+
+    @Join(value = "books", type = Join.Type.LEFT_FETCH)
+    List<AuthorDtoWithBooks> retrieveByIdIsNotNull();
 
     @Join(value = "books", type = Join.Type.LEFT_FETCH)
     Stream<Author> queryByIdIsNotNull();
 
     @Join(value = "books", type = Join.Type.RIGHT_FETCH)
     List<Author> findByNameIsNotNull();
+
+    @Join(value = "books", type = Join.Type.RIGHT_FETCH)
+    List<AuthorDtoWithBooks> searchByNameIsNotNull();
 
     void updateNickname(@Id Long id, @Parameter("nickName") @Nullable String nickName);
 

@@ -362,7 +362,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 joinTableBuilder.append(joinTableName).append(" (");
                 List<PersistentPropertyPath> leftProperties = new ArrayList<>();
                 List<PersistentPropertyPath> rightProperties = new ArrayList<>();
-                boolean isAssociationOwner = !inverseSide.isPresent();
+                boolean isAssociationOwner = inverseSide.isEmpty();
                 List<String> leftJoinTableColumns = resolveJoinTableJoinColumns(annotationMetadata, isAssociationOwner, entity, namingStrategy);
                 List<String> rightJoinTableColumns = resolveJoinTableJoinColumns(annotationMetadata, !isAssociationOwner, association.getAssociatedEntity(), namingStrategy);
                 traversePersistentProperties(entity.getIdentity(), (associations, property) -> {
@@ -854,20 +854,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         NamingStrategy namingStrategy = getNamingStrategy(entity);
         int length = sb.length();
         traversePersistentProperties(entity, (associations, property) -> {
-            String transformed = getDataTransformerReadValue(alias, property).orElse(null);
-            String columnAlias = getColumnAlias(property);
-            boolean useAlias = StringUtils.isNotEmpty(columnAlias);
-            if (transformed != null) {
-                sb.append(transformed).append(AS_CLAUSE).append(useAlias ? columnAlias : property.getPersistedName());
-            } else {
-                String column = getMappedName(namingStrategy, associations, property);
-                column = escapeColumnIfNeeded(column, escape);
-                sb.append(alias).append(DOT).append(column);
-                if (useAlias) {
-                    sb.append(AS_CLAUSE).append(columnAlias);
-                }
-            }
-            sb.append(COMMA);
+            appendProperty(sb, associations, property, namingStrategy, alias, escape);
         });
         int newLength = sb.length();
         if (newLength == length) {
@@ -887,20 +874,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             sb.append(alias).append(DOT);
         }
         sb.append("*");
-    }
-
-    /**
-     * Returns escaped (quoted) column if escape needed.
-     *
-     * @param column the column
-     * @param escape an indicator telling whether column needs to be escaped (quoted)
-     * @return escaped (quoted) column if instructed to do so, otherwise original column value
-     */
-    private String escapeColumnIfNeeded(String column, boolean escape) {
-        if (escape) {
-            return quote(column);
-        }
-        return column;
     }
 
     private boolean canUseWildcardForSelect(AnnotationMetadata annotationMetadata, PersistentEntity entity) {
