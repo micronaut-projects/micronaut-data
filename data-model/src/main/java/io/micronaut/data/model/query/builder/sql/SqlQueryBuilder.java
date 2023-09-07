@@ -365,12 +365,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 boolean isAssociationOwner = inverseSide.isEmpty();
                 List<String> leftJoinTableColumns = resolveJoinTableJoinColumns(annotationMetadata, isAssociationOwner, entity, namingStrategy);
                 List<String> rightJoinTableColumns = resolveJoinTableJoinColumns(annotationMetadata, !isAssociationOwner, association.getAssociatedEntity(), namingStrategy);
-                traversePersistentProperties(entity.getIdentity(), (associations, property) -> {
-                    leftProperties.add(PersistentPropertyPath.of(associations, property, ""));
-                });
-                traversePersistentProperties(associatedEntity.getIdentity(), (associations, property) -> {
-                    rightProperties.add(PersistentPropertyPath.of(associations, property, ""));
-                });
+                traversePersistentProperties(entity.getIdentity(), (associations, property)
+                        -> leftProperties.add(PersistentPropertyPath.of(associations, property, "")));
+                traversePersistentProperties(associatedEntity.getIdentity(), (associations, property)
+                        -> rightProperties.add(PersistentPropertyPath.of(associations, property, "")));
                 if (leftJoinTableColumns.size() == leftProperties.size()) {
                     for (int i = 0; i < leftJoinTableColumns.size(); i++) {
                         PersistentPropertyPath pp = leftProperties.get(i);
@@ -433,9 +431,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
         if (identity != null) {
             List<PersistentPropertyPath> ids = new ArrayList<>();
-            traversePersistentProperties(identity, (associations, property) -> {
-                ids.add(PersistentPropertyPath.of(associations, property, ""));
-            });
+            traversePersistentProperties(identity, (associations, property)
+                    -> ids.add(PersistentPropertyPath.of(associations, property, "")));
             int idFieldCount = ids.size();
             if (idFieldCount > 1) {
                 generatePkAfterColumns = true;
@@ -718,9 +715,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             return joinColumns;
         }
         List<String> columns = new ArrayList<>();
-        traversePersistentProperties(entity.getIdentity(), (associations, property) -> {
-            columns.add(namingStrategy.mappedJoinTableColumn(entity, associations, property));
-        });
+        traversePersistentProperties(entity.getIdentity(), (associations, property)
+                -> columns.add(namingStrategy.mappedJoinTableColumn(entity, associations, property)));
         return columns;
     }
 
@@ -853,9 +849,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         boolean escape = shouldEscape(entity);
         NamingStrategy namingStrategy = getNamingStrategy(entity);
         int length = sb.length();
-        traversePersistentProperties(entity, (associations, property) -> {
-            appendProperty(sb, associations, property, namingStrategy, alias, escape);
-        });
+        traversePersistentProperties(entity, (associations, property)
+                -> appendProperty(sb, associations, property, namingStrategy, alias, escape));
         int newLength = sb.length();
         if (newLength == length) {
             selectAllColumns(sb, alias);

@@ -575,30 +575,26 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
     }
 
     private <K> Object readProperty(RS rs, MappingContext<K> ctx, RuntimePersistentProperty<K> prop) {
-        try {
-            String columnName = ctx.namingStrategy.mappedName(ctx.embeddedPath, prop);
-            String columnAlias = prop.getAnnotationMetadata().stringValue(MappedProperty.class, MappedProperty.ALIAS).orElse("");
-            if (StringUtils.isNotEmpty(columnAlias)) {
-                columnName = columnAlias;
-            } else if (ctx.prefix != null && !ctx.prefix.isEmpty()) {
-                columnName = ctx.prefix + columnName;
-            }
-            DataType dataType = prop.getDataType();
-            Object result;
-            if (dataType == DataType.JSON && jsonColumnReader != null) {
-                JsonDataType jsonDataType = prop.getJsonDataType();
-                result = jsonColumnReader.readJsonColumn(resultReader, rs, columnName, jsonDataType, prop.getArgument());
-            } else {
-                result = resultReader.readDynamic(rs, columnName, dataType);
-            }
-            AttributeConverter<Object, Object> converter = prop.getConverter();
-            if (converter != null) {
-                return converter.convertToEntityValue(result, ConversionContext.of(prop.getArgument()));
-            }
-            return result;
-        } catch (Exception e) {
-            throw e;
+        String columnName = ctx.namingStrategy.mappedName(ctx.embeddedPath, prop);
+        String columnAlias = prop.getAnnotationMetadata().stringValue(MappedProperty.class, MappedProperty.ALIAS).orElse("");
+        if (StringUtils.isNotEmpty(columnAlias)) {
+            columnName = columnAlias;
+        } else if (ctx.prefix != null && !ctx.prefix.isEmpty()) {
+            columnName = ctx.prefix + columnName;
         }
+        DataType dataType = prop.getDataType();
+        Object result;
+        if (dataType == DataType.JSON && jsonColumnReader != null) {
+            JsonDataType jsonDataType = prop.getJsonDataType();
+            result = jsonColumnReader.readJsonColumn(resultReader, rs, columnName, jsonDataType, prop.getArgument());
+        } else {
+            result = resultReader.readDynamic(rs, columnName, dataType);
+        }
+        AttributeConverter<Object, Object> converter = prop.getConverter();
+        if (converter != null) {
+            return converter.convertToEntityValue(result, ConversionContext.of(prop.getArgument()));
+        }
+        return result;
     }
 
     private <K> K triggerPostLoad(RuntimePersistentEntity<?> persistentEntity, K entity) {
