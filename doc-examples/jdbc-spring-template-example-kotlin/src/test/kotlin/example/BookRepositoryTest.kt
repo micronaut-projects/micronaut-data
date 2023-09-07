@@ -4,29 +4,29 @@ import io.micronaut.context.annotation.Property
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import jakarta.inject.Inject
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
-import java.util.*
 
+@MicronautTest
 @Property(name = "spec.name", value = "BookRepositoryTest")
 @Property(name = "datasources.default.name", value = "mydb")
 @Property(name = "datasources.default.transactionManager", value = "springJdbc")
 @Property(name = "jpa.default.properties.hibernate.hbm2ddl.auto", value = "create-drop")
-@MicronautTest
 internal class BookRepositoryTest {
 
     @Inject
-    var abstractBookRepository: AbstractBookRepository? = null
+    lateinit var bookRepository: AbstractBookRepository
 
     @AfterEach
     fun cleanup() {
-        abstractBookRepository!!.deleteAll()
+        bookRepository.deleteAll()
     }
 
     @Test
     fun testBooksJdbcTemplate() {
-        abstractBookRepository!!.saveAll(
-            Arrays.asList(
+        bookRepository.saveAll(
+            listOf(
                 Book(null, "The Stand", 1000),
                 Book(null, "The Shining", 600),
                 Book(null, "The Power of the Dog", 500),
@@ -38,7 +38,11 @@ internal class BookRepositoryTest {
             )
         )
 
-        val result = abstractBookRepository!!.findByTitle("The Shining")
-        Assertions.assertEquals(1, result.size)
+        val result = bookRepository.findByTitle("The Shining")
+        assertEquals(1, result.size)
+
+        assertNotNull(result[0].id)
+        assertEquals("The Shining", result[0].title)
+        assertEquals(600, result[0].pages)
     }
 }

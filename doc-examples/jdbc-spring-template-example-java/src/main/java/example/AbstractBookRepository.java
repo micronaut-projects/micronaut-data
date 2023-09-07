@@ -1,4 +1,3 @@
-
 package example;
 
 import io.micronaut.context.annotation.Requires;
@@ -31,7 +30,7 @@ public abstract class AbstractBookRepository implements CrudRepository<@Valid Bo
 
         return jdbcTemplate.queryForList("SELECT * FROM Book AS book WHERE book.title = ?", title) // <3>
             .stream()
-            .map(m -> new Book((Long)m.get("id"), (String)m.get("title"), (Integer)m.get("pages")))
+            .map(m -> new Book((Long) m.get("id"), (String) m.get("title"), (Integer) m.get("pages")))
             .toList();
     }
 }
