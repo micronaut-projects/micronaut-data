@@ -17,9 +17,7 @@ package io.micronaut.data.model;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.naming.Named;
-import io.micronaut.data.annotation.MappedProperty;
 
 /**
  * Shared interface for a persistent element whether it be a type or a property.
