@@ -130,7 +130,7 @@ public interface NamingStrategy {
      * Convert the associated name to a proper format to be appended to the path.
      * @param associatedName The associated name
      * @return the name in a proper format
-     * @since 4.1.0
+     * @since 4.2.0
      */
     @NonNull
     default String mappedAssociatedName(@NonNull String associatedName) {

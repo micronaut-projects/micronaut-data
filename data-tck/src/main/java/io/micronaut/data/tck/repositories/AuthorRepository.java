@@ -79,6 +79,8 @@ public interface AuthorRepository extends CrudRepository<Author, Long> {
     @Join("books")
     List<Author> listAll();
 
+    List<AuthorDtoWithBooks> searchAll();
+
     @Join("books")
     List<AuthorDtoWithBooks> queryAll();
 

@@ -1259,6 +1259,18 @@ abstract class AbstractRepositorySpec extends Specification {
             ]
     }
 
+    void "test DTO without join"() {
+        given:
+            saveSampleBooks()
+
+        when:
+            def authors = authorRepository.searchAll()
+
+        then:
+            authors.size() == 3
+            authors.forEach { assert it.books.size() == 0 }
+    }
+
     void "stream joined"() {
         if (!transactionManager.isPresent()) {
             return
