@@ -48,6 +48,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     private final Argument<Object> argument;
     private final Supplier<AttributeConverter<Object, Object>> converter;
     private String persistedName;
+    private String alias;
 
     /**
      * Default constructor.
@@ -80,6 +81,12 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
         this.converter = annotationMetadata.classValue(MappedProperty.class, "converter")
                 .map(converter -> SupplierUtil.memoized(() -> owner.resolveConverter(converter)))
                 .orElse(null);
+        this.alias = property.getAnnotationMetadata().stringValue(MappedProperty.class, MappedProperty.ALIAS).orElse(null);
+    }
+
+    @Override
+    public String getAlias() {
+        return alias;
     }
 
     /**

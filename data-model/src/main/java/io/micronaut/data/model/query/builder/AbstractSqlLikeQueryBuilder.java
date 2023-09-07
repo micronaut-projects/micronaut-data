@@ -2123,7 +2123,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @return column alias if defined, otherwise an empty string
      */
     protected final String getColumnAlias(PersistentProperty property) {
-        return property.getAnnotationMetadata().stringValue(MappedProperty.class, MappedProperty.ALIAS).orElse("");
+        return property.getAlias();
     }
 
     /**

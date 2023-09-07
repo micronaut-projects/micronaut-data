@@ -576,7 +576,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
 
     private <K> Object readProperty(RS rs, MappingContext<K> ctx, RuntimePersistentProperty<K> prop) {
         String columnName = ctx.namingStrategy.mappedName(ctx.embeddedPath, prop);
-        String columnAlias = prop.getAnnotationMetadata().stringValue(MappedProperty.class, MappedProperty.ALIAS).orElse("");
+        String columnAlias = prop.getAlias();
         if (StringUtils.isNotEmpty(columnAlias)) {
             columnName = columnAlias;
         } else if (ctx.prefix != null && !ctx.prefix.isEmpty()) {
