@@ -27,7 +27,6 @@ public abstract class AbstractBookRepository implements CrudRepository<@Valid Bo
 
     @Transactional
     public List<Book> findByTitle(@NonNull @NotNull String title) {
-
         return jdbcTemplate.queryForList("SELECT * FROM Book AS book WHERE book.title = ?", title) // <3>
             .stream()
             .map(m -> new Book((Long) m.get("id"), (String) m.get("title"), (Integer) m.get("pages")))

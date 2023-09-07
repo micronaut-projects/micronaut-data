@@ -22,3 +22,4 @@ abstract class AbstractBookRepository(dataSource: DataSource) : CrudRepository<@
         .queryForList("SELECT * FROM Book AS book WHERE book.title = ?", title) // <3>
         .map { m -> Book(m["id"] as Long, m["title"] as String, m["pages"] as Int) }
 }
+// end::clazz[]
