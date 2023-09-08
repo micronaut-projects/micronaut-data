@@ -29,7 +29,6 @@ import io.micronaut.data.annotation.EntityRepresentation;
 import io.micronaut.data.annotation.IgnoreWhere;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Where;
 import io.micronaut.data.annotation.repeatable.WhereSpecifications;
@@ -302,8 +301,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param value the value to be added
      */
     protected void asLiterals(StringBuilder sb, @Nullable Object value) {
-        if (value instanceof Iterable) {
-            for (Iterator iterator = ((Iterable) value).iterator(); iterator.hasNext(); ) {
+        if (value instanceof Iterable<?> iterable) {
+            for (Iterator<?> iterator = iterable.iterator(); iterator.hasNext(); ) {
                 Object o = iterator.next();
                 sb.append(asLiteral(o));
                 if (iterator.hasNext()) {
@@ -623,6 +622,42 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                                                  Map<JoinPath, String> joinAliasOverride) {
     }
 
+    protected final void appendProperty(StringBuilder sb,
+                                        List<Association> associations,
+                                        PersistentProperty property,
+                                        NamingStrategy namingStrategy,
+                                        String tableAlias,
+                                        boolean escape) {
+        String transformed = getDataTransformerReadValue(tableAlias, property).orElse(null);
+        String columnAlias = getColumnAlias(property);
+        boolean useAlias = StringUtils.isNotEmpty(columnAlias);
+        if (transformed != null) {
+            sb.append(transformed).append(AS_CLAUSE).append(useAlias ? columnAlias : property.getPersistedName());
+        } else {
+            String column = getMappedName(namingStrategy, associations, property);
+            column = escapeColumnIfNeeded(column, escape);
+            sb.append(tableAlias).append(DOT).append(column);
+            if (useAlias) {
+                sb.append(AS_CLAUSE).append(columnAlias);
+            }
+        }
+        sb.append(COMMA);
+    }
+
+    /**
+     * Returns escaped (quoted) column if escape needed.
+     *
+     * @param column the column
+     * @param escape an indicator telling whether column needs to be escaped (quoted)
+     * @return escaped (quoted) column if instructed to do so, otherwise original column value
+     */
+    private String escapeColumnIfNeeded(String column, boolean escape) {
+        if (escape) {
+            return quote(column);
+        }
+        return column;
+    }
+
     /**
      * Begins the query state.
      *
@@ -698,9 +733,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             selectAllColumns(annotationMetadata, queryState, queryString);
         } else {
             int projectionCount = projectionList.size();
-            for (Iterator i = projectionList.iterator(); i.hasNext(); ) {
+            for (Iterator<QueryModel.Projection> i = projectionList.iterator(); i.hasNext(); ) {
                 boolean appendComma = true;
-                QueryModel.Projection projection = (QueryModel.Projection) i.next();
+                boolean removeComma = false;
+                QueryModel.Projection projection = i.next();
                 if (projection instanceof QueryModel.LiteralProjection) {
                     queryString.append(asLiteral(((QueryModel.LiteralProjection) projection).getValue()));
                 } else if (projection instanceof QueryModel.CountProjection) {
@@ -716,7 +752,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 } else if (projection instanceof QueryModel.IdProjection) {
                     if (entity.hasCompositeIdentity()) {
                         for (PersistentProperty identity : entity.getCompositeIdentity()) {
-                            appendPropertyProjection(annotationMetadata, entity, queryString, asQueryPropertyPath(queryState.getRootAlias(), identity));
+                            appendPropertyProjection(annotationMetadata, entity, queryString, asQueryPropertyPath(queryState.getRootAlias(), identity), null);
                             queryString.append(COMMA);
                         }
                         queryString.setLength(queryString.length() - 1);
@@ -725,22 +761,22 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         if (identity == null) {
                             throw new IllegalArgumentException("Cannot query on ID with entity that has no ID");
                         }
-                        appendPropertyProjection(annotationMetadata, queryState.getEntity(), queryString, asQueryPropertyPath(queryState.getRootAlias(), identity));
+                        appendPropertyProjection(annotationMetadata, queryState.getEntity(), queryString, asQueryPropertyPath(queryState.getRootAlias(), identity), null);
                     } else {
                         throw new IllegalArgumentException("Cannot query on ID with entity that has no ID");
                     }
                 } else if (projection instanceof QueryModel.PropertyProjection pp) {
                     String alias = pp.getAlias().orElse(null);
                     if (projection instanceof QueryModel.AvgProjection) {
-                        appendFunctionProjection(annotationMetadata, queryState.getEntity(), AVG, pp, tableAlias, queryString);
+                        appendFunctionProjection(annotationMetadata, queryState.getEntity(), AVG, pp, tableAlias, alias, queryString);
                     } else if (projection instanceof QueryModel.SumProjection) {
-                        appendFunctionProjection(annotationMetadata, queryState.getEntity(), SUM, pp, tableAlias, queryString);
+                        appendFunctionProjection(annotationMetadata, queryState.getEntity(), SUM, pp, tableAlias, alias, queryString);
                     } else if (projection instanceof QueryModel.MinProjection) {
-                        appendFunctionProjection(annotationMetadata, queryState.getEntity(), MIN, pp, tableAlias, queryString);
+                        appendFunctionProjection(annotationMetadata, queryState.getEntity(), MIN, pp, tableAlias, alias, queryString);
                     } else if (projection instanceof QueryModel.MaxProjection) {
-                        appendFunctionProjection(annotationMetadata, queryState.getEntity(), MAX, pp, tableAlias, queryString);
+                        appendFunctionProjection(annotationMetadata, queryState.getEntity(), MAX, pp, tableAlias, alias, queryString);
                     } else if (projection instanceof QueryModel.CountDistinctProjection) {
-                        appendFunctionProjection(annotationMetadata, queryState.getEntity(), COUNT_DISTINCT, pp, tableAlias, queryString);
+                        appendFunctionProjection(annotationMetadata, queryState.getEntity(), COUNT_DISTINCT, pp, tableAlias, alias, queryString);
                         queryString.append(CLOSE_BRACKET);
                     } else {
                         String propertyName = pp.getPropertyName();
@@ -749,19 +785,31 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                             throw new IllegalArgumentException("Cannot project on non-existent property: " + propertyName);
                         }
                         PersistentProperty property = propertyPath.getProperty();
-                        if (property instanceof Association && !(property instanceof Embedded)) {
-                            if (!appendAssociationProjection(queryState, queryString, property, propertyPath)) {
-                                continue;
+                        if (pp.isCompound()) {
+                            // Compound property which is part of a DTO
+                            if (property instanceof Association association && !(property instanceof Embedded)) {
+                                if (queryState.isJoined(propertyPath.getPath())) {
+                                    appendCompoundAssociationProjection(queryState, queryString, association, propertyPath, alias);
+                                } else {
+                                    removeComma = true;
+                                }
+                            } else {
+                                appendCompoundPropertyProjection(queryState, queryString, property, propertyPath, alias);
                             }
                         } else {
-                            appendPropertyProjection(annotationMetadata, queryState.getEntity(), queryString, findProperty(queryState, propertyName, null));
+                            if (property instanceof Association && !(property instanceof Embedded)) {
+                                if (!appendAssociationProjection(queryState, queryString, property, propertyPath, alias)) {
+                                    continue;
+                                }
+                            } else {
+                                appendPropertyProjection(annotationMetadata, queryState.getEntity(), queryString, findProperty(queryState, propertyName, null), alias);
+                            }
                         }
                     }
-                    if (alias != null) {
-                        queryString.append(AS_CLAUSE).append(alias);
-                    }
                 }
-
+                if (removeComma) {
+                    queryString.setLength(queryString.length() - 1);
+                }
                 if (appendComma && i.hasNext()) {
                     queryString.append(COMMA);
                 }
@@ -769,7 +817,55 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
     }
 
-    private void appendPropertyProjection(AnnotationMetadata annotationMetadata, PersistentEntity entity, StringBuilder sb, QueryPropertyPath propertyPath) {
+    /**
+     * Appends the compound (part of entity or DTO) property projection.
+     *
+     * @param queryState   The query state
+     * @param queryString  The builder
+     * @param property     The property
+     * @param propertyPath The property path
+     * @param columnAlias  The column alias
+     */
+    @Internal
+    protected void appendCompoundPropertyProjection(QueryState queryState, StringBuilder queryString, PersistentProperty property, PersistentPropertyPath propertyPath, String columnAlias) {
+        PersistentEntity entity = property.getOwner();
+        boolean escape = shouldEscape(entity);
+        NamingStrategy namingStrategy = getNamingStrategy(entity);
+        int[] propertiesCount = new int[1];
+        traversePersistentProperties(propertyPath.getAssociations(), property, (associations, p) -> {
+            appendProperty(queryString, associations, p, namingStrategy, queryState.rootAlias, escape);
+            propertiesCount[0]++;
+        });
+        queryString.setLength(queryString.length() - 1);
+        if (StringUtils.isNotEmpty(columnAlias)) {
+            if (propertiesCount[0] > 1) {
+                throw new IllegalStateException("Cannot apply a column alias: " + columnAlias + " with expanded property: " + propertyPath);
+            }
+            if (propertiesCount[0] == 1) {
+                queryString.append(AS_CLAUSE).append(columnAlias);
+            }
+        }
+    }
+
+    /**
+     * Appends the compound (part of entity or DTO) association projection.
+     *
+     * @param queryState   The query state
+     * @param queryString  The builder
+     * @param association  The association
+     * @param propertyPath The property path
+     * @param columnAlias  The column alias
+     */
+    @Internal
+    protected void appendCompoundAssociationProjection(QueryState queryState, StringBuilder queryString, Association association, PersistentPropertyPath propertyPath, String columnAlias) {
+        if (!queryString.isEmpty() && queryString.charAt(queryString.length() - 1) == ',') {
+            // Strip last .
+            queryString.setLength(queryString.length() - 1);
+        }
+        selectAllColumnsFromJoinPaths(queryState, queryString, queryState.getQueryModel().getJoinPaths(), null);
+    }
+
+    private void appendPropertyProjection(AnnotationMetadata annotationMetadata, PersistentEntity entity, StringBuilder sb, QueryPropertyPath propertyPath, String columnAlias) {
         boolean jsonEntity = isJsonEntity(annotationMetadata, entity);
         if (!computePropertyPaths() || jsonEntity) {
             sb.append(propertyPath.getTableAlias()).append(DOT);
@@ -791,23 +887,23 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         boolean escape = propertyPath.shouldEscape();
         NamingStrategy namingStrategy = propertyPath.getNamingStrategy();
         boolean[] needsTrimming = {false};
+        int[] propertiesCount = new int[1];
 
         traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), (associations, property) -> {
-            String columnName = getMappedName(namingStrategy, associations, property);
-            if (escape) {
-                columnName = quote(columnName);
-            }
-
-            sb.append(tableAlias).append(DOT).append(columnName);
-            String columnAlias = getColumnAlias(property);
-            if (StringUtils.isNotEmpty(columnAlias)) {
-                sb.append(AS_CLAUSE).append(columnAlias);
-            }
-            sb.append(COMMA);
+            appendProperty(sb, associations, property, namingStrategy, tableAlias, escape);
             needsTrimming[0] = true;
+            propertiesCount[0]++;
         });
         if (needsTrimming[0]) {
             sb.setLength(sb.length() - 1);
+        }
+        if (StringUtils.isNotEmpty(columnAlias)) {
+            if (propertiesCount[0] > 1) {
+                throw new IllegalStateException("Cannot apply a column alias: " + columnAlias + " with expanded property: " + propertyPath);
+            }
+            if (propertiesCount[0] == 1) {
+                sb.append(AS_CLAUSE).append(columnAlias);
+            }
         }
     }
 
@@ -818,9 +914,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param queryString the query string builder
      * @param property the persistent property
      * @param propertyPath the persistent property path
+     * @param columnAlias the column alias
      * @return true if association projection is appended, otherwise false
      */
-    protected boolean appendAssociationProjection(QueryState queryState, StringBuilder queryString, PersistentProperty property, PersistentPropertyPath propertyPath) {
+    protected boolean appendAssociationProjection(QueryState queryState, StringBuilder queryString, PersistentProperty property, PersistentPropertyPath propertyPath, String columnAlias) {
         String joinedPath = propertyPath.getPath();
         if (!queryState.isJoined(joinedPath)) {
             queryString.setLength(queryString.length() - 1);
@@ -918,6 +1015,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         String functionName,
         QueryModel.PropertyProjection propertyProjection,
         String tableAlias,
+        String columnAlias,
         StringBuilder queryString) {
         PersistentPropertyPath propertyPath = entity.getPropertyPath(propertyProjection.getPropertyName());
         if (propertyPath == null) {
@@ -947,6 +1045,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             appendJsonProjection(queryString, dataType);
         }
         queryString.append(CLOSE_BRACKET);
+        if (columnAlias != null) {
+            queryString.append(AS_CLAUSE).append(columnAlias);
+        }
     }
 
     /**
@@ -2017,11 +2118,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     /**
      * Gets column alias if defined as alias field on MappedProperty annotation on the mapping field.
      *
-     * @param property the persisent propert
+     * @param property the persistent property
      * @return column alias if defined, otherwise an empty string
      */
     protected final String getColumnAlias(PersistentProperty property) {
-        return property.getAnnotationMetadata().stringValue(MappedProperty.class, MappedProperty.ALIAS).orElse("");
+        return property.getAlias();
     }
 
     /**

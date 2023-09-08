@@ -18,6 +18,7 @@ package io.micronaut.data.model;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.annotation.sql.JoinColumn;
 import io.micronaut.data.annotation.sql.JoinColumns;
 
@@ -25,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 
 /**
@@ -35,6 +37,8 @@ import java.util.function.BiConsumer;
  */
 @Internal
 public final class PersistentEntityUtils {
+
+    private static final String UNDERSCORE = "_";
 
     private PersistentEntityUtils() {
     }
@@ -124,6 +128,37 @@ public final class PersistentEntityUtils {
         } else {
             consumerProperty.accept(associations, property);
         }
+    }
+
+    /**
+     * Computes a dot separated property path for the given camel case path.
+     *
+     * @param path The camel case path, can contain underscore to indicate how we should traverse entity properties
+     * @param entity the persistent entity
+     * @return The dot separated version or null if it cannot be computed
+     */
+    public static Optional<String> getPersistentPropertyPath(PersistentEntity entity, String path) {
+        String decapitalizedPath = NameUtils.decapitalize(path);
+        if (entity.getPropertyByName(decapitalizedPath) != null) {
+            // First try to see if there is direct property on the entity
+            return Optional.of(decapitalizedPath);
+        }
+        // Then see if path contains underscore to indicate which paths/entities to lookup
+        String[] entityPaths = path.split(UNDERSCORE);
+        if (entityPaths.length > 1) {
+            String assocPath = entityPaths[0];
+            PersistentProperty pp = entity.getPropertyByName(assocPath);
+            if (pp instanceof Association assoc) {
+                PersistentEntity assocEntity = assoc.getAssociatedEntity();
+                String restPath = path.replaceFirst(assocPath + UNDERSCORE, "");
+                Optional<String> tailPath = getPersistentPropertyPath(assocEntity, restPath);
+                if (tailPath.isPresent()) {
+                    return Optional.of(assocPath + "." + tailPath.get());
+                }
+                throw new IllegalArgumentException("Invalid path [" + restPath + "] of [" + assocEntity + "]");
+            }
+        }
+        return entity.getPath(path);
     }
 
     private static PersistentProperty getJoinColumnAssocIdentity(PersistentProperty property, PersistentEntity associatedEntity) {

@@ -13,25 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.model;
+package io.micronaut.data.tck.entities;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.AnnotationMetadataProvider;
-import io.micronaut.core.naming.Named;
+import io.micronaut.core.annotation.Introspected;
 
-/**
- * Shared interface for a persistent element whether it be a type or a property.
- *
- * @author graemerocher
- * @since 1.0.0
- */
-public interface PersistentElement extends Named, AnnotationMetadataProvider {
+import java.util.HashSet;
+import java.util.Set;
 
-    /**
-     * The persisted name is the fully qualified name including potential schema definitions.
-     *
-     * @return The persisted name.
-     */
-    @NonNull
-    String getPersistedName();
+@Introspected
+public class AuthorDtoWithBooks {
+
+    private Long id;
+
+    private Set<Book> books = new HashSet<>();
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Set<Book> getBooks() {
+        return books;
+    }
+
+    public void setBooks(Set<Book> books) {
+        this.books = books;
+    }
+
 }

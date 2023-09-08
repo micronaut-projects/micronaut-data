@@ -35,6 +35,7 @@ import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
@@ -606,7 +607,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         PersistentProperty prop = entity.getPropertyByName(propertyName);
         PersistentPropertyPath pp;
         if (prop == null) {
-            Optional<String> propertyPath = entity.getPath(propertyName);
+            Optional<String> propertyPath = PersistentEntityUtils.getPersistentPropertyPath(entity, propertyName);
             if (propertyPath.isPresent()) {
                 String path = propertyPath.get();
                 pp = entity.getPropertyPath(path);
