@@ -45,6 +45,7 @@ import io.micronaut.data.model.runtime.EntityOperation;
 import io.micronaut.data.model.runtime.InsertBatchOperation;
 import io.micronaut.data.model.runtime.InsertOperation;
 import io.micronaut.data.model.runtime.PagedQuery;
+import io.micronaut.data.model.runtime.PreparedDataOperation;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
@@ -423,14 +424,14 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     }
 
     /**
-     * reactive operations implementation.
+     * Reactive operations implementation.
      */
     private final class DefaultR2dbcReactiveRepositoryOperations implements ReactorReactiveRepositoryOperations {
 
         @Override
         public <T> Mono<Boolean> exists(@NonNull PreparedQuery<T, Boolean> pq) {
             SqlPreparedQuery<T, Boolean> preparedQuery = getSqlPreparedQuery(pq);
-            return withNewOrExistingConnectionMono(preparedQuery, false, connection -> {
+            return executeReadMono(preparedQuery, connection -> {
                 Statement statement = prepareStatement(connection::createStatement, preparedQuery, false, true);
                 preparedQuery.bindParameters(new R2dbcParameterBinder(connection, statement, preparedQuery));
                 return executeAndMapEachRow(statement, row -> true).collectList()
@@ -442,12 +443,16 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         @Override
         public <T, R> Mono<R> findOne(@NonNull PreparedQuery<T, R> pq) {
             SqlPreparedQuery<T, R> preparedQuery = getSqlPreparedQuery(pq);
-            return withNewOrExistingConnectionMono(preparedQuery, false, connection -> {
+            return executeReadMono(preparedQuery, connection -> {
                 Statement statement = prepareStatement(connection::createStatement, preparedQuery, false, true);
                 preparedQuery.bindParameters(new R2dbcParameterBinder(connection, statement, preparedQuery));
 
                 SqlTypeMapper<Row, R> mapper = createMapper(preparedQuery, Row.class);
                 if (mapper instanceof SqlResultEntityTypeMapper<Row, R> entityTypeMapper) {
+                    final boolean hasJoins = !preparedQuery.getJoinFetchPaths().isEmpty();
+                    if (!hasJoins) {
+                        return executeAndMapEachRow(statement, entityTypeMapper::readEntity);
+                    }
                     SqlResultEntityTypeMapper.PushingMapper<Row, R> rowsMapper = entityTypeMapper.readOneWithJoins();
                     return executeAndMapEachRow(statement, row -> {
                         rowsMapper.processRow(row);
@@ -462,12 +467,17 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         @Override
         public <T, R> Flux<R> findAll(@NonNull PreparedQuery<T, R> pq) {
             SqlPreparedQuery<T, R> preparedQuery = getSqlPreparedQuery(pq);
-            return withNewOrExistingConnectionFlux(preparedQuery, false, connection -> {
+            return executeReadFlux(preparedQuery, connection -> {
                 Statement statement = prepareStatement(connection::createStatement, preparedQuery, false, false);
                 preparedQuery.bindParameters(new R2dbcParameterBinder(connection, statement, preparedQuery));
 
                 SqlTypeMapper<Row, R> mapper = createMapper(preparedQuery, Row.class);
                 if (mapper instanceof SqlResultEntityTypeMapper<Row, R> entityTypeMapper) {
+                    final boolean hasJoins = !preparedQuery.getJoinFetchPaths().isEmpty();
+                    if (!hasJoins) {
+                        // Every row represents the entity record, we can return it directly
+                        return executeAndMapEachRow(statement, entityTypeMapper::readEntity);
+                    }
                     SqlResultEntityTypeMapper.PushingMapper<Row, List<R>> rowsMapper = entityTypeMapper.readAllWithJoins();
                     return executeAndMapEachRow(statement, row -> {
                         rowsMapper.processRow(row);
@@ -482,7 +492,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         @Override
         public Mono<Number> executeUpdate(@NonNull PreparedQuery<?, Number> pq) {
             SqlPreparedQuery<?, Number> preparedQuery = getSqlPreparedQuery(pq);
-            return withNewOrExistingConnectionMono(preparedQuery, true, connection -> {
+            return executeWriteMono(preparedQuery, connection -> {
                 Statement statement = prepareStatement(connection::createStatement, preparedQuery, true, true);
                 Dialect dialect = preparedQuery.getDialect();
                 preparedQuery.bindParameters(new R2dbcParameterBinder(connection, statement, preparedQuery));
@@ -518,7 +528,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         @NonNull
         @Override
         public <T> Mono<Number> delete(@NonNull DeleteOperation<T> operation) {
-            return withNewOrExistingConnectionMono(operation, true, status -> {
+            return executeWriteMono(operation, status -> {
                 final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
                 final R2dbcOperationContext ctx = createContext(operation, status, storedQuery);
                 R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(ctx, storedQuery.getPersistentEntity(), operation.getEntity(), storedQuery);
@@ -530,7 +540,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         @NonNull
         @Override
         public <T> Flux<T> persistAll(@NonNull InsertBatchOperation<T> operation) {
-            return withNewOrExistingConnectionFlux(operation, true, status -> {
+            return executeWriteFlux(operation, status -> {
                 final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
                 final RuntimePersistentEntity<T> persistentEntity = storedQuery.getPersistentEntity();
                 final R2dbcOperationContext ctx = createContext(operation, status, storedQuery);
@@ -560,7 +570,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         @NonNull
         @Override
         public <T> Mono<T> persist(@NonNull InsertOperation<T> operation) {
-            return withNewOrExistingConnectionMono(operation, true, status -> {
+            return executeWriteMono(operation, status -> {
                 final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
                 final R2dbcOperationContext ctx = createContext(operation, status, storedQuery);
                 R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(ctx, storedQuery, storedQuery.getPersistentEntity(), operation.getEntity(), true);
@@ -572,7 +582,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         @NonNull
         @Override
         public <T> Mono<T> update(@NonNull UpdateOperation<T> operation) {
-            return withNewOrExistingConnectionMono(operation, true, status -> {
+            return executeWriteMono(operation, status -> {
                 final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
                 final R2dbcOperationContext ctx = createContext(operation, status, storedQuery);
                 R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(ctx, storedQuery.getPersistentEntity(), operation.getEntity(), storedQuery);
@@ -581,81 +591,58 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             });
         }
 
-        private <T, R> Mono<R> withNewOrExistingConnectionMono(@NonNull EntityOperation<T> operation,
-                                                               boolean isWrite,
-                                                               Function<Connection, Publisher<R>> entityOperation) {
-            @SuppressWarnings("unchecked")
-            ReactiveTransactionStatus<Connection> tx = operation
-                .getParameterInRole(R2dbcRepository.PARAMETER_TX_STATUS_ROLE, ReactiveTransactionStatus.class).orElse(null);
-            if (tx != null) {
-                try {
-                    return Mono.fromDirect(entityOperation.apply(tx.getConnection()));
-                } catch (Exception e) {
-                    return Mono.error(e);
-                }
-            } else {
-                return withConnectionMono(isWrite, connection -> Mono.fromDirect(entityOperation.apply(connection)));
-            }
+        private <R> Mono<R> executeWriteMono(@NonNull PreparedDataOperation<?> operation,
+                                             @NonNull Function<Connection, Publisher<R>> entityOperation) {
+            return withConnectionMono(operation, true, connection -> Mono.fromDirect(entityOperation.apply(connection)));
         }
 
-        private <T, R> Flux<R> withNewOrExistingConnectionFlux(@NonNull EntityOperation<T> operation,
-                                                               boolean isWrite,
-                                                               Function<Connection, Flux<R>> entityOperation) {
-            @SuppressWarnings("unchecked")
-            ReactiveTransactionStatus<Connection> tx = operation
-                .getParameterInRole(R2dbcRepository.PARAMETER_TX_STATUS_ROLE, ReactiveTransactionStatus.class).orElse(null);
-            if (tx != null) {
-                try {
-                    return Flux.from(entityOperation.apply(tx.getConnection()));
-                } catch (Exception e) {
-                    return Flux.error(e);
-                }
-            }
-            return withConnectionFlux(isWrite, entityOperation);
+        private <R> Flux<R> executeWriteFlux(@NonNull PreparedDataOperation<?> operation,
+                                             @NonNull Function<Connection, Flux<R>> entityOperation) {
+            return withConnectionFlux(operation, true, entityOperation);
         }
 
-        private <T, R> Mono<R> withNewOrExistingConnectionMono(
-            @NonNull PreparedQuery<T, R> operation,
-            boolean isWrite,
-            Function<Connection, Publisher<R>> entityOperation) {
-            @SuppressWarnings("unchecked")
-            ReactiveTransactionStatus<Connection> tx = operation
-                .getParameterInRole(R2dbcRepository.PARAMETER_TX_STATUS_ROLE, ReactiveTransactionStatus.class).orElse(null);
-            if (tx != null) {
-                try {
-                    return Mono.fromDirect(entityOperation.apply(tx.getConnection()));
-                } catch (Exception e) {
-                    return Mono.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
-                }
-            }
-            return withConnectionMono(isWrite, connection -> Mono.fromDirect(entityOperation.apply(connection)));
+        private <R> Mono<R> executeReadMono(@NonNull PreparedDataOperation<?> operation,
+                                            @NonNull Function<Connection, Publisher<R>> entityOperation) {
+            return withConnectionMono(operation, false, connection -> Mono.fromDirect(entityOperation.apply(connection)));
         }
 
-        private <T, R> Flux<R> withNewOrExistingConnectionFlux(
-            @NonNull PreparedQuery<T, R> operation,
-            boolean isWrite,
-            Function<Connection, Flux<R>> entityOperation) {
+        private <R> Flux<R> executeReadFlux(@NonNull PreparedDataOperation<?> operation,
+                                            @NonNull Function<Connection, Flux<R>> entityOperation) {
+            return withConnectionFlux(operation, false, entityOperation);
+        }
+
+        private <R> Flux<R> withConnectionFlux(@NonNull PreparedDataOperation<?> operation,
+                                               boolean isWrite,
+                                               @NonNull Function<Connection, Flux<R>> callback) {
             @SuppressWarnings("unchecked")
             ReactiveTransactionStatus<Connection> tx = operation
-                .getParameterInRole(R2dbcRepository.PARAMETER_TX_STATUS_ROLE, ReactiveTransactionStatus.class).orElse(null);
+                    .getParameterInRole(R2dbcRepository.PARAMETER_TX_STATUS_ROLE, ReactiveTransactionStatus.class).orElse(null);
             if (tx != null) {
                 try {
-                    return Flux.from(entityOperation.apply(tx.getConnection()));
+                    return Flux.from(callback.apply(tx.getConnection()));
                 } catch (Exception e) {
                     return Flux.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
                 }
             }
-            return withConnectionFlux(isWrite, entityOperation);
-        }
-
-        private <R> Flux<R> withConnectionFlux(boolean isWrite, Function<Connection, Flux<R>> callback) {
             return connectionOperations.withConnectionFlux(
                 isWrite ? ConnectionDefinition.DEFAULT : ConnectionDefinition.READ_ONLY,
                 status -> callback.apply(status.getConnection())
             );
         }
 
-        private <R> Mono<R> withConnectionMono(boolean isWrite, Function<Connection, Mono<R>> callback) {
+        private <R> Mono<R> withConnectionMono(@NonNull PreparedDataOperation<?> operation,
+                                               boolean isWrite,
+                                               @NonNull Function<Connection, Mono<R>> callback) {
+            @SuppressWarnings("unchecked")
+            ReactiveTransactionStatus<Connection> tx = operation
+                    .getParameterInRole(R2dbcRepository.PARAMETER_TX_STATUS_ROLE, ReactiveTransactionStatus.class).orElse(null);
+            if (tx != null) {
+                try {
+                    return Mono.fromDirect(callback.apply(tx.getConnection()));
+                } catch (Exception e) {
+                    return Mono.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
+                }
+            }
             return connectionOperations.withConnectionMono(
                 isWrite ? ConnectionDefinition.DEFAULT : ConnectionDefinition.READ_ONLY,
                 status -> callback.apply(status.getConnection())
@@ -665,7 +652,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         @NonNull
         @Override
         public <T> Mono<Number> deleteAll(DeleteBatchOperation<T> operation) {
-            return withNewOrExistingConnectionMono(operation, true, connection -> {
+            return executeWriteMono(operation, connection -> {
                 final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
                 RuntimePersistentEntity<T> persistentEntity = storedQuery.getPersistentEntity();
                 final R2dbcOperationContext ctx = createContext(operation, connection, storedQuery);
@@ -688,7 +675,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         @NonNull
         @Override
         public <T> Flux<T> updateAll(@NonNull UpdateBatchOperation<T> operation) {
-            return withNewOrExistingConnectionFlux(operation, true, connection -> {
+            return executeWriteFlux(operation, connection -> {
                 final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
                 final R2dbcOperationContext ctx = createContext(operation, connection, storedQuery);
                 final RuntimePersistentEntity<T> persistentEntity = storedQuery.getPersistentEntity();
@@ -857,12 +844,12 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         }
 
         private Statement prepare(Connection connection) throws RuntimeException {
-            if (storedQuery instanceof SqlPreparedQuery) {
+            if (storedQuery instanceof SqlPreparedQuery<T, ?> sqlPreparedQuery) {
                 data = data.map(d -> {
                     if (d.vetoed) {
                         return d;
                     }
-                    ((SqlPreparedQuery) storedQuery).prepare(d.entity);
+                    sqlPreparedQuery.prepare(d.entity);
                     return d;
                 });
             }
@@ -1034,7 +1021,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             } else {
                 Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities
                     .flatMap(list -> {
-                        List<Data> notVetoedEntities = list.stream().filter(this::notVetoed).collect(Collectors.toList());
+                        List<Data> notVetoedEntities = list.stream().filter(this::notVetoed).toList();
                         if (notVetoedEntities.isEmpty()) {
                             return Mono.just(Tuples.of(list, 0L));
                         }
