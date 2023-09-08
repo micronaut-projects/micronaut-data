@@ -144,7 +144,7 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
     public @Nullable Object read(@NonNull S resultSet, @NonNull RuntimePersistentProperty<?> property) {
         String propertyName = property.getPersistedName();
         DataType dataType = property.getDataType();
-        String aliasPropertyName = property.getAnnotationMetadata().stringValue(MappedProperty.class, MappedProperty.ALIAS).orElse("");
+        String aliasPropertyName = property.getAlias();
         if (StringUtils.isNotEmpty(aliasPropertyName)) {
             propertyName = aliasPropertyName;
         }

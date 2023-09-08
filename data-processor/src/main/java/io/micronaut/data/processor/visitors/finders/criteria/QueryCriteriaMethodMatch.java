@@ -420,7 +420,11 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             if (selectionList.isEmpty()) {
                 return querySequence;
             }
-            query.multiselect(selectionList);
+            if (selectionList.size() == 1) {
+                query.select((Selection<? extends T>) selectionList.iterator().next());
+            } else {
+                query.multiselect(selectionList);
+            }
             return "";
         }
         return querySequence;

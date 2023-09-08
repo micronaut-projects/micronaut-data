@@ -24,11 +24,14 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.PersistentPropertyPath;
+import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
@@ -51,6 +54,28 @@ import java.util.StringJoiner;
  */
 @Internal
 public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder implements QueryBuilder {
+
+    private static final NamingStrategy JPA_NAMING_STRATEGY = new NamingStrategy() {
+        @Override
+        public String mappedName(String name) {
+            return name;
+        }
+
+        @Override
+        public String mappedAssociatedName(String associatedName) {
+            return associatedName;
+        }
+
+        @Override
+        public String mappedName(Association association) {
+            String providedName = association.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
+            if (providedName != null) {
+                return providedName;
+            }
+            return association.getName();
+        }
+    };
+
     /**
      * Default constructor.
      */
@@ -225,28 +250,14 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     @Override
     public String resolveJoinType(Join.Type jt) {
-        String joinType;
-        switch (jt) {
-            case LEFT:
-                joinType = " LEFT JOIN ";
-                break;
-            case LEFT_FETCH:
-                joinType = " LEFT JOIN FETCH ";
-                break;
-            case RIGHT:
-                joinType = " RIGHT JOIN ";
-                break;
-            case RIGHT_FETCH:
-                joinType = " RIGHT JOIN FETCH ";
-                break;
-            case INNER:
-            case FETCH:
-                joinType = " JOIN FETCH ";
-                break;
-            default:
-                joinType = " JOIN ";
-        }
-        return joinType;
+        return switch (jt) {
+            case LEFT -> " LEFT JOIN ";
+            case LEFT_FETCH -> " LEFT JOIN FETCH ";
+            case RIGHT -> " RIGHT JOIN ";
+            case RIGHT_FETCH -> " RIGHT JOIN FETCH ";
+            case INNER, FETCH -> " JOIN FETCH ";
+            default -> " JOIN ";
+        };
     }
 
     @Nullable
@@ -267,4 +278,21 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     public QueryResult buildPagination(@NonNull Pageable pageable) {
         throw new UnsupportedOperationException("JPA-QL does not support pagination in query definitions");
     }
+
+    @Override
+    protected void appendCompoundAssociationProjection(QueryState queryState, StringBuilder queryString, Association association, PersistentPropertyPath propertyPath, String alias) {
+        String joinAlias = queryState.computeAlias(propertyPath.getPath());
+        queryString.append(joinAlias).append(AS_CLAUSE).append(alias != null ? alias : association.getName());
+    }
+
+    @Override
+    protected NamingStrategy getNamingStrategy(PersistentEntity entity) {
+        return JPA_NAMING_STRATEGY;
+    }
+
+    @Override
+    protected NamingStrategy getNamingStrategy(PersistentPropertyPath propertyPath) {
+        return JPA_NAMING_STRATEGY;
+    }
+
 }

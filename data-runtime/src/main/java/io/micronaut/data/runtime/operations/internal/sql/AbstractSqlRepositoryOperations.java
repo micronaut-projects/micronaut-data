@@ -21,7 +21,10 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.data.annotation.AutoPopulated;
+import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -34,12 +37,14 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
+import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
+import io.micronaut.data.model.runtime.BeanPropertyWithAnnotationMetadata;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.QueryResultInfo;
@@ -56,6 +61,7 @@ import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.runtime.mapper.sql.JsonQueryResultMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlJsonValueMapper;
+import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlTypeMapper;
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
@@ -63,6 +69,7 @@ import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.data.runtime.query.internal.BasicStoredQuery;
 import io.micronaut.data.runtime.query.internal.QueryResultStoredQuery;
 import io.micronaut.inject.BeanDefinition;
+import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.json.JsonMapper;
 import org.slf4j.Logger;
@@ -76,6 +83,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
@@ -656,6 +664,106 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                                                                                RuntimePersistentEntity<T> persistentEntity, BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
         return new JsonQueryResultMapper<>(columnName, jsonDataType, persistentEntity, columnNameResultSetReader,
             sqlJsonColumnMapperProvider.getJsonColumnReader(sqlPreparedQuery, resultSetType), loadListener);
+    }
+
+    /**
+     * @return The first result set index.
+     * @since 4.2.0
+     */
+    protected abstract Integer getFirstResultSetIndex();
+
+    /**
+     * Creates a result mapper.
+     * @param preparedQuery The prepared query
+     * @param rsType The result set type
+     * @param <E> The entity type
+     * @param <R> The result type
+     * @return The new mapper
+     * @since 4.2.0
+     */
+    protected <E, R> SqlTypeMapper<RS, R> createMapper(SqlPreparedQuery<E, R> preparedQuery, Class<RS> rsType) {
+        BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener;
+        RuntimePersistentEntity<E> persistentEntity = preparedQuery.getPersistentEntity();
+        boolean isEntityResult = preparedQuery.getResultDataType() == DataType.ENTITY;
+        if (isEntityResult) {
+            loadListener = (loadedEntity, o) -> {
+                if (loadedEntity.hasPostLoadEventListeners()) {
+                    return triggerPostLoad(o, loadedEntity, preparedQuery.getAnnotationMetadata());
+                } else {
+                    return o;
+                }
+            };
+        } else {
+            loadListener = null;
+        }
+        QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
+        if (isJsonResult(preparedQuery, queryResultInfo)) {
+            String column = getJsonColumn(queryResultInfo);
+            JsonDataType jsonDataType = getJsonDataType(queryResultInfo);
+            return createQueryResultMapper(preparedQuery, column, jsonDataType, rsType, persistentEntity, loadListener);
+        }
+        if (isEntityResult || preparedQuery.isDtoProjection()) {
+            Class<R> resultType = preparedQuery.getResultType();
+            final Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
+            if (isEntityResult) {
+                return new SqlResultEntityTypeMapper<>(
+                    getEntity(resultType),
+                    columnNameResultSetReader,
+                    joinFetchPaths,
+                    sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, rsType),
+                    loadListener,
+                    conversionService);
+            } else {
+                RuntimePersistentEntity<R> resultPersistentEntity = getEntity(resultType);
+                Collection<BeanProperty<R, Object>> beanProperties = resultPersistentEntity.getIntrospection().getBeanProperties();
+                RuntimePersistentEntity<R> dtoPersistentEntity = new RuntimePersistentEntity<>(
+                    resultPersistentEntity.getIntrospection(),
+                    beanProperties.stream().map(p -> {
+                        if (p.hasAnnotation(MappedProperty.class)) {
+                            return p;
+                        }
+                        RuntimePersistentProperty<E> entityProperty = persistentEntity.getPropertyByName(p.getName());
+                        if (entityProperty == null || !ReflectionUtils.getWrapperType(entityProperty.getType()).equals(ReflectionUtils.getWrapperType(p.getType()))) {
+                            return p;
+                        }
+                        return new BeanPropertyWithAnnotationMetadata<>(
+                            p,
+                            new AnnotationMetadataHierarchy(p.getAnnotationMetadata(), entityProperty.getAnnotationMetadata())
+                        );
+                    }).toList()
+                );
+                return new SqlResultEntityTypeMapper<>(
+                    dtoPersistentEntity,
+                    columnNameResultSetReader,
+                    joinFetchPaths,
+                    sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, rsType),
+                    null,
+                    conversionService);
+            }
+        }
+        return new SqlTypeMapper<>() {
+            @Override
+            public boolean hasNext(RS resultSet) {
+                return columnIndexResultSetReader.next(resultSet);
+            }
+
+            @Override
+            public R map(RS rs, Class<R> type) throws DataAccessException {
+                Object v = columnIndexResultSetReader.readDynamic(rs, getFirstResultSetIndex(), preparedQuery.getResultDataType());
+                if (v == null) {
+                    return null;
+                } else if (type.isInstance(v)) {
+                    return (R) v;
+                } else {
+                    return columnIndexResultSetReader.convertRequired(v, type);
+                }
+            }
+
+            @Override
+            public Object read(RS object, String name) {
+                throw new IllegalStateException("Not supported!");
+            }
+        };
     }
 
     /**

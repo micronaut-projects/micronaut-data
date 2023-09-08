@@ -1239,6 +1239,38 @@ abstract class AbstractRepositorySpec extends Specification {
             ]
     }
 
+    @Unroll
+    void "test DTO with different join types on many ended association"(String methodName) {
+        given:
+            saveSampleBooks()
+
+        when:
+            def authors = authorRepository."$methodName"()
+
+        then:
+            authors.size() == 3
+            authors.collect { [books: it.books.size()] }.every { it.books == 2 }
+
+        where:
+            methodName << [
+                    "queryAll", // DEFAULT
+                    "retrieveByIdIsNotNull", // LEFT_FETCH
+                    "searchByNameIsNotNull" // RIGHT_FETCH
+            ]
+    }
+
+    void "test DTO without join"() {
+        given:
+            saveSampleBooks()
+
+        when:
+            def authors = authorRepository.searchAll()
+
+        then:
+            authors.size() == 3
+            authors.forEach { assert it.books.size() == 0 }
+    }
+
     void "stream joined"() {
         if (!transactionManager.isPresent()) {
             return

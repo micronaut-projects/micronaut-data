@@ -173,7 +173,7 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
     public PersistentEntityCriteriaQuery<T> multiselect(Selection<?>... selections) {
         Objects.requireNonNull(selections);
         if (selections.length > 0) {
-            this.selection = selections.length == 1 ? selections[0] : new CompoundSelection<>(Arrays.asList(selections));
+            this.selection = new CompoundSelection<>(Arrays.asList(selections));
         } else {
             this.selection = null;
         }
@@ -184,7 +184,7 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
     public PersistentEntityCriteriaQuery<T> multiselect(List<Selection<?>> selectionList) {
         Objects.requireNonNull(selectionList);
         if (!selectionList.isEmpty()) {
-            this.selection = selectionList.size() == 1 ? selectionList.iterator().next() : new CompoundSelection<>(selectionList);
+            this.selection = new CompoundSelection<>(selectionList);
         } else {
             this.selection = null;
         }
