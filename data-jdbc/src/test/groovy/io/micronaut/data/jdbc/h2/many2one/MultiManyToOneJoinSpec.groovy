@@ -33,6 +33,10 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
     @Inject
     CustomBookRepository customBookRepository = applicationContext.getBean(CustomBookRepository)
 
+    @Shared
+    @Inject
+    UserGroupMembershipRepository userGroupMembershipRepository = applicationContext.getBean(UserGroupMembershipRepository)
+
     void 'test many-to-one hierarchy'() {
         given:
             RefA refA = new RefA(refB: new RefB(refC: new RefC(name: "TestXyz")))
@@ -77,6 +81,28 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
         books[0].author.id2 == 20
         cleanup:
         customBookRepository.deleteAll()
+    }
+
+    void "test many to one with two properties starting with same prefix"() {
+        given:
+        def user = new User(login: "login1")
+        def area = new Area(name: "area51")
+        def userGroup = new UserGroup(area: area)
+        def userGroupMembership = new UserGroupMembership(user: user, userGroup: userGroup)
+        userGroup.getUserAuthorizations().add(userGroupMembership)
+        when:
+        userGroupMembershipRepository.save(userGroupMembership)
+        def listByUserLogin = userGroupMembershipRepository.findAllByUserLogin(user.login)
+        def listByUserLoginAndAreaId = userGroupMembershipRepository.findAllByUserLoginAndUserGroup_AreaId(user.login, area.id)
+        then:
+        listByUserLogin
+        listByUserLoginAndAreaId
+        listByUserLogin == listByUserLoginAndAreaId
+        listByUserLogin[0].userGroup.id == userGroup.id
+        listByUserLogin[0].user.id == user.id
+        listByUserLoginAndAreaId[0].userGroup.id == userGroup.id
+        listByUserLoginAndAreaId[0].user.id == user.id
+
     }
 }
 
@@ -163,4 +189,71 @@ class CustomBook {
     void setPages(int pages) { this.pages = pages }
     CustomAuthor getAuthor() { return author }
     void setAuthor(CustomAuthor author) { this.author = author }
+}
+
+@MappedEntity(value = "ugm", alias = "ugm_")
+class UserGroupMembership {
+
+    @Id
+    @GeneratedValue
+    Long id
+
+    @Relation(value = Relation.Kind.MANY_TO_ONE, cascade = Relation.Cascade.PERSIST)
+    UserGroup userGroup
+
+    @Relation(value = Relation.Kind.MANY_TO_ONE, cascade = Relation.Cascade.PERSIST)
+    User user
+
+    @Override
+    int hashCode() {
+        return Objects.hash(id)
+    }
+
+    @Override
+    boolean equals(Object obj) {
+        if (obj instanceof UserGroupMembership) {
+            UserGroupMembership other = (UserGroupMembership) obj
+            return Objects.equals(id, other.id)
+        }
+        return false
+    }
+}
+@MappedEntity(value = "ug", alias = "ug_")
+class UserGroup {
+
+    @Id
+    @GeneratedValue
+    Long id
+
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "userGroup")
+    Set<UserGroupMembership> userAuthorizations = new HashSet<UserGroupMembership>()
+
+    @Relation(value = Relation.Kind.MANY_TO_ONE, cascade = Relation.Cascade.PERSIST)
+    Area area
+}
+@MappedEntity(value = "a", alias = "a_")
+class Area {
+
+    @Id
+    @GeneratedValue
+    Long id
+
+    String name
+}
+@MappedEntity(value = "u", alias = "u_")
+class User {
+
+    @Id
+    @GeneratedValue
+    Long id
+
+    String login
+}
+@JdbcRepository(dialect = Dialect.H2)
+interface UserGroupMembershipRepository extends CrudRepository<UserGroupMembership, Long> {
+
+    List<UserGroupMembership> findAllByUserLogin(String login)
+
+    @Join(value = "userGroup.area", type = Join.Type.FETCH)
+    List<UserGroupMembership> findAllByUserLoginAndUserGroup_AreaId(String login, Long uid)
 }

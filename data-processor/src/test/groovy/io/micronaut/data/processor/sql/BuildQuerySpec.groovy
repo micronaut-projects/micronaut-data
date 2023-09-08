@@ -880,4 +880,148 @@ interface AuthorRepository extends GenericRepository<Author, Long> {
         expect:
             queryAllQuery == 'SELECT author_.`id`,author_books_.`id` AS books_id,author_books_.`author_id` AS books_author_id,author_books_.`genre_id` AS books_genre_id,author_books_.`title` AS books_title,author_books_.`total_pages` AS books_total_pages,author_books_.`publisher_id` AS books_publisher_id,author_books_.`last_updated` AS books_last_updated FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id`'
     }
+
+    void "test many-to-one with properties starting with the same prefix"() {
+        given:
+        def repository = buildRepository('test.UserGroupMembershipRepository', """
+
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+
+@MappedEntity(value = "ua", alias = "ua_")
+class Address {
+    @Id
+    private Long id;
+    private String zipCode;
+    private String city;
+    private String street;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getZipCode() { return zipCode; }
+    public void setZipCode(String zipCode) { this.zipCode = zipCode; }
+    public String getCity() { return city; }
+    public void setCity(String city) { this.city = city; }
+    public String getStreet() { return street; }
+    public void setStreet(String street) { this.street = street; }
+}
+@MappedEntity(value = "u", alias = "u_")
+class User {
+    @Id
+    private Long id;
+    private String login;
+    private Address address;
+    private String addressZipCode;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getLogin() { return login; }
+    public void setLogin(String login) { this.login = login; }
+    public Address getAddress() { return address; }
+    public void setAddress(Address address) { this.address = address; }
+    public String getAddressZipCode() { return addressZipCode; }
+    public void setAddressZipCode(String addressZipCode) { this.addressZipCode = addressZipCode; }
+}
+@MappedEntity(value = "a", alias = "a_")
+class Area {
+    @Id
+    private Long id;
+    private String name;
+    public Long getId() { return id;}
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name;}
+    public void setName(String name) { this.name = name; }
+}
+@MappedEntity(value = "ug", alias = "ug_")
+class UserGroup {
+    @Id
+    private Long id;
+    @OneToMany(mappedBy = "userGroup", fetch = FetchType.LAZY)
+    private Set<UserGroupMembership> userAuthorizations = new HashSet<>();
+    @ManyToOne
+    private Area area;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Set<UserGroupMembership> getUserAuthorizations() { return userAuthorizations; }
+    public void setUserAuthorizations(Set<UserGroupMembership> userAuthorizations) { this.userAuthorizations = userAuthorizations; }
+    public Area getArea() { return area; }
+    public void setArea(Area area) { this.area = area; }
+}
+@MappedEntity(value = "ugm", alias = "ugm_")
+class UserGroupMembership {
+    @Id
+    private Long id;
+    @ManyToOne(fetch = FetchType.EAGER)
+    private UserGroup userGroup;
+    @ManyToOne(fetch = FetchType.EAGER)
+    private User user;
+    @ManyToOne
+    private Address userAddress;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public UserGroup getUserGroup() { return userGroup; }
+    public void setUserGroup(UserGroup userGroup) { this.userGroup = userGroup; }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
+    public Address getUserAddress() { return userAddress; }
+    public void setUserAddress(Address userAddress) { this.userAddress = userAddress; }
+}
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface UserGroupMembershipRepository extends GenericRepository<UserGroupMembership, Long> {
+
+    @Join(value = "userGroup.area", type = Join.Type.FETCH)
+    List<UserGroupMembership> findAllByUserLoginAndUserGroup_AreaId(String login, Long uid);
+
+    List<UserGroupMembership> findAllByUserLogin(String userLogin);
+
+    List<UserGroupMembership> findAllByUser_AddressZipCode(String zipCode);
+
+    List<UserGroupMembership> findAllByUserAddress_ZipCode(String zipCode);
+}
+"""
+        )
+
+        expect:"The repository to compile"
+        repository != null
+        when:
+        def queryByUserLoginAndAreaId = getQuery(repository.getRequiredMethod("findAllByUserLoginAndUserGroup_AreaId", String, Long))
+        def queryByUserLogin = getQuery(repository.getRequiredMethod("findAllByUserLogin", String))
+        def queryByUserAddressZipCode = getQuery(repository.getRequiredMethod("findAllByUser_AddressZipCode", String))
+        def queryByUserAddressZipCode2 = getQuery(repository.getRequiredMethod("findAllByUserAddress_ZipCode", String))
+        then:
+        queryByUserLoginAndAreaId != ''
+        queryByUserLogin == 'SELECT ugm_.`id`,ugm_.`user_group_id`,ugm_.`user_id`,ugm_.`user_address_id` FROM `ugm` ugm_ INNER JOIN `u` ugm_user_ ON ugm_.`user_id`=ugm_user_.`id` WHERE (ugm_user_.`login` = ?)'
+        // Queries by user.addressZipCode
+        queryByUserAddressZipCode == 'SELECT ugm_.`id`,ugm_.`user_group_id`,ugm_.`user_id`,ugm_.`user_address_id` FROM `ugm` ugm_ INNER JOIN `u` ugm_user_ ON ugm_.`user_id`=ugm_user_.`id` WHERE (ugm_user_.`address_zip_code` = ?)'
+        // Queries by userAddress.zipCode
+        queryByUserAddressZipCode2 == 'SELECT ugm_.`id`,ugm_.`user_group_id`,ugm_.`user_id`,ugm_.`user_address_id` FROM `ugm` ugm_ INNER JOIN `ua` ugm_user_address_ ON ugm_.`user_address_id`=ugm_user_address_.`id` WHERE (ugm_user_address_.`zip_code` = ?)'
+    }
+
+    void "test repo method with underscore and not matching property"() {
+        when:
+        def repository = buildRepository('test.BookRepository', """
+
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface BookRepository extends GenericRepository<Book, Long> {
+
+    @Join(value = "author", type = Join.Type.FETCH)
+    List<UserGroupMembership> findAllByPublisherZipCodeAndAuthor_SpecName(String zipCode, String specName);
+}
+"""
+        )
+
+        then:
+        Throwable ex = thrown()
+        ex.message.contains('Invalid path [SpecName] of [io.micronaut.data.tck.entities.Author]')
+    }
 }
