@@ -590,12 +590,12 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
 
     @NonNull
     protected final <T> Expression<?> getProperty(PersistentEntityRoot<T> root, String propertyName) {
+        if (TypeRole.ID.equals(NameUtils.decapitalize(propertyName)) && (root.getPersistentEntity().hasIdentity() || root.getPersistentEntity().hasCompositeIdentity())) {
+            return root.id();
+        }
         io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<Object> property = findProperty(root, propertyName);
         if (property != null) {
             return property;
-        }
-        if (TypeRole.ID.equals(NameUtils.decapitalize(propertyName)) && (root.getPersistentEntity().hasIdentity() || root.getPersistentEntity().hasCompositeIdentity())) {
-            return root.id();
         }
         throw new MatchFailedException("Cannot query entity [" + root.getPersistentEntity().getSimpleName() + "] on non-existent property: " + propertyName);
     }

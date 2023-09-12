@@ -19,6 +19,8 @@ import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.entities.Invoice
+import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Restaurant
@@ -269,8 +271,8 @@ interface CustomIdEntityRepository extends CrudRepository<CustomIdEntity, Long> 
         "existsByCustomId" | 'SELECT TRUE FROM `custom_id_entity` custom_id_entity_ WHERE (custom_id_entity_.`custom_id` = ?)'
         "deleteByCustomId" | 'DELETE  FROM `custom_id_entity`  WHERE (`custom_id` = ?)'
         "findByCustomId"   | 'SELECT custom_id_entity_.`custom_id`,custom_id_entity_.`id`,custom_id_entity_.`name` FROM `custom_id_entity` custom_id_entity_ WHERE (custom_id_entity_.`custom_id` = ?)'
-        "existsById"       | 'SELECT TRUE FROM `custom_id_entity` custom_id_entity_ WHERE (custom_id_entity_.`id` = ?)'
-        "findById"         | 'SELECT custom_id_entity_.`custom_id`,custom_id_entity_.`id`,custom_id_entity_.`name` FROM `custom_id_entity` custom_id_entity_ WHERE (custom_id_entity_.`id` = ?)'
+        "existsById"       | 'SELECT TRUE FROM `custom_id_entity` custom_id_entity_ WHERE (custom_id_entity_.`custom_id` = ?)'
+        "findById"         | 'SELECT custom_id_entity_.`custom_id`,custom_id_entity_.`id`,custom_id_entity_.`name` FROM `custom_id_entity` custom_id_entity_ WHERE (custom_id_entity_.`custom_id` = ?)'
 
     }
 
@@ -1023,5 +1025,25 @@ interface BookRepository extends GenericRepository<Book, Long> {
         then:
         Throwable ex = thrown()
         ex.message.contains('Invalid path [SpecName] of [io.micronaut.data.tck.entities.Author]')
+    }
+
+    void "test entity with different id mapping"() {
+        when:
+            def repository = buildRepository('test.H2NoIdEntityRepository', '''
+import io.micronaut.data.annotation.MappedProperty;
+import java.sql.Time;
+
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.entities.NoIdEntity;
+import io.micronaut.data.repository.CrudRepository;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface H2NoIdEntityRepository extends CrudRepository<NoIdEntity, Long> {
+}
+
+''')
+        then:
+            noExceptionThrown()
     }
 }
