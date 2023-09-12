@@ -42,7 +42,7 @@ public final class StoredQueryParameter implements QueryParameterBinding {
     private final boolean requiresPreviousPopulatedValue;
     private final Class<?> parameterConverterClass;
     private final boolean expandable;
-    private final List<? extends QueryParameterBinding> all;
+    private final List<QueryParameterBinding> all;
 
     private boolean previousInitialized;
     private QueryParameterBinding previousPopulatedValueParameter;
@@ -57,7 +57,7 @@ public final class StoredQueryParameter implements QueryParameterBinding {
                          boolean requiresPreviousPopulatedValue,
                          Class<?> parameterConverterClass,
                          boolean expandable,
-                         List<? extends QueryParameterBinding> all) {
+                         List<QueryParameterBinding> all) {
         this.name = name;
         this.dataType = dataType;
         this.jsonDataType = jsonDataType;

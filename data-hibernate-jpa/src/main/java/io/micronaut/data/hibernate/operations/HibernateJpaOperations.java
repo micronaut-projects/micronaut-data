@@ -25,6 +25,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.QueryHint;
+import io.micronaut.data.annotation.sql.Procedure;
 import io.micronaut.data.hibernate.conf.RequiresSyncHibernate;
 import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
@@ -50,15 +51,16 @@ import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
 import io.micronaut.transaction.TransactionOperations;
 import jakarta.inject.Named;
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-import org.hibernate.graph.RootGraph;
-
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.FlushModeType;
+import jakarta.persistence.ParameterMode;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.CriteriaQuery;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.graph.RootGraph;
+import org.hibernate.procedure.ProcedureCall;
 import org.hibernate.query.CommonQueryContract;
 import org.hibernate.query.MutationQuery;
 import org.hibernate.query.Query;
@@ -153,6 +155,30 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
         }
         // Can we ignore type? Was needed before Hibernate 6
         query.setParameter(parameterName, value);
+    }
+
+    @Override
+    protected void setParameter(CommonQueryContract query, int parameterIndex, Object value) {
+        query.setParameter(parameterIndex, value);
+    }
+
+    @Override
+    protected void setParameter(CommonQueryContract query, int parameterIndex, Object value, Argument<?> argument) {
+        query.setParameter(parameterIndex, value);
+    }
+
+    @Override
+    protected void setParameterList(CommonQueryContract query, int parameterIndex, Collection<Object> value) {
+        query.setParameter(parameterIndex, value);
+    }
+
+    @Override
+    protected void setParameterList(CommonQueryContract query, int parameterIndex, Collection<Object> value, Argument<?> argument) {
+        if (value == null) {
+            value = Collections.emptyList();
+        }
+        // Can we ignore type? Was needed before Hibernate 6
+        query.setParameter(parameterIndex, parameterIndex);
     }
 
     @Override
@@ -383,10 +409,69 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
         return executeWrite(session -> {
             String query = preparedQuery.getQuery();
             MutationQuery q = preparedQuery.isNative() ? session.createNativeMutationQuery(query) : session.createMutationQuery(query);
-            bindParameters(q, preparedQuery);
+            bindParameters(q, preparedQuery, true);
             int numAffected = q.executeUpdate();
             flushIfNecessary(session, preparedQuery.getAnnotationMetadata(), true);
             return Optional.of(numAffected);
+        });
+    }
+
+    @Override
+    public <R> Optional<R> execute(PreparedQuery<?, R> preparedQuery) {
+        return executeWrite(session -> {
+            boolean needsOutRegistered = false;
+            if (preparedQuery.isProcedure()) {
+                Optional<String> named = preparedQuery.getAnnotationMetadata().stringValue(Procedure.class, "named");
+                ProcedureCall procedureQuery;
+                if (named.isPresent()) {
+                    procedureQuery = session.createNamedStoredProcedureQuery(named.get());
+                } else {
+                    String procedureName = preparedQuery.getAnnotationMetadata().stringValue(Procedure.class).orElseGet(preparedQuery::getName);
+                    if (preparedQuery.getResultArgument().isVoid()) {
+                        procedureQuery = session.createStoredProcedureQuery(procedureName);
+                    } else {
+                        procedureQuery = session.createStoredProcedureQuery(
+                                procedureName,
+                                preparedQuery.getResultArgument().getType()
+                        );
+                        needsOutRegistered = true;
+                    }
+                    int index = 1;
+                    for (QueryParameterBinding queryBinding : preparedQuery.getQueryBindings()) {
+                        int parameterIndex = queryBinding.getParameterIndex();
+                        Argument<?> argument = preparedQuery.getArguments()[parameterIndex];
+                        procedureQuery.registerStoredProcedureParameter(
+                                index++,
+                                argument.getType(),
+                                ParameterMode.IN);
+                    }
+                    if (needsOutRegistered) {
+                        procedureQuery.registerStoredProcedureParameter(
+                                index,
+                                preparedQuery.getResultArgument().getType(),
+                                ParameterMode.OUT);
+                    }
+                }
+                boolean bindNamed = procedureQuery.getRegisteredParameters().stream().anyMatch(p -> p.getName() != null);
+                bindParameters(procedureQuery, preparedQuery, bindNamed);
+                procedureQuery.execute();
+                if (preparedQuery.getResultArgument().isVoid()) {
+                    flushIfNecessary(session, preparedQuery.getAnnotationMetadata(), true);
+                    return Optional.empty();
+                }
+                jakarta.persistence.Parameter procedureParameter = procedureQuery.getRegisteredParameters().stream().filter(p -> p.getMode() == ParameterMode.OUT)
+                        .findFirst()
+                        .orElseThrow(() -> new IllegalStateException("Cannot determine the output parameter!"));
+                Object result;
+                if (bindNamed) {
+                    result = procedureQuery.getOutputParameterValue(procedureParameter.getName());
+                } else {
+                    result = procedureQuery.getOutputParameterValue(preparedQuery.getQueryBindings().size() + 1);
+                }
+                return Optional.ofNullable((R) result);
+            } else {
+                throw new IllegalStateException("Not supported!");
+            }
         });
     }
 

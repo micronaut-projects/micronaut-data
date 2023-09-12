@@ -159,6 +159,12 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
         return true
     }
 
+    void "test procedure"() {
+        expect:
+            bookRepository.add1(123) == 124
+            bookRepository.add1Aliased(123) == 124
+    }
+
     void "test escaped"() {
         when:
             def escaped = bookRepository.reproduceColonErrorEscaped()

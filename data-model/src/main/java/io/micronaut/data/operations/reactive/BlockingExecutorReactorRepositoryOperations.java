@@ -105,6 +105,11 @@ public interface BlockingExecutorReactorRepositoryOperations extends RepositoryO
     }
 
     @Override
+    default <R> Optional<R> execute(PreparedQuery<?, R> preparedQuery) {
+        return blockOptional(reactive -> reactive.execute(preparedQuery));
+    }
+
+    @Override
     default <T> int delete(@NonNull DeleteOperation<T> operation) {
         return blockOptional(reactive -> reactive.delete(operation)).orElse(0).intValue();
     }
