@@ -668,7 +668,10 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                         if (resolvedId == null) {
                             resolvedId = readEntityId(rs, ctx);
                         }
-                        return associatedIntrospection.instantiate(resultReader.convertRequired(resolvedId, identity.getType()));
+                        // instantiate only if id value is resolved
+                        if (resolvedId != null) {
+                            return associatedIntrospection.instantiate(resultReader.convertRequired(resolvedId, identity.getType()));
+                        }
                     }
                 }
             }
