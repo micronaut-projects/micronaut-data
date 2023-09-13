@@ -2,6 +2,7 @@ package io.micronaut.data.jdbc.h2.many2one
 
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.*
 import io.micronaut.data.annotation.sql.JoinColumn
 import io.micronaut.data.jdbc.annotation.JdbcRepository
@@ -17,6 +18,10 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 import jakarta.inject.Inject
+
+import jakarta.persistence.ManyToOne
+
+import static io.micronaut.data.model.query.builder.sql.Dialect.H2
 
 @MicronautTest
 @H2DBProperties
@@ -36,6 +41,14 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
     @Shared
     @Inject
     UserGroupMembershipRepository userGroupMembershipRepository = applicationContext.getBean(UserGroupMembershipRepository)
+
+    @Shared
+    @Inject
+    MyEntityRepository myEntityRepository
+
+    @Shared
+    @Inject
+    MyOtherRepository myOtherRepository
 
     void 'test many-to-one hierarchy'() {
         given:
@@ -102,7 +115,33 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
         listByUserLogin[0].user.id == user.id
         listByUserLoginAndAreaId[0].userGroup.id == userGroup.id
         listByUserLoginAndAreaId[0].user.id == user.id
+    }
 
+    void "test many to one with entity having only id field"() {
+        when:"Many to one entity is null"
+        def ent = myEntityRepository.save(new MyEntity(-1, null))
+        then:"Entity id is generated"
+        ent.lid != -1
+        when:"Find entity by id"
+        def optFound = myEntityRepository.findById(ent.getLid())
+        then:"Entity is loaded and many to one entity is null"
+        optFound.present
+        def myEntity = optFound.get()
+        !myEntity.other
+        when:
+        myEntityRepository.update(myEntity)
+        then:
+        noExceptionThrown()
+        when:"Many to one entity is not null"
+        def myOther = new MyOther("foo")
+        myOtherRepository.save(myOther)
+        def newMyEntity = new MyEntity(-1, myOther)
+        myEntityRepository.save(newMyEntity)
+        optFound = myEntityRepository.findById(newMyEntity.lid)
+        then:"Many to one entity is loaded and not null"
+        optFound.present
+        optFound.get().other
+        optFound.get().other.lid == myOther.lid
     }
 }
 
@@ -256,4 +295,39 @@ interface UserGroupMembershipRepository extends CrudRepository<UserGroupMembersh
 
     @Join(value = "userGroup.area", type = Join.Type.FETCH)
     List<UserGroupMembership> findAllByUserLoginAndUserGroup_AreaId(String login, Long uid)
+}
+
+@MappedEntity
+class MyEntity {
+    @Id
+    @GeneratedValue
+    long lid
+
+    @ManyToOne
+    final MyOther other
+
+    MyEntity(long lid, @Nullable MyOther other) {
+        this.lid = lid;
+        this.other = other
+    }
+}
+@MappedEntity
+class MyOther {
+
+    @Id
+    String lid
+
+    MyOther(String lid) {
+        this.lid = lid
+    }
+
+    String getLid() {
+        return lid
+    }
+}
+@JdbcRepository(dialect = H2)
+interface MyEntityRepository extends CrudRepository<MyEntity, Long> {
+}
+@JdbcRepository(dialect = H2)
+interface MyOtherRepository extends CrudRepository<MyOther, String> {
 }
