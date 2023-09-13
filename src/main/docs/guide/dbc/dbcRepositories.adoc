@@ -51,3 +51,13 @@ snippet::example.AbstractBookRepository[project-base="doc-examples/jdbc-spring-t
 <1> Inject the `java.sql.DataSource` configured by the application.
 <2> Instantiate a `JdbcTemplate` object using the injected `DataSource`.
 <3> Now the `JdbcTemplate` API can be used to implement repository methods.
+
+In addition, the transaction manager for Spring JDBC needs to be set in application configuration.
+
+[configuration]
+----
+datasources:
+  default:
+    transactionManager: springJdbc
+----
+
