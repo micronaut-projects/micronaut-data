@@ -8,7 +8,7 @@ import spock.lang.Specification
 @MicronautTest(transactional = false)
 @Property(name = 'spec.name', value = 'BookRepositorySpec')
 @Property(name = 'datasources.default.name', value = 'mydb')
-@Property(name = 'datasources.default.transactionManager', value = 'springJdbc')
+@Property(name = 'datasources.default.transaction-manager', value = 'springJdbc')
 @Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
 class BookRepositorySpec extends Specification {
 
