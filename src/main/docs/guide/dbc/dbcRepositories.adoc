@@ -58,6 +58,6 @@ In addition, the transaction manager for Spring JDBC needs to be set in applicat
 ----
 datasources:
   default:
-    transactionManager: springJdbc
+    transaction-manager: springJdbc
 ----
 
