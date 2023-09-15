@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 @MicronautTest
 @Property(name = "datasources.default.name", value = "mydb")
-@Property(name = "datasources.default.transactionManager", value = "springHibernate")
+@Property(name = "datasources.default.transaction-manager", value = "springHibernate")
 @Property(name = "jpa.default.properties.hibernate.hbm2ddl.auto", value = "create-drop")
 class BookRepositorySpec {
 
