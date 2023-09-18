@@ -121,8 +121,6 @@ benchmark-spring-data-bom = { module = "org.springframework.data:spring-data-bom
 # TESTCONTAINERS
 
 testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
-testcontainers-junit-jupiter = { module = "org.testcontainers:junit-jupiter" }
-testcontainers = { module = "org.testcontainers:testcontainers" }
 testcontainers-spock = { module = "org.testcontainers:spock" }
 testcontainers-postgresql = { module = "org.testcontainers:postgresql" }
 testcontainers-mysql = { module = "org.testcontainers:mysql" }
