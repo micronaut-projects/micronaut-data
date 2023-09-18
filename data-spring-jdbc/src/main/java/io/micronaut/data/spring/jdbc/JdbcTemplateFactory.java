@@ -26,7 +26,7 @@ import javax.sql.DataSource;
  * Factory for creating {@link JdbcTemplate} instances for each bean of type {@link DataSource}.
  */
 @Factory
-public class JdbcTemplateFactory {
+class JdbcTemplateFactory {
     /**
      *
      * @param dataSource Data Source
