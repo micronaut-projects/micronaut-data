@@ -35,7 +35,7 @@ class SpringPostgresJdbcTransactionSpec extends AbstractTransactionSpec implemen
     @Override
     Map<String, String> getProperties() {
         return TestResourcesDatabaseTestPropertyProvider.super.getProperties() + [
-                "datasources.default.transactionManager": "springJdbc",
+                "datasources.default.transaction-manager": "springJdbc",
         ]
     }
 

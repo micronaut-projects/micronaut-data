@@ -20,7 +20,10 @@ import io.micronaut.context.Qualifier;
 import io.micronaut.context.condition.Condition;
 import io.micronaut.context.condition.ConditionContext;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.naming.Named;
+
+import java.util.Optional;
 
 /**
  * Abstract transaction manager condition.
@@ -47,8 +50,28 @@ public abstract class AbstractDataSourceTransactionManagerCondition implements C
                 dataSourceName = "default";
             }
         }
-        return context.getProperty("datasources." + dataSourceName + ".transactionManager", String.class)
+        return transactionManagerProperty(context, dataSourceName)
             .map(name -> name.equals(getTransactionManagerName()))
             .orElse(true);
+    }
+
+    /**
+     *
+     * @param context Condition Context
+     * @param dataSourceName DataSource Name
+     * @return Transaction Manager Property
+     * @deprecated datasources.*.transactionManager support be removed in the next major version.
+     */
+    @Deprecated
+    @NonNull
+    private Optional<String> transactionManagerProperty(@NonNull ConditionContext context,
+                                                        @NonNull String dataSourceName) {
+        String propertyName = "datasources." + dataSourceName + ".transactionManager";
+        Optional<String> property = context.getProperty(propertyName, String.class);
+        if (property.isPresent()) {
+            return property;
+        }
+        String lowerKebapCasePropertyName = "datasources." + dataSourceName + ".transaction-manager";
+        return context.getProperty(lowerKebapCasePropertyName, String.class);
     }
 }
