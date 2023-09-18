@@ -8102,17 +8102,173 @@ abstract class AbstractBookRepository(private val jdbcOperations: JdbcOperations
 <div class="paragraph">
 <p>The example above uses the <a href="../api/io/micronaut/data/jdbc/runtime/JdbcOperations.html">JdbcOperations</a> interface which simplifies executing JDBC queries within the context of transactions.</p>
 </div>
-<div class="admonitionblock tip">
+<div class="paragraph">
+<p>You can also integrate whichever other tool you wish to use to handle more complex queries, such as QueryDSL, JOOQ, Spring JdbcTemplate etc.</p>
+</div>
+<div class="paragraph">
+<p>For example, to use <a href="https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/core/JdbcTemplate.html">Spring JdbcTemplate</a>, add the following dependencies:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-jdbc")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
+    &lt;artifactId&gt;micronaut-data-jdbc&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div></p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-spring-jdbc")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
+    &lt;artifactId&gt;micronaut-data-spring-jdbc&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div></p>
+</div>
+<div class="paragraph">
+<p>The following code illustrates an example that integrates a <code>JdbcTemplate</code> instance as part of a <a href="../api/io/micronaut/data/jdbc/annotation/JdbcRepository.html">JdbcRepository</a>.</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@JdbcRepository(dialect = Dialect.H2)
+public abstract class AbstractBookRepository implements CrudRepository&lt;@Valid Book, @NotNull Long&gt; {
+
+    private final JdbcTemplate jdbcTemplate; //<b class="conum">(2)</b>
+
+    public AbstractBookRepository(DataSource dataSource) { // <b class="conum">(1)</b>
+        this.jdbcTemplate = new JdbcTemplate(DelegatingDataSource.unwrapDataSource(dataSource)); //<b class="conum">(2)</b>
+    }
+
+    @Transactional
+    public List&lt;Book&gt; findByTitle(@NonNull @NotNull String title) {
+        return jdbcTemplate.queryForList("SELECT * FROM Book AS book WHERE book.title = ?", title) // <b class="conum">(3)</b>
+            .stream()
+            .map(m -&gt; new Book((Long) m.get("id"), (String) m.get("title"), (Integer) m.get("pages")))
+            .toList();
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@JdbcRepository(dialect = Dialect.H2)
+abstract class AbstractBookRepository implements CrudRepository&lt;@Valid Book, @NotNull Long&gt; {
+
+    private final JdbcTemplate jdbcTemplate; //<b class="conum">(2)</b>
+
+    AbstractBookRepository(DataSource dataSource) { // <b class="conum">(1)</b>
+        this.jdbcTemplate = new JdbcTemplate(DelegatingDataSource.unwrapDataSource(dataSource)); //<b class="conum">(2)</b>
+    }
+
+    @Transactional
+    List&lt;Book&gt; findByTitle(@NonNull @NotNull String title) {
+        return jdbcTemplate.queryForList('SELECT * FROM Book AS book WHERE book.title = ?', title) // <b class="conum">(3)</b>
+            .collect(m -&gt; new Book(m.id as Long, m.title as String, m.pages as Integer))
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@JdbcRepository(dialect = Dialect.H2)
+abstract class AbstractBookRepository(dataSource: DataSource) : CrudRepository&lt;@Valid Book, Long&gt; { // <b class="conum">(1)</b>
+
+    private val jdbcTemplate: JdbcTemplate = JdbcTemplate(DelegatingDataSource.unwrapDataSource(dataSource)) //<b class="conum">(2)</b>
+
+    @Transactional
+    open fun findByTitle(title: String) = jdbcTemplate
+        .queryForList("SELECT * FROM Book AS book WHERE book.title = ?", title) // <b class="conum">(3)</b>
+        .map { m -&gt; Book(m["id"] as Long, m["title"] as String, m["pages"] as Int) }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
 <table>
 <tr>
-<td class="icon">
-<i class="fa icon-tip" title="Tip"></i>
-</td>
-<td class="content">
-You could also inject whichever other tool you wish to use to handle more complex  queries, such as QueryDSL, JOOQ, Spring JdbcTemplate etc.
-</td>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Inject the <code>java.sql.DataSource</code> configured by the application.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Instantiate a <code>JdbcTemplate</code> object using the injected <code>DataSource</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Now the <code>JdbcTemplate</code> API can be used to implement repository methods.</td>
 </tr>
 </table>
+</div>
+<div class="paragraph">
+<p>In addition, the transaction manager for Spring JDBC needs to be set in application configuration.</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">datasources.default.transaction-manager=springJdbc</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">datasources:
+  default:
+    transaction-manager: springJdbc</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[datasources]
+  [datasources.default]
+    transaction-manager="springJdbc"</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">datasources {
+  'default' {
+    transactionManager = "springJdbc"
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  datasources {
+    default {
+      transaction-manager = "springJdbc"
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "datasources": {
+    "default": {
+      "transaction-manager": "springJdbc"
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
 </div>
 
 <h2 id="sqlInserts"><a class="anchor" href="#sqlInserts"></a>6.3.1 Accessing data</h2>
