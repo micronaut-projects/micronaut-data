@@ -18,15 +18,15 @@ import javax.sql.DataSource
 @JdbcRepository(dialect = Dialect.H2)
 abstract class AbstractBookRepository implements CrudRepository<@Valid Book, @NotNull Long> {
 
-    private final JdbcTemplate jdbcTemplate; //<2>
+    private final JdbcTemplate jdbcTemplate
 
-    AbstractBookRepository(DataSource dataSource) { // <1>
-        this.jdbcTemplate = new JdbcTemplate(DelegatingDataSource.unwrapDataSource(dataSource)); //<2>
+    AbstractBookRepository(JdbcTemplate jdbcTemplate) { // <1>
+        this.jdbcTemplate = jdbcTemplate
     }
 
     @Transactional
     List<Book> findByTitle(@NonNull @NotNull String title) {
-        return jdbcTemplate.queryForList('SELECT * FROM Book AS book WHERE book.title = ?', title) // <3>
+        return jdbcTemplate.queryForList('SELECT * FROM Book AS book WHERE book.title = ?', title) // <2>
             .collect(m -> new Book(m.id as Long, m.title as String, m.pages as Integer))
     }
 }

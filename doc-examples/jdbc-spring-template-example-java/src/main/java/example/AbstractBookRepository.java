@@ -2,7 +2,6 @@ package example;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
@@ -19,15 +18,15 @@ import java.util.List;
 @JdbcRepository(dialect = Dialect.H2)
 public abstract class AbstractBookRepository implements CrudRepository<@Valid Book, @NotNull Long> {
 
-    private final JdbcTemplate jdbcTemplate; //<2>
+    private final JdbcTemplate jdbcTemplate;
 
-    public AbstractBookRepository(DataSource dataSource) { // <1>
-        this.jdbcTemplate = new JdbcTemplate(DelegatingDataSource.unwrapDataSource(dataSource)); //<2>
+    public AbstractBookRepository(JdbcTemplate jdbcTemplate) { // <1>
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Transactional
     public List<Book> findByTitle(@NonNull @NotNull String title) {
-        return jdbcTemplate.queryForList("SELECT * FROM Book AS book WHERE book.title = ?", title) // <3>
+        return jdbcTemplate.queryForList("SELECT * FROM Book AS book WHERE book.title = ?", title) // <2>
             .stream()
             .map(m -> new Book((Long) m.get("id"), (String) m.get("title"), (Integer) m.get("pages")))
             .toList();
