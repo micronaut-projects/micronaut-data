@@ -35,6 +35,7 @@ import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
@@ -589,12 +590,12 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
 
     @NonNull
     protected final <T> Expression<?> getProperty(PersistentEntityRoot<T> root, String propertyName) {
+        if (TypeRole.ID.equals(NameUtils.decapitalize(propertyName)) && (root.getPersistentEntity().hasIdentity() || root.getPersistentEntity().hasCompositeIdentity())) {
+            return root.id();
+        }
         io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<Object> property = findProperty(root, propertyName);
         if (property != null) {
             return property;
-        }
-        if (TypeRole.ID.equals(NameUtils.decapitalize(propertyName)) && (root.getPersistentEntity().hasIdentity() || root.getPersistentEntity().hasCompositeIdentity())) {
-            return root.id();
         }
         throw new MatchFailedException("Cannot query entity [" + root.getPersistentEntity().getSimpleName() + "] on non-existent property: " + propertyName);
     }
@@ -606,7 +607,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         PersistentProperty prop = entity.getPropertyByName(propertyName);
         PersistentPropertyPath pp;
         if (prop == null) {
-            Optional<String> propertyPath = entity.getPath(propertyName);
+            Optional<String> propertyPath = PersistentEntityUtils.getPersistentPropertyPath(entity, propertyName);
             if (propertyPath.isPresent()) {
                 String path = propertyPath.get();
                 pp = entity.getPropertyPath(path);

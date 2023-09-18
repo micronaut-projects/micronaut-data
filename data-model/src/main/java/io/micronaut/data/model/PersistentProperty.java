@@ -44,8 +44,19 @@ public interface PersistentProperty extends PersistentElement {
     /**
      * The name with the first letter in upper case as per Java bean conventions.
      * @return The capitilized name
+     * @deprecated The method with a type replaced with {@link #getCapitalizedName()}.
      */
+    @Deprecated(forRemoval = true)
     default @NonNull String getCapitilizedName() {
+        return NameUtils.capitalize(getName());
+    }
+
+    /**
+     * The name with the first letter in upper case as per Java bean conventions.
+     * @return The capitalized name
+     * @since 4.2.0
+     */
+    default @NonNull String getCapitalizedName() {
         return NameUtils.capitalize(getName());
     }
 
@@ -190,5 +201,16 @@ public interface PersistentProperty extends PersistentElement {
                 .getDeclaredAnnotationNames()
                 .stream()
                 .anyMatch(n -> NameUtils.getSimpleName(n).equalsIgnoreCase("nullable"));
+    }
+
+    /**
+     * The alias of the property if used in a query.
+     *
+     * @return The alias.
+     * @since 4.2.0
+     */
+    @Nullable
+    default String getAlias() {
+        return getAnnotationMetadata().stringValue(MappedProperty.class, MappedProperty.ALIAS).orElse(null);
     }
 }
