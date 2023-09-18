@@ -17,6 +17,7 @@ package io.micronaut.data.spring.jdbc;
 
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -25,6 +26,7 @@ import javax.sql.DataSource;
 /**
  * Factory for creating {@link JdbcTemplate} instances for each bean of type {@link DataSource}.
  */
+@Internal
 @Factory
 class JdbcTemplateFactory {
     /**
