@@ -1399,13 +1399,24 @@ public interface QueryModel extends Criteria {
     class PropertyProjection extends Projection {
         private final String propertyName;
         private String alias;
+        private boolean compound;
 
         /**
          * Default constructor.
          * @param propertyName The property name
          */
         public PropertyProjection(String propertyName) {
+            this(propertyName, false);
+        }
+
+        /**
+         * Default constructor.
+         * @param propertyName The property name
+         * @param compound Is compound property
+         */
+        public PropertyProjection(String propertyName, boolean compound) {
             this.propertyName = propertyName;
+            this.compound = compound;
         }
 
         /**
@@ -1437,6 +1448,13 @@ public interface QueryModel extends Criteria {
          */
         public Optional<String> getAlias() {
             return Optional.ofNullable(alias);
+        }
+
+        /**
+         * @return True if it's compound property
+         */
+        public boolean isCompound() {
+            return compound;
         }
     }
 

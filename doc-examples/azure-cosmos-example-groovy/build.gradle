@@ -15,10 +15,10 @@ micronaut {
 
 dependencies {
     compileOnly projects.micronautDataDocumentProcessor
-    compileOnly libs.javax.persistence.api
+    compileOnly(libs.managed.javax.persistence.api)
 
     implementation projects.micronautDataAzureCosmos
-    implementation libs.jakarta.persistence.api
+    implementation(libs.managed.jakarta.persistence.api)
 
     runtimeOnly mnLogging.logback.classic
 

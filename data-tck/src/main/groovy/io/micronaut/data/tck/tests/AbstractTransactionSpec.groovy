@@ -9,7 +9,6 @@ import io.micronaut.transaction.TransactionOperations
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
-import spock.lang.Stepwise
 
 abstract class AbstractTransactionSpec extends Specification implements TestPropertyProvider {
 
@@ -53,6 +52,10 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
     }
 
     boolean supportsReadOnlyFlag() {
+        return true
+    }
+
+    boolean supportsNestedTx() {
         return true
     }
 
@@ -110,6 +113,20 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
             }
     }
 
+    void "test book added in never propagation sync"() {
+        if (!supportsNoTxProcessing()) {
+            return
+        }
+        when:
+            bookService.bookAddedInNeverPropagationSync(getNoTxCheck())
+        then:
+            if (supportsModificationInNonTransaction()) {
+                assert bookService.countBooksTransactional() == 1
+            } else {
+                assert bookService.countBooksTransactional() == 0
+            }
+    }
+
     void "test book added in inner never propagation"() {
         if (!supportsNoTxProcessing()) {
             return
@@ -119,6 +136,19 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
         then:
             def e = thrown(Exception)
             e.message == "Existing transaction found for transaction marked with propagation 'never'"
+            bookService.countBooksTransactional() == 0
+    }
+
+    void "test book added in inner never propagation sync"() {
+        if (!supportsNoTxProcessing()) {
+            return
+        }
+        when:
+            bookService.bookAddedInInnerNeverPropagationSync(getNoTxCheck())
+        then:
+            def e = thrown(Exception)
+            e.message == "Existing transaction found for transaction marked with propagation 'never'"
+            transactionOperations.findTransactionStatus().isEmpty()
             bookService.countBooksTransactional() == 0
     }
 
@@ -187,9 +217,25 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
             e.message == "No existing transaction found for transaction marked with propagation 'mandatory'"
     }
 
+    void "test mandatory transaction missing sync"() {
+        when:
+            bookService.mandatoryTransactionSync()
+        then:
+            def e = thrown(Exception)
+            e.message == "No existing transaction found for transaction marked with propagation 'mandatory'"
+            transactionOperations.findTransactionStatus().isEmpty()
+    }
+
     void "test book is added in mandatory transaction"() {
         when:
             bookService.bookAddedInMandatoryTransaction()
+        then:
+            bookService.countBooksTransactional() == 1
+    }
+
+    void "test book is added in mandatory transaction sync"() {
+        when:
+            bookService.bookAddedInMandatoryTransactionSync()
         then:
             bookService.countBooksTransactional() == 1
     }
@@ -200,6 +246,24 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
         then:
             def e = thrown(Exception)
             e.message == "Transaction rolled back because it has been marked as rollback-only"
+    }
+
+    void "test inner transaction with suppressed exception sync"() {
+        when:
+            bookService.innerTransactionHasSuppressedExceptionSync()
+        then:
+            def e = thrown(Exception)
+            e.message == "Transaction rolled back because it has been marked as rollback-only"
+            transactionOperations.findTransactionStatus().isEmpty()
+    }
+
+    void "test inner transaction with suppressed exception sync2"() {
+        when:
+            bookService.innerTransactionHasSuppressedExceptionSync2()
+        then:
+            def e = thrown(Exception)
+            e.message == "Transaction rolled back because it has been marked as rollback-only"
+            transactionOperations.findTransactionStatus().isEmpty()
     }
 
     void "test inner transaction marked for rollback"() {
@@ -244,6 +308,13 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
             bookService.countBooksTransactional() == 1
     }
 
+    void "test book is added in another requires new TX spec"() {
+        when:
+            bookService.bookIsAddedInAnotherRequiresNewTxSync()
+        then:
+            bookService.countBooksTransactional() == 1
+    }
+
     void "test book is added in another requires new TX which if failing"() {
         when:
             bookService.bookIsAddedInAnotherRequiresNewTxWhichIsFailing()
@@ -264,6 +335,56 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
             bookService.countBooksTransactional() == 0
     }
 
+    void "test book is added in the main TX and another requires new TX is failing sync"() {
+        when:
+            bookService.bookIsAddedAndAnotherRequiresNewTxIsFailingSync()
+        then:
+            def e = thrown(IllegalStateException)
+            e.message == "Big fail!"
+        and:
+            bookService.countBooksTransactional() == 0
+    }
+
+    void "test book is added in nested TX"() {
+        if (!supportsNestedTx()) {
+            return
+        }
+        when:
+            bookService.bookAddedInNestedTransaction()
+        then:
+            bookService.countBooksTransactional() == 1
+    }
+
+    void "test book is added in nested TX sync"() {
+        if (!supportsNestedTx()) {
+            return
+        }
+        when:
+            bookService.bookAddedInNestedTransactionSync()
+        then:
+            bookService.countBooksTransactional() == 1
+    }
+
+    void "test book is added in another nested TX"() {
+        if (!supportsNestedTx()) {
+            return
+        }
+        when:
+            bookService.bookAddedInAnotherNestedTransaction()
+        then:
+            bookService.countBooksTransactional() == 1
+    }
+
+    void "test book is added in another nested TX sync"() {
+        if (!supportsNestedTx()) {
+            return
+        }
+        when:
+            bookService.bookAddedInAnotherNestedTransactionSync()
+        then:
+            bookService.countBooksTransactional() == 1
+    }
+
     void "test that connections are never exhausted 1"() {
         when:
             CONNECTIONS.times { bookService.bookIsAddedInTxMethod() }
@@ -273,7 +394,7 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
 
     void "test that connections are never exhausted 2"() {
         when:
-            CONNECTIONS.times { bookService.bookIsAddedInAnotherRequiresNewTx() }
+            CONNECTIONS.times { bookService.bookIsAddedInAnotherRequiresNewTxSync() }
         then:
             CONNECTIONS == bookService.countBooks()
     }
@@ -318,6 +439,40 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
             } else {
                 assert 0L == bookService.countBooks()
             }
+    }
+
+    void "test that connections are never exhausted 7"() {
+        if (!supportsNestedTx()) {
+            return
+        }
+        when:
+            CONNECTIONS.times { bookService.bookAddedInNestedTransaction() }
+        then:
+            CONNECTIONS == bookService.countBooks()
+    }
+
+    void "test that connections are never exhausted 8"() {
+        if (!supportsNestedTx()) {
+            return
+        }
+        when:
+            CONNECTIONS.times { bookService.bookAddedInNestedTransactionSync() }
+        then:
+            CONNECTIONS == bookService.countBooks()
+    }
+
+    void "test that connections are never exhausted 9"() {
+        when:
+            CONNECTIONS.times {
+                try {
+                    bookService.innerTransactionHasSuppressedExceptionSync()
+                    assert false
+                } catch (Exception e) {
+                    assert e.message == "Transaction rolled back because it has been marked as rollback-only"
+                }
+            }
+        then:
+            bookService.countBooks() == 0
     }
 
     void "test transactional events handling"() {

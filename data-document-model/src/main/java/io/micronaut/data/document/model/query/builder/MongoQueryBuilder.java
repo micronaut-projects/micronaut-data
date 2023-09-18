@@ -215,6 +215,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
         addCriterionHandler(QueryModel.Contains.class, (context, obj, criterion) -> {
             handleRegexPropertyExpression(context, obj, criterion, criterion.isIgnoreCase(), false, false, false);
         });
+        addCriterionHandler(QueryModel.Like.class, (context, obj, criterion) -> {
+            handleRegexPropertyExpression(context, obj, criterion, criterion.isIgnoreCase(), false, false, false);
+        });
         addCriterionHandler(QueryModel.ArrayContains.class, (context, obj, criterion) -> {
             PersistentPropertyPath propertyPath = context.getRequiredProperty(criterion);
             Object value = criterion.getValue();

@@ -64,6 +64,17 @@ public class Projections {
     }
 
     /**
+     * A projection that obtains the value of a property of an entity.
+     * @param name The name of the property
+     * @param compound Is compound
+     * @return The PropertyProjection instance
+     * @since 4.2.0
+     */
+    public static QueryModel.PropertyProjection property(String name, boolean compound) {
+        return new QueryModel.PropertyProjection(name, compound);
+    }
+
+    /**
      * Computes the sum of a property.
      *
      * @param name The name of the property

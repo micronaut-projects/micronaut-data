@@ -2,18 +2,19 @@
 package example;
 
 import io.micronaut.data.annotation.*;
+import io.micronaut.data.model.naming.NamingStrategies;
 
-@MappedEntity
-@Where("@.enabled = true") // <1>
+@MappedEntity(namingStrategy = NamingStrategies.Raw.class)
+@Where("@.userEnabled = true") // <1>
 public class User {
     @GeneratedValue
     @Id
     private Long id;
-    private String name;
-    private boolean enabled = true; // <2>
+    private String userName;
+    private boolean userEnabled = true; // <2>
 
-    public User(String name) {
-        this.name = name;
+    public User(String userName) {
+        this.userName = userName;
     }
 
     public Long getId() {
@@ -24,19 +25,19 @@ public class User {
         this.id = id;
     }
 
-    public String getName() {
-        return name;
+    public String getUserName() {
+        return userName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 
-    public boolean isEnabled() {
-        return enabled;
+    public boolean isUserEnabled() {
+        return userEnabled;
     }
 
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
+    public void setUserEnabled(boolean userEnabled) {
+        this.userEnabled = userEnabled;
     }
 }

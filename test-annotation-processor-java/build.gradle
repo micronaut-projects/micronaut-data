@@ -1,0 +1,19 @@
+
+plugins {
+    id "io.micronaut.build.internal.data-tck"
+}
+
+tasks.named("test") {
+    useJUnitPlatform()
+}
+
+dependencies {
+    testImplementation projects.micronautDataProcessor
+    testImplementation mn.micronaut.inject.java.test
+    testImplementation libs.jupiter.api
+    testRuntimeOnly libs.jupiter.engine
+}
+
+configurations.configureEach {
+    exclude group: "ch.qos.logback"
+}

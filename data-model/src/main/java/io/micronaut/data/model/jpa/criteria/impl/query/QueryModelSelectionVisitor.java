@@ -63,7 +63,7 @@ public final class QueryModelSelectionVisitor implements SelectionVisitor {
         if (distinct && !hasDistinctProjection()) {
             addProjection(Projections.distinct());
         }
-        addProjection(Projections.property(persistentPropertyPath.getPathAsString()));
+        addProjection(Projections.property(persistentPropertyPath.getPathAsString(), isCompound));
     }
 
     @Override
@@ -74,15 +74,19 @@ public final class QueryModelSelectionVisitor implements SelectionVisitor {
     private QueryModel.Projection getProjection(AggregateExpression<?, ?> aggregateExpression) {
         Expression<?> expression = aggregateExpression.getExpression();
         switch (aggregateExpression.getType()) {
-            case SUM:
+            case SUM -> {
                 return Projections.sum(CriteriaUtils.requireProperty(expression).getPathAsString());
-            case AVG:
+            }
+            case AVG -> {
                 return Projections.avg(CriteriaUtils.requireProperty(expression).getPathAsString());
-            case MAX:
+            }
+            case MAX -> {
                 return Projections.max(CriteriaUtils.requireProperty(expression).getPathAsString());
-            case MIN:
+            }
+            case MIN -> {
                 return Projections.min(CriteriaUtils.requireProperty(expression).getPathAsString());
-            case COUNT:
+            }
+            case COUNT -> {
                 if (expression instanceof PersistentEntityRoot) {
                     return Projections.count();
                 } else if (expression instanceof PersistentPropertyPath) {
@@ -91,7 +95,8 @@ public final class QueryModelSelectionVisitor implements SelectionVisitor {
                 } else {
                     throw new IllegalStateException("Illegal expression: " + expression + " for count selection!");
                 }
-            case COUNT_DISTINCT:
+            }
+            case COUNT_DISTINCT -> {
                 if (expression instanceof PersistentEntityRoot) {
                     // TODO
                     return Projections.countDistinct(((PersistentPropertyPath<?>) expression).getPathAsString());
@@ -100,8 +105,8 @@ public final class QueryModelSelectionVisitor implements SelectionVisitor {
                 } else {
                     throw new IllegalStateException("Illegal expression: " + expression + " for count distinct selection!");
                 }
-            default:
-                throw new IllegalStateException("Unknown aggregation: " + aggregateExpression.getExpression());
+            }
+            default -> throw new IllegalStateException("Unknown aggregation: " + aggregateExpression.getExpression());
         }
     }
 
@@ -109,8 +114,8 @@ public final class QueryModelSelectionVisitor implements SelectionVisitor {
     public void visit(CompoundSelection<?> compoundSelection) {
         isCompound = true;
         for (Selection<?> selection : compoundSelection.getCompoundSelectionItems()) {
-            if (selection instanceof SelectionVisitable) {
-                ((SelectionVisitable) selection).accept(this);
+            if (selection instanceof SelectionVisitable selectionVisitable) {
+                selectionVisitable.accept(this);
             } else {
                 throw new IllegalStateException("Unknown selection object: " + selection);
             }

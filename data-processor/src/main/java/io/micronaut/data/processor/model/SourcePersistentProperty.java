@@ -47,6 +47,7 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
     private final DataType dataType;
     private final ClassElement type;
     private final String converterClassName;
+    private final String alias;
 
     /**
      * Default constructor.
@@ -60,6 +61,12 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
         this.type = propertyElement.getGenericType();
         this.dataType = computeDataType(propertyElement);
         this.converterClassName = propertyElement.stringValue(MappedProperty.class, "converter").orElse(null);
+        this.alias = getAnnotationMetadata().stringValue(MappedProperty.class, MappedProperty.ALIAS).orElse("");
+    }
+
+    @Override
+    public String getAlias() {
+        return alias;
     }
 
     @Override

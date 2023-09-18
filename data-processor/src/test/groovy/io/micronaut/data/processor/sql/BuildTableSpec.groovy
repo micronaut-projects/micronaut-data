@@ -20,6 +20,8 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.entities.Restaurant
+import io.micronaut.data.tck.jdbc.entities.Employee
+import io.micronaut.data.tck.jdbc.entities.EmployeeGroup
 import spock.lang.Unroll
 
 //@Requires({ javaVersion <= 1.8 })
@@ -394,5 +396,21 @@ class Emb {
 
         then:
         sql == 'CREATE TABLE "embedded_entity" ("id" BIGINT NOT NULL,"emb_a_a" VARCHAR(255) NOT NULL,"emb_a_b" VARCHAR(255) NOT NULL,"emb_b_a" VARCHAR(255) NOT NULL,"emb_b_b" VARCHAR(255) NOT NULL, PRIMARY KEY("id"));'
+    }
+
+    void "test create table OneToMany with JoinColumn"() {
+        given:
+        def employeeEntity = PersistentEntity.of(Employee)
+        def employeeGroupEntity = PersistentEntity.of(EmployeeGroup)
+        def builder = new SqlQueryBuilder(Dialect.H2)
+
+        when:"Tables are created"
+        def employeeSql = builder.buildCreateTableStatements(employeeEntity)
+        def employeeGroupSql = builder.buildCreateTableStatements(employeeGroupEntity)
+        then:"No join table is created"
+        employeeSql.length == 1
+        employeeSql[0] == 'CREATE TABLE `employee` (`id` BIGINT AUTO_INCREMENT PRIMARY KEY,`name` VARCHAR(255) NOT NULL,`category_id` BIGINT NOT NULL,`employer_id` BIGINT NOT NULL);'
+        employeeGroupSql.length == 1
+        employeeGroupSql[0] == 'CREATE TABLE `employee_group` (`id` BIGINT AUTO_INCREMENT PRIMARY KEY,`name` VARCHAR(255) NOT NULL,`category_id` BIGINT NOT NULL,`employer_id` BIGINT NOT NULL);'
     }
 }

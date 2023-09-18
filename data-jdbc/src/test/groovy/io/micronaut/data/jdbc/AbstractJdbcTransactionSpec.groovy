@@ -20,7 +20,11 @@ abstract class AbstractJdbcTransactionSpec extends AbstractTransactionSpec {
         return new Runnable() {
             @Override
             void run() {
-                Connection connection = connectionOperations.getConnectionStatus().getConnection()
+                def status = connectionOperations.findConnectionStatus()
+                if (status.isEmpty()) {
+                    return
+                }
+                Connection connection = status.get().getConnection()
                 // No transaction -> autoCommit == true
                 assert connection.getAutoCommit()
             }

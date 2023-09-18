@@ -34,6 +34,8 @@ import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.sql.JoinColumn;
+import io.micronaut.data.annotation.sql.JoinColumns;
 import io.micronaut.data.annotation.sql.SqlMembers;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
@@ -101,6 +103,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      */
     private static final String ANN_JOIN_TABLE = "io.micronaut.data.annotation.sql.JoinTable";
     private static final String ANN_JOIN_COLUMNS = "io.micronaut.data.annotation.sql.JoinColumns";
+    private static final String VALUE_MEMBER = "value";
     private static final String BLANK_SPACE = " ";
     private static final String SEQ_SUFFIX = "_seq";
     private static final String INSERT_INTO = "INSERT INTO ";
@@ -300,9 +303,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      * @return True if it is.
      */
     public static boolean isForeignKeyWithJoinTable(@NonNull Association association) {
-        return association.isForeignKey() &&
-                !association.getAnnotationMetadata()
-                        .stringValue(Relation.class, "mappedBy").isPresent();
+        if (!association.isForeignKey()) {
+            return false;
+        }
+        if (association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").isPresent()) {
+            return false;
+        }
+        AnnotationValue<JoinColumns> joinColumnsAnnotationValue  = association.getAnnotationMetadata().getAnnotation(JoinColumns.class);
+        return joinColumnsAnnotationValue == null || CollectionUtils.isEmpty(joinColumnsAnnotationValue.getAnnotations(VALUE_MEMBER));
     }
 
     /**
@@ -354,15 +362,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 joinTableBuilder.append(joinTableName).append(" (");
                 List<PersistentPropertyPath> leftProperties = new ArrayList<>();
                 List<PersistentPropertyPath> rightProperties = new ArrayList<>();
-                boolean isAssociationOwner = !inverseSide.isPresent();
+                boolean isAssociationOwner = inverseSide.isEmpty();
                 List<String> leftJoinTableColumns = resolveJoinTableJoinColumns(annotationMetadata, isAssociationOwner, entity, namingStrategy);
                 List<String> rightJoinTableColumns = resolveJoinTableJoinColumns(annotationMetadata, !isAssociationOwner, association.getAssociatedEntity(), namingStrategy);
-                traversePersistentProperties(entity.getIdentity(), (associations, property) -> {
-                    leftProperties.add(PersistentPropertyPath.of(associations, property, ""));
-                });
-                traversePersistentProperties(associatedEntity.getIdentity(), (associations, property) -> {
-                    rightProperties.add(PersistentPropertyPath.of(associations, property, ""));
-                });
+                traversePersistentProperties(entity.getIdentity(), (associations, property)
+                        -> leftProperties.add(PersistentPropertyPath.of(associations, property, "")));
+                traversePersistentProperties(associatedEntity.getIdentity(), (associations, property)
+                        -> rightProperties.add(PersistentPropertyPath.of(associations, property, "")));
                 if (leftJoinTableColumns.size() == leftProperties.size()) {
                     for (int i = 0; i < leftJoinTableColumns.size(); i++) {
                         PersistentPropertyPath pp = leftProperties.get(i);
@@ -425,9 +431,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
         if (identity != null) {
             List<PersistentPropertyPath> ids = new ArrayList<>();
-            traversePersistentProperties(identity, (associations, property) -> {
-                ids.add(PersistentPropertyPath.of(associations, property, ""));
-            });
+            traversePersistentProperties(identity, (associations, property)
+                    -> ids.add(PersistentPropertyPath.of(associations, property, "")));
             int idFieldCount = ids.size();
             if (idFieldCount > 1) {
                 generatePkAfterColumns = true;
@@ -534,7 +539,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
         final Optional<List<AnnotationValue<Index>>> indexes = entity
                 .findAnnotation(Indexes.class)
-                .map(idxes -> idxes.getAnnotations("value", Index.class));
+                .map(idxes -> idxes.getAnnotations(VALUE_MEMBER, Index.class));
 
         Stream.of(indexes)
                 .flatMap(o -> o.map(Stream::of).orElseGet(Stream::empty))
@@ -710,9 +715,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             return joinColumns;
         }
         List<String> columns = new ArrayList<>();
-        traversePersistentProperties(entity.getIdentity(), (associations, property) -> {
-            columns.add(namingStrategy.mappedJoinTableColumn(entity, associations, property));
-        });
+        traversePersistentProperties(entity.getIdentity(), (associations, property)
+                -> columns.add(namingStrategy.mappedJoinTableColumn(entity, associations, property)));
         return columns;
     }
 
@@ -845,22 +849,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         boolean escape = shouldEscape(entity);
         NamingStrategy namingStrategy = getNamingStrategy(entity);
         int length = sb.length();
-        traversePersistentProperties(entity, (associations, property) -> {
-            String transformed = getDataTransformerReadValue(alias, property).orElse(null);
-            String columnAlias = getColumnAlias(property);
-            boolean useAlias = StringUtils.isNotEmpty(columnAlias);
-            if (transformed != null) {
-                sb.append(transformed).append(AS_CLAUSE).append(useAlias ? columnAlias : property.getPersistedName());
-            } else {
-                String column = getMappedName(namingStrategy, associations, property);
-                column = escapeColumnIfNeeded(column, escape);
-                sb.append(alias).append(DOT).append(column);
-                if (useAlias) {
-                    sb.append(AS_CLAUSE).append(columnAlias);
-                }
-            }
-            sb.append(COMMA);
-        });
+        traversePersistentProperties(entity, (associations, property)
+                -> appendProperty(sb, associations, property, namingStrategy, alias, escape));
         int newLength = sb.length();
         if (newLength == length) {
             selectAllColumns(sb, alias);
@@ -879,20 +869,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             sb.append(alias).append(DOT);
         }
         sb.append("*");
-    }
-
-    /**
-     * Returns escaped (quoted) column if escape needed.
-     *
-     * @param column the column
-     * @param escape an indicator telling whether column needs to be escaped (quoted)
-     * @return escaped (quoted) column if instructed to do so, otherwise original column value
-     */
-    private String escapeColumnIfNeeded(String column, boolean escape) {
-        if (escape) {
-            return quote(column);
-        }
-        return column;
     }
 
     private boolean canUseWildcardForSelect(AnnotationMetadata annotationMetadata, PersistentEntity entity) {
@@ -1413,8 +1389,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                            String currentJoinAlias) {
         final boolean escape = shouldEscape(associationOwner);
         String mappedBy = association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").orElse(null);
+        AnnotationValue<JoinColumns> joinColumnsAnnotationValue  = association.getAnnotationMetadata().getAnnotation(JoinColumns.class);
+        List<AnnotationValue<JoinColumn>> joinColumnValues = joinColumnsAnnotationValue == null ? null : joinColumnsAnnotationValue.getAnnotations(VALUE_MEMBER);
 
-        if (association.getKind() == Relation.Kind.MANY_TO_MANY || association.isForeignKey() && StringUtils.isEmpty(mappedBy)) {
+        if (association.getKind() == Relation.Kind.MANY_TO_MANY || (association.isForeignKey() && StringUtils.isEmpty(mappedBy) && CollectionUtils.isEmpty(joinColumnValues))) {
             PersistentProperty identity = associatedEntity.getIdentity();
             if (identity == null) {
                 throw new IllegalArgumentException("Associated entity [" + associatedEntity.getName() + "] defines no ID. Cannot join.");
@@ -1535,14 +1513,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             AnnotationValue<Annotation> joinColumnsHolder = owner.getAnnotationMetadata().getAnnotation(ANN_JOIN_COLUMNS);
             if (joinColumnsHolder != null) {
                 onLeftColumns.addAll(
-                        joinColumnsHolder.getAnnotations("value")
+                        joinColumnsHolder.getAnnotations(VALUE_MEMBER)
                                 .stream()
                                 .map(ann -> ann.stringValue(isOwner ? "name" : "referencedColumnName").orElse(null))
                                 .filter(Objects::nonNull)
                                 .collect(Collectors.toList())
                 );
                 onRightColumns.addAll(
-                        joinColumnsHolder.getAnnotations("value")
+                        joinColumnsHolder.getAnnotations(VALUE_MEMBER)
                                 .stream()
                                 .map(ann -> ann.stringValue(isOwner ? "referencedColumnName" : "name").orElse(null))
                                 .filter(Objects::nonNull)

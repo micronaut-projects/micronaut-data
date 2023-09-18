@@ -35,6 +35,8 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
     private final TransactionDefinition definition;
     @Nullable
     private Object transaction;
+    @Nullable
+    private Object savepoint;
 
     private DefaultTransactionStatus(ConnectionStatus<C> connectionStatus,
                                      TransactionDefinition definition) {
@@ -56,6 +58,11 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
         return new ExistingTransactionStatus<>(connectionStatus, existingTransaction);
     }
 
+    @Override
+    public boolean isNestedTransaction() {
+        return definition.getPropagationBehavior() == TransactionDefinition.Propagation.NESTED;
+    }
+
     /**
      * Sets the transaction representation object.
      *
@@ -63,6 +70,24 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
      */
     public void setTransaction(Object transaction) {
         this.transaction = transaction;
+    }
+
+    /**
+     * Sets the savepoint for nested the transaction.
+     * @param savepoint The savepoint
+     * @since 4.1.0
+     */
+    public void setSavepoint(@NonNull Object savepoint) {
+        this.savepoint = savepoint;
+    }
+
+    /**
+     * @return The savepoint
+     * @since 4.1.0
+     */
+    @Nullable
+    public Object getSavepoint() {
+        return savepoint;
     }
 
     @Override

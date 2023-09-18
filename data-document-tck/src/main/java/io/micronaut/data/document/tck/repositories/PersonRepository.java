@@ -124,10 +124,16 @@ public interface PersonRepository extends CrudRepository<Person, String>, Pageab
 
     List<Person> findByNameContainsIgnoreCase(String name);
 
+    List<Person> findByNameLike(String name);
+
     class Specifications {
 
         public static PredicateSpecification<Person> nameEquals(String name) {
             return (root, criteriaBuilder) -> criteriaBuilder.equal(root.get("name"), name);
+        }
+
+        public static PredicateSpecification<Person> nameLike(String name) {
+            return (root, criteriaBuilder) -> criteriaBuilder.like(root.get("name"), name);
         }
 
         public static PredicateSpecification<Person> dateOfBirthEquals(LocalDate localDate) {

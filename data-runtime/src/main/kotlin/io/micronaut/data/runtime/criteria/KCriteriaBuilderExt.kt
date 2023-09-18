@@ -265,9 +265,9 @@ class Where<T>(var root: Root<T>, var criteriaBuilder: CriteriaBuilder) {
 
     infix fun <Y : Comparable<Y>> Expression<out Y?>.lessThan(other: Expression<out Y?>) = addComparablePredicate(criteriaBuilder::lessThan, other)
 
-    infix fun <Y : Comparable<Y>> Expression<out Y?>.lessThanOrEqualTo(other: Y) = addComparablePredicate(criteriaBuilder::lessThan, other)
+    infix fun <Y : Comparable<Y>> Expression<out Y?>.lessThanOrEqualTo(other: Y) = addComparablePredicate(criteriaBuilder::lessThanOrEqualTo, other)
 
-    infix fun <Y : Comparable<Y>> Expression<out Y?>.lessThanOrEqualTo(other: Expression<out Y?>) = addComparablePredicate(criteriaBuilder::lessThan, other)
+    infix fun <Y : Comparable<Y>> Expression<out Y?>.lessThanOrEqualTo(other: Expression<out Y?>) = addComparablePredicate(criteriaBuilder::lessThanOrEqualTo, other)
 
     fun <Y : Comparable<Y>> Expression<out Y?>.between(x: Y, y: Y) = addPredicate(criteriaBuilder.between(this, x, y))
 

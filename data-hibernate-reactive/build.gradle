@@ -19,6 +19,8 @@ dependencies {
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.micronautDataProcessor
 
+    testImplementation mnSerde.micronaut.serde.jackson
+    testImplementation mn.micronaut.http.client
     testImplementation mn.micronaut.inject.groovy
     testImplementation projects.micronautDataProcessor
     testImplementation mnRxjava2.micronaut.rxjava2

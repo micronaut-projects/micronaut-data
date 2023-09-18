@@ -31,14 +31,14 @@ dependencies {
 
     testAnnotationProcessor projects.micronautDataDocumentProcessor
     testAnnotationProcessor mn.micronaut.inject.java
-    testAnnotationProcessor libs.jakarta.persistence.api
+    testAnnotationProcessor(libs.managed.jakarta.persistence.api)
 
     testImplementation projects.micronautDataDocumentProcessor
     testImplementation projects.micronautDataDocumentTck
-    testImplementation libs.jakarta.persistence.api
+    testImplementation(libs.managed.jakarta.persistence.api)
     testImplementation mnRxjava2.micronaut.rxjava2
     testImplementation mnReactor.micronaut.reactor
-    testImplementation libs.jakarta.persistence.api
+    testImplementation(libs.managed.jakarta.persistence.api)
     testImplementation mnValidation.micronaut.validation
     testImplementation platform(libs.testcontainers.bom)
     testImplementation libs.testcontainers.spock

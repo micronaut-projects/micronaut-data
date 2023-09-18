@@ -75,6 +75,8 @@ import static io.micronaut.data.tck.repositories.BookSpecifications.titleEqualsW
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.distinct
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.idsIn
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEquals
+import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.setIncome
+import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.setName
 
 abstract class AbstractRepositorySpec extends Specification {
 
@@ -1237,6 +1239,38 @@ abstract class AbstractRepositorySpec extends Specification {
             ]
     }
 
+    @Unroll
+    void "test DTO with different join types on many ended association"(String methodName) {
+        given:
+            saveSampleBooks()
+
+        when:
+            def authors = authorRepository."$methodName"()
+
+        then:
+            authors.size() == 3
+            authors.collect { [books: it.books.size()] }.every { it.books == 2 }
+
+        where:
+            methodName << [
+                    "queryAll", // DEFAULT
+                    "retrieveByIdIsNotNull", // LEFT_FETCH
+                    "searchByNameIsNotNull" // RIGHT_FETCH
+            ]
+    }
+
+    void "test DTO without join"() {
+        given:
+            saveSampleBooks()
+
+        when:
+            def authors = authorRepository.searchAll()
+
+        then:
+            authors.size() == 3
+            authors.forEach { assert it.books.size() == 0 }
+    }
+
     void "stream joined"() {
         if (!transactionManager.isPresent()) {
             return
@@ -2180,6 +2214,21 @@ abstract class AbstractRepositorySpec extends Specification {
             updated == 1
             personRepository.count(nameEquals("Xyz")) == 1
             personRepository.count(nameEquals("Jeff")) == 0
+        when:
+            personRepository.updateAll(setIncome(1000).where(nameEquals("James")))
+            def jamesPerson = personRepository.findByName("James")
+        then:
+            jamesPerson.income == 1000
+        when:"Income set to null using criteria"
+            personRepository.updateAll(setIncome(null).where(nameEquals("James")))
+            jamesPerson = personRepository.findByName("James")
+        then:"Field is updated to null"
+            jamesPerson.income == null
+        when:"Update name to null using criteria"
+            personRepository.updateAll(setName(null).where(nameEquals("James")))
+        then:"Exception is thrown because name is not nullable"
+            def ex = thrown(IllegalStateException)
+            ex.message == 'Field [name] does not allow null value.'
         when:
             deleted = personRepository.deleteAll(DeleteSpecification.where(nameEquals("Xyz")))
         then:

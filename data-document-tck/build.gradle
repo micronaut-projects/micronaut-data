@@ -12,7 +12,7 @@ dependencies {
     implementation projects.micronautDataTx
     implementation mnTest.micronaut.test.spock
     implementation mnTest.micronaut.test.core
-    implementation libs.jakarta.persistence.api
+    implementation(libs.managed.jakarta.persistence.api)
 
     compileOnly mn.micronaut.inject.groovy
 }

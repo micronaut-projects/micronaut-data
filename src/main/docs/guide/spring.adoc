@@ -1,6 +1,6 @@
 Micronaut Data features general Spring support that is provided through the `micronaut-data-spring` dependency:
 
-dependency:io.micronaut.data:micronaut-data-spring[version="{version}"]
+dependency:io.micronaut.data:micronaut-data-spring[]
 
 In addition to this dependency you will need either `spring-orm` (for Hibernate) or `spring-jdbc` (for JDBC) on your classpath to enable support for Spring-based transaction management:
 
@@ -23,7 +23,7 @@ The following Spring Data types are also supported:
 
 To obtain additional support for https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#specifications[Spring Data JPA Specifications] when using Hibernate and JPA you should add the following dependency to your classpath:
 
-dependency:io.micronaut.data:micronaut-data-spring[version="{version}"]
+dependency:io.micronaut.data:micronaut-data-spring[]
 
 You can then implement the `JpaSpecificationExecutor` (the generic argument to the interface should be a domain class) interface as per the https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#specifications[Spring Data JPA documentation].
 
@@ -31,8 +31,8 @@ You can then implement the `JpaSpecificationExecutor` (the generic argument to t
 
 To replace the internal data-source TX manager with the Spring JDBC alternative include:
 
-dependency:io.micronaut.data:micronaut-data-spring-jdbc[version="{version}"]
+dependency:io.micronaut.data:micronaut-data-spring-jdbc[]
 
 And to replace the internal Hibernate TX manager with the Spring Hibernate alternative include:
 
-dependency:io.micronaut.data:micronaut-data-spring-jpa[version="{version}"]
+dependency:io.micronaut.data:micronaut-data-spring-jpa[]

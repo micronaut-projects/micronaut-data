@@ -28,6 +28,8 @@ import io.micronaut.data.annotation.Version;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -40,6 +42,8 @@ import java.util.stream.Collectors;
  * @param <T> The type
  */
 public class RuntimePersistentEntity<T> extends AbstractPersistentEntity implements PersistentEntity {
+
+    private static final Logger LOG = LoggerFactory.getLogger(RuntimePersistentEntity.class);
 
     private final BeanIntrospection<T> introspection;
     private final RuntimePersistentProperty<T>[] identity;
@@ -71,14 +75,23 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
      * @param introspection The introspection
      */
     public RuntimePersistentEntity(@NonNull BeanIntrospection<T> introspection) {
+        this(introspection, introspection.getBeanProperties());
+    }
+
+    /**
+     * Default constructor.
+     *
+     * @param introspection The introspection
+     * @param beanProperties The bean properties
+     */
+    public RuntimePersistentEntity(@NonNull BeanIntrospection<T> introspection, Collection<BeanProperty<T, Object>> beanProperties) {
         super(introspection);
         ArgumentUtils.requireNonNull("introspection", introspection);
         this.introspection = introspection;
         Argument<?>[] constructorArguments = introspection.getConstructorArguments();
         Set<String> constructorArgumentNames = Arrays.stream(constructorArguments).map(Argument::getName).collect(Collectors.toSet());
         RuntimePersistentProperty<T> version = null;
-        List<RuntimePersistentProperty<T>> ids = new LinkedList<>();
-        Collection<BeanProperty<T, Object>> beanProperties = introspection.getBeanProperties();
+        List<RuntimePersistentProperty<T>> ids = new ArrayList<>(5);
         this.allPersistentProperties = new RuntimePersistentProperty[beanProperties.size()];
         this.persistentProperties = new RuntimePersistentProperty[beanProperties.size()];
         for (BeanProperty<T, Object> bp : beanProperties) {
@@ -127,6 +140,11 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
             this.constructorArguments[i] = prop;
         }
         this.aliasName = super.getAliasName();
+    }
+
+    @Override
+    protected void logDebug(String message, Exception e) {
+        LOG.debug(message, e);
     }
 
     private static EnumSet<Relation.Cascade> cascades(RuntimePersistentEntity<?> persistentEntity) {

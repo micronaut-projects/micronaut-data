@@ -34,8 +34,8 @@ dependencies {
     testAnnotationProcessor projects.micronautDataProcessor
 
     testImplementation mn.jackson.databind
-    testImplementation libs.javax.persistence.api
-    testImplementation libs.jakarta.persistence.api
+    testImplementation(libs.managed.javax.persistence.api)
+    testImplementation(libs.managed.jakarta.persistence.api)
     testImplementation libs.groovy.sql
     testImplementation mnValidation.micronaut.validation
     testImplementation mnValidation.micronaut.validation.processor

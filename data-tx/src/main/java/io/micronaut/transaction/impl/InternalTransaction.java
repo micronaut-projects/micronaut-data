@@ -15,6 +15,7 @@
  */
 package io.micronaut.transaction.impl;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.exceptions.TransactionSuspensionNotSupportedException;
 import io.micronaut.transaction.support.TransactionSynchronization;
@@ -26,7 +27,15 @@ import io.micronaut.transaction.support.TransactionSynchronization;
  * @author Denis Stepanov
  * @since 4.0.0
  */
+@Internal
 public interface InternalTransaction<T> extends TransactionStatus<T> {
+
+    /**
+     * Check if the current TX is nested.
+     * @return true if is nested transaction
+     * @since 4.1.0
+     */
+    boolean isNestedTransaction();
 
     /**
      * Determine the rollback-only flag via checking this TransactionStatus.
