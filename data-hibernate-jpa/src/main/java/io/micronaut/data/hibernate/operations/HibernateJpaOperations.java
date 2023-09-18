@@ -382,7 +382,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     public Optional<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery) {
         return executeWrite(session -> {
             String query = preparedQuery.getQuery();
-            MutationQuery q = session.createMutationQuery(query);
+            MutationQuery q = preparedQuery.isNative() ? session.createNativeMutationQuery(query) : session.createMutationQuery(query);
             bindParameters(q, preparedQuery);
             int numAffected = q.executeUpdate();
             flushIfNecessary(session, preparedQuery.getAnnotationMetadata(), true);
