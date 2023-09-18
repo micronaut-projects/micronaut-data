@@ -34,8 +34,6 @@ As you can see from the above example, using abstract classes can be useful as i
 
 The example above uses the api:data.jdbc.runtime.JdbcOperations[] interface which simplifies executing JDBC queries within the context of transactions.
 
-====
-
 You can also integrate whichever other tool you wish to use to handle more complex queries, such as QueryDSL, JOOQ, Spring JdbcTemplate etc.
 
 For example, to use link:https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/core/JdbcTemplate.html[Spring JdbcTemplate], add the following dependencies:
