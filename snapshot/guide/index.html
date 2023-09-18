@@ -8148,15 +8148,15 @@ abstract class AbstractBookRepository(private val jdbcOperations: JdbcOperations
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@JdbcRepository(dialect = Dialect.H2)
 public abstract class AbstractBookRepository implements CrudRepository&lt;@Valid Book, @NotNull Long&gt; {
 
-    private final JdbcTemplate jdbcTemplate; //<b class="conum">(2)</b>
+    private final JdbcTemplate jdbcTemplate;
 
-    public AbstractBookRepository(DataSource dataSource) { // <b class="conum">(1)</b>
-        this.jdbcTemplate = new JdbcTemplate(DelegatingDataSource.unwrapDataSource(dataSource)); //<b class="conum">(2)</b>
+    public AbstractBookRepository(JdbcTemplate jdbcTemplate) { // <b class="conum">(1)</b>
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Transactional
     public List&lt;Book&gt; findByTitle(@NonNull @NotNull String title) {
-        return jdbcTemplate.queryForList("SELECT * FROM Book AS book WHERE book.title = ?", title) // <b class="conum">(3)</b>
+        return jdbcTemplate.queryForList("SELECT * FROM Book AS book WHERE book.title = ?", title) // <b class="conum">(2)</b>
             .stream()
             .map(m -&gt; new Book((Long) m.get("id"), (String) m.get("title"), (Integer) m.get("pages")))
             .toList();
@@ -8169,15 +8169,15 @@ public abstract class AbstractBookRepository implements CrudRepository&lt;@Valid
 <pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@JdbcRepository(dialect = Dialect.H2)
 abstract class AbstractBookRepository implements CrudRepository&lt;@Valid Book, @NotNull Long&gt; {
 
-    private final JdbcTemplate jdbcTemplate; //<b class="conum">(2)</b>
+    private final JdbcTemplate jdbcTemplate
 
-    AbstractBookRepository(DataSource dataSource) { // <b class="conum">(1)</b>
-        this.jdbcTemplate = new JdbcTemplate(DelegatingDataSource.unwrapDataSource(dataSource)); //<b class="conum">(2)</b>
+    AbstractBookRepository(JdbcTemplate jdbcTemplate) { // <b class="conum">(1)</b>
+        this.jdbcTemplate = jdbcTemplate
     }
 
     @Transactional
     List&lt;Book&gt; findByTitle(@NonNull @NotNull String title) {
-        return jdbcTemplate.queryForList('SELECT * FROM Book AS book WHERE book.title = ?', title) // <b class="conum">(3)</b>
+        return jdbcTemplate.queryForList('SELECT * FROM Book AS book WHERE book.title = ?', title) // <b class="conum">(2)</b>
             .collect(m -&gt; new Book(m.id as Long, m.title as String, m.pages as Integer))
     }
 }</code></pre>
@@ -8186,13 +8186,11 @@ abstract class AbstractBookRepository implements CrudRepository&lt;@Valid Book, 
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@JdbcRepository(dialect = Dialect.H2)
-abstract class AbstractBookRepository(dataSource: DataSource) : CrudRepository&lt;@Valid Book, Long&gt; { // <b class="conum">(1)</b>
-
-    private val jdbcTemplate: JdbcTemplate = JdbcTemplate(DelegatingDataSource.unwrapDataSource(dataSource)) //<b class="conum">(2)</b>
+abstract class AbstractBookRepository(val jdbcTemplate: JdbcTemplate) : CrudRepository&lt;@Valid Book, Long&gt; {  //<b class="conum">(1)</b>
 
     @Transactional
     open fun findByTitle(title: String) = jdbcTemplate
-        .queryForList("SELECT * FROM Book AS book WHERE book.title = ?", title) // <b class="conum">(3)</b>
+        .queryForList("SELECT * FROM Book AS book WHERE book.title = ?", title) // <b class="conum">(2)</b>
         .map { m -&gt; Book(m["id"] as Long, m["title"] as String, m["pages"] as Int) }
 }</code></pre>
 </div>
@@ -8201,14 +8199,10 @@ abstract class AbstractBookRepository(dataSource: DataSource) : CrudRepository&l
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>Inject the <code>java.sql.DataSource</code> configured by the application.</td>
+<td>Inject the <code>org.springframework.jdbc.core.JdbcTemplate</code> configured by the application.</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>Instantiate a <code>JdbcTemplate</code> object using the injected <code>DataSource</code>.</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="3"></i><b>3</b></td>
 <td>Now the <code>JdbcTemplate</code> API can be used to implement repository methods.</td>
 </tr>
 </table>
