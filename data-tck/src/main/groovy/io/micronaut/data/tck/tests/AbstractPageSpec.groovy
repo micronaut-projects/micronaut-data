@@ -183,4 +183,22 @@ abstract class AbstractPageSpec extends Specification {
         cleanup:
         bookRepository.deleteAll()
     }
+
+    void "test pageable findBy and count using different params"() {
+        given:
+        def person1 = new Person(name: "John")
+        def person2 = new Person(name: "Jonas", enabled: false)
+        def person3 = new Person(name: "Joanna", enabled: false)
+        personRepository.saveAll(Arrays.asList(person1, person2, person3))
+        when: "People are searched by name and enabled"
+        def pageable = Pageable.from(0, 10)
+        Page<Person> page = personRepository.findByNameLikeAndEnabled("Jo%", true, pageable)
+
+        then: "The page returns correct results and count"
+        page.offset == 0
+        page.pageNumber == 0
+        page.totalSize == 3
+        page.content
+        page.content.size() == 1
+    }
 }

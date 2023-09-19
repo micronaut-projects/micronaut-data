@@ -150,9 +150,14 @@ public @interface DataMethod {
     String META_MEMBER_RAW_QUERY = "rawQuery";
 
     /**
-     * Whether the user is a raw user specified query.
+     * Whether the user declared raw count query.
      */
     String META_MEMBER_RAW_COUNT_QUERY = "rawCountQuery";
+
+    /**
+     * Used when there is a raw count query declared.
+     */
+    String META_MEMBER_RAW_COUNT_PARAMETERS = "rawCountParameters";
 
     /**
      * Meta member for storing the parameter type defs.

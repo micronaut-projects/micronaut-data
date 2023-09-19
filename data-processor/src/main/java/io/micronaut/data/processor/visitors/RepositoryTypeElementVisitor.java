@@ -336,7 +336,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 // no need to annotation since already annotated, just replace the
                 // the computed parameter names
                 parameterBinding = queryResult.getParameterBindings();
-
+                encodeEntityParameters = methodInfo.isEncodeEntityParameters();
                 element.annotate(Query.class, (builder) -> builder.member(DataMethod.META_MEMBER_RAW_QUERY,
                     element.stringValue(Query.class)
                         .map(q -> addRawQueryParameterPlaceholders(queryEncoder, queryResult.getQuery(), queryResult.getQueryParts()))
@@ -352,10 +352,16 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                             Query.class,
                             (builder) -> builder.member(DataMethod.META_MEMBER_RAW_COUNT_QUERY, addRawQueryParameterPlaceholders(queryEncoder, countQueryResult.getQuery(), countQueryResult.getQueryParts()))
                         );
+                        // For count query, we might need to take parameters for that query
+                        // since it can differ from the main query
+                        final List<QueryParameterBinding> finalCountParameterBindings = countQueryResult.getParameterBindings();
+                        if (CollectionUtils.isNotEmpty(finalCountParameterBindings)) {
+                            final boolean finalEncodeEntityParameters = encodeEntityParameters;
+                            element.annotate(DataMethod.class, builder -> bindParameters(supportsImplicitQueries, finalCountParameterBindings, finalEncodeEntityParameters,
+                                builder, DataMethod.META_MEMBER_RAW_COUNT_PARAMETERS));
+                        }
                     }
                 }
-
-                encodeEntityParameters = methodInfo.isEncodeEntityParameters();
             } else {
 
                 encodeEntityParameters = methodInfo.isEncodeEntityParameters();
@@ -459,7 +465,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 .ifPresent(parameterElement -> annotationBuilder.member(DataMethod.META_MEMBER_ENTITY, parameterElement.getName()));
 
             if (CollectionUtils.isNotEmpty(finalParameterBinding)) {
-                bindParameters(supportsImplicitQueries, finalParameterBinding, finalEncodeEntityParameters, annotationBuilder);
+                bindParameters(supportsImplicitQueries, finalParameterBinding, finalEncodeEntityParameters, annotationBuilder, DataMethod.META_MEMBER_PARAMETERS);
             }
 
         });
@@ -468,7 +474,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     private void bindParameters(boolean supportsImplicitQueries,
                                 List<QueryParameterBinding> finalParameterBinding,
                                 boolean finalEncodeEntityParameters,
-                                AnnotationValueBuilder<DataMethod> annotationBuilder) {
+                                AnnotationValueBuilder<DataMethod> annotationBuilder,
+                                String parametersMemberName) {
 
         List<AnnotationValue<?>> annotationValues = new ArrayList<>();
         for (QueryParameterBinding p : finalParameterBinding) {
@@ -508,7 +515,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             annotationValues.add(builder.build());
         }
         AnnotationValue[] annotations = annotationValues.toArray(new AnnotationValue[0]);
-        annotationBuilder.member(DataMethod.META_MEMBER_PARAMETERS, annotations);
+        annotationBuilder.member(parametersMemberName, annotations);
     }
 
     private void bindAdditionalParameters(MatchContext matchContext,
