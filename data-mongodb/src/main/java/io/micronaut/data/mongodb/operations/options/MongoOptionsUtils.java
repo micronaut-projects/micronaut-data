@@ -29,7 +29,6 @@ import com.mongodb.client.model.UpdateOptions;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.mongodb.annotation.MongoCollation;
 import io.micronaut.data.mongodb.annotation.MongoDeleteOptions;

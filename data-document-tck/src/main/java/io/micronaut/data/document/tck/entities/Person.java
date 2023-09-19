@@ -20,7 +20,6 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
-import jakarta.persistence.Embedded;
 
 import java.time.LocalDate;
 import java.util.List;
