@@ -255,9 +255,7 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
                                        List<ParameterElement> parameters,
                                        ParameterElement entityParam,
                                        SourcePersistentEntity persistentEntity) {
-        String filterQueryString = matchContext.getMethodElement().stringValue(MongoAnnotations.FILTER).orElseThrow(() ->
-                new MatchFailedException("Filter query is missing!")
-        );
+        String filterQueryString = matchContext.getMethodElement().stringValue(MongoAnnotations.FILTER).orElse("{}");
         String updateQueryString = matchContext.getMethodElement().stringValue(MongoAnnotations.UPDATE_QUERY, "update").orElseThrow(() ->
                 new MatchFailedException("Update query is missing!")
         );

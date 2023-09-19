@@ -22,6 +22,7 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @MappedEntity
 public class Person {
@@ -35,6 +36,9 @@ public class Person {
 
     @Nullable
     private LocalDate dateOfBirth;
+
+    @Nullable
+    private List<Address> addresses;
 
     public String getId() {
         return id;
@@ -74,6 +78,14 @@ public class Person {
 
     public void setDateOfBirth(LocalDate dateOfBirth) {
         this.dateOfBirth = dateOfBirth;
+    }
+
+    public List<Address> getAddresses() {
+        return addresses;
+    }
+
+    public void setAddresses(List<Address> addresses) {
+        this.addresses = addresses;
     }
 
     @Override

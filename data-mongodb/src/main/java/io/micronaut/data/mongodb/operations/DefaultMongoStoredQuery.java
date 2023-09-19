@@ -608,6 +608,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             newOptions.bypassDocumentValidation(options.getBypassDocumentValidation());
             newOptions.hint(options.getHint());
             newOptions.hintString(options.getHintString());
+            newOptions.arrayFilters(options.getArrayFilters());
             return newOptions;
         }
 
@@ -626,6 +627,9 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             }
             if (from.getHintString() != null) {
                 to.hintString(from.getHintString());
+            }
+            if (from.getArrayFilters() != null) {
+                to.arrayFilters(from.getArrayFilters());
             }
         }
 

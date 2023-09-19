@@ -48,6 +48,12 @@ public interface MongoPersonRepository extends PersonRepository {
     @MongoDeleteQuery("{name:{$eq: :xyz}}")
     int deleteCustomSingleNoEntity(String xyz);
 
+    @MongoUpdateQuery(filter = "{addresses: null}", update = "{$set:{addresses: []}}")
+    long updateMissingAddressesToAnEmptyArray();
+
+    @MongoUpdateQuery(update = "{$set:{'addresses.$[address].zipCode': :zipCode}}", arrayFilters = "{'address.zipCode': null}}}")
+    long updateMissingZipcodeInAddress(String zipCode);
+
     @MongoFindQuery(filter = "{'name': {'$in': :names}}")
     List<Person> findByNameInList(String[] names);
 }

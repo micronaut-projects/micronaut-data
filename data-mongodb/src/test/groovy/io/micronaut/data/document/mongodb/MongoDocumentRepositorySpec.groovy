@@ -18,8 +18,10 @@ import io.micronaut.data.document.mongodb.repositories.MongoPersonRepository
 import io.micronaut.data.document.mongodb.repositories.MongoSaleRepository
 import io.micronaut.data.document.mongodb.repositories.MongoStudentRepository
 import io.micronaut.data.document.tck.AbstractDocumentRepositorySpec
+import io.micronaut.data.document.tck.entities.Address
 import io.micronaut.data.document.tck.entities.Document
 import io.micronaut.data.document.tck.entities.Owner
+import io.micronaut.data.document.tck.entities.Person
 import io.micronaut.data.document.tck.entities.Quantity
 import io.micronaut.data.document.tck.entities.Sale
 import io.micronaut.data.document.tck.repositories.AuthorRepository
@@ -142,6 +144,22 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
         then:
             people.count { it.name == "Dennis"} == 0
             people.count { it.name == "Denis"} == 2
+    }
+
+    void "test custom update with arrayFilters"() {
+        given:
+            savePersons(["Jeff", "James"])
+            personRepository.save(new Person(name: "Denis", age: 44, addresses: [new Address("Krymska", null), new Address("Mistni", "12345")]))
+            personRepository.save(new Person(name: "Steven", age: 33, addresses: [new Address("Husinecka", "13300")]))
+
+        when:
+            personRepository.updateMissingAddressesToAnEmptyArray()
+            personRepository.updateMissingZipcodeInAddress("15500")
+            def denisPerson = personRepository.findByName("Denis")
+
+        then:
+            denisPerson.addresses[0].zipCode == "15500"
+            denisPerson.addresses[1].zipCode == "12345"
     }
 
     void "test custom update single"() {
