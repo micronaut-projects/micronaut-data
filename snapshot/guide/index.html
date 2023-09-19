@@ -167,7 +167,9 @@
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateNativeQueries"><a href="#hibernateNativeQueries"><strong>4.6</strong><span>Native queries</span></a></div>
         
-        <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateSpecifications"><a href="#hibernateSpecifications"><strong>4.7</strong><span>JPA specifications</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateProcedures"><a href="#hibernateProcedures"><strong>4.7</strong><span>Procedures</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateSpecifications"><a href="#hibernateSpecifications"><strong>4.8</strong><span>JPA specifications</span></a></div>
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-hibernateReactive"><a href="#hibernateReactive"><strong>5</strong><span>Micronaut Data Hibernate Reactive</span></a></div>
         
@@ -248,6 +250,8 @@
         <div class="toc-item" style="margin-left:10px" id="toc-item-dbcJoinQueries"><a href="#dbcJoinQueries"><strong>6.8</strong><span>Join Queries</span></a></div>
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-dbcNativeQueries"><a href="#dbcNativeQueries"><strong>6.9</strong><span>Explicit Queries</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-dbcProcedures"><a href="#dbcProcedures"><strong>6.10</strong><span>Procedures</span></a></div>
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-mongo"><a href="#mongo"><strong>7</strong><span>Micronaut Data MongoDB</span></a></div>
         
@@ -4893,6 +4897,13 @@ If a <code>LazyInitializationException</code> occurs this is not a bug in Micron
 
 import jakarta.persistence.*;
 
+@NamedStoredProcedureQuery(name = "calculateSum",
+    procedureName = "calculateSumInternal",
+    parameters = {
+        @StoredProcedureParameter(name = "productId", mode = ParameterMode.IN, type = Long.class),
+        @StoredProcedureParameter(name = "result", mode = ParameterMode.OUT, type = Long.class)
+    }
+)
 @Entity
 public class Product {
 
@@ -4943,6 +4954,13 @@ public class Product {
 
 import jakarta.persistence.*
 
+@NamedStoredProcedureQuery(name = "calculateSum",
+        procedureName = "calculateSumInternal",
+        parameters = [
+            @StoredProcedureParameter(name = "productId", mode = ParameterMode.IN, type = Long.class),
+            @StoredProcedureParameter(name = "result", mode = ParameterMode.OUT, type = Long.class)
+        ]
+)
 @Entity
 class Product {
 
@@ -4967,8 +4985,24 @@ class Product {
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
-import jakarta.persistence.*
+import jakarta.persistence.Entity
+import jakarta.persistence.FetchType
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.Id
+import jakarta.persistence.ManyToOne
+import jakarta.persistence.NamedStoredProcedureQuery
+import jakarta.persistence.ParameterMode
+import jakarta.persistence.StoredProcedureParameter
 
+@NamedStoredProcedureQuery(
+    name = "calculateSum",
+    procedureName = "calculateSumInternal",
+    parameters = [StoredProcedureParameter(
+        name = "productId",
+        mode = ParameterMode.IN,
+        type = Long::class
+    ), StoredProcedureParameter(name = "result", mode = ParameterMode.OUT, type = Long::class)]
+)
 @Entity
 data class Product(
     @Id
@@ -5212,7 +5246,194 @@ For <a href="#pagination">Pagination</a> queries that return a <a href="../api/i
 </table>
 </div>
 
-<h2 id="hibernateSpecifications"><a class="anchor" href="#hibernateSpecifications"></a>4.7 JPA specifications</h2>
+<h2 id="hibernateProcedures"><a class="anchor" href="#hibernateProcedures"></a>4.7 Procedures</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/hibernate/hibernateProcedures.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>It&#8217;s possible to execute a stored procedure using the JPA provider:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Repository
+public interface ProductRepository extends CrudRepository&lt;Product, Long&gt;, JpaSpecificationExecutor&lt;Product&gt; {
+    @Join(value = "manufacturer", type = Join.Type.FETCH) // <b class="conum">(1)</b>
+    List&lt;Product&gt; list();
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@Repository
+abstract class ProductRepository implements CrudRepository&lt;Product, Long&gt;, JpaSpecificationExecutor&lt;Product&gt; {
+    @Join(value = "manufacturer", type = Join.Type.FETCH) // <b class="conum">(1)</b>
+    abstract List&lt;Product&gt; list()
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Repository
+interface ProductRepository : CrudRepository&lt;Product, Long&gt;, JpaSpecificationExecutor&lt;Product&gt; {
+    @Join(value = "manufacturer", type = Join.Type.FETCH) // <b class="conum">(1)</b>
+    fun list(): List&lt;Product&gt;
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
+
+import jakarta.persistence.*;
+
+@NamedStoredProcedureQuery(name = "calculateSum",
+    procedureName = "calculateSumInternal",
+    parameters = {
+        @StoredProcedureParameter(name = "productId", mode = ParameterMode.IN, type = Long.class),
+        @StoredProcedureParameter(name = "result", mode = ParameterMode.OUT, type = Long.class)
+    }
+)
+@Entity
+public class Product {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String name;
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    private Manufacturer manufacturer;
+
+    public Product(String name, Manufacturer manufacturer) {
+        this.name = name;
+        this.manufacturer = manufacturer;
+    }
+
+    public Product() {
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Manufacturer getManufacturer() {
+        return manufacturer;
+    }
+
+    public void setManufacturer(Manufacturer manufacturer) {
+        this.manufacturer = manufacturer;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">package example
+
+import jakarta.persistence.*
+
+@NamedStoredProcedureQuery(name = "calculateSum",
+        procedureName = "calculateSumInternal",
+        parameters = [
+            @StoredProcedureParameter(name = "productId", mode = ParameterMode.IN, type = Long.class),
+            @StoredProcedureParameter(name = "result", mode = ParameterMode.OUT, type = Long.class)
+        ]
+)
+@Entity
+class Product {
+
+    @Id
+    @GeneratedValue
+    Long id
+    String name
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    Manufacturer manufacturer
+
+    Product(String name, Manufacturer manufacturer) {
+        this.name = name
+        this.manufacturer = manufacturer
+    }
+
+    Product() {
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
+
+import jakarta.persistence.Entity
+import jakarta.persistence.FetchType
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.Id
+import jakarta.persistence.ManyToOne
+import jakarta.persistence.NamedStoredProcedureQuery
+import jakarta.persistence.ParameterMode
+import jakarta.persistence.StoredProcedureParameter
+
+@NamedStoredProcedureQuery(
+    name = "calculateSum",
+    procedureName = "calculateSumInternal",
+    parameters = [StoredProcedureParameter(
+        name = "productId",
+        mode = ParameterMode.IN,
+        type = Long::class
+    ), StoredProcedureParameter(name = "result", mode = ParameterMode.OUT, type = Long::class)]
+)
+@Entity
+data class Product(
+    @Id
+    @GeneratedValue
+    var id: Long?,
+    var name: String,
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    var manufacturer: Manufacturer
+)</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The definition is referencing the named stored procedure defined in <code>Product</code> entity</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The definition is referencing the native database procedure name</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The output parameter, if present, is defined as the last output parameter of the procedure
+</td>
+</tr>
+</table>
+</div>
+
+<h2 id="hibernateSpecifications"><a class="anchor" href="#hibernateSpecifications"></a>4.8 JPA specifications</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/hibernate/hibernateSpecifications.adoc"'>
@@ -6381,7 +6602,9 @@ data class Book(@Id
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
 
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.*;
+import io.micronaut.data.annotation.sql.Procedure;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -6399,7 +6622,9 @@ interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b class=
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">package example
 
+import io.micronaut.core.annotation.NonNull
 import io.micronaut.data.annotation.*
+import io.micronaut.data.annotation.sql.Procedure
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.*
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -6418,9 +6643,14 @@ interface BookRepository extends CrudRepository&lt;Book, Long&gt; { // <b class=
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
 import io.micronaut.context.annotation.Executable
-import io.micronaut.data.annotation.*
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.Query
+import io.micronaut.data.annotation.sql.Procedure
 import io.micronaut.data.jdbc.annotation.JdbcRepository
-import io.micronaut.data.model.*
+import io.micronaut.data.model.Page
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Slice
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
 import jakarta.transaction.Transactional
@@ -11141,6 +11371,39 @@ It is necessary to use the "logical name" of the field in the <code>@Join</code>
 </td>
 </tr>
 </table>
+</div>
+</div>
+
+<h2 id="dbcProcedures"><a class="anchor" href="#dbcProcedures"></a>6.10 Procedures</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/dbc/dbcProcedures.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data supports executing simple SQL procedures. Simply annotate a repository method with <a href="../api/io/micronaut/data/annotation/sql/Procedure.html">@Procedure</a>.
+All the method parameters will be used as incoming parameters of the procedure and not-void result will be bind as an out parameter.
+By default the method name will be used as the procedure name, to customize the name it&#8217;s possible to use the <code>value</code> attribute:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Procedure
+Long calculateSum(@NonNull Long bookId);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@Procedure
+Long calculateSum(@NonNull Long bookId);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Procedure
+fun calculateSum(bookId: @NonNull Long): Long</code></pre>
 </div>
 </div>
 

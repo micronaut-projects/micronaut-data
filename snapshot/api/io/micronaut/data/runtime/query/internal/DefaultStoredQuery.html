@@ -223,18 +223,23 @@ implements <a href="../../../model/runtime/StoredQuery.html" title="interface in
 <div class="block">Is with an optimistic lock.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isRawQuery()" class="member-name-link">isRawQuery</a>()</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isProcedure()" class="member-name-link">isProcedure</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Gets an indicator telling whether underlying query is raw query.</div>
+<div class="block">Is the query a procedure.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isSingleResult()" class="member-name-link">isSingleResult</a>()</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isRawQuery()" class="member-name-link">isRawQuery</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Whether the query can be treated as a single result.</div>
+<div class="block">Gets an indicator telling whether underlying query is raw query.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#useNumericPlaceholders()" class="member-name-link">useNumericPlaceholders</a>()</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isSingleResult()" class="member-name-link">isSingleResult</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Whether the query can be treated as a single result.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#useNumericPlaceholders()" class="member-name-link">useNumericPlaceholders</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Is this a raw SQL query.</div>
 </div>
 </div>
@@ -400,6 +405,20 @@ implements <a href="../../../model/runtime/StoredQuery.html" title="interface in
 <dd><code><a href="../../../model/runtime/StoredQuery.html#isNative()">isNative</a></code>&nbsp;in interface&nbsp;<code><a href="../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">E</a>,<wbr><a href="DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">RT</a>&gt;</code></dd>
 <dt>Returns:</dt>
 <dd>Whether the query is native.</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="isProcedure()">
+<h3>isProcedure</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isProcedure</span>()</div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../../../model/runtime/StoredQuery.html#isProcedure()">StoredQuery</a></code></span></div>
+<div class="block">Is the query a procedure.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../../../model/runtime/StoredQuery.html#isProcedure()">isProcedure</a></code>&nbsp;in interface&nbsp;<code><a href="../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">E</a>,<wbr><a href="DefaultStoredQuery.html" title="type parameter in DefaultStoredQuery">RT</a>&gt;</code></dd>
+<dt>Returns:</dt>
+<dd>Whether the query is a procedure invocation.</dd>
 </dl>
 </section>
 </li>
