@@ -142,6 +142,11 @@ public final class ReactorToAsyncOperationsAdaptor implements AsyncRepositoryOpe
         return toCompletionStage(reactiveOperations.executeDelete(preparedQuery));
     }
 
+    @Override
+    public <R> CompletionStage<R> execute(PreparedQuery<?, R> preparedQuery) {
+        return toCompletionStage(reactiveOperations.execute(preparedQuery));
+    }
+
     @NonNull
     @Override
     public <T> CompletionStage<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation) {

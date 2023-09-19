@@ -19,6 +19,7 @@ import io.micronaut.context.ApplicationContextProvider;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionServiceProvider;
+import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
@@ -160,7 +161,8 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * @param <T> The generic type
      * @return The updated entities
      */
-    default @NonNull <T> Iterable<T> updateAll(@NonNull UpdateBatchOperation<T> operation) {
+    @NonNull
+    default <T> Iterable<T> updateAll(@NonNull UpdateBatchOperation<T> operation) {
         return operation.split().stream()
                 .map(this::update)
                 .collect(Collectors.toList());
@@ -172,7 +174,8 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * @param <T> The generic type
      * @return The entities, possibly mutated
      */
-    default @NonNull <T> Iterable<T> persistAll(@NonNull InsertBatchOperation<T> operation) {
+    @NonNull
+    default <T> Iterable<T> persistAll(@NonNull InsertBatchOperation<T> operation) {
         return operation.split().stream()
                 .map(this::persist)
                 .collect(Collectors.toList());
@@ -184,9 +187,8 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * @param preparedQuery The prepared query
      * @return An optional number with the count of the number of records updated
      */
-    @NonNull Optional<Number> executeUpdate(
-            @NonNull PreparedQuery<?, Number> preparedQuery
-    );
+    @NonNull
+    Optional<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery);
 
     /**
      * Executes a delete for the given query and parameter values. If it is possible to
@@ -194,10 +196,22 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * @param preparedQuery The prepared query
      * @return An optional number with the count of the number of records updated
      */
-    default @NonNull Optional<Number> executeDelete(
-            @NonNull PreparedQuery<?, Number> preparedQuery
-    ) {
+    @NonNull
+    default  Optional<Number> executeDelete(@NonNull PreparedQuery<?, Number> preparedQuery) {
         return executeUpdate(preparedQuery);
+    }
+
+    /**
+     * Executes the given query with parameter values returning a result.
+     *
+     * @param preparedQuery The prepared query
+     * @param <R>           The result type
+     * @return The result
+     * @since 4.2.0
+     */
+    @NonNull
+    default <R> Optional<R> execute(@NonNull PreparedQuery<?, R> preparedQuery) {
+        throw new DataAccessException("Current repository: " + getClass() + " doesn't support method 'execute'!");
     }
 
     /**

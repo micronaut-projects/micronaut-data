@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.jdbc.mapper;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -52,6 +53,33 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
         this.conversionService = conversionService == null ? ConversionService.SHARED : conversionService;
     }
 
+    /**
+     * Find the SQL type from {@link DataType}.
+     * @param dataType The data type
+     * @return The SQL type
+     */
+    @Internal
+    public static int findSqlType(@NonNull DataType dataType) {
+        return switch (dataType) {
+            case LONG -> Types.BIGINT;
+            case STRING, JSON -> Types.VARCHAR;
+            case DATE -> Types.DATE;
+            case BOOLEAN -> Types.BOOLEAN;
+            case INTEGER -> Types.INTEGER;
+            case TIMESTAMP -> Types.TIMESTAMP;
+            case TIME -> Types.TIME;
+            case OBJECT -> Types.OTHER;
+            case CHARACTER -> Types.CHAR;
+            case DOUBLE -> Types.DOUBLE;
+            case BYTE_ARRAY -> Types.BINARY;
+            case FLOAT -> Types.FLOAT;
+            case BIGDECIMAL -> Types.DECIMAL;
+            case BYTE -> Types.BIT;
+            case SHORT -> Types.TINYINT;
+            default -> -1;
+        };
+    }
+
     @Override
     public ConversionService getConversionService() {
         return conversionService;
@@ -62,65 +90,22 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
         if (value == null) {
             try {
                 switch (dataType) {
-                    case ENTITY:
-                        throw new IllegalStateException("Cannot set null value as ENTITY data type!");
-                    case LONG:
-                        statement.setNull(index, Types.BIGINT);
-                        return this;
-                    case STRING:
-                    case JSON:
-                        statement.setNull(index, Types.VARCHAR);
-                        return this;
-                    case DATE:
-                        statement.setNull(index, Types.DATE);
-                        return this;
-                    case BOOLEAN:
-                        statement.setNull(index, Types.BOOLEAN);
-                        return this;
-                    case INTEGER:
-                        statement.setNull(index, Types.INTEGER);
-                        return this;
-                    case TIMESTAMP:
-                        statement.setNull(index, Types.TIMESTAMP);
-                        return this;
-                    case TIME:
-                        statement.setNull(index, Types.TIME);
-                        return this;
-                    case OBJECT:
-                        statement.setNull(index, Types.OTHER);
-                        return this;
-                    case CHARACTER:
-                        statement.setNull(index, Types.CHAR);
-                        return this;
-                    case DOUBLE:
-                        statement.setNull(index, Types.DOUBLE);
-                        return this;
-                    case BYTE_ARRAY:
-                        statement.setNull(index, Types.BINARY);
-                        return this;
-                    case FLOAT:
-                        statement.setNull(index, Types.FLOAT);
-                        return this;
-                    case BIGDECIMAL:
-                        statement.setNull(index, Types.DECIMAL);
-                        return this;
-                    case BYTE:
-                        statement.setNull(index, Types.BIT);
-                        return this;
-                    case SHORT:
-                        statement.setNull(index, Types.TINYINT);
-                        return this;
-                    case UUID:
+                    case ENTITY -> throw new IllegalStateException("Cannot set null value as ENTITY data type!");
+                    case UUID -> {
                         statement.setNull(index, Types.OTHER, "uuid");
                         return this;
-
-                    default:
-                        if (dataType.isArray()) {
+                    }
+                    default -> {
+                        int sqlType = findSqlType(dataType);
+                        if (sqlType != -1) {
+                            statement.setNull(index, sqlType);
+                        } else if (dataType.isArray()) {
                             statement.setNull(index, Types.ARRAY);
                         } else {
                             statement.setNull(index, Types.NULL);
                         }
                         return this;
+                    }
                 }
             } catch (SQLException e) {
                 throw new DataAccessException("Error setting JDBC null value: " + e.getMessage(), e);

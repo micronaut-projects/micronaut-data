@@ -15,3 +15,4 @@ io.micronaut.data.processor.visitors.finders.ListMethodMatcher
 io.micronaut.data.processor.visitors.finders.UpdateMethodMatcher
 io.micronaut.data.processor.visitors.finders.SaveEntityMethodMatcher
 io.micronaut.data.processor.visitors.finders.SaveOneMethodMatcher
+io.micronaut.data.processor.visitors.finders.ProcedureMethodMatcher

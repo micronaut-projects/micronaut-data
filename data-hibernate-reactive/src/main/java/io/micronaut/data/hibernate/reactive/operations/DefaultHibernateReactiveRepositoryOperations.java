@@ -108,6 +108,26 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     }
 
     @Override
+    protected void setParameter(Stage.AbstractQuery query, int parameterIndex, Object value) {
+        query.setParameter(parameterIndex, value);
+    }
+
+    @Override
+    protected void setParameter(Stage.AbstractQuery query, int parameterIndex, Object value, Argument<?> argument) {
+        query.setParameter(parameterIndex, value);
+    }
+
+    @Override
+    protected void setParameterList(Stage.AbstractQuery query, int parameterIndex, Collection<Object> value) {
+        query.setParameter(parameterIndex, value);
+    }
+
+    @Override
+    protected void setParameterList(Stage.AbstractQuery query, int parameterIndex, Collection<Object> value, Argument<?> argument) {
+        query.setParameter(parameterIndex, value);
+    }
+
+    @Override
     protected void setHint(Stage.SelectionQuery<?> query, String hintName, Object value) {
         if (value instanceof EntityGraph plan) {
             query.setPlan(plan);
@@ -308,7 +328,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
         return operation(session -> {
             String query = preparedQuery.getQuery();
             Stage.Query<Object> q = session.createQuery(query);
-            bindParameters(q, preparedQuery);
+            bindParameters(q, preparedQuery, true);
             Mono<Number> result = helper.executeUpdate(q).cast(Number.class);
             return flushIfNecessary(result, session, preparedQuery.getAnnotationMetadata());
         });

@@ -55,7 +55,6 @@ import static io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_PAGE
 @Internal
 public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<RT> implements StoredQuery<E, RT> {
     private static final String DATA_METHOD_ANN_NAME = DataMethod.class.getName();
-    private static final int[] EMPTY_INT_ARRAY = new int[0];
     @NonNull
     private final Class<RT> resultType;
     @NonNull
@@ -67,15 +66,15 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     private final boolean isDto;
     private final boolean isOptimisticLock;
     private final boolean isNative;
+    private final boolean isProcedure;
     private final boolean isNumericPlaceHolder;
     private final boolean hasPageable;
     private final AnnotationMetadata annotationMetadata;
     private final boolean isCount;
-    private final DataType[] indexedDataTypes;
     private final boolean hasResultConsumer;
     private Map<String, Object> queryHints;
     private Set<JoinPath> joinFetchPaths = null;
-    private final List<StoredQueryParameter> queryParameters;
+    private final List<QueryParameterBinding> queryParameters;
     private final boolean rawQuery;
     private final boolean jsonEntity;
 
@@ -102,6 +101,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
         this.rootEntity = rootEntity;
         this.annotationMetadata = method.getAnnotationMetadata();
         this.isNative = method.isTrue(Query.class, "nativeQuery");
+        this.isProcedure = method.isTrue(DataMethod.class, DataMethod.META_MEMBER_PROCEDURE);
         this.hasResultConsumer = method.stringValue(DATA_METHOD_ANN_NAME, "sqlMappingFunction").isPresent();
         this.isNumericPlaceHolder = method
                 .classValue(RepositoryConfiguration.class, "queryBuilder")
@@ -147,19 +147,11 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
             }
         }
 
-        if (isNumericPlaceHolder) {
-            this.indexedDataTypes = annotationMetadata
-                    .getValue(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS, DataType[].class)
-                    .orElse(DataType.EMPTY_DATA_TYPE_ARRAY);
-        } else {
-            this.indexedDataTypes = null;
-        }
-
         if (annotation == null) {
             queryParameters = Collections.emptyList();
         } else {
             List<AnnotationValue<DataMethodQueryParameter>> params = annotation.getAnnotations(DataMethod.META_MEMBER_PARAMETERS, DataMethodQueryParameter.class);
-            List<StoredQueryParameter> queryParameters = new ArrayList<>(params.size());
+            List<QueryParameterBinding> queryParameters = new ArrayList<>(params.size());
             for (AnnotationValue<DataMethodQueryParameter> av : params) {
                 String[] propertyPath = av.stringValues(DataMethodQueryParameter.META_MEMBER_PROPERTY_PATH);
                 if (propertyPath.length == 0) {
@@ -195,7 +187,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
 
     @Override
     public List<QueryParameterBinding> getQueryBindings() {
-        return (List) queryParameters;
+        return queryParameters;
     }
 
     @NonNull
@@ -242,6 +234,11 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     @Override
     public boolean isNative() {
         return isNative;
+    }
+
+    @Override
+    public boolean isProcedure() {
+        return isProcedure;
     }
 
     /**

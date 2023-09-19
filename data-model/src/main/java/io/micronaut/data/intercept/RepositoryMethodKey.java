@@ -18,14 +18,54 @@ package io.micronaut.data.intercept;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.inject.ExecutableMethod;
 
+import java.util.Objects;
+
 /**
  * Key used to cache results for repository method invocations.
  *
- * @param repository The repository instance
- * @param method     The method
  * @author graemerocher
  * @since 1.0
  */
 @Internal
-public record RepositoryMethodKey(Object repository, ExecutableMethod<?, ?> method) {
+public final class RepositoryMethodKey {
+    private final Object repository;
+    private final ExecutableMethod<?, ?> method;
+    private final int hashCode;
+
+    /**
+     * @param repository The repository instance
+     * @param method     The method
+     */
+    public RepositoryMethodKey(Object repository, ExecutableMethod<?, ?> method) {
+        this.repository = repository;
+        this.method = method;
+        this.hashCode = Objects.hash(repository, method);
+    }
+
+    public Object repository() {
+        return repository;
+    }
+
+    public ExecutableMethod<?, ?> method() {
+        return method;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (obj == null || obj.getClass() != this.getClass()) {
+            return false;
+        }
+        var that = (RepositoryMethodKey) obj;
+        return Objects.equals(this.repository, that.repository) &&
+                Objects.equals(this.method, that.method);
+    }
+
+    @Override
+    public int hashCode() {
+        return hashCode;
+    }
+
 }

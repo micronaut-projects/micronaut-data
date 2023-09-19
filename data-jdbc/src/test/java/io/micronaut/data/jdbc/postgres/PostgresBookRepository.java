@@ -18,6 +18,7 @@ package io.micronaut.data.jdbc.postgres;
 import io.micronaut.data.annotation.Expandable;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeDef;
+import io.micronaut.data.annotation.sql.Procedure;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.repositories.BookRepository;
@@ -45,4 +46,10 @@ public abstract class PostgresBookRepository extends BookRepository {
 
     @Query("SELECT 'one\\:two\\:three'")
     public abstract String reproduceColonErrorEscaped();
+
+    @Procedure
+    public abstract int add1(int input);
+
+    @Procedure("add1")
+    public abstract int add1Aliased(int input);
 }

@@ -89,6 +89,7 @@ import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.Parameters;
 import io.r2dbc.spi.R2dbcType;
+import io.r2dbc.spi.Readable;
 import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.Statement;
@@ -392,6 +393,11 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             .flatMap(result -> Flux.from(result.map((row, rowMetadata) -> mapper.apply(row))));
     }
 
+    private static <T> Flux<T> executeAndMapEachReadable(Statement statement, Function<Readable, T> mapper) {
+        return Flux.from(statement.execute())
+            .flatMap(result -> Flux.from(result.map(mapper)));
+    }
+
     private static <T> Flux<T> executeAndMapEachRowNullable(Statement statement, Function<Row, T> mapper) {
         return Flux.from(statement.execute())
             .flatMap(result -> Flux.from(result.map((row, metadata) -> Mono.justOrEmpty(mapper.apply(row)))).flatMap(t -> t));
@@ -399,6 +405,10 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
     private static <T> Mono<T> executeAndMapEachRowSingle(Statement statement, Dialect dialect, Function<Row, T> mapper) {
         return executeAndMapEachRow(statement, mapper).onErrorResume(errorHandler(dialect)).as(DefaultR2dbcRepositoryOperations::toSingleResult);
+    }
+
+    private static <T> Mono<T> executeAndMapEachReadableSingle(Statement statement, Dialect dialect, Function<Readable, T> mapper) {
+        return executeAndMapEachReadable(statement, mapper).onErrorResume(errorHandler(dialect)).as(DefaultR2dbcRepositoryOperations::toSingleResult);
     }
 
     private static Mono<Number> executeAndGetRowsUpdatedSingle(Statement statement, Dialect dialect) {
@@ -523,6 +533,28 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         @Override
         public Mono<Number> executeDelete(@NonNull PreparedQuery<?, Number> preparedQuery) {
             return executeUpdate(preparedQuery);
+        }
+
+        @NonNull
+        @Override
+        public <R> Mono<R> execute(@NonNull PreparedQuery<?, R> pq) {
+            SqlPreparedQuery<?, R> preparedQuery = getSqlPreparedQuery(pq);
+            return executeWriteMono(preparedQuery, connection -> {
+                if (preparedQuery.isProcedure()) {
+                    int outIndex = preparedQuery.getQueryBindings().size();
+                    Statement statement = prepareStatement(connection::createStatement, preparedQuery, true, true);
+                    preparedQuery.bindParameters(new R2dbcParameterBinder(connection, statement, preparedQuery));
+                    if (!preparedQuery.getResultArgument().isVoid()) {
+                        statement = statement.bind(outIndex, Parameters.out(preparedQuery.getResultType()));
+                    }
+                    if (preparedQuery.getResultArgument().isVoid()) {
+                        return executeAndGetRowsUpdated(statement).then(Mono.empty());
+                    }
+                    return executeAndMapEachReadableSingle(statement, preparedQuery.getDialect(), readable -> readable.get(0, preparedQuery.getResultType()));
+                } else {
+                    throw new IllegalStateException("Not implemented");
+                }
+            });
         }
 
         @NonNull

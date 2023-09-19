@@ -25,7 +25,7 @@ class OracleXEReactiveRepositorySpec extends AbstractReactiveRepositorySpec impl
 
     @Memoized
     @Override
-    PersonReactiveRepository getPersonRepository() {
+    OracleXEPersonReactiveRepository getPersonRepository() {
         return context.getBean(OracleXEPersonReactiveRepository)
     }
 
@@ -33,6 +33,12 @@ class OracleXEReactiveRepositorySpec extends AbstractReactiveRepositorySpec impl
     @Override
     StudentReactiveRepository getStudentRepository() {
         return context.getBean(OracleXEStudentReactiveRepository)
+    }
+
+    void "test procedure"() {
+        expect:
+            personRepository.add1(123).block() == 124
+            personRepository.add1Aliased(123).block() == 124
     }
 
 }

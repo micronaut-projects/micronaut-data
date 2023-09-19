@@ -45,6 +45,11 @@ public @interface DataMethod {
     String NAME = DataMethod.class.getName();
 
     /**
+     * The member that holds the is procedure value.
+     */
+    String META_MEMBER_PROCEDURE = "procedure";
+
+    /**
      * The member that holds expandable query parts.
      */
     String META_MEMBER_EXPANDABLE_QUERY = "expandableQuery";
@@ -81,27 +86,37 @@ public @interface DataMethod {
 
     /**
      * The member name that holds parameter binding.
+     * @deprecated No longer used
      */
+    @Deprecated(forRemoval = true)
     String META_MEMBER_PARAMETER_BINDING = "parameterBinding";
 
     /**
      * The member name that holds parameter binding paths.
+     * @deprecated No longer used
      */
+    @Deprecated(forRemoval = true)
     String META_MEMBER_PARAMETER_BINDING_PATHS = META_MEMBER_PARAMETER_BINDING + "Paths";
 
     /**
      * The member name that holds parameter auto populated property paths.
+     * @deprecated No longer used
      */
+    @Deprecated(forRemoval = true)
     String META_MEMBER_PARAMETER_AUTO_POPULATED_PROPERTY_PATHS = META_MEMBER_PARAMETER_BINDING + "AutoPopulatedPaths";
 
     /**
      * The member name that holds parameter auto populated property paths.
+     * @deprecated No longer used
      */
+    @Deprecated(forRemoval = true)
     String META_MEMBER_PARAMETER_AUTO_POPULATED_PREVIOUS_PROPERTY_PATHS = META_MEMBER_PARAMETER_BINDING + "AutoPopulatedPreviousPaths";
 
     /**
      * The member name that holds parameter auto populated property paths.
+     * @deprecated No longer used
      */
+    @Deprecated(forRemoval = true)
     String META_MEMBER_PARAMETER_AUTO_POPULATED_PREVIOUS_PROPERTY_INDEXES = META_MEMBER_PARAMETER_BINDING + "AutoPopulatedPrevious";
 
     /**
@@ -156,12 +171,16 @@ public @interface DataMethod {
 
     /**
      * Meta member for storing the parameter type defs.
+     * @deprecated No longer used
      */
+    @Deprecated(forRemoval = true)
     String META_MEMBER_PARAMETER_TYPE_DEFS = "parameterTypeDefs";
 
     /**
      * Meta member for storing the parameter converters.
+     * @deprecated No longer used
      */
+    @Deprecated(forRemoval = true)
     String META_MEMBER_PARAMETER_CONVERTERS = "parameterConverters";
 
     /**
@@ -211,7 +230,9 @@ public @interface DataMethod {
      * {@link Property#value()} is used to define method argument name to bind.
      *
      * @return The parameter binding.
+     * @deprecated No longer used
      */
+    @Deprecated(forRemoval = true)
     Property[] parameterBinding() default {};
 
     /**
@@ -251,6 +272,12 @@ public @interface DataMethod {
      * @return The query parameters
      */
     DataMethodQueryParameter[] parameters() default {};
+
+    /**
+     * @return True if the method represents the procedure invocation.
+     * @since 4.2.0
+     */
+    boolean procedure() default false;
 
     /**
      * Describes the operation type.

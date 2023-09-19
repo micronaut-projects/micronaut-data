@@ -1,4 +1,4 @@
-package io.micronaut.data.jdbc.postgres;
+package io.micronaut.data.hibernate;
 
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.event.BeanCreatedEvent;
@@ -9,10 +9,7 @@ import jakarta.inject.Singleton;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.JDBCType;
 import java.sql.SQLException;
-import java.sql.SQLType;
-import java.sql.Types;
 import java.util.Locale;
 import java.util.Properties;
 
@@ -40,16 +37,6 @@ public class PostgresDbInit implements BeanCreatedEventListener<BasicJdbcConfigu
 
         try {
             try (Connection connection = DriverManager.getConnection(configuration.getUrl(), info)) {
-                try (CallableStatement callableStatement = connection.prepareCall("CREATE EXTENSION \"uuid-ossp\";")) {
-                    callableStatement.execute();
-                } catch (SQLException e) {
-                    // Ignore if already exists
-                }
-                try (CallableStatement st = connection.prepareCall("CREATE TYPE happiness AS ENUM ('happy', 'very_happy', 'ecstatic');")) {
-                    st.execute();
-                } catch (SQLException e) {
-                    // Ignore if already exists
-                }
                 try (CallableStatement st = connection.prepareCall("""
 CREATE PROCEDURE add1(IN myInput integer, OUT myOutput integer)
 LANGUAGE plpgsql

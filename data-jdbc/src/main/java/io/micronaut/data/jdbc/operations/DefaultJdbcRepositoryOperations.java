@@ -34,7 +34,9 @@ import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.jdbc.convert.JdbcConversionContext;
+import io.micronaut.data.jdbc.mapper.ColumnIndexCallableResultReader;
 import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;
+import io.micronaut.data.jdbc.mapper.ColumnNameCallableResultReader;
 import io.micronaut.data.jdbc.mapper.ColumnNameResultSetReader;
 import io.micronaut.data.jdbc.mapper.JdbcQueryStatement;
 import io.micronaut.data.jdbc.mapper.SqlResultConsumer;
@@ -148,6 +150,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final SchemaTenantResolver schemaTenantResolver;
     private final JdbcSchemaHandler schemaHandler;
 
+    private final ColumnNameCallableResultReader columnNameCallableResultReader;
+    private final ColumnIndexCallableResultReader columnIndexCallableResultReader;
+
     /**
      * Default constructor.
      *
@@ -208,6 +213,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         this.executorService = executorService;
         this.cascadeOperations = new SyncCascadeOperations<>(conversionService, this);
         this.jdbcConfiguration = jdbcConfiguration;
+        this.columnNameCallableResultReader = new ColumnNameCallableResultReader(conversionService);
+        this.columnIndexCallableResultReader = new ColumnIndexCallableResultReader(conversionService);
     }
 
     @NonNull
@@ -478,6 +485,45 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         checkOptimisticLocking(1, result);
                     }
                     return Optional.of(result);
+                }
+            } catch (SQLException e) {
+                Throwable throwable = handleSqlException(e, preparedQuery.getDialect());
+                if (throwable instanceof DataAccessException dataAccessException) {
+                    throw dataAccessException;
+                }
+                throw new DataAccessException("Error executing SQL UPDATE: " + e.getMessage(), e);
+            }
+        });
+    }
+
+    @Override
+    public <R> Optional<R> execute(PreparedQuery<?, R> pq) {
+        return executeWrite(connection -> {
+            SqlPreparedQuery<?, R> preparedQuery = getSqlPreparedQuery(pq);
+            try {
+                if (preparedQuery.isProcedure()) {
+                    try (CallableStatement callableStatement = connection.prepareCall(preparedQuery.getQuery())) {
+                        preparedQuery.bindParameters(new JdbcParameterBinder(connection, callableStatement, preparedQuery));
+                        if (!preparedQuery.getResultArgument().isVoid()) {
+                            DataType resultDataType = preparedQuery.getResultDataType();
+                            int sqlType = JdbcQueryStatement.findSqlType(resultDataType);
+                            int outIndex = preparedQuery.getQueryBindings().size() + 1;
+                            callableStatement.registerOutParameter(outIndex, sqlType);
+                        }
+                        callableStatement.execute();
+                        if (preparedQuery.getResultArgument().isVoid()) {
+                            return Optional.empty();
+                        }
+                        int outIndex = preparedQuery.getQueryBindings().size() + 1;
+                        Object result = columnIndexCallableResultReader.readDynamic(
+                                callableStatement,
+                                outIndex,
+                                preparedQuery.getResultDataType()
+                        );
+                        return Optional.ofNullable((R) result);
+                    }
+                } else {
+                    throw new IllegalStateException("Not implemented");
                 }
             } catch (SQLException e) {
                 Throwable throwable = handleSqlException(e, preparedQuery.getDialect());
@@ -968,9 +1014,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             previousValues = storedQuery.collectAutoPopulatedPreviousValues(entity);
         }
 
-        private PreparedStatement prepare(Connection connection, SqlStoredQuery storedQuery) throws SQLException {
-            if (storedQuery instanceof SqlPreparedQuery) {
-                ((SqlPreparedQuery) storedQuery).prepare(entity);
+        private PreparedStatement prepare(Connection connection, SqlStoredQuery<T, ?> storedQuery) throws SQLException {
+            if (storedQuery instanceof SqlPreparedQuery<T, ?> sqlPreparedQuery) {
+                sqlPreparedQuery.prepare(entity);
             }
             if (insert) {
                 Dialect dialect = storedQuery.getDialect();

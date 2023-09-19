@@ -171,6 +171,12 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleXET
         return true
     }
 
+    void "test procedure"() {
+        expect:
+            bookRepository.add1(123) == 124
+            bookRepository.add1Aliased(123) == 124
+    }
+
     void "test ANY queries"() {
         given:
             saveSampleBooks()

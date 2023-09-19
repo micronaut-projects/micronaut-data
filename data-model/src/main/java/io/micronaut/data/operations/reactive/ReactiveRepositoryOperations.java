@@ -18,6 +18,7 @@ package io.micronaut.data.operations.reactive;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.core.convert.ConversionServiceProvider;
+import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.runtime.*;
 import org.reactivestreams.Publisher;
@@ -164,9 +165,7 @@ public interface ReactiveRepositoryOperations extends ConversionServiceProvider 
      */
     @NonNull
     @SingleResult
-    Publisher<Number> executeUpdate(
-            @NonNull PreparedQuery<?, Number> preparedQuery
-    );
+    Publisher<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery);
 
     /**
      * Executes a batch delete for the given query and parameter values. If it is possible to
@@ -176,10 +175,21 @@ public interface ReactiveRepositoryOperations extends ConversionServiceProvider 
      */
     @NonNull
     @SingleResult
-    default Publisher<Number> executeDelete(
-            @NonNull PreparedQuery<?, Number> preparedQuery
-    ) {
+    default Publisher<Number> executeDelete(@NonNull PreparedQuery<?, Number> preparedQuery) {
         return executeUpdate(preparedQuery);
+    }
+
+    /**
+     * Executes the given query with parameter values returning a result.
+     *
+     * @param preparedQuery The prepared query
+     * @param <R>           The result type
+     * @return A publisher that emits the result
+     * @since 4.2.0
+     */
+    @NonNull
+    default <R> Publisher<R> execute(@NonNull PreparedQuery<?, R> preparedQuery) {
+        throw new DataAccessException("Current repository: " + getClass() + " doesn't support method 'execute'!");
     }
 
     /**

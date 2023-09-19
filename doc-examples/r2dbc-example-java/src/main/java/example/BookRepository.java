@@ -2,6 +2,7 @@ package example;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.sql.Procedure;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.repository.reactive.ReactiveStreamsCrudRepository;
@@ -36,4 +37,10 @@ public interface BookRepository extends ReactiveStreamsCrudRepository<Book, Long
     @Transactional(Transactional.TxType.MANDATORY)
     <S extends Book> Publisher<S> saveAll(@NonNull @Valid @NotNull Iterable<S> entities);
     // end::mandatory[]
+
+    // tag::procedure[]
+    @Procedure
+    Mono<Long> calculateSum(@NonNull Long bookId);
+    // end::procedure[]
+
 }

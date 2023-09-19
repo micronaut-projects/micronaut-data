@@ -135,6 +135,13 @@ public interface BlockingReactorRepositoryOperations extends RepositoryOperation
     }
 
     @Override
+    default <R> Optional<R> execute(PreparedQuery<?, R> preparedQuery) {
+        return reactive().execute(preparedQuery)
+            .contextWrite(getContextView())
+            .blockOptional();
+    }
+
+    @Override
     default <T> int delete(@NonNull DeleteOperation<T> operation) {
         return reactive().delete(operation)
             .contextWrite(getContextView())

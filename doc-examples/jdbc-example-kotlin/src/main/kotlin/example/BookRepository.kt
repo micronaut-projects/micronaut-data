@@ -3,9 +3,14 @@
 package example
 
 import io.micronaut.context.annotation.Executable
-import io.micronaut.data.annotation.*
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.Query
+import io.micronaut.data.annotation.sql.Procedure
 import io.micronaut.data.jdbc.annotation.JdbcRepository
-import io.micronaut.data.model.*
+import io.micronaut.data.model.Page
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Slice
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
 import jakarta.transaction.Transactional
@@ -107,6 +112,12 @@ interface BookRepository : CrudRepository<Book, Long> { // <2>
     @Query("select * from book b where b.title like :title limit 5")
     fun findBooks(title: String): List<Book>
     // end::native[]
+
+    // end::native[]
+    // tag::procedure[]
+    @Procedure
+    fun calculateSum(bookId: @NonNull Long): Long
+    // end::procedure[]
 
 // tag::repository[]
 }
