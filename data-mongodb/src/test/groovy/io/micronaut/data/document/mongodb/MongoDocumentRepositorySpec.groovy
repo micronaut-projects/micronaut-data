@@ -153,6 +153,7 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
             personRepository.save(new Person(name: "Steven", age: 33, addresses: [new Address("Husinecka", "13300")]))
 
         when:
+            personRepository.updateMissingAddressesToAnEmptyArray()
             personRepository.updateMissingZipcodeInAddress("15500")
             def denisPerson = personRepository.findByName("Denis")
 

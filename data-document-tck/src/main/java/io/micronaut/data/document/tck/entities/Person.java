@@ -39,7 +39,7 @@ public class Person {
     private LocalDate dateOfBirth;
 
     @Nullable
-    private List<Address> addresses = List.of();
+    private List<Address> addresses;
 
     public String getId() {
         return id;
