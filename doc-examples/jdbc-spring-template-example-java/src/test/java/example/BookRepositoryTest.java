@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @MicronautTest
 @Property(name = "spec.name", value = "BookRepositoryTest")
 @Property(name = "datasources.default.name", value = "mydb")
-@Property(name = "datasources.default.transaction-manager", value = "springJdbc")
+@Property(name = "datasources.default.transactionManager", value = "springJdbc")
 @Property(name = "jpa.default.properties.hibernate.hbm2ddl.auto", value = "create-drop")
 class BookRepositoryTest {
 
