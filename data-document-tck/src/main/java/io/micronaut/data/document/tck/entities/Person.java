@@ -20,8 +20,10 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
+import jakarta.persistence.Embedded;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @MappedEntity
 public class Person {
@@ -35,6 +37,9 @@ public class Person {
 
     @Nullable
     private LocalDate dateOfBirth;
+
+    @Nullable
+    private List<Address> addresses = List.of();
 
     public String getId() {
         return id;
@@ -74,6 +79,14 @@ public class Person {
 
     public void setDateOfBirth(LocalDate dateOfBirth) {
         this.dateOfBirth = dateOfBirth;
+    }
+
+    public List<Address> getAddresses() {
+        return addresses;
+    }
+
+    public void setAddresses(List<Address> addresses) {
+        this.addresses = addresses;
     }
 
     @Override
