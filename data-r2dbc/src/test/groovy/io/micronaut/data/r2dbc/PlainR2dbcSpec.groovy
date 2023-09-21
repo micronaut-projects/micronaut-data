@@ -16,19 +16,22 @@
 package io.micronaut.data.r2dbc
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.data.r2dbc.operations.R2dbcOperations
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.transaction.reactive.ReactiveTransactionOperations
 import io.r2dbc.spi.Connection
 import io.r2dbc.spi.ConnectionFactory
 import io.r2dbc.spi.Result
+import io.r2dbc.spi.Row
+import io.r2dbc.spi.RowMetadata
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
-import java.util.stream.Collectors
+import java.util.function.BiFunction
 import java.util.stream.LongStream
 
 abstract class PlainR2dbcSpec extends Specification {
@@ -38,6 +41,8 @@ abstract class PlainR2dbcSpec extends Specification {
     ApplicationContext context = ApplicationContext.run(properties)
 
     ConnectionFactory connectionFactory = context.getBean(ConnectionFactory)
+
+    R2dbcOperations r2dbcOperations = context.getBean(R2dbcOperations)
 
     ReactiveTransactionOperations<Connection> reactiveTransactionOperations = context.getBean(ReactiveTransactionOperations)
 
@@ -51,8 +56,62 @@ abstract class PlainR2dbcSpec extends Specification {
         'INSERT INTO author (name) VALUES ($1)'
     }
 
+    protected String getSelectByIdQuery() {
+        'SELECT * FROM author WHERE id=$1'
+    }
+
+    def "use withTransaction and withConnection"() {
+        given:
+            ByteArrayOutputStream out = new ByteArrayOutputStream()
+            System.setOut(new PrintStream(out))
+        when:
+            authorRepository.deleteAll()
+            def author = new Author(name: "Denis")
+            authorRepository.save(author)
+            Mono<Long> newRecord = Mono.from(r2dbcOperations.<Author> withTransaction(status -> saveAuthor(status.getConnection(), "Test")))
+            Long id = newRecord.block()
+        then:
+            out.toString().isEmpty()
+            id
+        when:
+            Mono<Author> testResultAuthor = Mono.from(r2dbcOperations.<Author> withTransaction(status -> findById(status.getConnection(), id)))
+            Author testAuthor = testResultAuthor.block()
+        then:
+            out.toString().isEmpty()
+            testAuthor.name == "Test"
+        when:
+            Mono<Author> testResultAuthor2 = Mono.from(r2dbcOperations.<Author> withConnection(connection -> findById(connection, id)))
+            Author testAuthor2 = testResultAuthor2.block()
+        then:
+            out.toString().isEmpty()
+            testAuthor2.name == "Test"
+        cleanup:
+            System.setOut(System.out)
+    }
+
+    protected Mono<Long> saveAuthor(Connection connection, String name) {
+        return Mono.from(connection.createStatement(getInsertQuery()).bind(0, name).returnGeneratedValues("id").execute())
+                .flatMap(r -> Mono.from(r.map((row, rowMetadata) -> row.get("id", Long.class))))
+    }
+
+    protected Mono<Author> findById(Connection connection, Long id) {
+        return Mono.from(connection.createStatement(getSelectByIdQuery()).bind(0, id).execute())
+                .flatMap(r -> Mono.from(r.map(mappingFn())))
+                .switchIfEmpty(Mono.empty())
+    }
+
+    protected static BiFunction<Row, RowMetadata, Author> mappingFn() {
+        return new BiFunction<Row, RowMetadata, Author>() {
+            @Override
+            Author apply(Row row, RowMetadata rowMetadata) {
+                return new Author(name: row.get("name", String));
+            }
+        }
+    }
+
     def "save one"() {
         when:
+            authorRepository.deleteAll()
             def author = new Author(name: "Denis")
             def result = Flux.usingWhen(connectionFactory.create(), connection -> {
                 return Flux.usingWhen(Mono.from(connection.beginTransaction()).then(Mono.just(connection)),

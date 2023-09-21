@@ -33,4 +33,8 @@ class OracleXEPlainR2dbcSpec extends PlainR2dbcSpec implements OracleXETestPrope
         return 'INSERT INTO author (id, name) VALUES (\"AUTHOR_SEQ\".nextval, ?)'
     }
 
+    @Override
+    protected String getSelectByIdQuery() {
+        return 'SELECT * FROM author WHERE id=?'
+    }
 }
