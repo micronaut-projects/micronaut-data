@@ -101,9 +101,10 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
             def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Student))
 
         then:
-            statements.length == 2
-            statements[0] == 'CREATE TABLE "m2m_student_course_association" ("st_id" BIGINT NOT NULL,"cs_id" BIGINT NOT NULL);'
-            statements[1] == 'CREATE TABLE "m2m_student" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL);'
+            statements.length == 3
+            statements[0] == 'CREATE SCHEMA "students";'
+            statements[1] == 'CREATE TABLE "students"."m2m_student_course_association" ("st_id" BIGINT NOT NULL,"cs_id" BIGINT NOT NULL);'
+            statements[2] == 'CREATE TABLE "students"."m2m_student" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL);'
     }
 
     void "test build create CourseRating tables"() {
@@ -112,8 +113,9 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
             def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(CourseRating))
 
         then:
-            statements.length == 1
-            statements[0] == 'CREATE TABLE "m2m_course_rating" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"student_id" BIGINT NOT NULL,"course_id" BIGINT NOT NULL,"rating" INT NOT NULL);'
+            statements.length == 2
+            statements[0] == 'CREATE SCHEMA "students";'
+            statements[1] == 'CREATE TABLE "students"."m2m_course_rating" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"student_id" BIGINT NOT NULL,"course_id" BIGINT NOT NULL,"rating" INT NOT NULL);'
     }
 
     void "test build create Course tables"() {
@@ -122,8 +124,9 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
             def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Course))
 
         then:
-            statements.length == 1
-            statements[0] == 'CREATE TABLE "m2m_course" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL);'
+            statements.length == 2
+            statements[0] == 'CREATE SCHEMA "students";'
+            statements[1] == 'CREATE TABLE "students"."m2m_course" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL);'
     }
 
     void "test build Student select with courses"() {
@@ -133,7 +136,7 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
             queryModel.join("courses", Join.Type.FETCH, null)
             def q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel.idEq(new QueryParameter("id")))
         then:
-            q.query == 'SELECT student_."id",student_."name",student_courses_."id" AS courses_id,student_courses_."name" AS courses_name FROM "m2m_student" student_ INNER JOIN "m2m_student_course_association" student_courses_m2m_student_course_association_ ON student_."id"=student_courses_m2m_student_course_association_."st_id"  INNER JOIN "m2m_course" student_courses_ ON student_courses_m2m_student_course_association_."cs_id"=student_courses_."id" WHERE (student_."id" = ?)'
+            q.query == 'SELECT student_."id",student_."name",student_courses_."id" AS courses_id,student_courses_."name" AS courses_name FROM "students"."m2m_student" student_ INNER JOIN "students"."m2m_student_course_association" student_courses_m2m_student_course_association_ ON student_."id"=student_courses_m2m_student_course_association_."st_id"  INNER JOIN "students"."m2m_course" student_courses_ ON student_courses_m2m_student_course_association_."cs_id"=student_courses_."id" WHERE (student_."id" = ?)'
             q.parameters == ['1': 'id']
     }
 
@@ -144,7 +147,7 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
             queryModel.join("ratings", Join.Type.FETCH, null)
             def q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel.idEq(new QueryParameter("id")))
         then:
-            q.query == 'SELECT student_."id",student_."name",student_ratings_."id" AS ratings_id,student_ratings_."student_id" AS ratings_student_id,student_ratings_."course_id" AS ratings_course_id,student_ratings_."rating" AS ratings_rating FROM "m2m_student" student_ INNER JOIN "m2m_course_rating" student_ratings_ ON student_."id"=student_ratings_."student_id" WHERE (student_."id" = ?)'
+            q.query == 'SELECT student_."id",student_."name",student_ratings_."id" AS ratings_id,student_ratings_."student_id" AS ratings_student_id,student_ratings_."course_id" AS ratings_course_id,student_ratings_."rating" AS ratings_rating FROM "students"."m2m_student" student_ INNER JOIN "students"."m2m_course_rating" student_ratings_ ON student_."id"=student_ratings_."student_id" WHERE (student_."id" = ?)'
             q.parameters == ['1': 'id']
     }
 
@@ -155,7 +158,7 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
             def query = encoder.buildJoinTableInsert(e, e.getPropertyByName("courses") as Association)
 
         then:
-            query == 'INSERT INTO "m2m_student_course_association" ("st_id","cs_id") VALUES (?,?)'
+            query == 'INSERT INTO "students"."m2m_student_course_association" ("st_id","cs_id") VALUES (?,?)'
     }
 
     void "test build CourseRatingCompositeKey insert"() {
@@ -165,7 +168,7 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
             def insert = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, e)
 
         then:
-            insert.query == 'INSERT INTO "m2m_course_rating_ck" ("rating","xyz_student_id","abc_course_id") VALUES (?,?,?)'
+            insert.query == 'INSERT INTO "students"."m2m_course_rating_ck" ("rating","xyz_student_id","abc_course_id") VALUES (?,?,?)'
     }
 
     @Shared
@@ -245,7 +248,7 @@ interface CourseRatingCompositeKeyRepository extends CrudRepository<CourseRating
 }
 
 @EqualsAndHashCode(includes = "id")
-@MappedEntity("m2m_student")
+@MappedEntity(value = "m2m_student", schema = "students")
 class Student {
     @Id
     @GeneratedValue
@@ -264,7 +267,7 @@ class Student {
 }
 
 @EqualsAndHashCode(includes = "id")
-@MappedEntity("m2m_course")
+@MappedEntity(value = "m2m_course", schema = "students")
 class Course {
     @Id
     @GeneratedValue
@@ -276,7 +279,7 @@ class Course {
     Set<CourseRating> ratings
 }
 
-@MappedEntity("m2m_course_rating")
+@MappedEntity(value = "m2m_course_rating", schema = "students")
 class CourseRating {
     @Id
     @GeneratedValue
@@ -288,7 +291,7 @@ class CourseRating {
     int rating
 }
 
-@MappedEntity("m2m_course_rating_ck")
+@MappedEntity(value = "m2m_course_rating_ck", schema = "students")
 class CourseRatingCompositeKey {
     @EmbeddedId
     CourseRatingKey id

@@ -285,6 +285,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     .orElseGet(() ->
                             getMappedName(namingStrategy, association)
                     );
+            joinTableName = quote(joinTableName);
+            String joinTableSchema = annotationMetadata
+                    .stringValue(ANN_JOIN_TABLE, "schema")
+                    .orElse(getSchemaName(entity));
+            if (StringUtils.isNotEmpty(joinTableSchema)) {
+                joinTableSchema = quote(joinTableSchema);
+                joinTableName = joinTableSchema + DOT + joinTableName;
+            }
             List<String> leftJoinColumns = resolveJoinTableJoinColumns(annotationMetadata, true, entity, namingStrategy);
             List<String> rightJoinColumns = resolveJoinTableJoinColumns(annotationMetadata, false, association.getAssociatedEntity(), namingStrategy);
             boolean escape = shouldEscape(entity);
@@ -292,7 +300,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     .map(columnName -> escape ? quote(columnName) : columnName)
                     .collect(Collectors.joining(","));
             String placeholders = IntStream.range(0, leftJoinColumns.size() + rightJoinColumns.size()).mapToObj(i -> formatParameter(i + 1).toString()).collect(Collectors.joining(","));
-            return INSERT_INTO + quote(joinTableName) + " (" + columns + ") VALUES (" + placeholders + ")";
+            return INSERT_INTO + joinTableName + " (" + columns + ") VALUES (" + placeholders + ")";
         }
     }
 
@@ -358,6 +366,17 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         );
                 if (escape) {
                     joinTableName = quote(joinTableName);
+                }
+                String joinTableSchema = annotationMetadata.stringValue(ANN_JOIN_TABLE, SqlMembers.SCHEMA).orElse(null);
+                if (StringUtils.isNotEmpty(joinTableSchema)) {
+                    if (escape) {
+                        joinTableSchema = quote(joinTableSchema);
+                    }
+                } else {
+                    joinTableSchema = schema;
+                }
+                if (StringUtils.isNotEmpty(joinTableSchema)) {
+                    joinTableBuilder.append(joinTableSchema).append(DOT);
                 }
                 joinTableBuilder.append(joinTableName).append(" (");
                 List<PersistentPropertyPath> leftProperties = new ArrayList<>();
@@ -1418,16 +1437,28 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 associationJoinTableColumns = associationJoinTableColumns.stream().map(this::quote).collect(Collectors.toList());
             }
 
+            String joinTableSchema = annotationMetadata
+                .stringValue(ANN_JOIN_TABLE, "schema")
+                .orElse(getSchemaName(associationOwner));
+            if (StringUtils.isNotEmpty(joinTableSchema)) {
+                if (escape) {
+                    joinTableSchema = quote(joinTableSchema);
+                }
+            }
             String joinTableName = annotationMetadata
                     .stringValue(ANN_JOIN_TABLE, "name")
                     .orElseGet(() -> getMappedName(namingStrategy, association));
             String joinTableAlias = annotationMetadata
                     .stringValue(ANN_JOIN_TABLE, "alias")
                     .orElseGet(() -> currentJoinAlias + joinTableName + "_");
+            String finalTableName = escape ? quote(joinTableName) : joinTableName;
+            if (StringUtils.isNotEmpty(joinTableSchema)) {
+                finalTableName = joinTableSchema + DOT + finalTableName;
+            }
             join(sb,
                     queryState.getQueryModel(),
                     joinType,
-                    escape ? quote(joinTableName) : joinTableName,
+                    finalTableName,
                     joinTableAlias,
                     joinAlias,
                     ownerJoinColumns,
@@ -1768,7 +1799,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             boolean messageFormat = positionalParameterFormat.endsWith("%s");
             if (messageFormat) {
                 String pattern = positionalParameterFormat.substring(0, positionalParameterFormat.length() - 2);
-                pattern = java.util.regex.Pattern.quote(pattern) + "\\d";
+                pattern = Pattern.quote(pattern) + "\\d";
                 this.positionalParameterPattern = Pattern.compile(pattern);
             } else {
                 this.positionalParameterPattern = Pattern.compile(Pattern.quote(positionalParameterFormat));
