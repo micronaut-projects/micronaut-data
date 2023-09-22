@@ -287,7 +287,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     );
             joinTableName = quote(joinTableName);
             String joinTableSchema = annotationMetadata
-                    .stringValue(ANN_JOIN_TABLE, "schema")
+                    .stringValue(ANN_JOIN_TABLE, SqlMembers.SCHEMA)
                     .orElse(getSchemaName(entity));
             if (StringUtils.isNotEmpty(joinTableSchema)) {
                 joinTableSchema = quote(joinTableSchema);
@@ -1229,7 +1229,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     private String getSchemaName(PersistentEntity entity) {
         return entity.getAnnotationMetadata().stringValue(MappedEntity.class, SqlMembers.SCHEMA).orElseGet(() ->
-            entity.getAnnotationMetadata().stringValue(MappedEntity.class, "schema").orElse(null)
+            entity.getAnnotationMetadata().stringValue(MappedEntity.class, SqlMembers.SCHEMA).orElse(null)
         );
     }
 
@@ -1438,12 +1438,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             }
 
             String joinTableSchema = annotationMetadata
-                .stringValue(ANN_JOIN_TABLE, "schema")
+                .stringValue(ANN_JOIN_TABLE, SqlMembers.SCHEMA)
                 .orElse(getSchemaName(associationOwner));
-            if (StringUtils.isNotEmpty(joinTableSchema)) {
-                if (escape) {
-                    joinTableSchema = quote(joinTableSchema);
-                }
+            if (StringUtils.isNotEmpty(joinTableSchema) && escape) {
+                joinTableSchema = quote(joinTableSchema);
             }
             String joinTableName = annotationMetadata
                     .stringValue(ANN_JOIN_TABLE, "name")
