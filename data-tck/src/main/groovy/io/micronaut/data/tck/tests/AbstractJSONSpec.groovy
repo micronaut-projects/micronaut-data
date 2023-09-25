@@ -26,7 +26,6 @@ import io.micronaut.data.tck.repositories.JsonEntityRepository
 import io.micronaut.data.tck.repositories.SaleItemRepository
 import io.micronaut.data.tck.repositories.SaleRepository
 import spock.lang.AutoCleanup
-import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -242,7 +241,6 @@ abstract class AbstractJSONSpec extends Specification {
         cleanup()
     }
 
-    @Ignore
     void 'test save/update iterable'() {
         given:
         def a = new JsonEntity(id: 1, values: List.of("item1", "item2"))

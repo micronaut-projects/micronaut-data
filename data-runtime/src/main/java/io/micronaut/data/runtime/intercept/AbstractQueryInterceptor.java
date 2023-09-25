@@ -523,8 +523,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
         BeanWrapper<Object> wrapper = BeanWrapper.getWrapper(instance);
         Collection<? extends PersistentProperty> persistentProperties = entity.getPersistentProperties();
-        // TODO: Temp disable to debug issue with Oracle JSON View
-        /*PersistentProperty identity = entity.getIdentity();
+        PersistentProperty identity = entity.getIdentity();
         if (identity != null) {
             setProperty(wrapper, identity, parameterValues);
         } else {
@@ -534,7 +533,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                     setProperty(wrapper, compositeIdentity, parameterValues);
                 }
             }
-        }*/
+        }
         for (PersistentProperty prop : persistentProperties) {
             setProperty(wrapper, prop, parameterValues);
         }
