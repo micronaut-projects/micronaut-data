@@ -523,23 +523,19 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
         BeanWrapper<Object> wrapper = BeanWrapper.getWrapper(instance);
         Collection<? extends PersistentProperty> persistentProperties = entity.getPersistentProperties();
-        for (PersistentProperty prop : persistentProperties) {
-            if (!prop.isReadOnly() && !prop.isGenerated()) {
-                String propName = prop.getName();
-                if (parameterValues.containsKey(propName)) {
-
-                    Object v = parameterValues.get(propName);
-                    if (v == null && !prop.isOptional()) {
-                        throw new IllegalArgumentException("Argument [" + propName + "] cannot be null");
-                    }
-                    wrapper.setProperty(propName, v);
-                } else if (prop.isRequired()) {
-                    final Optional<Object> p = wrapper.getProperty(propName, Object.class);
-                    if (!p.isPresent()) {
-                        throw new IllegalArgumentException("Argument [" + propName + "] cannot be null");
-                    }
+        PersistentProperty identity = entity.getIdentity();
+        if (identity != null) {
+            setProperty(wrapper, identity, parameterValues);
+        } else {
+            PersistentProperty[] compositeIdentities = entity.getCompositeIdentity();
+            if (compositeIdentities != null && compositeIdentities.length > 0) {
+                for (PersistentProperty compositeIdentity : compositeIdentities) {
+                    setProperty(wrapper, compositeIdentity, parameterValues);
                 }
             }
+        }
+        for (PersistentProperty prop : persistentProperties) {
+            setProperty(wrapper, prop, parameterValues);
         }
         return instance;
     }
@@ -756,6 +752,33 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             ).orElse(false);
         }
         return Number.class.isAssignableFrom(type);
+    }
+
+    /**
+     * Sets the property value for given persistent property of the {@link BeanWrapper} if property
+     * present in given parameter values and property not readonly or generated.
+     *
+     * @param wrapper the bean wrapper
+     * @param prop the persistent property
+     * @param parameterValues the parameter value map
+     */
+    private static void setProperty(BeanWrapper<Object> wrapper, PersistentProperty prop, Map<String, Object> parameterValues) {
+        if (!prop.isReadOnly() && !prop.isGenerated()) {
+            String propName = prop.getName();
+            if (parameterValues.containsKey(propName)) {
+
+                Object v = parameterValues.get(propName);
+                if (v == null && !prop.isOptional()) {
+                    throw new IllegalArgumentException("Argument [" + propName + "] cannot be null");
+                }
+                wrapper.setProperty(propName, v);
+            } else if (prop.isRequired()) {
+                final Optional<Object> p = wrapper.getProperty(propName, Object.class);
+                if (!p.isPresent()) {
+                    throw new IllegalArgumentException("Argument [" + propName + "] cannot be null");
+                }
+            }
+        }
     }
 
     /**
