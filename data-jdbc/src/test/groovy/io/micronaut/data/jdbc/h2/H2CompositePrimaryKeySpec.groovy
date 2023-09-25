@@ -15,7 +15,13 @@
  */
 package io.micronaut.data.jdbc.h2
 
-
+import io.micronaut.core.annotation.AnnotationMetadata
+import io.micronaut.data.annotation.Join
+import io.micronaut.data.model.PersistentEntity
+import io.micronaut.data.model.query.QueryModel
+import io.micronaut.data.model.query.QueryParameter
+import io.micronaut.data.model.query.builder.QueryBuilder
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.tck.jdbc.entities.Project
 import io.micronaut.data.tck.jdbc.entities.ProjectId
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
@@ -49,6 +55,7 @@ class H2CompositePrimaryKeySpec extends Specification {
 
         when:"Querying for an entity by ID"
         project = projectRepository.findById(id).orElse(null)
+        def projects = projectRepository.findByProjectIdIn(List.of(id))
 
         then:"The entity is retrieved"
         project != null
@@ -56,6 +63,8 @@ class H2CompositePrimaryKeySpec extends Specification {
         project.projectId.projectId == 1
         project.name == "project 1"
         projectRepository.existsById(id)
+        projects.size()
+        projects.contains(project)
 
         when: "An update is executed"
         projectRepository.update(id, "Project Changed")
@@ -71,5 +80,22 @@ class H2CompositePrimaryKeySpec extends Specification {
 
         then:"The object was deleted"
         project == null
+    }
+
+    void "test build findByProjectIdIn"() {
+        given:
+        QueryBuilder encoder = new SqlQueryBuilder()
+        when:
+        def queryModel = QueryModel.from(PersistentEntity.of(Project))
+        def q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel.eq("projectId", new QueryParameter("projectId")))
+        then:
+        q.query == 'SELECT project_."project_id_department_id",project_."project_id_project_id",LOWER(project_.name) AS name,project_.name AS db_name,UPPER(project_.org) AS org FROM "project" project_ WHERE (project_."project_id_department_id" = ? AND project_."project_id_project_id" = ?)'
+        q.parameters == ["1": "projectId.departmentId", "2": "projectId.projectId"]
+        when:
+        queryModel = QueryModel.from(PersistentEntity.of(Project))
+        q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel.inList("projectId", new QueryParameter("projectIds")))
+        then:
+        q.query == 'SELECT project_."project_id_department_id",project_."project_id_project_id",LOWER(project_.name) AS name,project_.name AS db_name,UPPER(project_.org) AS org FROM "project" project_ WHERE (project_."project_id" IN (?))'
+        q.parameters == ["1": "projectId"]
     }
 }

@@ -20,7 +20,11 @@ import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.jdbc.entities.Project;
 import io.micronaut.data.tck.jdbc.entities.ProjectId;
 
+import java.util.List;
+
 public interface ProjectRepository extends CrudRepository<Project, ProjectId> {
 
     void update(@Id ProjectId projectId, String name);
+
+    List<Project> findByProjectIdIn(List<ProjectId> projectIds);
 }

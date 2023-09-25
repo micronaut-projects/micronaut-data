@@ -21,6 +21,8 @@ import io.micronaut.data.annotation.sql.ColumnTransformer;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 
+import java.util.Objects;
+
 @Entity
 public class Project {
     @EmbeddedId
@@ -73,5 +75,25 @@ public class Project {
 
     public void setOrg(@Nullable String org) {
         this.org = org;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(projectId);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (obj.getClass() == this.getClass()) {
+            Project other = (Project) obj;
+            return Objects.equals(projectId, other.projectId);
+        }
+        return false;
     }
 }
