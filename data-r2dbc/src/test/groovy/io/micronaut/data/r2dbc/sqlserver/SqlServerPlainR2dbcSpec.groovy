@@ -34,7 +34,7 @@ class SqlServerPlainR2dbcSpec extends PlainR2dbcSpec implements SqlServerTestPro
 
     @Override
     protected String getSelectByIdQuery() {
-        'SELECT * FROM author WHERE id=@id'
+        'SELECT * FROM author WHERE id = @id'
     }
 
 }

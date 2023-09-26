@@ -20,16 +20,13 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.async.propagation.ReactorPropagation;
 import io.micronaut.core.propagation.PropagatedContextElement;
-import io.micronaut.data.connection.ConnectionDefinition;
-import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.exceptions.NoConnectionException;
+import io.micronaut.data.connection.ConnectionDefinition;
+import io.micronaut.data.connection.reactive.DefaultReactiveConnectionStatus;
 import io.micronaut.data.connection.reactive.ReactiveStreamsConnectionOperations;
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
+import io.micronaut.data.connection.ConnectionStatus;
 import org.reactivestreams.Publisher;
-import org.reactivestreams.Subscriber;
-import org.reactivestreams.Subscription;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.context.Context;
@@ -48,29 +45,6 @@ import java.util.function.Function;
  */
 @Internal
 public abstract class AbstractReactorConnectionOperations<C> implements ReactorConnectionOperations<C> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(AbstractReactorConnectionOperations.class);
-
-    private static final Subscriber<Void> CLOSE_CONNECTION_SUBSCRIBER = new Subscriber<>() {
-        @Override
-        public void onSubscribe(Subscription s) {
-
-        }
-
-        @Override
-        public void onNext(Void unused) {
-
-        }
-
-        @Override
-        public void onError(Throwable t) {
-            LOG.debug("Failed to close the connection", t);
-        }
-
-        @Override
-        public void onComplete() {
-        }
-    };
 
     /**
      * Open a new connection.
@@ -106,7 +80,7 @@ public abstract class AbstractReactorConnectionOperations<C> implements ReactorC
     @NonNull
     @Override
     public <T> Flux<T> withConnectionFlux(@NonNull ConnectionDefinition definition,
-                                          @NonNull Function<ConnectionStatus<C>, Flux<T>> callback) {
+                                                @NonNull Function<ConnectionStatus<C>, Flux<T>> callback) {
         Objects.requireNonNull(callback, "Callback cannot be null");
         return Flux.deferContextual(contextView -> {
             C connection = findConnection(contextView);
@@ -129,18 +103,19 @@ public abstract class AbstractReactorConnectionOperations<C> implements ReactorC
     }
 
     private <T> Flux<T> openConnectionFlux(ConnectionDefinition definition, Function<ConnectionStatus<C>, Flux<T>> callback) {
-        return Mono.from(openConnection(definition))
-            .flatMapMany(connection -> {
-                DefaultConnectionStatus<C> status = new DefaultConnectionStatus<>(connection, definition, true);
-                return callback.apply(status).contextWrite(ctx -> addClientSession(ctx, status))
-                    .doAfterTerminate(() -> closeConnection(connection, definition).subscribe(CLOSE_CONNECTION_SUBSCRIBER));
-            });
+        return Flux.usingWhen(
+            Mono.from(openConnection(definition)).map(connection -> new DefaultReactiveConnectionStatus<>(connection, definition, true)),
+            connectionStatus -> callback.apply(connectionStatus).contextWrite(ctx -> addClientSession(ctx, connectionStatus)),
+            connectionStatus -> connectionStatus.onComplete(() -> closeConnection(connectionStatus.getConnection(), definition)),
+            (connectionStatus, throwable) -> connectionStatus.onError(throwable, () -> closeConnection(connectionStatus.getConnection(), definition)),
+            connectionStatus -> connectionStatus.onCancel(() -> closeConnection(connectionStatus.getConnection(), definition))
+        );
     }
 
     @NonNull
     @Override
     public <T> Mono<T> withConnectionMono(@NonNull ConnectionDefinition definition,
-                                          @NonNull Function<ConnectionStatus<C>, Mono<T>> callback) {
+                                                @NonNull Function<ConnectionStatus<C>, Mono<T>> callback) {
         Objects.requireNonNull(callback, "Callback cannot be null");
         return Mono.deferContextual(contextView -> {
             C connection = findConnection(contextView);
@@ -164,12 +139,11 @@ public abstract class AbstractReactorConnectionOperations<C> implements ReactorC
 
     private <T> Mono<T> openConnectionMono(ConnectionDefinition definition, Function<ConnectionStatus<C>, Mono<T>> callback) {
         return Mono.usingWhen(
-            openConnection(definition),
-            connection -> {
-                DefaultConnectionStatus<C> status = new DefaultConnectionStatus<>(connection, definition, true);
-                return callback.apply(status).contextWrite(ctx -> addClientSession(ctx, status));
-            },
-            connection -> closeConnection(connection, definition)
+            Mono.from(openConnection(definition)).map(connection -> new DefaultReactiveConnectionStatus<>(connection, definition, true)),
+            connectionStatus -> callback.apply(connectionStatus).contextWrite(ctx -> addClientSession(ctx, connectionStatus)),
+            connectionStatus -> connectionStatus.onComplete(() -> closeConnection(connectionStatus.getConnection(), definition)),
+            (connectionStatus, throwable) -> connectionStatus.onError(throwable, () -> closeConnection(connectionStatus.getConnection(), definition)),
+            connectionStatus -> connectionStatus.onCancel(() -> closeConnection(connectionStatus.getConnection(), definition))
         );
     }
 

@@ -60,6 +60,10 @@ abstract class PlainR2dbcSpec extends Specification {
         'SELECT * FROM author WHERE id=$1'
     }
 
+    protected String correctOutput(String output) {
+        return output
+    }
+
     def "use withTransaction and withConnection"() {
         given:
             ByteArrayOutputStream out = new ByteArrayOutputStream()
@@ -71,20 +75,32 @@ abstract class PlainR2dbcSpec extends Specification {
             Mono<Long> newRecord = Mono.from(r2dbcOperations.<Author> withTransaction(status -> saveAuthor(status.getConnection(), "Test")))
             Long id = newRecord.block()
         then:
-            out.toString().isEmpty()
+            correctOutput(out.toString()).isEmpty()
             id
         when:
             Mono<Author> testResultAuthor = Mono.from(r2dbcOperations.<Author> withTransaction(status -> findById(status.getConnection(), id)))
             Author testAuthor = testResultAuthor.block()
         then:
-            out.toString().isEmpty()
+            correctOutput(out.toString()).isEmpty()
             testAuthor.name == "Test"
         when:
             Mono<Author> testResultAuthor2 = Mono.from(r2dbcOperations.<Author> withConnection(connection -> findById(connection, id)))
             Author testAuthor2 = testResultAuthor2.block()
         then:
-            out.toString().isEmpty()
+            correctOutput(out.toString()).isEmpty()
             testAuthor2.name == "Test"
+        when:
+            Mono<Author> testResultAuthor3 = Mono.from(r2dbcOperations.<Author> withConnection(connection -> findById(connection, 3333L)))
+            Author testAuthor3 = testResultAuthor3.block()
+        then:
+            correctOutput(out.toString()).isEmpty()
+            testAuthor3 == null
+        when:
+            Mono<Author> testResultAuthor4 = Mono.from(r2dbcOperations.<Author> withTransaction(status -> findById(status.getConnection(), 3333L)))
+            Author testAuthor4 = testResultAuthor4.block()
+        then:
+            correctOutput(out.toString()).isEmpty()
+            testAuthor4 == null
         cleanup:
             System.setOut(System.out)
     }
