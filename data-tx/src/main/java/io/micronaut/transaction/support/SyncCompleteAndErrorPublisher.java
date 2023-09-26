@@ -59,7 +59,11 @@ final class SyncCompleteAndErrorPublisher<T> implements CorePublisher<T> {
 
     @Override
     public void subscribe(Subscriber<? super T> actualSubscriber) {
-        doSubscribe(actualSubscriber, null);
+        if (actualSubscriber instanceof CoreSubscriber<? super T> coreSubscriber) {
+            doSubscribe(actualSubscriber, coreSubscriber);
+        } else {
+            doSubscribe(actualSubscriber, null);
+        }
     }
 
     private void doSubscribe(Subscriber<? super T> actualSubscriber, @Nullable CoreSubscriber<? super T> coreSubscriber) {
