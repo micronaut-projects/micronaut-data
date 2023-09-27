@@ -519,6 +519,10 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/transaction/test/DefaultTestTransactionExecutionListener.html#afterCleanupTest(io.micronaut.test.context.TestContext)" class="member-name-link">afterCleanupTest(TestContext)</a> - Method in class io.micronaut.transaction.test.<a href="io/micronaut/transaction/test/DefaultTestTransactionExecutionListener.html" title="class in io.micronaut.transaction.test">DefaultTestTransactionExecutionListener</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/connection/reactive/ReactiveConnectionSynchronization.html#afterClose()" class="member-name-link">afterClose()</a> - Method in interface io.micronaut.data.connection.reactive.<a href="io/micronaut/data/connection/reactive/ReactiveConnectionSynchronization.html" title="interface in io.micronaut.data.connection.reactive">ReactiveConnectionSynchronization</a></dt>
+<dd>
+<div class="block">Invoked after the connection is closed.</div>
+</dd>
 <dt><a href="io/micronaut/data/connection/ConnectionSynchronization.html#afterClosed()" class="member-name-link">afterClosed()</a> - Method in interface io.micronaut.data.connection.<a href="io/micronaut/data/connection/ConnectionSynchronization.html" title="interface in io.micronaut.data.connection">ConnectionSynchronization</a></dt>
 <dd>
 <div class="block">Invoked after the connection is closed.</div>
@@ -3256,6 +3260,12 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">The reactive R2DBC connection operations implementation.</div>
 </dd>
+<dt><a href="io/micronaut/data/connection/reactive/DefaultReactiveConnectionStatus.html" class="type-name-link" title="class in io.micronaut.data.connection.reactive">DefaultReactiveConnectionStatus</a>&lt;<a href="io/micronaut/data/connection/reactive/DefaultReactiveConnectionStatus.html" title="type parameter in DefaultReactiveConnectionStatus">C</a>&gt; - Class in <a href="io/micronaut/data/connection/reactive/package-summary.html">io.micronaut.data.connection.reactive</a></dt>
+<dd>
+<div class="block">The default reactive connection status.</div>
+</dd>
+<dt><a href="io/micronaut/data/connection/reactive/DefaultReactiveConnectionStatus.html#%3Cinit%3E(C,io.micronaut.data.connection.ConnectionDefinition,boolean)" class="member-name-link">DefaultReactiveConnectionStatus(C, ConnectionDefinition, boolean)</a> - Constructor for class io.micronaut.data.connection.reactive.<a href="io/micronaut/data/connection/reactive/DefaultReactiveConnectionStatus.html" title="class in io.micronaut.data.connection.reactive">DefaultReactiveConnectionStatus</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/cosmos/operations/DefaultReactiveCosmosRepositoryOperations.html" class="type-name-link" title="class in io.micronaut.data.cosmos.operations">DefaultReactiveCosmosRepositoryOperations</a> - Class in <a href="io/micronaut/data/cosmos/operations/package-summary.html">io.micronaut.data.cosmos.operations</a></dt>
 <dd>
 <div class="block">The reactive Cosmos DB repository operations implementation.</div>
@@ -6183,6 +6193,8 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/data/connection/jdbc/advice/DelegatingDataSource.html#getConnection()" class="member-name-link">getConnection()</a> - Method in class io.micronaut.data.connection.jdbc.advice.<a href="io/micronaut/data/connection/jdbc/advice/DelegatingDataSource.html" title="class in io.micronaut.data.connection.jdbc.advice">DelegatingDataSource</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/connection/reactive/DefaultReactiveConnectionStatus.html#getConnection()" class="member-name-link">getConnection()</a> - Method in class io.micronaut.data.connection.reactive.<a href="io/micronaut/data/connection/reactive/DefaultReactiveConnectionStatus.html" title="class in io.micronaut.data.connection.reactive">DefaultReactiveConnectionStatus</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/connection/support/DefaultConnectionStatus.html#getConnection()" class="member-name-link">getConnection()</a> - Method in class io.micronaut.data.connection.support.<a href="io/micronaut/data/connection/support/DefaultConnectionStatus.html" title="class in io.micronaut.data.connection.support">DefaultConnectionStatus</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/convert/JdbcConversionContext.html#getConnection()" class="member-name-link">getConnection()</a> - Method in interface io.micronaut.data.jdbc.convert.<a href="io/micronaut/data/jdbc/convert/JdbcConversionContext.html" title="interface in io.micronaut.data.jdbc.convert">JdbcConversionContext</a></dt>
@@ -6418,6 +6430,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">The connection definition.</div>
 </dd>
+<dt><a href="io/micronaut/data/connection/reactive/DefaultReactiveConnectionStatus.html#getDefinition()" class="member-name-link">getDefinition()</a> - Method in class io.micronaut.data.connection.reactive.<a href="io/micronaut/data/connection/reactive/DefaultReactiveConnectionStatus.html" title="class in io.micronaut.data.connection.reactive">DefaultReactiveConnectionStatus</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/connection/support/DefaultConnectionStatus.html#getDefinition()" class="member-name-link">getDefinition()</a> - Method in class io.micronaut.data.connection.support.<a href="io/micronaut/data/connection/support/DefaultConnectionStatus.html" title="class in io.micronaut.data.connection.support">DefaultConnectionStatus</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getDeleteAllBatchOperation(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getDeleteAllBatchOperation(MethodInvocationContext&lt;T, ?&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="class in io.micronaut.data.runtime.intercept">AbstractQueryInterceptor</a></dt>
@@ -10078,6 +10092,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">A new connection value.</div>
 </dd>
+<dt><a href="io/micronaut/data/connection/reactive/DefaultReactiveConnectionStatus.html#isNew()" class="member-name-link">isNew()</a> - Method in class io.micronaut.data.connection.reactive.<a href="io/micronaut/data/connection/reactive/DefaultReactiveConnectionStatus.html" title="class in io.micronaut.data.connection.reactive">DefaultReactiveConnectionStatus</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/connection/support/DefaultConnectionStatus.html#isNew()" class="member-name-link">isNew()</a> - Method in class io.micronaut.data.connection.support.<a href="io/micronaut/data/connection/support/DefaultConnectionStatus.html" title="class in io.micronaut.data.connection.support">DefaultConnectionStatus</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/support/AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus.html#isNewTransaction()" class="member-name-link">isNewTransaction()</a> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus.html" title="class in io.micronaut.transaction.support">AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus</a></dt>
@@ -12598,6 +12614,22 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html#on(jakarta.persistence.criteria.Predicate...)" class="member-name-link">on(Predicate...)</a> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentSetAssociationPath</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/connection/reactive/ReactiveConnectionSynchronization.html#onCancel()" class="member-name-link">onCancel()</a> - Method in interface io.micronaut.data.connection.reactive.<a href="io/micronaut/data/connection/reactive/ReactiveConnectionSynchronization.html" title="interface in io.micronaut.data.connection.reactive">ReactiveConnectionSynchronization</a></dt>
+<dd>
+<div class="block">Invoked when the connection operation is canceled.</div>
+</dd>
+<dt><a href="io/micronaut/data/connection/reactive/DefaultReactiveConnectionStatus.html#onCancel(java.util.function.Supplier)" class="member-name-link">onCancel(Supplier&lt;Publisher&lt;Void&gt;&gt;)</a> - Method in class io.micronaut.data.connection.reactive.<a href="io/micronaut/data/connection/reactive/DefaultReactiveConnectionStatus.html" title="class in io.micronaut.data.connection.reactive">DefaultReactiveConnectionStatus</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/connection/reactive/ReactiveConnectionSynchronization.html#onClose()" class="member-name-link">onClose()</a> - Method in interface io.micronaut.data.connection.reactive.<a href="io/micronaut/data/connection/reactive/ReactiveConnectionSynchronization.html" title="interface in io.micronaut.data.connection.reactive">ReactiveConnectionSynchronization</a></dt>
+<dd>
+<div class="block">Invoked before the connection is closed.</div>
+</dd>
+<dt><a href="io/micronaut/data/connection/reactive/ReactiveConnectionSynchronization.html#onComplete()" class="member-name-link">onComplete()</a> - Method in interface io.micronaut.data.connection.reactive.<a href="io/micronaut/data/connection/reactive/ReactiveConnectionSynchronization.html" title="interface in io.micronaut.data.connection.reactive">ReactiveConnectionSynchronization</a></dt>
+<dd>
+<div class="block">Invoked when the connection operation execution is completed.</div>
+</dd>
+<dt><a href="io/micronaut/data/connection/reactive/DefaultReactiveConnectionStatus.html#onComplete(java.util.function.Supplier)" class="member-name-link">onComplete(Supplier&lt;Publisher&lt;Void&gt;&gt;)</a> - Method in class io.micronaut.data.connection.reactive.<a href="io/micronaut/data/connection/reactive/DefaultReactiveConnectionStatus.html" title="class in io.micronaut.data.connection.reactive">DefaultReactiveConnectionStatus</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/connection/jdbc/advice/ContextualAwareDataSource.html#onCreated(io.micronaut.context.event.BeanCreatedEvent)" class="member-name-link">onCreated(BeanCreatedEvent&lt;DataSource&gt;)</a> - Method in class io.micronaut.data.connection.jdbc.advice.<a href="io/micronaut/data/connection/jdbc/advice/ContextualAwareDataSource.html" title="class in io.micronaut.data.connection.jdbc.advice">ContextualAwareDataSource</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/annotation/Relation.Kind.html#ONE_TO_MANY" class="member-name-link">ONE_TO_MANY</a> - Enum constant in enum class io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/Relation.Kind.html" title="enum class in io.micronaut.data.annotation">Relation.Kind</a></dt>
@@ -12616,6 +12648,12 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">One relation serializer.</div>
 </dd>
+<dt><a href="io/micronaut/data/connection/reactive/ReactiveConnectionSynchronization.html#onError(java.lang.Throwable)" class="member-name-link">onError(Throwable)</a> - Method in interface io.micronaut.data.connection.reactive.<a href="io/micronaut/data/connection/reactive/ReactiveConnectionSynchronization.html" title="interface in io.micronaut.data.connection.reactive">ReactiveConnectionSynchronization</a></dt>
+<dd>
+<div class="block">Invoked when the connection operation execution throws an exception.</div>
+</dd>
+<dt><a href="io/micronaut/data/connection/reactive/DefaultReactiveConnectionStatus.html#onError(java.lang.Throwable,java.util.function.Supplier)" class="member-name-link">onError(Throwable, Supplier&lt;Publisher&lt;Void&gt;&gt;)</a> - Method in class io.micronaut.data.connection.reactive.<a href="io/micronaut/data/connection/reactive/DefaultReactiveConnectionStatus.html" title="class in io.micronaut.data.connection.reactive">DefaultReactiveConnectionStatus</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/mappers/jpa/jakarta/OneToManyMapper.html" class="type-name-link" title="class in io.micronaut.data.processor.mappers.jpa.jakarta">OneToManyMapper</a> - Class in <a href="io/micronaut/data/processor/mappers/jpa/jakarta/package-summary.html">io.micronaut.data.processor.mappers.jpa.jakarta</a></dt>
 <dd>
 <div class="block">Maps JPA's <code>OneToMany</code> annotation to <a href="io/micronaut/data/annotation/Relation.html" title="annotation interface in io.micronaut.data.annotation"><code>Relation</code></a>.</div>
@@ -14485,6 +14523,14 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">The cascade operations helper.</div>
 </dd>
+<dt><a href="io/micronaut/data/connection/reactive/ReactiveConnectionStatus.html" class="type-name-link" title="interface in io.micronaut.data.connection.reactive">ReactiveConnectionStatus</a>&lt;<a href="io/micronaut/data/connection/reactive/ReactiveConnectionStatus.html" title="type parameter in ReactiveConnectionStatus">C</a>&gt; - Interface in <a href="io/micronaut/data/connection/reactive/package-summary.html">io.micronaut.data.connection.reactive</a></dt>
+<dd>
+<div class="block">The reactive connection status.</div>
+</dd>
+<dt><a href="io/micronaut/data/connection/reactive/ReactiveConnectionSynchronization.html" class="type-name-link" title="interface in io.micronaut.data.connection.reactive">ReactiveConnectionSynchronization</a> - Interface in <a href="io/micronaut/data/connection/reactive/package-summary.html">io.micronaut.data.connection.reactive</a></dt>
+<dd>
+<div class="block">Interface for the reactive connection synchronization callbacks.</div>
+</dd>
 <dt><a href="io/micronaut/data/hibernate/reactive/repository/jpa/intercept/ReactiveCountSpecificationInterceptor.html" class="type-name-link" title="class in io.micronaut.data.hibernate.reactive.repository.jpa.intercept">ReactiveCountSpecificationInterceptor</a> - Class in <a href="io/micronaut/data/hibernate/reactive/repository/jpa/intercept/package-summary.html">io.micronaut.data.hibernate.reactive.repository.jpa.intercept</a></dt>
 <dd>
 <div class="block">Interceptor that supports count specifications.</div>
@@ -15043,6 +15089,12 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/predicate/PredicateBinaryOp.html#REGEX" class="member-name-link">REGEX</a> - Enum constant in enum class io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/PredicateBinaryOp.html" title="enum class in io.micronaut.data.model.jpa.criteria.impl.predicate">PredicateBinaryOp</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/connection/reactive/ReactiveConnectionStatus.html#registerReactiveSynchronization(io.micronaut.data.connection.reactive.ReactiveConnectionSynchronization)" class="member-name-link">registerReactiveSynchronization(ReactiveConnectionSynchronization)</a> - Method in interface io.micronaut.data.connection.reactive.<a href="io/micronaut/data/connection/reactive/ReactiveConnectionStatus.html" title="interface in io.micronaut.data.connection.reactive">ReactiveConnectionStatus</a></dt>
+<dd>
+<div class="block">Register reactive connection synchronization.</div>
+</dd>
+<dt><a href="io/micronaut/data/connection/reactive/DefaultReactiveConnectionStatus.html#registerReactiveSynchronization(io.micronaut.data.connection.reactive.ReactiveConnectionSynchronization)" class="member-name-link">registerReactiveSynchronization(ReactiveConnectionSynchronization)</a> - Method in class io.micronaut.data.connection.reactive.<a href="io/micronaut/data/connection/reactive/DefaultReactiveConnectionStatus.html" title="class in io.micronaut.data.connection.reactive">DefaultReactiveConnectionStatus</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/connection/ConnectionStatus.html#registerSynchronization(io.micronaut.data.connection.ConnectionSynchronization)" class="member-name-link">registerSynchronization(ConnectionSynchronization)</a> - Method in interface io.micronaut.data.connection.<a href="io/micronaut/data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a></dt>
 <dd>
 <div class="block">Register connection synchronization.</div>
@@ -15053,6 +15105,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Register a new transaction synchronization for the current state.</div>
 </dd>
+<dt><a href="io/micronaut/data/connection/reactive/DefaultReactiveConnectionStatus.html#registerSynchronization(io.micronaut.data.connection.ConnectionSynchronization)" class="member-name-link">registerSynchronization(ConnectionSynchronization)</a> - Method in class io.micronaut.data.connection.reactive.<a href="io/micronaut/data/connection/reactive/DefaultReactiveConnectionStatus.html" title="class in io.micronaut.data.connection.reactive">DefaultReactiveConnectionStatus</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/connection/support/DefaultConnectionStatus.html#registerSynchronization(io.micronaut.data.connection.ConnectionSynchronization)" class="member-name-link">registerSynchronization(ConnectionSynchronization)</a> - Method in class io.micronaut.data.connection.support.<a href="io/micronaut/data/connection/support/DefaultConnectionStatus.html" title="class in io.micronaut.data.connection.support">DefaultConnectionStatus</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/support/AbstractConversionContext.html#reject(java.lang.Exception)" class="member-name-link">reject(Exception)</a> - Method in class io.micronaut.data.runtime.support.<a href="io/micronaut/data/runtime/support/AbstractConversionContext.html" title="class in io.micronaut.data.runtime.support">AbstractConversionContext</a></dt>
