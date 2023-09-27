@@ -22,6 +22,7 @@ import io.micronaut.core.async.propagation.ReactorPropagation;
 import io.micronaut.core.propagation.PropagatedContextElement;
 import io.micronaut.data.connection.exceptions.NoConnectionException;
 import io.micronaut.data.connection.ConnectionDefinition;
+import io.micronaut.data.connection.reactive.DefaultReactiveConnectionStatus;
 import io.micronaut.data.connection.reactive.ReactiveStreamsConnectionOperations;
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
@@ -103,12 +104,11 @@ public abstract class AbstractReactorConnectionOperations<C> implements ReactorC
 
     private <T> Flux<T> openConnectionFlux(ConnectionDefinition definition, Function<ConnectionStatus<C>, Flux<T>> callback) {
         return Flux.usingWhen(
-            openConnection(definition),
-            connection -> {
-                DefaultConnectionStatus<C> status = new DefaultConnectionStatus<>(connection, definition, true);
-                return callback.apply(status).contextWrite(ctx -> addClientSession(ctx, status));
-            },
-            connection -> closeConnection(connection, definition)
+            Mono.from(openConnection(definition)).map(connection -> new DefaultReactiveConnectionStatus<>(connection, definition, true)),
+            connectionStatus -> callback.apply(connectionStatus).contextWrite(ctx -> addClientSession(ctx, connectionStatus)),
+            connectionStatus -> connectionStatus.onComplete(() -> closeConnection(connectionStatus.getConnection(), definition)),
+            (connectionStatus, throwable) -> connectionStatus.onError(throwable, () -> closeConnection(connectionStatus.getConnection(), definition)),
+            connectionStatus -> connectionStatus.onCancel(() -> closeConnection(connectionStatus.getConnection(), definition))
         );
     }
 
@@ -139,12 +139,11 @@ public abstract class AbstractReactorConnectionOperations<C> implements ReactorC
 
     private <T> Mono<T> openConnectionMono(ConnectionDefinition definition, Function<ConnectionStatus<C>, Mono<T>> callback) {
         return Mono.usingWhen(
-            openConnection(definition),
-            connection -> {
-                DefaultConnectionStatus<C> status = new DefaultConnectionStatus<>(connection, definition, true);
-                return callback.apply(status).contextWrite(ctx -> addClientSession(ctx, status));
-            },
-            connection -> closeConnection(connection, definition)
+            Mono.from(openConnection(definition)).map(connection -> new DefaultReactiveConnectionStatus<>(connection, definition, true)),
+            connectionStatus -> callback.apply(connectionStatus).contextWrite(ctx -> addClientSession(ctx, connectionStatus)),
+            connectionStatus -> connectionStatus.onComplete(() -> closeConnection(connectionStatus.getConnection(), definition)),
+            (connectionStatus, throwable) -> connectionStatus.onError(throwable, () -> closeConnection(connectionStatus.getConnection(), definition)),
+            connectionStatus -> connectionStatus.onCancel(() -> closeConnection(connectionStatus.getConnection(), definition))
         );
     }
 
