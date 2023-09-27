@@ -15,12 +15,18 @@
  */
 package io.micronaut.data.processor.sql
 
+import io.micronaut.core.annotation.AnnotationMetadata
+import io.micronaut.data.annotation.Join
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.PersistentEntity
+
 import io.micronaut.data.model.entities.Invoice
+import io.micronaut.data.model.query.QueryModel
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
+import io.micronaut.data.processor.entity.ActivityPeriodEntity
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Restaurant
@@ -1045,5 +1051,39 @@ interface H2NoIdEntityRepository extends CrudRepository<NoIdEntity, Long> {
 ''')
         then:
             noExceptionThrown()
+    }
+
+    void "test embedded id join"() {
+        given:
+        def repository = buildRepository('test.TestRepository', '''
+
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.processor.entity.ActivityPeriodEntity;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface TestRepository extends GenericRepository<ActivityPeriodEntity, UUID> {
+
+    @Join(value = "persons.id.person", type = Join.Type.LEFT)
+    List<ActivityPeriodEntity> findAll();
+}
+
+''')
+        expect:"The repository to compile"
+        repository != null
+        when:
+        def queryFindAll = getQuery(repository.getRequiredMethod("findAll"))
+        then:
+        queryFindAll == 'SELECT activity_period_entity_.`id`,activity_period_entity_.`name`,activity_period_entity_.`description`,activity_period_entity_.`type` FROM `activity_period` activity_period_entity_ LEFT JOIN `activity_period_person` activity_period_entity_persons_ ON activity_period_entity_.`id`=activity_period_entity_persons_.`activity_period_id` LEFT JOIN `activity_person` activity_period_entity_persons_id_person_ ON activity_period_entity_persons_.`person_id`=activity_period_entity_persons_id_person_.`id`'
+        when:
+        def test = QueryModel.from(PersistentEntity.of(ActivityPeriodEntity))
+        test.join("persons.id.person", Join.Type.LEFT, null)
+        def builder = new SqlQueryBuilder(Dialect.H2)
+        def result = builder.buildQuery(AnnotationMetadata.EMPTY_METADATA, test)
+        def query = result.query
+        then:
+        query == queryFindAll
     }
 }
