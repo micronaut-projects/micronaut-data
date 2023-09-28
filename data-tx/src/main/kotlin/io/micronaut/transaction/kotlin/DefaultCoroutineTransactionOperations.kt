@@ -20,13 +20,18 @@ import io.micronaut.context.annotation.Requires
 import io.micronaut.core.annotation.Internal
 import io.micronaut.core.async.propagation.KotlinCoroutinePropagation
 import io.micronaut.core.async.propagation.ReactorPropagation
+import io.micronaut.data.connection.ConnectionStatus
 import io.micronaut.transaction.TransactionDefinition
+import io.micronaut.transaction.TransactionStatus
 import io.micronaut.transaction.reactive.ReactiveTransactionOperations
+import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations
 import jakarta.inject.Singleton
 import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.ReactorContext
 import kotlinx.coroutines.reactor.mono
 import kotlinx.coroutines.withContext
+import reactor.util.context.Context
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The default implementation of CoroutineTransactionOperations that is using the reactive TX manager.
@@ -35,10 +40,10 @@ import kotlinx.coroutines.withContext
  * @since 4.2.0
  */
 @Requires(classes = [ReactorContext::class])
-@EachBean(ReactiveTransactionOperations::class)
+@EachBean(ReactorReactiveTransactionOperations::class)
 @Singleton
 @Internal
-class DefaultCoroutineTransactionOperations<C>(private val reactiveTransactionOperations: ReactiveTransactionOperations<C>) : CoroutineTransactionOperations<C> {
+class DefaultCoroutineTransactionOperations<C>(private val reactiveTransactionOperations: ReactorReactiveTransactionOperations<C>) : CoroutineTransactionOperations<C> {
 
     override suspend fun <R> execute(definition: TransactionDefinition,
                                      handler: suspend (CoroutineTransactionStatus<C>) -> R): R {
@@ -61,5 +66,16 @@ class DefaultCoroutineTransactionOperations<C>(private val reactiveTransactionOp
                 handler(DefaultCoroutineTransactionStatus(it))
             }
         }.awaitSingle()
+    }
+
+    override fun findTransactionStatus(coroutineContext: CoroutineContext): CoroutineTransactionStatus<C>? {
+        val micronautPropagatedContext = KotlinCoroutinePropagation.findPropagatedContext(coroutineContext)
+        if (micronautPropagatedContext != null) {
+            val reactorContext = ReactorPropagation.addPropagatedContext(Context.empty(), micronautPropagatedContext)
+            return reactiveTransactionOperations.findTransactionStatus(reactorContext)
+                .map { DefaultCoroutineTransactionStatus(it) }
+                .orElse(null)
+        }
+        return null
     }
 }

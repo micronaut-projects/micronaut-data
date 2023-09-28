@@ -18,6 +18,7 @@ package io.micronaut.data.connection.kotlin
 import io.micronaut.core.annotation.Experimental
 import io.micronaut.data.connection.ConnectionDefinition
 import io.micronaut.data.connection.ConnectionStatus
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The connection operations that supports coroutines.
@@ -27,6 +28,12 @@ import io.micronaut.data.connection.ConnectionStatus
  */
 @Experimental
 interface CoroutineConnectionOperations<C> {
+
+    /**
+     * Find optional propagated connection status.
+     * @return The connection status.
+     */
+    fun findConnectionStatus(coroutineContext: CoroutineContext): ConnectionStatus<C>?
 
     /**
      * Execute the given handler with a new connection.

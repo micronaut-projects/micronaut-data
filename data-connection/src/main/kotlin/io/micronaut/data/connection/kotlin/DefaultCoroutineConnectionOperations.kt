@@ -28,6 +28,7 @@ import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.ReactorContext
 import kotlinx.coroutines.reactor.mono
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The default implementation of CoroutineConnectionOperations that is using the reactive connection manager.
@@ -61,5 +62,13 @@ class DefaultCoroutineConnectionOperations<C>(private val reactiveConnectionOper
                  handler(it)
             }
         }.awaitSingle()
+    }
+
+    override fun findConnectionStatus(coroutineContext: CoroutineContext): ConnectionStatus<C>? {
+        val reactorContext = coroutineContext[ReactorContext.Key]
+        if (reactorContext != null) {
+            return reactiveConnectionOperations.findConnectionStatus(reactorContext.context).orElse(null)
+        }
+        return null
     }
 }

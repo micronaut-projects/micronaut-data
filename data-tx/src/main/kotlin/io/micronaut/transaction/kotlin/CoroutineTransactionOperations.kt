@@ -17,6 +17,9 @@ package io.micronaut.transaction.kotlin
 
 import io.micronaut.core.annotation.Experimental
 import io.micronaut.transaction.TransactionDefinition
+import io.micronaut.transaction.TransactionStatus
+import java.util.*
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The transaction operations that supports coroutines.
@@ -26,6 +29,12 @@ import io.micronaut.transaction.TransactionDefinition
  */
 @Experimental
 interface CoroutineTransactionOperations<C> {
+
+    /**
+     * Find optional propagated transaction status.
+     * @return The transaction status.
+     */
+    fun findTransactionStatus(coroutineContext: CoroutineContext): CoroutineTransactionStatus<C>?
 
     /**
      * Execute the given handler with a new transaction.
