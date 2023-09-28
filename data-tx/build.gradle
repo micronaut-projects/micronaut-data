@@ -1,9 +1,12 @@
 plugins {
     id "io.micronaut.build.internal.data-module"
+    id "io.micronaut.build.internal.data-kotlin"
+    id "org.jetbrains.kotlin.kapt"
 }
 
 dependencies {
     annotationProcessor mn.micronaut.inject.java
+    kapt mn.micronaut.inject.java
 
     api(libs.managed.jakarta.transaction.api)
     api projects.micronautDataConnection
