@@ -26,6 +26,7 @@ dependencies {
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.micronautDataProcessor
+    kaptTest mn.micronaut.inject.java
 
     testImplementation projects.micronautDataProcessor
     testImplementation mn.jackson.databind
