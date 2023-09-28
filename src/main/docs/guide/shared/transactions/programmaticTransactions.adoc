@@ -21,3 +21,5 @@ snippet::example.ProductManager[project-base="doc-examples/jdbc-example", source
 Note that it is important that you always use the injected connection as Micronaut Data makes available a transaction-aware implementation that uses the connection associated with the underlying transaction.
 
 If a transaction is not active when using this connection then a api:transaction.exceptions.NoTransactionException[] will be thrown indicating you should either provide a programmatic transaction or use `@Transactional`.
+
+NOTE: For Kotlin suspended methods use api:transaction.kotlin.CoroutineTransactionOperations[]

@@ -3,6 +3,7 @@ package example
 import com.mongodb.reactivestreams.client.ClientSession
 import io.micronaut.transaction.TransactionExecution
 import io.micronaut.transaction.async.AsyncTransactionOperations
+import io.micronaut.transaction.kotlin.CoroutineTransactionOperations
 import jakarta.inject.Named
 import jakarta.inject.Singleton
 import kotlinx.coroutines.Dispatchers.IO
@@ -13,11 +14,13 @@ import org.slf4j.LoggerFactory
 import java.lang.Thread.currentThread
 import java.util.*
 import jakarta.transaction.Transactional
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.coroutineContext
 
 @Singleton
 open class PersonSuspendRepositoryService(
-        private val txManager: AsyncTransactionOperations<ClientSession>,
-        @Named("custom") private val txCustomManager: AsyncTransactionOperations<ClientSession>,
+        private val txManager: CoroutineTransactionOperations<ClientSession>,
+        @Named("custom") private val txCustomManager: CoroutineTransactionOperations<ClientSession>,
         private val parentSuspendRepository: ParentSuspendRepository,
         private val parentSuspendRepositoryForCustomDb: ParentSuspendRepositoryForCustomDb,
         private val parentRepository: ParentRepository,
@@ -51,7 +54,7 @@ open class PersonSuspendRepositoryService(
 
     @io.micronaut.transaction.annotation.Transactional("custom")
     open suspend fun deleteAllForCustomDb2(): TransactionExecution {
-        val txStatus: TransactionExecution = getCustomTxStatus()
+        val txStatus: TransactionExecution = getCustomTxStatus(coroutineContext)!!
         if (txStatus.isCompleted || !txStatus.isNewTransaction) {
             throw RuntimeException()
         }
@@ -61,7 +64,7 @@ open class PersonSuspendRepositoryService(
 
     @io.micronaut.transaction.annotation.Transactional("custom")
     open suspend fun saveForCustomDb2(p: Parent): TransactionExecution {
-        val txStatus: TransactionExecution = getCustomTxStatus()
+        val txStatus: TransactionExecution = getCustomTxStatus(coroutineContext)!!
         if (txStatus.isCompleted || !txStatus.isNewTransaction) {
             throw RuntimeException()
         }
@@ -71,7 +74,7 @@ open class PersonSuspendRepositoryService(
 
     @Transactional
     open suspend fun saveTwo(p1: Parent, p2: Parent) {
-        val current: TransactionExecution = getTxStatus()
+        val current: TransactionExecution = getTxStatus(coroutineContext)!!
         if (!current.isNewTransaction && current.isCompleted) {
             throw IllegalStateException()
         }
@@ -87,7 +90,7 @@ open class PersonSuspendRepositoryService(
 
     @Transactional(Transactional.TxType.MANDATORY)
     open suspend fun saveOneMandatory(p: Parent): TransactionExecution {
-        val txStatus: TransactionExecution = getTxStatus()
+        val txStatus: TransactionExecution = getTxStatus(coroutineContext)!!
         if (txStatus.isNewTransaction && txStatus.isCompleted) {
             throw IllegalStateException()
         }
@@ -196,8 +199,8 @@ open class PersonSuspendRepositoryService(
         throw RuntimeException("exception")
     }
 
-    private fun getTxStatus() = txManager.findTransactionStatus().orElse(null)
+    private fun getTxStatus(coroutineContext: CoroutineContext) = txManager.findTransactionStatus(coroutineContext)
 
-    private fun getCustomTxStatus() = txCustomManager.findTransactionStatus().orElse(null)
+    private fun getCustomTxStatus(coroutineContext: CoroutineContext) = txCustomManager.findTransactionStatus(coroutineContext)
 
 }

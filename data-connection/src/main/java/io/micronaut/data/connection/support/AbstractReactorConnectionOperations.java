@@ -99,7 +99,7 @@ public abstract class AbstractReactorConnectionOperations<C> implements ReactorC
     }
 
     private <T> Flux<T> existingConnectionFlux(ConnectionDefinition definition, Function<ConnectionStatus<C>, Flux<T>> callback, C clientSession) {
-        return callback.apply(new DefaultConnectionStatus<>(clientSession, definition, false));
+        return callback.apply(new DefaultReactiveConnectionStatus<>(clientSession, definition, false));
     }
 
     private <T> Flux<T> openConnectionFlux(ConnectionDefinition definition, Function<ConnectionStatus<C>, Flux<T>> callback) {
@@ -134,7 +134,7 @@ public abstract class AbstractReactorConnectionOperations<C> implements ReactorC
     }
 
     private <T> Mono<T> existingConnectionMono(ConnectionDefinition definition, Function<ConnectionStatus<C>, Mono<T>> callback, C clientSession) {
-        return callback.apply(new DefaultConnectionStatus<>(clientSession, definition, false));
+        return callback.apply(new DefaultReactiveConnectionStatus<>(clientSession, definition, false));
     }
 
     private <T> Mono<T> openConnectionMono(ConnectionDefinition definition, Function<ConnectionStatus<C>, Mono<T>> callback) {
