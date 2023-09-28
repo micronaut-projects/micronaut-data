@@ -28,6 +28,7 @@ import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.ReactorContext
 import kotlinx.coroutines.reactor.mono
 import kotlinx.coroutines.withContext
+import reactor.util.context.Context
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -65,9 +66,11 @@ class DefaultCoroutineConnectionOperations<C>(private val reactiveConnectionOper
     }
 
     override fun findConnectionStatus(coroutineContext: CoroutineContext): ConnectionStatus<C>? {
-        val reactorContext = coroutineContext[ReactorContext.Key]
-        if (reactorContext != null) {
-            return reactiveConnectionOperations.findConnectionStatus(reactorContext.context).orElse(null)
+        val micronautPropagatedContext = KotlinCoroutinePropagation.findPropagatedContext(coroutineContext)
+        if (micronautPropagatedContext != null) {
+            val reactorContext = ReactorPropagation.addPropagatedContext(Context.empty(), micronautPropagatedContext)
+            return reactiveConnectionOperations.findConnectionStatus(reactorContext)
+                .orElse(null)
         }
         return null
     }
