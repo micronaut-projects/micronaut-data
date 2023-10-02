@@ -31,7 +31,7 @@ spring-data = "3.1.4"
 # JDBC Drivers
 
 # Need to leave it here because micronaut-sql uses older version. When it's upgraded there then we can remove this declaration here
-oracle-jdbc-driver = "23.2.0.0"
+oracle-jdbc-driver = "23.3.0.23.09"
 
 # Testing and benchmarking
 
