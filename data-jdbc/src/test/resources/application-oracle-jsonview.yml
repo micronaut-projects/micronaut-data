@@ -18,6 +18,6 @@ datasources:
 test-resources:
   containers:
     oracle:
-      image-name: gvenzl/oracle-free:23.2-faststart
+      image-name: gvenzl/oracle-free:latest
       startup-timeout: 600s
       db-name: test
