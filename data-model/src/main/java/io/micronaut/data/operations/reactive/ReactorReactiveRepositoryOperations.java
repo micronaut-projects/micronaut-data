@@ -91,8 +91,8 @@ public interface ReactorReactiveRepositoryOperations extends ReactiveRepositoryO
 
     @NonNull
     @Override
-    default <R> Mono<R> execute(@NonNull  PreparedQuery<?, R> preparedQuery) {
-        return Mono.from(ReactiveRepositoryOperations.super.execute(preparedQuery));
+    default <R> Flux<R> execute(@NonNull  PreparedQuery<?, R> preparedQuery) {
+        return Flux.from(ReactiveRepositoryOperations.super.execute(preparedQuery));
     }
 
     @NonNull

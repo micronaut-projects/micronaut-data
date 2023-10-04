@@ -20,5 +20,5 @@ You can also specify a custom query for the update methods:
 
 snippet::example.BookRepository[project-base="doc-examples/hibernate-example", source="main", tags="updateCustomQuery", indent="0"]
 
-
+snippet::example.BookRepository[project-base="doc-examples/hibernate-example", source="main", tags="updateCustomQuery", indent="0"]
 

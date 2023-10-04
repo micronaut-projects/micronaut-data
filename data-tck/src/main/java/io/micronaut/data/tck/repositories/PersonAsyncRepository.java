@@ -75,9 +75,9 @@ public interface PersonAsyncRepository extends AsyncPageableRepository<Person, L
 
     CompletableFuture<Integer> remove(Long id);
 
-    CompletableFuture<Integer> deleteOneReturnRowsDeleted(Person people);
+    CompletableFuture<Integer> erase(Person people);
 
-    CompletableFuture<Integer> deleteManyReturnRowsDeleted(List<Person> people);
+    CompletableFuture<Integer> erase(List<Person> people);
 
     @Query("DELETE FROM person WHERE name = :name")
     CompletableFuture<Integer> deleteCustom(List<Person> people);

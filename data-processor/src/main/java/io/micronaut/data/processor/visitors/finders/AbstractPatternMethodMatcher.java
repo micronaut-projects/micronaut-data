@@ -33,7 +33,9 @@ import java.util.stream.Collectors;
  *
  * @author Denis Stepanov
  * @since 3.2
+ * @deprecated No longer used
  */
+@Deprecated(forRemoval = true)
 @Experimental
 public abstract class AbstractPatternMethodMatcher implements MethodMatcher {
 

@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitable;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaUpdate;
 import io.micronaut.inject.ast.ClassElement;
@@ -70,5 +71,15 @@ final class SourcePersistentEntityCriteriaUpdateImpl<T> extends AbstractPersiste
             ((SourceParameterExpressionImpl) value).setUpdate(true);
         }
         super.setValue(attributeName, value);
+    }
+
+    @Override
+    public String getQueryResultTypeName() {
+        if (returning instanceof SelectionVisitable selectionVisitable) {
+            QueryResultAnalyzer selectionVisitor = new QueryResultAnalyzer();
+            selectionVisitable.accept(selectionVisitor);
+            return selectionVisitor.getQueryResultTypeName();
+        }
+        return null;
     }
 }

@@ -13,41 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.runtime.intercept.async;
+package io.micronaut.data.runtime.intercept;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.intercept.ProcedureReturningManyInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.intercept.async.ProcedureAsyncInterceptor;
-import io.micronaut.data.intercept.reactive.ProcedureReactiveInterceptor;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 
-import java.util.concurrent.CompletionStage;
-
 /**
- * The default implementation of {@link ProcedureReactiveInterceptor}.
+ * The default implementation of {@link io.micronaut.data.intercept.ProcedureReturningManyInterceptor}.
  *
- * @param <T> The return type
+ * @param <T> The declaring type
+ * @param <R> The return generic type
  * @author Denis Stepanov
  * @since 4.2.0
  */
 @Internal
-public class DefaultProcedureAsyncInterceptor<T> extends AbstractConvertCompletionStageInterceptor<T> implements ProcedureAsyncInterceptor<Object, CompletionStage<T>> {
+public final class DefaultProcedureReturningManyInterceptor<T, R> extends AbstractQueryInterceptor<T, Iterable<R>> implements ProcedureReturningManyInterceptor<T, R> {
 
     /**
      * Default constructor.
      *
      * @param datastore The operations
      */
-    DefaultProcedureAsyncInterceptor(RepositoryOperations datastore) {
+    DefaultProcedureReturningManyInterceptor(RepositoryOperations datastore) {
         super(datastore);
     }
 
     @Override
-    protected CompletionStage<T> interceptCompletionStage(RepositoryMethodKey methodKey, MethodInvocationContext<Object, CompletionStage<T>> context) {
-        PreparedQuery<?, T> preparedQuery = prepareQuery(methodKey, context, null);
-        return asyncDatastoreOperations.execute(preparedQuery);
+    public Iterable<R> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Iterable<R>> context) {
+        PreparedQuery<?, R> preparedQuery = prepareQuery(methodKey, context, null);
+        return operations.execute(preparedQuery);
     }
-
 }

@@ -252,7 +252,7 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
         personRepository.count().get() == 2
 
         when:
-        def rowsDeleted = personRepository.deleteManyReturnRowsDeleted(personRepository.findAll().get()).get()
+        def rowsDeleted = personRepository.erase(personRepository.findAll().get()).get()
 
         then:
         rowsDeleted == 2
@@ -296,7 +296,7 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
         personRepository.count().get() == 2
 
         when:
-        def rowsDeleted = personRepository.deleteOneReturnRowsDeleted(frank).get()
+        def rowsDeleted = personRepository.erase(frank).get()
         then:
         rowsDeleted == 1
 

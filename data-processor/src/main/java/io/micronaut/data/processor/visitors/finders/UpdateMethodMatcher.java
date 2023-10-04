@@ -25,6 +25,9 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Version;
 import io.micronaut.data.model.Association;
+import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.PersistentEntityUtils;
+import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
@@ -38,7 +41,9 @@ import io.micronaut.data.processor.visitors.finders.criteria.UpdateCriteriaMetho
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.ParameterExpression;
+import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 
 import java.util.Arrays;
@@ -54,39 +59,48 @@ import java.util.stream.Stream;
  * @since 3.2
  */
 @Internal
-public final class UpdateMethodMatcher extends AbstractPatternMethodMatcher {
+public final class UpdateMethodMatcher extends AbstractMethodMatcher {
 
     public UpdateMethodMatcher() {
-        super(false, "update", "updateBy");
+        super(MethodNameParser.builder()
+            .match(QueryMatchId.PREFIX, "update", "modify")
+            .tryMatchLastOccurrencePrefixed(QueryMatchId.RETURNING, null, RETURNING)
+            .tryMatchFirstOccurrencePrefixed(QueryMatchId.PREDICATE, BY)
+            .build());
     }
 
     @Override
-    protected MethodMatch match(MethodMatchContext matchContext, java.util.regex.Matcher matcher) {
+    protected MethodMatch match(MethodMatchContext matchContext, List<MethodNameParser.Match> matches) {
         MethodElement methodElement = matchContext.getMethodElement();
         ParameterElement[] parameters = methodElement.getParameters();
         ParameterElement idParameter = Arrays.stream(parameters).filter(p -> p.hasAnnotation(Id.class)).findFirst().orElse(null);
 
+        boolean isReturning = matches.stream().anyMatch(m -> m.id() == QueryMatchId.RETURNING);
+
         if (parameters.length > 1 && idParameter != null) {
-            if (!TypeUtils.isValidBatchUpdateReturnType(methodElement)) {
+            if (!isReturning && !TypeUtils.isValidBatchUpdateReturnType(methodElement)) {
                 throw new MatchFailedException("Update methods only support void or number based return types");
             }
-            return batchUpdate(matcher, idParameter);
+            return batchUpdate(matches, idParameter, isReturning);
         }
 
         final ParameterElement entityParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isEntity(p.getGenericType())).findFirst().orElse(null);
         final ParameterElement entitiesParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isIterableOfEntity(p.getGenericType())).findFirst().orElse(null);
         if ((entityParameter != null || entitiesParameter != null)) {
-            return entityUpdate(matcher, entityParameter, entitiesParameter);
+            return entityUpdate(matches, entityParameter, entitiesParameter, isReturning);
         }
 
-        if (!TypeUtils.isValidBatchUpdateReturnType(methodElement)) {
+        if (!isReturning && !TypeUtils.isValidBatchUpdateReturnType(methodElement)) {
             throw new MatchFailedException("Update methods only support void or number based return types");
         }
-        return batchUpdate2(matcher);
+        return batchUpdate2(matches, isReturning);
     }
 
-    private UpdateCriteriaMethodMatch entityUpdate(java.util.regex.Matcher matcher, ParameterElement entityParameter, ParameterElement entitiesParameter) {
-        return new UpdateCriteriaMethodMatch(matcher) {
+    private UpdateCriteriaMethodMatch entityUpdate(List<MethodNameParser.Match> matches,
+                                                   ParameterElement entityParameter,
+                                                   ParameterElement entitiesParameter,
+                                                   boolean isReturning) {
+        return new UpdateCriteriaMethodMatch(matches, isReturning) {
 
             final ParameterElement entityParam = entityParameter == null ? entitiesParameter : entityParameter;
 
@@ -145,7 +159,7 @@ public final class UpdateMethodMatcher extends AbstractPatternMethodMatcher {
                 MethodElement methodElement = matchContext.getMethodElement();
                 FindersUtils.InterceptorMatch e = super.resolveReturnTypeAndInterceptor(matchContext);
                 ClassElement returnType = e.returnType();
-                if (returnType != null
+                if (!isReturning && returnType != null
                         && !TypeUtils.isVoid(returnType)
                         && !TypeUtils.isNumber(returnType)
                         && !returnType.hasStereotype(MappedEntity.class)
@@ -167,8 +181,10 @@ public final class UpdateMethodMatcher extends AbstractPatternMethodMatcher {
         };
     }
 
-    private UpdateCriteriaMethodMatch batchUpdate(java.util.regex.Matcher matcher, ParameterElement idParameter) {
-        return new UpdateCriteriaMethodMatch(matcher) {
+    private UpdateCriteriaMethodMatch batchUpdate(List<MethodNameParser.Match> matches,
+                                                  ParameterElement idParameter,
+                                                  boolean isReturning) {
+        return new UpdateCriteriaMethodMatch(matches, isReturning) {
 
             @Override
             protected <T> void applyPredicates(String querySequence, ParameterElement[] parameters,
@@ -218,7 +234,7 @@ public final class UpdateMethodMatcher extends AbstractPatternMethodMatcher {
                 List<ParameterElement> parameters = matchContext.getParametersNotInRole();
                 List<ParameterElement> remainingParameters = parameters.stream()
                         .filter(p -> !p.hasAnnotation(Id.class) && !p.hasAnnotation(Version.class))
-                        .collect(Collectors.toList());
+                        .toList();
 
                 ParameterElement idParameter = parameters.stream().filter(p -> p.hasAnnotation(Id.class)).findFirst()
                         .orElse(null);
@@ -256,8 +272,9 @@ public final class UpdateMethodMatcher extends AbstractPatternMethodMatcher {
         };
     }
 
-    private UpdateCriteriaMethodMatch batchUpdate2(java.util.regex.Matcher matcher) {
-        return new UpdateCriteriaMethodMatch(matcher) {
+    private UpdateCriteriaMethodMatch batchUpdate2(List<MethodNameParser.Match> matches,
+                                                   boolean isReturning) {
+        return new UpdateCriteriaMethodMatch(matches, isReturning) {
 
             @Override
             protected <T> void addPropertiesToUpdate(MethodMatchContext matchContext,
@@ -274,14 +291,30 @@ public final class UpdateMethodMatcher extends AbstractPatternMethodMatcher {
                     if (queryParameters.contains(parameterName)) {
                         continue;
                     }
-                    PersistentPropertyPath path = root.getPersistentEntity().getPropertyPath(parameterName);
+                    PersistentEntity persistentEntity = root.getPersistentEntity();
+                    PersistentPropertyPath path = persistentEntity.getPropertyPath(persistentEntity.getPath(parameterName).orElse(parameterName));
                     if (path != null) {
-                        query.set(path.getProperty().getName(), cb.parameter(p));
+                        PersistentProperty property = path.getProperty();
+                        if (path.getAssociations().isEmpty()) {
+                            query.set(property.getName(), cb.parameter(p));
+                        } else {
+                            // TODO: support embedded ID
+                            Association association = path.getAssociations().get(0);
+                            if (path.getAssociations().size() == 1 && PersistentEntityUtils.isAccessibleWithoutJoin(association, property)) {
+                                // Added Void type to satisfy the type check
+                                Path<Void> pp = root.join(association.getName()).get(property.getName());
+                                Expression<Void> parameter = cb.parameter(p);
+                                query.set(pp, parameter);
+                            } else {
+                                throw new MatchFailedException("Cannot perform batch update for a property with an association: " + parameterName);
+                            }
+                        }
                     } else {
                         throw new MatchFailedException("Cannot perform batch update for non-existent property: " + parameterName);
                     }
                 }
             }
+
         };
     }
 

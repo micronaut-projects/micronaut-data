@@ -19,10 +19,7 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.annotation.sql.Procedure;
-import io.micronaut.data.intercept.ProcedureInterceptor;
 import io.micronaut.data.intercept.annotation.DataMethod;
-import io.micronaut.data.intercept.async.ProcedureAsyncInterceptor;
-import io.micronaut.data.intercept.reactive.ProcedureReactiveInterceptor;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.BindingParameter.BindingContext;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
@@ -30,8 +27,6 @@ import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.processor.model.criteria.impl.SourceParameterExpressionImpl;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.Utils;
-import io.micronaut.inject.ast.ClassElement;
-import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 
 import java.util.ArrayList;
@@ -70,25 +65,15 @@ public final class ProcedureMethodMatcher implements MethodMatcher {
 
                 @Override
                 public MethodMatchInfo buildMatchInfo(MethodMatchContext matchContext) {
-                    ClassElement resultType;
-                    ClassElement interceptor;
-                    MethodElement methodElement = matchContext.getMethodElement();
-                    ClassElement returnType = methodElement.getReturnType();
-                    if (FindersUtils.isFutureType(methodElement, returnType)) {
-                        interceptor = matchContext.getVisitorContext().getClassElement(ProcedureAsyncInterceptor.class).orElseThrow();
-                        resultType = FindersUtils.getAsyncType(methodElement, returnType);
-                    } else if (FindersUtils.isReactiveType(returnType)) {
-                        interceptor = matchContext.getVisitorContext().getClassElement(ProcedureReactiveInterceptor.class).orElseThrow();
-                        resultType = returnType.getFirstTypeArgument().orElse(returnType);
-                    } else {
-                        interceptor = matchContext.getVisitorContext().getClassElement(ProcedureInterceptor.class).orElseThrow();
-                        resultType = matchContext.getReturnType();
-                    }
+                    FindersUtils.InterceptorMatch interceptorMatch = FindersUtils.pickProcedureInterceptor(
+                        matchContext,
+                        matchContext.getMethodElement().getReturnType()
+                    );
 
                     MethodMatchInfo methodMatchInfo = new MethodMatchInfo(
                         DataMethod.OperationType.QUERY,
-                        resultType,
-                        interceptor
+                        interceptorMatch.returnType(),
+                        interceptorMatch.interceptor()
                     );
 
                     QueryResult queryResult = getQueryResult(matchContext, procedureAnnotationValue, matchContext.getParametersNotInRole());

@@ -143,12 +143,11 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
         Class<?> repositoryType = context.getTarget().getClass();
         // CodecRegistry is per MongoClient and can be memoized
         Supplier<CodecRegistry> codecRegistry = SupplierUtil.memoizedNonEmpty(() -> getCodecRegistry(getDatabase(persistentEntity, repositoryType)));
-        if (storedQuery instanceof QueryResultStoredQuery) {
-            QueryResultStoredQuery<?, ?> resultStoredQuery = (QueryResultStoredQuery) storedQuery;
+        if (storedQuery instanceof QueryResultStoredQuery<?, ?> resultStoredQuery) {
             String update = resultStoredQuery.getQueryResult().getUpdate();
             if (update != null) {
                 return new DefaultMongoStoredQuery<>(storedQuery, codecRegistry, attributeConverterRegistry,
-                    runtimeEntityRegistry, conversionService, persistentEntity, resultStoredQuery.getOperationType(), update);
+                    runtimeEntityRegistry, conversionService, persistentEntity, update);
             }
         }
         return new DefaultMongoStoredQuery<>(storedQuery, codecRegistry, attributeConverterRegistry,

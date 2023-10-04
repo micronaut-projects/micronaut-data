@@ -16,10 +16,7 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.reflect.ClassUtils;
-import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.FindByIdInterceptor;
 import io.micronaut.data.intercept.FindOneInterceptor;
 import io.micronaut.data.intercept.async.FindByIdAsyncInterceptor;
@@ -30,11 +27,11 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
-import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.criteria.QueryCriteriaMethodMatch;
 import io.micronaut.inject.ast.ClassElement;
-import io.micronaut.inject.ast.MethodElement;
+
+import java.util.List;
 
 /**
  * Find method matcher.
@@ -43,79 +40,66 @@ import io.micronaut.inject.ast.MethodElement;
  * @since 3.2
  */
 @Internal
-public final class FindMethodMatcher extends AbstractPatternMethodMatcher {
+public final class FindMethodMatcher extends AbstractMethodMatcher {
 
     public FindMethodMatcher() {
-        super(true, "find", "get", "query", "retrieve", "read", "search");
+        super(MethodNameParser.builder()
+            .match(QueryMatchId.PREFIX, "find", "list", "get", "query", "retrieve", "read", "search")
+            .tryMatch(QueryMatchId.ALL_OR_ONE, ALL_OR_ONE)
+            .tryMatchPrefixedNumber(QueryMatchId.LIMIT, TOP_OR_FIRST)
+            .tryMatch(QueryMatchId.DISTINCT, DISTINCT)
+            .tryMatchLast(QueryMatchId.FOR_UPDATE, FOR_UPDATE)
+            .tryMatchLastOccurrencePrefixed(QueryMatchId.ORDER, "Order property not specified!", ORDER_VARIATIONS)
+            .tryMatchFirstOccurrencePrefixed(QueryMatchId.PREDICATE, BY)
+            .tryMatchExactly(QueryMatchId.FIRST, FIRST) // here we have a bit of conflict between `findFirstProperty` vs `findFirstName`
+            .takeRest(QueryMatchId.PROJECTION)
+            .build());
     }
 
     @Override
-    protected MethodMatch match(MethodMatchContext matchContext, java.util.regex.Matcher matcher) {
-        if (isCompatibleReturnType(matchContext)) {
-            return new QueryCriteriaMethodMatch(matcher) {
+    public MethodMatch match(MethodMatchContext matchContext, List<MethodNameParser.Match> matches) {
+        return new QueryCriteriaMethodMatch(matches) {
 
-                boolean hasIdMatch;
+            boolean hasIdMatch;
 
-                @Override
-                protected <T> void apply(MethodMatchContext matchContext,
-                                         PersistentEntityRoot<T> root,
-                                         PersistentEntityCriteriaQuery<T> query,
-                                         SourcePersistentEntityCriteriaBuilder cb) {
-                    super.apply(matchContext, root, query, cb);
-                    if (query instanceof AbstractPersistentEntityCriteriaQuery) {
-                        hasIdMatch = ((AbstractPersistentEntityCriteriaQuery<T>) query).hasOnlyIdRestriction();
+            @Override
+            protected <T> void apply(MethodMatchContext matchContext,
+                                     PersistentEntityRoot<T> root,
+                                     PersistentEntityCriteriaQuery<T> query,
+                                     SourcePersistentEntityCriteriaBuilder cb) {
+                super.apply(matchContext, root, query, cb);
+                if (query instanceof AbstractPersistentEntityCriteriaQuery) {
+                    hasIdMatch = ((AbstractPersistentEntityCriteriaQuery<T>) query).hasOnlyIdRestriction();
+                }
+            }
+
+            @Override
+            protected FindersUtils.InterceptorMatch resolveReturnTypeAndInterceptor(MethodMatchContext matchContext) {
+                FindersUtils.InterceptorMatch e = super.resolveReturnTypeAndInterceptor(matchContext);
+                ClassElement interceptorType = e.interceptor();
+                ClassElement queryResultType = e.returnType();
+                if (isFindByIdQuery(matchContext, queryResultType)) {
+                    if (interceptorType.isAssignable(FindOneInterceptor.class)) {
+                        interceptorType = matchContext.getVisitorContext().getClassElement(FindByIdInterceptor.class).orElseThrow();
+                    } else if (interceptorType.isAssignable(FindOneAsyncInterceptor.class)) {
+                        interceptorType = matchContext.getVisitorContext().getClassElement(FindByIdAsyncInterceptor.class).orElseThrow();
+                    } else if (interceptorType.isAssignable(FindOneReactiveInterceptor.class)) {
+                        interceptorType = matchContext.getVisitorContext().getClassElement(FindByIdReactiveInterceptor.class).orElseThrow();
                     }
+                    return new FindersUtils.InterceptorMatch(queryResultType, interceptorType);
                 }
+                return e;
+            }
 
-                @Override
-                protected FindersUtils.InterceptorMatch resolveReturnTypeAndInterceptor(MethodMatchContext matchContext) {
-                    FindersUtils.InterceptorMatch e = super.resolveReturnTypeAndInterceptor(matchContext);
-                    ClassElement interceptorType = e.interceptor();
-                    ClassElement queryResultType = e.returnType();
-                    if (isFindByIdQuery(matchContext, queryResultType)) {
-                        if (interceptorType.isAssignable(FindOneInterceptor.class)) {
-                            interceptorType = matchContext.getVisitorContext().getClassElement(FindByIdInterceptor.class).orElseThrow();
-                        } else if (interceptorType.isAssignable(FindOneAsyncInterceptor.class)) {
-                            interceptorType = matchContext.getVisitorContext().getClassElement(FindByIdAsyncInterceptor.class).orElseThrow();
-                        } else if (interceptorType.isAssignable(FindOneReactiveInterceptor.class)) {
-                            interceptorType = matchContext.getVisitorContext().getClassElement(FindByIdReactiveInterceptor.class).orElseThrow();
-                        }
-                        return new FindersUtils.InterceptorMatch(queryResultType, interceptorType);
-                    }
-                    return e;
-                }
+            private boolean isFindByIdQuery(@NonNull MethodMatchContext matchContext,
+                                            @NonNull ClassElement queryResultType) {
+                return hasIdMatch
+                    && matchContext.supportsImplicitQueries()
+                    && queryResultType.getName().equals(matchContext.getRootEntity().getName())
+                    && hasNoWhereAndJoinDeclaration(matchContext);
+            }
 
-                private boolean isFindByIdQuery(@NonNull MethodMatchContext matchContext,
-                                                @NonNull ClassElement queryResultType) {
-                    return hasIdMatch
-                            && matchContext.supportsImplicitQueries()
-                            && queryResultType.getName().equals(matchContext.getRootEntity().getName())
-                            && hasNoWhereAndJoinDeclaration(matchContext);
-                }
-
-            };
-        }
-        return null;
-    }
-
-    private boolean isCompatibleReturnType(@NonNull MatchContext matchContext) {
-        MethodElement methodElement = matchContext.getMethodElement();
-        ClassElement returnType = TypeUtils.getMethodProducingItemType(methodElement);
-        if (returnType == null) {
-            return false;
-        }
-        if (FindersUtils.isFindAllCompatibleReturnType(matchContext)) {
-            return true;
-        }
-        if (!TypeUtils.isVoid(returnType)) {
-            return returnType.hasStereotype(Introspected.class) ||
-                    returnType.isPrimitive() ||
-                    ClassUtils.isJavaBasicType(returnType.getName()) ||
-                    TypeUtils.isContainerType(returnType);
-        }
-        ClassElement genericReturnType = methodElement.getGenericReturnType();
-        return matchContext.isTypeInRole(genericReturnType, TypeRole.PAGE) ||
-                matchContext.isTypeInRole(genericReturnType, TypeRole.SLICE);
+        };
     }
 
 }

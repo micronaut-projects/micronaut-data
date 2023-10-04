@@ -18,6 +18,7 @@ package io.micronaut.data.processor.visitors.finders.criteria;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaUpdate;
@@ -25,19 +26,26 @@ import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
+import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
+import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaUpdate;
 import io.micronaut.data.processor.model.criteria.impl.MethodMatchSourcePersistentEntityCriteriaBuilderImpl;
 import io.micronaut.data.processor.visitors.MatchFailedException;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.AbstractCriteriaMethodMatch;
 import io.micronaut.data.processor.visitors.finders.FindersUtils;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
+import io.micronaut.data.processor.visitors.finders.MethodNameParser;
+import io.micronaut.data.processor.visitors.finders.QueryMatchId;
 import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ParameterElement;
+import jakarta.persistence.criteria.Selection;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
+import java.util.stream.Collectors;
 
 /**
  * Update criteria method match.
@@ -48,13 +56,17 @@ import java.util.regex.Matcher;
 @Experimental
 public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
+    private final boolean isReturning;
+
     /**
      * Default constructor.
      *
-     * @param matcher The matcher
+     * @param matches     The matches
+     * @param isReturning The returning
      */
-    public UpdateCriteriaMethodMatch(Matcher matcher) {
-        super(matcher);
+    public UpdateCriteriaMethodMatch(List<MethodNameParser.Match> matches, boolean isReturning) {
+        super(matches);
+        this.isReturning = isReturning;
     }
 
     /**
@@ -70,34 +82,69 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                              PersistentEntityRoot<T> root,
                              PersistentEntityCriteriaUpdate<T> query,
                              SourcePersistentEntityCriteriaBuilder cb) {
-        String querySequence = matcher.group(3);
-        if (matcher.group(2).endsWith("By")) {
-            applyPredicates(querySequence, matchContext.getParameters(), root, query, cb);
-        } else {
-            applyPredicates(matchContext.getParametersNotInRole(), root, query, cb);
-        }
 
-        if (query.getRestriction() == null) {
-            throw new MatchFailedException("Cannot implement batch update operation that doesn't perform a query");
+        boolean predicatedApplied = false;
+        boolean projectionApplied = false;
+        for (MethodNameParser.Match match : matches) {
+            if (match.id() == QueryMatchId.PREDICATE) {
+                applyPredicates(match.part(), matchContext.getParameters(), root, query, cb);
+                predicatedApplied = true;
+            }
+            if (match.id() == QueryMatchId.RETURNING) {
+                applyProjections(match.part(), root, query, cb);
+                projectionApplied = true;
+            }
+        }
+        if (!predicatedApplied) {
+            applyPredicates(Collections.emptyList(), root, query, cb);
+        }
+        if (!projectionApplied) {
+            applyProjections("", root, query, cb);
         }
 
         SourcePersistentEntity entity = matchContext.getRootEntity();
 
         addPropertiesToUpdate(matchContext, root, query, cb);
 
+        AbstractPersistentEntityCriteriaUpdate<T> criteriaUpdate = (AbstractPersistentEntityCriteriaUpdate<T>) query;
+
         // Add updatable auto-populated parameters
         entity.getPersistentProperties().stream()
                 .filter(p -> p != null && p.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATEABLE, Boolean.class)).orElse(false))
                 .forEach(p -> query.set(p.getName(), cb.parameter((ParameterElement) null)));
 
-        if (entity.getVersion() != null) {
-            if (((AbstractPersistentEntityCriteriaUpdate<T>) query).hasVersionRestriction()) {
-                query.set(entity.getVersion().getName(), cb.parameter((ParameterElement) null));
-            }
+        if (entity.getVersion() != null && criteriaUpdate.hasVersionRestriction()) {
+            query.set(entity.getVersion().getName(), cb.parameter((ParameterElement) null));
         }
 
-        if (((AbstractPersistentEntityCriteriaUpdate<T>) query).getUpdateValues().isEmpty()) {
+        if (criteriaUpdate.getUpdateValues().isEmpty()) {
             throw new MatchFailedException("At least one parameter required to update");
+        }
+    }
+
+    /**
+     * Apply projections.
+     *
+     * @param projection The querySequence
+     * @param root          The root
+     * @param query         The query
+     * @param cb            The criteria builder
+     * @param <T>           The entity type
+     */
+    protected <T> void applyProjections(String projection,
+                                        PersistentEntityRoot<T> root,
+                                        PersistentEntityCriteriaUpdate<T> query,
+                                        PersistentEntityCriteriaBuilder cb) {
+        if (!isReturning) {
+            return;
+        }
+        List<Selection<?>> selections = findSelections(projection, root, cb, null);
+        if (selections.isEmpty()) {
+            query.returning(root);
+        } else if (selections.size() == 1) {
+            query.returning((Selection<? extends T>) selections.get(0));
+        } else {
+            throw new MatchFailedException("Multi-selection is not supported");
         }
     }
 
@@ -113,14 +160,45 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         MethodMatchSourcePersistentEntityCriteriaBuilderImpl cb = new MethodMatchSourcePersistentEntityCriteriaBuilderImpl(matchContext);
 
         PersistentEntityCriteriaUpdate<Object> criteriaQuery = cb.createCriteriaUpdate(null);
-        apply(matchContext, criteriaQuery.from(matchContext.getRootEntity()), criteriaQuery, cb);
+        PersistentEntityRoot<Object> root = criteriaQuery.from(matchContext.getRootEntity());
 
-        FindersUtils.InterceptorMatch entry = resolveReturnTypeAndInterceptor(matchContext);
-        ClassElement resultType = entry.returnType();
-        ClassElement interceptorType = entry.interceptor();
+        apply(matchContext, root, criteriaQuery, cb);
 
-        AbstractPersistentEntityCriteriaUpdate<?> criteriaUpdate = (AbstractPersistentEntityCriteriaUpdate<?>) criteriaQuery;
-        boolean optimisticLock = criteriaUpdate.hasVersionRestriction();
+        FindersUtils.InterceptorMatch interceptorMatch = resolveReturnTypeAndInterceptor(matchContext);
+        ClassElement resultType = interceptorMatch.returnType();
+        ClassElement interceptorType = interceptorMatch.interceptor();
+
+        SourcePersistentEntityCriteriaUpdate<?> criteriaUpdate = (SourcePersistentEntityCriteriaUpdate<?>) criteriaQuery;
+
+        MethodResult result = analyzeMethodResult(
+            matchContext,
+            criteriaUpdate.getQueryResultTypeName(),
+            matchContext.getVisitorContext().getClassElement(Long.class).orElseThrow(), // Default result type
+            interceptorMatch,
+            true
+        );
+
+        if (result.isDto() && !result.isRuntimeDtoConversion()) {
+            List<SourcePersistentProperty> dtoProjectionProperties = getDtoProjectionProperties(matchContext.getRootEntity(), resultType);
+            if (!dtoProjectionProperties.isEmpty()) {
+                List<Selection<?>> selectionList = dtoProjectionProperties.stream()
+                    .map(p -> {
+                        if (matchContext.getQueryBuilder().shouldAliasProjections()) {
+                            return root.get(p.getName()).alias(p.getName());
+                        } else {
+                            return root.get(p.getName());
+                        }
+                    })
+                    .collect(Collectors.toList());
+                criteriaUpdate.returningMulti(
+                    selectionList
+                );
+            }
+        }
+
+        AbstractPersistentEntityCriteriaUpdate<?> query = (AbstractPersistentEntityCriteriaUpdate<?>) criteriaQuery;
+
+        boolean optimisticLock = query.hasVersionRestriction();
 
         final AnnotationMetadataHierarchy annotationMetadataHierarchy = new AnnotationMetadataHierarchy(
                 matchContext.getRepositoryClass().getAnnotationMetadata(),
@@ -128,21 +206,25 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         );
         QueryBuilder queryBuilder = matchContext.getQueryBuilder();
 
-        Map<String, Object> propertiesToUpdate = criteriaUpdate.getUpdateValues();
-        QueryModel queryModel = ((AbstractPersistentEntityCriteriaUpdate) criteriaQuery).getQueryModel();
+        Map<String, Object> propertiesToUpdate = query.getUpdateValues();
+        QueryModel queryModel = query.getQueryModel();
         QueryResult queryResult = queryBuilder.buildUpdate(annotationMetadataHierarchy, queryModel, propertiesToUpdate);
 
         return new MethodMatchInfo(
-                DataMethod.OperationType.UPDATE,
-                resultType,
-                interceptorType
+            getOperationType(),
+            result.resultType(),
+            interceptorType
         )
-                .optimisticLock(optimisticLock)
-                .queryResult(queryResult);
+            .dto(result.isDto())
+            .optimisticLock(optimisticLock)
+            .queryResult(queryResult);
     }
 
     @Override
     protected DataMethod.OperationType getOperationType() {
+        if (isReturning) {
+            return DataMethod.OperationType.UPDATE_RETURNING;
+        }
         return DataMethod.OperationType.UPDATE;
     }
 }

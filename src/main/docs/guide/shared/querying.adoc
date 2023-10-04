@@ -111,6 +111,10 @@ The following table summarizes the possible alternative patterns, behaviour and 
 |A `void` or `Number` return type
 |Batch update where parameter/s represents an entity's property (must be named the same)
 
+|`updateReturning` all of the update variations (except batch entities update) plus a suffix `Returning`
+|An entity type or any types that can be returned by the query
+|Update with a returning clause (Might not be supported by a DIALECT or an implementation)
+
 |===
 
 Note that every method prefix can have `One` or `All` suffix: `findOneByTitle`, `countAllByTitle` etc.

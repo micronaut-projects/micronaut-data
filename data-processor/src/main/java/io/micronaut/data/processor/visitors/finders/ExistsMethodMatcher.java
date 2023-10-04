@@ -23,6 +23,8 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.criteria.QueryCriteriaMethodMatch;
 
+import java.util.List;
+
 /**
  * Exists method matcher.
  *
@@ -30,21 +32,28 @@ import io.micronaut.data.processor.visitors.finders.criteria.QueryCriteriaMethod
  * @since 3.2
  */
 @Internal
-public final class ExistsMethodMatcher extends AbstractPatternMethodMatcher {
+public final class ExistsMethodMatcher extends AbstractMethodMatcher {
 
     public ExistsMethodMatcher() {
-        super(false, "exists");
+        super(MethodNameParser.builder()
+            .match(QueryMatchId.PREFIX, "exists")
+            .tryMatchFirstOccurrencePrefixed(QueryMatchId.PREDICATE, BY)
+            .failOnRest("Exists method doesn't support projections")
+            .build());
     }
 
     @Override
-    protected MethodMatch match(MethodMatchContext matchContext, java.util.regex.Matcher matcher) {
+    protected MethodMatch match(MethodMatchContext matchContext, List<MethodNameParser.Match> matches) {
         if (TypeUtils.doesMethodProducesABoolean(matchContext.getMethodElement())) {
-            return new QueryCriteriaMethodMatch(matcher) {
+            return new QueryCriteriaMethodMatch(matches) {
 
                 @Override
-                protected <T> String applyProjections(String querySequence, PersistentEntityRoot<T> root, PersistentEntityCriteriaQuery<T> query, PersistentEntityCriteriaBuilder cb) {
+                protected <T> void applyProjections(String projectionPart,
+                                                    PersistentEntityRoot<T> root,
+                                                    PersistentEntityCriteriaQuery<T> query,
+                                                    PersistentEntityCriteriaBuilder cb,
+                                                    String returnTypeName) {
                     query.multiselect(cb.literal(true));
-                    return "";
                 }
 
                 @Override

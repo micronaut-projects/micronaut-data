@@ -77,6 +77,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     private final List<QueryParameterBinding> queryParameters;
     private final boolean rawQuery;
     private final boolean jsonEntity;
+    private final OperationType operationType;
 
     /**
      * The default constructor.
@@ -183,6 +184,9 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
             this.queryParameters = queryParameters;
         }
         this.jsonEntity = DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(annotationMetadata);
+        this.operationType = method.enumValue(DataMethod.NAME, DataMethod.META_MEMBER_OPERATION_TYPE, DataMethod.OperationType.class)
+            .map(op -> OperationType.valueOf(op.name()))
+            .orElse(OperationType.QUERY);
     }
 
     @Override
@@ -239,6 +243,11 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     @Override
     public boolean isProcedure() {
         return isProcedure;
+    }
+
+    @Override
+    public OperationType getOperationType() {
+        return operationType;
     }
 
     /**

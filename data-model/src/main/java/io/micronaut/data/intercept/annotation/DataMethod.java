@@ -300,12 +300,16 @@ public @interface DataMethod {
          */
         UPDATE,
         /**
+         * An update returning operation.
+         */
+        UPDATE_RETURNING,
+        /**
          * A delete operation.
          */
         DELETE,
         /**
          * An insert operation.
          */
-        INSERT
+        INSERT,
     }
 }

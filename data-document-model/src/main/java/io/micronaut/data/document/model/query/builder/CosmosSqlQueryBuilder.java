@@ -143,7 +143,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
         // For projections, we need to have VALUE in order to be able to read value
         // but for DTO when there can be more fields retrieved (meaning there is comma in the query) then VALUE cannot work
         // also literal projection does not need VALUE
-        if (projections.size() == 1 && !(projections.get(0) instanceof QueryModel.LiteralProjection) && select.indexOf(",") == -1) {
+        if (projections.size() == 1 && !(projections.get(0) instanceof QueryModel.LiteralProjection) && !(projections.get(0) instanceof QueryModel.RootEntityProjection) && select.indexOf(",") == -1) {
             select.insert(SELECT_CLAUSE.length(), VALUE);
         }
 
