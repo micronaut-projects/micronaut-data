@@ -81,7 +81,7 @@ public final class UpdateMethodMatcher extends AbstractMethodMatcher {
             if (!isReturning && !TypeUtils.isValidBatchUpdateReturnType(methodElement)) {
                 throw new MatchFailedException("Update methods only support void or number based return types");
             }
-            return batchUpdate(matches, idParameter, isReturning);
+            return batchUpdate(matchContext, matches, idParameter, isReturning);
         }
 
         final ParameterElement entityParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isEntity(p.getGenericType())).findFirst().orElse(null);
@@ -93,7 +93,7 @@ public final class UpdateMethodMatcher extends AbstractMethodMatcher {
         if (!isReturning && !TypeUtils.isValidBatchUpdateReturnType(methodElement)) {
             throw new MatchFailedException("Update methods only support void or number based return types");
         }
-        return batchUpdate2(matches, isReturning);
+        return batchUpdateBy(matches, isReturning);
     }
 
     private UpdateCriteriaMethodMatch entityUpdate(List<MethodNameParser.Match> matches,
@@ -105,17 +105,15 @@ public final class UpdateMethodMatcher extends AbstractMethodMatcher {
             final ParameterElement entityParam = entityParameter == null ? entitiesParameter : entityParameter;
 
             @Override
-            protected <T> void applyPredicates(List<ParameterElement> parameters,
-                                               PersistentEntityRoot<T> root,
+            protected <T> void applyPredicates(PersistentEntityRoot<T> root,
                                                PersistentEntityCriteriaUpdate<T> query,
                                                SourcePersistentEntityCriteriaBuilder cb) {
-
                 final SourcePersistentEntity rootEntity = (SourcePersistentEntity) root.getPersistentEntity();
                 Predicate predicate;
                 if (rootEntity.getVersion() != null) {
                     predicate = cb.and(
-                            cb.equal(root.id(), cb.entityPropertyParameter(entityParam)),
-                            cb.equal(root.version(), cb.entityPropertyParameter(entityParam))
+                        cb.equal(root.id(), cb.entityPropertyParameter(entityParam)),
+                        cb.equal(root.version(), cb.entityPropertyParameter(entityParam))
                     );
                 } else {
                     predicate = cb.equal(root.id(), cb.entityPropertyParameter(entityParam));
@@ -181,29 +179,21 @@ public final class UpdateMethodMatcher extends AbstractMethodMatcher {
         };
     }
 
-    private UpdateCriteriaMethodMatch batchUpdate(List<MethodNameParser.Match> matches,
+    private UpdateCriteriaMethodMatch batchUpdate(MethodMatchContext matchContext,
+                                                  List<MethodNameParser.Match> matches,
                                                   ParameterElement idParameter,
                                                   boolean isReturning) {
         return new UpdateCriteriaMethodMatch(matches, isReturning) {
 
             @Override
-            protected <T> void applyPredicates(String querySequence, ParameterElement[] parameters,
+            protected <T> void applyPredicates(String querySequence,
+                                               ParameterElement[] parameters,
                                                PersistentEntityRoot<T> root,
                                                PersistentEntityCriteriaUpdate<T> query,
                                                SourcePersistentEntityCriteriaBuilder cb) {
                 super.applyPredicates(querySequence, parameters, root, query, cb);
 
-                ParameterElement versionParameter = Arrays.stream(parameters).filter(p -> p.hasAnnotation(Version.class)).findFirst().orElse(null);
-                Predicate predicate;
-                if (versionParameter != null) {
-                    predicate = cb.and(
-                            cb.equal(root.id(), cb.parameter(idParameter)),
-                            cb.equal(root.version(), cb.parameter(versionParameter))
-                    );
-                } else {
-                    predicate = cb.equal(root.id(), cb.parameter(idParameter));
-                }
-                query.where(predicate);
+                applyPredicates(root, query, cb);
             }
 
             @Override
@@ -212,12 +202,21 @@ public final class UpdateMethodMatcher extends AbstractMethodMatcher {
                                                PersistentEntityCriteriaUpdate<T> query,
                                                SourcePersistentEntityCriteriaBuilder cb) {
 
-                ParameterElement versionParameter = parameters.stream().filter(p -> p.hasAnnotation(Version.class)).findFirst().orElse(null);
+                applyPredicates(root, query, cb);
+            }
+
+            @Override
+            protected <T> void applyPredicates(PersistentEntityRoot<T> root,
+                                               PersistentEntityCriteriaUpdate<T> query,
+                                               SourcePersistentEntityCriteriaBuilder cb) {
+
+                ParameterElement versionParameter = Arrays.stream(matchContext.getParameters())
+                    .filter(p -> p.hasAnnotation(Version.class)).findFirst().orElse(null);
                 Predicate predicate;
                 if (versionParameter != null) {
                     predicate = cb.and(
-                            cb.equal(root.id(), cb.parameter(idParameter)),
-                            cb.equal(root.version(), cb.parameter(versionParameter))
+                        cb.equal(root.id(), cb.parameter(idParameter)),
+                        cb.equal(root.version(), cb.parameter(versionParameter))
                     );
                 } else {
                     predicate = cb.equal(root.id(), cb.parameter(idParameter));
@@ -272,8 +271,8 @@ public final class UpdateMethodMatcher extends AbstractMethodMatcher {
         };
     }
 
-    private UpdateCriteriaMethodMatch batchUpdate2(List<MethodNameParser.Match> matches,
-                                                   boolean isReturning) {
+    private UpdateCriteriaMethodMatch batchUpdateBy(List<MethodNameParser.Match> matches,
+                                                    boolean isReturning) {
         return new UpdateCriteriaMethodMatch(matches, isReturning) {
 
             @Override

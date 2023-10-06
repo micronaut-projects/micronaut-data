@@ -333,6 +333,19 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     }
 
     /**
+     * Apply a basic predicate.
+     *
+     * @param root       The root
+     * @param query      The query
+     * @param cb         The criteria builder
+     * @param <T>        The entity type
+     */
+    protected <T> void applyPredicates(PersistentEntityRoot<T> root,
+                                       PersistentEntityCriteriaUpdate<T> query,
+                                       SourcePersistentEntityCriteriaBuilder cb) {
+    }
+
+    /**
      * Apply predicates based on parameters.
      *
      * @param parameters The parameters
