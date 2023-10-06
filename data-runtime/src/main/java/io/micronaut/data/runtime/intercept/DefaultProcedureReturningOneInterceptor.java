@@ -62,6 +62,9 @@ public final class DefaultProcedureReturningOneInterceptor<T, R> extends Abstrac
                 convertOne(context, results.get(0))
             );
         }
+        if (results.isEmpty()) {
+            return null;
+        }
         return (R) convertOne(context, results.get(0));
     }
 }

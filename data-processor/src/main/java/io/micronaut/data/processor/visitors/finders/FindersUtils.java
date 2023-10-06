@@ -55,6 +55,7 @@ import io.micronaut.data.intercept.async.FindOneAsyncInterceptor;
 import io.micronaut.data.intercept.async.FindPageAsyncInterceptor;
 import io.micronaut.data.intercept.async.FindSliceAsyncInterceptor;
 import io.micronaut.data.intercept.async.ProcedureReturningManyAsyncInterceptor;
+import io.micronaut.data.intercept.async.ProcedureReturningOneAsyncInterceptor;
 import io.micronaut.data.intercept.async.SaveAllAsyncInterceptor;
 import io.micronaut.data.intercept.async.SaveEntityAsyncInterceptor;
 import io.micronaut.data.intercept.async.SaveOneAsyncInterceptor;
@@ -205,7 +206,7 @@ public interface FindersUtils {
             if (isContainer(asyncType, Iterable.class)) {
                 return typeAndInterceptorEntry(matchContext, asyncType.getFirstTypeArgument().orElse(asyncType), ProcedureReturningManyAsyncInterceptor.class);
             }
-            return typeAndInterceptorEntry(matchContext, asyncType, ProcedureReturningManyAsyncInterceptor.class);
+            return typeAndInterceptorEntry(matchContext, asyncType, ProcedureReturningOneAsyncInterceptor.class);
         } else if (isReactiveType(returnType)) {
             return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(null), ProcedureReactiveInterceptor.class);
         }

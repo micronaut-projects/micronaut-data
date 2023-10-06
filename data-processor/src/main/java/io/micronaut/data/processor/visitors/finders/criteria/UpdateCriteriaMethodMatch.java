@@ -42,7 +42,6 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ParameterElement;
 import jakarta.persistence.criteria.Selection;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -96,7 +95,7 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             }
         }
         if (!predicatedApplied) {
-            applyPredicates(Collections.emptyList(), root, query, cb);
+            applyPredicates(matchContext.getParametersInRoleList(), root, query, cb);
         }
         if (!projectionApplied) {
             applyProjections("", root, query, cb);
