@@ -109,11 +109,6 @@ interface BookRepository extends CrudRepository<Book, Long> { // <2>
     Long calculateSum(@NonNull Long bookId);
     // end::procedure[]
 
-    // tag::updateReturning[]
-    @Procedure
-    Long calculateSum(@NonNull Long bookId);
-    // end::updateReturning[]
-
 // tag::repository[]
 }
 // end::repository[]
