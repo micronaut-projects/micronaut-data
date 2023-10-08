@@ -768,7 +768,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         if (isDto) {
             isRuntimeDto = isDtoType(matchContext.getRepositoryClass(), resultType);
         } else if (interceptorMatch.validateReturnType()) {
-            if (resultType == null || (!resultType.isAssignable(void.class) && !resultType.isAssignable(Void.class))) {
+            if (resultType == null || (!resultType.isAssignable(void.class) && !resultType.isAssignable(Void.class) && !resultType.getName().equals("kotlin.Unit"))) {
                 if (resultType == null || TypeUtils.areTypesCompatible(resultType, queryResultType)) {
                     if (!queryResultType.isPrimitive() || resultType == null) {
                         resultType = queryResultType;
