@@ -15,17 +15,17 @@
  */
 package io.micronaut.data.jdbc.postgres;
 
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Expandable;
+import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.annotation.sql.Procedure;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.repositories.BookRepository;
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.model.query.builder.sql.Dialect;
-
-import io.micronaut.core.annotation.Nullable;
 
 import java.util.List;
 
@@ -52,4 +52,28 @@ public abstract class PostgresBookRepository extends BookRepository {
 
     @Procedure("add1")
     public abstract int add1Aliased(int input);
+
+    public abstract Book updateReturning(Book book);
+
+    public abstract String updateReturningTitle(Book book);
+
+    public abstract String updateReturningTitle(@Id Long id, String title);
+
+    public abstract String updateByIdReturningTitle(Long id, String title);
+
+    //    @Query(value = "update books set read = true where author = :author returning *", readOnly = false)
+    public abstract List<Book> updateReturning(Long authorId);
+
+    public abstract Book modifyReturning(Long authorId);
+
+    @Query("""
+        UPDATE "book" SET "author_id"=:authorId RETURNING "id","author_id","genre_id","title","total_pages","publisher_id","last_updated"
+        """)
+    public abstract List<Book> customUpdateReturningBooks(Long authorId);
+
+    @Query("""
+        UPDATE "book" SET "author_id"=:authorId RETURNING *
+        """)
+    public abstract Book customUpdateReturningBook(Long authorId);
+
 }

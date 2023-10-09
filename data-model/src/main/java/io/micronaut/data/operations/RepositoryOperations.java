@@ -32,6 +32,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -210,7 +211,7 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * @since 4.2.0
      */
     @NonNull
-    default <R> Optional<R> execute(@NonNull PreparedQuery<?, R> preparedQuery) {
+    default <R> List<R> execute(@NonNull PreparedQuery<?, R> preparedQuery) {
         throw new DataAccessException("Current repository: " + getClass() + " doesn't support method 'execute'!");
     }
 

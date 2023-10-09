@@ -100,4 +100,8 @@ public interface PersistentPropertyPath<T> extends Path<T>, IExpression<T> {
         return new PersistentPropertyInValuesPredicate<>(this, Arrays.asList(values));
     }
 
+    @Override
+    default Predicate in(Expression<Collection<?>> values) {
+        return new PersistentPropertyInValuesPredicate<>(this, List.of(Objects.requireNonNull(values)));
+    }
 }

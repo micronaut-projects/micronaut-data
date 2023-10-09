@@ -98,6 +98,11 @@ public interface DelegateStoredQuery<E, R> extends StoredQuery<E, R> {
     }
 
     @Override
+    default OperationType getOperationType() {
+        return getStoredQueryDelegate().getOperationType();
+    }
+
+    @Override
     default boolean useNumericPlaceholders() {
         return getStoredQueryDelegate().useNumericPlaceholders();
     }

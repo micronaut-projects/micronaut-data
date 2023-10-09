@@ -65,7 +65,7 @@ public enum Dialect {
     /**
      * Postgres 9.5 or later.
      */
-    POSTGRES(true, false, ALL_TYPES),
+    POSTGRES(true, false, ALL_TYPES, false, true),
     /**
      * SQL server 2012 or above.
      */
@@ -73,7 +73,7 @@ public enum Dialect {
     /**
      * Oracle 12c or above.
      */
-    ORACLE(true, true, ALL_TYPES, true),
+    ORACLE(true, true, ALL_TYPES, true, true),
     /**
      * Ansi compliant SQL.
      */
@@ -86,6 +86,8 @@ public enum Dialect {
 
     private final EnumSet<Join.Type> joinTypesSupported;
 
+    private final boolean supportsUpdateReturning;
+
     /**
      * Allows customization of batch support.
      *
@@ -94,7 +96,7 @@ public enum Dialect {
      * @param joinTypesSupported EnumSet of supported join types.
      */
     Dialect(boolean supportsBatch, boolean stringUUID, EnumSet<Join.Type> joinTypesSupported) {
-        this(supportsBatch, stringUUID, joinTypesSupported, false);
+        this(supportsBatch, stringUUID, joinTypesSupported, false, false);
     }
 
     /**
@@ -104,12 +106,18 @@ public enum Dialect {
      * @param stringUUID         Does the dialect require a string UUID
      * @param joinTypesSupported EnumSet of supported join types.
      * @param supportsJsonEntity Whether JSON entity is supported
+     * @param supportsUpdateReturning Whether the dialect supports UPDATE ... RETURNING clause.
      */
-    Dialect(boolean supportsBatch, boolean stringUUID, EnumSet<Join.Type> joinTypesSupported, boolean supportsJsonEntity) {
+    Dialect(boolean supportsBatch,
+            boolean stringUUID,
+            EnumSet<Join.Type> joinTypesSupported,
+            boolean supportsJsonEntity,
+            boolean supportsUpdateReturning) {
         this.supportsBatch = supportsBatch;
         this.stringUUID = stringUUID;
         this.joinTypesSupported = joinTypesSupported;
         this.supportsJsonEntity = supportsJsonEntity;
+        this.supportsUpdateReturning = supportsUpdateReturning;
     }
 
     /**
@@ -165,5 +173,15 @@ public enum Dialect {
      */
     public boolean supportsJsonEntity() {
         return supportsJsonEntity;
+    }
+
+    /**
+     * Whether the dialect supports UPDATE ... RETURNING clause.
+     *
+     * @return true if does supports
+     * @since 4.2.0
+     */
+    public boolean supportsUpdateReturning() {
+        return supportsUpdateReturning;
     }
 }

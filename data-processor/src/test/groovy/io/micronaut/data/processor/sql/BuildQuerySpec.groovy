@@ -31,6 +31,7 @@ import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Restaurant
 import io.micronaut.data.tck.jdbc.entities.EmployeeGroup
+import io.micronaut.inject.ExecutableMethod
 import spock.lang.Issue
 import spock.lang.Unroll
 
@@ -43,6 +44,7 @@ import static io.micronaut.data.processor.visitors.TestUtils.getParameterBinding
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterPropertyPaths
 import static io.micronaut.data.processor.visitors.TestUtils.getQuery
 import static io.micronaut.data.processor.visitors.TestUtils.getRawQuery
+import static io.micronaut.data.processor.visitors.TestUtils.getResultDataType
 import static io.micronaut.data.processor.visitors.TestUtils.isExpandableQuery
 
 class BuildQuerySpec extends AbstractDataSpec {
@@ -113,6 +115,7 @@ interface MyInterface2 extends CrudRepository<CustomBook, Long> {
         then:
             query == 'SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[:nickNames]'
             rawQuery == 'SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[?]'
+            getResultDataType(method) == DataType.ENTITY
     }
 
     void "test join on repository type that inherits from CrudRepository"() {
@@ -592,7 +595,7 @@ interface PageRepository extends GenericRepository<Page, Long> {
         chaptersBookJoinQuery == "SELECT page_book_chapters_.`id`,page_book_chapters_.`pages`,page_book_chapters_.`book_id`,page_book_chapters_.`title`,page_book_chapters_book_.`author_id` AS book_author_id,page_book_chapters_book_.`genre_id` AS book_genre_id,page_book_chapters_book_.`title` AS book_title,page_book_chapters_book_.`total_pages` AS book_total_pages,page_book_chapters_book_.`publisher_id` AS book_publisher_id,page_book_chapters_book_.`last_updated` AS book_last_updated FROM `page` page_ INNER JOIN `book` page_book_ ON page_.`book_id`=page_book_.`id` INNER JOIN `chapter` page_book_chapters_ ON page_book_.`id`=page_book_chapters_.`book_id` INNER JOIN `book` page_book_chapters_book_ ON page_book_chapters_.`book_id`=page_book_chapters_book_.`id` WHERE (page_.`id` = ? AND page_.`num` = ?)"
         chaptersBookJoinJoins.size() == 1
         chaptersBookJoinJoins.keySet() == ["book"] as Set
-
+        getResultDataType(method) == DataType.ENTITY
     }
 
     void "test many-to-many using mappedBy"() {
@@ -620,7 +623,7 @@ interface StudentRepository extends GenericRepository<Student, Long> {
 
         expect:
         query.contains("FROM `student` student_ INNER JOIN `book_student`")
-
+        getResultDataType(method) == DataType.ENTITY
     }
 
     void "test many-to-many from inverse association"() {
@@ -648,6 +651,7 @@ interface BookRepository extends GenericRepository<Book, Long> {
 
         expect:
         query.contains("FROM `book` book_ INNER JOIN `book_student`")
+        getResultDataType(method) == DataType.ENTITY
 
     }
 
@@ -751,6 +755,9 @@ interface AuthorRepository extends GenericRepository<Author, Long> {
         findByNameCountQuery == 'SELECT COUNT(*) FROM `author` author_ WHERE (author_.`name` = ? AND (author_.nick_name =?))'
         findByNickNameQuery == 'SELECT author_.`id`,author_.`name`,author_.`nick_name` FROM `author` author_ WHERE (author_.`nick_name` = ? AND (author_.name =?))'
         findByNickNameCountQuery == 'SELECT COUNT(*) FROM `author` author_ WHERE (author_.`nick_name` = ? AND (author_.name =?))'
+        getResultDataType(findAllMethod) == DataType.ENTITY
+        getResultDataType(findByNameMethod) == DataType.ENTITY
+        getResultDataType(findByNickNameMethod) == DataType.ENTITY
     }
 
     void "test distinct query"() {
@@ -859,6 +866,7 @@ class CustomBook {
 
         expect:
         findAllQuery == 'SELECT custom_book_.`id`,custom_book_.`title`,custom_book_.`pages`,custom_book_.`author_id2`,custom_book_author_.`id2` AS author_id2,custom_book_author_.`name` AS author_name FROM `custom_book` custom_book_ INNER JOIN `custom_author` custom_book_author_ ON custom_book_.`author_id2`=custom_book_author_.`id2`'
+        getResultDataType(findAllMethod) == DataType.ENTITY
     }
 
     void "test DTO with association and join"() {
@@ -887,6 +895,7 @@ interface AuthorRepository extends GenericRepository<Author, Long> {
 
         expect:
             queryAllQuery == 'SELECT author_.`id`,author_books_.`id` AS books_id,author_books_.`author_id` AS books_author_id,author_books_.`genre_id` AS books_genre_id,author_books_.`title` AS books_title,author_books_.`total_pages` AS books_total_pages,author_books_.`publisher_id` AS books_publisher_id,author_books_.`last_updated` AS books_last_updated FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id`'
+            getResultDataType(queryAllMethod) == DataType.OBJECT
     }
 
     void "test many-to-one with properties starting with the same prefix"() {
@@ -1085,5 +1094,55 @@ interface TestRepository extends GenericRepository<ActivityPeriodEntity, UUID> {
         def query = result.query
         then:
         query == queryFindAll
+    }
+
+    void "test project enum"() {
+        when:
+            def repository = buildRepository('test.PetRepository', """
+import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Pet;
+import reactor.core.publisher.Flux;
+
+@Repository
+interface PetRepository extends GenericRepository<Pet, UUID> {
+
+    Flux<Pet.PetType> listDistinctType();
+
+}
+"""
+            )
+
+
+            def method = repository.getRequiredMethod("listDistinctType")
+        then:
+            getQuery(method) == 'SELECT DISTINCT pet_.type FROM io.micronaut.data.tck.entities.Pet AS pet_'
+            getResultDataType(method) == DataType.STRING
+    }
+
+    void "test project max"() {
+        when:
+            def repository = buildRepository('test.StudentRepository', """
+import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Pet;
+import io.micronaut.data.tck.entities.Student;
+
+@Repository
+interface StudentRepository extends GenericRepository<Student, Long> {
+
+    int findMaxIdByIdIn(List<Long> ids);
+
+}
+"""
+            )
+
+
+            def method = repository.getRequiredMethod("findMaxIdByIdIn", List)
+        then:
+            getQuery(method) == 'SELECT MAX(student_.id) FROM io.micronaut.data.tck.entities.Student AS student_ WHERE (student_.id IN (:p1))'
+            getResultDataType(method) == DataType.LONG
     }
 }

@@ -13,17 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.intercept.async;
+package io.micronaut.data.processor.visitors.finders;
 
-import io.micronaut.data.intercept.DataInterceptor;
+import io.micronaut.core.annotation.Internal;
 
 /**
- * An interceptor that does execute the procedure and returns a result asynchronously.
+ * Type of method match.
  *
- * @param <T> The declaring type
- * @param <R> The return result
  * @author Denis Stepanov
  * @since 4.2.0
  */
-public interface ProcedureAsyncInterceptor<T, R> extends DataInterceptor<T, R> {
+@Internal
+public enum QueryMatchId implements MethodNameParser.MatchId {
+
+    PREFIX,
+    ALL_OR_ONE,
+    LIMIT,
+    FIRST,
+    DISTINCT,
+    PROJECTION,
+    PREDICATE,
+    RETURNING,
+    ORDER,
+    FOR_UPDATE
 }

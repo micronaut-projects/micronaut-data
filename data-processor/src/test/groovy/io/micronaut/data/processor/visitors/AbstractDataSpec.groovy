@@ -30,8 +30,7 @@ import spock.lang.Requires
 
 import javax.annotation.processing.SupportedAnnotationTypes
 
-@Requires({ javaVersion <= 1.8 })
-class AbstractDataSpec extends AbstractTypeElementSpec {
+abstract class AbstractDataSpec extends AbstractTypeElementSpec {
 
     SourcePersistentEntity buildJpaEntity(String name, @Language("JAVA") String source) {
         def pkg = NameUtils.getPackageName(name)

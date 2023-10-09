@@ -16,6 +16,7 @@
 package io.micronaut.data.jdbc.postgres
 
 import groovy.transform.Memoized
+import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 
@@ -221,5 +222,116 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
             books12.size() == 1
     }
 
+    void "test update returning book"() {
+        given:
+            setupBooks()
+        when:
+            def book = bookRepository.findByTitle("Pet Cemetery")
+            book.title = "Xyz"
+            Book newBook = bookRepository.updateReturning(book)
+            book.title = "old"
+        then:
+            newBook.title == "Xyz"
+    }
+
+    void "test update returning book title"() {
+        given:
+            setupBooks()
+        when:
+            def book = bookRepository.findByTitle("Pet Cemetery")
+            book.title = "Xyz"
+            String newTitle = bookRepository.updateReturningTitle(book)
+        then:
+            newTitle == "Xyz"
+            bookRepository.findById(book.id).get().title == "Xyz"
+    }
+
+    void "test update returning book title 2"() {
+        given:
+            setupBooks()
+            def book = bookRepository.findByTitle("Pet Cemetery")
+        when:
+            String newTitle = bookRepository.updateReturningTitle(book.id, "Xyz")
+        then:
+            newTitle == "Xyz"
+            bookRepository.findById(book.id).get().title == "Xyz"
+    }
+
+    void "test update returning book title 3"() {
+        given:
+            setupBooks()
+            def book = bookRepository.findByTitle("Pet Cemetery")
+        when:
+            String newTitle = bookRepository.updateByIdReturningTitle(book.id, "Xyz")
+        then:
+            newTitle == "Xyz"
+            bookRepository.findById(book.id).get().title == "Xyz"
+    }
+
+    void "test update all books with author and returning books"() {
+        given:
+            setupBooks()
+            def books = bookRepository.findAll()
+            def petCemetery = bookRepository.findByTitle("Pet Cemetery")
+        when:
+            def b = bookRepository.updateReturning(petCemetery.author.id)
+        then:
+            b.size() == books.size()
+        when:
+            def allBooks = bookRepository.findAll()
+        then:
+            allBooks.forEach {
+                assert it.author.id == petCemetery.author.id
+            }
+    }
+
+    void "test update all books with author and returning a book"() {
+        given:
+            setupBooks()
+            def petCemetery = bookRepository.findByTitle("Pet Cemetery")
+        when:
+            def b = bookRepository.modifyReturning(petCemetery.author.id)
+        then:
+            b.author.id == petCemetery.author.id
+        when:
+            def allBooks = bookRepository.findAll()
+        then:
+            allBooks.forEach {
+                assert it.author.id == petCemetery.author.id
+            }
+    }
+
+    void "test custom update all books with author and returning books"() {
+        given:
+            setupBooks()
+            def books = bookRepository.findAll()
+            def petCemetery = bookRepository.findByTitle("Pet Cemetery")
+        when:
+            def b = bookRepository.customUpdateReturningBooks(petCemetery.author.id)
+        then:
+            b.size() == books.size()
+        when:
+            def allBooks = bookRepository.findAll()
+        then:
+            allBooks.forEach {
+                assert it.author.id == petCemetery.author.id
+            }
+    }
+
+    void "test custom update all books with author and returning a book"() {
+        given:
+            setupBooks()
+            def petCemetery = bookRepository.findByTitle("Pet Cemetery")
+        when:
+            def b = bookRepository.customUpdateReturningBook(petCemetery.author.id)
+        then:
+            b.author.id == petCemetery.author.id
+        when:
+            def allBooks = bookRepository.findAll()
+        then:
+            allBooks.forEach {
+                assert it.author.id == petCemetery.author.id
+            }
+    }
 
 }

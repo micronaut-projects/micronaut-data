@@ -13,15 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.intercept;
+package io.micronaut.data.intercept.async;
+
+import io.micronaut.data.intercept.DataInterceptor;
+
+import java.util.concurrent.CompletionStage;
 
 /**
- * An interceptor that does execute the procedure.
+ * An interceptor that does execute the procedure and returns results asynchronously.
  *
  * @param <T> The declaring type
  * @param <R> The return result
  * @author Denis Stepanov
  * @since 4.2.0
  */
-public interface ProcedureInterceptor<T, R> extends DataInterceptor<T, R> {
+public interface ProcedureReturningManyAsyncInterceptor<T, R> extends DataInterceptor<T, CompletionStage<? extends Iterable<R>>> {
 }

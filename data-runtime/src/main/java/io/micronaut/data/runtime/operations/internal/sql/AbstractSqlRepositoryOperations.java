@@ -29,7 +29,6 @@ import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.OptimisticLockException;
-import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
@@ -88,6 +87,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static io.micronaut.data.model.runtime.StoredQuery.*;
 
 /**
  * Abstract SQL repository implementation not specifically bound to JDBC.
@@ -305,7 +306,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             final SqlQueryBuilder queryBuilder = findQueryBuilder(repositoryType);
             final QueryResult queryResult = queryBuilder.buildInsert(annotationMetadata, persistentEntity);
 
-            return new DefaultSqlStoredQuery<>(QueryResultStoredQuery.single(DataMethod.OperationType.INSERT, "Custom insert", AnnotationMetadata.EMPTY_METADATA, queryResult, rootEntity), persistentEntity, queryBuilder);
+            return new DefaultSqlStoredQuery<>(QueryResultStoredQuery.single(OperationType.INSERT, "Custom insert", AnnotationMetadata.EMPTY_METADATA, queryResult, rootEntity), persistentEntity, queryBuilder);
         });
     }
 
@@ -366,7 +367,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                     .map(PersistentProperty::getName)
                     .collect(Collectors.toList());
             final QueryResult queryResult = queryBuilder.buildUpdate(annotationMetadata, queryModel, updateProperties);
-            return new DefaultSqlStoredQuery<>(QueryResultStoredQuery.single(DataMethod.OperationType.UPDATE, "Custom update", AnnotationMetadata.EMPTY_METADATA, queryResult, rootEntity), persistentEntity, queryBuilder);
+            return new DefaultSqlStoredQuery<>(QueryResultStoredQuery.single(OperationType.UPDATE, "Custom update", AnnotationMetadata.EMPTY_METADATA, queryResult, rootEntity), persistentEntity, queryBuilder);
         });
     }
 
@@ -408,7 +409,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 }
             });
         }
-        for (PersistentPropertyPath pp : idProperties(association.getAssociatedEntity().getIdentity()).collect(Collectors.toList())) {
+        for (PersistentPropertyPath pp : idProperties(association.getAssociatedEntity().getIdentity()).toList()) {
             parameters.add(new QueryParameterBinding() {
 
                 @Override
@@ -434,7 +435,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         }
 
         RuntimePersistentEntity associatedEntity = association.getAssociatedEntity();
-        return new DefaultSqlStoredQuery<>(new BasicStoredQuery<>(sqlInsert, new String[0], parameters, persistentEntity.getIntrospection().getBeanType(), Object.class), associatedEntity, queryBuilder);
+        return new DefaultSqlStoredQuery<>(new BasicStoredQuery<>(sqlInsert, new String[0], parameters, persistentEntity.getIntrospection().getBeanType(), Object.class, OperationType.INSERT), associatedEntity, queryBuilder);
     }
 
     private SqlQueryBuilder findQueryBuilder(Class<?> repositoryType) {

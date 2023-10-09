@@ -13,55 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.runtime.intercept;
+package io.micronaut.data.runtime.intercept.async;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.type.ReturnType;
-import io.micronaut.data.intercept.ProcedureInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
+import io.micronaut.data.intercept.async.ProcedureReturningManyAsyncInterceptor;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 
-import java.util.Optional;
+import java.util.concurrent.CompletionStage;
 
 /**
- * The default implementation of {@link ProcedureInterceptor}.
+ * The default implementation of {@link ProcedureReturningManyAsyncInterceptor}.
  *
- * @param <T> The declaring type
- * @param <R> The return generic type
+ * @param <T> The return type
+ * @param <R> The result type
  * @author Denis Stepanov
  * @since 4.2.0
  */
 @Internal
-public class DefaultProcedureInterceptor<T, R> extends AbstractQueryInterceptor<T, R> implements ProcedureInterceptor<T, R> {
+public final class DefaultProcedureReturningManyAsyncInterceptor<T, R> extends AbstractAsyncInterceptor2<T, Iterable<R>> implements ProcedureReturningManyAsyncInterceptor<T, R> {
 
     /**
      * Default constructor.
      *
      * @param datastore The operations
      */
-    DefaultProcedureInterceptor(RepositoryOperations datastore) {
+    DefaultProcedureReturningManyAsyncInterceptor(RepositoryOperations datastore) {
         super(datastore);
     }
 
     @Override
-    public R intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
+    public CompletionStage<? extends Iterable<R>> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<? extends Iterable<R>>> context) {
         PreparedQuery<?, R> preparedQuery = prepareQuery(methodKey, context, null);
-        Optional<R> result = operations.execute(preparedQuery);
-        ReturnType<R> returnType = context.getReturnType();
-        if (returnType.isVoid()) {
-            return null;
-        }
-        if (returnType.isOptional()) {
-            if (result.isEmpty()) {
-                return (R) result;
-            }
-            return (R) result.map(r -> convertOne(context, r));
-        }
-        return (R) convertOne(
-                context,
-                result.orElse(null)
-        );
+        return asyncDatastoreOperations.execute(preparedQuery);
     }
+
 }

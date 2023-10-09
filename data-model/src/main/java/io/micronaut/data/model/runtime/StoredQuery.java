@@ -117,6 +117,14 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
     }
 
     /**
+     * Get the operation type.
+     *
+     * @return The operation type.
+     * @since 4.2.0
+     */
+    OperationType getOperationType();
+
+    /**
      * Are the placeholders for query set using numeric indices starting from 1.
      * @return True if they are.
      * @deprecated Not used anymore
@@ -213,5 +221,39 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      */
     default boolean isJsonEntity() {
         return false;
+    }
+
+    /**
+     * Describes the operation type.
+     */
+    enum OperationType {
+        /**
+         * A query operation.
+         */
+        QUERY,
+        /**
+         * A count operation.
+         */
+        COUNT,
+        /**
+         * A exists operation.
+         */
+        EXISTS,
+        /**
+         * An update operation.
+         */
+        UPDATE,
+        /**
+         * An update returning operation.
+         */
+        UPDATE_RETURNING,
+        /**
+         * A delete operation.
+         */
+        DELETE,
+        /**
+         * An insert operation.
+         */
+        INSERT
     }
 }

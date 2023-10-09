@@ -417,7 +417,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     }
 
     @Override
-    public <R> Optional<R> execute(PreparedQuery<?, R> preparedQuery) {
+    public <R> List<R> execute(PreparedQuery<?, R> preparedQuery) {
         return executeWrite(session -> {
             boolean needsOutRegistered = false;
             if (preparedQuery.isProcedure()) {
@@ -457,7 +457,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
                 procedureQuery.execute();
                 if (preparedQuery.getResultArgument().isVoid()) {
                     flushIfNecessary(session, preparedQuery.getAnnotationMetadata(), true);
-                    return Optional.empty();
+                    return List.of();
                 }
                 jakarta.persistence.Parameter procedureParameter = procedureQuery.getRegisteredParameters().stream().filter(p -> p.getMode() == ParameterMode.OUT)
                         .findFirst()
@@ -468,7 +468,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
                 } else {
                     result = procedureQuery.getOutputParameterValue(preparedQuery.getQueryBindings().size() + 1);
                 }
-                return Optional.ofNullable((R) result);
+                return List.of((R) result);
             } else {
                 throw new IllegalStateException("Not supported!");
             }
