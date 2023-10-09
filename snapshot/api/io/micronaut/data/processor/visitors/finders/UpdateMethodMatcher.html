@@ -72,7 +72,7 @@ loadScripts(document, 'script');</script>
 <h1 title="Class UpdateMethodMatcher" class="title">Class UpdateMethodMatcher</h1>
 </div>
 <div class="inheritance" title="Inheritance Tree"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">java.lang.Object</a>
-<div class="inheritance"><a href="AbstractPatternMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">io.micronaut.data.processor.visitors.finders.AbstractPatternMethodMatcher</a>
+<div class="inheritance"><a href="AbstractMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">io.micronaut.data.processor.visitors.finders.AbstractMethodMatcher</a>
 <div class="inheritance">io.micronaut.data.processor.visitors.finders.UpdateMethodMatcher</div>
 </div>
 </div>
@@ -84,7 +84,7 @@ loadScripts(document, 'script');</script>
 <hr>
 <div class="type-signature"><span class="annotations">@Internal
 </span><span class="modifiers">public final class </span><span class="element-name type-name-label">UpdateMethodMatcher</span>
-<span class="extends-implements">extends <a href="AbstractPatternMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractPatternMethodMatcher</a></span></div>
+<span class="extends-implements">extends <a href="AbstractMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractMethodMatcher</a></span></div>
 <div class="block">Update method matcher.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -109,8 +109,8 @@ loadScripts(document, 'script');</script>
 <section class="field-summary" id="field-summary">
 <h2>Field Summary</h2>
 <div class="inherited-list">
-<h3 id="fields-inherited-from-class-io.micronaut.data.processor.visitors.finders.AbstractPatternMethodMatcher">Fields inherited from class&nbsp;io.micronaut.data.processor.visitors.finders.<a href="AbstractPatternMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractPatternMethodMatcher</a></h3>
-<code><a href="AbstractPatternMethodMatcher.html#patternWithBySyntax">patternWithBySyntax</a>, <a href="AbstractPatternMethodMatcher.html#patternWithoutBySyntax">patternWithoutBySyntax</a></code></div>
+<h3 id="fields-inherited-from-class-io.micronaut.data.processor.visitors.finders.AbstractMethodMatcher">Fields inherited from class&nbsp;io.micronaut.data.processor.visitors.finders.<a href="AbstractMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractMethodMatcher</a></h3>
+<code><a href="AbstractMethodMatcher.html#ALL_OR_ONE">ALL_OR_ONE</a>, <a href="AbstractMethodMatcher.html#BY">BY</a>, <a href="AbstractMethodMatcher.html#DISTINCT">DISTINCT</a>, <a href="AbstractMethodMatcher.html#FIRST">FIRST</a>, <a href="AbstractMethodMatcher.html#FOR_UPDATE">FOR_UPDATE</a>, <a href="AbstractMethodMatcher.html#ORDER_VARIATIONS">ORDER_VARIATIONS</a>, <a href="AbstractMethodMatcher.html#RETURNING">RETURNING</a>, <a href="AbstractMethodMatcher.html#TOP_OR_FIRST">TOP_OR_FIRST</a></code></div>
 <div class="inherited-list">
 <h3 id="fields-inherited-from-class-io.micronaut.data.processor.visitors.finders.MethodMatcher">Fields inherited from interface&nbsp;io.micronaut.data.processor.visitors.finders.<a href="MethodMatcher.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher</a></h3>
 <code><a href="MethodMatcher.html#DEFAULT_POSITION">DEFAULT_POSITION</a></code></div>
@@ -144,17 +144,17 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="MethodMatcher.MethodMatch.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher.MethodMatch</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#match(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.regex.Matcher)" class="member-name-link">match</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/regex/Matcher.html" title="class or interface in java.util.regex" class="external-link">Matcher</a>&nbsp;matcher)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#match(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.List)" class="member-name-link">match</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="MethodNameParser.Match.html" title="class in io.micronaut.data.processor.visitors.finders">MethodNameParser.Match</a>&gt;&nbsp;matches)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Handle match.</div>
+<div class="block">Matched the method.</div>
 </div>
 </div>
 </div>
 </div>
 <div class="inherited-list">
-<h3 id="methods-inherited-from-class-io.micronaut.data.processor.visitors.finders.AbstractPatternMethodMatcher">Methods inherited from class&nbsp;io.micronaut.data.processor.visitors.finders.<a href="AbstractPatternMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractPatternMethodMatcher</a></h3>
-<code><a href="AbstractPatternMethodMatcher.html#match(io.micronaut.data.processor.visitors.MethodMatchContext)">match</a></code></div>
+<h3 id="methods-inherited-from-class-io.micronaut.data.processor.visitors.finders.AbstractMethodMatcher">Methods inherited from class&nbsp;io.micronaut.data.processor.visitors.finders.<a href="AbstractMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractMethodMatcher</a></h3>
+<code><a href="AbstractMethodMatcher.html#match(io.micronaut.data.processor.visitors.MethodMatchContext)">match</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-java.lang.Object">Methods inherited from class&nbsp;java.lang.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></h3>
 <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#toString()" title="class or interface in java.lang" class="external-link">toString</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
@@ -187,18 +187,18 @@ loadScripts(document, 'script');</script>
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="match(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.regex.Matcher)">
+<section class="detail" id="match(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.List)">
 <h3>match</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="MethodMatcher.MethodMatch.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher.MethodMatch</a></span>&nbsp;<span class="element-name">match</span><wbr><span class="parameters">(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/regex/Matcher.html" title="class or interface in java.util.regex" class="external-link">Matcher</a>&nbsp;matcher)</span></div>
-<div class="block"><span class="descfrm-type-label">Description copied from class:&nbsp;<code><a href="AbstractPatternMethodMatcher.html#match(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.regex.Matcher)">AbstractPatternMethodMatcher</a></code></span></div>
-<div class="block">Handle match.</div>
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="MethodNameParser.Match.html" title="class in io.micronaut.data.processor.visitors.finders">MethodNameParser.Match</a>&gt;&nbsp;matches)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from class:&nbsp;<code><a href="AbstractMethodMatcher.html#match(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.List)">AbstractMethodMatcher</a></code></span></div>
+<div class="block">Matched the method.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="AbstractPatternMethodMatcher.html#match(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.regex.Matcher)">match</a></code>&nbsp;in class&nbsp;<code><a href="AbstractPatternMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractPatternMethodMatcher</a></code></dd>
+<dd><code><a href="AbstractMethodMatcher.html#match(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.List)">match</a></code>&nbsp;in class&nbsp;<code><a href="AbstractMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractMethodMatcher</a></code></dd>
 <dt>Parameters:</dt>
 <dd><code>matchContext</code> - The match context</dd>
-<dd><code>matcher</code> - The matcher</dd>
+<dd><code>matches</code> - The matches</dd>
 <dt>Returns:</dt>
 <dd>The method match</dd>
 </dl>

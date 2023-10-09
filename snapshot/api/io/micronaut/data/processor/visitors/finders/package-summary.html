@@ -95,7 +95,7 @@ loadScripts(document, 'script');</script>
 </li>
 <li>
 <div id="class-summary">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="class-summary-tab0" role="tab" aria-selected="true" aria-controls="class-summary.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary', 2)" class="active-table-tab">All Classes and Interfaces</button><button id="class-summary-tab1" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab1', 2)" class="table-tab">Interfaces</button><button id="class-summary-tab2" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab2', 2)" class="table-tab">Classes</button><button id="class-summary-tab4" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab4', 2)" class="table-tab">Record Classes</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="class-summary-tab0" role="tab" aria-selected="true" aria-controls="class-summary.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary', 2)" class="active-table-tab">All Classes and Interfaces</button><button id="class-summary-tab1" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab1', 2)" class="table-tab">Interfaces</button><button id="class-summary-tab2" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab2', 2)" class="table-tab">Classes</button><button id="class-summary-tab3" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab3', 2)" class="table-tab">Enum Classes</button><button id="class-summary-tab4" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab4', 2)" class="table-tab">Record Classes</button></div>
 <div id="class-summary.tabpanel" role="tabpanel">
 <div class="summary-table two-column-summary" aria-labelledby="class-summary-tab0">
 <div class="table-header col-first">Class</div>
@@ -104,9 +104,17 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">Abstract criteria matcher.</div>
 </div>
+<div class="col-first odd-row-color class-summary class-summary-tab4"><a href="AbstractCriteriaMethodMatch.MethodResult.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractCriteriaMethodMatch.MethodResult</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab4">
+<div class="block">Method result.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="AbstractMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractMethodMatcher</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="block">The method matcher that is using <a href="MethodNameParser.html" title="class in io.micronaut.data.processor.visitors.finders"><code>MethodNameParser</code></a>.</div>
+</div>
 <div class="col-first odd-row-color class-summary class-summary-tab2"><a href="AbstractPatternMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractPatternMethodMatcher</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
-<div class="block">Abstract pattern method match that support two variations of method names.</div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">Deprecated, for removal: This API element is subject to removal in a future version.
+<div class="deprecation-comment">No longer used</div>
 </div>
 <div class="col-first even-row-color class-summary class-summary-tab2"><a href="AbstractPrefixPatternMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractPrefixPatternMethodMatcher</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab2">
@@ -144,49 +152,65 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">Find method matcher.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ListMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">ListMethodMatcher</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
-<div class="block">List method matcher.</div>
-</div>
-<div class="col-first even-row-color class-summary class-summary-tab1"><a href="MethodCandidate.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodCandidate</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab1">
+<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="MethodCandidate.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodCandidate</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab1">
 <div class="block">Implementation of dynamic finders.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="MethodMatcher.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab1">
+<div class="col-first even-row-color class-summary class-summary-tab1"><a href="MethodMatcher.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab1">
 <div class="block">The method matcher.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab1"><a href="MethodMatcher.MethodMatch.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher.MethodMatch</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab1">
+<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="MethodMatcher.MethodMatch.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher.MethodMatch</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab1">
 <div class="block">Method match implementation.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">The method info.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="ProcedureMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">ProcedureMethodMatcher</a></div>
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="MethodNameParser.html" title="class in io.micronaut.data.processor.visitors.finders">MethodNameParser</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="block">The method name parser.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="MethodNameParser.Builder.html" title="class in io.micronaut.data.processor.visitors.finders">MethodNameParser.Builder</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="block">The builder.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab4"><a href="MethodNameParser.Match.html" title="class in io.micronaut.data.processor.visitors.finders">MethodNameParser.Match</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab4">
+<div class="block">The match.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab1"><a href="MethodNameParser.MatchId.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodNameParser.MatchId</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab1">
+<div class="block">The match ID.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ProcedureMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">ProcedureMethodMatcher</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">Finder for the procedure methods.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="Projections.html" title="class in io.micronaut.data.processor.visitors.finders">Projections</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="Projections.html" title="class in io.micronaut.data.processor.visitors.finders">Projections</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">Projections.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="Projections.Avg.html" title="class in io.micronaut.data.processor.visitors.finders">Projections.Avg</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="Projections.Avg.html" title="class in io.micronaut.data.processor.visitors.finders">Projections.Avg</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">The AVG projection.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="Projections.Max.html" title="class in io.micronaut.data.processor.visitors.finders">Projections.Max</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="Projections.Max.html" title="class in io.micronaut.data.processor.visitors.finders">Projections.Max</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">The MAX projection.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="Projections.Min.html" title="class in io.micronaut.data.processor.visitors.finders">Projections.Min</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="Projections.Min.html" title="class in io.micronaut.data.processor.visitors.finders">Projections.Min</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">The MIN projection.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="Projections.Sum.html" title="class in io.micronaut.data.processor.visitors.finders">Projections.Sum</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="Projections.Sum.html" title="class in io.micronaut.data.processor.visitors.finders">Projections.Sum</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">The SUM projection.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab3"><a href="QueryMatchId.html" title="enum class in io.micronaut.data.processor.visitors.finders">QueryMatchId</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab3">
+<div class="block">Type of method match.</div>
 </div>
 <div class="col-first even-row-color class-summary class-summary-tab2"><a href="RawQueryMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">RawQueryMethodMatcher</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab2">

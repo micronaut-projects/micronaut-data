@@ -44,7 +44,7 @@ loadScripts(document, 'script');</script>
 <div>
 <ul class="sub-nav-list">
 <li>Summary:&nbsp;</li>
-<li>Nested&nbsp;|&nbsp;</li>
+<li><a href="#nested-class-summary">Nested</a>&nbsp;|&nbsp;</li>
 <li><a href="#field-summary">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor-summary">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method-summary">Method</a></li>
@@ -97,6 +97,23 @@ implements <a href="MethodMatcher.MethodMatch.html" title="interface in io.micro
 </section>
 <section class="summary">
 <ul class="summary-list">
+<!-- ======== NESTED CLASS SUMMARY ======== -->
+<li>
+<section class="nested-class-summary" id="nested-class-summary">
+<h2>Nested Class Summary</h2>
+<div class="caption"><span>Nested Classes</span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Class</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>protected static final record&nbsp;</code></div>
+<div class="col-second even-row-color"><code><a href="AbstractCriteriaMethodMatch.MethodResult.html" class="type-name-link" title="class in io.micronaut.data.processor.visitors.finders">AbstractCriteriaMethodMatch.MethodResult</a></code></div>
+<div class="col-last even-row-color">
+<div class="block">Method result.</div>
+</div>
+</div>
+</section>
+</li>
 <!-- =========== FIELD SUMMARY =========== -->
 <li>
 <section class="field-summary" id="field-summary">
@@ -106,8 +123,8 @@ implements <a href="MethodMatcher.MethodMatch.html" title="interface in io.micro
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Field</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code>protected final @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/regex/Matcher.html" title="class or interface in java.util.regex" class="external-link">Matcher</a></code></div>
-<div class="col-second even-row-color"><code><a href="#matcher" class="member-name-link">matcher</a></code></div>
+<div class="col-first even-row-color"><code>protected final @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="MethodNameParser.Match.html" title="class in io.micronaut.data.processor.visitors.finders">MethodNameParser.Match</a>&gt;</code></div>
+<div class="col-second even-row-color"><code><a href="#matches" class="member-name-link">matches</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
@@ -122,7 +139,7 @@ implements <a href="MethodMatcher.MethodMatch.html" title="interface in io.micro
 <div class="table-header col-second">Constructor</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color"><code>protected </code></div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.util.regex.Matcher)" class="member-name-link">AbstractCriteriaMethodMatch</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/regex/Matcher.html" title="class or interface in java.util.regex" class="external-link">Matcher</a>&nbsp;matcher)</code></div>
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.util.List)" class="member-name-link">AbstractCriteriaMethodMatch</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="MethodNameParser.Match.html" title="class in io.micronaut.data.processor.visitors.finders">MethodNameParser.Match</a>&gt;&nbsp;matches)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
@@ -138,109 +155,131 @@ implements <a href="MethodMatcher.MethodMatch.html" title="interface in io.micro
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;T&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#applyForUpdate(java.lang.String,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery)" class="member-name-link">applyForUpdate</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;querySequence,
- <a href="../../../model/jpa/criteria/PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;T&gt;&nbsp;query)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Matches for update definitions in the query sequence.</div>
-</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="AbstractCriteriaMethodMatch.MethodResult.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractCriteriaMethodMatch.MethodResult</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#analyzeMethodResult(io.micronaut.data.processor.visitors.MethodMatchContext,java.lang.String,io.micronaut.inject.ast.ClassElement,io.micronaut.data.processor.visitors.finders.FindersUtils.InterceptorMatch,boolean)" class="member-name-link">analyzeMethodResult</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;selectedType,
+ io.micronaut.inject.ast.ClassElement&nbsp;queryResultType,
+ <a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a>&nbsp;interceptorMatch,
+ boolean&nbsp;allowEntityResultByDefault)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final void</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#applyJoinSpecs(io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,java.util.List)" class="member-name-link">applyJoinSpecs</a><wbr>(<a href="../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;?&gt;&nbsp;root,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.core.annotation.AnnotationValue&lt;<a href="../../../annotation/Join.html" title="annotation interface in io.micronaut.data.annotation">Join</a>&gt;&gt;&nbsp;joinSpecs)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;T&gt;&nbsp;void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#applyPredicates(java.lang.String,io.micronaut.inject.ast.ParameterElement%5B%5D,io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete,io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder)" class="member-name-link">applyPredicates</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;querySequence,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#applyPredicates(io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate,io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder)" class="member-name-link">applyPredicates</a><wbr>(<a href="../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;T&gt;&nbsp;root,
+ <a href="../../../model/jpa/criteria/PersistentEntityCriteriaUpdate.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaUpdate</a>&lt;T&gt;&nbsp;query,
+ <a href="../../model/criteria/SourcePersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaBuilder</a>&nbsp;cb)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Apply a basic predicate.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;T&gt;&nbsp;void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#applyPredicates(java.lang.String,io.micronaut.inject.ast.ParameterElement%5B%5D,io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete,io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder)" class="member-name-link">applyPredicates</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;querySequence,
  io.micronaut.inject.ast.ParameterElement[]&nbsp;parameters,
  <a href="../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;T&gt;&nbsp;root,
  <a href="../../../model/jpa/criteria/PersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a>&lt;T&gt;&nbsp;query,
- <a href="../../model/criteria/SourcePersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaBuilder</a>&nbsp;cb)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Apply predicates.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;T&gt;&nbsp;void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#applyPredicates(java.lang.String,io.micronaut.inject.ast.ParameterElement%5B%5D,io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery,io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder)" class="member-name-link">applyPredicates</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;querySequence,
- io.micronaut.inject.ast.ParameterElement[]&nbsp;parameters,
- <a href="../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;T&gt;&nbsp;root,
- <a href="../../../model/jpa/criteria/PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;T&gt;&nbsp;query,
  <a href="../../model/criteria/SourcePersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaBuilder</a>&nbsp;cb)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Apply predicates.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;T&gt;&nbsp;void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#applyPredicates(java.lang.String,io.micronaut.inject.ast.ParameterElement%5B%5D,io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate,io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder)" class="member-name-link">applyPredicates</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;querySequence,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#applyPredicates(java.lang.String,io.micronaut.inject.ast.ParameterElement%5B%5D,io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery,io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder)" class="member-name-link">applyPredicates</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;querySequence,
  io.micronaut.inject.ast.ParameterElement[]&nbsp;parameters,
  <a href="../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;T&gt;&nbsp;root,
- <a href="../../../model/jpa/criteria/PersistentEntityCriteriaUpdate.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaUpdate</a>&lt;T&gt;&nbsp;query,
+ <a href="../../../model/jpa/criteria/PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;T&gt;&nbsp;query,
  <a href="../../model/criteria/SourcePersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaBuilder</a>&nbsp;cb)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Apply predicates.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;T&gt;&nbsp;void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#applyPredicates(java.util.List,io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete,io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder)" class="member-name-link">applyPredicates</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.inject.ast.ParameterElement&gt;&nbsp;parameters,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#applyPredicates(java.lang.String,io.micronaut.inject.ast.ParameterElement%5B%5D,io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate,io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder)" class="member-name-link">applyPredicates</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;querySequence,
+ io.micronaut.inject.ast.ParameterElement[]&nbsp;parameters,
  <a href="../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;T&gt;&nbsp;root,
- <a href="../../../model/jpa/criteria/PersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a>&lt;T&gt;&nbsp;query,
+ <a href="../../../model/jpa/criteria/PersistentEntityCriteriaUpdate.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaUpdate</a>&lt;T&gt;&nbsp;query,
  <a href="../../model/criteria/SourcePersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaBuilder</a>&nbsp;cb)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Apply predicates based on parameters.</div>
+<div class="block">Apply predicates.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;T&gt;&nbsp;void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#applyPredicates(java.util.List,io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery,io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder)" class="member-name-link">applyPredicates</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.inject.ast.ParameterElement&gt;&nbsp;parameters,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#applyPredicates(java.util.List,io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete,io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder)" class="member-name-link">applyPredicates</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.inject.ast.ParameterElement&gt;&nbsp;parameters,
  <a href="../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;T&gt;&nbsp;root,
- <a href="../../../model/jpa/criteria/PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;T&gt;&nbsp;query,
+ <a href="../../../model/jpa/criteria/PersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a>&lt;T&gt;&nbsp;query,
  <a href="../../model/criteria/SourcePersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaBuilder</a>&nbsp;cb)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Apply predicates based on parameters.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;T&gt;&nbsp;void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#applyPredicates(java.util.List,io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate,io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder)" class="member-name-link">applyPredicates</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.inject.ast.ParameterElement&gt;&nbsp;parameters,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#applyPredicates(java.util.List,io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery,io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder)" class="member-name-link">applyPredicates</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.inject.ast.ParameterElement&gt;&nbsp;parameters,
  <a href="../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;T&gt;&nbsp;root,
- <a href="../../../model/jpa/criteria/PersistentEntityCriteriaUpdate.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaUpdate</a>&lt;T&gt;&nbsp;query,
+ <a href="../../../model/jpa/criteria/PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;T&gt;&nbsp;query,
  <a href="../../model/criteria/SourcePersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaBuilder</a>&nbsp;cb)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Apply predicates based on parameters.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#build(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">build</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildMatchInfo(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">buildMatchInfo</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;T&gt;&nbsp;void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#applyPredicates(java.util.List,io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate,io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder)" class="member-name-link">applyPredicates</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.inject.ast.ParameterElement&gt;&nbsp;parameters,
+ <a href="../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;T&gt;&nbsp;root,
+ <a href="../../../model/jpa/criteria/PersistentEntityCriteriaUpdate.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaUpdate</a>&lt;T&gt;&nbsp;query,
+ <a href="../../model/criteria/SourcePersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaBuilder</a>&nbsp;cb)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Apply predicates based on parameters.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#build(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">build</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildMatchInfo(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">buildMatchInfo</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Match info builder.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;T&gt;&nbsp;<a href="../../../model/jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findProperty(io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,java.lang.String)" class="member-name-link">findProperty</a><wbr>(<a href="../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;T&gt;&nbsp;root,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;T&gt;&nbsp;<a href="../../../model/jpa/criteria/PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findProperty(io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,java.lang.String)" class="member-name-link">findProperty</a><wbr>(<a href="../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;T&gt;&nbsp;root,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;propertyName)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;T&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;jakarta.persistence.criteria.Selection&lt;?&gt;&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findSelections(java.lang.String,io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder,java.lang.String)" class="member-name-link">findSelections</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;projectionPart,
+ <a href="../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;T&gt;&nbsp;root,
+ <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaBuilder</a>&nbsp;cb,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;returnTypeName)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Find projection selection.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../model/SourcePersistentProperty.html" title="class in io.micronaut.data.processor.model">SourcePersistentProperty</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDtoProjectionProperties(io.micronaut.data.processor.model.SourcePersistentEntity,io.micronaut.inject.ast.ClassElement)" class="member-name-link">getDtoProjectionProperties</a><wbr>(<a href="../../model/SourcePersistentEntity.html" title="class in io.micronaut.data.processor.model">SourcePersistentEntity</a>&nbsp;entity,
+ io.micronaut.inject.ast.ClassElement&nbsp;returnType)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Find DTO properties.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @Nullable io.micronaut.inject.ast.ParameterElement</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getEntitiesParameter()" class="member-name-link">getEntitiesParameter</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @Nullable io.micronaut.inject.ast.ParameterElement</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getEntitiesParameter()" class="member-name-link">getEntitiesParameter</a>()</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getEntityParameter()" class="member-name-link">getEntityParameter</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @Nullable io.micronaut.inject.ast.ParameterElement</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getEntityParameter()" class="member-name-link">getEntityParameter</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final io.micronaut.inject.ast.ClassElement</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getInterceptorElement(io.micronaut.data.processor.visitors.MethodMatchContext,java.lang.Class)" class="member-name-link">getInterceptorElement</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final io.micronaut.inject.ast.ClassElement</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getInterceptorElement(io.micronaut.data.processor.visitors.MethodMatchContext,java.lang.Class)" class="member-name-link">getInterceptorElement</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="../../../intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept">DataInterceptor</a>&gt;&nbsp;interceptorType)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="../../../intercept/annotation/DataMethod.OperationType.html" title="enum class in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getOperationType()" class="member-name-link">getOperationType</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;T&gt;&nbsp;@NonNull jakarta.persistence.criteria.Expression&lt;?&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getProperty(io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,java.lang.String)" class="member-name-link">getProperty</a><wbr>(<a href="../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;T&gt;&nbsp;root,
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="../../../intercept/annotation/DataMethod.OperationType.html" title="enum class in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getOperationType()" class="member-name-link">getOperationType</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;T&gt;&nbsp;@NonNull jakarta.persistence.criteria.Expression&lt;?&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getProperty(io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,java.lang.String)" class="member-name-link">getProperty</a><wbr>(<a href="../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;T&gt;&nbsp;root,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;propertyName)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hasNoWhereAndJoinDeclaration(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">hasNoWhereAndJoinDeclaration</a><wbr>(@NonNull <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.core.annotation.AnnotationValue&lt;<a href="../../../annotation/Join.html" title="annotation interface in io.micronaut.data.annotation">Join</a>&gt;&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#joinSpecsAtMatchContext(io.micronaut.data.processor.visitors.MethodMatchContext,boolean)" class="member-name-link">joinSpecsAtMatchContext</a><wbr>(@NonNull <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hasNoWhereAndJoinDeclaration(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">hasNoWhereAndJoinDeclaration</a><wbr>(@NonNull <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.core.annotation.AnnotationValue&lt;<a href="../../../annotation/Join.html" title="annotation interface in io.micronaut.data.annotation">Join</a>&gt;&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#joinSpecsAtMatchContext(io.micronaut.data.processor.visitors.MethodMatchContext,boolean)" class="member-name-link">joinSpecsAtMatchContext</a><wbr>(@NonNull <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  boolean&nbsp;isQuery)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#resolveReturnTypeAndInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">resolveReturnTypeAndInterceptor</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#supportedByImplicitQueries()" class="member-name-link">supportedByImplicitQueries</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#resolveReturnTypeAndInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">resolveReturnTypeAndInterceptor</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#supportedByImplicitQueries()" class="member-name-link">supportedByImplicitQueries</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -259,10 +298,10 @@ implements <a href="MethodMatcher.MethodMatch.html" title="interface in io.micro
 <h2>Field Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="matcher">
-<h3>matcher</h3>
+<section class="detail" id="matches">
+<h3>matches</h3>
 <div class="member-signature"><span class="annotations">@Nullable
-</span><span class="modifiers">protected final</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/regex/Matcher.html" title="class or interface in java.util.regex" class="external-link">Matcher</a></span>&nbsp;<span class="element-name">matcher</span></div>
+</span><span class="modifiers">protected final</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="MethodNameParser.Match.html" title="class in io.micronaut.data.processor.visitors.finders">MethodNameParser.Match</a>&gt;</span>&nbsp;<span class="element-name">matches</span></div>
 </section>
 </li>
 </ul>
@@ -274,9 +313,9 @@ implements <a href="MethodMatcher.MethodMatch.html" title="interface in io.micro
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(java.util.regex.Matcher)">
+<section class="detail" id="&lt;init&gt;(java.util.List)">
 <h3>AbstractCriteriaMethodMatch</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="element-name">AbstractCriteriaMethodMatch</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/regex/Matcher.html" title="class or interface in java.util.regex" class="external-link">Matcher</a>&nbsp;matcher)</span></div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="element-name">AbstractCriteriaMethodMatch</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="MethodNameParser.Match.html" title="class in io.micronaut.data.processor.visitors.finders">MethodNameParser.Match</a>&gt;&nbsp;matches)</span></div>
 </section>
 </li>
 </ul>
@@ -461,6 +500,23 @@ implements <a href="MethodMatcher.MethodMatch.html" title="interface in io.micro
 </section>
 </li>
 <li>
+<section class="detail" id="applyPredicates(io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate,io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder)">
+<h3>applyPredicates</h3>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">applyPredicates</span><wbr><span class="parameters">(<a href="../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;T&gt;&nbsp;root,
+ <a href="../../../model/jpa/criteria/PersistentEntityCriteriaUpdate.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaUpdate</a>&lt;T&gt;&nbsp;query,
+ <a href="../../model/criteria/SourcePersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaBuilder</a>&nbsp;cb)</span></div>
+<div class="block">Apply a basic predicate.</div>
+<dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><code>T</code> - The entity type</dd>
+<dt>Parameters:</dt>
+<dd><code>root</code> - The root</dd>
+<dd><code>query</code> - The query</dd>
+<dd><code>cb</code> - The criteria builder</dd>
+</dl>
+</section>
+</li>
+<li>
 <section class="detail" id="applyPredicates(java.util.List,io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate,io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder)">
 <h3>applyPredicates</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">applyPredicates</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.inject.ast.ParameterElement&gt;&nbsp;parameters,
@@ -495,23 +551,6 @@ implements <a href="MethodMatcher.MethodMatch.html" title="interface in io.micro
 <dd><code>root</code> - The root</dd>
 <dd><code>query</code> - The query</dd>
 <dd><code>cb</code> - The criteria builder</dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="applyForUpdate(java.lang.String,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery)">
-<h3>applyForUpdate</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">applyForUpdate</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;querySequence,
- <a href="../../../model/jpa/criteria/PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;T&gt;&nbsp;query)</span></div>
-<div class="block">Matches for update definitions in the query sequence.</div>
-<dl class="notes">
-<dt>Type Parameters:</dt>
-<dd><code>T</code> - The entity type</dd>
-<dt>Parameters:</dt>
-<dd><code>querySequence</code> - The query sequence</dd>
-<dd><code>query</code> - The query</dd>
-<dt>Returns:</dt>
-<dd>The new query sequence without the for update definitions</dd>
 </dl>
 </section>
 </li>
@@ -561,6 +600,54 @@ implements <a href="MethodMatcher.MethodMatch.html" title="interface in io.micro
 <h3>hasNoWhereAndJoinDeclaration</h3>
 <div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">hasNoWhereAndJoinDeclaration</span><wbr><span class="parameters">(@NonNull
  @NonNull <a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="findSelections(java.lang.String,io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder,java.lang.String)">
+<h3>findSelections</h3>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>
+<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;jakarta.persistence.criteria.Selection&lt;?&gt;&gt;</span>&nbsp;<span class="element-name">findSelections</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;projectionPart,
+ <a href="../../../model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;T&gt;&nbsp;root,
+ <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaBuilder</a>&nbsp;cb,
+ @Nullable
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;returnTypeName)</span></div>
+<div class="block">Find projection selection.</div>
+<dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><code>T</code> - The query type</dd>
+<dt>Parameters:</dt>
+<dd><code>projectionPart</code> - The projection</dd>
+<dd><code>root</code> - The root</dd>
+<dd><code>cb</code> - The criteria builder</dd>
+<dd><code>returnTypeName</code> - The return type name</dd>
+<dt>Returns:</dt>
+<dd>The selections</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="analyzeMethodResult(io.micronaut.data.processor.visitors.MethodMatchContext,java.lang.String,io.micronaut.inject.ast.ClassElement,io.micronaut.data.processor.visitors.finders.FindersUtils.InterceptorMatch,boolean)">
+<h3>analyzeMethodResult</h3>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="AbstractCriteriaMethodMatch.MethodResult.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractCriteriaMethodMatch.MethodResult</a></span>&nbsp;<span class="element-name">analyzeMethodResult</span><wbr><span class="parameters">(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;selectedType,
+ io.micronaut.inject.ast.ClassElement&nbsp;queryResultType,
+ <a href="FindersUtils.InterceptorMatch.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.InterceptorMatch</a>&nbsp;interceptorMatch,
+ boolean&nbsp;allowEntityResultByDefault)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="getDtoProjectionProperties(io.micronaut.data.processor.model.SourcePersistentEntity,io.micronaut.inject.ast.ClassElement)">
+<h3>getDtoProjectionProperties</h3>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../model/SourcePersistentProperty.html" title="class in io.micronaut.data.processor.model">SourcePersistentProperty</a>&gt;</span>&nbsp;<span class="element-name">getDtoProjectionProperties</span><wbr><span class="parameters">(<a href="../../model/SourcePersistentEntity.html" title="class in io.micronaut.data.processor.model">SourcePersistentEntity</a>&nbsp;entity,
+ io.micronaut.inject.ast.ClassElement&nbsp;returnType)</span></div>
+<div class="block">Find DTO properties.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>entity</code> - The entity</dd>
+<dd><code>returnType</code> - The result</dd>
+<dt>Returns:</dt>
+<dd>DTO properties</dd>
+</dl>
 </section>
 </li>
 </ul>

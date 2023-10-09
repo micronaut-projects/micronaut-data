@@ -113,12 +113,12 @@ extends <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.htm
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull jakarta.persistence.criteria.ParameterExpression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;T&gt;&nbsp;@NonNull jakarta.persistence.criteria.ParameterExpression&lt;T&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#entityPropertyParameter(io.micronaut.inject.ast.ParameterElement)" class="member-name-link">entityPropertyParameter</a><wbr>(@NonNull io.micronaut.inject.ast.ParameterElement&nbsp;entityParameter)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Create parameter expression from <code>ParameterElement</code> that is representing an entity instance.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull jakarta.persistence.criteria.ParameterExpression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;T&gt;&nbsp;@NonNull jakarta.persistence.criteria.ParameterExpression&lt;T&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#parameter(io.micronaut.inject.ast.ParameterElement)" class="member-name-link">parameter</a><wbr>(@NonNull io.micronaut.inject.ast.ParameterElement&nbsp;parameterElement)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Create parameter expression from <code>ParameterElement</code>.</div>
@@ -147,10 +147,13 @@ extends <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.htm
 <section class="detail" id="parameter(io.micronaut.inject.ast.ParameterElement)">
 <h3>parameter</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type">@NonNull jakarta.persistence.criteria.ParameterExpression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</span>&nbsp;<span class="element-name">parameter</span><wbr><span class="parameters">(@NonNull
+</span><span class="type-parameters">&lt;T&gt;</span>
+<span class="return-type">@NonNull jakarta.persistence.criteria.ParameterExpression&lt;T&gt;</span>&nbsp;<span class="element-name">parameter</span><wbr><span class="parameters">(@NonNull
  @NonNull io.micronaut.inject.ast.ParameterElement&nbsp;parameterElement)</span></div>
 <div class="block">Create parameter expression from <code>ParameterElement</code>.</div>
 <dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><code>T</code> - The expression type</dd>
 <dt>Parameters:</dt>
 <dd><code>parameterElement</code> - The parameter element</dd>
 <dt>Returns:</dt>
@@ -162,10 +165,13 @@ extends <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.htm
 <section class="detail" id="entityPropertyParameter(io.micronaut.inject.ast.ParameterElement)">
 <h3>entityPropertyParameter</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type">@NonNull jakarta.persistence.criteria.ParameterExpression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</span>&nbsp;<span class="element-name">entityPropertyParameter</span><wbr><span class="parameters">(@NonNull
+</span><span class="type-parameters">&lt;T&gt;</span>
+<span class="return-type">@NonNull jakarta.persistence.criteria.ParameterExpression&lt;T&gt;</span>&nbsp;<span class="element-name">entityPropertyParameter</span><wbr><span class="parameters">(@NonNull
  @NonNull io.micronaut.inject.ast.ParameterElement&nbsp;entityParameter)</span></div>
 <div class="block">Create parameter expression from <code>ParameterElement</code> that is representing an entity instance.</div>
 <dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><code>T</code> - The expression type</dd>
 <dt>Parameters:</dt>
 <dd><code>entityParameter</code> - The entity parameter element</dd>
 <dt>Returns:</dt>

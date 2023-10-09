@@ -155,37 +155,49 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color class-summary class-summary-tab1">
 <div class="block">An interceptor that returns an iterable result.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="ProcedureInterceptor.html" title="interface in io.micronaut.data.intercept">ProcedureInterceptor</a>&lt;T,<wbr>R&gt;</div>
+<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="ProcedureReturningManyInterceptor.html" title="interface in io.micronaut.data.intercept">ProcedureReturningManyInterceptor</a>&lt;T,<wbr>R&gt;</div>
 <div class="col-last odd-row-color class-summary class-summary-tab1">
-<div class="block">An interceptor that does execute the procedure.</div>
+<div class="block">An interceptor that does execute the procedure and returns one result.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="col-first even-row-color class-summary class-summary-tab1"><a href="ProcedureReturningOneInterceptor.html" title="interface in io.micronaut.data.intercept">ProcedureReturningOneInterceptor</a>&lt;T,<wbr>R&gt;</div>
+<div class="col-last even-row-color class-summary class-summary-tab1">
+<div class="block">An interceptor that does execute the procedure and returns one result.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">Key used to cache results for repository method invocations.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="SaveAllInterceptor.html" title="interface in io.micronaut.data.intercept">SaveAllInterceptor</a>&lt;T,<wbr>R&gt;</div>
-<div class="col-last odd-row-color class-summary class-summary-tab1">
+<div class="col-first even-row-color class-summary class-summary-tab1"><a href="SaveAllInterceptor.html" title="interface in io.micronaut.data.intercept">SaveAllInterceptor</a>&lt;T,<wbr>R&gt;</div>
+<div class="col-last even-row-color class-summary class-summary-tab1">
 <div class="block">Interface for the interceptor that handles saving a list or iterable of objects.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab1"><a href="SaveEntityInterceptor.html" title="interface in io.micronaut.data.intercept">SaveEntityInterceptor</a>&lt;T&gt;</div>
-<div class="col-last even-row-color class-summary class-summary-tab1">
-<div class="block">An interceptor that accepts a single entity to be saved and returns either the entity or nothing.</div>
-</div>
-<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="SaveOneInterceptor.html" title="interface in io.micronaut.data.intercept">SaveOneInterceptor</a>&lt;T&gt;</div>
+<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="SaveEntityInterceptor.html" title="interface in io.micronaut.data.intercept">SaveEntityInterceptor</a>&lt;T&gt;</div>
 <div class="col-last odd-row-color class-summary class-summary-tab1">
 <div class="block">An interceptor that accepts a single entity to be saved and returns either the entity or nothing.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab1"><a href="UpdateAllEntitiesInterceptor.html" title="interface in io.micronaut.data.intercept">UpdateAllEntitiesInterceptor</a>&lt;T,<wbr>R&gt;</div>
+<div class="col-first even-row-color class-summary class-summary-tab1"><a href="SaveOneInterceptor.html" title="interface in io.micronaut.data.intercept">SaveOneInterceptor</a>&lt;T&gt;</div>
 <div class="col-last even-row-color class-summary class-summary-tab1">
+<div class="block">An interceptor that accepts a single entity to be saved and returns either the entity or nothing.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="UpdateAllEntitiesInterceptor.html" title="interface in io.micronaut.data.intercept">UpdateAllEntitiesInterceptor</a>&lt;T,<wbr>R&gt;</div>
+<div class="col-last odd-row-color class-summary class-summary-tab1">
 <div class="block">Interface for the interceptor that handles updating a list or iterable of objects.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="UpdateEntityInterceptor.html" title="interface in io.micronaut.data.intercept">UpdateEntityInterceptor</a>&lt;T&gt;</div>
-<div class="col-last odd-row-color class-summary class-summary-tab1">
+<div class="col-first even-row-color class-summary class-summary-tab1"><a href="UpdateEntityInterceptor.html" title="interface in io.micronaut.data.intercept">UpdateEntityInterceptor</a>&lt;T&gt;</div>
+<div class="col-last even-row-color class-summary class-summary-tab1">
 <div class="block">Interceptor that handles update methods that take a single argument that is the entity.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab1"><a href="UpdateInterceptor.html" title="interface in io.micronaut.data.intercept">UpdateInterceptor</a>&lt;T&gt;</div>
-<div class="col-last even-row-color class-summary class-summary-tab1">
+<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="UpdateInterceptor.html" title="interface in io.micronaut.data.intercept">UpdateInterceptor</a>&lt;T&gt;</div>
+<div class="col-last odd-row-color class-summary class-summary-tab1">
 <div class="block">Implements update with lookup by id.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab1"><a href="UpdateReturningManyInterceptor.html" title="interface in io.micronaut.data.intercept">UpdateReturningManyInterceptor</a>&lt;T,<wbr>R&gt;</div>
+<div class="col-last even-row-color class-summary class-summary-tab1">
+<div class="block">Implements update returning many results interceptor.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="UpdateReturningOneInterceptor.html" title="interface in io.micronaut.data.intercept">UpdateReturningOneInterceptor</a>&lt;T,<wbr>R&gt;</div>
+<div class="col-last odd-row-color class-summary class-summary-tab1">
+<div class="block">Implements update returning one result interceptor.</div>
 </div>
 </div>
 </div>

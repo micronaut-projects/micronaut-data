@@ -553,6 +553,44 @@ fun testAnnotationMetadata() {
 
 
 <div class="sect2">
+<h3 id="_micronaut_data_4_2">Micronaut Data 4.2</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>Procedure invocations in repositories</p>
+</li>
+<li>
+<p>Added possibility to have associations (JOINs) in DTOs</p>
+</li>
+<li>
+<p>Support for updates with <code>RETURNING</code> clause in repositories</p>
+</li>
+<li>
+<p>MongoDB: Support <code>arrayFilters</code></p>
+</li>
+<li>
+<p>Kotlin: New coroutine variations of connection / transaction operations: <code>io.micronaut.data.connection.kotlin.CoroutineConnectionOperations</code>, <code>io.micronaut.transaction.kotlin.CoroutineTransactionOperations</code></p>
+</li>
+<li>
+<p>R2DBC: New connection status callback. Corrected cancellation.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_micronaut_data_4_1">Micronaut Data 4.1</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>Support NESTED transaction propagation</p>
+</li>
+<li>
+<p>Bugfixes</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
 <h3 id="_micronaut_data_4_0">Micronaut Data 4.0</h3>
 <div class="ulist">
 <ul>
@@ -1349,6 +1387,11 @@ Methods with <code>Stream&lt;Book&gt;</code> results need to be used with a 'try
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>update</code> with by method parameters to match (annotated @Id or @Version) followed by method parameters to update</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">A <code>void</code> or <code>Number</code> return type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Batch update where parameter/s represents an entity&#8217;s property (must be named the same)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>updateReturning</code> all of the update variations (except batch entities update) plus a suffix <code>Returning</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">An entity type or any types that can be returned by the query</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Update with a returning clause (Might not be supported by a DIALECT or an implementation)</p></td>
 </tr>
 </tbody>
 </table>
@@ -2656,6 +2699,33 @@ It is not possible to use the entity as the return type in partial updates becau
 </div>
 <div class="paragraph">
 <p>You can also specify a custom query for the update methods:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Query("UPDATE book SET title = :title where id = :id")
+void updateOne(Book book);
+
+@Query("UPDATE book SET title = :title where id = :id")
+void updateMany(Iterable&lt;Book&gt; books);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@Query("UPDATE book SET title = :title where id = :id")
+void updateOne(Book book)
+
+@Query("UPDATE book SET title = :title where id = :id")
+void updateMany(Iterable&lt;Book&gt; books)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Query("UPDATE book SET title = :title where id = :id")
+fun updateOne(book: Book)
+
+@Query("UPDATE book SET title = :title where id = :id")
+fun updateMany(books: Iterable&lt;Book&gt;)</code></pre>
+</div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">

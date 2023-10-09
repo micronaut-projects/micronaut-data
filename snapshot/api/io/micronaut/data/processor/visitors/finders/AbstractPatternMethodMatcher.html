@@ -79,14 +79,14 @@ loadScripts(document, 'script');</script>
 <dt>All Implemented Interfaces:</dt>
 <dd><code>io.micronaut.core.order.Ordered</code>, <code><a href="MethodMatcher.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher</a></code></dd>
 </dl>
-<dl class="notes">
-<dt>Direct Known Subclasses:</dt>
-<dd><code><a href="CountMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">CountMethodMatcher</a></code>, <code><a href="DeleteMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">DeleteMethodMatcher</a></code>, <code><a href="ExistsMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">ExistsMethodMatcher</a></code>, <code><a href="FindMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">FindMethodMatcher</a></code>, <code><a href="ListMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">ListMethodMatcher</a></code>, <code><a href="UpdateMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">UpdateMethodMatcher</a></code></dd>
-</dl>
 <hr>
-<div class="type-signature"><span class="modifiers">public abstract class </span><span class="element-name type-name-label">AbstractPatternMethodMatcher</span>
+<div class="type-signature"><span class="annotations"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Deprecated.html" title="class or interface in java.lang" class="external-link">@Deprecated</a>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Deprecated.html#forRemoval()" title="class or interface in java.lang" class="external-link">forRemoval</a>=true)
+</span><span class="modifiers">public abstract class </span><span class="element-name type-name-label">AbstractPatternMethodMatcher</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>
 implements <a href="MethodMatcher.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher</a></span></div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span>
+<div class="deprecation-comment">No longer used</div>
+</div>
 <div class="block">Abstract pattern method match that support two variations of method names.
 
  - With `by` syntax - projection followed by predicates
@@ -120,10 +120,14 @@ implements <a href="MethodMatcher.html" title="interface in io.micronaut.data.pr
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color"><code>protected final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/regex/Pattern.html" title="class or interface in java.util.regex" class="external-link">Pattern</a></code></div>
 <div class="col-second even-row-color"><code><a href="#patternWithBySyntax" class="member-name-link">patternWithBySyntax</a></code></div>
-<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-last even-row-color">
+<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
+&nbsp;</div>
 <div class="col-first odd-row-color"><code>protected final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/regex/Pattern.html" title="class or interface in java.util.regex" class="external-link">Pattern</a></code></div>
 <div class="col-second odd-row-color"><code><a href="#patternWithoutBySyntax" class="member-name-link">patternWithoutBySyntax</a></code></div>
-<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-last odd-row-color">
+<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
+&nbsp;</div>
 </div>
 <div class="inherited-list">
 <h3 id="fields-inherited-from-class-io.micronaut.data.processor.visitors.finders.MethodMatcher">Fields inherited from interface&nbsp;io.micronaut.data.processor.visitors.finders.<a href="MethodMatcher.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher</a></h3>
@@ -146,6 +150,7 @@ implements <a href="MethodMatcher.html" title="interface in io.micronaut.data.pr
 <div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(boolean,java.lang.String...)" class="member-name-link">AbstractPatternMethodMatcher</a><wbr>(boolean&nbsp;supportsProjections,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>...&nbsp;prefixes)</code></div>
 <div class="col-last even-row-color">
+<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <div class="block">Default constructor.</div>
 </div>
 </div>
@@ -156,19 +161,22 @@ implements <a href="MethodMatcher.html" title="interface in io.micronaut.data.pr
 <section class="method-summary" id="method-summary">
 <h2>Method Summary</h2>
 <div id="method-summary-table">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab3" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab3', 3)" class="table-tab">Abstract Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab3" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab3', 3)" class="table-tab">Abstract Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button><button id="method-summary-table-tab6" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab6', 3)" class="table-tab">Deprecated Methods</button></div>
 <div id="method-summary-table.tabpanel" role="tabpanel">
 <div class="summary-table three-column-summary" aria-labelledby="method-summary-table-tab0">
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="MethodMatcher.MethodMatch.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher.MethodMatch</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#match(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">match</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="MethodMatcher.MethodMatch.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher.MethodMatch</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#match(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.regex.Matcher)" class="member-name-link">match</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code>final <a href="MethodMatcher.MethodMatch.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher.MethodMatch</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code><a href="#match(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">match</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6">
+<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
+&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3 method-summary-table-tab6"><code>protected abstract <a href="MethodMatcher.MethodMatch.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher.MethodMatch</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3 method-summary-table-tab6"><code><a href="#match(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.regex.Matcher)" class="member-name-link">match</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/regex/Matcher.html" title="class or interface in java.util.regex" class="external-link">Matcher</a>&nbsp;matcher)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3 method-summary-table-tab6">
+<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <div class="block">Handle match.</div>
 </div>
 </div>
@@ -195,12 +203,14 @@ implements <a href="MethodMatcher.html" title="interface in io.micronaut.data.pr
 <section class="detail" id="patternWithBySyntax">
 <h3>patternWithBySyntax</h3>
 <div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/regex/Pattern.html" title="class or interface in java.util.regex" class="external-link">Pattern</a></span>&nbsp;<span class="element-name">patternWithBySyntax</span></div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 </section>
 </li>
 <li>
 <section class="detail" id="patternWithoutBySyntax">
 <h3>patternWithoutBySyntax</h3>
 <div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/regex/Pattern.html" title="class or interface in java.util.regex" class="external-link">Pattern</a></span>&nbsp;<span class="element-name">patternWithoutBySyntax</span></div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 </section>
 </li>
 </ul>
@@ -217,6 +227,7 @@ implements <a href="MethodMatcher.html" title="interface in io.micronaut.data.pr
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="element-name">AbstractPatternMethodMatcher</span><wbr><span class="parameters">(boolean&nbsp;supportsProjections,
  @NonNull
  @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>...&nbsp;prefixes)</span></div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <div class="block">Default constructor.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -237,6 +248,7 @@ implements <a href="MethodMatcher.html" title="interface in io.micronaut.data.pr
 <section class="detail" id="match(io.micronaut.data.processor.visitors.MethodMatchContext)">
 <h3>match</h3>
 <div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type"><a href="MethodMatcher.MethodMatch.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher.MethodMatch</a></span>&nbsp;<span class="element-name">match</span><wbr><span class="parameters">(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</span></div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code><a href="MethodMatcher.html#match(io.micronaut.data.processor.visitors.MethodMatchContext)">match</a></code>&nbsp;in interface&nbsp;<code><a href="MethodMatcher.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher</a></code></dd>
@@ -248,6 +260,7 @@ implements <a href="MethodMatcher.html" title="interface in io.micronaut.data.pr
 <h3>match</h3>
 <div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type"><a href="MethodMatcher.MethodMatch.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher.MethodMatch</a></span>&nbsp;<span class="element-name">match</span><wbr><span class="parameters">(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/regex/Matcher.html" title="class or interface in java.util.regex" class="external-link">Matcher</a>&nbsp;matcher)</span></div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <div class="block">Handle match.</div>
 <dl class="notes">
 <dt>Parameters:</dt>

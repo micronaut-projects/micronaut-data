@@ -100,8 +100,8 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createCountStoredQuery(io.micronaut.inject.ExecutableMethod,io.micronaut.data.intercept.annotation.DataMethod.OperationType,java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,java.lang.Class,java.lang.String,java.lang.String%5B%5D,java.util.List)" class="member-name-link">createCountStoredQuery</a><wbr>(io.micronaut.inject.ExecutableMethod&lt;?,<wbr>?&gt;&nbsp;executableMethod,
- <a href="../../intercept/annotation/DataMethod.OperationType.html" title="enum class in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a>&nbsp;operationType,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createCountStoredQuery(io.micronaut.inject.ExecutableMethod,io.micronaut.data.model.runtime.StoredQuery.OperationType,java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,java.lang.Class,java.lang.String,java.lang.String%5B%5D,java.util.List)" class="member-name-link">createCountStoredQuery</a><wbr>(io.micronaut.inject.ExecutableMethod&lt;?,<wbr>?&gt;&nbsp;executableMethod,
+ <a href="../../model/runtime/StoredQuery.OperationType.html" title="enum class in io.micronaut.data.model.runtime">StoredQuery.OperationType</a>&nbsp;operationType,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
  io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;rootEntity,
@@ -113,8 +113,8 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;E,<wbr>
 QR&gt;&nbsp;<a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>QR&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createStoredQuery(io.micronaut.inject.ExecutableMethod,io.micronaut.data.intercept.annotation.DataMethod.OperationType,java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,java.lang.Class,java.lang.String,java.lang.String,java.lang.String%5B%5D,java.util.List,boolean,boolean)" class="member-name-link">createStoredQuery</a><wbr>(io.micronaut.inject.ExecutableMethod&lt;?,<wbr>?&gt;&nbsp;executableMethod,
- <a href="../../intercept/annotation/DataMethod.OperationType.html" title="enum class in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a>&nbsp;operationType,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createStoredQuery(io.micronaut.inject.ExecutableMethod,io.micronaut.data.model.runtime.StoredQuery.OperationType,java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,java.lang.Class,java.lang.String,java.lang.String,java.lang.String%5B%5D,java.util.List,boolean,boolean)" class="member-name-link">createStoredQuery</a><wbr>(io.micronaut.inject.ExecutableMethod&lt;?,<wbr>?&gt;&nbsp;executableMethod,
+ <a href="../../model/runtime/StoredQuery.OperationType.html" title="enum class in io.micronaut.data.model.runtime">StoredQuery.OperationType</a>&nbsp;operationType,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
  io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;rootEntity,
@@ -203,11 +203,11 @@ R&gt;</span>&nbsp;<span class="return-type"><a href="../../model/runtime/StoredQ
 </section>
 </li>
 <li>
-<section class="detail" id="createStoredQuery(io.micronaut.inject.ExecutableMethod,io.micronaut.data.intercept.annotation.DataMethod.OperationType,java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,java.lang.Class,java.lang.String,java.lang.String,java.lang.String[],java.util.List,boolean,boolean)">
+<section class="detail" id="createStoredQuery(io.micronaut.inject.ExecutableMethod,io.micronaut.data.model.runtime.StoredQuery.OperationType,java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,java.lang.Class,java.lang.String,java.lang.String,java.lang.String[],java.util.List,boolean,boolean)">
 <h3>createStoredQuery</h3>
 <div class="member-signature"><span class="type-parameters">&lt;E,<wbr>
 QR&gt;</span>&nbsp;<span class="return-type"><a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>QR&gt;</span>&nbsp;<span class="element-name">createStoredQuery</span><wbr><span class="parameters">(io.micronaut.inject.ExecutableMethod&lt;?,<wbr>?&gt;&nbsp;executableMethod,
- <a href="../../intercept/annotation/DataMethod.OperationType.html" title="enum class in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a>&nbsp;operationType,
+ <a href="../../model/runtime/StoredQuery.OperationType.html" title="enum class in io.micronaut.data.model.runtime">StoredQuery.OperationType</a>&nbsp;operationType,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
  io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;rootEntity,
@@ -241,10 +241,10 @@ QR&gt;</span>&nbsp;<span class="return-type"><a href="../../model/runtime/Stored
 </section>
 </li>
 <li>
-<section class="detail" id="createCountStoredQuery(io.micronaut.inject.ExecutableMethod,io.micronaut.data.intercept.annotation.DataMethod.OperationType,java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,java.lang.Class,java.lang.String,java.lang.String[],java.util.List)">
+<section class="detail" id="createCountStoredQuery(io.micronaut.inject.ExecutableMethod,io.micronaut.data.model.runtime.StoredQuery.OperationType,java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,java.lang.Class,java.lang.String,java.lang.String[],java.util.List)">
 <h3>createCountStoredQuery</h3>
 <div class="member-signature"><span class="return-type"><a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;</span>&nbsp;<span class="element-name">createCountStoredQuery</span><wbr><span class="parameters">(io.micronaut.inject.ExecutableMethod&lt;?,<wbr>?&gt;&nbsp;executableMethod,
- <a href="../../intercept/annotation/DataMethod.OperationType.html" title="enum class in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a>&nbsp;operationType,
+ <a href="../../model/runtime/StoredQuery.OperationType.html" title="enum class in io.micronaut.data.model.runtime">StoredQuery.OperationType</a>&nbsp;operationType,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
  io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;rootEntity,
