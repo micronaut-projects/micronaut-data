@@ -83,6 +83,8 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
             def found = userWithWhereRepository.findById(e.id)
         then:
             found.isPresent()
+        cleanup:
+            userWithWhereRepository.deleteById(e.id)
     }
 
     void "test @where on find one deleted"() {
@@ -727,6 +729,28 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
             result = (List<RelPerson>) relPersonRepo.findAll(RelPersonRepository.Specifications.findRelPersonByChildren(List.of(child1Friend1.id, child1Friend2.id, child2Friend1.id)))
         then:
             result.size() == 0
+    }
+
+    void "test order by embedded field"() {
+        when:
+            def e1 = userWithWhereRepository.save(new UserWithWhere(id: UUID.randomUUID(), email: "where1@somewhere.com", deleted: false))
+            def u2 = new UserWithWhere(id: UUID.randomUUID(), email: "where2@somewhere.com", deleted: false)
+            u2.audit.createdTime = u2.audit.createdTime.plusSeconds(30)
+            def e2 = userWithWhereRepository.save(u2)
+            def found1 = userWithWhereRepository.findById(e1.id)
+            def found2 = userWithWhereRepository.findById(e2.id)
+        then:
+            found1.present
+            found2.present
+        when:"Sorted by embedded field works"
+            def sortedItems = userWithWhereRepository.findAllByIdInList(List.of(e1.id, e2.id), Sort.of(Sort.Order.desc("audit.createdTime", false)))
+        then:
+            sortedItems
+            sortedItems.size() == 2
+            sortedItems[0].id == e2.id
+            sortedItems[1].id == e1.id
+        cleanup:
+            userWithWhereRepository.deleteAll(List.of(e1, e2))
     }
 
     private static Specification<Book> testJoin(String value) {
