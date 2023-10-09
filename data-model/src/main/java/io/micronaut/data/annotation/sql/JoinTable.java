@@ -52,4 +52,9 @@ public @interface JoinTable {
      * @return The alias to use for the query
      */
     String alias() default "";
+
+    /**
+     * @return The schema of the join table
+     */
+    String schema() default "";
 }

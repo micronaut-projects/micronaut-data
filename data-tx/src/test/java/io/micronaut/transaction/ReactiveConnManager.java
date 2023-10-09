@@ -8,19 +8,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Singleton
 public class ReactiveConnManager extends AbstractReactorConnectionOperations<String> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ReactiveTxManager.class);
 
     private int connectionCount = 0;
-    private final List<String> connectionsLog = new ArrayList<>();
+    private final OpLogger opLogger;
 
-    public List<String> getConnectionsLog() {
-        return connectionsLog;
+    public ReactiveConnManager(OpLogger opLogger) {
+        this.opLogger = opLogger;
     }
 
     private String newConnection() {
@@ -31,14 +28,14 @@ public class ReactiveConnManager extends AbstractReactorConnectionOperations<Str
     protected Publisher<String> openConnection(ConnectionDefinition definition) {
         String c = newConnection();
         LOGGER.info("Open connection: {}", c);
-        connectionsLog.add("OPEN " + c);
+        opLogger.add("OPEN " + c);
         return Mono.just(c);
     }
 
     @Override
     protected Publisher<Void> closeConnection(String connection, ConnectionDefinition definition) {
         LOGGER.info("Close connection: {}", connection);
-        connectionsLog.add("OPEN " + connection);
+        opLogger.add("CLOSE " + connection);
         return Mono.empty();
     }
 }

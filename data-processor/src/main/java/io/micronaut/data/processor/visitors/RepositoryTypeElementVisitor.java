@@ -34,6 +34,7 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.annotation.TypeRole;
+import io.micronaut.data.annotation.sql.Procedure;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.intercept.annotation.DataMethodQueryParameter;
 import io.micronaut.data.model.DataType;
@@ -406,6 +407,10 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         boolean finalEncodeEntityParameters = encodeEntityParameters;
         List<QueryParameterBinding> finalParameterBinding = parameterBinding;
         element.annotate(DataMethod.class, annotationBuilder -> {
+
+            if (element.hasAnnotation(Procedure.class)) {
+                annotationBuilder.member(DataMethod.META_MEMBER_PROCEDURE, true);
+            }
 
             annotationBuilder.member(DataMethod.META_MEMBER_OPERATION_TYPE, methodInfo.getOperationType());
             annotationBuilder.member(DataMethod.META_MEMBER_ROOT_ENTITY, new AnnotationClassValue<>(entity.getName()));

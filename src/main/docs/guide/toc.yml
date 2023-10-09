@@ -45,6 +45,7 @@ hibernate:
   hibernateJoinQueries: Join queries
   hibernateExplicitQueries: Explicit queries
   hibernateNativeQueries: Native queries
+  hibernateProcedures: Procedures
   hibernateSpecifications: JPA specifications
 hibernateReactive: Micronaut Data Hibernate Reactive
 dbc:
@@ -92,6 +93,7 @@ dbc:
   dbcAttributeConverter: Using Attribute Converter
   dbcJoinQueries: Join Queries
   dbcNativeQueries: Explicit Queries
+  dbcProcedures: Procedures
 mongo:
   title: Micronaut Data MongoDB
   mongoQuickStart: Quick Start

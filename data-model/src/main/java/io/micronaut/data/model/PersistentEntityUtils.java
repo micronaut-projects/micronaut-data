@@ -44,6 +44,17 @@ public final class PersistentEntityUtils {
     }
 
     /**
+     * Check if the property is an association ID that can be accessed without join. In a case it's not an ID stored outside the associated table.
+     * @param association The association
+     * @param persistentProperty The association's property
+     * @return true if can be accessed
+     * @since 4.2.0
+     */
+    public static boolean isAccessibleWithoutJoin(Association association, PersistentProperty persistentProperty) {
+        return association.getAssociatedEntity().getIdentity() == persistentProperty && !association.isForeignKey();
+    }
+
+    /**
      * Traverses properties that should be persisted.
      *
      * @param property The property to start traversing from

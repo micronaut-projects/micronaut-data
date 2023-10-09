@@ -107,9 +107,29 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
     }
 
     /**
+     * Is the query a procedure.
+     *
+     * @return Whether the query is a procedure invocation.
+     * @since 4.2.0
+     */
+    default boolean isProcedure() {
+        return false;
+    }
+
+    /**
+     * Get the operation type.
+     *
+     * @return The operation type.
+     * @since 4.2.0
+     */
+    OperationType getOperationType();
+
+    /**
      * Are the placeholders for query set using numeric indices starting from 1.
      * @return True if they are.
+     * @deprecated Not used anymore
      */
+    @Deprecated(forRemoval = true)
     boolean useNumericPlaceholders();
 
     /**
@@ -125,7 +145,9 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      * The type of the ID member of the entity.
      *
      * @return The ID type
+     * @deprecated Not used anymore
      */
+    @Deprecated(forRemoval = true)
     default Optional<Class<?>> getEntityIdentifierType() {
         return Optional.empty();
     }
@@ -134,7 +156,9 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      * The argument types to the method that invokes the query.
      *
      * @return The argument types
+     * @deprecated Not used anymore
      */
+    @Deprecated(forRemoval = true)
     @NonNull
     default Class<?>[] getArgumentTypes() {
         return ReflectionUtils.EMPTY_CLASS_ARRAY;
@@ -165,7 +189,9 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
     /**
      * Whether the query can be treated as a single result.
      * @return True if it can.
+     * @deprecated Not used anymore
      */
+    @Deprecated(forRemoval = true)
     boolean isSingleResult();
 
     /**
@@ -195,5 +221,39 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      */
     default boolean isJsonEntity() {
         return false;
+    }
+
+    /**
+     * Describes the operation type.
+     */
+    enum OperationType {
+        /**
+         * A query operation.
+         */
+        QUERY,
+        /**
+         * A count operation.
+         */
+        COUNT,
+        /**
+         * A exists operation.
+         */
+        EXISTS,
+        /**
+         * An update operation.
+         */
+        UPDATE,
+        /**
+         * An update returning operation.
+         */
+        UPDATE_RETURNING,
+        /**
+         * A delete operation.
+         */
+        DELETE,
+        /**
+         * An insert operation.
+         */
+        INSERT
     }
 }

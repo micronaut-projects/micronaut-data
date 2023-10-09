@@ -17,10 +17,22 @@ package io.micronaut.data.hibernate
 
 import io.micronaut.context.annotation.Property
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import jakarta.inject.Inject
 
 @MicronautTest(packages = "io.micronaut.data.tck.entities", rollback = false, transactional = false)
 @Property(name = "datasources.default.name", value = "mydb")
 @Property(name = 'datasources.default.db-type', value = 'postgres')
 @Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
 class HibernatePostgresQuerySpec extends AbstractHibernateQuerySpec {
+
+    @Inject
+    AnimalRepository animalRepository
+
+    void "test procedure"() {
+        expect:
+            animalRepository.add1Named(123) == 124
+            animalRepository.add1Indexed(123) == 124
+            animalRepository.add1(123) == 124
+            animalRepository.add1Alias(123) == 124
+    }
 }

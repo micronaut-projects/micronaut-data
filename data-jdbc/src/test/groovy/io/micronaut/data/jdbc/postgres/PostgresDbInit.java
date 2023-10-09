@@ -9,7 +9,10 @@ import jakarta.inject.Singleton;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.JDBCType;
 import java.sql.SQLException;
+import java.sql.SQLType;
+import java.sql.Types;
 import java.util.Locale;
 import java.util.Properties;
 
@@ -42,20 +45,31 @@ public class PostgresDbInit implements BeanCreatedEventListener<BasicJdbcConfigu
                 } catch (SQLException e) {
                     // Ignore if already exists
                 }
+                try (CallableStatement st = connection.prepareCall("CREATE TYPE happiness AS ENUM ('happy', 'very_happy', 'ecstatic');")) {
+                    st.execute();
+                } catch (SQLException e) {
+                    // Ignore if already exists
+                }
+                try (CallableStatement st = connection.prepareCall("""
+CREATE PROCEDURE add1(IN myInput integer, OUT myOutput integer)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+myOutput := myInput + 1;
+END;
+$$;
+
+                 """)) {
+                    st.execute();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    // Ignore if already exists
+                }
+
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        try (Connection connection = DriverManager.getConnection(configuration.getUrl(), info)) {
-            try (CallableStatement st = connection.prepareCall("CREATE TYPE happiness AS ENUM ('happy', 'very_happy', 'ecstatic');")) {
-                st.execute();
-            } catch (SQLException e) {
-                // Ignore if already exists
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
         return configuration;
     }
 }

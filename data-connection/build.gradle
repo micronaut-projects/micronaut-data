@@ -1,15 +1,20 @@
 
 plugins {
     id "io.micronaut.build.internal.data-module"
+    id "io.micronaut.build.internal.data-kotlin"
+    id "org.jetbrains.kotlin.kapt"
 }
 
 dependencies {
     annotationProcessor mn.micronaut.inject.java
     annotationProcessor mn.micronaut.graal
     annotationProcessor libs.micronaut.docs
+    kapt mn.micronaut.inject.java
 
     implementation mn.reactor
     implementation mn.micronaut.aop
     implementation mn.micronaut.context.propagation
     implementation mn.micronaut.core.reactive
+
+    compileOnly libs.kotlin.coroutines.reactor
 }

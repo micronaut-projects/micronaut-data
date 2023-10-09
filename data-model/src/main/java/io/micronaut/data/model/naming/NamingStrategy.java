@@ -156,8 +156,10 @@ public interface NamingStrategy {
             }
         }
         if (foreignAssociation != null) {
-            if (foreignAssociation.getAssociatedEntity() == property.getOwner()
-                    && foreignAssociation.getAssociatedEntity().getIdentity() == property) {
+            PersistentEntity associatedEntity = foreignAssociation.getAssociatedEntity();
+            PersistentProperty associatedEntityIdentity = associatedEntity != null ? associatedEntity.getIdentity() : null;
+            if (associatedEntity != null && associatedEntity.equals(property.getOwner())
+                && associatedEntityIdentity != null && associatedEntityIdentity.equals(property)) {
                 String providedName = foreignAssociation.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
                 if (providedName != null) {
                     return providedName;

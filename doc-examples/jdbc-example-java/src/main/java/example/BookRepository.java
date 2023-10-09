@@ -2,7 +2,9 @@
 // tag::repository[]
 package example;
 
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.*;
+import io.micronaut.data.annotation.sql.Procedure;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -101,6 +103,11 @@ interface BookRepository extends CrudRepository<Book, Long> { // <2>
     @Query("select * from book b where b.title like :title limit 5")
     List<Book> findBooks(String title);
     // end::native[]
+
+    // tag::procedure[]
+    @Procedure
+    Long calculateSum(@NonNull Long bookId);
+    // end::procedure[]
 
 // tag::repository[]
 }

@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.Association;
+import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
@@ -105,8 +106,7 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
         } else if (path instanceof PersistentPropertyPath<?> persistentPropertyPath) {
             Path<?> parentPath = persistentPropertyPath.getParentPath();
             if (parentPath instanceof PersistentAssociationPath<?, ?> parent
-                    && parent.getAssociation().getAssociatedEntity().getIdentity() == persistentPropertyPath.getProperty()
-                    && !parent.getAssociation().isForeignKey()) {
+                && PersistentEntityUtils.isAccessibleWithoutJoin(parent.getAssociation(), persistentPropertyPath.getProperty())) {
                 // We don't need a join to access the ID
                 return;
             }

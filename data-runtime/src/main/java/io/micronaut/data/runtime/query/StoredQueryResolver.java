@@ -18,7 +18,6 @@ package io.micronaut.data.runtime.query;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.inject.ExecutableMethod;
@@ -79,7 +78,7 @@ public interface StoredQueryResolver {
      * @return new instance of stored query
      */
     <E, QR> StoredQuery<E, QR> createStoredQuery(ExecutableMethod<?, ?> executableMethod,
-                                                 DataMethod.OperationType operationType,
+                                                 StoredQuery.OperationType operationType,
                                                  String name,
                                                  AnnotationMetadata annotationMetadata,
                                                  Class<Object> rootEntity,
@@ -103,10 +102,9 @@ public interface StoredQueryResolver {
      * @param queryParts         The query parts
      * @param queryParameters    The query parameters
      * @return new instance of stored query
-     * @return
      */
     StoredQuery<Object, Long> createCountStoredQuery(ExecutableMethod<?, ?> executableMethod,
-                                                     DataMethod.OperationType operationType,
+                                                     StoredQuery.OperationType operationType,
                                                      String name,
                                                      AnnotationMetadata annotationMetadata,
                                                      Class<Object> rootEntity,

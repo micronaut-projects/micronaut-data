@@ -34,7 +34,9 @@ import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.jdbc.convert.JdbcConversionContext;
+import io.micronaut.data.jdbc.mapper.ColumnIndexCallableResultReader;
 import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;
+import io.micronaut.data.jdbc.mapper.ColumnNameCallableResultReader;
 import io.micronaut.data.jdbc.mapper.ColumnNameResultSetReader;
 import io.micronaut.data.jdbc.mapper.JdbcQueryStatement;
 import io.micronaut.data.jdbc.mapper.SqlResultConsumer;
@@ -148,6 +150,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final SchemaTenantResolver schemaTenantResolver;
     private final JdbcSchemaHandler schemaHandler;
 
+    private final ColumnNameCallableResultReader columnNameCallableResultReader;
+    private final ColumnIndexCallableResultReader columnIndexCallableResultReader;
+
     /**
      * Default constructor.
      *
@@ -208,6 +213,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         this.executorService = executorService;
         this.cascadeOperations = new SyncCascadeOperations<>(conversionService, this);
         this.jdbcConfiguration = jdbcConfiguration;
+        this.columnNameCallableResultReader = new ColumnNameCallableResultReader(conversionService);
+        this.columnIndexCallableResultReader = new ColumnIndexCallableResultReader(conversionService);
     }
 
     @NonNull
@@ -309,39 +316,71 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @Nullable
     @Override
     public <T, R> R findOne(@NonNull PreparedQuery<T, R> pq) {
-        return executeRead(connection -> {
-            SqlPreparedQuery<T, R> preparedQuery = getSqlPreparedQuery(pq);
-            try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, false, true)) {
-                preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
-                try (ResultSet rs = ps.executeQuery()) {
-                    SqlTypeMapper<ResultSet, R> mapper = createMapper(preparedQuery, ResultSet.class);
-                    R result;
-                    if (mapper instanceof SqlResultEntityTypeMapper<ResultSet, R> entityTypeMapper) {
-                        final boolean hasJoins = !preparedQuery.getJoinFetchPaths().isEmpty();
+        return executeRead(connection -> findOne(connection, getSqlPreparedQuery(pq)));
+    }
 
-                        SqlResultEntityTypeMapper.PushingMapper<ResultSet, R> oneMapper = entityTypeMapper.readOneWithJoins();
-                        if (rs.next()) {
-                            oneMapper.processRow(rs);
-                        }
-                        while (hasJoins && rs.next()) {
-                            oneMapper.processRow(rs);
-                        }
-                        result = oneMapper.getResult();
-                    } else if (rs.next()) {
-                        result = mapper.map(rs, preparedQuery.getResultType());
-                    } else {
-                        result = null;
+    private <T, R> R findOne(Connection connection, SqlPreparedQuery<T, R> preparedQuery) {
+        try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, false, true)) {
+            preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
+            try (ResultSet rs = ps.executeQuery()) {
+                SqlTypeMapper<ResultSet, R> mapper = createMapper(preparedQuery, ResultSet.class);
+                R result;
+                if (mapper instanceof SqlResultEntityTypeMapper<ResultSet, R> entityTypeMapper) {
+                    final boolean hasJoins = !preparedQuery.getJoinFetchPaths().isEmpty();
+
+                    SqlResultEntityTypeMapper.PushingMapper<ResultSet, R> oneMapper = entityTypeMapper.readOneWithJoins();
+                    if (rs.next()) {
+                        oneMapper.processRow(rs);
                     }
-                    if (result != null && preparedQuery.hasResultConsumer()) {
-                        preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class)
-                            .ifPresent(consumer -> consumer.accept(result, newMappingContext(rs)));
+                    while (hasJoins && rs.next()) {
+                        oneMapper.processRow(rs);
                     }
-                    return result;
+                    result = oneMapper.getResult();
+                } else if (rs.next()) {
+                    result = mapper.map(rs, preparedQuery.getResultType());
+                } else {
+                    result = null;
                 }
-            } catch (SQLException e) {
-                throw new DataAccessException("Error executing SQL Query: " + e.getMessage(), e);
+                if (result != null && preparedQuery.hasResultConsumer()) {
+                    preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class)
+                        .ifPresent(consumer -> consumer.accept(result, newMappingContext(rs)));
+                }
+                return result;
             }
-        });
+        } catch (SQLException e) {
+            throw new DataAccessException("Error executing SQL Query: " + e.getMessage(), e);
+        }
+    }
+
+    private <T, R> List<R> findAll(Connection connection, SqlPreparedQuery<T, R> preparedQuery, boolean applyPageable) {
+        try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, !applyPageable, false)) {
+            preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
+            try (ResultSet rs = ps.executeQuery()) {
+                SqlTypeMapper<ResultSet, R> mapper = createMapper(preparedQuery, ResultSet.class);
+                List<R> result;
+                if (mapper instanceof SqlResultEntityTypeMapper<ResultSet, R> entityTypeMapper) {
+                    SqlResultEntityTypeMapper.PushingMapper<ResultSet, List<R>> manyMapper = entityTypeMapper.readAllWithJoins();
+                    while (rs.next()) {
+                        manyMapper.processRow(rs);
+                    }
+                    result = manyMapper.getResult();
+                } else {
+                    result = new ArrayList<>();
+                    while (rs.next()) {
+                        result.add(
+                            mapper.map(rs, preparedQuery.getResultType())
+                        );
+                    }
+                }
+                if (result != null && preparedQuery.hasResultConsumer()) {
+                    preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class)
+                        .ifPresent(consumer -> consumer.accept(result, newMappingContext(rs)));
+                }
+                return result;
+            }
+        } catch (SQLException e) {
+            throw new DataAccessException("Error executing SQL Query: " + e.getMessage(), e);
+        }
     }
 
     @Override
@@ -455,11 +494,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @NonNull
     @Override
     public <T, R> Iterable<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return executeRead(connection -> {
-            try (Stream<R> stream = findStream(preparedQuery, connection, false)) {
-                return stream.collect(Collectors.toList());
-            }
-        });
+        return executeRead(connection -> findAll(connection, getSqlPreparedQuery(preparedQuery), true));
     }
 
     @NonNull
@@ -467,17 +502,35 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     public Optional<Number> executeUpdate(@NonNull PreparedQuery<?, Number> pq) {
         return executeWrite(connection -> {
             SqlPreparedQuery<?, Number> preparedQuery = getSqlPreparedQuery(pq);
+            try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, true, false)) {
+                preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
+                int result = ps.executeUpdate();
+                if (QUERY_LOG.isTraceEnabled()) {
+                    QUERY_LOG.trace("Update operation updated {} records", result);
+                }
+                if (preparedQuery.isOptimisticLock()) {
+                    checkOptimisticLocking(1, result);
+                }
+                return Optional.of(result);
+            } catch (SQLException e) {
+                Throwable throwable = handleSqlException(e, preparedQuery.getDialect());
+                if (throwable instanceof DataAccessException dataAccessException) {
+                    throw dataAccessException;
+                }
+                throw new DataAccessException("Error executing SQL UPDATE: " + e.getMessage(), e);
+            }
+        });
+    }
+
+    @Override
+    public <R> List<R> execute(PreparedQuery<?, R> pq) {
+        return executeWrite(connection -> {
+            SqlPreparedQuery<?, R> preparedQuery = getSqlPreparedQuery(pq);
             try {
-                try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, true, false)) {
-                    preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
-                    int result = ps.executeUpdate();
-                    if (QUERY_LOG.isTraceEnabled()) {
-                        QUERY_LOG.trace("Update operation updated {} records", result);
-                    }
-                    if (preparedQuery.isOptimisticLock()) {
-                        checkOptimisticLocking(1, result);
-                    }
-                    return Optional.of(result);
+                if (preparedQuery.isProcedure()) {
+                    return callProcedure(connection, preparedQuery);
+                } else {
+                    return findAll(connection, preparedQuery, false);
                 }
             } catch (SQLException e) {
                 Throwable throwable = handleSqlException(e, preparedQuery.getDialect());
@@ -487,6 +540,32 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 throw new DataAccessException("Error executing SQL UPDATE: " + e.getMessage(), e);
             }
         });
+    }
+
+    private <R> List<R> callProcedure(Connection connection, SqlPreparedQuery<?, R> preparedQuery) throws SQLException {
+        try (CallableStatement callableStatement = connection.prepareCall(preparedQuery.getQuery())) {
+            preparedQuery.bindParameters(new JdbcParameterBinder(connection, callableStatement, preparedQuery));
+            if (!preparedQuery.getResultArgument().isVoid()) {
+                DataType resultDataType = preparedQuery.getResultDataType();
+                int sqlType = JdbcQueryStatement.findSqlType(resultDataType);
+                int outIndex = preparedQuery.getQueryBindings().size() + 1;
+                callableStatement.registerOutParameter(outIndex, sqlType);
+            }
+            callableStatement.execute();
+            if (preparedQuery.getResultArgument().isVoid()) {
+                return List.of();
+            }
+            int outIndex = preparedQuery.getQueryBindings().size() + 1;
+            List<R> result = new ArrayList<>();
+            result.add(
+                (R) columnIndexCallableResultReader.readDynamic(
+                    callableStatement,
+                    outIndex,
+                    preparedQuery.getResultDataType()
+                )
+            );
+            return result;
+        }
     }
 
     private Integer sum(Stream<Integer> stream) {
@@ -968,9 +1047,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             previousValues = storedQuery.collectAutoPopulatedPreviousValues(entity);
         }
 
-        private PreparedStatement prepare(Connection connection, SqlStoredQuery storedQuery) throws SQLException {
-            if (storedQuery instanceof SqlPreparedQuery) {
-                ((SqlPreparedQuery) storedQuery).prepare(entity);
+        private PreparedStatement prepare(Connection connection, SqlStoredQuery<T, ?> storedQuery) throws SQLException {
+            if (storedQuery instanceof SqlPreparedQuery<T, ?> sqlPreparedQuery) {
+                sqlPreparedQuery.prepare(entity);
             }
             if (insert) {
                 Dialect dialect = storedQuery.getDialect();

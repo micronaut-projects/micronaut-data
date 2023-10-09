@@ -30,7 +30,7 @@ class SpringJdbcTransactionSpec extends AbstractTransactionSpec {
     Map<String, String> getProperties() {
         return [
                 "datasources.default.name": "mydb",
-                "datasources.default.transactionManager": "springJdbc",
+                "datasources.default.transaction-manager": "springJdbc",
                 "datasources.default.schema-generate": "create-drop",
                 "datasources.default.dialect": "h2",
                 "datasources.default.driver-class-name": "org.h2.Driver",

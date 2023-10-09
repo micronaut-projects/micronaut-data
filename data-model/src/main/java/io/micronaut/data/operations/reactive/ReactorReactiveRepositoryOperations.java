@@ -90,6 +90,12 @@ public interface ReactorReactiveRepositoryOperations extends ReactiveRepositoryO
     Mono<Number> executeDelete(@NonNull PreparedQuery<?, Number> preparedQuery);
 
     @NonNull
+    @Override
+    default <R> Flux<R> execute(@NonNull  PreparedQuery<?, R> preparedQuery) {
+        return Flux.from(ReactiveRepositoryOperations.super.execute(preparedQuery));
+    }
+
+    @NonNull
     @SingleResult
     <T> Mono<Number> delete(@NonNull DeleteOperation<T> operation);
 

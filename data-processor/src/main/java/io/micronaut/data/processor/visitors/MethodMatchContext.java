@@ -114,6 +114,14 @@ public class MethodMatchContext extends MatchContext {
     }
 
     /**
+     * Returns a list of parameters that are not fulfilling a specific query role.
+     * @return The parameters not in role
+     */
+    public @NonNull List<ParameterElement> getParametersInRoleList() {
+        return Arrays.stream(getParameters()).filter(this.parametersInRole::containsValue).toList();
+    }
+
+    /**
      * Resolves an entity.
      * @param element The element
      * @return The entity

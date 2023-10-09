@@ -33,8 +33,8 @@ class SqlServerPlainR2dbcSpec extends PlainR2dbcSpec implements SqlServerTestPro
     }
 
     @Override
-    boolean isFailsWhenConvertingFluxToMono() {
-        return true
+    protected String getSelectByIdQuery() {
+        'SELECT * FROM author WHERE id = @id'
     }
 
 }

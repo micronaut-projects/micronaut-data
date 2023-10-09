@@ -18,6 +18,7 @@ package io.micronaut.data.tck.repositories;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.sql.Procedure;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.repository.async.AsyncPageableRepository;
@@ -74,9 +75,9 @@ public interface PersonAsyncRepository extends AsyncPageableRepository<Person, L
 
     CompletableFuture<Integer> remove(Long id);
 
-    CompletableFuture<Integer> deleteOneReturnRowsDeleted(Person people);
+    CompletableFuture<Integer> erase(Person people);
 
-    CompletableFuture<Integer> deleteManyReturnRowsDeleted(List<Person> people);
+    CompletableFuture<Integer> erase(List<Person> people);
 
     @Query("DELETE FROM person WHERE name = :name")
     CompletableFuture<Integer> deleteCustom(List<Person> people);
@@ -86,4 +87,10 @@ public interface PersonAsyncRepository extends AsyncPageableRepository<Person, L
 
     @Query("DELETE FROM person WHERE name = :xyz")
     CompletableFuture<Integer> deleteCustomSingleNoEntity(String xyz);
+
+    @Procedure
+    CompletableFuture<Integer> add1(int input);
+
+    @Procedure("add1")
+    CompletableFuture<Integer> add1Aliased(int input);
 }

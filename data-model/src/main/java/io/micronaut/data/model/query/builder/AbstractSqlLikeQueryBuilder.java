@@ -92,6 +92,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     protected static final String LOGICAL_AND = " " + AND + " ";
     protected static final String UPDATE_CLAUSE = "UPDATE ";
     protected static final String DELETE_CLAUSE = "DELETE ";
+    protected static final String RETURNING = " RETURNING ";
     protected static final String OR = "OR";
     protected static final String LOGICAL_OR = " " + OR + " ";
     protected static final String FUNCTION_COUNT = "COUNT";
@@ -636,7 +637,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         } else {
             String column = getMappedName(namingStrategy, associations, property);
             column = escapeColumnIfNeeded(column, escape);
-            sb.append(tableAlias).append(DOT).append(column);
+            if (tableAlias == null) {
+                sb.append(column);
+            } else {
+                sb.append(tableAlias).append(DOT).append(column);
+            }
             if (useAlias) {
                 sb.append(AS_CLAUSE).append(columnAlias);
             }
@@ -728,7 +733,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param tableAlias the table alias
      * @param entity the persistent entity
      */
-    protected void buildSelect(AnnotationMetadata annotationMetadata, QueryState queryState, StringBuilder queryString, List<QueryModel.Projection> projectionList, String tableAlias, PersistentEntity entity) {
+    protected void buildSelect(AnnotationMetadata annotationMetadata,
+                               QueryState queryState,
+                               StringBuilder queryString,
+                               List<QueryModel.Projection> projectionList,
+                               String tableAlias,
+                               PersistentEntity entity) {
         if (projectionList.isEmpty()) {
             selectAllColumns(annotationMetadata, queryState, queryString);
         } else {
@@ -737,6 +747,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 boolean appendComma = true;
                 boolean removeComma = false;
                 QueryModel.Projection projection = i.next();
+                if (projection instanceof QueryModel.RootEntityProjection) {
+                    selectAllColumns(annotationMetadata, queryState, queryString);
+                    return;
+                }
                 if (projection instanceof QueryModel.LiteralProjection) {
                     queryString.append(asLiteral(((QueryModel.LiteralProjection) projection).getValue()));
                 } else if (projection instanceof QueryModel.CountProjection) {
@@ -1590,14 +1604,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         if (tableAlias != null) {
                             queryString.append(tableAlias).append(DOT);
                         }
-                        String columnName;
-                        if (jsonEntity) {
-                            columnName = property.getName();
-                        } else {
-                            columnName = getMappedName(namingStrategy, associations, property);
-                            if (queryState.escape) {
-                                columnName = quote(columnName);
-                            }
+                        String columnName = getMappedName(namingStrategy, associations, property);
+                        if (queryState.escape) {
+                            columnName = quote(columnName);
                         }
                         queryString.append(columnName).append('=');
                         appendUpdateSetParameter(queryString, tableAlias, property, () -> {
@@ -1684,12 +1693,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     }
 
     @NonNull
-    private QueryPropertyPath findProperty(QueryState queryState, String name, Class criterionType) {
-        return findPropertyInternal(queryState, queryState.getEntity(), queryState.getRootAlias(), name, criterionType);
+    private QueryPropertyPath findProperty(QueryState queryState, String propertypath, Class criterionType) {
+        return findPropertyInternal(queryState, queryState.getEntity(), queryState.getRootAlias(), propertypath, criterionType);
     }
 
-    private QueryPropertyPath findPropertyInternal(QueryState queryState, PersistentEntity entity, String tableAlias, String name, Class criterionType) {
-        PersistentPropertyPath propertyPath = entity.getPropertyPath(name);
+    private QueryPropertyPath findPropertyInternal(QueryState queryState, PersistentEntity entity, String tableAlias, String propertypath, Class criterionType) {
+        PersistentPropertyPath propertyPath = entity.getPropertyPath(propertypath);
         if (propertyPath != null) {
             if (propertyPath.getAssociations().isEmpty()) {
                 return new QueryPropertyPath(propertyPath, tableAlias);
@@ -1742,7 +1751,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     );
                 }
             }
-        } else if (TypeRole.ID.equals(name) && entity.getIdentity() != null) {
+        } else if (TypeRole.ID.equals(propertypath) && entity.getIdentity() != null) {
             // special case handling for ID
             return new QueryPropertyPath(
                 new PersistentPropertyPath(Collections.emptyList(), entity.getIdentity(), entity.getIdentity().getName()),
@@ -1751,9 +1760,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
         if (propertyPath == null) {
             if (criterionType == null || criterionType == Sort.Order.class) {
-                throw new IllegalArgumentException("Cannot order on non-existent property path: " + name);
+                throw new IllegalArgumentException("Cannot order on non-existent property path: " + propertypath);
             } else {
-                throw new IllegalArgumentException("Cannot use [" + criterionType.getSimpleName() + "] criterion on non-existent property path: " + name);
+                throw new IllegalArgumentException("Cannot use [" + criterionType.getSimpleName() + "] criterion on non-existent property path: " + propertypath);
             }
         }
         return new QueryPropertyPath(propertyPath, tableAlias);
@@ -1811,6 +1820,21 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
         buildUpdateStatement(annotationMetadata, queryState, propertiesToUpdate);
         buildWhereClause(annotationMetadata, query.getCriteria(), queryState);
+
+        if (!query.getProjections().isEmpty()) {
+            if (!getDialect().supportsUpdateReturning()) {
+                throw new IllegalStateException("Dialect: " + getDialect() + " doesn't support UPDATE ... RETURNING clause");
+            }
+            queryString.append(RETURNING);
+            buildSelect(
+                annotationMetadata,
+                queryState,
+                queryString,
+                query.getProjections(),
+                tableAlias,
+                entity
+            );
+        }
         return QueryResult.of(
             queryState.getFinalQuery(),
             queryState.getQueryParts(),

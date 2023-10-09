@@ -39,7 +39,7 @@ import java.util.regex.Pattern;
  * @since 3.2
  */
 @Internal
-public final class DeleteMethodMatcher extends AbstractPatternMethodMatcher {
+public final class DeleteMethodMatcher extends AbstractMethodMatcher {
 
     public static final Pattern METHOD_PATTERN = Pattern.compile("^((delete|remove|erase|eliminate)(\\S*?))$");
 
@@ -47,13 +47,18 @@ public final class DeleteMethodMatcher extends AbstractPatternMethodMatcher {
      * Default constructor.
      */
     public DeleteMethodMatcher() {
-        super(false, "delete", "remove", "erase", "eliminate", "deleteAll", "removeAll", "eraseAll", "eliminateAll");
+        super(MethodNameParser.builder()
+            .match(QueryMatchId.PREFIX, "delete", "remove", "erase", "eliminate")
+            .tryMatch(QueryMatchId.ALL_OR_ONE, ALL_OR_ONE)
+            .tryMatchFirstOccurrencePrefixed(QueryMatchId.PREDICATE, BY)
+            .failOnRest("Delete method doesn't support projections")
+            .build());
     }
 
     @Override
-    public MethodMatch match(MethodMatchContext matchContext, java.util.regex.Matcher matcher) {
+    protected MethodMatch match(MethodMatchContext matchContext, List<MethodNameParser.Match> matches) {
         ParameterElement[] parameters = matchContext.getParameters();
-        boolean isSpecificDelete = matcher.group(2).endsWith("By");
+        boolean isSpecificDelete = matches.stream().anyMatch(m -> m.id() == QueryMatchId.PREDICATE);
         ParameterElement entityParameter = null;
         ParameterElement entitiesParameter = null;
         if (matchContext.getParametersNotInRole().size() == 1) {
@@ -77,7 +82,7 @@ public final class DeleteMethodMatcher extends AbstractPatternMethodMatcher {
             if (!TypeUtils.isValidBatchUpdateReturnType(matchContext.getMethodElement())) {
                 return null;
             }
-            return new DeleteCriteriaMethodMatch(matcher);
+            return new DeleteCriteriaMethodMatch(matches);
         }
 
         SourcePersistentEntity rootEntity = matchContext.getRootEntity();
@@ -85,7 +90,7 @@ public final class DeleteMethodMatcher extends AbstractPatternMethodMatcher {
             throw new MatchFailedException("Delete all not supported for entities with no ID");
         }
 
-        boolean supportedByImplicitQueries = !matcher.group(2).endsWith("By");
+        boolean supportedByImplicitQueries = !isSpecificDelete;
 
         boolean generateInIdList = entitiesParameter != null
                 && !rootEntity.hasCompositeIdentity()
@@ -93,7 +98,7 @@ public final class DeleteMethodMatcher extends AbstractPatternMethodMatcher {
         ParameterElement finalEntityParameter = entityParameter;
         ParameterElement finalEntitiesParameter = entitiesParameter;
         if (generateInIdList) {
-            return new DeleteCriteriaMethodMatch(matcher) {
+            return new DeleteCriteriaMethodMatch(matches) {
 
                 @Override
                 protected boolean supportedByImplicitQueries() {
@@ -129,7 +134,7 @@ public final class DeleteMethodMatcher extends AbstractPatternMethodMatcher {
 
         ParameterElement entityParam = entityParameter == null ? entitiesParameter : entityParameter;
 
-        return new DeleteCriteriaMethodMatch(matcher) {
+        return new DeleteCriteriaMethodMatch(matches) {
 
             @Override
             protected boolean supportedByImplicitQueries() {

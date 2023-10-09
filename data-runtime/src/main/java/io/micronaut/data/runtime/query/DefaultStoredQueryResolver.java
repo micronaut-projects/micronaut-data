@@ -33,6 +33,8 @@ import io.micronaut.inject.ExecutableMethod;
 
 import java.util.List;
 
+import static io.micronaut.data.model.runtime.StoredQuery.*;
+
 /**
  * Default stored query resolver.
  *
@@ -79,7 +81,7 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
 
     @Override
     public <E, QR> StoredQuery<E, QR> createStoredQuery(ExecutableMethod<?, ?> executableMethod,
-                                                        DataMethod.OperationType operationType,
+                                                        OperationType operationType,
                                                         String name,
                                                         AnnotationMetadata annotationMetadata,
                                                         Class<Object> rootEntity,
@@ -95,7 +97,13 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
         String[] finalQueryParts = queryParts;
         boolean rawQuery = annotationMetadata.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
         boolean jsonEntity = DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(annotationMetadata);
-        return new StoredQuery<E, QR>() {
+        return new StoredQuery<>() {
+
+            @Override
+            public OperationType getOperationType() {
+                return operationType;
+            }
+
             @Override
             public Class<E> getRootEntity() {
                 return (Class<E>) rootEntity;
@@ -176,7 +184,7 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
 
     @Override
     public StoredQuery<Object, Long> createCountStoredQuery(ExecutableMethod<?, ?> executableMethod,
-                                                            DataMethod.OperationType operationType,
+                                                            OperationType operationType,
                                                             String name,
                                                             AnnotationMetadata annotationMetadata,
                                                             Class<Object> rootEntity,
@@ -188,7 +196,12 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
         }
         String[] finalQueryParts = queryParts;
         boolean rawCountQuery = annotationMetadata.stringValue(Query.class, DataMethod.META_MEMBER_RAW_COUNT_QUERY).isPresent();
-        return new StoredQuery<Object, Long>() {
+        return new StoredQuery<>() {
+
+            @Override
+            public OperationType getOperationType() {
+                return operationType;
+            }
 
             @Override
             public Class<Object> getRootEntity() {

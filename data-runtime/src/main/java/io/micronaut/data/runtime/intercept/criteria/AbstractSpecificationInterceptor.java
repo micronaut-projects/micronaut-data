@@ -25,7 +25,6 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.AssociationUtils;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
@@ -71,6 +70,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static io.micronaut.data.model.runtime.StoredQuery.*;
 
 /**
  * Abstract specification interceptor.
@@ -176,7 +177,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         CriteriaQuery<E> criteriaQuery = builder.build(criteriaBuilder);
         QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(sqlQueryBuilder);
 
-        return QueryResultStoredQuery.single(DataMethod.OperationType.EXISTS, context.getName(), context.getAnnotationMetadata(),
+        return QueryResultStoredQuery.single(OperationType.EXISTS, context.getName(), context.getAnnotationMetadata(),
             queryResult, rootEntity);
     }
 
@@ -184,7 +185,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         CriteriaUpdateBuilder<E> criteriaUpdateBuilder = getCriteriaUpdateBuilder(context);
         CriteriaUpdate<E> criteriaUpdate = criteriaUpdateBuilder.build(criteriaBuilder);
         QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaUpdate).buildQuery(sqlQueryBuilder);
-        return QueryResultStoredQuery.single(DataMethod.OperationType.UPDATE, context.getName(),
+        return QueryResultStoredQuery.single(OperationType.UPDATE, context.getName(),
             context.getAnnotationMetadata(), queryResult, (Class<E>) criteriaUpdate.getRoot().getJavaType());
     }
 
@@ -192,7 +193,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         CriteriaDeleteBuilder<E> criteriaDeleteBuilder = getCriteriaDeleteBuilder(context);
         CriteriaDelete<E> criteriaDelete = criteriaDeleteBuilder.build(criteriaBuilder);
         QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaDelete).buildQuery(sqlQueryBuilder);
-        return QueryResultStoredQuery.single(DataMethod.OperationType.DELETE, context.getName(),
+        return QueryResultStoredQuery.single(OperationType.DELETE, context.getName(),
             context.getAnnotationMetadata(), queryResult, (Class<E>) criteriaDelete.getRoot().getJavaType());
     }
 
@@ -238,7 +239,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         QueryResult queryResult = sqlQueryBuilder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel);
         Set<JoinPath> joinPaths = mergeJoinPaths(annotationJoinPaths, queryJoinPaths).stream().filter(jp -> jp.getJoinType().isFetch()).collect(Collectors.toSet());
         if (type == Type.FIND_ONE) {
-            return QueryResultStoredQuery.single(DataMethod.OperationType.QUERY, context.getName(), context.getAnnotationMetadata(),
+            return QueryResultStoredQuery.single(OperationType.QUERY, context.getName(), context.getAnnotationMetadata(),
                 queryResult, rootEntity, criteriaQuery.getResultType(), joinPaths);
         }
         return QueryResultStoredQuery.many(context.getName(), context.getAnnotationMetadata(), queryResult, rootEntity,

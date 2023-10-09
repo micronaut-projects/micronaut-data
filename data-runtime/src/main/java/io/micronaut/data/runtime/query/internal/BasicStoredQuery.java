@@ -51,13 +51,15 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
     private final boolean isCount;
     private final DataType resultDataType;
     private final boolean rawQuery;
+    private final OperationType operationType;
 
     public BasicStoredQuery(String query,
                             String[] expandableQueryParts,
                             List<QueryParameterBinding> queryParameterBindings,
                             Class<E> rootEntity,
-                            Class<R> resultType) {
-        this("Custom query", AnnotationMetadata.EMPTY_METADATA, query, expandableQueryParts, queryParameterBindings, rootEntity, resultType, false, false, false);
+                            Class<R> resultType,
+                            OperationType operationType) {
+        this("Custom query", AnnotationMetadata.EMPTY_METADATA, query, expandableQueryParts, queryParameterBindings, rootEntity, resultType, false, false, false, operationType);
     }
 
     public BasicStoredQuery(String name,
@@ -69,7 +71,8 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
                             Class<R> resultType,
                             boolean pageable,
                             boolean isSingleResult,
-                            boolean isCount) {
+                            boolean isCount,
+                            OperationType operationType) {
         this.name = name;
         this.annotationMetadata = annotationMetadata;
         this.query = query;
@@ -80,8 +83,14 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
         this.pageable = pageable;
         this.isSingleResult = isSingleResult;
         this.isCount = isCount;
+        this.operationType = operationType;
         this.resultDataType = isCount ? DataType.forType(resultType) : DataType.ENTITY;
         this.rawQuery = annotationMetadata.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
+    }
+
+    @Override
+    public OperationType getOperationType() {
+        return operationType;
     }
 
     @Override

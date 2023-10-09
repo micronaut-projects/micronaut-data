@@ -30,10 +30,12 @@ import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.AbstractCriteriaMethodMatch;
 import io.micronaut.data.processor.visitors.finders.FindersUtils;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
+import io.micronaut.data.processor.visitors.finders.MethodNameParser;
+import io.micronaut.data.processor.visitors.finders.QueryMatchId;
 import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
 import io.micronaut.inject.ast.ClassElement;
 
-import java.util.regex.Matcher;
+import java.util.List;
 
 /**
  * Delete criteria method match.
@@ -47,10 +49,10 @@ public class DeleteCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
     /**
      * Default constructor.
      *
-     * @param matcher The matcher
+     * @param matches The matches
      */
-    public DeleteCriteriaMethodMatch(Matcher matcher) {
-        super(matcher);
+    public DeleteCriteriaMethodMatch(List<MethodNameParser.Match> matches) {
+        super(matches);
     }
 
     /**
@@ -66,12 +68,15 @@ public class DeleteCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                              PersistentEntityRoot<T> root,
                              PersistentEntityCriteriaDelete<T> query,
                              SourcePersistentEntityCriteriaBuilder cb) {
-        String querySequence = matcher.group(3);
 
-//            querySequence = applyForUpdate(querySequence, query);
-        if (matcher.group(2).endsWith("By")) {
-            applyPredicates(querySequence, matchContext.getParameters(), root, query, cb);
-        } else {
+        boolean predicatedApplied = false;
+        for (MethodNameParser.Match match : matches) {
+            if (match.id() == QueryMatchId.PREDICATE) {
+                applyPredicates(match.part(), matchContext.getParameters(), root, query, cb);
+                predicatedApplied = true;
+            }
+        }
+        if (!predicatedApplied) {
             applyPredicates(matchContext.getParametersNotInRole(), root, query, cb);
         }
 

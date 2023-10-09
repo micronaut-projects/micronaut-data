@@ -30,6 +30,7 @@ import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.RepositoryOperations;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -102,6 +103,11 @@ public interface BlockingExecutorReactorRepositoryOperations extends RepositoryO
     @Override
     default Optional<Number> executeDelete(@NonNull PreparedQuery<?, Number> preparedQuery) {
         return blockOptional(reactive -> reactive.executeDelete(preparedQuery));
+    }
+
+    @Override
+    default <R> List<R> execute(PreparedQuery<?, R> preparedQuery) {
+        return block(reactive -> reactive.execute(preparedQuery).collectList());
     }
 
     @Override

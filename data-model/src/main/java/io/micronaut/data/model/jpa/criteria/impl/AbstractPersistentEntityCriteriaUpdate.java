@@ -24,6 +24,8 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.query.QueryModelPredicateVisitor;
+import io.micronaut.data.model.jpa.criteria.impl.query.QueryModelSelectionVisitor;
+import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.jpa.criteria.impl.util.Joiner;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.builder.QueryBuilder;
@@ -32,6 +34,7 @@ import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.ParameterExpression;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Selection;
 import jakarta.persistence.criteria.Subquery;
 import jakarta.persistence.metamodel.EntityType;
 import jakarta.persistence.metamodel.SingularAttribute;
@@ -39,6 +42,7 @@ import jakarta.persistence.metamodel.SingularAttribute;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -63,6 +67,7 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
     protected Predicate predicate;
     protected PersistentEntityRoot<T> entityRoot;
     protected Map<String, Object> updateValues = new LinkedHashMap<>();
+    protected Selection<?> returning;
 
     @Override
     public QueryResult buildQuery(QueryBuilder queryBuilder) {
@@ -81,6 +86,11 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
             PredicateVisitable predicate = (PredicateVisitable) this.predicate;
             predicate.accept(createPredicateVisitor(qm));
             predicate.accept(joiner);
+        }
+        if (returning instanceof SelectionVisitable) {
+            SelectionVisitable selection = (SelectionVisitable) this.returning;
+            selection.accept(new QueryModelSelectionVisitor(qm, false));
+            selection.accept(joiner);
         }
         for (Map.Entry<String, Joiner.Joined> e : joiner.getJoins().entrySet()) {
             qm.join(e.getKey(), Optional.ofNullable(e.getValue().getType()).orElse(Join.Type.DEFAULT), e.getValue().getAlias());
@@ -128,13 +138,13 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
 
     @Override
     public <Y, X extends Y> PersistentEntityCriteriaUpdate<T> set(Path<Y> attribute, X value) {
-        setValue(requireProperty(attribute).getProperty().getName(), value);
+        setValue(requireProperty(attribute).getPathAsString(), value);
         return this;
     }
 
     @Override
     public <Y> PersistentEntityCriteriaUpdate<T> set(Path<Y> attribute, Expression<? extends Y> value) {
-        setValue(requireProperty(attribute).getProperty().getName(), requireParameter(value));
+        setValue(requireProperty(attribute).getPathAsString(), requireParameter(value));
         return this;
     }
 
@@ -199,5 +209,34 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
     @Override
     public Set<ParameterExpression<?>> getParameters() {
         return CriteriaUtils.extractPredicateParameters(predicate);
+    }
+
+    @Override
+    public PersistentEntityCriteriaUpdate<T> returning(Selection<? extends T> selection) {
+        Objects.requireNonNull(selection);
+        this.returning = selection;
+        return this;
+    }
+
+    @Override
+    public PersistentEntityCriteriaUpdate<T> returningMulti(List<Selection<?>> selectionList) {
+        Objects.requireNonNull(selectionList);
+        if (!selectionList.isEmpty()) {
+            this.returning = new CompoundSelection<>(selectionList);
+        } else {
+            this.returning = null;
+        }
+        return this;
+    }
+
+    @Override
+    public PersistentEntityCriteriaUpdate<T> returningMulti(@NonNull Selection<?>... selections) {
+        Objects.requireNonNull(selections);
+        if (selections.length != 0) {
+            this.returning = new CompoundSelection<>(List.of(selections));
+        } else {
+            this.returning = null;
+        }
+        return this;
     }
 }

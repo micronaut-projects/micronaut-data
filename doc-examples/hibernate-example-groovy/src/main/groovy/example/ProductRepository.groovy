@@ -3,6 +3,7 @@ package example
 
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.Repository
+import io.micronaut.data.annotation.sql.Procedure
 import io.micronaut.data.jpa.annotation.EntityGraph
 import io.micronaut.data.jpa.repository.JpaSpecificationExecutor
 import io.micronaut.data.jpa.repository.criteria.Specification
@@ -44,6 +45,14 @@ abstract class ProductRepository implements CrudRepository<Product, Long>, JpaSp
 
     abstract Single<Long> countDistinctByManufacturerName(String name)
     // end::reactive[]
+
+    // tag::procedure[]
+    @Procedure(named = "calculateSum")
+    abstract long calculateSum(Long productId);
+
+    @Procedure("calculateSumInternal")
+    abstract long calculateSumCustom(Long productId);
+    // end::procedure[]
 
     // tag::specifications[]
 

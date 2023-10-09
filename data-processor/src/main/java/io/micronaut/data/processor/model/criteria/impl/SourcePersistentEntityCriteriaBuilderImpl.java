@@ -67,12 +67,12 @@ public final class SourcePersistentEntityCriteriaBuilderImpl extends AbstractCri
     }
 
     @Override
-    public ParameterExpression<Object> parameter(ParameterElement parameterElement) {
+    public <T> ParameterExpression<T> parameter(ParameterElement parameterElement) {
         throw notSupportedOperation();
     }
 
     @Override
-    public ParameterExpression<Object> entityPropertyParameter(ParameterElement entityParameter) {
+    public <T> ParameterExpression<T> entityPropertyParameter(ParameterElement entityParameter) {
         throw notSupportedOperation();
     }
 }

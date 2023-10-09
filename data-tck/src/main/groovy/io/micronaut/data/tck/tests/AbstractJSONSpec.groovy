@@ -46,6 +46,7 @@ abstract class AbstractJSONSpec extends Specification {
     def cleanup() {
         saleRepository.deleteAll()
         saleItemRepository.deleteAll()
+        jsonEntityRepository.deleteAll()
     }
 
     void "test read and write json"() {
@@ -240,6 +241,54 @@ abstract class AbstractJSONSpec extends Specification {
         cleanup()
     }
 
+    void 'test save/update iterable'() {
+        given:
+        def a = new JsonEntity(id: 1, values: List.of("item1", "item2"))
+        jsonEntityRepository.save(a)
+        when:
+        def loaded = jsonEntityRepository.findById(1L).get()
+        then:
+        loaded
+        loaded.values.size() == 2
+        loaded.values[0] == 'item1'
+        loaded.values[1] == 'item2'
+        when:
+        loaded.values[2] = 'item3'
+        jsonEntityRepository.update(loaded)
+        loaded = jsonEntityRepository.findById(1L).get()
+        then:
+        loaded
+        loaded.values.size() == 3
+        loaded.values[0] == 'item1'
+        loaded.values[1] == 'item2'
+        loaded.values[2] == 'item3'
+        when:
+        def b = jsonEntityRepository.save(2, List.of("newitem1", "newitem2", "newitem3"))
+        loaded = jsonEntityRepository.findById(2L).get()
+        then:
+        b
+        b.id == 2
+        b.values.size() == 3
+        loaded
+        loaded.values.size() == 3
+        loaded.values[0] == 'newitem1'
+        loaded.values[1] == 'newitem2'
+        loaded.values[2] == 'newitem3'
+        when:
+        loaded.values[1] = 'newitem2_updated'
+        jsonEntityRepository.update(loaded.id, loaded.values)
+        loaded = jsonEntityRepository.findById(2L).get()
+        then:
+        loaded
+        loaded.values.size() == 3
+        loaded.values[0] == 'newitem1'
+        loaded.values[1] == 'newitem2_updated'
+        loaded.values[2] == 'newitem3'
+
+        cleanup:
+        cleanup()
+    }
+
     void "test JSON fields retrieval"() {
         def jsonEntity = new JsonEntity()
         jsonEntity.id = 1L
@@ -285,6 +334,9 @@ abstract class AbstractJSONSpec extends Specification {
         optSampleDataFromJsonString.get().description == "Updated via param"
         optSampleDataFromJsonBlob.present
         optSampleDataFromJsonBlob.get().grade == 15
+
+        cleanup:
+        cleanup()
     }
 
     void verifySale(Sale actualSale, Sale expectedSale) {

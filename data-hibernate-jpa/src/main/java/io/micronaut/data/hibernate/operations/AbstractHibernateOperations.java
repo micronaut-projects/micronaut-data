@@ -82,7 +82,7 @@ import java.util.stream.Collectors;
  *
  * @param <S> The session type
  * @param <Q> The query type
- * @param <P> The selection query
+ * @param <P> The selection query type
  * @author Denis Stepaov
  * @since 3.5.0
  */
@@ -198,6 +198,44 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
      * @param argument      The argument
      */
     protected abstract void setParameterList(Q query, String parameterName, Collection<Object> value, Argument<?> argument);
+
+    /**
+     * Sets a parameter into query.
+     *
+     * @param query          The query
+     * @param parameterIndex The parameter index
+     * @param value          The value
+     */
+    protected abstract void setParameter(Q query, int parameterIndex, Object value);
+
+    /**
+     * Sets parameter into query.
+     *
+     * @param query          The query
+     * @param parameterIndex The parameter index
+     * @param value          The value
+     * @param argument       The argument
+     */
+    protected abstract void setParameter(Q query, int parameterIndex, Object value, Argument<?> argument);
+
+    /**
+     * Sets a list parameter into query.
+     *
+     * @param query          The query
+     * @param parameterIndex The parameter index
+     * @param value          The value
+     */
+    protected abstract void setParameterList(Q query, int parameterIndex, Collection<Object> value);
+
+    /**
+     * Sets a list parameter into query.
+     *
+     * @param query          The query
+     * @param parameterIndex The parameter index
+     * @param value          The value
+     * @param argument       The argument
+     */
+    protected abstract void setParameterList(Q query, int parameterIndex, Collection<Object> value, Argument<?> argument);
 
     /**
      * Sets a hint.
@@ -371,13 +409,17 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
      * Bind parameters into query.
      *
      * @param q             The query
-     * @param preparedQuery THe prepared query
+     * @param preparedQuery The prepared query
+     * @param bindNamed     If parameter should be bind by the name
      * @param <T>           The entity type
      * @param <R>           The result type
      */
-    protected <T, R> void bindParameters(Q q, @NonNull PreparedQuery<T, R> preparedQuery) {
+    protected <T, R> void bindParameters(Q q, @NonNull PreparedQuery<T, R> preparedQuery, boolean bindNamed) {
         BindableParametersPreparedQuery<T, R> bindableParametersPreparedQuery = getBindableParametersPreparedQuery(preparedQuery);
         bindableParametersPreparedQuery.bindParameters(new BindableParametersStoredQuery.Binder() {
+
+            int index = 1;
+
             @Override
             public Object autoPopulateRuntimeProperty(RuntimePersistentProperty<?> persistentProperty, Object previousValue) {
                 return runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
@@ -401,7 +443,11 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
                     Argument<?> argument = preparedQuery.getArguments()[parameterIndex];
                     Class<?> argumentType = argument.getType();
                     if (Collection.class.isAssignableFrom(argumentType)) {
-                        setParameterList(q, parameterName, value == null ? Collections.emptyList() : (Collection<Object>) value, argument.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT));
+                        if (bindNamed) {
+                            setParameterList(q, parameterName, value == null ? Collections.emptyList() : (Collection<Object>) value, argument.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT));
+                        } else {
+                            setParameterList(q, index, value == null ? Collections.emptyList() : (Collection<Object>) value, argument.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT));
+                        }
                     } else if (Object[].class.isAssignableFrom(argumentType)) {
                         Collection<Object> coll;
                         if (value == null) {
@@ -411,13 +457,22 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
                         } else {
                             coll = Arrays.asList((Object[]) value);
                         }
-                        setParameterList(q, parameterName, coll);
-                    } else {
+                        if (bindNamed) {
+                            setParameterList(q, parameterName, coll);
+                        } else {
+                            setParameterList(q, index, coll);
+                        }
+                    } else if (bindNamed) {
                         setParameter(q, parameterName, value, argument);
+                    } else {
+                        setParameter(q, index, value, argument);
                     }
-                } else {
+                } else if (bindNamed) {
                     setParameter(q, parameterName, value);
+                } else {
+                    setParameter(q, index, value);
                 }
+                index++;
             }
 
             @Override
@@ -429,7 +484,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
     }
 
     private <T, R> void bindPreparedQuery(P q, @NonNull PreparedQuery<T, R> preparedQuery, S currentSession) {
-        bindParameters(q, preparedQuery);
+        bindParameters(q, preparedQuery, true);
         bindPageable(q, preparedQuery.getPageable());
         bindQueryHints(q, preparedQuery, currentSession);
     }

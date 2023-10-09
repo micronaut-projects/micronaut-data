@@ -130,8 +130,9 @@ public final class QueryModelSelectionVisitor implements SelectionVisitor {
         }
         if (distinct) {
             addProjection(Projections.distinct());
+        } else {
+            addProjection(Projections.rootEntity());
         }
-        // default
     }
 
     @Override

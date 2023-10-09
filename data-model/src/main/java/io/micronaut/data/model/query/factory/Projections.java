@@ -143,4 +143,13 @@ public class Projections {
     public static QueryModel.GroupPropertyProjection groupProperty(String property) {
         return new QueryModel.GroupPropertyProjection(property);
     }
+
+    /**
+     * Defines a projection of the root entity.
+     *
+     * @return The projection
+     */
+    public static QueryModel.RootEntityProjection rootEntity() {
+        return new QueryModel.RootEntityProjection();
+    }
 }

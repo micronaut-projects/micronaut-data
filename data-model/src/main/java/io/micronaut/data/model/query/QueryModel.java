@@ -1362,6 +1362,14 @@ public interface QueryModel extends Criteria {
     }
 
     /**
+     * A projection used to project the root entity.
+     * @since 4.2.0
+     */
+    class RootEntityProjection extends Projection {
+
+    }
+
+    /**
      * A projection of a simple literal.
      */
     class LiteralProjection extends Projection {

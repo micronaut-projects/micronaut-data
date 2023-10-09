@@ -413,4 +413,91 @@ class Emb {
         employeeGroupSql.length == 1
         employeeGroupSql[0] == 'CREATE TABLE `employee_group` (`id` BIGINT AUTO_INCREMENT PRIMARY KEY,`name` VARCHAR(255) NOT NULL,`category_id` BIGINT NOT NULL,`employer_id` BIGINT NOT NULL);'
     }
+
+    void "test create ManyToMany table with schema"() {
+        given:
+        def entity = buildJpaEntity('test.Student', '''
+import io.micronaut.data.annotation.Embeddable;
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.sql.JoinColumn;
+import io.micronaut.data.annotation.sql.JoinTable;
+
+@MappedEntity(value = "m2m_student", schema = "students")
+class Student {
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String name;
+    @JoinTable(
+            name = "m2m_student_course_association",
+            joinColumns = @JoinColumn(name = "st_id"),
+            inverseJoinColumns = @JoinColumn(name = "cs_id"),
+            schema = "students")
+    @Relation(value = Relation.Kind.MANY_TO_MANY, cascade = Relation.Cascade.PERSIST)
+    private List<Course> courses;
+    @JoinTable(
+            name = "m2m_student_teacher_association",
+            joinColumns = @JoinColumn(name = "st_id"),
+            inverseJoinColumns = @JoinColumn(name = "te_id"))
+    @Relation(value = Relation.Kind.MANY_TO_MANY, cascade = Relation.Cascade.PERSIST)
+    private List<Teacher> teachers;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public List<Course> getCourses() { return courses; }
+    public void setCourses(List<Course> courses) { this.courses = courses; }
+    public List<Teacher> getTeachers() { return teachers; }
+    public void setTeachers(List<Teacher> teachers) { this.teachers = teachers; }
+}
+
+@MappedEntity(value = "m2m_course", schema = "students")
+class Course {
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String name;
+    @Relation(value = Relation.Kind.MANY_TO_MANY, mappedBy = "courses")
+    private List<Student> students;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public List<Student> getStudents() { return students; }
+    public void setStudents(List<Student> students) { this.students = students; }
+}
+
+@MappedEntity(value = "m2m_teacher", schema = "students")
+class Teacher {
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String name;
+    @Relation(value = Relation.Kind.MANY_TO_MANY, mappedBy = "teachers")
+    private List<Student> students;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public List<Student> getStudents() { return students; }
+    public void setStudents(List<Student> students) { this.students = students; }
+}
+
+''')
+
+        when:
+        SqlQueryBuilder builder = new SqlQueryBuilder()
+        def sql = builder.buildCreateTableStatements(entity)
+
+        then:
+        sql.length == 4
+        sql[0] == 'CREATE SCHEMA "students";'
+        sql[1] == 'CREATE TABLE "students"."m2m_student_course_association" ("st_id" BIGINT NOT NULL,"cs_id" BIGINT NOT NULL);'
+        sql[2] == 'CREATE TABLE "students"."m2m_student_teacher_association" ("st_id" BIGINT NOT NULL,"te_id" BIGINT NOT NULL);'
+        sql[3] == 'CREATE TABLE "students"."m2m_student" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL);'
+    }
 }

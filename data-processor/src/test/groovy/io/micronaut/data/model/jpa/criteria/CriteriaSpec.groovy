@@ -1,6 +1,6 @@
 package io.micronaut.data.model.jpa.criteria
 
-
+import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.processor.model.SourcePersistentEntity
 import io.micronaut.data.processor.model.criteria.impl.SourcePersistentEntityCriteriaBuilderImpl
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaDelete
@@ -13,6 +13,7 @@ import jakarta.persistence.criteria.CriteriaDelete
 import jakarta.persistence.criteria.CriteriaQuery
 import jakarta.persistence.criteria.CriteriaUpdate
 import jakarta.persistence.criteria.Expression
+import jakarta.persistence.criteria.Path
 import spock.lang.Unroll
 
 import java.util.function.Function
@@ -197,6 +198,48 @@ class CriteriaSpec extends AbstractCriteriaSpec {
                     'UPDATE "test" SET "name"=\'ABC\',"amount"=123 WHERE ("amount" >= 1000)',
                     'UPDATE "test" SET "name"=?,"amount"=? WHERE ("amount" >= 1000)',
                     'UPDATE "test" SET "name"=\'test\',"amount"=? WHERE ("amount" >= 1000)',
+            ]
+    }
+
+    @Unroll
+    void "test update returning"(UpdateSpecification specification) {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaUpdate)
+            def predicate = specification.toPredicate(entityRoot, criteriaUpdate, criteriaBuilder)
+            if (predicate) {
+                criteriaUpdate.where(predicate)
+            }
+            String sqlQuery = getSqlQuery(criteriaUpdate, Dialect.POSTGRES)
+
+        expect:
+            sqlQuery == expectedQuery
+
+        where:
+            specification << [
+                    { root, query, cb ->
+                        query.set("name", "ABC")
+                        Path<Number> amountProperty = root.get("amount")
+                        query.set(amountProperty, 123)
+                        (query as PersistentEntityCriteriaUpdate).returning(amountProperty)
+                        cb.ge(amountProperty, 1000)
+                    } as UpdateSpecification,
+                    { root, query, cb ->
+                        query.set("name", cb.parameter(String))
+                        query.set(root.get("amount"), cb.parameter(Integer))
+                        (query as PersistentEntityCriteriaUpdate).returning(root)
+                        cb.ge(root.get("amount"), 1000)
+                    } as UpdateSpecification,
+                    { root, query, cb ->
+                        query.set("name", "test")
+                        query.set(root.get("amount"), cb.parameter(Integer))
+                        (query as PersistentEntityCriteriaUpdate).returning(root)
+                        cb.ge(root.get("amount"), 1000)
+                    } as UpdateSpecification,
+            ]
+            expectedQuery << [
+                    'UPDATE "test" SET "name"=\'ABC\',"amount"=123 WHERE ("amount" >= 1000) RETURNING "amount"',
+                    'UPDATE "test" SET "name"=?,"amount"=? WHERE ("amount" >= 1000) RETURNING "id","name","enabled2","enabled","age","amount","budget"',
+                    'UPDATE "test" SET "name"=\'test\',"amount"=? WHERE ("amount" >= 1000) RETURNING "id","name","enabled2","enabled","age","amount","budget"',
             ]
     }
 

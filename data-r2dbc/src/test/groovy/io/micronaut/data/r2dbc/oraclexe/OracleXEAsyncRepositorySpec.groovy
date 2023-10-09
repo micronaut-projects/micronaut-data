@@ -28,4 +28,10 @@ class OracleXEAsyncRepositorySpec extends AbstractAsyncRepositorySpec implements
         return context.getBean(OracleXEPersonAsyncRepository)
     }
 
+    void "test procedure"() {
+        expect:
+            personRepository.add1(123).get() == 124
+            personRepository.add1Aliased(123).get() == 124
+    }
+
 }

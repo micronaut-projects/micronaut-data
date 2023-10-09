@@ -1,3 +1,15 @@
+=== Micronaut Data 4.2
+- Procedure invocations in repositories
+- Added possibility to have associations (JOINs) in DTOs
+- Support for updates with `RETURNING` clause in repositories
+- MongoDB: Support `arrayFilters`
+- Kotlin: New coroutine variations of connection / transaction operations: `io.micronaut.data.connection.kotlin.CoroutineConnectionOperations`, `io.micronaut.transaction.kotlin.CoroutineTransactionOperations`
+- R2DBC: New connection status callback. Corrected cancellation.
+
+=== Micronaut Data 4.1
+- Support NESTED transaction propagation
+- Bugfixes
+
 === Micronaut Data 4.0
 - https://hibernate.org/orm/documentation/6.0/[Hibernate 6]
 - https://hibernate.org/reactive/releases/2.0/[Hibernate Reactive 2] (Hibernate 6 compatible)

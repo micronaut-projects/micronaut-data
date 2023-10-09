@@ -9,6 +9,7 @@ dependencies {
 	compileOnly mn.micronaut.core.processor
 
 	testAnnotationProcessor mn.micronaut.inject.java
+	testAnnotationProcessor projects.micronautDataProcessor
 
 	testImplementation mnReactor.micronaut.reactor
 	testImplementation mn.micronaut.inject.groovy

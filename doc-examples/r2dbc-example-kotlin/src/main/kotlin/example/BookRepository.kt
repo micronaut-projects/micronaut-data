@@ -1,13 +1,16 @@
 package example
 
+import io.micronaut.core.annotation.NonNull
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.Query
+import io.micronaut.data.annotation.sql.Procedure
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
 import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder
 import io.micronaut.data.repository.kotlin.CoroutineCrudRepository
-import kotlinx.coroutines.flow.Flow
 import jakarta.transaction.Transactional
+import kotlinx.coroutines.flow.Flow
+import reactor.core.publisher.Mono
 
 @R2dbcRepository(dialect = Dialect.MYSQL) // <1>
 interface BookRepository : CoroutineCrudRepository<Book, Long> {
@@ -31,5 +34,10 @@ interface BookRepository : CoroutineCrudRepository<Book, Long> {
     suspend fun findOne(title: String): BookDTO?
 
     fun findAll(specification: CriteriaQueryBuilder<BookDTO>): Flow<BookDTO>
+
+    // tag::procedure[]
+    @Procedure
+    suspend fun calculateSum(bookId: @NonNull Long): Long
+    // end::procedure[]
 
 }

@@ -1,0 +1,5 @@
+Micronaut Data supports executing simple SQL procedures. Simply annotate a repository method with ann:data.annotation.sql.Procedure[].
+All the method parameters will be used as incoming parameters of the procedure and not-void result will be bind as an out parameter.
+By default the method name will be used as the procedure name, to customize the name it's possible to use the `value` attribute:
+
+snippet::example.BookRepository[project-base="doc-examples/jdbc-example", source="main", tags="procedure", indent="0"]

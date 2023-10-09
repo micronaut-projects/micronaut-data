@@ -37,6 +37,9 @@ dependencies {
     testRuntimeOnly mnSql.h2
     testRuntimeOnly mnSql.postgresql
     testRuntimeOnly mnSql.micronaut.jdbc.tomcat
+
+    testRuntimeOnly(libs.jupiter.engine)
+    testImplementation(mnTest.micronaut.test.junit5)
 }
 
 micronaut {
