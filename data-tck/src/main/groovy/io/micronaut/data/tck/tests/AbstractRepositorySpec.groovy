@@ -27,6 +27,7 @@ import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.AuthorBooksDto
+import io.micronaut.data.tck.entities.AuthorDtoWithBookDtos
 import io.micronaut.data.tck.entities.BasicTypes
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.BookDto
@@ -1256,6 +1257,29 @@ abstract class AbstractRepositorySpec extends Specification {
                     "queryAll", // DEFAULT
                     "retrieveByIdIsNotNull", // LEFT_FETCH
                     "searchByNameIsNotNull" // RIGHT_FETCH
+            ]
+    }
+
+    @Unroll
+    void "test DTO with different joined DTO types on many ended association"(String methodName) {
+        given:
+            saveSampleBooks()
+
+        when:
+            List<AuthorDtoWithBookDtos> authors = authorRepository."$methodName"()
+
+        then:
+            authors.size() == 3
+            authors.collect { [books: it.books.size()] }.every { it.books == 2 }
+            authors[0].books[0].title
+            authors[0].books[0].lastUpdated
+            authors[0].books[0].totalPages
+
+        where:
+            methodName << [
+                    "read", // DEFAULT
+                    "readByIdIsNotNull", // LEFT_FETCH
+                    "readByNameIsNotNull" // RIGHT_FETCH
             ]
     }
 
