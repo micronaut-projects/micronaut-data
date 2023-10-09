@@ -164,6 +164,8 @@ abstract class AbstractRepositorySpec extends Specification {
     }
 
     protected void setup() {
+        TimeZone.setDefault(TimeZone.getTimeZone("Europe/Berlin"))
+        //TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
         cleanup()
     }
 
