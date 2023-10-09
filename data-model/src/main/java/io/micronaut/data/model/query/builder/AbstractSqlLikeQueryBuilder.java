@@ -1803,7 +1803,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             List<Association> associations = new ArrayList<>(path.getAssociations());
             int assocCount = associations.size();
             // If last association is embedded, it does not need to be joined to the alias since it will be in the destination table
-            if (assocCount > 0 && associations.get(assocCount - 1) instanceof Embedded) {
+            // JPA/Hibernate is special case and in that case we leave association for specific handling below
+            if (assocCount > 0 && computePropertyPaths() && associations.get(assocCount - 1) instanceof Embedded) {
                 associations.remove(assocCount - 1);
             }
             if (associations.isEmpty()) {
