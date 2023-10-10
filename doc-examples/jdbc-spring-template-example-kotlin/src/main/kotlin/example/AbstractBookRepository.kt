@@ -13,11 +13,13 @@ import org.springframework.jdbc.core.JdbcTemplate
 @Requires(property = "spec.name", value = "BookRepositoryTest") // tag::clazz[]
 // tag::clazz[]
 @JdbcRepository(dialect = Dialect.H2)
-abstract class AbstractBookRepository(val jdbcTemplate: JdbcTemplate) : CrudRepository<@Valid Book, Long> {  //<1>
+abstract class AbstractBookRepository(dataSource: DataSource) : CrudRepository<@Valid Book, Long> { // <1>
+
+    private val jdbcTemplate: JdbcTemplate = JdbcTemplate(DelegatingDataSource.unwrapDataSource(dataSource)) //<2>
 
     @Transactional
     open fun findByTitle(title: String) = jdbcTemplate
-        .queryForList("SELECT * FROM Book AS book WHERE book.title = ?", title) // <2>
+        .queryForList("SELECT * FROM Book AS book WHERE book.title = ?", title) // <3>
         .map { m -> Book(m["id"] as Long, m["title"] as String, m["pages"] as Int) }
 }
 // end::clazz[]
