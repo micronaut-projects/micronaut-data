@@ -10,7 +10,7 @@ dependencies {
     annotationProcessor mn.micronaut.graal
 
     api (projects.micronautDataHibernateJpa) {
-        exclude group: 'org.hibernate.orm', module: 'hibernate-core'
+        exclude group: 'org.hibernate.orm'
     }
     api (mnSql.micronaut.hibernate.reactive) {
         exclude group: 'io.smallrye.reactive', module: 'mutiny'
