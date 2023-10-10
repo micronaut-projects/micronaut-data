@@ -18,7 +18,7 @@ import javax.sql.DataSource
 @JdbcRepository(dialect = Dialect.H2)
 abstract class AbstractBookRepository implements CrudRepository<@Valid Book, @NotNull Long> {
 
-    private final JdbcTemplate jdbcTemplate; //<2>
+    private final JdbcTemplate jdbcTemplate;
 
     AbstractBookRepository(DataSource dataSource) { // <1>
         this.jdbcTemplate = new JdbcTemplate(DelegatingDataSource.unwrapDataSource(dataSource)); //<2>

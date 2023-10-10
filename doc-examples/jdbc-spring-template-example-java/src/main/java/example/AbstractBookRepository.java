@@ -19,7 +19,7 @@ import java.util.List;
 @JdbcRepository(dialect = Dialect.H2)
 public abstract class AbstractBookRepository implements CrudRepository<@Valid Book, @NotNull Long> {
 
-    private final JdbcTemplate jdbcTemplate; //<2>
+    private final JdbcTemplate jdbcTemplate;
 
     public AbstractBookRepository(DataSource dataSource) { // <1>
         this.jdbcTemplate = new JdbcTemplate(DelegatingDataSource.unwrapDataSource(dataSource)); //<2>
