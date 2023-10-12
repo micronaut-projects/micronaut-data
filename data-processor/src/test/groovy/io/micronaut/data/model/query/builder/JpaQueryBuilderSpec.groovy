@@ -316,6 +316,19 @@ class JpaQueryBuilderSpec extends Specification {
             result.parameterTypes == ['name': DataType.STRING, 'id1': DataType.LONG, 'id2': DataType.LONG]
     }
 
+    void "test update returning"() {
+        when:"Try build JPA query for UPDATE ... RETURNING"
+        QueryBuilder encoder = new JpaQueryBuilder()
+        def entity = getRuntimePersistentEntity(EntityWithIdClass)
+        def qm = QueryModel.from(entity)
+        qm.idEq(new QueryParameter("xyz"))
+        qm.projections().add(Projections.rootEntity())
+        encoder.buildUpdate(qm, ['name'])
+        then:"An exception will be thrown because it's not supported"
+        IllegalStateException ex = thrown()
+        ex.message == "Dialect: ANSI doesn't support UPDATE ... RETURNING clause"
+    }
+
     @Shared
     Map<Class, RuntimePersistentEntity> entities = [:]
 

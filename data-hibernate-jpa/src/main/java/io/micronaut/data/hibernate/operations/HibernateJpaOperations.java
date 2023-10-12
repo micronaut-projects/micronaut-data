@@ -470,7 +470,11 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
                 }
                 return List.of((R) result);
             } else {
-                throw new IllegalStateException("Not supported!");
+                if (preparedQuery.isNative()) {
+                    Iterable<?> result = findAll(preparedQuery);
+                    return (List<R>) result;
+                }
+                throw new IllegalStateException("Only native query supports update RETURNING operations.");
             }
         });
     }
