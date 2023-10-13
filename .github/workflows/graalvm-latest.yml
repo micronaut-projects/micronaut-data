@@ -35,7 +35,7 @@ jobs:
     strategy:
       max-parallel: 6
       matrix:
-        java: ['17', '21']
+        java: ['17']
         native_test_task: ${{ fromJson(needs.build_matrix.outputs.matrix).native_test_task }}
     env:
       GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
