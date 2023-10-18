@@ -72,12 +72,14 @@ public final class SqlJsonColumnMapperProvider<S> {
      * that supports given prepared query and result set type then it will be returned.
      * Otherwise, it will return default {@link SqlJsonColumnReader}.
      *
-     * @param sqlPreparedQuery the SQL prepared query
+     * @param sqlStoredQuery the SQL stored query
      * @param resultSetType the result set type (for R2Dbc and Jdbc it is different for example)
      * @return the {@link SqlJsonColumnReader} for given SQL prepared query, or default {@link SqlJsonColumnReader}
      * if prepared query does not have specific one that it supports
      */
-    public SqlJsonColumnReader<S> getJsonColumnReader(SqlPreparedQuery<?, ?> sqlPreparedQuery, Class<S> resultSetType) {
+    public SqlJsonColumnReader<S> getJsonColumnReader(SqlStoredQuery<?, ?> sqlStoredQuery, Class<S> resultSetType) {
+        // Hack to avoid using the prepared query
+        DefaultSqlPreparedQuery<?, ?> sqlPreparedQuery = new DefaultSqlPreparedQuery<>(sqlStoredQuery);
         SqlJsonColumnReader<S> supportedSqlJsonColumnReader = null;
         for (SqlJsonColumnReader<S> sqlJsonColumnReader : sqlJsonColumnReaders) {
             if (sqlJsonColumnReader.supportsResultSetType(resultSetType) && sqlJsonColumnReader.supportsRead(sqlPreparedQuery)) {
@@ -88,13 +90,13 @@ public final class SqlJsonColumnMapperProvider<S> {
 
         if (supportedSqlJsonColumnReader != null) {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Using custom JSON column reader for dialect {}", sqlPreparedQuery.getDialect());
+                LOG.debug("Using custom JSON column reader for dialect {}", sqlStoredQuery.getDialect());
             }
             return supportedSqlJsonColumnReader;
         }
         if (defaultSqlJsonColumnReader == null && LOG.isDebugEnabled()) {
             LOG.debug("No default SqlJsonColumnReader found for dialect {}. Need to add Micronaut JsonMapper to the classpath.",
-                sqlPreparedQuery.getDialect());
+                sqlStoredQuery.getDialect());
         }
         return defaultSqlJsonColumnReader;
     }

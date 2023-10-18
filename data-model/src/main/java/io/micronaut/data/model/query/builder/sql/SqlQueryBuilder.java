@@ -943,6 +943,19 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     @NonNull
     @Override
     public QueryResult buildInsert(AnnotationMetadata repositoryMetadata, PersistentEntity entity) {
+        return buildInsert(repositoryMetadata, entity, false);
+    }
+
+    @Override
+    public QueryResult buildInsertReturning(AnnotationMetadata repositoryMetadata, PersistentEntity entity) {
+        if (!getDialect().supportsInsertReturning()) {
+            throw new IllegalStateException("Dialect: " + getDialect() + " doesn't support INSERT ... RETURNING clause");
+        }
+        return buildInsert(repositoryMetadata, entity, true);
+    }
+
+    @NonNull
+    private QueryResult buildInsert(AnnotationMetadata repositoryMetadata, PersistentEntity entity, boolean isReturning) {
         boolean escape = shouldEscape(entity);
         final String unescapedTableName = getUnescapedTableName(entity);
 
@@ -987,44 +1000,53 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
             Collection<? extends PersistentProperty> persistentProperties = entity.getPersistentProperties();
             List<String> columns = new ArrayList<>();
+            List<String> resultColumns = new ArrayList<>();
             List<String> values = new ArrayList<>();
 
             for (PersistentProperty prop : persistentProperties) {
-                if (!prop.isGenerated()) {
-                    traversePersistentProperties(prop, (associations, property) -> {
-                        addWriteExpression(values, prop);
-
-                        String key = String.valueOf(values.size());
-                        String[] path = asStringPath(associations, property);
-                        parameterBindings.add(new QueryParameterBinding() {
-                            @Override
-                            public String getKey() {
-                                return key;
-                            }
-
-                            @Override
-                            public DataType getDataType() {
-                                return property.getDataType();
-                            }
-
-                            @Override
-                            public JsonDataType getJsonDataType() {
-                                return property.getJsonDataType();
-                            }
-
-                            @Override
-                            public String[] getPropertyPath() {
-                                return path;
-                            }
-                        });
-
+                traversePersistentProperties(prop, (associations, property) -> {
+                    if (prop.isGenerated()) {
                         String columnName = getMappedName(namingStrategy, associations, property);
                         if (escape) {
                             columnName = quote(columnName);
                         }
-                        columns.add(columnName);
+                        resultColumns.add(columnName);
+                        return;
+                    }
+
+                    addWriteExpression(values, prop);
+
+                    String key = String.valueOf(values.size());
+                    String[] path = asStringPath(associations, property);
+                    parameterBindings.add(new QueryParameterBinding() {
+                        @Override
+                        public String getKey() {
+                            return key;
+                        }
+
+                        @Override
+                        public DataType getDataType() {
+                            return property.getDataType();
+                        }
+
+                        @Override
+                        public JsonDataType getJsonDataType() {
+                            return property.getJsonDataType();
+                        }
+
+                        @Override
+                        public String[] getPropertyPath() {
+                            return path;
+                        }
                     });
-                }
+
+                    String columnName = getMappedName(namingStrategy, associations, property);
+                    if (escape) {
+                        columnName = quote(columnName);
+                    }
+                    columns.add(columnName);
+                    resultColumns.add(columnName);
+                });
             }
             PersistentProperty version = entity.getVersion();
             if (version != null) {
@@ -1058,13 +1080,22 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     columnName = quote(columnName);
                 }
                 columns.add(columnName);
+                resultColumns.add(columnName);
             }
 
             PersistentProperty identity = entity.getIdentity();
             if (identity != null) {
                 traversePersistentProperties(identity, (associations, property) -> {
+                    String columnName = getMappedName(namingStrategy, associations, property);
+                    if (escape) {
+                        columnName = quote(columnName);
+                    }
+
                     boolean isSequence = false;
                     if (isNotForeign(associations)) {
+
+                        resultColumns.add(columnName);
+
                         Optional<AnnotationValue<GeneratedValue>> generated = property.findAnnotation(GeneratedValue.class);
                         if (generated.isPresent()) {
                             GeneratedValue.Type idGeneratorType = generated
@@ -1110,10 +1141,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
                     }
 
-                    String columnName = getMappedName(namingStrategy, associations, property);
-                    if (escape) {
-                        columnName = quote(columnName);
-                    }
                     columns.add(columnName);
                 });
             }
@@ -1121,6 +1148,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             builder = INSERT_INTO + getTableName(entity) +
                 " (" + String.join(",", columns) + CLOSE_BRACKET + " " +
                 "VALUES (" + String.join(String.valueOf(COMMA), values) + CLOSE_BRACKET;
+
+            if (isReturning) {
+                builder += RETURNING + String.join(",", resultColumns);
+            }
         }
         return QueryResult.of(
                 builder,

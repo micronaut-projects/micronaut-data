@@ -15,12 +15,16 @@
  */
 package io.micronaut.data.runtime.operations.internal.sql;
 
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.annotation.QueryResult;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
+import io.micronaut.data.model.runtime.QueryResultInfo;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.runtime.operations.internal.query.DefaultBindableParametersStoredQuery;
@@ -45,6 +49,7 @@ public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStored
 
     private final boolean expandableQuery;
     private final SqlQueryBuilder queryBuilder;
+    private final QueryResultInfo queryResultInfo;
 
     /**
      * @param storedQuery             The stored query
@@ -62,6 +67,21 @@ public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStored
         if (expandableQuery && expandableQueryParts.length != queryParameterBindings.size() + 1) {
             throw new IllegalStateException("Expandable query parts size should be the same as parameters size + 1. " + expandableQueryParts.length + " != 1 + " + queryParameterBindings.size() + " " + storedQuery.getQuery() + " " + Arrays.toString(expandableQueryParts));
         }
+
+        if (storedQuery.getAnnotationMetadata().hasAnnotation(QueryResult.class)) {
+            AnnotationValue<QueryResult> queryResultAnn = storedQuery.getAnnotationMetadata().getAnnotation(QueryResult.class);
+            QueryResult.Type type = queryResultAnn.enumValue("type", QueryResult.Type.class).orElse(QueryResult.Type.JSON);
+            String columnName = queryResultAnn.getRequiredValue("column", String.class);
+            JsonDataType jsonDataType = type == QueryResult.Type.JSON ? queryResultAnn.enumValue("jsonDataType", JsonDataType.class).orElse(JsonDataType.DEFAULT) : null;
+            queryResultInfo = new QueryResultInfo(type, columnName, jsonDataType);
+        } else {
+            queryResultInfo = null;
+        }
+    }
+
+    @Override
+    public QueryResultInfo getQueryResultInfo() {
+        return queryResultInfo;
     }
 
     @Override

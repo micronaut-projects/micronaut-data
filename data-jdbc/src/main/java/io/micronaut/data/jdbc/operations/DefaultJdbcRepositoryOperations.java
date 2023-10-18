@@ -60,6 +60,7 @@ import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
@@ -355,32 +356,45 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private <T, R> List<R> findAll(Connection connection, SqlPreparedQuery<T, R> preparedQuery, boolean applyPageable) {
         try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, !applyPageable, false)) {
             preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
-            try (ResultSet rs = ps.executeQuery()) {
-                SqlTypeMapper<ResultSet, R> mapper = createMapper(preparedQuery, ResultSet.class);
-                List<R> result;
-                if (mapper instanceof SqlResultEntityTypeMapper<ResultSet, R> entityTypeMapper) {
-                    SqlResultEntityTypeMapper.PushingMapper<ResultSet, List<R>> manyMapper = entityTypeMapper.readAllWithJoins();
-                    while (rs.next()) {
-                        manyMapper.processRow(rs);
-                    }
-                    result = manyMapper.getResult();
-                } else {
-                    result = new ArrayList<>();
-                    while (rs.next()) {
-                        result.add(
-                            mapper.map(rs, preparedQuery.getResultType())
-                        );
-                    }
-                }
-                if (result != null && preparedQuery.hasResultConsumer()) {
-                    preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class)
-                        .ifPresent(consumer -> consumer.accept(result, newMappingContext(rs)));
-                }
-                return result;
-            }
+            return findAll(preparedQuery, ps);
         } catch (SQLException e) {
             throw new DataAccessException("Error executing SQL Query: " + e.getMessage(), e);
         }
+    }
+
+    private <T, R> List<R> findAll(SqlStoredQuery<T, R> sqlStoredQuery, PreparedStatement ps) throws SQLException {
+        try (ResultSet rs = ps.executeQuery()) {
+            return findAll(sqlStoredQuery, rs);
+        }
+    }
+
+    @NonNull
+    private <T, R> List<R> findAll(SqlStoredQuery<T, R> sqlStoredQuery, ResultSet rs) throws SQLException {
+        SqlTypeMapper<ResultSet, R> mapper = createMapper(sqlStoredQuery, ResultSet.class);
+        List<R> result;
+        if (mapper instanceof SqlResultEntityTypeMapper<ResultSet, R> entityTypeMapper) {
+            SqlResultEntityTypeMapper.PushingMapper<ResultSet, List<R>> manyMapper = entityTypeMapper.readAllWithJoins();
+            while (rs.next()) {
+                manyMapper.processRow(rs);
+            }
+            result = manyMapper.getResult();
+            if (result == null) {
+                result = List.of();
+            }
+        } else {
+            result = new ArrayList<>();
+            while (rs.next()) {
+                result.add(
+                    mapper.map(rs, sqlStoredQuery.getResultType())
+                );
+            }
+        }
+        if (sqlStoredQuery.hasResultConsumer() && sqlStoredQuery instanceof PreparedQuery<?, ?> preparedQuery) {
+            List<R> finalResult = result;
+            preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class)
+                .ifPresent(consumer -> consumer.accept(finalResult, newMappingContext(rs)));
+        }
+        return result;
     }
 
     @Override
@@ -624,7 +638,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
             final RuntimePersistentEntity<T> persistentEntity = storedQuery.getPersistentEntity();
             JdbcOperationContext ctx = createContext(operation, connection, storedQuery);
-            if (!isSupportsBatchUpdate(persistentEntity, storedQuery.getDialect())) {
+            if (!isSupportsBatchUpdate(persistentEntity, storedQuery)) {
                 return operation.split()
                     .stream()
                     .map(updateOp -> {
@@ -686,7 +700,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
             final RuntimePersistentEntity<T> persistentEntity = storedQuery.getPersistentEntity();
             JdbcOperationContext ctx = createContext(operation, connection, storedQuery);
-            if (!isSupportsBatchInsert(persistentEntity, storedQuery.getDialect())) {
+            if (!isSupportsBatchInsert(persistentEntity, storedQuery)) {
                 return operation.split().stream()
                     .map(persistOp -> {
                         JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, storedQuery, persistentEntity, persistOp.getEntity(), true);
@@ -1076,6 +1090,40 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             if (QUERY_LOG.isDebugEnabled()) {
                 QUERY_LOG.debug("Executing SQL query: {}", storedQuery.getQuery());
             }
+            try {
+                if (storedQuery.getOperationType() == StoredQuery.OperationType.INSERT_RETURNING
+                    || storedQuery.getOperationType() == StoredQuery.OperationType.UPDATE_RETURNING) {
+                    executeReturning();
+                } else {
+                    executeUpdate();
+                }
+                if (storedQuery.isOptimisticLock()) {
+                    checkOptimisticLocking(1, rowsUpdated);
+                }
+            } catch (SQLException e) {
+                Throwable throwable = handleSqlException(e, ctx.dialect);
+                if (throwable instanceof DataAccessException dataAccessException) {
+                    throw dataAccessException;
+                }
+                throw e;
+            }
+        }
+
+        private void executeReturning() {
+            try (PreparedStatement ps = ctx.connection.prepareStatement(storedQuery.getQuery())) {
+                storedQuery.bindParameters(new JdbcParameterBinder(ctx.connection, ps, storedQuery), ctx.invocationContext, entity, previousValues);
+                List<T> result = (List<T>) findAll(storedQuery, ps);
+                if (result.isEmpty()) {
+                    throw new DataAccessException("Returning clause produced no results");
+                }
+                rowsUpdated = result.size();
+                entity = result.iterator().next();
+            } catch (SQLException e) {
+                throw new DataAccessException("Error executing SQL Query: " + e.getMessage(), e);
+            }
+        }
+
+        private void executeUpdate() throws SQLException {
             try (PreparedStatement ps = prepare(ctx.connection, storedQuery)) {
                 storedQuery.bindParameters(new JdbcParameterBinder(ctx.connection, ps, storedQuery), ctx.invocationContext, entity, previousValues);
                 rowsUpdated = ps.executeUpdate();
@@ -1097,15 +1145,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         }
                     }
                 }
-                if (storedQuery.isOptimisticLock()) {
-                    checkOptimisticLocking(1, rowsUpdated);
-                }
-            } catch (SQLException e) {
-                Throwable throwable = handleSqlException(e, ctx.dialect);
-                if (throwable instanceof DataAccessException dataAccessException) {
-                    throw dataAccessException;
-                }
-                throw e;
             }
         }
     }
@@ -1172,6 +1211,10 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         protected void execute() throws SQLException {
             if (QUERY_LOG.isDebugEnabled()) {
                 QUERY_LOG.debug("Executing SQL query: {}", storedQuery.getQuery());
+            }
+            if (storedQuery.getOperationType() == StoredQuery.OperationType.INSERT_RETURNING
+                || storedQuery.getOperationType() == StoredQuery.OperationType.UPDATE_RETURNING) {
+                throw new IllegalStateException("Batch operations don't support returning operations");
             }
             try (PreparedStatement ps = prepare(ctx.connection)) {
                 setParameters(ps, storedQuery);

@@ -181,6 +181,9 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             }
             return DataMethod.OperationType.UPDATE;
         } else if (query.startsWith(INSERT)) {
+            if (query.contains(RETURNING)) {
+                return DataMethod.OperationType.INSERT_RETURNING;
+            }
             return DataMethod.OperationType.INSERT;
         }
         if (readOnly) {

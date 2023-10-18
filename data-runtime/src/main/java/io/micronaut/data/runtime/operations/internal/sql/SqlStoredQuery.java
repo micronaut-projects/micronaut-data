@@ -16,9 +16,11 @@
 package io.micronaut.data.runtime.operations.internal.sql;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
+import io.micronaut.data.model.runtime.QueryResultInfo;
 import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery;
 
 import java.util.Map;
@@ -59,4 +61,10 @@ public interface SqlStoredQuery<E, R> extends BindableParametersStoredQuery<E, R
      */
     Map<QueryParameterBinding, Object> collectAutoPopulatedPreviousValues(E entity);
 
+    /**
+     * @return the query result info
+     * @since 4.2.0
+     */
+    @Nullable
+    QueryResultInfo getQueryResultInfo();
 }

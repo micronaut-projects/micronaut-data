@@ -576,7 +576,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
                 final RuntimePersistentEntity<T> persistentEntity = storedQuery.getPersistentEntity();
                 final R2dbcOperationContext ctx = createContext(operation, status, storedQuery);
-                if (!isSupportsBatchInsert(persistentEntity, storedQuery.getDialect())) {
+                if (!isSupportsBatchInsert(persistentEntity, storedQuery)) {
                     return concatMono(
                         operation.split().stream()
                             .map(persistOp -> {
@@ -711,7 +711,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
                 final R2dbcOperationContext ctx = createContext(operation, connection, storedQuery);
                 final RuntimePersistentEntity<T> persistentEntity = storedQuery.getPersistentEntity();
-                if (!isSupportsBatchUpdate(persistentEntity, storedQuery.getDialect())) {
+                if (!isSupportsBatchUpdate(persistentEntity, storedQuery)) {
                     return concatMono(
                         operation.split().stream()
                             .map(updateOp -> {
