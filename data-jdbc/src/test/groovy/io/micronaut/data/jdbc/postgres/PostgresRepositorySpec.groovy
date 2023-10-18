@@ -234,6 +234,34 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
             book.title = "old"
         then:
             newBook.title == "Xyz"
+            newBook.postLoad == 1
+            newBook.postUpdate == 1
+            book.postLoad == 1
+            book.preUpdate == 1
+    }
+
+    void "test update returning books"() {
+        given:
+            setupBooks()
+        when:
+            def book = bookRepository.findByTitle("Pet Cemetery")
+            def books = bookRepository.findByAuthorName(book.author.name)
+            books.forEach {
+                it.title += "UPDATED"
+            }
+            List<Book> newBooks = bookRepository.updateReturning(books)
+            book.title = "old"
+        then:
+            newBooks.size() == 2
+            newBooks.forEach {
+                assert it.title.endsWith("UPDATED")
+                assert it.postLoad == 1
+                assert it.postUpdate == 1
+            }
+            books.forEach {
+                assert it.postLoad == 1
+                assert it.preUpdate == 1
+            }
     }
 
     void "test insert returning book"() {
@@ -248,6 +276,9 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
         then:
             newBook.id
             !newBook.is(bookToCreate)
+            bookToCreate.prePersist == 1
+            newBook.postLoad == 1
+            newBook.postPersist == 1
             bookRepository.findById(newBook.id).get().title == "My book"
             bookRepository.findByTitle("My book")
     }
@@ -276,6 +307,13 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
             def newBook = newBooks[0]
             bookRepository.findById(newBook.id).get().title == "My book 1"
             bookRepository.findByTitle("My book 1")
+            booksToCreate.forEach {
+                assert it.prePersist == 1
+            }
+            newBooks.forEach {
+                assert it.postLoad == 1
+                assert it.postPersist == 1
+            }
     }
 
     void "test custom insert returning book"() {
@@ -365,6 +403,9 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
             allBooks.forEach {
                 assert it.author.id == petCemetery.author.id
             }
+            b.forEach {
+                assert it.postLoad == 1
+            }
     }
 
     void "test update all books with author and returning a book"() {
@@ -375,6 +416,7 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
             def b = bookRepository.modifyReturning(petCemetery.author.id)
         then:
             b.author.id == petCemetery.author.id
+            b.postLoad == 1
         when:
             def allBooks = bookRepository.findAll()
         then:
@@ -398,6 +440,9 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
             allBooks.forEach {
                 assert it.author.id == petCemetery.author.id
             }
+            b.forEach {
+                assert it.postLoad == 1
+            }
     }
 
     void "test custom update all books with author and returning a book"() {
@@ -408,6 +453,7 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
             def b = bookRepository.customUpdateReturningBook(petCemetery.author.id)
         then:
             b.author.id == petCemetery.author.id
+            b.postLoad == 1
         when:
             def allBooks = bookRepository.findAll()
         then:

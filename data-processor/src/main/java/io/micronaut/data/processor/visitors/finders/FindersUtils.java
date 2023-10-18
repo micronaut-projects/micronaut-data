@@ -151,10 +151,19 @@ public interface FindersUtils {
                 }
             }
             case UPDATE_RETURNING -> {
-                if (hasMultipleEntityParameter) {
-                    throw new MatchFailedException("Batch update doesn't support returning clause");
+                boolean returnsEntity = TypeUtils.doesMethodProducesAnEntityIterableOfAnEntity(matchContext.getMethodElement());
+                InterceptorMatch updateEntry;
+                if (hasMultipleEntityParameter && returnsEntity) {
+                    updateEntry = pickUpdateAllEntitiesInterceptor(matchContext, returnType);
+                } else if (hasEntityParameter && returnsEntity) {
+                    updateEntry = pickUpdateEntityInterceptor(matchContext, returnType);
                 } else {
-                    yield pickUpdateReturningInterceptor(matchContext, returnType);
+                    updateEntry = pickUpdateReturningInterceptor(matchContext, returnType);
+                }
+                if (isContainer(updateEntry.returnType, Iterable.class)) {
+                    yield typeAndInterceptorEntry(updateEntry.returnType.getFirstTypeArgument().orElseThrow(IllegalStateException::new), updateEntry.interceptor);
+                } else {
+                    yield updateEntry;
                 }
             }
             case INSERT -> {
@@ -173,10 +182,11 @@ public interface FindersUtils {
                 }
             }
             case INSERT_RETURNING -> {
+                boolean returnsEntity = TypeUtils.doesMethodProducesAnEntityIterableOfAnEntity(matchContext.getMethodElement());
                 InterceptorMatch saveEntry;
-                if (hasEntityParameter) {
+                if (hasEntityParameter && returnsEntity) {
                     saveEntry = pickSaveEntityInterceptor(matchContext, returnType);
-                } else if (hasMultipleEntityParameter) {
+                } else if (hasMultipleEntityParameter && returnsEntity) {
                     saveEntry = pickSaveAllEntitiesInterceptor(matchContext, returnType);
                 } else {
                     saveEntry = pickInsertReturningInterceptor(matchContext, returnType);

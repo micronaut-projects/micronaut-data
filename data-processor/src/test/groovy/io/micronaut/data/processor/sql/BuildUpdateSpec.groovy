@@ -345,7 +345,7 @@ interface BookRepository extends GenericRepository<Book, Long> {
             getQuery(updateReturningCustomMethod) == 'UPDATE "book" SET "author_id"=?,"genre_id"=?,"title"=?,"total_pages"=?,"publisher_id"=?,"last_updated"=? WHERE ("id" = ?) RETURNING "id","author_id","genre_id","title","total_pages","publisher_id","last_updated"'
             getDataResultType(updateReturningCustomMethod) == "io.micronaut.data.tck.entities.Book"
             getParameterPropertyPaths(updateReturningCustomMethod) == ["author.id", "genre.id", "title", "totalPages", "publisher.id", "lastUpdated", "id"] as String[]
-            getDataInterceptor(updateReturningCustomMethod) == "io.micronaut.data.intercept.UpdateReturningOneInterceptor"
+            getDataInterceptor(updateReturningCustomMethod) == "io.micronaut.data.intercept.UpdateEntityInterceptor"
             getResultDataType(updateReturningCustomMethod) == DataType.ENTITY
     }
 
@@ -460,6 +460,35 @@ interface BookRepository extends GenericRepository<Book, Long> {
             getParameterPropertyPaths(updateReturningCustomMethod) == ["author.id", "lastUpdated"] as String[]
             getDataResultType(updateReturningCustomMethod) == "io.micronaut.data.tck.entities.Book"
             getDataInterceptor(updateReturningCustomMethod) == "io.micronaut.data.intercept.UpdateReturningManyInterceptor"
+            getResultDataType(updateReturningCustomMethod) == DataType.ENTITY
+    }
+
+    void "POSTGRES test build update all 2"() {
+        given:
+            def repository = buildRepository('test.BookRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.Author;
+import java.time.LocalDateTime;
+
+@JdbcRepository(dialect= Dialect.POSTGRES)
+@io.micronaut.context.annotation.Executable
+interface BookRepository extends GenericRepository<Book, Long> {
+
+    List<Book> updateReturning(List<Book> books);
+
+}
+""")
+        when:
+            def updateReturningCustomMethod = repository.findPossibleMethods("updateReturning").findFirst().get()
+        then:
+            getQuery(updateReturningCustomMethod) == 'UPDATE "book" SET "author_id"=?,"genre_id"=?,"title"=?,"total_pages"=?,"publisher_id"=?,"last_updated"=? WHERE ("id" = ?) RETURNING "id","author_id","genre_id","title","total_pages","publisher_id","last_updated"'
+            getParameterPropertyPaths(updateReturningCustomMethod) == ["author.id", "genre.id", "title", "totalPages", "publisher.id", "lastUpdated", "id"] as String[]
+            getDataResultType(updateReturningCustomMethod) == "io.micronaut.data.tck.entities.Book"
+            getDataInterceptor(updateReturningCustomMethod) == "io.micronaut.data.intercept.UpdateAllEntitiesInterceptor"
             getResultDataType(updateReturningCustomMethod) == DataType.ENTITY
     }
 

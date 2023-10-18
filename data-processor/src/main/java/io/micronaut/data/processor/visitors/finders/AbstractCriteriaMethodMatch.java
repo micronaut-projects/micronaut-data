@@ -181,15 +181,6 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     protected abstract MethodMatchInfo build(MethodMatchContext matchContext);
 
     /**
-     * @param matchContext    The match context
-     * @param interceptorType The interceptor type
-     * @return The resolved class element
-     */
-    protected final ClassElement getInterceptorElement(MethodMatchContext matchContext, Class<? extends DataInterceptor> interceptorType) {
-        return FindersUtils.getInterceptorElement(matchContext, interceptorType);
-    }
-
-    /**
      * @param matchContext The match context
      * @return resolved return type and interceptor
      */

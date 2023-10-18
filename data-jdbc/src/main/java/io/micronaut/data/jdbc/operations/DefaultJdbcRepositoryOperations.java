@@ -368,6 +368,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
     }
 
+    @NonNull
     private <T, R> List<R> findAll(SqlStoredQuery<T, R> sqlStoredQuery, ResultSet rs) throws SQLException {
         SqlTypeMapper<ResultSet, R> mapper = createMapper(sqlStoredQuery, ResultSet.class);
         List<R> result;
@@ -377,6 +378,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 manyMapper.processRow(rs);
             }
             result = manyMapper.getResult();
+            if (result == null) {
+                result = List.of();
+            }
         } else {
             result = new ArrayList<>();
             while (rs.next()) {
@@ -385,9 +389,10 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 );
             }
         }
-        if (result != null && sqlStoredQuery.hasResultConsumer() && sqlStoredQuery instanceof PreparedQuery<?, ?> preparedQuery) {
+        if (sqlStoredQuery.hasResultConsumer() && sqlStoredQuery instanceof PreparedQuery<?, ?> preparedQuery) {
+            List<R> finalResult = result;
             preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class)
-                .ifPresent(consumer -> consumer.accept(result, newMappingContext(rs)));
+                .ifPresent(consumer -> consumer.accept(finalResult, newMappingContext(rs)));
         }
         return result;
     }
@@ -1086,18 +1091,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 QUERY_LOG.debug("Executing SQL query: {}", storedQuery.getQuery());
             }
             try {
-                if (storedQuery.getOperationType() == StoredQuery.OperationType.INSERT_RETURNING) {
-                    try (PreparedStatement ps = ctx.connection.prepareStatement(storedQuery.getQuery())) {
-                        storedQuery.bindParameters(new JdbcParameterBinder(ctx.connection, ps, storedQuery), ctx.invocationContext, entity, previousValues);
-                        List<T> result = (List<T>) findAll(storedQuery, ps);
-                        if (result.isEmpty()) {
-                            throw new DataAccessException("Returning clause produced no results");
-                        }
-                        rowsUpdated = result.size();
-                        entity = result.iterator().next();
-                    } catch (SQLException e) {
-                        throw new DataAccessException("Error executing SQL Query: " + e.getMessage(), e);
-                    }
+                if (storedQuery.getOperationType() == StoredQuery.OperationType.INSERT_RETURNING
+                    || storedQuery.getOperationType() == StoredQuery.OperationType.UPDATE_RETURNING) {
+                    executeReturning();
                 } else {
                     executeUpdate();
                 }
@@ -1110,6 +1106,20 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     throw dataAccessException;
                 }
                 throw e;
+            }
+        }
+
+        private void executeReturning() {
+            try (PreparedStatement ps = ctx.connection.prepareStatement(storedQuery.getQuery())) {
+                storedQuery.bindParameters(new JdbcParameterBinder(ctx.connection, ps, storedQuery), ctx.invocationContext, entity, previousValues);
+                List<T> result = (List<T>) findAll(storedQuery, ps);
+                if (result.isEmpty()) {
+                    throw new DataAccessException("Returning clause produced no results");
+                }
+                rowsUpdated = result.size();
+                entity = result.iterator().next();
+            } catch (SQLException e) {
+                throw new DataAccessException("Error executing SQL Query: " + e.getMessage(), e);
             }
         }
 

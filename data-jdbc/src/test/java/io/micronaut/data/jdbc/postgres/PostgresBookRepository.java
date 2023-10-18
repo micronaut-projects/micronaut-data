@@ -56,6 +56,8 @@ public abstract class PostgresBookRepository extends BookRepository {
 
     public abstract Book updateReturning(Book book);
 
+    public abstract List<Book> updateReturning(List<Book> books);
+
     public abstract String updateReturningTitle(Book book);
 
     public abstract String updateReturningTitle(@Id Long id, String title);
