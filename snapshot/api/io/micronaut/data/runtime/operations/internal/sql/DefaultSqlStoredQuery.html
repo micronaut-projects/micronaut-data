@@ -161,9 +161,12 @@ implements <a href="SqlStoredQuery.html" title="interface in io.micronaut.data.r
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../../model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getQueryBuilder()" class="member-name-link">getQueryBuilder</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isExpandableQuery()" class="member-name-link">isExpandableQuery</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getQueryResultInfo()" class="member-name-link">getQueryResultInfo</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isExpandableQuery()" class="member-name-link">isExpandableQuery</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -221,6 +224,18 @@ implements <a href="SqlStoredQuery.html" title="interface in io.micronaut.data.r
 <section class="method-details" id="method-detail">
 <h2>Method Details</h2>
 <ul class="member-list">
+<li>
+<section class="detail" id="getQueryResultInfo()">
+<h3>getQueryResultInfo</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a></span>&nbsp;<span class="element-name">getQueryResultInfo</span>()</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="SqlStoredQuery.html#getQueryResultInfo()">getQueryResultInfo</a></code>&nbsp;in interface&nbsp;<code><a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;<a href="DefaultSqlStoredQuery.html" title="type parameter in DefaultSqlStoredQuery">E</a>,<wbr><a href="DefaultSqlStoredQuery.html" title="type parameter in DefaultSqlStoredQuery">R</a>&gt;</code></dd>
+<dt>Returns:</dt>
+<dd>the query result info</dd>
+</dl>
+</section>
+</li>
 <li>
 <section class="detail" id="isExpandableQuery()">
 <h3>isExpandableQuery</h3>

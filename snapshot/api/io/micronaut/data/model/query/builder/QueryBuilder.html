@@ -134,62 +134,68 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Builds an insert statement for the given entity.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#buildOrderBy(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.Sort)" class="member-name-link">buildOrderBy</a><wbr>(@NonNull <a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity,
- @NonNull <a href="../../Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
-<div class="block">Encode the given query into the encoded query instance.</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @Nullable <a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#buildInsertReturning(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.PersistentEntity)" class="member-name-link">buildInsertReturning</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;repositoryMetadata,
+ <a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Builds an insert statement for the given entity.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#buildPagination(io.micronaut.data.model.Pageable)" class="member-name-link">buildPagination</a><wbr>(@NonNull <a href="../../Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#buildOrderBy(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.Sort)" class="member-name-link">buildOrderBy</a><wbr>(@NonNull <a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity,
+ @NonNull <a href="../../Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Encode the given query into the encoded query instance.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#buildPagination(io.micronaut.data.model.Pageable)" class="member-name-link">buildPagination</a><wbr>(@NonNull <a href="../../Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Encode the pageable.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#buildQuery(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.QueryModel)" class="member-name-link">buildQuery</a><wbr>(@NonNull io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#buildQuery(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.QueryModel)" class="member-name-link">buildQuery</a><wbr>(@NonNull io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  @NonNull <a href="../QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Encode the given query for the passed annotation metadata and query.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#buildUpdate(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.QueryModel,java.util.List)" class="member-name-link">buildUpdate</a><wbr>(@NonNull io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#buildUpdate(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.QueryModel,java.util.List)" class="member-name-link">buildUpdate</a><wbr>(@NonNull io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  @NonNull <a href="../QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;propertiesToUpdate)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
-<div class="block">Encode the given query into the encoded query instance.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#buildUpdate(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.QueryModel,java.util.Map)" class="member-name-link">buildUpdate</a><wbr>(@NonNull io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
- @NonNull <a href="../QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query,
- @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;propertiesToUpdate)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Encode the given query into the encoded query instance.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#buildUpdate(io.micronaut.data.model.query.QueryModel,java.util.List)" class="member-name-link">buildUpdate</a><wbr>(@NonNull <a href="../QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query,
- @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;propertiesToUpdate)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#buildUpdate(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.QueryModel,java.util.Map)" class="member-name-link">buildUpdate</a><wbr>(@NonNull io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+ @NonNull <a href="../QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;propertiesToUpdate)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Encode the given query into the encoded query instance.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#buildUpdate(io.micronaut.data.model.query.QueryModel,java.util.Map)" class="member-name-link">buildUpdate</a><wbr>(@NonNull <a href="../QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query,
- @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;propertiesToUpdate)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#buildUpdate(io.micronaut.data.model.query.QueryModel,java.util.List)" class="member-name-link">buildUpdate</a><wbr>(@NonNull <a href="../QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;propertiesToUpdate)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Encode the given query into the encoded query instance.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static @NonNull <a href="QueryBuilder.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#newQueryBuilder(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">newQueryBuilder</a><wbr>(@NonNull io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#buildUpdate(io.micronaut.data.model.query.QueryModel,java.util.Map)" class="member-name-link">buildUpdate</a><wbr>(@NonNull <a href="../QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;propertiesToUpdate)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Encode the given query into the encoded query instance.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static @NonNull <a href="QueryBuilder.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#newQueryBuilder(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">newQueryBuilder</a><wbr>(@NonNull io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1">
 <div class="block">Build a query build from the configured annotation metadata.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#shouldAliasProjections()" class="member-name-link">shouldAliasProjections</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#shouldAliasProjections()" class="member-name-link">shouldAliasProjections</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Whether projections should be aliased.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#supportsForUpdate()" class="member-name-link">supportsForUpdate</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#supportsForUpdate()" class="member-name-link">supportsForUpdate</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Whether FOR UPDATE queries are supported.</div>
 </div>
 </div>
@@ -226,6 +232,22 @@ loadScripts(document, 'script');</script>
 <h3>buildInsert</h3>
 <div class="member-signature"><span class="annotations">@Nullable
 </span><span class="return-type">@Nullable <a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></span>&nbsp;<span class="element-name">buildInsert</span><wbr><span class="parameters">(io.micronaut.core.annotation.AnnotationMetadata&nbsp;repositoryMetadata,
+ <a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</span></div>
+<div class="block">Builds an insert statement for the given entity.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>repositoryMetadata</code> - The repository annotation metadata</dd>
+<dd><code>entity</code> - The entity</dd>
+<dt>Returns:</dt>
+<dd>The insert statement or null if the implementation doesn't require insert statements</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="buildInsertReturning(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.PersistentEntity)">
+<h3>buildInsertReturning</h3>
+<div class="member-signature"><span class="annotations">@Nullable
+</span><span class="modifiers">default</span>&nbsp;<span class="return-type">@Nullable <a href="QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></span>&nbsp;<span class="element-name">buildInsertReturning</span><wbr><span class="parameters">(io.micronaut.core.annotation.AnnotationMetadata&nbsp;repositoryMetadata,
  <a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</span></div>
 <div class="block">Builds an insert statement for the given entity.</div>
 <dl class="notes">

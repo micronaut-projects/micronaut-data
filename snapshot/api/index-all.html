@@ -1395,6 +1395,12 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/options/MongoOptionsUtils.html#buildInsertOneOptions(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">buildInsertOneOptions(AnnotationMetadata)</a> - Static method in class io.micronaut.data.mongodb.operations.options.<a href="io/micronaut/data/mongodb/operations/options/MongoOptionsUtils.html" title="class in io.micronaut.data.mongodb.operations.options">MongoOptionsUtils</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/query/builder/QueryBuilder.html#buildInsertReturning(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.PersistentEntity)" class="member-name-link">buildInsertReturning(AnnotationMetadata, PersistentEntity)</a> - Method in interface io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/QueryBuilder.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder</a></dt>
+<dd>
+<div class="block">Builds an insert statement for the given entity.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#buildInsertReturning(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.PersistentEntity)" class="member-name-link">buildInsertReturning(AnnotationMetadata, PersistentEntity)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/mappers/MappedEntityMapper.html#buildIntrospectionConfiguration()" class="member-name-link">buildIntrospectionConfiguration()</a> - Static method in class io.micronaut.data.processor.mappers.<a href="io/micronaut/data/processor/mappers/MappedEntityMapper.html" title="class in io.micronaut.data.processor.mappers">MappedEntityMapper</a></dt>
 <dd>
 <div class="block">The bean introspection configuration for a mapped entity.</div>
@@ -2511,7 +2517,7 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html#createJoinAssociation(io.micronaut.data.model.Association,io.micronaut.data.annotation.Join.Type,java.lang.String)" class="member-name-link">createJoinAssociation(Association, Join.Type, String)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityJoinSupport</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#createMapper(io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery,java.lang.Class)" class="member-name-link">createMapper(SqlPreparedQuery&lt;E, R&gt;, Class&lt;RS&gt;)</a> - Method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal.sql">AbstractSqlRepositoryOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#createMapper(io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery,java.lang.Class)" class="member-name-link">createMapper(SqlStoredQuery&lt;E, R&gt;, Class&lt;RS&gt;)</a> - Method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal.sql">AbstractSqlRepositoryOperations</a></dt>
 <dd>
 <div class="block">Creates a result mapper.</div>
 </dd>
@@ -2579,7 +2585,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Create a new query.</div>
 </dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#createQueryResultMapper(io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery,java.lang.String,io.micronaut.data.model.JsonDataType,java.lang.Class,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.util.function.BiFunction)" class="member-name-link">createQueryResultMapper(SqlPreparedQuery&lt;?, ?&gt;, String, JsonDataType, Class&lt;RS&gt;, RuntimePersistentEntity&lt;T&gt;, BiFunction&lt;RuntimePersistentEntity&lt;Object&gt;, Object, Object&gt;)</a> - Method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal.sql">AbstractSqlRepositoryOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#createQueryResultMapper(io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery,java.lang.String,io.micronaut.data.model.JsonDataType,java.lang.Class,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.util.function.BiFunction)" class="member-name-link">createQueryResultMapper(SqlStoredQuery&lt;?, ?&gt;, String, JsonDataType, Class&lt;RS&gt;, RuntimePersistentEntity&lt;T&gt;, BiFunction&lt;RuntimePersistentEntity&lt;Object&gt;, Object, Object&gt;)</a> - Method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal.sql">AbstractSqlRepositoryOperations</a></dt>
 <dd>
 <div class="block">Creates <a href="io/micronaut/data/runtime/mapper/sql/SqlTypeMapper.html" title="interface in io.micronaut.data.runtime.mapper.sql"><code>SqlTypeMapper</code></a> for reading results from single column into an entity.</div>
 </dd>
@@ -3218,6 +3224,22 @@ loadScripts(document, 'script');</script>
 <div class="block">Default implementation of <a href="io/micronaut/data/intercept/FindStreamInterceptor.html" title="interface in io.micronaut.data.intercept"><code>FindStreamInterceptor</code></a>.</div>
 </dd>
 <dt><a href="io/micronaut/data/runtime/intercept/DefaultFindStreamInterceptor.html#%3Cinit%3E(io.micronaut.data.operations.RepositoryOperations)" class="member-name-link">DefaultFindStreamInterceptor(RepositoryOperations)</a> - Constructor for class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultFindStreamInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindStreamInterceptor</a></dt>
+<dd>
+<div class="block">Default constructor.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/DefaultInsertReturningManyInterceptor.html" class="type-name-link" title="class in io.micronaut.data.runtime.intercept">DefaultInsertReturningManyInterceptor</a>&lt;<a href="io/micronaut/data/runtime/intercept/DefaultInsertReturningManyInterceptor.html" title="type parameter in DefaultInsertReturningManyInterceptor">T</a>,<wbr><a href="io/micronaut/data/runtime/intercept/DefaultInsertReturningManyInterceptor.html" title="type parameter in DefaultInsertReturningManyInterceptor">R</a>&gt; - Class in <a href="io/micronaut/data/runtime/intercept/package-summary.html">io.micronaut.data.runtime.intercept</a></dt>
+<dd>
+<div class="block">Default implementation of <a href="io/micronaut/data/intercept/InsertReturningManyInterceptor.html" title="interface in io.micronaut.data.intercept"><code>InsertReturningManyInterceptor</code></a>.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/DefaultInsertReturningManyInterceptor.html#%3Cinit%3E(io.micronaut.data.operations.RepositoryOperations)" class="member-name-link">DefaultInsertReturningManyInterceptor(RepositoryOperations)</a> - Constructor for class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultInsertReturningManyInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultInsertReturningManyInterceptor</a></dt>
+<dd>
+<div class="block">Default constructor.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/DefaultInsertReturningOneInterceptor.html" class="type-name-link" title="class in io.micronaut.data.runtime.intercept">DefaultInsertReturningOneInterceptor</a>&lt;<a href="io/micronaut/data/runtime/intercept/DefaultInsertReturningOneInterceptor.html" title="type parameter in DefaultInsertReturningOneInterceptor">T</a>,<wbr><a href="io/micronaut/data/runtime/intercept/DefaultInsertReturningOneInterceptor.html" title="type parameter in DefaultInsertReturningOneInterceptor">R</a>&gt; - Class in <a href="io/micronaut/data/runtime/intercept/package-summary.html">io.micronaut.data.runtime.intercept</a></dt>
+<dd>
+<div class="block">Default implementation of <a href="io/micronaut/data/intercept/InsertReturningOneInterceptor.html" title="interface in io.micronaut.data.intercept"><code>InsertReturningOneInterceptor</code></a>.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/DefaultInsertReturningOneInterceptor.html#%3Cinit%3E(io.micronaut.data.operations.RepositoryOperations)" class="member-name-link">DefaultInsertReturningOneInterceptor(RepositoryOperations)</a> - Constructor for class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultInsertReturningOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultInsertReturningOneInterceptor</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
@@ -4030,6 +4052,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#doesMethodProducesABoolean(io.micronaut.inject.ast.MethodElement)" class="member-name-link">doesMethodProducesABoolean(MethodElement)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
 <dd>
 <div class="block">Does the given method element return boolean.</div>
+</dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#doesMethodProducesAnEntityIterableOfAnEntity(io.micronaut.inject.ast.MethodElement)" class="member-name-link">doesMethodProducesAnEntityIterableOfAnEntity(MethodElement)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
+<dd>
+<div class="block">Checks whether the return type is supported.</div>
 </dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#doesMethodProducesANumber(io.micronaut.inject.ast.MethodElement)" class="member-name-link">doesMethodProducesANumber(MethodElement)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
 <dd>
@@ -6823,8 +6849,6 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Obtain the interceptor element for the given class name.</div>
 </dd>
-<dt><a href="io/micronaut/data/processor/visitors/finders/AbstractCriteriaMethodMatch.html#getInterceptorElement(io.micronaut.data.processor.visitors.MethodMatchContext,java.lang.Class)" class="member-name-link">getInterceptorElement(MethodMatchContext, Class&lt;? extends DataInterceptor&gt;)</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/AbstractCriteriaMethodMatch.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractCriteriaMethodMatch</a></dt>
-<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/AbstractSpecificationMethodMatcher.html#getInterceptorElement(io.micronaut.data.processor.visitors.MethodMatchContext,java.lang.String)" class="member-name-link">getInterceptorElement(MethodMatchContext, String)</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/AbstractSpecificationMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractSpecificationMethodMatcher</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/runtime/RuntimePersistentEntity.html#getIntrospection()" class="member-name-link">getIntrospection()</a> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a></dt>
@@ -6919,7 +6943,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Gets column name for JSON result.</div>
 </dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/sql/SqlJsonColumnMapperProvider.html#getJsonColumnReader(io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery,java.lang.Class)" class="member-name-link">getJsonColumnReader(SqlPreparedQuery&lt;?, ?&gt;, Class&lt;S&gt;)</a> - Method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/SqlJsonColumnMapperProvider.html" title="class in io.micronaut.data.runtime.operations.internal.sql">SqlJsonColumnMapperProvider</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/sql/SqlJsonColumnMapperProvider.html#getJsonColumnReader(io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery,java.lang.Class)" class="member-name-link">getJsonColumnReader(SqlStoredQuery&lt;?, ?&gt;, Class&lt;S&gt;)</a> - Method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/SqlJsonColumnMapperProvider.html" title="class in io.micronaut.data.runtime.operations.internal.sql">SqlJsonColumnMapperProvider</a></dt>
 <dd>
 <div class="block">Provides <a href="io/micronaut/data/runtime/mapper/sql/SqlJsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper.sql"><code>SqlJsonColumnReader</code></a> for given SQL prepared query.</div>
 </dd>
@@ -7441,8 +7465,6 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/RawQueryMethodMatcher.html#getOrder()" class="member-name-link">getOrder()</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/RawQueryMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">RawQueryMethodMatcher</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/processor/visitors/finders/SaveOneMethodMatcher.html#getOrder()" class="member-name-link">getOrder()</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/SaveOneMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">SaveOneMethodMatcher</a></dt>
-<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/spec/FindAllSpecificationMethodMatcher.html#getOrder()" class="member-name-link">getOrder()</a> - Method in class io.micronaut.data.processor.visitors.finders.spec.<a href="io/micronaut/data/processor/visitors/finders/spec/FindAllSpecificationMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders.spec">FindAllSpecificationMethodMatcher</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/spec/FindPageSpecificationMethodMatcher.html#getOrder()" class="member-name-link">getOrder()</a> - Method in class io.micronaut.data.processor.visitors.finders.spec.<a href="io/micronaut/data/processor/visitors/finders/spec/FindPageSpecificationMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders.spec">FindPageSpecificationMethodMatcher</a></dt>
@@ -7907,7 +7929,11 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/sql/DefaultSqlPreparedQuery.html#getQueryResultInfo()" class="member-name-link">getQueryResultInfo()</a> - Method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/DefaultSqlPreparedQuery.html" title="class in io.micronaut.data.runtime.operations.internal.sql">DefaultSqlPreparedQuery</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/sql/DefaultSqlStoredQuery.html#getQueryResultInfo()" class="member-name-link">getQueryResultInfo()</a> - Method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/DefaultSqlStoredQuery.html" title="class in io.micronaut.data.runtime.operations.internal.sql">DefaultSqlStoredQuery</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/sql/SqlPreparedQuery.html#getQueryResultInfo()" class="member-name-link">getQueryResultInfo()</a> - Method in interface io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/SqlPreparedQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlPreparedQuery</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/sql/SqlStoredQuery.html#getQueryResultInfo()" class="member-name-link">getQueryResultInfo()</a> - Method in interface io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/model/criteria/SourcePersistentEntityCriteriaQuery.html#getQueryResultTypeName()" class="member-name-link">getQueryResultTypeName()</a> - Method in interface io.micronaut.data.processor.model.criteria.<a href="io/micronaut/data/processor/model/criteria/SourcePersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaQuery</a></dt>
 <dd>&nbsp;</dd>
@@ -9086,6 +9112,14 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">An insert operation.</div>
 </dd>
+<dt><a href="io/micronaut/data/intercept/annotation/DataMethod.OperationType.html#INSERT_RETURNING" class="member-name-link">INSERT_RETURNING</a> - Enum constant in enum class io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethod.OperationType.html" title="enum class in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a></dt>
+<dd>
+<div class="block">An insert returning operation.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/runtime/StoredQuery.OperationType.html#INSERT_RETURNING" class="member-name-link">INSERT_RETURNING</a> - Enum constant in enum class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/StoredQuery.OperationType.html" title="enum class in io.micronaut.data.model.runtime">StoredQuery.OperationType</a></dt>
+<dd>
+<div class="block">An insert returning operation.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/runtime/InsertBatchOperation.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime">InsertBatchOperation</a>&lt;<a href="io/micronaut/data/model/runtime/InsertBatchOperation.html" title="type parameter in InsertBatchOperation">E</a>&gt; - Interface in <a href="io/micronaut/data/model/runtime/package-summary.html">io.micronaut.data.model.runtime</a></dt>
 <dd>
 <div class="block">An insert batch operation is an operation performed on one or more entities of the same type.</div>
@@ -9093,6 +9127,14 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/model/runtime/InsertOperation.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime">InsertOperation</a>&lt;<a href="io/micronaut/data/model/runtime/InsertOperation.html" title="type parameter in InsertOperation">E</a>&gt; - Interface in <a href="io/micronaut/data/model/runtime/package-summary.html">io.micronaut.data.model.runtime</a></dt>
 <dd>
 <div class="block">An insert operation that inserts a record.</div>
+</dd>
+<dt><a href="io/micronaut/data/intercept/InsertReturningManyInterceptor.html" class="type-name-link" title="interface in io.micronaut.data.intercept">InsertReturningManyInterceptor</a>&lt;<a href="io/micronaut/data/intercept/InsertReturningManyInterceptor.html" title="type parameter in InsertReturningManyInterceptor">T</a>,<wbr><a href="io/micronaut/data/intercept/InsertReturningManyInterceptor.html" title="type parameter in InsertReturningManyInterceptor">R</a>&gt; - Interface in <a href="io/micronaut/data/intercept/package-summary.html">io.micronaut.data.intercept</a></dt>
+<dd>
+<div class="block">Implements insert returning many results interceptor.</div>
+</dd>
+<dt><a href="io/micronaut/data/intercept/InsertReturningOneInterceptor.html" class="type-name-link" title="interface in io.micronaut.data.intercept">InsertReturningOneInterceptor</a>&lt;<a href="io/micronaut/data/intercept/InsertReturningOneInterceptor.html" title="type parameter in InsertReturningOneInterceptor">T</a>,<wbr><a href="io/micronaut/data/intercept/InsertReturningOneInterceptor.html" title="type parameter in InsertReturningOneInterceptor">R</a>&gt; - Interface in <a href="io/micronaut/data/intercept/package-summary.html">io.micronaut.data.intercept</a></dt>
+<dd>
+<div class="block">Implements insert returning one result interceptor.</div>
 </dd>
 <dt><a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#instantiateEntity(java.lang.Class,java.util.Map)" class="member-name-link">instantiateEntity(Class&lt;?&gt;, Map&lt;String, Object&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="class in io.micronaut.data.runtime.intercept">AbstractQueryInterceptor</a></dt>
 <dd>
@@ -9184,6 +9226,8 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/DefaultFindAllInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, Iterable&lt;R&gt;&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultFindAllInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindAllInterceptor</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/DefaultInsertReturningManyInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, Iterable&lt;R&gt;&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultInsertReturningManyInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultInsertReturningManyInterceptor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/DefaultProcedureReturningManyInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, Iterable&lt;R&gt;&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultProcedureReturningManyInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultProcedureReturningManyInterceptor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/DefaultUpdateReturningManyInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, Iterable&lt;R&gt;&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultUpdateReturningManyInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultUpdateReturningManyInterceptor</a></dt>
@@ -9227,6 +9271,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/runtime/intercept/DefaultFindPageInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultFindPageInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindPageInterceptor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/DefaultFindSliceInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultFindSliceInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindSliceInterceptor</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/DefaultInsertReturningOneInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultInsertReturningOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultInsertReturningOneInterceptor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/DefaultProcedureReturningOneInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultProcedureReturningOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultProcedureReturningOneInterceptor</a></dt>
 <dd>&nbsp;</dd>
@@ -10183,7 +10229,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Inserting JSON entity representation (like Oracle Json View) can generate new id, and we support retrieval only numeric auto generated ids.</div>
 </dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#isJsonResult(io.micronaut.data.model.runtime.PreparedQuery,io.micronaut.data.model.runtime.QueryResultInfo)" class="member-name-link">isJsonResult(PreparedQuery&lt;?, ?&gt;, QueryResultInfo)</a> - Method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal.sql">AbstractSqlRepositoryOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#isJsonResult(io.micronaut.data.model.runtime.StoredQuery,io.micronaut.data.model.runtime.QueryResultInfo)" class="member-name-link">isJsonResult(StoredQuery&lt;?, ?&gt;, QueryResultInfo)</a> - Method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal.sql">AbstractSqlRepositoryOperations</a></dt>
 <dd>
 <div class="block">Return an indicator telling whether prepared query result produces JSON result.</div>
 </dd>
@@ -10609,6 +10655,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Does supports batch for update queries.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#isSupportsBatchInsert(io.micronaut.data.model.PersistentEntity,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)" class="member-name-link">isSupportsBatchInsert(PersistentEntity, SqlStoredQuery&lt;?, ?&gt;)</a> - Method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal.sql">AbstractSqlRepositoryOperations</a></dt>
+<dd>
+<div class="block">Does supports batch for update queries.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/ReactiveCascadeOperations.ReactiveCascadeOperationsHelper.html#isSupportsBatchUpdate(Ctx,io.micronaut.data.model.runtime.RuntimePersistentEntity)" class="member-name-link">isSupportsBatchUpdate(Ctx, RuntimePersistentEntity&lt;?&gt;)</a> - Method in interface io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/ReactiveCascadeOperations.ReactiveCascadeOperationsHelper.html" title="interface in io.micronaut.data.runtime.operations.internal">ReactiveCascadeOperations.ReactiveCascadeOperationsHelper</a></dt>
 <dd>
 <div class="block">Is supports batch update.</div>
@@ -10617,7 +10667,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Is supports batch update.</div>
 </dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#isSupportsBatchUpdate(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">isSupportsBatchUpdate(PersistentEntity, Dialect)</a> - Method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal.sql">AbstractSqlRepositoryOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#isSupportsBatchUpdate(io.micronaut.data.model.PersistentEntity,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)" class="member-name-link">isSupportsBatchUpdate(PersistentEntity, SqlStoredQuery&lt;?, ?&gt;)</a> - Method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal.sql">AbstractSqlRepositoryOperations</a></dt>
 <dd>
 <div class="block">Does supports batch for update queries.</div>
 </dd>
@@ -11606,6 +11656,8 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/FindMethodMatcher.html#match(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.List)" class="member-name-link">match(MethodMatchContext, List&lt;MethodNameParser.Match&gt;)</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/FindMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">FindMethodMatcher</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/SaveMethodMatcher.html#match(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.List)" class="member-name-link">match(MethodMatchContext, List&lt;MethodNameParser.Match&gt;)</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/SaveMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">SaveMethodMatcher</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/UpdateMethodMatcher.html#match(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.List)" class="member-name-link">match(MethodMatchContext, List&lt;MethodNameParser.Match&gt;)</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/UpdateMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">UpdateMethodMatcher</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/AbstractPatternMethodMatcher.html#match(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.regex.Matcher)" class="member-name-link">match(MethodMatchContext, Matcher)</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/AbstractPatternMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractPatternMethodMatcher</a></dt>
@@ -11617,10 +11669,6 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Handle the match.</div>
 </dd>
-<dt><a href="io/micronaut/data/processor/visitors/finders/SaveEntityMethodMatcher.html#match(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.regex.Matcher)" class="member-name-link">match(MethodMatchContext, Matcher)</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/SaveEntityMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">SaveEntityMethodMatcher</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/processor/visitors/finders/SaveOneMethodMatcher.html#match(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.regex.Matcher)" class="member-name-link">match(MethodMatchContext, Matcher)</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/SaveOneMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">SaveOneMethodMatcher</a></dt>
-<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/spec/CountSpecificationMethodMatcher.html#match(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.regex.Matcher)" class="member-name-link">match(MethodMatchContext, Matcher)</a> - Method in class io.micronaut.data.processor.visitors.finders.spec.<a href="io/micronaut/data/processor/visitors/finders/spec/CountSpecificationMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders.spec">CountSpecificationMethodMatcher</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/spec/DeleteAllSpecificationMethodMatcher.html#match(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.regex.Matcher)" class="member-name-link">match(MethodMatchContext, Matcher)</a> - Method in class io.micronaut.data.processor.visitors.finders.spec.<a href="io/micronaut/data/processor/visitors/finders/spec/DeleteAllSpecificationMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders.spec">DeleteAllSpecificationMethodMatcher</a></dt>
@@ -13691,8 +13739,6 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Prefix for data related config.</div>
 </dd>
-<dt><a href="io/micronaut/data/processor/visitors/finders/SaveEntityMethodMatcher.html#PREFIXES" class="member-name-link">PREFIXES</a> - Static variable in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/SaveEntityMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">SaveEntityMethodMatcher</a></dt>
-<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/sql/DefaultSqlPreparedQuery.html#prepare(E)" class="member-name-link">prepare(E)</a> - Method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/DefaultSqlPreparedQuery.html" title="class in io.micronaut.data.runtime.operations.internal.sql">DefaultSqlPreparedQuery</a></dt>
 <dd>
 <div class="block">Check if query need to be modified to expand parameters.</div>
@@ -14621,8 +14667,6 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Supported query result types.</div>
 </dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/sql/DefaultSqlPreparedQuery.html#queryResultInfo" class="member-name-link">queryResultInfo</a> - Variable in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/DefaultSqlPreparedQuery.html" title="class in io.micronaut.data.runtime.operations.internal.sql">DefaultSqlPreparedQuery</a></dt>
-<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/runtime/QueryResultInfo.html" class="type-name-link" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a> - Class in <a href="io/micronaut/data/model/runtime/package-summary.html">io.micronaut.data.model.runtime</a></dt>
 <dd>
 <div class="block">The information about query result info for the query method.</div>
@@ -16056,17 +16100,17 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">An interceptor that accepts a single entity to be saved and returns either the entity or nothing.</div>
 </dd>
-<dt><a href="io/micronaut/data/processor/visitors/finders/SaveEntityMethodMatcher.html" class="type-name-link" title="class in io.micronaut.data.processor.visitors.finders">SaveEntityMethodMatcher</a> - Class in <a href="io/micronaut/data/processor/visitors/finders/package-summary.html">io.micronaut.data.processor.visitors.finders</a></dt>
-<dd>
-<div class="block">A save method for saving a single entity.</div>
-</dd>
-<dt><a href="io/micronaut/data/processor/visitors/finders/SaveEntityMethodMatcher.html#%3Cinit%3E()" class="member-name-link">SaveEntityMethodMatcher()</a> - Constructor for class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/SaveEntityMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">SaveEntityMethodMatcher</a></dt>
-<dd>
-<div class="block">The default constructor.</div>
-</dd>
 <dt><a href="io/micronaut/data/intercept/reactive/SaveEntityReactiveInterceptor.html" class="type-name-link" title="interface in io.micronaut.data.intercept.reactive">SaveEntityReactiveInterceptor</a>&lt;<a href="io/micronaut/data/intercept/reactive/SaveEntityReactiveInterceptor.html" title="type parameter in SaveEntityReactiveInterceptor">T</a>,<wbr><a href="io/micronaut/data/intercept/reactive/SaveEntityReactiveInterceptor.html" title="type parameter in SaveEntityReactiveInterceptor">R</a>&gt; - Interface in <a href="io/micronaut/data/intercept/reactive/package-summary.html">io.micronaut.data.intercept.reactive</a></dt>
 <dd>
 <div class="block">An interceptor that saves a single entity reactively.</div>
+</dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/SaveMethodMatcher.html" class="type-name-link" title="class in io.micronaut.data.processor.visitors.finders">SaveMethodMatcher</a> - Class in <a href="io/micronaut/data/processor/visitors/finders/package-summary.html">io.micronaut.data.processor.visitors.finders</a></dt>
+<dd>
+<div class="block">A save method for saving a single entity.</div>
+</dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/SaveMethodMatcher.html#%3Cinit%3E()" class="member-name-link">SaveMethodMatcher()</a> - Constructor for class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/SaveMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">SaveMethodMatcher</a></dt>
+<dd>
+<div class="block">The default constructor.</div>
 </dd>
 <dt><a href="io/micronaut/data/intercept/async/SaveOneAsyncInterceptor.html" class="type-name-link" title="interface in io.micronaut.data.intercept.async">SaveOneAsyncInterceptor</a>&lt;<a href="io/micronaut/data/intercept/async/SaveOneAsyncInterceptor.html" title="type parameter in SaveOneAsyncInterceptor">T</a>&gt; - Interface in <a href="io/micronaut/data/intercept/async/package-summary.html">io.micronaut.data.intercept.async</a></dt>
 <dd>
@@ -16075,14 +16119,6 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/intercept/SaveOneInterceptor.html" class="type-name-link" title="interface in io.micronaut.data.intercept">SaveOneInterceptor</a>&lt;<a href="io/micronaut/data/intercept/SaveOneInterceptor.html" title="type parameter in SaveOneInterceptor">T</a>&gt; - Interface in <a href="io/micronaut/data/intercept/package-summary.html">io.micronaut.data.intercept</a></dt>
 <dd>
 <div class="block">An interceptor that accepts a single entity to be saved and returns either the entity or nothing.</div>
-</dd>
-<dt><a href="io/micronaut/data/processor/visitors/finders/SaveOneMethodMatcher.html" class="type-name-link" title="class in io.micronaut.data.processor.visitors.finders">SaveOneMethodMatcher</a> - Class in <a href="io/micronaut/data/processor/visitors/finders/package-summary.html">io.micronaut.data.processor.visitors.finders</a></dt>
-<dd>
-<div class="block">A save method for saving a single entity.</div>
-</dd>
-<dt><a href="io/micronaut/data/processor/visitors/finders/SaveOneMethodMatcher.html#%3Cinit%3E()" class="member-name-link">SaveOneMethodMatcher()</a> - Constructor for class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/SaveOneMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">SaveOneMethodMatcher</a></dt>
-<dd>
-<div class="block">Default constructor.</div>
 </dd>
 <dt><a href="io/micronaut/data/intercept/reactive/SaveOneReactiveInterceptor.html" class="type-name-link" title="interface in io.micronaut.data.intercept.reactive">SaveOneReactiveInterceptor</a>&lt;<a href="io/micronaut/data/intercept/reactive/SaveOneReactiveInterceptor.html" title="type parameter in SaveOneReactiveInterceptor">T</a>,<wbr><a href="io/micronaut/data/intercept/reactive/SaveOneReactiveInterceptor.html" title="type parameter in SaveOneReactiveInterceptor">R</a>&gt; - Interface in <a href="io/micronaut/data/intercept/reactive/package-summary.html">io.micronaut.data.intercept.reactive</a></dt>
 <dd>
@@ -17322,6 +17358,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/processor/visitors/MatchContext.html#supportsImplicitQueries()" class="member-name-link">supportsImplicitQueries()</a> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a></dt>
 <dd>
 <div class="block">Whether or not implicit queries such as lookup by id and counting is supported without an explicit query.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/Dialect.html#supportsInsertReturning()" class="member-name-link">supportsInsertReturning()</a> - Method in enum class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a></dt>
+<dd>
+<div class="block">Whether the dialect supports INSERT ...</div>
 </dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/Dialect.html#supportsJoinType(io.micronaut.data.annotation.Join.Type)" class="member-name-link">supportsJoinType(Join.Type)</a> - Method in enum class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a></dt>
 <dd>

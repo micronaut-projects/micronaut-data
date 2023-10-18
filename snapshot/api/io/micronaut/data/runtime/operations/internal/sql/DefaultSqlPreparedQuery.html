@@ -125,12 +125,9 @@ implements <a href="SqlPreparedQuery.html" title="interface in io.micronaut.data
 <div class="col-first even-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color"><code><a href="#query" class="member-name-link">query</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code>protected final <a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#queryResultInfo" class="member-name-link">queryResultInfo</a></code></div>
+<div class="col-first odd-row-color"><code>protected final <a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;<a href="DefaultSqlPreparedQuery.html" title="type parameter in DefaultSqlPreparedQuery">E</a>,<wbr><a href="DefaultSqlPreparedQuery.html" title="type parameter in DefaultSqlPreparedQuery">R</a>&gt;</code></div>
+<div class="col-second odd-row-color"><code><a href="#sqlStoredQuery" class="member-name-link">sqlStoredQuery</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code>protected final <a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;<a href="DefaultSqlPreparedQuery.html" title="type parameter in DefaultSqlPreparedQuery">E</a>,<wbr><a href="DefaultSqlPreparedQuery.html" title="type parameter in DefaultSqlPreparedQuery">R</a>&gt;</code></div>
-<div class="col-second even-row-color"><code><a href="#sqlStoredQuery" class="member-name-link">sqlStoredQuery</a></code></div>
-<div class="col-last even-row-color">&nbsp;</div>
 </div>
 <div class="inherited-list">
 <h3 id="fields-inherited-from-class-io.micronaut.data.runtime.operations.internal.query.DefaultBindableParametersPreparedQuery">Fields inherited from class&nbsp;io.micronaut.data.runtime.operations.internal.query.<a href="../query/DefaultBindableParametersPreparedQuery.html" title="class in io.micronaut.data.runtime.operations.internal.query">DefaultBindableParametersPreparedQuery</a></h3>
@@ -268,12 +265,6 @@ implements <a href="SqlPreparedQuery.html" title="interface in io.micronaut.data
 <section class="detail" id="query">
 <h3>query</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">query</span></div>
-</section>
-</li>
-<li>
-<section class="detail" id="queryResultInfo">
-<h3>queryResultInfo</h3>
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a></span>&nbsp;<span class="element-name">queryResultInfo</span></div>
 </section>
 </li>
 </ul>
@@ -460,6 +451,8 @@ implements <a href="SqlPreparedQuery.html" title="interface in io.micronaut.data
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code><a href="SqlPreparedQuery.html#getQueryResultInfo()">getQueryResultInfo</a></code>&nbsp;in interface&nbsp;<code><a href="SqlPreparedQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlPreparedQuery</a>&lt;<a href="DefaultSqlPreparedQuery.html" title="type parameter in DefaultSqlPreparedQuery">E</a>,<wbr><a href="DefaultSqlPreparedQuery.html" title="type parameter in DefaultSqlPreparedQuery">R</a>&gt;</code></dd>
+<dt>Specified by:</dt>
+<dd><code><a href="SqlStoredQuery.html#getQueryResultInfo()">getQueryResultInfo</a></code>&nbsp;in interface&nbsp;<code><a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;<a href="DefaultSqlPreparedQuery.html" title="type parameter in DefaultSqlPreparedQuery">E</a>,<wbr><a href="DefaultSqlPreparedQuery.html" title="type parameter in DefaultSqlPreparedQuery">R</a>&gt;</code></dd>
 <dt>Returns:</dt>
 <dd>the query result info</dd>
 </dl>

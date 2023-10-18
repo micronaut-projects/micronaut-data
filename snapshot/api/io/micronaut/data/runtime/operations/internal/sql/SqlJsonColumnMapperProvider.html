@@ -124,7 +124,7 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../mapper/sql/SqlJsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper.sql">SqlJsonColumnReader</a>&lt;<a href="SqlJsonColumnMapperProvider.html" title="type parameter in SqlJsonColumnMapperProvider">S</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getJsonColumnReader(io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery,java.lang.Class)" class="member-name-link">getJsonColumnReader</a><wbr>(<a href="SqlPreparedQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlPreparedQuery</a>&lt;?,<wbr>?&gt;&nbsp;sqlPreparedQuery,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getJsonColumnReader(io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery,java.lang.Class)" class="member-name-link">getJsonColumnReader</a><wbr>(<a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;?,<wbr>?&gt;&nbsp;sqlStoredQuery,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="SqlJsonColumnMapperProvider.html" title="type parameter in SqlJsonColumnMapperProvider">S</a>&gt;&nbsp;resultSetType)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Provides <a href="../../../mapper/sql/SqlJsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper.sql"><code>SqlJsonColumnReader</code></a> for given SQL prepared query.</div>
@@ -178,16 +178,16 @@ loadScripts(document, 'script');</script>
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="getJsonColumnReader(io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery,java.lang.Class)">
+<section class="detail" id="getJsonColumnReader(io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery,java.lang.Class)">
 <h3>getJsonColumnReader</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../../mapper/sql/SqlJsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper.sql">SqlJsonColumnReader</a>&lt;<a href="SqlJsonColumnMapperProvider.html" title="type parameter in SqlJsonColumnMapperProvider">S</a>&gt;</span>&nbsp;<span class="element-name">getJsonColumnReader</span><wbr><span class="parameters">(<a href="SqlPreparedQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlPreparedQuery</a>&lt;?,<wbr>?&gt;&nbsp;sqlPreparedQuery,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../../mapper/sql/SqlJsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper.sql">SqlJsonColumnReader</a>&lt;<a href="SqlJsonColumnMapperProvider.html" title="type parameter in SqlJsonColumnMapperProvider">S</a>&gt;</span>&nbsp;<span class="element-name">getJsonColumnReader</span><wbr><span class="parameters">(<a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;?,<wbr>?&gt;&nbsp;sqlStoredQuery,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="SqlJsonColumnMapperProvider.html" title="type parameter in SqlJsonColumnMapperProvider">S</a>&gt;&nbsp;resultSetType)</span></div>
 <div class="block">Provides <a href="../../../mapper/sql/SqlJsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper.sql"><code>SqlJsonColumnReader</code></a> for given SQL prepared query. If there is specific <a href="../../../mapper/sql/SqlJsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper.sql"><code>SqlJsonColumnReader</code></a>
  that supports given prepared query and result set type then it will be returned.
  Otherwise, it will return default <a href="../../../mapper/sql/SqlJsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper.sql"><code>SqlJsonColumnReader</code></a>.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
-<dd><code>sqlPreparedQuery</code> - the SQL prepared query</dd>
+<dd><code>sqlStoredQuery</code> - the SQL stored query</dd>
 <dd><code>resultSetType</code> - the result set type (for R2Dbc and Jdbc it is different for example)</dd>
 <dt>Returns:</dt>
 <dd>the <a href="../../../mapper/sql/SqlJsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper.sql"><code>SqlJsonColumnReader</code></a> for given SQL prepared query, or default <a href="../../../mapper/sql/SqlJsonColumnReader.html" title="interface in io.micronaut.data.runtime.mapper.sql"><code>SqlJsonColumnReader</code></a>
