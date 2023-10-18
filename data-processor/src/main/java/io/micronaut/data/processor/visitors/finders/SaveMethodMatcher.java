@@ -72,12 +72,13 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
             ClassElement producingItem = TypeUtils.getMethodProducingItemType(methodElement);
             throw new ProcessingException(methodElement, "Unsupported return type for a save method: " + producingItem.getName());
         }
-        for (MethodNameParser.Match match : matches) {
+//        for (MethodNameParser.Match match : matches) {
             // Support Person savePerson(Person p) style methods
-            if (match.id() == QueryMatchId.PROJECTION && !match.part().equals(methodElement.getReturnType().getSimpleName())) {
-                throw new ProcessingException(methodElement, "Save method doesn't support projections");
-            }
-        }
+            // There are cases where the projection value is ignored: saveAndFlush
+//            if (match.id() == QueryMatchId.PROJECTION && !match.part().equals(methodElement.getReturnType().getSimpleName())) {
+//                throw new ProcessingException(methodElement, "Save method doesn't support projections");
+//            }
+//        }
 
         boolean isReturning = matches.stream().anyMatch(m -> m.id() == QueryMatchId.RETURNING);
         if (isReturning && !producesAnEntity) {
