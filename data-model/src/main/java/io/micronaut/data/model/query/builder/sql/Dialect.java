@@ -65,7 +65,7 @@ public enum Dialect {
     /**
      * Postgres 9.5 or later.
      */
-    POSTGRES(true, false, ALL_TYPES, false, true),
+    POSTGRES(true, false, ALL_TYPES, false, true, true),
     /**
      * SQL server 2012 or above.
      */
@@ -73,7 +73,7 @@ public enum Dialect {
     /**
      * Oracle 12c or above.
      */
-    ORACLE(true, true, ALL_TYPES, true, true),
+    ORACLE(true, true, ALL_TYPES, true, false, false),
     /**
      * Ansi compliant SQL.
      */
@@ -87,6 +87,7 @@ public enum Dialect {
     private final EnumSet<Join.Type> joinTypesSupported;
 
     private final boolean supportsUpdateReturning;
+    private final boolean supportsInsertReturning;
 
     /**
      * Allows customization of batch support.
@@ -96,7 +97,7 @@ public enum Dialect {
      * @param joinTypesSupported EnumSet of supported join types.
      */
     Dialect(boolean supportsBatch, boolean stringUUID, EnumSet<Join.Type> joinTypesSupported) {
-        this(supportsBatch, stringUUID, joinTypesSupported, false, false);
+        this(supportsBatch, stringUUID, joinTypesSupported, false, false, false);
     }
 
     /**
@@ -107,17 +108,21 @@ public enum Dialect {
      * @param joinTypesSupported EnumSet of supported join types.
      * @param supportsJsonEntity Whether JSON entity is supported
      * @param supportsUpdateReturning Whether the dialect supports UPDATE ... RETURNING clause.
+     * @param supportsInsertReturning Whether the dialect supports INSERT ... RETURNING clause.
+     * @since 4.2.0
      */
     Dialect(boolean supportsBatch,
             boolean stringUUID,
             EnumSet<Join.Type> joinTypesSupported,
             boolean supportsJsonEntity,
-            boolean supportsUpdateReturning) {
+            boolean supportsUpdateReturning,
+            boolean supportsInsertReturning) {
         this.supportsBatch = supportsBatch;
         this.stringUUID = stringUUID;
         this.joinTypesSupported = joinTypesSupported;
         this.supportsJsonEntity = supportsJsonEntity;
         this.supportsUpdateReturning = supportsUpdateReturning;
+        this.supportsInsertReturning = supportsInsertReturning;
     }
 
     /**
@@ -183,5 +188,15 @@ public enum Dialect {
      */
     public boolean supportsUpdateReturning() {
         return supportsUpdateReturning;
+    }
+
+    /**
+     * Whether the dialect supports INSERT ... RETURNING clause.
+     *
+     * @return true if does supports
+     * @since 4.2.0
+     */
+    public boolean supportsInsertReturning() {
+        return supportsInsertReturning;
     }
 }

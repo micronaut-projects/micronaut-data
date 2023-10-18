@@ -34,6 +34,8 @@ import io.micronaut.data.intercept.FindOptionalInterceptor;
 import io.micronaut.data.intercept.FindPageInterceptor;
 import io.micronaut.data.intercept.FindSliceInterceptor;
 import io.micronaut.data.intercept.FindStreamInterceptor;
+import io.micronaut.data.intercept.InsertReturningManyInterceptor;
+import io.micronaut.data.intercept.InsertReturningOneInterceptor;
 import io.micronaut.data.intercept.ProcedureReturningManyInterceptor;
 import io.micronaut.data.intercept.ProcedureReturningOneInterceptor;
 import io.micronaut.data.intercept.SaveAllInterceptor;
@@ -170,6 +172,21 @@ public interface FindersUtils {
                     yield saveEntry;
                 }
             }
+            case INSERT_RETURNING -> {
+                InterceptorMatch saveEntry;
+                if (hasEntityParameter) {
+                    saveEntry = pickSaveEntityInterceptor(matchContext, returnType);
+                } else if (hasMultipleEntityParameter) {
+                    saveEntry = pickSaveAllEntitiesInterceptor(matchContext, returnType);
+                } else {
+                    saveEntry = pickInsertReturningInterceptor(matchContext, returnType);
+                }
+                if (isContainer(saveEntry.returnType, Iterable.class)) {
+                    yield typeAndInterceptorEntry(saveEntry.returnType.getFirstTypeArgument().orElseThrow(IllegalStateException::new), saveEntry.interceptor);
+                } else {
+                    yield saveEntry;
+                }
+            }
             case QUERY, COUNT, EXISTS -> resolveFindInterceptor(matchContext, returnType);
         };
     }
@@ -179,6 +196,14 @@ public interface FindersUtils {
             return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(returnType), UpdateReturningManyInterceptor.class);
         } else {
             return typeAndInterceptorEntry(matchContext, returnType.getType(), UpdateReturningOneInterceptor.class);
+        }
+    }
+
+    private static InterceptorMatch pickInsertReturningInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
+        if (isContainer(returnType, Iterable.class)) {
+            return typeAndInterceptorEntry(matchContext, returnType.getFirstTypeArgument().orElse(returnType), InsertReturningManyInterceptor.class);
+        } else {
+            return typeAndInterceptorEntry(matchContext, returnType.getType(), InsertReturningOneInterceptor.class);
         }
     }
 

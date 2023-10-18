@@ -311,5 +311,9 @@ public @interface DataMethod {
          * An insert operation.
          */
         INSERT,
+        /**
+         * An insert returning operation.
+         */
+        INSERT_RETURNING,
     }
 }

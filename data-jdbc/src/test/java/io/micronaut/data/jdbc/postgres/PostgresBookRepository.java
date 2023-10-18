@@ -27,6 +27,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.repositories.BookRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @JdbcRepository(dialect = Dialect.POSTGRES)
@@ -75,5 +76,33 @@ public abstract class PostgresBookRepository extends BookRepository {
         UPDATE "book" SET "author_id"=:authorId RETURNING *
         """)
     public abstract Book customUpdateReturningBook(Long authorId);
+
+    @Query("""
+        INSERT INTO "book" ("author_id","genre_id","title","total_pages","publisher_id","last_updated")
+        VALUES (:authorId, :genderId, :title, :totalPages, :publisherId, :lastUpdated)
+         RETURNING *
+        """)
+    public abstract List<Book> customInsertReturningBooks(Long authorId,
+                                                          @Nullable Long genderId,
+                                                          String title,
+                                                          int totalPages,
+                                                          @Nullable Long publisherId,
+                                                          LocalDateTime lastUpdated);
+
+    @Query("""
+        INSERT INTO "book" ("author_id","genre_id","title","total_pages","publisher_id","last_updated")
+        VALUES (:authorId, :genderId, :title, :totalPages, :publisherId, :lastUpdated)
+         RETURNING *
+        """)
+    public abstract Book customInsertReturningBook(Long authorId,
+                                                   @Nullable Long genderId,
+                                                   String title,
+                                                   int totalPages,
+                                                   @Nullable Long publisherId,
+                                                   LocalDateTime lastUpdated);
+
+    public abstract Book saveReturning(Book book);
+
+    public abstract List<Book> saveReturning(List<Book> books);
 
 }
