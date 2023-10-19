@@ -171,6 +171,9 @@ public class RawQueryMethodMatcher implements MethodMatcher {
         if (query.startsWith(SELECT)) {
             return DataMethod.OperationType.QUERY;
         } else if (query.startsWith(DELETE)) {
+            if (query.contains(RETURNING)) {
+                return DataMethod.OperationType.DELETE_RETURNING;
+            }
             return DataMethod.OperationType.DELETE;
         } else if (query.startsWith(UPDATE)) {
             if (query.contains(RETURNING)) {

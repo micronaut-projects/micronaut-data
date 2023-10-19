@@ -17,6 +17,7 @@ package io.micronaut.data.processor.visitors.finders.criteria;
 
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaDelete;
@@ -24,8 +25,10 @@ import io.micronaut.data.model.jpa.criteria.impl.QueryModelPersistentEntityCrite
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
+import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
 import io.micronaut.data.processor.model.criteria.impl.MethodMatchSourcePersistentEntityCriteriaBuilderImpl;
+import io.micronaut.data.processor.visitors.MatchFailedException;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.AbstractCriteriaMethodMatch;
 import io.micronaut.data.processor.visitors.finders.FindersUtils;
@@ -34,8 +37,10 @@ import io.micronaut.data.processor.visitors.finders.MethodNameParser;
 import io.micronaut.data.processor.visitors.finders.QueryMatchId;
 import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
 import io.micronaut.inject.ast.ClassElement;
+import jakarta.persistence.criteria.Selection;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Delete criteria method match.
@@ -46,13 +51,17 @@ import java.util.List;
 @Experimental
 public class DeleteCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
+    private final boolean isReturning;
+
     /**
      * Default constructor.
      *
-     * @param matches The matches
+     * @param matches     The matches
+     * @param isReturning Is returning
      */
-    public DeleteCriteriaMethodMatch(List<MethodNameParser.Match> matches) {
+    public DeleteCriteriaMethodMatch(List<MethodNameParser.Match> matches, boolean isReturning) {
         super(matches);
+        this.isReturning = isReturning;
     }
 
     /**
@@ -75,6 +84,9 @@ public class DeleteCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                 applyPredicates(match.part(), matchContext.getParameters(), root, query, cb);
                 predicatedApplied = true;
             }
+            if (match.id() == QueryMatchId.RETURNING) {
+                applyProjections(match.part(), root, query, cb);
+            }
         }
         if (!predicatedApplied) {
             applyPredicates(matchContext.getParametersNotInRole(), root, query, cb);
@@ -83,18 +95,45 @@ public class DeleteCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         applyJoinSpecs(root, joinSpecsAtMatchContext(matchContext, true));
     }
 
+    /**
+     * Apply projections.
+     *
+     * @param projection The querySequence
+     * @param root       The root
+     * @param query      The query
+     * @param cb         The criteria builder
+     * @param <T>        The entity type
+     */
+    protected <T> void applyProjections(String projection,
+                                        PersistentEntityRoot<T> root,
+                                        PersistentEntityCriteriaDelete<T> query,
+                                        PersistentEntityCriteriaBuilder cb) {
+        if (!isReturning) {
+            return;
+        }
+        List<Selection<?>> selections = findSelections(projection, root, cb, null);
+        if (selections.isEmpty()) {
+            query.returning(root);
+        } else if (selections.size() == 1) {
+            query.returning((Selection<? extends T>) selections.get(0));
+        } else {
+            throw new MatchFailedException("Multi-selection is not supported");
+        }
+    }
+
     @Override
     protected MethodMatchInfo build(MethodMatchContext matchContext) {
 
         MethodMatchSourcePersistentEntityCriteriaBuilderImpl cb = new MethodMatchSourcePersistentEntityCriteriaBuilderImpl(matchContext);
 
         PersistentEntityCriteriaDelete<Object> criteriaQuery = cb.createCriteriaDelete(null);
+        PersistentEntityRoot<Object> root = criteriaQuery.from(matchContext.getRootEntity());
 
-        apply(matchContext, criteriaQuery.from(matchContext.getRootEntity()), criteriaQuery, cb);
+        apply(matchContext, root, criteriaQuery, cb);
 
-        FindersUtils.InterceptorMatch entry = resolveReturnTypeAndInterceptor(matchContext);
-        ClassElement resultType = entry.returnType();
-        ClassElement interceptorType = entry.interceptor();
+        FindersUtils.InterceptorMatch interceptorMatch = resolveReturnTypeAndInterceptor(matchContext);
+        ClassElement resultType = interceptorMatch.returnType();
+        ClassElement interceptorType = interceptorMatch.interceptor();
 
         boolean optimisticLock = ((AbstractPersistentEntityCriteriaDelete<?>) criteriaQuery).hasVersionRestriction();
 
@@ -102,12 +141,38 @@ public class DeleteCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                 matchContext.getRepositoryClass().getAnnotationMetadata(),
                 matchContext.getAnnotationMetadata()
         );
+
+        MethodResult result = analyzeMethodResult(
+            matchContext,
+            resultType,
+            interceptorMatch,
+            true
+        );
+
+        if (result.isDto() && !result.isRuntimeDtoConversion()) {
+            List<SourcePersistentProperty> dtoProjectionProperties = getDtoProjectionProperties(matchContext.getRootEntity(), resultType);
+            if (!dtoProjectionProperties.isEmpty()) {
+                List<Selection<?>> selectionList = dtoProjectionProperties.stream()
+                    .map(p -> {
+                        if (matchContext.getQueryBuilder().shouldAliasProjections()) {
+                            return root.get(p.getName()).alias(p.getName());
+                        } else {
+                            return root.get(p.getName());
+                        }
+                    })
+                    .collect(Collectors.toList());
+                criteriaQuery.returningMulti(
+                    selectionList
+                );
+            }
+        }
+
         QueryBuilder queryBuilder = matchContext.getQueryBuilder();
         QueryModel queryModel = ((QueryModelPersistentEntityCriteriaQuery) criteriaQuery).getQueryModel();
         QueryResult queryResult = queryBuilder.buildDelete(annotationMetadataHierarchy, queryModel);
 
         return new MethodMatchInfo(
-                DataMethod.OperationType.DELETE,
+                getOperationType(),
                 resultType,
                 interceptorType
         )
@@ -117,6 +182,9 @@ public class DeleteCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
     @Override
     protected DataMethod.OperationType getOperationType() {
+        if (isReturning) {
+            return DataMethod.OperationType.DELETE_RETURNING;
+        }
         return DataMethod.OperationType.DELETE;
     }
 }

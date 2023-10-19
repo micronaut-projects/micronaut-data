@@ -34,7 +34,6 @@ import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Where;
 import io.micronaut.data.annotation.repeatable.QueryHints;
-import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
@@ -739,16 +738,23 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                                                      boolean allowEntityResultByDefault) {
         if (selectedType != null) {
             queryResultType = matchContext.getVisitorContext().getClassElement(selectedType)
-                .orElse(null);
-            if (queryResultType == null) {
-                try {
-                    queryResultType = PrimitiveElement.valueOf(selectedType);
-                } catch (Exception e) {
-                    // Ignore
-                }
-            }
+                .or(() -> {
+                    try {
+                        return Optional.of(PrimitiveElement.valueOf(selectedType));
+                    } catch (Exception e) {
+                        return Optional.empty();
+                        // Ignore
+                    }
+                }).orElse(queryResultType);
         }
 
+        return analyzeMethodResult(matchContext, queryResultType, interceptorMatch, allowEntityResultByDefault);
+    }
+
+    protected final MethodResult analyzeMethodResult(MethodMatchContext matchContext,
+                                                     ClassElement queryResultType,
+                                                     FindersUtils.InterceptorMatch interceptorMatch,
+                                                     boolean allowEntityResultByDefault) {
         ClassElement resultType = interceptorMatch.returnType();
 
         boolean isRuntimeDto = false;
@@ -759,17 +765,23 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         if (isDto) {
             isRuntimeDto = isDtoType(matchContext.getRepositoryClass(), resultType);
         } else if (interceptorMatch.validateReturnType()) {
-            if (resultType == null || (!resultType.isAssignable(void.class) && !resultType.isAssignable(Void.class) && !resultType.getName().equals("kotlin.Unit"))) {
-                if (resultType == null || TypeUtils.areTypesCompatible(resultType, queryResultType)) {
-                    if (!queryResultType.isPrimitive() || resultType == null) {
-                        resultType = queryResultType;
+            if (queryResultType != null) {
+                if (resultType == null || !isVoid(resultType)) {
+                    if (resultType == null || TypeUtils.areTypesCompatible(resultType, queryResultType)) {
+                        if (!queryResultType.isPrimitive() || resultType == null) {
+                            resultType = queryResultType;
+                        }
+                    } else if (!allowEntityResultByDefault || !matchContext.getRootEntity().getClassElement().equals(resultType)) {
+                        throw new MatchFailedException("Query results in a type [" + queryResultType.getName() + "] whilst method returns an incompatible type: " + resultType.getName());
                     }
-                } else if (!allowEntityResultByDefault || !matchContext.getRootEntity().getClassElement().equals(resultType)) {
-                    throw new MatchFailedException("Query results in a type [" + queryResultType.getName() + "] whilst method returns an incompatible type: " + resultType.getName());
                 }
             }
         }
         return new MethodResult(resultType, isDto, isRuntimeDto);
+    }
+
+    private boolean isVoid(ClassElement resultType) {
+        return resultType.isAssignable(void.class) || resultType.isAssignable(Void.class) || resultType.getName().equals("kotlin.Unit");
     }
 
     private boolean isDtoType(ClassElement repositoryElement, ClassElement classElement) {

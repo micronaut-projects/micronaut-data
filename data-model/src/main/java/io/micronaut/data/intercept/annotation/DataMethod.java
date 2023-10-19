@@ -308,6 +308,10 @@ public @interface DataMethod {
          */
         DELETE,
         /**
+         * An delete returning operation.
+         */
+        DELETE_RETURNING,
+        /**
          * An insert operation.
          */
         INSERT,

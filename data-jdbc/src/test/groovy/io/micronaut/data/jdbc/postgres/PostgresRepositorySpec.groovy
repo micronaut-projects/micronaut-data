@@ -462,4 +462,104 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
             }
     }
 
+    void "test delete returning book"() {
+        given:
+            setupBooks()
+        when:
+            def book = bookRepository.findByTitle("Pet Cemetery")
+            Book deletedBook = bookRepository.deleteReturning(book)
+        then:
+            deletedBook.id == book.id
+            deletedBook.title == book.title
+            deletedBook.postLoad == 1
+    }
+
+    void "test delete returning book custom query"() {
+        given:
+            setupBooks()
+        when:
+            def book = bookRepository.findByTitle("Pet Cemetery")
+            Book deletedBook = bookRepository.customDeleteOne(book.id)
+        then:
+            deletedBook.id == book.id
+            deletedBook.title == book.title
+            deletedBook.postLoad == 1
+    }
+
+    void "test delete returning title book"() {
+        given:
+            setupBooks()
+        when:
+            def book = bookRepository.findByTitle("Pet Cemetery")
+            String deletedTitle = bookRepository.deleteReturningTitle(book)
+        then:
+            deletedTitle == book.title
+            bookRepository.findById(book.id).isEmpty()
+    }
+
+    void "test delete returning last updated book"() {
+        given:
+            setupBooks()
+        when:
+            def book = bookRepository.findByTitle("Pet Cemetery")
+            LocalDateTime lastUpdated = bookRepository.deleteReturningLastUpdated(book.id, book.title)
+        then:
+            lastUpdated == book.lastUpdated
+            bookRepository.findById(book.id).isEmpty()
+    }
+
+    void "test delete returning last updated book 2"() {
+        given:
+            setupBooks()
+        when:
+            def book = bookRepository.findByTitle("Pet Cemetery")
+            LocalDateTime lastUpdated = bookRepository.deleteByIdAndTitleReturningLastUpdated(book.id, book.title)
+        then:
+            lastUpdated == book.lastUpdated
+            bookRepository.findById(book.id).isEmpty()
+    }
+
+    void "test delete returning books"() {
+        given:
+            setupBooks()
+        when:
+            def book = bookRepository.findByTitle("Pet Cemetery")
+            def books = bookRepository.findByAuthorName(book.author.name)
+            List<Book> deletedBooks = bookRepository.deleteReturning(books)
+        then:
+            deletedBooks.size() == books.size()
+            deletedBooks[0].id == books[0].id
+            deletedBooks[0].title == books[0].title
+            bookRepository.findByAuthorName(book.author.name).isEmpty()
+    }
+
+    void "test delete returning author books"() {
+        given:
+            setupBooks()
+        when:
+            def book = bookRepository.findByTitle("Pet Cemetery")
+            def books = bookRepository.findByAuthorName(book.author.name)
+            List<Book> deletedBooks = bookRepository.deleteReturning(book.author.id)
+        then:
+            deletedBooks.size() == books.size()
+            deletedBooks[0].id == books[0].id
+            deletedBooks[0].title == books[0].title
+            bookRepository.findByAuthorName(book.author.name).isEmpty()
+    }
+
+    void "test custom delete all"() {
+        given:
+            setupBooks()
+        when:
+            def allBooks = bookRepository.findAll().sort {it.id }
+            def deletedBooks = bookRepository.customDeleteAll().sort {it.id }
+        then:
+            allBooks.size() == deletedBooks.size()
+            allBooks.eachWithIndex { book, index ->
+                def deletedBook = deletedBooks[index]
+                assert book.id == deletedBook.id
+                assert book.title == deletedBook.title
+            }
+    }
+
 }

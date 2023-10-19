@@ -198,7 +198,7 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * @return An optional number with the count of the number of records updated
      */
     @NonNull
-    default  Optional<Number> executeDelete(@NonNull PreparedQuery<?, Number> preparedQuery) {
+    default Optional<Number> executeDelete(@NonNull PreparedQuery<?, Number> preparedQuery) {
         return executeUpdate(preparedQuery);
     }
 
@@ -231,4 +231,5 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * @return The number of entities deleted
      */
     <T> Optional<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation);
+
 }

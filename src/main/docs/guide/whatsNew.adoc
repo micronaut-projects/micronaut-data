@@ -1,7 +1,7 @@
 === Micronaut Data 4.2
 - Procedure invocations in repositories
 - Added possibility to have associations (JOINs) in DTOs
-- Support for updates with `RETURNING` clause in repositories
+- Support for inserts, updates and deletes with `RETURNING` clause in repositories
 - MongoDB: Support `arrayFilters`
 - Kotlin: New coroutine variations of connection / transaction operations: `io.micronaut.data.connection.kotlin.CoroutineConnectionOperations`, `io.micronaut.transaction.kotlin.CoroutineTransactionOperations`
 - R2DBC: New connection status callback. Corrected cancellation.
