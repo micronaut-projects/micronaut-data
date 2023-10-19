@@ -107,4 +107,25 @@ public abstract class PostgresBookRepository extends BookRepository {
 
     public abstract List<Book> saveReturning(List<Book> books);
 
+    public abstract Book deleteReturning(Book book);
+
+    public abstract String deleteReturningTitle(Book book);
+
+    public abstract LocalDateTime deleteReturningLastUpdated(Long id, String title);
+
+    public abstract LocalDateTime deleteByIdAndTitleReturningLastUpdated(Long id, String title);
+
+    public abstract List<Book> deleteReturning(Long authorId);
+
+    public abstract List<Book> deleteReturning(List<Book> books);
+
+    @Query("""
+        DELETE FROM "book" RETURNING *
+        """)
+    public abstract List<Book> customDeleteAll();
+
+    @Query("""
+        DELETE FROM "book" WHERE "id" = :id RETURNING *
+        """)
+    public abstract Book customDeleteOne(Long id);
 }

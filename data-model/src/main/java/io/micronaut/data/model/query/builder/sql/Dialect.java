@@ -65,7 +65,7 @@ public enum Dialect {
     /**
      * Postgres 9.5 or later.
      */
-    POSTGRES(true, false, ALL_TYPES, false, true, true),
+    POSTGRES(true, false, ALL_TYPES, false, true, true, true),
     /**
      * SQL server 2012 or above.
      */
@@ -73,7 +73,7 @@ public enum Dialect {
     /**
      * Oracle 12c or above.
      */
-    ORACLE(true, true, ALL_TYPES, true, false, false),
+    ORACLE(true, true, ALL_TYPES, true, false, false, false),
     /**
      * Ansi compliant SQL.
      */
@@ -88,6 +88,7 @@ public enum Dialect {
 
     private final boolean supportsUpdateReturning;
     private final boolean supportsInsertReturning;
+    private final boolean supportsDeleteReturning;
 
     /**
      * Allows customization of batch support.
@@ -97,7 +98,7 @@ public enum Dialect {
      * @param joinTypesSupported EnumSet of supported join types.
      */
     Dialect(boolean supportsBatch, boolean stringUUID, EnumSet<Join.Type> joinTypesSupported) {
-        this(supportsBatch, stringUUID, joinTypesSupported, false, false, false);
+        this(supportsBatch, stringUUID, joinTypesSupported, false, false, false, false);
     }
 
     /**
@@ -109,6 +110,7 @@ public enum Dialect {
      * @param supportsJsonEntity Whether JSON entity is supported
      * @param supportsUpdateReturning Whether the dialect supports UPDATE ... RETURNING clause.
      * @param supportsInsertReturning Whether the dialect supports INSERT ... RETURNING clause.
+     * @param supportsDeleteReturning Whether the dialect supports DELETE ... RETURNING clause.
      * @since 4.2.0
      */
     Dialect(boolean supportsBatch,
@@ -116,13 +118,15 @@ public enum Dialect {
             EnumSet<Join.Type> joinTypesSupported,
             boolean supportsJsonEntity,
             boolean supportsUpdateReturning,
-            boolean supportsInsertReturning) {
+            boolean supportsInsertReturning,
+            boolean supportsDeleteReturning) {
         this.supportsBatch = supportsBatch;
         this.stringUUID = stringUUID;
         this.joinTypesSupported = joinTypesSupported;
         this.supportsJsonEntity = supportsJsonEntity;
         this.supportsUpdateReturning = supportsUpdateReturning;
         this.supportsInsertReturning = supportsInsertReturning;
+        this.supportsDeleteReturning = supportsDeleteReturning;
     }
 
     /**
@@ -198,5 +202,15 @@ public enum Dialect {
      */
     public boolean supportsInsertReturning() {
         return supportsInsertReturning;
+    }
+
+    /**
+     * Whether the dialect supports DELETE ... RETURNING clause.
+     *
+     * @return true if does supports
+     * @since 4.2.0
+     */
+    public boolean supportsDeleteReturning() {
+        return supportsDeleteReturning;
     }
 }

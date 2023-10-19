@@ -1856,6 +1856,20 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             buffer.append(getTableAsKeyword()).append(tableAlias);
         }
         buildWhereClause(annotationMetadata, query.getCriteria(), queryState);
+        if (!query.getProjections().isEmpty()) {
+            if (!getDialect().supportsDeleteReturning()) {
+                throw new IllegalStateException("Dialect: " + getDialect() + " doesn't support DELETE ... RETURNING clause");
+            }
+            queryString.append(RETURNING);
+            buildSelect(
+                annotationMetadata,
+                queryState,
+                queryString,
+                query.getProjections(),
+                tableAlias,
+                entity
+            );
+        }
         return QueryResult.of(
             queryState.getFinalQuery(),
             queryState.getQueryParts(),

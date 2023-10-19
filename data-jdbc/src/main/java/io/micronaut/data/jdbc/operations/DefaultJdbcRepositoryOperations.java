@@ -50,6 +50,8 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
+import io.micronaut.data.model.runtime.DeleteReturningBatchOperation;
+import io.micronaut.data.model.runtime.DeleteReturningOperation;
 import io.micronaut.data.model.runtime.EntityOperation;
 import io.micronaut.data.model.runtime.InsertBatchOperation;
 import io.micronaut.data.model.runtime.InsertOperation;
@@ -64,6 +66,7 @@ import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import io.micronaut.data.operations.DeleteReturningRepositoryOperations;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
@@ -135,6 +138,7 @@ import java.util.stream.StreamSupport;
 @Internal
 public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperations<ResultSet, PreparedStatement, SQLException> implements
     JdbcRepositoryOperations,
+    DeleteReturningRepositoryOperations,
     AsyncCapableRepository,
     ReactiveCapableRepository,
     AutoCloseable,
@@ -175,7 +179,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
      */
     @Internal
     @SuppressWarnings("ParameterNumber")
-    protected DefaultJdbcRepositoryOperations(@Parameter String dataSourceName,
+    DefaultJdbcRepositoryOperations(@Parameter String dataSourceName,
                                               @Parameter DataJdbcConfiguration jdbcConfiguration,
                                               DataSource dataSource,
                                               @Parameter ConnectionOperations<Connection> connectionOperations,
@@ -617,6 +621,37 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             op.delete();
             return op;
         }).rowsUpdated;
+    }
+
+    @Override
+    public <E, R> R deleteReturning(DeleteReturningOperation<E, R> operation) {
+        return executeWrite(connection -> {
+            SqlStoredQuery<E, R> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
+            JdbcOperationContext ctx = createContext(operation, connection, storedQuery);
+            JdbcEntityOperations<E> op = new JdbcEntityOperations<>(ctx, storedQuery.getPersistentEntity(), operation.getEntity(), storedQuery);
+            op.delete();
+            return (R) op.getEntity();
+        });
+    }
+
+    @Override
+    public <E, R> List<R> deleteAllReturning(DeleteReturningBatchOperation<E, R> operation) {
+        return executeWrite(connection -> {
+            SqlStoredQuery<E, R> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
+            JdbcOperationContext ctx = createContext(operation, connection, storedQuery);
+            RuntimePersistentEntity<E> persistentEntity = storedQuery.getPersistentEntity();
+            if (isSupportsBatchDelete(persistentEntity, storedQuery.getDialect())) {
+                JdbcEntitiesOperations<E> op = new JdbcEntitiesOperations<>(ctx, persistentEntity, operation, storedQuery);
+                op.delete();
+                return (List<R>) op.getEntities();
+            }
+            return (List<R>) operation.split().stream()
+                    .map(deleteOp -> {
+                        JdbcEntityOperations<E> op = new JdbcEntityOperations<>(ctx, persistentEntity, deleteOp.getEntity(), storedQuery);
+                        op.delete();
+                        return op.getEntity();
+                    }).toList();
+        });
     }
 
     @NonNull
@@ -1092,7 +1127,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             }
             try {
                 if (storedQuery.getOperationType() == StoredQuery.OperationType.INSERT_RETURNING
-                    || storedQuery.getOperationType() == StoredQuery.OperationType.UPDATE_RETURNING) {
+                    || storedQuery.getOperationType() == StoredQuery.OperationType.UPDATE_RETURNING
+                    || storedQuery.getOperationType() == StoredQuery.OperationType.DELETE_RETURNING) {
                     executeReturning();
                 } else {
                     executeUpdate();
