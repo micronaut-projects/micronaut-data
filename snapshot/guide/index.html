@@ -563,7 +563,7 @@ fun testAnnotationMetadata() {
 <p>Added possibility to have associations (JOINs) in DTOs</p>
 </li>
 <li>
-<p>Support for updates with <code>RETURNING</code> clause in repositories</p>
+<p>Support for inserts, updates and deletes with <code>RETURNING</code> clause in repositories</p>
 </li>
 <li>
 <p>MongoDB: Support <code>arrayFilters</code></p>
@@ -1359,6 +1359,11 @@ Methods with <code>Stream&lt;Book&gt;</code> results need to be used with a 'try
 <td class="tableblock halign-left valign-top"><p class="tableblock">Checks whether a record exists matching properties</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>save</code>, <code>persist</code>, <code>store</code>, <code>insert</code> with an entity or entities method parameter</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A <code>void</code> or an entity</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Inserts one or many instances</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>delete</code>, <code>remove</code>, <code>erase</code>, <code>eliminate</code> with an entity or entities method parameter</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">A <code>void</code> or <code>Number</code> return type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Delete one or many entries</p></td>
@@ -1389,9 +1394,19 @@ Methods with <code>Stream&lt;Book&gt;</code> results need to be used with a 'try
 <td class="tableblock halign-left valign-top"><p class="tableblock">Batch update where parameter/s represents an entity&#8217;s property (must be named the same)</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>updateReturning</code> all of the update variations (except batch entities update) plus a suffix <code>Returning</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>saveReturning</code> all of the save variations plus a suffix <code>Returning</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">An entity type or any types that can be returned by the query</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Insert with a returning clause (Might not be supported by a DIALECT or an implementation)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>updateReturning</code> all of the update variations plus a suffix <code>Returning</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">An entity type or any types that can be returned by the query</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Update with a returning clause (Might not be supported by a DIALECT or an implementation)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>deleteReturning</code> all of the delete variations plus a suffix <code>Returning</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">An entity type or any types that can be returned by the query</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Delete with a returning clause (Might not be supported by a DIALECT or an implementation)</p></td>
 </tr>
 </tbody>
 </table>

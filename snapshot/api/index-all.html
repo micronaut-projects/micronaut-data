@@ -666,6 +666,8 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/options/MongoFindOptions.html#allowDiskUse(java.lang.Boolean)" class="member-name-link">allowDiskUse(Boolean)</a> - Method in class io.micronaut.data.mongodb.operations.options.<a href="io/micronaut/data/mongodb/operations/options/MongoFindOptions.html" title="class in io.micronaut.data.mongodb.operations.options">MongoFindOptions</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/AbstractCriteriaMethodMatch.html#analyzeMethodResult(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement,io.micronaut.data.processor.visitors.finders.FindersUtils.InterceptorMatch,boolean)" class="member-name-link">analyzeMethodResult(MethodMatchContext, ClassElement, FindersUtils.InterceptorMatch, boolean)</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/AbstractCriteriaMethodMatch.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractCriteriaMethodMatch</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/AbstractCriteriaMethodMatch.html#analyzeMethodResult(io.micronaut.data.processor.visitors.MethodMatchContext,java.lang.String,io.micronaut.inject.ast.ClassElement,io.micronaut.data.processor.visitors.finders.FindersUtils.InterceptorMatch,boolean)" class="member-name-link">analyzeMethodResult(MethodMatchContext, String, ClassElement, FindersUtils.InterceptorMatch, boolean)</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/AbstractCriteriaMethodMatch.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractCriteriaMethodMatch</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/Criteria.html#and(io.micronaut.data.model.query.Criteria)" class="member-name-link">and(Criteria)</a> - Method in interface io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></dt>
@@ -873,6 +875,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/processor/visitors/finders/AbstractCriteriaMethodMatch.html#applyPredicates(java.util.List,io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate,io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder)" class="member-name-link">applyPredicates(List&lt;ParameterElement&gt;, PersistentEntityRoot&lt;T&gt;, PersistentEntityCriteriaUpdate&lt;T&gt;, SourcePersistentEntityCriteriaBuilder)</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/AbstractCriteriaMethodMatch.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractCriteriaMethodMatch</a></dt>
 <dd>
 <div class="block">Apply predicates based on parameters.</div>
+</dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/criteria/DeleteCriteriaMethodMatch.html#applyProjections(java.lang.String,io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder)" class="member-name-link">applyProjections(String, PersistentEntityRoot&lt;T&gt;, PersistentEntityCriteriaDelete&lt;T&gt;, PersistentEntityCriteriaBuilder)</a> - Method in class io.micronaut.data.processor.visitors.finders.criteria.<a href="io/micronaut/data/processor/visitors/finders/criteria/DeleteCriteriaMethodMatch.html" title="class in io.micronaut.data.processor.visitors.finders.criteria">DeleteCriteriaMethodMatch</a></dt>
+<dd>
+<div class="block">Apply projections.</div>
 </dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/criteria/QueryCriteriaMethodMatch.html#applyProjections(java.lang.String,io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder,java.lang.String)" class="member-name-link">applyProjections(String, PersistentEntityRoot&lt;T&gt;, PersistentEntityCriteriaQuery&lt;T&gt;, PersistentEntityCriteriaBuilder, String)</a> - Method in class io.micronaut.data.processor.visitors.finders.criteria.<a href="io/micronaut/data/processor/visitors/finders/criteria/QueryCriteriaMethodMatch.html" title="class in io.micronaut.data.processor.visitors.finders.criteria">QueryCriteriaMethodMatch</a></dt>
 <dd>
@@ -3037,6 +3043,14 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/intercept/DefaultDeleteAllReturningInterceptor.html" class="type-name-link" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteAllReturningInterceptor</a>&lt;<a href="io/micronaut/data/runtime/intercept/DefaultDeleteAllReturningInterceptor.html" title="type parameter in DefaultDeleteAllReturningInterceptor">E</a>,<wbr><a href="io/micronaut/data/runtime/intercept/DefaultDeleteAllReturningInterceptor.html" title="type parameter in DefaultDeleteAllReturningInterceptor">R</a>&gt; - Class in <a href="io/micronaut/data/runtime/intercept/package-summary.html">io.micronaut.data.runtime.intercept</a></dt>
+<dd>
+<div class="block">Default implementation of <a href="io/micronaut/data/intercept/DeleteAllInterceptor.html" title="interface in io.micronaut.data.intercept"><code>DeleteAllInterceptor</code></a>.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/DefaultDeleteAllReturningInterceptor.html#%3Cinit%3E(io.micronaut.data.operations.RepositoryOperations)" class="member-name-link">DefaultDeleteAllReturningInterceptor(RepositoryOperations)</a> - Constructor for class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultDeleteAllReturningInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteAllReturningInterceptor</a></dt>
+<dd>
+<div class="block">Default constructor.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/async/DefaultDeleteOneAsyncInterceptor.html" class="type-name-link" title="class in io.micronaut.data.runtime.intercept.async">DefaultDeleteOneAsyncInterceptor</a>&lt;<a href="io/micronaut/data/runtime/intercept/async/DefaultDeleteOneAsyncInterceptor.html" title="type parameter in DefaultDeleteOneAsyncInterceptor">T</a>&gt; - Class in <a href="io/micronaut/data/runtime/intercept/async/package-summary.html">io.micronaut.data.runtime.intercept.async</a></dt>
 <dd>
 <div class="block">The default implementation of <a href="io/micronaut/data/intercept/async/DeleteOneAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><code>DeleteOneAsyncInterceptor</code></a>.</div>
@@ -3058,6 +3072,22 @@ loadScripts(document, 'script');</script>
 <div class="block">Default implementation of <a href="io/micronaut/data/intercept/reactive/DeleteOneReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><code>DeleteOneReactiveInterceptor</code></a>.</div>
 </dd>
 <dt><a href="io/micronaut/data/runtime/intercept/reactive/DefaultDeleteOneReactiveInterceptor.html#%3Cinit%3E(io.micronaut.data.operations.RepositoryOperations)" class="member-name-link">DefaultDeleteOneReactiveInterceptor(RepositoryOperations)</a> - Constructor for class io.micronaut.data.runtime.intercept.reactive.<a href="io/micronaut/data/runtime/intercept/reactive/DefaultDeleteOneReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultDeleteOneReactiveInterceptor</a></dt>
+<dd>
+<div class="block">Default constructor.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/DefaultDeleteReturningManyInterceptor.html" class="type-name-link" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteReturningManyInterceptor</a>&lt;<a href="io/micronaut/data/runtime/intercept/DefaultDeleteReturningManyInterceptor.html" title="type parameter in DefaultDeleteReturningManyInterceptor">T</a>,<wbr><a href="io/micronaut/data/runtime/intercept/DefaultDeleteReturningManyInterceptor.html" title="type parameter in DefaultDeleteReturningManyInterceptor">R</a>&gt; - Class in <a href="io/micronaut/data/runtime/intercept/package-summary.html">io.micronaut.data.runtime.intercept</a></dt>
+<dd>
+<div class="block">Default implementation of <a href="io/micronaut/data/intercept/DeleteReturningManyInterceptor.html" title="interface in io.micronaut.data.intercept"><code>DeleteReturningManyInterceptor</code></a>.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/DefaultDeleteReturningManyInterceptor.html#%3Cinit%3E(io.micronaut.data.operations.RepositoryOperations)" class="member-name-link">DefaultDeleteReturningManyInterceptor(RepositoryOperations)</a> - Constructor for class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultDeleteReturningManyInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteReturningManyInterceptor</a></dt>
+<dd>
+<div class="block">Default constructor.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/DefaultDeleteReturningOneInterceptor.html" class="type-name-link" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteReturningOneInterceptor</a>&lt;<a href="io/micronaut/data/runtime/intercept/DefaultDeleteReturningOneInterceptor.html" title="type parameter in DefaultDeleteReturningOneInterceptor">T</a>,<wbr><a href="io/micronaut/data/runtime/intercept/DefaultDeleteReturningOneInterceptor.html" title="type parameter in DefaultDeleteReturningOneInterceptor">R</a>&gt; - Class in <a href="io/micronaut/data/runtime/intercept/package-summary.html">io.micronaut.data.runtime.intercept</a></dt>
+<dd>
+<div class="block">Default implementation of <a href="io/micronaut/data/intercept/DeleteReturningOneInterceptor.html" title="interface in io.micronaut.data.intercept"><code>DeleteReturningOneInterceptor</code></a>.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/DefaultDeleteReturningOneInterceptor.html#%3Cinit%3E(io.micronaut.data.operations.RepositoryOperations)" class="member-name-link">DefaultDeleteReturningOneInterceptor(RepositoryOperations)</a> - Constructor for class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultDeleteReturningOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteReturningOneInterceptor</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
@@ -3246,10 +3276,6 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html" class="type-name-link" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations</a> - Class in <a href="io/micronaut/data/jdbc/operations/package-summary.html">io.micronaut.data.jdbc.operations</a></dt>
 <dd>
 <div class="block">Implementation of <a href="io/micronaut/data/jdbc/operations/JdbcRepositoryOperations.html" title="interface in io.micronaut.data.jdbc.operations"><code>JdbcRepositoryOperations</code></a>.</div>
-</dd>
-<dt><a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#%3Cinit%3E(java.lang.String,io.micronaut.data.jdbc.config.DataJdbcConfiguration,javax.sql.DataSource,io.micronaut.data.connection.ConnectionOperations,io.micronaut.transaction.TransactionOperations,java.util.concurrent.ExecutorService,io.micronaut.context.BeanContext,io.micronaut.data.runtime.date.DateTimeProvider,io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.data.runtime.convert.DataConversionService,io.micronaut.data.model.runtime.AttributeConverterRegistry,io.micronaut.data.runtime.multitenancy.SchemaTenantResolver,io.micronaut.data.jdbc.operations.JdbcSchemaHandler,io.micronaut.json.JsonMapper,io.micronaut.data.runtime.operations.internal.sql.SqlJsonColumnMapperProvider)" class="member-name-link">DefaultJdbcRepositoryOperations(String, DataJdbcConfiguration, DataSource, ConnectionOperations&lt;Connection&gt;, TransactionOperations&lt;Connection&gt;, ExecutorService, BeanContext, DateTimeProvider, RuntimeEntityRegistry, DataConversionService, AttributeConverterRegistry, SchemaTenantResolver, JdbcSchemaHandler, JsonMapper, SqlJsonColumnMapperProvider&lt;ResultSet&gt;)</a> - Constructor for class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations</a></dt>
-<dd>
-<div class="block">Default constructor.</div>
 </dd>
 <dt><a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.JdbcOperationContext.html" class="type-name-link" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a> - Class in <a href="io/micronaut/data/jdbc/operations/package-summary.html">io.micronaut.data.jdbc.operations</a></dt>
 <dd>&nbsp;</dd>
@@ -3694,6 +3720,14 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/document/mongo/MongoAnnotations.html#DELETE_QUERY" class="member-name-link">DELETE_QUERY</a> - Static variable in interface io.micronaut.data.document.mongo.<a href="io/micronaut/data/document/mongo/MongoAnnotations.html" title="interface in io.micronaut.data.document.mongo">MongoAnnotations</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/intercept/annotation/DataMethod.OperationType.html#DELETE_RETURNING" class="member-name-link">DELETE_RETURNING</a> - Enum constant in enum class io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethod.OperationType.html" title="enum class in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a></dt>
+<dd>
+<div class="block">An delete returning operation.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/runtime/StoredQuery.OperationType.html#DELETE_RETURNING" class="member-name-link">DELETE_RETURNING</a> - Enum constant in enum class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/StoredQuery.OperationType.html" title="enum class in io.micronaut.data.model.runtime">StoredQuery.OperationType</a></dt>
+<dd>
+<div class="block">An delete returning operation.</div>
+</dd>
 <dt><a href="io/micronaut/data/repository/async/AsyncCrudRepository.html#deleteAll()" class="member-name-link">deleteAll()</a> - Method in interface io.micronaut.data.repository.async.<a href="io/micronaut/data/repository/async/AsyncCrudRepository.html" title="interface in io.micronaut.data.repository.async">AsyncCrudRepository</a></dt>
 <dd>
 <div class="block">Deletes all entities managed by the repository.</div>
@@ -3830,6 +3864,16 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
+<dt><a href="io/micronaut/data/operations/DeleteReturningRepositoryOperations.html#deleteAllReturning(io.micronaut.data.model.runtime.DeleteReturningBatchOperation)" class="member-name-link">deleteAllReturning(DeleteReturningBatchOperation&lt;E, R&gt;)</a> - Method in interface io.micronaut.data.operations.<a href="io/micronaut/data/operations/DeleteReturningRepositoryOperations.html" title="interface in io.micronaut.data.operations">DeleteReturningRepositoryOperations</a></dt>
+<dd>
+<div class="block">Deletes the entities and returns a result.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#deleteAllReturning(io.micronaut.data.model.runtime.DeleteReturningBatchOperation)" class="member-name-link">deleteAllReturning(DeleteReturningBatchOperation&lt;E, R&gt;)</a> - Method in class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/intercept/DeleteAllReturningInterceptor.html" class="type-name-link" title="interface in io.micronaut.data.intercept">DeleteAllReturningInterceptor</a>&lt;<a href="io/micronaut/data/intercept/DeleteAllReturningInterceptor.html" title="type parameter in DeleteAllReturningInterceptor">E</a>,<wbr><a href="io/micronaut/data/intercept/DeleteAllReturningInterceptor.html" title="type parameter in DeleteAllReturningInterceptor">R</a>&gt; - Interface in <a href="io/micronaut/data/intercept/package-summary.html">io.micronaut.data.intercept</a></dt>
+<dd>
+<div class="block">An interceptor that executes a batch delete.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/criteria/DeleteAllSpecificationInterceptor.html" class="type-name-link" title="class in io.micronaut.data.runtime.intercept.criteria">DeleteAllSpecificationInterceptor</a> - Class in <a href="io/micronaut/data/runtime/intercept/criteria/package-summary.html">io.micronaut.data.runtime.intercept.criteria</a></dt>
 <dd>
 <div class="block">Implementation of <code>deleteAll(Specification)</code>.</div>
@@ -3872,7 +3916,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Delete criteria method match.</div>
 </dd>
-<dt><a href="io/micronaut/data/processor/visitors/finders/criteria/DeleteCriteriaMethodMatch.html#%3Cinit%3E(java.util.List)" class="member-name-link">DeleteCriteriaMethodMatch(List&lt;MethodNameParser.Match&gt;)</a> - Constructor for class io.micronaut.data.processor.visitors.finders.criteria.<a href="io/micronaut/data/processor/visitors/finders/criteria/DeleteCriteriaMethodMatch.html" title="class in io.micronaut.data.processor.visitors.finders.criteria">DeleteCriteriaMethodMatch</a></dt>
+<dt><a href="io/micronaut/data/processor/visitors/finders/criteria/DeleteCriteriaMethodMatch.html#%3Cinit%3E(java.util.List,boolean)" class="member-name-link">DeleteCriteriaMethodMatch(List&lt;MethodNameParser.Match&gt;, boolean)</a> - Constructor for class io.micronaut.data.processor.visitors.finders.criteria.<a href="io/micronaut/data/processor/visitors/finders/criteria/DeleteCriteriaMethodMatch.html" title="class in io.micronaut.data.processor.visitors.finders.criteria">DeleteCriteriaMethodMatch</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
@@ -3899,6 +3943,32 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/model/runtime/DeleteOperation.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime">DeleteOperation</a>&lt;<a href="io/micronaut/data/model/runtime/DeleteOperation.html" title="type parameter in DeleteOperation">E</a>&gt; - Interface in <a href="io/micronaut/data/model/runtime/package-summary.html">io.micronaut.data.model.runtime</a></dt>
 <dd>
 <div class="block">A delete operation that updates the given entity.</div>
+</dd>
+<dt><a href="io/micronaut/data/operations/DeleteReturningRepositoryOperations.html#deleteReturning(io.micronaut.data.model.runtime.DeleteReturningOperation)" class="member-name-link">deleteReturning(DeleteReturningOperation&lt;E, R&gt;)</a> - Method in interface io.micronaut.data.operations.<a href="io/micronaut/data/operations/DeleteReturningRepositoryOperations.html" title="interface in io.micronaut.data.operations">DeleteReturningRepositoryOperations</a></dt>
+<dd>
+<div class="block">Deletes the entity and returns a result.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#deleteReturning(io.micronaut.data.model.runtime.DeleteReturningOperation)" class="member-name-link">deleteReturning(DeleteReturningOperation&lt;E, R&gt;)</a> - Method in class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/runtime/DeleteReturningBatchOperation.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime">DeleteReturningBatchOperation</a>&lt;<a href="io/micronaut/data/model/runtime/DeleteReturningBatchOperation.html" title="type parameter in DeleteReturningBatchOperation">E</a>,<wbr><a href="io/micronaut/data/model/runtime/DeleteReturningBatchOperation.html" title="type parameter in DeleteReturningBatchOperation">R</a>&gt; - Interface in <a href="io/micronaut/data/model/runtime/package-summary.html">io.micronaut.data.model.runtime</a></dt>
+<dd>
+<div class="block">A delete returning batch operation is an operation performed on one or more entities of the same type.</div>
+</dd>
+<dt><a href="io/micronaut/data/intercept/DeleteReturningManyInterceptor.html" class="type-name-link" title="interface in io.micronaut.data.intercept">DeleteReturningManyInterceptor</a>&lt;<a href="io/micronaut/data/intercept/DeleteReturningManyInterceptor.html" title="type parameter in DeleteReturningManyInterceptor">T</a>,<wbr><a href="io/micronaut/data/intercept/DeleteReturningManyInterceptor.html" title="type parameter in DeleteReturningManyInterceptor">R</a>&gt; - Interface in <a href="io/micronaut/data/intercept/package-summary.html">io.micronaut.data.intercept</a></dt>
+<dd>
+<div class="block">Implements delete returning many results interceptor.</div>
+</dd>
+<dt><a href="io/micronaut/data/intercept/DeleteReturningOneInterceptor.html" class="type-name-link" title="interface in io.micronaut.data.intercept">DeleteReturningOneInterceptor</a>&lt;<a href="io/micronaut/data/intercept/DeleteReturningOneInterceptor.html" title="type parameter in DeleteReturningOneInterceptor">T</a>,<wbr><a href="io/micronaut/data/intercept/DeleteReturningOneInterceptor.html" title="type parameter in DeleteReturningOneInterceptor">R</a>&gt; - Interface in <a href="io/micronaut/data/intercept/package-summary.html">io.micronaut.data.intercept</a></dt>
+<dd>
+<div class="block">Implements delete returning one result interceptor.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/runtime/DeleteReturningOperation.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime">DeleteReturningOperation</a>&lt;<a href="io/micronaut/data/model/runtime/DeleteReturningOperation.html" title="type parameter in DeleteReturningOperation">E</a>,<wbr><a href="io/micronaut/data/model/runtime/DeleteReturningOperation.html" title="type parameter in DeleteReturningOperation">R</a>&gt; - Interface in <a href="io/micronaut/data/model/runtime/package-summary.html">io.micronaut.data.model.runtime</a></dt>
+<dd>
+<div class="block">A delete returning operation that updates the given entity and returns a result.</div>
+</dd>
+<dt><a href="io/micronaut/data/operations/DeleteReturningRepositoryOperations.html" class="type-name-link" title="interface in io.micronaut.data.operations">DeleteReturningRepositoryOperations</a> - Interface in <a href="io/micronaut/data/operations/package-summary.html">io.micronaut.data.operations</a></dt>
+<dd>
+<div class="block">A variation of <a href="io/micronaut/data/operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations"><code>RepositoryOperations</code></a> that supports delete returning operations.</div>
 </dd>
 <dt><a href="io/micronaut/data/repository/jpa/criteria/DeleteSpecification.html" class="type-name-link" title="interface in io.micronaut.data.repository.jpa.criteria">DeleteSpecification</a>&lt;<a href="io/micronaut/data/repository/jpa/criteria/DeleteSpecification.html" title="type parameter in DeleteSpecification">T</a>&gt; - Interface in <a href="io/micronaut/data/repository/jpa/criteria/package-summary.html">io.micronaut.data.repository.jpa.criteria</a></dt>
 <dd>
@@ -6587,6 +6657,14 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html#getDeleteOptions(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">getDeleteOptions(AnnotationMetadata)</a> - Method in class io.micronaut.data.mongodb.operations.<a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getDeleteReturningBatchOperation(io.micronaut.aop.MethodInvocationContext,java.lang.Iterable)" class="member-name-link">getDeleteReturningBatchOperation(MethodInvocationContext&lt;T, ?&gt;, Iterable&lt;E&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="class in io.micronaut.data.runtime.intercept">AbstractQueryInterceptor</a></dt>
+<dd>
+<div class="block">Get the delete returning batch operation for the given context.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getDeleteReturningOperation(io.micronaut.aop.MethodInvocationContext,E)" class="member-name-link">getDeleteReturningOperation(MethodInvocationContext&lt;T, ?&gt;, E)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="class in io.micronaut.data.runtime.intercept">AbstractQueryInterceptor</a></dt>
+<dd>
+<div class="block">Get the delete operation for the given context.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html#getDeleteSpecification(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getDeleteSpecification(MethodInvocationContext&lt;?, ?&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.<a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor</a></dt>
 <dd>
 <div class="block">Find <a href="io/micronaut/data/repository/jpa/criteria/DeleteSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>DeleteSpecification</code></a> in context.</div>
@@ -8227,6 +8305,10 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#getSqlStoredQuery(io.micronaut.data.model.runtime.StoredQuery)" class="member-name-link">getSqlStoredQuery(StoredQuery&lt;E, R&gt;)</a> - Method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal.sql">AbstractSqlRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/runtime/DeleteReturningBatchOperation.html#getStoredQuery()" class="member-name-link">getStoredQuery()</a> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/DeleteReturningBatchOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteReturningBatchOperation</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/runtime/DeleteReturningOperation.html#getStoredQuery()" class="member-name-link">getStoredQuery()</a> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/DeleteReturningOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteReturningOperation</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/runtime/EntityOperation.html#getStoredQuery()" class="member-name-link">getStoredQuery()</a> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/EntityOperation.html" title="interface in io.micronaut.data.model.runtime">EntityOperation</a></dt>
 <dd>
 <div class="block">Possible stored query if exists.</div>
@@ -9160,6 +9242,8 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/connection/jdbc/advice/ContextualConnectionInterceptor.html#intercept(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(MethodInvocationContext&lt;Connection, Object&gt;)</a> - Method in class io.micronaut.data.connection.jdbc.advice.<a href="io/micronaut/data/connection/jdbc/advice/ContextualConnectionInterceptor.html" title="class in io.micronaut.data.connection.jdbc.advice">ContextualConnectionInterceptor</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/DefaultDeleteAllReturningInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;E, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultDeleteAllReturningInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteAllReturningInterceptor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/criteria/ExistsSpecificationInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;Object, Boolean&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.<a href="io/micronaut/data/runtime/intercept/criteria/ExistsSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">ExistsSpecificationInterceptor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jpa/repository/intercept/CountSpecificationInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;Object, Number&gt;)</a> - Method in class io.micronaut.data.jpa.repository.intercept.<a href="io/micronaut/data/jpa/repository/intercept/CountSpecificationInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept">CountSpecificationInterceptor</a></dt>
@@ -9224,6 +9308,8 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/DefaultExistsByInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, Boolean&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultExistsByInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultExistsByInterceptor</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/DefaultDeleteReturningManyInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, Iterable&lt;R&gt;&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultDeleteReturningManyInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteReturningManyInterceptor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/DefaultFindAllInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, Iterable&lt;R&gt;&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultFindAllInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindAllInterceptor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/DefaultInsertReturningManyInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, Iterable&lt;R&gt;&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultInsertReturningManyInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultInsertReturningManyInterceptor</a></dt>
@@ -9268,6 +9354,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Intercepts a data method execution.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/intercept/DefaultDeleteReturningOneInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultDeleteReturningOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteReturningOneInterceptor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/DefaultFindPageInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultFindPageInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindPageInterceptor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/DefaultFindSliceInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultFindSliceInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindSliceInterceptor</a></dt>
@@ -10147,8 +10235,6 @@ loadScripts(document, 'script');</script>
 <div class="block">Default constructor.</div>
 </dd>
 <dt><a href="io/micronaut/data/annotation/Join.Type.html#isFetch()" class="member-name-link">isFetch()</a> - Method in enum class io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/Join.Type.html" title="enum class in io.micronaut.data.annotation">Join.Type</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html#isFindAllCompatibleReturnType(io.micronaut.data.processor.visitors.MatchContext)" class="member-name-link">isFindAllCompatibleReturnType(MatchContext)</a> - Static method in interface io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html" title="interface in io.micronaut.data.processor.visitors.finders">FindersUtils</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/AbstractSpecificationMethodMatcher.html#isFirstParameterMicronautDataDeleteSpecification(io.micronaut.inject.ast.MethodElement)" class="member-name-link">isFirstParameterMicronautDataDeleteSpecification(MethodElement)</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/AbstractSpecificationMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractSpecificationMethodMatcher</a></dt>
 <dd>&nbsp;</dd>
@@ -13484,6 +13570,8 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html#pickDeleteAllInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">pickDeleteAllInterceptor(MethodMatchContext, ClassElement)</a> - Static method in interface io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html" title="interface in io.micronaut.data.processor.visitors.finders">FindersUtils</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html#pickDeleteAllReturningInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">pickDeleteAllReturningInterceptor(MethodMatchContext, ClassElement)</a> - Static method in interface io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html" title="interface in io.micronaut.data.processor.visitors.finders">FindersUtils</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html#pickDeleteAllSpecInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">pickDeleteAllSpecInterceptor(MethodMatchContext, ClassElement)</a> - Static method in interface io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html" title="interface in io.micronaut.data.processor.visitors.finders">FindersUtils</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html#pickDeleteInterceptor(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">pickDeleteInterceptor(MethodMatchContext, ClassElement)</a> - Static method in interface io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html" title="interface in io.micronaut.data.processor.visitors.finders">FindersUtils</a></dt>
@@ -15853,12 +15941,20 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/transaction/impl/InternalTransaction.html#resume()" class="member-name-link">resume()</a> - Method in interface io.micronaut.transaction.impl.<a href="io/micronaut/transaction/impl/InternalTransaction.html" title="interface in io.micronaut.transaction.impl">InternalTransaction</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaDelete.html#returning" class="member-name-link">returning</a> - Variable in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaDelete.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaDelete</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaUpdate.html#returning" class="member-name-link">returning</a> - Variable in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaUpdate.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaUpdate</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaDelete.html#returning(jakarta.persistence.criteria.Selection)" class="member-name-link">returning(Selection&lt;? extends T&gt;)</a> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a></dt>
+<dd>
+<div class="block">The returning result of the query.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaUpdate.html#returning(jakarta.persistence.criteria.Selection)" class="member-name-link">returning(Selection&lt;? extends T&gt;)</a> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaUpdate.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaUpdate</a></dt>
 <dd>
 <div class="block">The returning result of the query.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaDelete.html#returning(jakarta.persistence.criteria.Selection)" class="member-name-link">returning(Selection&lt;? extends T&gt;)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaDelete.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaDelete</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaUpdate.html#returning(jakarta.persistence.criteria.Selection)" class="member-name-link">returning(Selection&lt;? extends T&gt;)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaUpdate.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaUpdate</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/QueryMatchId.html#RETURNING" class="member-name-link">RETURNING</a> - Enum constant in enum class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/QueryMatchId.html" title="enum class in io.micronaut.data.processor.visitors.finders">QueryMatchId</a></dt>
@@ -15867,9 +15963,19 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/AbstractMethodMatcher.html#RETURNING" class="member-name-link">RETURNING</a> - Static variable in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/AbstractMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractMethodMatcher</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaDelete.html#returningMulti(jakarta.persistence.criteria.Selection...)" class="member-name-link">returningMulti(Selection&lt;?&gt;...)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaDelete.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaDelete</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaUpdate.html#returningMulti(jakarta.persistence.criteria.Selection...)" class="member-name-link">returningMulti(Selection&lt;?&gt;...)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaUpdate.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaUpdate</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaDelete.html#returningMulti(jakarta.persistence.criteria.Selection...)" class="member-name-link">returningMulti(Selection&lt;?&gt;...)</a> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a></dt>
+<dd>
+<div class="block">The returning result of the query.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaUpdate.html#returningMulti(jakarta.persistence.criteria.Selection...)" class="member-name-link">returningMulti(Selection&lt;?&gt;...)</a> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaUpdate.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaUpdate</a></dt>
+<dd>
+<div class="block">The returning result of the query.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaDelete.html#returningMulti(java.util.List)" class="member-name-link">returningMulti(List&lt;Selection&lt;?&gt;&gt;)</a> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a></dt>
 <dd>
 <div class="block">The returning result of the query.</div>
 </dd>
@@ -15877,6 +15983,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">The returning result of the query.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaDelete.html#returningMulti(java.util.List)" class="member-name-link">returningMulti(List&lt;Selection&lt;?&gt;&gt;)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaDelete.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaDelete</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaUpdate.html#returningMulti(java.util.List)" class="member-name-link">returningMulti(List&lt;Selection&lt;?&gt;&gt;)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaUpdate.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaUpdate</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/annotation/MongoFindOptions.html#returnKey()" class="member-name-link">returnKey()</a> - Element in annotation interface io.micronaut.data.mongodb.annotation.<a href="io/micronaut/data/mongodb/annotation/MongoFindOptions.html" title="annotation interface in io.micronaut.data.mongodb.annotation">MongoFindOptions</a></dt>
@@ -17346,6 +17454,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/transaction/TransactionDefinition.Propagation.html#SUPPORTS" class="member-name-link">SUPPORTS</a> - Enum constant in enum class io.micronaut.transaction.<a href="io/micronaut/transaction/TransactionDefinition.Propagation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Propagation</a></dt>
 <dd>
 <div class="block">Support a current transaction; execute non-transactionally if none exists.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/Dialect.html#supportsDeleteReturning()" class="member-name-link">supportsDeleteReturning()</a> - Method in enum class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a></dt>
+<dd>
+<div class="block">Whether the dialect supports DELETE ...</div>
 </dd>
 <dt><a href="io/micronaut/data/event/EntityEventContext.html#supportsEventSystem()" class="member-name-link">supportsEventSystem()</a> - Method in interface io.micronaut.data.event.<a href="io/micronaut/data/event/EntityEventContext.html" title="interface in io.micronaut.data.event">EntityEventContext</a></dt>
 <dd>&nbsp;</dd>

@@ -46,13 +46,13 @@ loadScripts(document, 'script');</script>
 <li>Summary:&nbsp;</li>
 <li><a href="#nested-class-summary">Nested</a>&nbsp;|&nbsp;</li>
 <li><a href="#field-summary">Field</a>&nbsp;|&nbsp;</li>
-<li><a href="#constructor-summary">Constr</a>&nbsp;|&nbsp;</li>
+<li>Constr&nbsp;|&nbsp;</li>
 <li><a href="#method-summary">Method</a></li>
 </ul>
 <ul class="sub-nav-list">
 <li>Detail:&nbsp;</li>
 <li>Field&nbsp;|&nbsp;</li>
-<li><a href="#constructor-detail">Constr</a>&nbsp;|&nbsp;</li>
+<li>Constr&nbsp;|&nbsp;</li>
 <li><a href="#method-detail">Method</a></li>
 </ul>
 </div>
@@ -81,14 +81,14 @@ loadScripts(document, 'script');</script>
 <section class="class-description" id="class-description">
 <dl class="notes">
 <dt>All Implemented Interfaces:</dt>
-<dd><code>io.micronaut.context.ApplicationContextProvider</code>, <code>io.micronaut.core.convert.ConversionServiceProvider</code>, <code><a href="JdbcRepositoryOperations.html" title="interface in io.micronaut.data.jdbc.operations">JdbcRepositoryOperations</a></code>, <code><a href="../runtime/JdbcOperations.html" title="interface in io.micronaut.data.jdbc.runtime">JdbcOperations</a></code>, <code><a href="../../operations/async/AsyncCapableRepository.html" title="interface in io.micronaut.data.operations.async">AsyncCapableRepository</a></code>, <code><a href="../../operations/HintsCapableRepository.html" title="interface in io.micronaut.data.operations">HintsCapableRepository</a></code>, <code><a href="../../operations/reactive/ReactiveCapableRepository.html" title="interface in io.micronaut.data.operations.reactive">ReactiveCapableRepository</a></code>, <code><a href="../../operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations">RepositoryOperations</a></code>, <code><a href="../../runtime/operations/internal/SyncCascadeOperations.SyncCascadeOperationsHelper.html" title="interface in io.micronaut.data.runtime.operations.internal">SyncCascadeOperations.SyncCascadeOperationsHelper</a>&lt;<a href="DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a>&gt;</code>, <code><a href="../../runtime/query/MethodContextAwareStoredQueryDecorator.html" title="interface in io.micronaut.data.runtime.query">MethodContextAwareStoredQueryDecorator</a></code>, <code><a href="../../runtime/query/PreparedQueryDecorator.html" title="interface in io.micronaut.data.runtime.query">PreparedQueryDecorator</a></code>, <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/AutoCloseable.html" title="class or interface in java.lang" class="external-link">AutoCloseable</a></code></dd>
+<dd><code>io.micronaut.context.ApplicationContextProvider</code>, <code>io.micronaut.core.convert.ConversionServiceProvider</code>, <code><a href="JdbcRepositoryOperations.html" title="interface in io.micronaut.data.jdbc.operations">JdbcRepositoryOperations</a></code>, <code><a href="../runtime/JdbcOperations.html" title="interface in io.micronaut.data.jdbc.runtime">JdbcOperations</a></code>, <code><a href="../../operations/async/AsyncCapableRepository.html" title="interface in io.micronaut.data.operations.async">AsyncCapableRepository</a></code>, <code><a href="../../operations/DeleteReturningRepositoryOperations.html" title="interface in io.micronaut.data.operations">DeleteReturningRepositoryOperations</a></code>, <code><a href="../../operations/HintsCapableRepository.html" title="interface in io.micronaut.data.operations">HintsCapableRepository</a></code>, <code><a href="../../operations/reactive/ReactiveCapableRepository.html" title="interface in io.micronaut.data.operations.reactive">ReactiveCapableRepository</a></code>, <code><a href="../../operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations">RepositoryOperations</a></code>, <code><a href="../../runtime/operations/internal/SyncCascadeOperations.SyncCascadeOperationsHelper.html" title="interface in io.micronaut.data.runtime.operations.internal">SyncCascadeOperations.SyncCascadeOperationsHelper</a>&lt;<a href="DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a>&gt;</code>, <code><a href="../../runtime/query/MethodContextAwareStoredQueryDecorator.html" title="interface in io.micronaut.data.runtime.query">MethodContextAwareStoredQueryDecorator</a></code>, <code><a href="../../runtime/query/PreparedQueryDecorator.html" title="interface in io.micronaut.data.runtime.query">PreparedQueryDecorator</a></code>, <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/AutoCloseable.html" title="class or interface in java.lang" class="external-link">AutoCloseable</a></code></dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="annotations">@EachBean(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link">javax.sql.DataSource.class</a>)
 @Internal
 </span><span class="modifiers">public final class </span><span class="element-name type-name-label">DefaultJdbcRepositoryOperations</span>
 <span class="extends-implements">extends <a href="../../runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal.sql">AbstractSqlRepositoryOperations</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/ResultSet.html" title="class or interface in java.sql" class="external-link">ResultSet</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/PreparedStatement.html" title="class or interface in java.sql" class="external-link">PreparedStatement</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/SQLException.html" title="class or interface in java.sql" class="external-link">SQLException</a>&gt;
-implements <a href="JdbcRepositoryOperations.html" title="interface in io.micronaut.data.jdbc.operations">JdbcRepositoryOperations</a>, <a href="../../operations/async/AsyncCapableRepository.html" title="interface in io.micronaut.data.operations.async">AsyncCapableRepository</a>, <a href="../../operations/reactive/ReactiveCapableRepository.html" title="interface in io.micronaut.data.operations.reactive">ReactiveCapableRepository</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/AutoCloseable.html" title="class or interface in java.lang" class="external-link">AutoCloseable</a>, <a href="../../runtime/operations/internal/SyncCascadeOperations.SyncCascadeOperationsHelper.html" title="interface in io.micronaut.data.runtime.operations.internal">SyncCascadeOperations.SyncCascadeOperationsHelper</a>&lt;<a href="DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a>&gt;</span></div>
+implements <a href="JdbcRepositoryOperations.html" title="interface in io.micronaut.data.jdbc.operations">JdbcRepositoryOperations</a>, <a href="../../operations/DeleteReturningRepositoryOperations.html" title="interface in io.micronaut.data.operations">DeleteReturningRepositoryOperations</a>, <a href="../../operations/async/AsyncCapableRepository.html" title="interface in io.micronaut.data.operations.async">AsyncCapableRepository</a>, <a href="../../operations/reactive/ReactiveCapableRepository.html" title="interface in io.micronaut.data.operations.reactive">ReactiveCapableRepository</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/AutoCloseable.html" title="class or interface in java.lang" class="external-link">AutoCloseable</a>, <a href="../../runtime/operations/internal/SyncCascadeOperations.SyncCascadeOperationsHelper.html" title="interface in io.micronaut.data.runtime.operations.internal">SyncCascadeOperations.SyncCascadeOperationsHelper</a>&lt;<a href="DefaultJdbcRepositoryOperations.JdbcOperationContext.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.JdbcOperationContext</a>&gt;</span></div>
 <div class="block">Implementation of <a href="JdbcRepositoryOperations.html" title="interface in io.micronaut.data.jdbc.operations"><code>JdbcRepositoryOperations</code></a>.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -129,37 +129,6 @@ implements <a href="JdbcRepositoryOperations.html" title="interface in io.micron
 <code><a href="../../runtime/operations/internal/AbstractRepositoryOperations.html#attributeConverterRegistry">attributeConverterRegistry</a>, <a href="../../runtime/operations/internal/AbstractRepositoryOperations.html#conversionService">conversionService</a>, <a href="../../runtime/operations/internal/AbstractRepositoryOperations.html#dateTimeProvider">dateTimeProvider</a>, <a href="../../runtime/operations/internal/AbstractRepositoryOperations.html#entityEventRegistry">entityEventRegistry</a>, <a href="../../runtime/operations/internal/AbstractRepositoryOperations.html#runtimeEntityRegistry">runtimeEntityRegistry</a></code></div>
 </section>
 </li>
-<!-- ======== CONSTRUCTOR SUMMARY ======== -->
-<li>
-<section class="constructor-summary" id="constructor-summary">
-<h2>Constructor Summary</h2>
-<div class="caption"><span>Constructors</span></div>
-<div class="summary-table three-column-summary">
-<div class="table-header col-first">Modifier</div>
-<div class="table-header col-second">Constructor</div>
-<div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code>protected </code></div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.String,io.micronaut.data.jdbc.config.DataJdbcConfiguration,javax.sql.DataSource,io.micronaut.data.connection.ConnectionOperations,io.micronaut.transaction.TransactionOperations,java.util.concurrent.ExecutorService,io.micronaut.context.BeanContext,io.micronaut.data.runtime.date.DateTimeProvider,io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.data.runtime.convert.DataConversionService,io.micronaut.data.model.runtime.AttributeConverterRegistry,io.micronaut.data.runtime.multitenancy.SchemaTenantResolver,io.micronaut.data.jdbc.operations.JdbcSchemaHandler,io.micronaut.json.JsonMapper,io.micronaut.data.runtime.operations.internal.sql.SqlJsonColumnMapperProvider)" class="member-name-link">DefaultJdbcRepositoryOperations</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;dataSourceName,
- <a href="../config/DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a>&nbsp;jdbcConfiguration,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link">DataSource</a>&nbsp;dataSource,
- <a href="../../connection/ConnectionOperations.html" title="interface in io.micronaut.data.connection">ConnectionOperations</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;connectionOperations,
- <a href="../../../transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;transactionOperations,
- @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/ExecutorService.html" title="class or interface in java.util.concurrent" class="external-link">ExecutorService</a>&nbsp;executorService,
- io.micronaut.context.BeanContext&nbsp;beanContext,
- @NonNull <a href="../../runtime/date/DateTimeProvider.html" title="interface in io.micronaut.data.runtime.date">DateTimeProvider</a>&nbsp;dateTimeProvider,
- <a href="../../model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a>&nbsp;entityRegistry,
- <a href="../../runtime/convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;conversionService,
- <a href="../../model/runtime/AttributeConverterRegistry.html" title="interface in io.micronaut.data.model.runtime">AttributeConverterRegistry</a>&nbsp;attributeConverterRegistry,
- @Nullable <a href="../../runtime/multitenancy/SchemaTenantResolver.html" title="interface in io.micronaut.data.runtime.multitenancy">SchemaTenantResolver</a>&nbsp;schemaTenantResolver,
- <a href="JdbcSchemaHandler.html" title="interface in io.micronaut.data.jdbc.operations">JdbcSchemaHandler</a>&nbsp;schemaHandler,
- @Nullable io.micronaut.json.JsonMapper&nbsp;jsonMapper,
- <a href="../../runtime/operations/internal/sql/SqlJsonColumnMapperProvider.html" title="class in io.micronaut.data.runtime.operations.internal.sql">SqlJsonColumnMapperProvider</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/ResultSet.html" title="class or interface in java.sql" class="external-link">ResultSet</a>&gt;&nbsp;sqlJsonColumnMapperProvider)</code></div>
-<div class="col-last even-row-color">
-<div class="block">Default constructor.</div>
-</div>
-</div>
-</section>
-</li>
 <!-- ========== METHOD SUMMARY =========== -->
 <li>
 <section class="method-summary" id="method-summary">
@@ -191,6 +160,18 @@ implements <a href="JdbcRepositoryOperations.html" title="interface in io.micron
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#deleteAll(io.micronaut.data.model.runtime.DeleteBatchOperation)" class="member-name-link">deleteAll</a><wbr>(@NonNull <a href="../../model/runtime/DeleteBatchOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteBatchOperation</a>&lt;T&gt;&nbsp;operation)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Deletes all the entities of the given type.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;E,<wbr>
+R&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;R&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#deleteAllReturning(io.micronaut.data.model.runtime.DeleteReturningBatchOperation)" class="member-name-link">deleteAllReturning</a><wbr>(<a href="../../model/runtime/DeleteReturningBatchOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteReturningBatchOperation</a>&lt;E,<wbr>R&gt;&nbsp;operation)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Deletes the entities and returns a result.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;E,<wbr>
+R&gt;&nbsp;R</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#deleteReturning(io.micronaut.data.model.runtime.DeleteReturningOperation)" class="member-name-link">deleteReturning</a><wbr>(<a href="../../model/runtime/DeleteReturningOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteReturningOperation</a>&lt;E,<wbr>R&gt;&nbsp;operation)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Deletes the entity and returns a result.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/stream/Stream.html" title="class or interface in java.util.stream" class="external-link">Stream</a>&lt;T&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#entityStream(java.sql.ResultSet,java.lang.Class)" class="member-name-link">entityStream</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/ResultSet.html" title="class or interface in java.sql" class="external-link">ResultSet</a>&nbsp;resultSet,
@@ -405,62 +386,6 @@ D&gt;&nbsp;D</code></div>
 </section>
 <section class="details">
 <ul class="details-list">
-<!-- ========= CONSTRUCTOR DETAIL ======== -->
-<li>
-<section class="constructor-details" id="constructor-detail">
-<h2>Constructor Details</h2>
-<ul class="member-list">
-<li>
-<section class="detail" id="&lt;init&gt;(java.lang.String,io.micronaut.data.jdbc.config.DataJdbcConfiguration,javax.sql.DataSource,io.micronaut.data.connection.ConnectionOperations,io.micronaut.transaction.TransactionOperations,java.util.concurrent.ExecutorService,io.micronaut.context.BeanContext,io.micronaut.data.runtime.date.DateTimeProvider,io.micronaut.data.model.runtime.RuntimeEntityRegistry,io.micronaut.data.runtime.convert.DataConversionService,io.micronaut.data.model.runtime.AttributeConverterRegistry,io.micronaut.data.runtime.multitenancy.SchemaTenantResolver,io.micronaut.data.jdbc.operations.JdbcSchemaHandler,io.micronaut.json.JsonMapper,io.micronaut.data.runtime.operations.internal.sql.SqlJsonColumnMapperProvider)">
-<h3>DefaultJdbcRepositoryOperations</h3>
-<div class="member-signature"><span class="annotations">@Internal
-</span><span class="modifiers">protected</span>&nbsp;<span class="element-name">DefaultJdbcRepositoryOperations</span><wbr><span class="parameters">(@Parameter
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;dataSourceName,
- @Parameter
- <a href="../config/DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a>&nbsp;jdbcConfiguration,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/javax/sql/DataSource.html" title="class or interface in javax.sql" class="external-link">DataSource</a>&nbsp;dataSource,
- @Parameter
- <a href="../../connection/ConnectionOperations.html" title="interface in io.micronaut.data.connection">ConnectionOperations</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;connectionOperations,
- @Parameter
- <a href="../../../transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link">Connection</a>&gt;&nbsp;transactionOperations,
- @Named("io") @Nullable
- @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/ExecutorService.html" title="class or interface in java.util.concurrent" class="external-link">ExecutorService</a>&nbsp;executorService,
- io.micronaut.context.BeanContext&nbsp;beanContext,
- @NonNull
- @NonNull <a href="../../runtime/date/DateTimeProvider.html" title="interface in io.micronaut.data.runtime.date">DateTimeProvider</a>&nbsp;dateTimeProvider,
- <a href="../../model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a>&nbsp;entityRegistry,
- <a href="../../runtime/convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;conversionService,
- <a href="../../model/runtime/AttributeConverterRegistry.html" title="interface in io.micronaut.data.model.runtime">AttributeConverterRegistry</a>&nbsp;attributeConverterRegistry,
- @Nullable
- @Nullable <a href="../../runtime/multitenancy/SchemaTenantResolver.html" title="interface in io.micronaut.data.runtime.multitenancy">SchemaTenantResolver</a>&nbsp;schemaTenantResolver,
- <a href="JdbcSchemaHandler.html" title="interface in io.micronaut.data.jdbc.operations">JdbcSchemaHandler</a>&nbsp;schemaHandler,
- @Nullable
- @Nullable io.micronaut.json.JsonMapper&nbsp;jsonMapper,
- <a href="../../runtime/operations/internal/sql/SqlJsonColumnMapperProvider.html" title="class in io.micronaut.data.runtime.operations.internal.sql">SqlJsonColumnMapperProvider</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/ResultSet.html" title="class or interface in java.sql" class="external-link">ResultSet</a>&gt;&nbsp;sqlJsonColumnMapperProvider)</span></div>
-<div class="block">Default constructor.</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>dataSourceName</code> - The data source name</dd>
-<dd><code>jdbcConfiguration</code> - The jdbcConfiguration</dd>
-<dd><code>dataSource</code> - The datasource</dd>
-<dd><code>transactionOperations</code> - The JDBC operations for the data source</dd>
-<dd><code>executorService</code> - The executor service</dd>
-<dd><code>beanContext</code> - The bean context</dd>
-<dd><code>dateTimeProvider</code> - The dateTimeProvider</dd>
-<dd><code>entityRegistry</code> - The entity registry</dd>
-<dd><code>conversionService</code> - The conversion service</dd>
-<dd><code>attributeConverterRegistry</code> - The attribute converter registry</dd>
-<dd><code>schemaTenantResolver</code> - The schema tenant resolver</dd>
-<dd><code>schemaHandler</code> - The schema handler</dd>
-<dd><code>jsonMapper</code> - The JSON mapper</dd>
-<dd><code>sqlJsonColumnMapperProvider</code> - The SQL JSON column mapper provider</dd>
-<dd><code>connectionOperations</code> - </dd>
-</dl>
-</section>
-</li>
-</ul>
-</section>
-</li>
 <!-- ============ METHOD DETAIL ========== -->
 <li>
 <section class="method-details" id="method-detail">
@@ -777,6 +702,46 @@ R&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracl
 <dd><code>operation</code> - The operation</dd>
 <dt>Returns:</dt>
 <dd>The number of entities deleted</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="deleteReturning(io.micronaut.data.model.runtime.DeleteReturningOperation)">
+<h3>deleteReturning</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;E,<wbr>
+R&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">deleteReturning</span><wbr><span class="parameters">(<a href="../../model/runtime/DeleteReturningOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteReturningOperation</a>&lt;E,<wbr>R&gt;&nbsp;operation)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../../operations/DeleteReturningRepositoryOperations.html#deleteReturning(io.micronaut.data.model.runtime.DeleteReturningOperation)">DeleteReturningRepositoryOperations</a></code></span></div>
+<div class="block">Deletes the entity and returns a result.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../../operations/DeleteReturningRepositoryOperations.html#deleteReturning(io.micronaut.data.model.runtime.DeleteReturningOperation)">deleteReturning</a></code>&nbsp;in interface&nbsp;<code><a href="../../operations/DeleteReturningRepositoryOperations.html" title="interface in io.micronaut.data.operations">DeleteReturningRepositoryOperations</a></code></dd>
+<dt>Type Parameters:</dt>
+<dd><code>E</code> - The entity type</dd>
+<dd><code>R</code> - The result type</dd>
+<dt>Parameters:</dt>
+<dd><code>operation</code> - The operation</dd>
+<dt>Returns:</dt>
+<dd>The deleted entity</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="deleteAllReturning(io.micronaut.data.model.runtime.DeleteReturningBatchOperation)">
+<h3>deleteAllReturning</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;E,<wbr>
+R&gt;</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;R&gt;</span>&nbsp;<span class="element-name">deleteAllReturning</span><wbr><span class="parameters">(<a href="../../model/runtime/DeleteReturningBatchOperation.html" title="interface in io.micronaut.data.model.runtime">DeleteReturningBatchOperation</a>&lt;E,<wbr>R&gt;&nbsp;operation)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../../operations/DeleteReturningRepositoryOperations.html#deleteAllReturning(io.micronaut.data.model.runtime.DeleteReturningBatchOperation)">DeleteReturningRepositoryOperations</a></code></span></div>
+<div class="block">Deletes the entities and returns a result.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../../operations/DeleteReturningRepositoryOperations.html#deleteAllReturning(io.micronaut.data.model.runtime.DeleteReturningBatchOperation)">deleteAllReturning</a></code>&nbsp;in interface&nbsp;<code><a href="../../operations/DeleteReturningRepositoryOperations.html" title="interface in io.micronaut.data.operations">DeleteReturningRepositoryOperations</a></code></dd>
+<dt>Type Parameters:</dt>
+<dd><code>E</code> - The entity type</dd>
+<dd><code>R</code> - The result type</dd>
+<dt>Parameters:</dt>
+<dd><code>operation</code> - The operation</dd>
+<dt>Returns:</dt>
+<dd>The deleted entities</dd>
 </dl>
 </section>
 </li>

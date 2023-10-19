@@ -113,6 +113,9 @@ implements <a href="../PersistentEntityCriteriaDelete.html" title="interface in 
 <div class="col-first odd-row-color"><code>protected jakarta.persistence.criteria.Predicate</code></div>
 <div class="col-second odd-row-color"><code><a href="#predicate" class="member-name-link">predicate</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>protected jakarta.persistence.criteria.Selection&lt;?&gt;</code></div>
+<div class="col-second even-row-color"><code><a href="#returning" class="member-name-link">returning</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
 </li>
@@ -169,15 +172,30 @@ implements <a href="../PersistentEntityCriteriaDelete.html" title="interface in 
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final boolean</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hasVersionRestriction()" class="member-name-link">hasVersionRestriction</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;U&gt;&nbsp;jakarta.persistence.criteria.Subquery&lt;U&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#subquery(java.lang.Class)" class="member-name-link">subquery</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;U&gt;&nbsp;type)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../PersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a>&lt;<a href="AbstractPersistentEntityCriteriaDelete.html" title="type parameter in AbstractPersistentEntityCriteriaDelete">T</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#returning(jakarta.persistence.criteria.Selection)" class="member-name-link">returning</a><wbr>(jakarta.persistence.criteria.Selection&lt;? extends <a href="AbstractPersistentEntityCriteriaDelete.html" title="type parameter in AbstractPersistentEntityCriteriaDelete">T</a>&gt;&nbsp;selection)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">The returning result of the query.</div>
+</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../PersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a>&lt;<a href="AbstractPersistentEntityCriteriaDelete.html" title="type parameter in AbstractPersistentEntityCriteriaDelete">T</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#where(jakarta.persistence.criteria.Expression)" class="member-name-link">where</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;&nbsp;restriction)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#returningMulti(jakarta.persistence.criteria.Selection...)" class="member-name-link">returningMulti</a><wbr>(@NonNull jakarta.persistence.criteria.Selection&lt;?&gt;...&nbsp;selections)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">The returning result of the query.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../PersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a>&lt;<a href="AbstractPersistentEntityCriteriaDelete.html" title="type parameter in AbstractPersistentEntityCriteriaDelete">T</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#returningMulti(java.util.List)" class="member-name-link">returningMulti</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;jakarta.persistence.criteria.Selection&lt;?&gt;&gt;&nbsp;selectionList)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">The returning result of the query.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;U&gt;&nbsp;jakarta.persistence.criteria.Subquery&lt;U&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#subquery(java.lang.Class)" class="member-name-link">subquery</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;U&gt;&nbsp;type)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../PersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a>&lt;<a href="AbstractPersistentEntityCriteriaDelete.html" title="type parameter in AbstractPersistentEntityCriteriaDelete">T</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#where(jakarta.persistence.criteria.Predicate...)" class="member-name-link">where</a><wbr>(jakarta.persistence.criteria.Predicate...&nbsp;restrictions)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#where(jakarta.persistence.criteria.Expression)" class="member-name-link">where</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;&nbsp;restriction)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../PersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a>&lt;<a href="AbstractPersistentEntityCriteriaDelete.html" title="type parameter in AbstractPersistentEntityCriteriaDelete">T</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#where(jakarta.persistence.criteria.Predicate...)" class="member-name-link">where</a><wbr>(jakarta.persistence.criteria.Predicate...&nbsp;restrictions)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -205,6 +223,12 @@ implements <a href="../PersistentEntityCriteriaDelete.html" title="interface in 
 <section class="detail" id="entityRoot">
 <h3>entityRoot</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="../PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;<a href="AbstractPersistentEntityCriteriaDelete.html" title="type parameter in AbstractPersistentEntityCriteriaDelete">T</a>&gt;</span>&nbsp;<span class="element-name">entityRoot</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="returning">
+<h3>returning</h3>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">jakarta.persistence.criteria.Selection&lt;?&gt;</span>&nbsp;<span class="element-name">returning</span></div>
 </section>
 </li>
 </ul>
@@ -357,6 +381,55 @@ implements <a href="../PersistentEntityCriteriaDelete.html" title="interface in 
 <section class="detail" id="hasVersionRestriction()">
 <h3>hasVersionRestriction</h3>
 <div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">hasVersionRestriction</span>()</div>
+</section>
+</li>
+<li>
+<section class="detail" id="returning(jakarta.persistence.criteria.Selection)">
+<h3>returning</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../PersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a>&lt;<a href="AbstractPersistentEntityCriteriaDelete.html" title="type parameter in AbstractPersistentEntityCriteriaDelete">T</a>&gt;</span>&nbsp;<span class="element-name">returning</span><wbr><span class="parameters">(jakarta.persistence.criteria.Selection&lt;? extends <a href="AbstractPersistentEntityCriteriaDelete.html" title="type parameter in AbstractPersistentEntityCriteriaDelete">T</a>&gt;&nbsp;selection)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../PersistentEntityCriteriaDelete.html#returning(jakarta.persistence.criteria.Selection)">PersistentEntityCriteriaDelete</a></code></span></div>
+<div class="block">The returning result of the query.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../PersistentEntityCriteriaDelete.html#returning(jakarta.persistence.criteria.Selection)">returning</a></code>&nbsp;in interface&nbsp;<code><a href="../PersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a>&lt;<a href="AbstractPersistentEntityCriteriaDelete.html" title="type parameter in AbstractPersistentEntityCriteriaDelete">T</a>&gt;</code></dd>
+<dt>Parameters:</dt>
+<dd><code>selection</code> - The selection to return</dd>
+<dt>Returns:</dt>
+<dd>The delete criteria.</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="returningMulti(java.util.List)">
+<h3>returningMulti</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../PersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a>&lt;<a href="AbstractPersistentEntityCriteriaDelete.html" title="type parameter in AbstractPersistentEntityCriteriaDelete">T</a>&gt;</span>&nbsp;<span class="element-name">returningMulti</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;jakarta.persistence.criteria.Selection&lt;?&gt;&gt;&nbsp;selectionList)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../PersistentEntityCriteriaDelete.html#returningMulti(java.util.List)">PersistentEntityCriteriaDelete</a></code></span></div>
+<div class="block">The returning result of the query.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../PersistentEntityCriteriaDelete.html#returningMulti(java.util.List)">returningMulti</a></code>&nbsp;in interface&nbsp;<code><a href="../PersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a>&lt;<a href="AbstractPersistentEntityCriteriaDelete.html" title="type parameter in AbstractPersistentEntityCriteriaDelete">T</a>&gt;</code></dd>
+<dt>Parameters:</dt>
+<dd><code>selectionList</code> - The multi selection to return</dd>
+<dt>Returns:</dt>
+<dd>The delete criteria.</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="returningMulti(jakarta.persistence.criteria.Selection...)">
+<h3>returningMulti</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../PersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a>&lt;<a href="AbstractPersistentEntityCriteriaDelete.html" title="type parameter in AbstractPersistentEntityCriteriaDelete">T</a>&gt;</span>&nbsp;<span class="element-name">returningMulti</span><wbr><span class="parameters">(@NonNull
+ @NonNull jakarta.persistence.criteria.Selection&lt;?&gt;...&nbsp;selections)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../PersistentEntityCriteriaDelete.html#returningMulti(jakarta.persistence.criteria.Selection...)">PersistentEntityCriteriaDelete</a></code></span></div>
+<div class="block">The returning result of the query.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../PersistentEntityCriteriaDelete.html#returningMulti(jakarta.persistence.criteria.Selection...)">returningMulti</a></code>&nbsp;in interface&nbsp;<code><a href="../PersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a>&lt;<a href="AbstractPersistentEntityCriteriaDelete.html" title="type parameter in AbstractPersistentEntityCriteriaDelete">T</a>&gt;</code></dd>
+<dt>Parameters:</dt>
+<dd><code>selections</code> - The multi selection to return</dd>
+<dt>Returns:</dt>
+<dd>The delete criteria.</dd>
+</dl>
 </section>
 </li>
 </ul>
