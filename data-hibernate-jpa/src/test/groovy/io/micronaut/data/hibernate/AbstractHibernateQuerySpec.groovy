@@ -314,12 +314,21 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
 
     void "author dto result from native query"() {
         when:
-        def author = authorRepository.getAuthorsByNativeQuery()
+        def sort = Sort.of(Sort.Order.desc("authorName"))
+        def authors = authorRepository.getAuthorsByNativeQuery(sort)
 
         then:
-        author
-        author.authorId
-        author.authorName
+        authors
+        authors.size() == 3
+        authors[0].authorId
+        authors[0].authorName
+        authors[1].authorId
+        authors[1].authorName
+        authors[2].authorId
+        authors[2].authorName
+        // verify sorted desc by authorName
+        authors[0].authorName >= authors[1].authorName
+        authors[1].authorName >= authors[2].authorName
     }
 
     void "entity with id class"() {
