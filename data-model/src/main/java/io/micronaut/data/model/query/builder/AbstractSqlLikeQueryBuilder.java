@@ -1917,7 +1917,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @deprecated use {@link #buildOrderBy(String, PersistentEntity, AnnotationMetadata, Sort, boolean)}
      */
     @NonNull
-    @Deprecated
+    @Deprecated(forRemoval = true, since = "4.2.0")
     public QueryResult buildOrderBy(String query, @NonNull PersistentEntity entity, @NonNull AnnotationMetadata annotationMetadata, @NonNull Sort sort) {
         return buildOrderBy(query, entity, annotationMetadata, sort, false);
     }
