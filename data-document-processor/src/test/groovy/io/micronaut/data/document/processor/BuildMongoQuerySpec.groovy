@@ -287,7 +287,7 @@ import io.micronaut.data.document.tck.entities.Book;
 interface MyInterface2 extends GenericRepository<Book, String> {
 
     @MongoUpdateQuery(filter = \"{title:{\$eq: :t}}\", update = \"{\$set:{name: \\"tom\\"}}\", collation = \"{ locale: 'en_US', numericOrdering: true}\")
-    List<Book> customUpdate(String t);
+    void customUpdate(String t);
 
 }
 """
@@ -315,7 +315,7 @@ import io.micronaut.data.document.tck.entities.Book;
 interface MyInterface2 extends GenericRepository<Book, String> {
 
     @MongoUpdateQuery(filter = \"{title:{\$eq: :t}}\", update = \"{\$set:{name: \\"tom\\"}}\")
-    List<Book> customUpdate(String t);
+    void customUpdate(String t);
 
 }
 """
@@ -344,7 +344,7 @@ import io.micronaut.data.document.tck.entities.Book;
 interface MyInterface2 extends GenericRepository<Book, String> {
 
     @MongoUpdateQuery(update = \"{\$set:{name: \\"tom\\"}}\")
-    List<Book> customUpdate(String t);
+    void customUpdate(String t);
 
 }
 """
