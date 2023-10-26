@@ -16,6 +16,7 @@
 package io.micronaut.data.jdbc.postgres
 
 import groovy.transform.Memoized
+import io.micronaut.data.model.Sort
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
@@ -179,15 +180,25 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
         given:
             setupBooks()
         when:
-            def books1 = bookRepository.listNativeBooksNullableSearch(null)
+            def books1 = bookRepository.listNativeBooksNullableSearch(null, null)
+            def books1Sorted = bookRepository.listNativeBooksNullableSearch(null, Sort.of(Sort.Order.asc("title")))
         then:
             books1.size() == 8
+            books1Sorted.size() == 8
+            // verify native query with given sort returned sorted results as expected
+            def book1Titles = books1.stream().map(b -> b.title).sorted().toList()
+            book1Titles.size() == 8
+            for (int i = 0; i < book1Titles.size(); i++) {
+                def title = book1Titles[i]
+                def book1Sorted = books1Sorted[i]
+                title == book1Sorted.title
+            }
         when:
-            def books2 = bookRepository.listNativeBooksNullableSearch("The Stand")
+            def books2 = bookRepository.listNativeBooksNullableSearch("The Stand", null)
         then:
             books2.size() == 1
         when:
-            def books3 = bookRepository.listNativeBooksNullableSearch("Xyz")
+            def books3 = bookRepository.listNativeBooksNullableSearch("Xyz", null)
         then:
             books3.size() == 0
         when:
