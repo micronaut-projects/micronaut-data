@@ -45,6 +45,7 @@ public interface MongoAnnotations {
     String DELETE_OPTIONS_ROLE = "deleteOptions";
 
     String EXECUTOR_REPOSITORY = "io.micronaut.data.mongodb.repository.MongoQueryExecutor";
+    String REACTIVE_EXECUTOR_REPOSITORY = "io.micronaut.data.mongodb.repository.MongoReactiveQueryExecutor";
 
     String BSON = "org.bson.conversions.Bson";
     String FIND_OPTIONS_BEAN = "io.micronaut.data.mongodb.operations.options.MongoFindOptions";
