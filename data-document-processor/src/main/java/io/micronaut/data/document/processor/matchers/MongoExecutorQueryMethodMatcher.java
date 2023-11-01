@@ -54,6 +54,10 @@ public class MongoExecutorQueryMethodMatcher implements MethodMatcher {
         if (executor.isPresent() && executor.get().isAssignable(matchContext.getRepositoryClass())) {
             return null;
         }
+        Optional<ClassElement> reactiveExecutor = matchContext.getVisitorContext().getClassElement(MongoAnnotations.REACTIVE_EXECUTOR_REPOSITORY);
+        if (reactiveExecutor.isPresent() && reactiveExecutor.get().isAssignable(matchContext.getRepositoryClass())) {
+            return null;
+        }
         String methodName = matchContext.getMethodElement().getName();
         if ("findAll".equals(methodName) || "findOne".equals(methodName)) {
             ParameterElement[] parameters = matchContext.getParameters();
