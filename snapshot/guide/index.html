@@ -12195,7 +12195,7 @@ You can specify MongoDB&#8217;s database name using the repository annotation: <
 </table>
 </div>
 <div class="paragraph">
-<p>Micronaut Data MongoDB introduces one special repository interface <a href="../api/io/micronaut/data/mongodb/repository/MongoQueryExecutor.html">MongoQueryExecutor</a> which accepts <code>Bson</code>/<code>List&lt;Bson&gt;</code> filter/pipeline/update parameters intended to be used in combination with MongoDB DSL API:</p>
+<p>Micronaut Data MongoDB introduces one special repository interface <a href="../api/io/micronaut/data/mongodb/repository/MongoQueryExecutor.html">MongoQueryExecutor</a> (and corresponding reactive interface <a href="../api/io/micronaut/data/mongodb/repository/MongoReactiveQueryExecutor.html">MongoReactiveQueryExecutor</a>) which accepts <code>Bson</code>/<code>List&lt;Bson&gt;</code> filter/pipeline/update parameters intended to be used in combination with MongoDB DSL API:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -12360,7 +12360,7 @@ List&lt;Book&gt; customFind(String t);
 List&lt;Person&gt; customAggregate(String t);
 
 @MongoUpdateQuery(filter = "{title:{$regex: :t}}", update = "{$set:{name: 'tom'}}")
-List&lt;Book&gt; customUpdate(String t);
+void customUpdate(String t);
 
 @MongoDeleteQuery(filter = "{title:{$regex: :t}}", collation = "{locale:'en_US', numericOrdering:true}")
 void customDelete(String t);</code></pre>
@@ -12375,7 +12375,7 @@ List&lt;Book&gt; customFind(String t);
 List&lt;Person&gt; customAggregate(String t)
 
 @MongoUpdateQuery(filter = '{title:{$regex: :t}}', update = '{$set:{name: "tom"}}')
-List&lt;Book&gt; customUpdate(String t);
+void customUpdate(String t);
 
 @MongoDeleteQuery(filter = '{title:{$regex: :t}}', collation = "{locale:'en_US', numericOrdering:true}")
 void customDelete(String t);</code></pre>
@@ -12390,7 +12390,7 @@ fun customFind(t: String): List&lt;Book&gt;
 fun customAggregate(t: String): List&lt;Person&gt;
 
 @MongoUpdateQuery(filter = "{title:{\$regex: :t}}", update = "{\$set:{name: 'tom'}}")
-fun customUpdate(t: String): List&lt;Book&gt;
+fun customUpdate(t: String)
 
 @MongoDeleteQuery(filter = "{title:{\$regex: :t}}", collation = "{locale:'en_US', numericOrdering:true}")
 fun customDelete(t: String)</code></pre>
