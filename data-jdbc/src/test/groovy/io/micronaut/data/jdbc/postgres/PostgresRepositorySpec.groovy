@@ -158,7 +158,7 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
     }
 
     @Memoized
-    PostgresDtoTestService dtoTestService() {
+    PostgresDtoTestService getDtoTestService() {
         context.getBean(PostgresDtoTestService)
     }
 
@@ -579,10 +579,21 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
     }
 
     void "test DTO with and without constructor"() {
-        when:
-        def result0 = dtoTestService().getDto(0, PostgresDtoTestService.DtoWithoutConstructor.class)
-        def result1 = dtoTestService().getDto(1, PostgresDtoTestService.DtoWithAllArgsConstructor.class)
-        def result2 = dtoTestService().getDto(2, PostgresDtoTestService.DtoRecord.class)
+        when:"Retrieve DTO using Jdbc Operations"
+        def result0 = dtoTestService.getDto(0, PostgresDtoTestService.DtoWithoutConstructor.class)
+        def result1 = dtoTestService.getDto(1, PostgresDtoTestService.DtoWithAllArgsConstructor.class)
+        def result2 = dtoTestService.getDto(2, PostgresDtoTestService.DtoRecord.class)
+        then:
+        result0.id == 0
+        result1.id == 1
+        result2.id() == 2
+        result0.tags == ["foo", "bar"]
+        result1.tags == ["foo", "bar"]
+        result2.tags() == ["foo", "bar"]
+        when:"Retrieve DTO using repository"
+        result0 = dtoTestService.getDtoUsingRepository(0, PostgresDtoTestService.DtoWithoutConstructor.class)
+        result1 = dtoTestService.getDtoUsingRepository(1, PostgresDtoTestService.DtoWithAllArgsConstructor.class)
+        result2 = dtoTestService.getDtoUsingRepository(2, PostgresDtoTestService.DtoRecord.class)
         then:
         result0.id == 0
         result1.id == 1
