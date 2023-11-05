@@ -29,11 +29,8 @@ import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.exceptions.DataAccessException;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -72,7 +69,7 @@ public interface BeanIntrospectionMapper<D, R> extends TypeMapper<D, R> {
                         } else {
                             Object convertFrom;
                             if (Collection.class.isAssignableFrom(argument.getType()) && !(o instanceof Collection)) {
-                                convertFrom = Collections.singleton(o);
+                                convertFrom = MapperUtils.toCollection(o);
                             } else {
                                 convertFrom = o;
                             }
@@ -93,33 +90,13 @@ public interface BeanIntrospectionMapper<D, R> extends TypeMapper<D, R> {
                     if (property.getType().isInstance(v)) {
                         property.set(instance, v);
                     } else if (Iterable.class.isAssignableFrom(property.getType())) {
-                        Object value = property.get(instance);
-                        Collection<?> collection;
                         if (v instanceof Collection) {
-                            collection = (Collection<?>) v;
+                            property.set(instance, v);
                         } else if (v instanceof Iterable) {
-                            collection = new ArrayList<>(CollectionUtils.iterableToList((Iterable) v));
-                        } else if (v.getClass().isArray()) {
-                            Object[] arr = (Object[]) v;
-                            collection = Arrays.asList(arr);
-                        } else if (v instanceof java.sql.Array) {
-                            Object[] arr;
-                            try {
-                                arr = (Object[]) ((java.sql.Array) v).getArray();
-                            } catch (SQLException e) {
-                                throw new DataAccessException("Unable to read SQL array", e);
-                            }
-                            collection = Arrays.asList(arr);
-                        } else {
-                            collection = Collections.singleton(v);
-                        }
-                        if (value instanceof Collection) {
-                            ((Collection) value).addAll(collection);
-                        } else if (value instanceof Iterable) {
-                            List list = new ArrayList(CollectionUtils.iterableToList((Iterable) value));
-                            list.addAll(collection);
+                            List list = new ArrayList(CollectionUtils.iterableToList((Iterable) v));
                             property.set(instance, convert(list, property.asArgument()));
                         } else {
+                            Collection<?> collection = MapperUtils.toCollection(v);
                             property.set(instance, convert(collection, property.asArgument()));
                         }
                     } else {

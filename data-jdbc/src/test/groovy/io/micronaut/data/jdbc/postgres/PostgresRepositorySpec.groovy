@@ -158,6 +158,11 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
     }
 
     @Memoized
+    PostgresDtoTestService dtoTestService() {
+        context.getBean(PostgresDtoTestService)
+    }
+
+    @Memoized
     @Override
     boolean isSupportsArrays() {
         return true
@@ -571,6 +576,20 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
                 assert book.id == deletedBook.id
                 assert book.title == deletedBook.title
             }
+    }
+
+    void "test DTO with and without constructor"() {
+        when:
+        def result0 = dtoTestService().getDto(0, PostgresDtoTestService.DtoWithoutConstructor.class)
+        def result1 = dtoTestService().getDto(1, PostgresDtoTestService.DtoWithAllArgsConstructor.class)
+        def result2 = dtoTestService().getDto(2, PostgresDtoTestService.DtoRecord.class)
+        then:
+        result0.id == 0
+        result1.id == 1
+        result2.id() == 2
+        result0.tags == ["foo", "bar"]
+        result1.tags == ["foo", "bar"]
+        result2.tags() == ["foo", "bar"]
     }
 
 }
