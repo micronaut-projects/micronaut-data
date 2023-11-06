@@ -130,7 +130,7 @@ public final class MongoUtils {
                 }
                 return result;
             case ARRAY:
-                return bsonValue.asArray().stream().map(item -> toValue(item)).toList();
+                return bsonValue.asArray().stream().map(MongoUtils::toValue).toList();
             default:
                 throw new IllegalStateException("Not implemented for: " + bsonValue.getBsonType());
         }
