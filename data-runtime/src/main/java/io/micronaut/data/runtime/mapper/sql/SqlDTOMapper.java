@@ -26,6 +26,7 @@ import io.micronaut.data.runtime.mapper.ResultReader;
  * @param <T> The entity type
  * @param <S> The source type.
  * @param <R> The result type
+ * @deprecated Not used as of 4.2
  */
 @Deprecated(forRemoval = true, since = "4.2")
 public class SqlDTOMapper<T, S, R> extends DTOMapper<T, S, R> implements SqlTypeMapper<S, R> {

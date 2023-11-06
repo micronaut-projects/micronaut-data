@@ -48,8 +48,8 @@ final class MapperUtils {
         Collection<?> collection;
         if (value instanceof Collection) {
             collection = (Collection<?>) value;
-        } else if (value instanceof Iterable) {
-            collection = new ArrayList<>(CollectionUtils.iterableToList((Iterable) value));
+        } else if (value instanceof Iterable iterable) {
+            collection = new ArrayList<>(CollectionUtils.iterableToList(iterable));
         } else if (value.getClass().isArray()) {
             Object[] arr = (Object[]) value;
             collection = Arrays.asList(arr);
