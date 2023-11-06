@@ -9,8 +9,6 @@ import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.model.Updates
 import groovy.transform.Memoized
 import io.micronaut.data.document.mongodb.entities.ElementRow
-
-
 import io.micronaut.data.document.mongodb.repositories.ElementRowRepository
 import io.micronaut.data.document.mongodb.repositories.MongoAuthorRepository
 import io.micronaut.data.document.mongodb.repositories.MongoDocumentRepository

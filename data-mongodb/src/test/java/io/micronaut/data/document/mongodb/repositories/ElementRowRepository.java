@@ -9,7 +9,6 @@ import org.bson.types.ObjectId;
 
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @MongoRepository
 public interface ElementRowRepository extends CrudRepository<ElementRow, ObjectId> {
@@ -21,7 +20,7 @@ public interface ElementRowRepository extends CrudRepository<ElementRow, ObjectI
     ElementCountResponse customAggregateCount(long eventId, String rowState);
 
     @MongoAggregateQuery("[{ $match: {subType: :subType} },"
-        + "{$group: {\"_id\": \"\", \"eventIds\": {$push: \"$eventId\"}}}, {$project: {\"eventIds\":  1, \"_id\":  0}}]")
+        + "{$group: {_id: '', eventIds: {$push: '$eventId'}}}, {$project: {eventIds:  1, _id:  0}}]")
     ElementEventIdsResponse customAggregateEventIds(String subType);
 
     @Serdeable
