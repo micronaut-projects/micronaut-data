@@ -4,7 +4,7 @@ TIP: If a `LazyInitializationException` occurs this is not a bug in Micronaut Da
 
 Consider a `Product` entity:
 
-snippet::example.Product[project-base="doc-examples/hibernate-example", source="main"]
+snippet::example.Product[project-base="doc-examples/hibernate-example", source="main", tags="entity"]
 
 That has an association to a `Manufacturer` entity:
 
