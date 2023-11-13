@@ -368,6 +368,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         }
         try {
             boolean beforeCompletionInvoked = false;
+            boolean invokeAfter = false;
 
             try {
                 tx.triggerBeforeCommit();
@@ -377,8 +378,10 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
 
                 if (tx.isNewTransaction()) {
                     doCommit(tx);
+                    invokeAfter = true;
                 } else if (tx.isNestedTransaction()) {
                     doNestedCommit(tx);
+                    invokeAfter = true;
                 }
 
             } catch (UnexpectedRollbackException ex) {
@@ -401,12 +404,14 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
                 throw ex;
             }
 
-            // Trigger afterCommit callbacks, with an exception thrown there
-            // propagated to callers but the transaction still considered as committed.
-            try {
-                tx.triggerAfterCommit();
-            } finally {
-                tx.triggerAfterCompletion(TransactionSynchronization.Status.COMMITTED);
+            if (invokeAfter) {
+                // Trigger afterCommit callbacks, with an exception thrown there
+                // propagated to callers but the transaction still considered as committed.
+                try {
+                    tx.triggerAfterCommit();
+                } finally {
+                    tx.triggerAfterCompletion(TransactionSynchronization.Status.COMMITTED);
+                }
             }
 
         } finally {
