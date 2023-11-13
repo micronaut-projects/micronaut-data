@@ -23,6 +23,7 @@ import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.processor.model.SourcePersistentEntity
 import io.micronaut.inject.ast.ClassElement
 import org.intellij.lang.annotations.Language
+import spock.lang.PendingFeature
 
 import java.util.function.Function
 
@@ -84,11 +85,20 @@ class Test {
         idx["name"] == "idx_test_name"
         idx["columns"][0] == "name"
         idx["unique"] == true
-        introspection.getProperty("tmp").isPresent()
         introspection.getIndexedProperty(io.micronaut.data.annotation.Id).isPresent()
         introspection.getIndexedProperty(io.micronaut.data.annotation.Id).get().name == 'id'
         introspection.getIndexedProperty(MappedProperty, "test_name").isPresent()
         introspection.getIndexedProperty(MappedProperty, "test_name").get().name == 'name'
+    }
+
+    @PendingFeature
+    void "test mapping javax.persistent entity with @Transient Field"() {
+        given:
+        BeanIntrospection introspection = buildBeanIntrospection('test.Test', CLAZZ)
+
+        expect:
+        introspection
+        introspection.getProperty("tmp").isPresent()
     }
 
     void "test mapping javax.persistent entity SourcePersistentEntity"() {

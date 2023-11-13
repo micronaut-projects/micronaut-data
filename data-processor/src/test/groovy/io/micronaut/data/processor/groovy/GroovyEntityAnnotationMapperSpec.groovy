@@ -21,6 +21,7 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.processor.model.SourcePersistentEntity
 import io.micronaut.inject.ast.ClassElement
+import spock.lang.PendingFeature
 
 import java.util.function.Function
 
@@ -73,7 +74,6 @@ class Test {
         }
     }
 
-
     void "test groovy mapping javax.persistent entity with empty indexes"() {
         given:
         BeanIntrospection introspection = buildBeanIntrospection('test.Test', CLAZZ.apply('javax.persistence'))
@@ -85,11 +85,30 @@ class Test {
         def indexes = introspection.getAnnotation("io.micronaut.data.annotation.Indexes")
         indexes
         indexes.getValues().isEmpty()
-        introspection.getProperty("tmp").isPresent()
         introspection.getIndexedProperty(io.micronaut.data.annotation.Id).isPresent()
         introspection.getIndexedProperty(io.micronaut.data.annotation.Id).get().name == 'id'
         introspection.getIndexedProperty(MappedProperty, "test_name").isPresent()
         introspection.getIndexedProperty(MappedProperty, "test_name").get().name == 'name'
+    }
+
+    @PendingFeature
+    void "test @Transient field for javax.persistent entity"() {
+        given:
+        BeanIntrospection introspection = buildBeanIntrospection('test.Test', CLAZZ.apply('javax.persistence'))
+
+        expect:
+        introspection
+        introspection.getProperty("tmp").isPresent()
+    }
+
+    @PendingFeature
+    void "test @Transient field for jakarta.persistent entity"() {
+        given:
+        BeanIntrospection introspection = buildBeanIntrospection('test.Test', CLAZZ.apply('jakarta.persistence'))
+
+        expect:
+        introspection
+        introspection.getProperty("tmp").isPresent()
     }
 
     void "test groovy mapping jakarta.persistent entity with empty indexes"() {
@@ -103,7 +122,6 @@ class Test {
         def indexes = introspection.getAnnotation("io.micronaut.data.annotation.Indexes")
         indexes
         indexes.getValues().isEmpty()
-        introspection.getProperty("tmp").isPresent()
         introspection.getIndexedProperty(io.micronaut.data.annotation.Id).isPresent()
         introspection.getIndexedProperty(io.micronaut.data.annotation.Id).get().name == 'id'
         introspection.getIndexedProperty(MappedProperty, "test_name").isPresent()

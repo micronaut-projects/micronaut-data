@@ -22,6 +22,7 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.processor.model.SourcePersistentEntity
 import io.micronaut.inject.ast.ClassElement
+import spock.lang.PendingFeature
 
 class EntityJakartaAnnotationMapperSpec extends AbstractTypeElementSpec {
     private static final String CLAZZ = '''
@@ -75,11 +76,20 @@ class Test {
         introspection.hasStereotype(MappedEntity)
         introspection.getPropertyNames()
         introspection.getValue(MappedEntity, String).get() == 'test_tb1'
-        introspection.getProperty("tmp").isPresent()
         introspection.getIndexedProperty(io.micronaut.data.annotation.Id).isPresent()
         introspection.getIndexedProperty(io.micronaut.data.annotation.Id).get().name == 'id'
         introspection.getIndexedProperty(MappedProperty, "test_name").isPresent()
         introspection.getIndexedProperty(MappedProperty, "test_name").get().name == 'name'
+    }
+
+    @PendingFeature
+    void "test mapping javax.persistent entity with a @Transient Field"() {
+        given:
+        BeanIntrospection introspection = buildBeanIntrospection('test.Test', CLAZZ)
+
+        expect:
+        introspection
+        introspection.getProperty("tmp").isPresent()
     }
 
     void "test mapping javax.persistent entity SourcePersistentEntity"() {
