@@ -4990,19 +4990,10 @@ If a <code>LazyInitializationException</code> occurs this is not a bug in Micron
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import jakarta.persistence.*;
 
-import jakarta.persistence.*;
-
-@NamedStoredProcedureQuery(name = "calculateSum",
-    procedureName = "calculateSumInternal",
-    parameters = {
-        @StoredProcedureParameter(name = "productId", mode = ParameterMode.IN, type = Long.class),
-        @StoredProcedureParameter(name = "result", mode = ParameterMode.OUT, type = Long.class)
-    }
-)
 @Entity
-public class Product {
+class Product {
 
     @Id
     @GeneratedValue
@@ -5047,17 +5038,8 @@ public class Product {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">package example
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">import jakarta.persistence.*
 
-import jakarta.persistence.*
-
-@NamedStoredProcedureQuery(name = "calculateSum",
-        procedureName = "calculateSumInternal",
-        parameters = [
-            @StoredProcedureParameter(name = "productId", mode = ParameterMode.IN, type = Long.class),
-            @StoredProcedureParameter(name = "result", mode = ParameterMode.OUT, type = Long.class)
-        ]
-)
 @Entity
 class Product {
 
@@ -5080,28 +5062,11 @@ class Product {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">import jakarta.persistence.*
 
-import jakarta.persistence.Entity
-import jakarta.persistence.FetchType
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.Id
-import jakarta.persistence.ManyToOne
-import jakarta.persistence.NamedStoredProcedureQuery
-import jakarta.persistence.ParameterMode
-import jakarta.persistence.StoredProcedureParameter
-
-@NamedStoredProcedureQuery(
-    name = "calculateSum",
-    procedureName = "calculateSumInternal",
-    parameters = [StoredProcedureParameter(
-        name = "productId",
-        mode = ParameterMode.IN,
-        type = Long::class
-    ), StoredProcedureParameter(name = "result", mode = ParameterMode.OUT, type = Long::class)]
-)
 @Entity
 data class Product(
+
     @Id
     @GeneratedValue
     var id: Long?,
@@ -5355,12 +5320,18 @@ For <a href="#pagination">Pagination</a> queries that return a <a href="../api/i
 <div class="paragraph">
 <p>It&#8217;s possible to execute a stored procedure using the JPA provider:</p>
 </div>
+<div class="paragraph">
+<p>Repository with procedure methods:</p>
+</div>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Repository
 public interface ProductRepository extends CrudRepository&lt;Product, Long&gt;, JpaSpecificationExecutor&lt;Product&gt; {
-    @Join(value = "manufacturer", type = Join.Type.FETCH) // <b class="conum">(1)</b>
-    List&lt;Product&gt; list();
+    @Procedure(named = "calculateSum")
+    long calculateSum(Long productId); // <b class="conum">(1)</b>
+
+    @Procedure("calculateSumInternal")
+    long calculateSumCustom(Long productId); // <b class="conum">(2)</b>
 }</code></pre>
 </div>
 </div>
@@ -5368,8 +5339,11 @@ public interface ProductRepository extends CrudRepository&lt;Product, Long&gt;, 
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@Repository
 abstract class ProductRepository implements CrudRepository&lt;Product, Long&gt;, JpaSpecificationExecutor&lt;Product&gt; {
-    @Join(value = "manufacturer", type = Join.Type.FETCH) // <b class="conum">(1)</b>
-    abstract List&lt;Product&gt; list()
+    @Procedure(named = "calculateSum")
+    abstract long calculateSum(Long productId);
+
+    @Procedure("calculateSumInternal")
+    abstract long calculateSumCustom(Long productId);
 }</code></pre>
 </div>
 </div>
@@ -5377,16 +5351,20 @@ abstract class ProductRepository implements CrudRepository&lt;Product, Long&gt;,
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Repository
 interface ProductRepository : CrudRepository&lt;Product, Long&gt;, JpaSpecificationExecutor&lt;Product&gt; {
-    @Join(value = "manufacturer", type = Join.Type.FETCH) // <b class="conum">(1)</b>
-    fun list(): List&lt;Product&gt;
+    @Procedure(named = "calculateSum")
+    fun calculateSum(productId: Long): Long
+
+    @Procedure("calculateSumInternal")
+    fun calculateSumCustom(productId: Long): Long
 }</code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>An entity with named procedures defined:</p>
+</div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
-
-import jakarta.persistence.*;
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import jakarta.persistence.*;
 
 @NamedStoredProcedureQuery(name = "calculateSum",
     procedureName = "calculateSumInternal",
@@ -5396,54 +5374,12 @@ import jakarta.persistence.*;
     }
 )
 @Entity
-public class Product {
-
-    @Id
-    @GeneratedValue
-    private Long id;
-    private String name;
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    private Manufacturer manufacturer;
-
-    public Product(String name, Manufacturer manufacturer) {
-        this.name = name;
-        this.manufacturer = manufacturer;
-    }
-
-    public Product() {
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public Manufacturer getManufacturer() {
-        return manufacturer;
-    }
-
-    public void setManufacturer(Manufacturer manufacturer) {
-        this.manufacturer = manufacturer;
-    }
-}</code></pre>
+class Product {</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">package example
-
-import jakarta.persistence.*
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">import jakarta.persistence.*
 
 @NamedStoredProcedureQuery(name = "calculateSum",
         procedureName = "calculateSumInternal",
@@ -5453,37 +5389,12 @@ import jakarta.persistence.*
         ]
 )
 @Entity
-class Product {
-
-    @Id
-    @GeneratedValue
-    Long id
-    String name
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    Manufacturer manufacturer
-
-    Product(String name, Manufacturer manufacturer) {
-        this.name = name
-        this.manufacturer = manufacturer
-    }
-
-    Product() {
-    }
-}</code></pre>
+class Product {</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
-
-import jakarta.persistence.Entity
-import jakarta.persistence.FetchType
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.Id
-import jakarta.persistence.ManyToOne
-import jakarta.persistence.NamedStoredProcedureQuery
-import jakarta.persistence.ParameterMode
-import jakarta.persistence.StoredProcedureParameter
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">import jakarta.persistence.*
 
 @NamedStoredProcedureQuery(
     name = "calculateSum",
@@ -5495,14 +5406,7 @@ import jakarta.persistence.StoredProcedureParameter
     ), StoredProcedureParameter(name = "result", mode = ParameterMode.OUT, type = Long::class)]
 )
 @Entity
-data class Product(
-    @Id
-    @GeneratedValue
-    var id: Long?,
-    var name: String,
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    var manufacturer: Manufacturer
-)</code></pre>
+data class Product(</code></pre>
 </div>
 </div>
 <div class="colist arabic">
