@@ -27,6 +27,8 @@ import spock.lang.PendingFeature
 
 import java.util.function.Function
 
+import java.util.function.Function
+
 class EntityAnnotationMapperSpec extends AbstractTypeElementSpec {
 
     private static final String CLAZZ = '''
