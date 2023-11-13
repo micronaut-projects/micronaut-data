@@ -106,5 +106,6 @@ interface PersonRepository : CrudRepository<Person, Long>, JpaSpecificationExecu
     }
     // end::allSpecifications[]
     // end::specifications[]
-    // tag::repository[]
+// tag::repository[]
 }
+// end::repository[]

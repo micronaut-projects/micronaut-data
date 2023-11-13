@@ -3,7 +3,6 @@ package example
 
 // tag::entity[]
 // tag::entitywithprocedures[]
-
 import jakarta.persistence.*
 
 // end::entity[]
@@ -28,3 +27,4 @@ data class Product(
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     var manufacturer: Manufacturer
 )
+// end::entity[]
