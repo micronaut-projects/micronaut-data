@@ -18,11 +18,13 @@ import java.util.concurrent.CompletableFuture;
 // tag::join[]
 // tag::async[]
 // tag::specifications[]
+// tag::procedure[]
 @Repository
 public interface ProductRepository extends CrudRepository<Product, Long>, JpaSpecificationExecutor<Product> {
 // end::join[]
 // end::async[]
 // end::specifications[]
+// end::procedure[]
 
     // tag::join[]
     @Join(value = "manufacturer", type = Join.Type.FETCH) // <1>
@@ -91,7 +93,9 @@ public interface ProductRepository extends CrudRepository<Product, Long>, JpaSpe
 // tag::join[]
 // tag::async[]
 // tag::specifications[]
+// tag::procedure[]
 }
 // end::join[]
 // end::async[]
 // end::specifications[]
+// end::procedure[]
