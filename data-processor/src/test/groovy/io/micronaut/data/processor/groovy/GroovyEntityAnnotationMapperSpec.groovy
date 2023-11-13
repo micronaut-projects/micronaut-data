@@ -16,18 +16,23 @@
 package io.micronaut.data.processor.groovy
 
 import io.micronaut.ast.transform.test.AbstractBeanDefinitionSpec
+import io.micronaut.core.beans.BeanIntrospection
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.processor.model.SourcePersistentEntity
+import io.micronaut.inject.ast.ClassElement
+
+import java.util.function.Function
 
 class GroovyEntityAnnotationMapperSpec extends AbstractBeanDefinitionSpec {
 
-    void "test groovy mapping javax.persistent entity with empty indexes"() {
-        given:
-        def introspection = buildBeanIntrospection('test.Test', '''
+    private final static Function<String, String> CLAZZ = new Function<String, String>() {
+        @Override
+        String apply(String importPackage) {
+            """
 package test
 
-import javax.persistence.*
+import ${importPackage}.*
 
 @Entity
 @Table(name="test_tb1", indexes = [])
@@ -64,8 +69,14 @@ class Test {
         this.tmp = tmp
     }
 }
+"""
+        }
+    }
 
-''')
+
+    void "test groovy mapping javax.persistent entity with empty indexes"() {
+        given:
+        BeanIntrospection introspection = buildBeanIntrospection('test.Test', CLAZZ.apply('javax.persistence'))
         expect:
         introspection != null
         introspection.hasStereotype(MappedEntity)
@@ -83,48 +94,7 @@ class Test {
 
     void "test groovy mapping jakarta.persistent entity with empty indexes"() {
         given:
-        def introspection = buildBeanIntrospection('test.Test', '''
-package test
-
-import jakarta.persistence.*
-
-@Entity
-@Table(name="test_tb1", indexes = [])
-class Test {
-    private String name
-    @Id
-    private Long id
-    @Transient
-    private String tmp
-
-    @Column(name="test_name")
-    String getName() {
-        return name
-    }
-
-    void setName(String name) {
-        this.name = name
-    }
-
-
-    Long getId() {
-        return id
-    }
-
-    void setId(Long id) {
-        this.id = id
-    }
-
-    String getTmp() {
-        return tmp
-    }
-
-    void setTmp(String tmp) {
-        this.tmp = tmp
-    }
-}
-
-''')
+        BeanIntrospection introspection = buildBeanIntrospection('test.Test', CLAZZ.apply('jakarta.persistence'))
         expect:
         introspection != null
         introspection.hasStereotype(MappedEntity)
@@ -142,48 +112,7 @@ class Test {
 
     void "test groovy mapping javax.persistent entity with empty indexes SourcePersistentEntity"() {
         given:
-        def test = buildClassElement('test.Test', '''
-package test
-
-import javax.persistence.*
-
-@Entity
-@Table(name="test_tb1", indexes = [])
-class Test {
-    private String name
-    @Id
-    private Long id
-    @Transient
-    private String tmp
-
-    @Column(name="test_name")
-    String getName() {
-        return name
-    }
-
-    void setName(String name) {
-        this.name = name
-    }
-
-
-    Long getId() {
-        return id
-    }
-
-    void setId(Long id) {
-        this.id = id
-    }
-
-    String getTmp() {
-        return tmp
-    }
-
-    void setTmp(String tmp) {
-        this.tmp = tmp
-    }
-}
-
-''')
+        ClassElement test = buildClassElement('test.Test', CLAZZ.apply('javax.persistence'))
         expect:
         SourcePersistentEntity persistentEntity = new SourcePersistentEntity(test, (te) -> null)
         persistentEntity.getPersistentPropertyNames() == ["name", "id"]
@@ -191,48 +120,8 @@ class Test {
 
     void "test groovy mapping jakarta.persistent entity with empty indexes SourcePersistentEntity"() {
         given:
-        def test = buildClassElement('test.Test', '''
-package test
+        ClassElement test = buildClassElement('test.Test', CLAZZ.apply('jakarta.persistence'))
 
-import jakarta.persistence.*
-
-@Entity
-@Table(name="test_tb1", indexes = [])
-class Test {
-    private String name
-    @Id
-    private Long id
-    @Transient
-    private String tmp
-
-    @Column(name="test_name")
-    String getName() {
-        return name
-    }
-
-    void setName(String name) {
-        this.name = name
-    }
-
-
-    Long getId() {
-        return id
-    }
-
-    void setId(Long id) {
-        this.id = id
-    }
-
-    String getTmp() {
-        return tmp
-    }
-
-    void setTmp(String tmp) {
-        this.tmp = tmp
-    }
-}
-
-''')
         expect:
         SourcePersistentEntity persistentEntity = new SourcePersistentEntity(test, (te) -> null)
         persistentEntity.getPersistentPropertyNames() == ["name", "id"]
