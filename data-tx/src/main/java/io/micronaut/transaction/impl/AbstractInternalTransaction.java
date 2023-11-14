@@ -113,6 +113,11 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
 
     @Override
     public void registerSynchronization(@NonNull TransactionSynchronization synchronization) {
+        registerInvocationSynchronization(synchronization);
+    }
+
+    @Override
+    public void registerInvocationSynchronization(@NonNull TransactionSynchronization synchronization) {
         if (synchronizations == null) {
             synchronizations = new ArrayList<>(5);
         }
