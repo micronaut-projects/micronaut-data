@@ -484,39 +484,83 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
         then: "The insert worked"
             txEventsService.lastEvent?.title() == "The Stand"
             txEventsService.countBooksTransactional() == 1
+            txEventsService.events == ["BEFORE COMMIT: false", "BEFORE COMPLETION", "AFTER COMMIT", "AFTER COMPLETION: COMMITTED"]
 
         when: "A transaction is rolled back"
-            txEventsService.cleanLastEvent()
+            txEventsService.cleanup()
             txEventsService.insertAndRollback()
 
         then:
             def e = thrown(RuntimeException)
             e.message == 'Bad things happened'
             txEventsService.lastEvent == null
-            txEventsService.countBooksTransactional() == 1
-
+            txEventsService.countBooksTransactional() == 0
+            txEventsService.events == ["BEFORE COMPLETION", "AFTER COMPLETION: ROLLED_BACK"]
 
         when: "A transaction is rolled back"
+            txEventsService.cleanup()
+            txEventsService.insertAndRollbackWithOuterTransaction()
+
+        then:
+            e = thrown(RuntimeException)
+            e.message == 'Bad things happened'
+            txEventsService.lastEvent == null
+            txEventsService.countBooksTransactional() == 0
+            txEventsService.events == ["ENTER INNER", "OUTER BEFORE COMPLETION", "BEFORE COMPLETION", "OUTER AFTER COMPLETION: ROLLED_BACK", "AFTER COMPLETION: ROLLED_BACK"]
+
+        when: "A transaction is rolled back"
+            txEventsService.cleanup()
             txEventsService.insertAndRollbackChecked()
 
         then:
             def e2 = thrown(Exception)
             e2.message == 'Bad things happened'
             txEventsService.lastEvent == null
-            txEventsService.countBooksTransactional() == 1
+            txEventsService.countBooksTransactional() == 0
+            txEventsService.events == ["BEFORE COMPLETION", "AFTER COMPLETION: ROLLED_BACK"]
+
+        when: "A transaction is rolled back"
+            txEventsService.cleanup()
+            txEventsService.insertAndRollbackCheckedWithOuterTransaction()
+
+        then:
+            e2 = thrown(Exception)
+            e2.message == 'Bad things happened'
+            txEventsService.lastEvent == null
+            txEventsService.countBooksTransactional() == 0
+            txEventsService.events == ["ENTER INNER", "OUTER BEFORE COMPLETION", "BEFORE COMPLETION", "OUTER AFTER COMPLETION: ROLLED_BACK", "AFTER COMPLETION: ROLLED_BACK"]
 
         when: "A transaction is rolled back but the exception ignored"
+            txEventsService.cleanup()
             txEventsService.insertAndRollbackDontRollbackOn()
 
         then:
             thrown(IOException)
             if (supportsDontRollbackOn()) {
-                assert txEventsService.countBooksTransactional() == 2
+                assert txEventsService.countBooksTransactional() == 1
                 assert txEventsService.lastEvent
             } else {
-                assert txEventsService.countBooksTransactional() == 1
+                assert txEventsService.countBooksTransactional() == 0
                 assert txEventsService.lastEvent == null
             }
+
+        when:
+            txEventsService.cleanup()
+            txEventsService.insertWithOuterTransaction()
+        then:
+            noExceptionThrown()
+            txEventsService.lastEvent?.title() == "The Stand"
+            txEventsService.countBooksTransactional() == 1
+            txEventsService.events == ["ENTER INNER", "EXIT INNER", "OUTER BEFORE COMMIT: false", "BEFORE COMMIT: false", "OUTER BEFORE COMPLETION", "BEFORE COMPLETION", "OUTER AFTER COMMIT", "AFTER COMMIT", "OUTER AFTER COMPLETION: COMMITTED", "AFTER COMPLETION: COMMITTED"]
+
+        when:
+            txEventsService.cleanup()
+            txEventsService.insertWithOuterNewTransaction()
+        then:
+            noExceptionThrown()
+            txEventsService.lastEvent?.title() == "The Stand"
+            txEventsService.countBooksTransactional() == 1
+            txEventsService.events == ["ENTER INNER", "BEFORE COMMIT: false", "BEFORE COMPLETION", "AFTER COMMIT", "AFTER COMPLETION: COMMITTED", "EXIT INNER", "OUTER BEFORE COMMIT: false", "OUTER BEFORE COMPLETION", "OUTER AFTER COMMIT", "OUTER AFTER COMPLETION: COMMITTED"]
     }
 
     void "test TX managed"() {

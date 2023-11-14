@@ -16,6 +16,7 @@
 package io.micronaut.transaction.impl;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.exceptions.TransactionSuspensionNotSupportedException;
 import io.micronaut.transaction.support.TransactionSynchronization;
@@ -74,4 +75,11 @@ public interface InternalTransaction<T> extends TransactionStatus<T> {
     void triggerAfterCompletion(TransactionSynchronization.Status status);
 
     void cleanupAfterCompletion();
+
+    /**
+     * The variation of {@link #registerSynchronization(TransactionSynchronization)} that is always executed on the current TX invocation.
+     * The ordinary {@link #registerSynchronization(TransactionSynchronization)} will always bound the synchronization to the TX in progress.
+     * @param synchronization The synchronization
+     */
+    void registerInvocationSynchronization(@NonNull TransactionSynchronization synchronization);
 }

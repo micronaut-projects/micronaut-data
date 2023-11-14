@@ -125,7 +125,7 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
             FlushMode flushMode = session.getHibernateFlushMode();
             if (FlushMode.MANUAL.equals(flushMode)) {
                 session.setFlushMode(FlushMode.AUTO.toJpaFlushMode());
-                txStatus.registerSynchronization(new TransactionSynchronization() {
+                txStatus.registerInvocationSynchronization(new TransactionSynchronization() {
                     @Override
                     public void beforeCompletion() {
                         session.setFlushMode(flushMode.toJpaFlushMode());
@@ -144,7 +144,7 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
 
         if (!onComplete.isEmpty()) {
             Collections.reverse(onComplete);
-            txStatus.registerSynchronization(new TransactionSynchronization() {
+            txStatus.registerInvocationSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCompletion(Status status) {
                     if (isPhysicallyConnected(session)) {
