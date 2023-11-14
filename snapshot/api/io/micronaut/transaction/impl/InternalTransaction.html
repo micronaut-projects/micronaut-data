@@ -128,24 +128,29 @@ extends <a href="../TransactionStatus.html" title="interface in io.micronaut.tra
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Check if the current TX is nested.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#resume()" class="member-name-link">resume</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#registerInvocationSynchronization(io.micronaut.transaction.support.TransactionSynchronization)" class="member-name-link">registerInvocationSynchronization</a><wbr>(@NonNull <a href="../support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a>&nbsp;synchronization)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">The variation of <a href="../TransactionStatus.html#registerSynchronization(io.micronaut.transaction.support.TransactionSynchronization)"><code>TransactionStatus.registerSynchronization(TransactionSynchronization)</code></a> that is always executed on the current TX invocation.</div>
+</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#suspend()" class="member-name-link">suspend</a>()</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#resume()" class="member-name-link">resume</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#triggerAfterCommit()" class="member-name-link">triggerAfterCommit</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#suspend()" class="member-name-link">suspend</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#triggerAfterCompletion(io.micronaut.transaction.support.TransactionSynchronization.Status)" class="member-name-link">triggerAfterCompletion</a><wbr>(<a href="../support/TransactionSynchronization.Status.html" title="enum class in io.micronaut.transaction.support">TransactionSynchronization.Status</a>&nbsp;status)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#triggerAfterCommit()" class="member-name-link">triggerAfterCommit</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#triggerBeforeCommit()" class="member-name-link">triggerBeforeCommit</a>()</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#triggerAfterCompletion(io.micronaut.transaction.support.TransactionSynchronization.Status)" class="member-name-link">triggerAfterCompletion</a><wbr>(<a href="../support/TransactionSynchronization.Status.html" title="enum class in io.micronaut.transaction.support">TransactionSynchronization.Status</a>&nbsp;status)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#triggerBeforeCompletion()" class="member-name-link">triggerBeforeCompletion</a>()</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#triggerBeforeCommit()" class="member-name-link">triggerBeforeCommit</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#triggerBeforeCompletion()" class="member-name-link">triggerBeforeCompletion</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -245,6 +250,19 @@ extends <a href="../TransactionStatus.html" title="interface in io.micronaut.tra
 <section class="detail" id="cleanupAfterCompletion()">
 <h3>cleanupAfterCompletion</h3>
 <div class="member-signature"><span class="return-type">void</span>&nbsp;<span class="element-name">cleanupAfterCompletion</span>()</div>
+</section>
+</li>
+<li>
+<section class="detail" id="registerInvocationSynchronization(io.micronaut.transaction.support.TransactionSynchronization)">
+<h3>registerInvocationSynchronization</h3>
+<div class="member-signature"><span class="return-type">void</span>&nbsp;<span class="element-name">registerInvocationSynchronization</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="../support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a>&nbsp;synchronization)</span></div>
+<div class="block">The variation of <a href="../TransactionStatus.html#registerSynchronization(io.micronaut.transaction.support.TransactionSynchronization)"><code>TransactionStatus.registerSynchronization(TransactionSynchronization)</code></a> that is always executed on the current TX invocation.
+ The ordinary <a href="../TransactionStatus.html#registerSynchronization(io.micronaut.transaction.support.TransactionSynchronization)"><code>TransactionStatus.registerSynchronization(TransactionSynchronization)</code></a> will always bound the synchronization to the TX in progress.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>synchronization</code> - The synchronization</dd>
+</dl>
 </section>
 </li>
 </ul>
