@@ -42,7 +42,7 @@ You can use Micronaut Launch to create a pre-configured project:
 
 |===
 
-==== Micronaut Data and Lombok
+=== Micronaut Data and Lombok
 
 If you intend to use Lombok with Micronaut Data then you must place the Lombok annotation processor *before* the Micronaut processors in your build configuration since Micronaut needs to see the mutations to the AST that Lombok applies.
 
