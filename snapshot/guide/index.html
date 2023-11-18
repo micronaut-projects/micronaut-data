@@ -557,7 +557,7 @@ fun testAnnotationMetadata() {
 <div class="ulist">
 <ul>
 <li>
-<p>Procedure invocations in repositories</p>
+<p>Procedure invocations in repositories for <a href="#hibernateProcedures">Data JPA</a> and <a href="#dbcProcedures">Data JDBC/R2DBC</a></p>
 </li>
 <li>
 <p>Added possibility to have associations (JOINs) in DTOs</p>
@@ -566,13 +566,23 @@ fun testAnnotationMetadata() {
 <p>Support for inserts, updates and deletes with <code>RETURNING</code> clause in repositories</p>
 </li>
 <li>
-<p>MongoDB: Support <code>arrayFilters</code></p>
+<p>MongoDB: Support <a href="https://www.mongodb.com/docs/manual/reference/operator/update/positional-filtered/"><code>arrayFilters</code></a></p>
 </li>
 <li>
-<p>Kotlin: New coroutine variations of connection / transaction operations: <code>io.micronaut.data.connection.kotlin.CoroutineConnectionOperations</code>, <code>io.micronaut.transaction.kotlin.CoroutineTransactionOperations</code></p>
+<p>Kotlin: New coroutine variations of connection / transaction operations:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>io.micronaut.data.connection.kotlin.CoroutineConnectionOperations</code></p>
 </li>
 <li>
-<p>R2DBC: New connection status callback. Corrected cancellation.</p>
+<p><code>io.micronaut.transaction.kotlin.CoroutineTransactionOperations</code></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>R2DBC: New <a href="../api/io/micronaut/data/connection/reactive/ReactiveConnectionSynchronization.html">connection status callback</a>. Corrected cancellation.</p>
 </li>
 </ul>
 </div>
