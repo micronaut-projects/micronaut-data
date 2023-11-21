@@ -37,7 +37,7 @@ oracle-jdbc-driver = "23.3.0.23.09"
 
 benchmark-spring-data = "2023.0.5"
 spock = "2.2-groovy-4.0"
-testcontainers = "1.19.2"
+testcontainers = "1.19.3"
 jmh = "1.37"
 
 # Gradle plugins
