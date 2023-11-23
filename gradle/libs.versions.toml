@@ -26,7 +26,7 @@ managed-javax-persistence = "2.2"
 managed-jakarta-persistence-api = "3.1.0"
 managed-jakarta-transaction-api = "2.0.1"
 
-spring-data = "3.1.5"
+spring-data = "3.2.0"
 
 # JDBC Drivers
 
@@ -35,7 +35,7 @@ oracle-jdbc-driver = "23.3.0.23.09"
 
 # Testing and benchmarking
 
-benchmark-spring-data = "2023.0.5"
+benchmark-spring-data = "2023.1.0"
 spock = "2.2-groovy-4.0"
 testcontainers = "1.19.3"
 jmh = "1.37"
@@ -45,7 +45,7 @@ jmh = "1.37"
 ksp-gradle-plugin = "1.9.20-1.0.14"
 kotlin-gradle-plugin = "1.9.20"
 jmh-gradle-plugin = "0.7.2"
-spring-boot-gradle-plugin = "3.1.5"
+spring-boot-gradle-plugin = "3.2.0"
 spring-dependency-management-gradle-plugin = "1.1.4"
 shadow-gradle-plugin = "8.0.0"
 
