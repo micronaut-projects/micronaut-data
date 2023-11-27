@@ -79,7 +79,7 @@ class MultipleDataSourceSpec extends Specification {
     }
 
     void "verify intercepted connection"() {
-        when:"Intercepted connection does not method"
+        when:"Intercepted connection does have method implemented"
         def stmt = otherPersonRepository.prepareStatement("SELECT 1 FROM DUAL")
         def resultSet = stmt.executeQuery()
         then:
@@ -87,7 +87,7 @@ class MultipleDataSourceSpec extends Specification {
         def result = resultSet.getInt(1)
         result == 1
         noExceptionThrown()
-        when:"Intercepted connection does not have method"
+        when:"Intercepted connection does not have method implemented"
         otherPersonRepository.prepareStatement("SELECT 1 FROM DUAL", Statement.RETURN_GENERATED_KEYS)
         then:
         AbstractMethodError ex = thrown()
