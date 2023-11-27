@@ -113,6 +113,15 @@ You can now perform CRUD (Create, Read, Update, Delete) operations on the entity
 
 snippet::example.BookRepositorySpec[project-base="doc-examples/mongo-example", tags="inject", indent="0"]
 
+If entity classes are located outside the default package then packages containing entity classes need to be configured in MongoDB Configuration:
+[configuration]
+----
+mongodb:
+  package-names:
+    - com.example.domain
+    - com.example.other
+----
+
 === Saving an Instance (Create)
 
 To save an instance use the `save` method of the `CrudRepository` interface:
