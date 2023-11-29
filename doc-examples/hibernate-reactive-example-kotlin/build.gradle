@@ -40,4 +40,6 @@ dependencies {
 
     testResourcesService mnSql.postgresql
     testRuntimeOnly mnSql.ongres.scram.client
+
+    runtimeOnly libs.kotlin.reflect
 }

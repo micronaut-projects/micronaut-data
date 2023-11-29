@@ -85,6 +85,7 @@ kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8" }
 kotlin-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlin-coroutines" }
 kotlin-coroutines-reactor = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactor", version.ref = "kotlin-coroutines" }
 kotlin-coroutines-reactive = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactive", version.ref = "kotlin-coroutines" }
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }
 
 managed-jakarta-transaction-api = { module = "jakarta.transaction:jakarta.transaction-api", version.ref = "managed-jakarta-transaction-api" }
 
