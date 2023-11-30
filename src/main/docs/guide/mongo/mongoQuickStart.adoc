@@ -98,6 +98,16 @@ mongodb:
   uri: mongodb://username:password@localhost:27017/databaseName
 ----
 
+If entity classes are located outside the default package then packages containing entity classes need to be configured in MongoDB Configuration:
+[configuration]
+----
+mongodb:
+  uri: mongodb://username:password@localhost:27017/databaseName
+  package-names:
+    - com.example.domain
+    - com.example.other
+----
+
 To retrieve objects from the database you need to define a class annotated with ann:data.annotation.MappedEntity[]:
 
 snippet::example.Book[project-base="doc-examples/mongo-example", source="main", tags="book"]
@@ -112,15 +122,6 @@ snippet::example.BookRepository[project-base="doc-examples/mongo-example", sourc
 You can now perform CRUD (Create, Read, Update, Delete) operations on the entity. The implementation of `example.BookRepository` is created at compilation time. To obtain a reference to it simply inject the bean:
 
 snippet::example.BookRepositorySpec[project-base="doc-examples/mongo-example", tags="inject", indent="0"]
-
-If entity classes are located outside the default package then packages containing entity classes need to be configured in MongoDB Configuration:
-[configuration]
-----
-mongodb:
-  package-names:
-    - com.example.domain
-    - com.example.other
-----
 
 === Saving an Instance (Create)
 
