@@ -98,6 +98,16 @@ mongodb:
   uri: mongodb://username:password@localhost:27017/databaseName
 ----
 
+If entity classes are located outside the default package then packages containing entity classes need to be configured in MongoDB Configuration:
+[configuration]
+----
+mongodb:
+  uri: mongodb://username:password@localhost:27017/databaseName
+  package-names:
+    - com.example.domain
+    - com.example.other
+----
+
 To retrieve objects from the database you need to define a class annotated with ann:data.annotation.MappedEntity[]:
 
 snippet::example.Book[project-base="doc-examples/mongo-example", source="main", tags="book"]
