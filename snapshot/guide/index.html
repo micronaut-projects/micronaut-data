@@ -11727,6 +11727,67 @@ It&#8217;s not possible to use both drivers at the same time. If you have both d
 </div>
 </div>
 <div class="paragraph">
+<p>If entity classes are located outside the default package then packages containing entity classes need to be configured in MongoDB Configuration:</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">mongodb.uri=mongodb://username:password@localhost:27017/databaseName
+mongodb.package-names[0]=com.example.domain
+mongodb.package-names[1]=com.example.other</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">mongodb:
+  uri: mongodb://username:password@localhost:27017/databaseName
+  package-names:
+    - com.example.domain
+    - com.example.other</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[mongodb]
+  uri="mongodb://username:password@localhost:27017/databaseName"
+  package-names=[
+    "com.example.domain",
+    "com.example.other"
+  ]</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">mongodb {
+  uri = "mongodb://username:password@localhost:27017/databaseName"
+  packageNames = ["com.example.domain", "com.example.other"]
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  mongodb {
+    uri = "mongodb://username:password@localhost:27017/databaseName"
+    package-names = ["com.example.domain", "com.example.other"]
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "mongodb": {
+    "uri": "mongodb://username:password@localhost:27017/databaseName",
+    "package-names": ["com.example.domain", "com.example.other"]
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
 <p>To retrieve objects from the database you need to define a class annotated with <a href="../api/io/micronaut/data/annotation/MappedEntity.html">@MappedEntity</a>:</p>
 </div>
 <div class="listingblock multi-language-sample">
