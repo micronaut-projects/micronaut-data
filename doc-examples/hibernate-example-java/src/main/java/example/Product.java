@@ -57,3 +57,4 @@ class Product {
         this.manufacturer = manufacturer;
     }
 }
+// end::entity[]

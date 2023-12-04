@@ -113,7 +113,6 @@ interface BookRepository : CrudRepository<Book, Long> { // <2>
     fun findBooks(title: String): List<Book>
     // end::native[]
 
-    // end::native[]
     // tag::procedure[]
     @Procedure
     fun calculateSum(bookId: @NonNull Long): Long

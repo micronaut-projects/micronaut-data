@@ -10,7 +10,7 @@ import jakarta.validation.Valid
 import javax.sql.DataSource
 import org.springframework.jdbc.core.JdbcTemplate
 
-@Requires(property = "spec.name", value = "BookRepositoryTest") // tag::clazz[]
+@Requires(property = "spec.name", value = "BookRepositoryTest")
 // tag::clazz[]
 @JdbcRepository(dialect = Dialect.H2)
 abstract class AbstractBookRepository(dataSource: DataSource) : CrudRepository<@Valid Book, Long> { // <1>

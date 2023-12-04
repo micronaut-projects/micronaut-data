@@ -71,12 +71,10 @@ interface PersonRepository : CrudRepository<Person, ObjectId>, JpaSpecificationE
     override
     // tag::count[]
     fun count(spec: QuerySpecification<Person>?): Long
-
     // end::count[]
     override
     // tag::update[]
     fun updateAll(spec: UpdateSpecification<Person>?): Long
-
     // end::update[]
     override
     // tag::delete[]
@@ -86,8 +84,6 @@ interface PersonRepository : CrudRepository<Person, ObjectId>, JpaSpecificationE
     override
     // tag::delete[]
     fun deleteAll(spec: DeleteSpecification<Person>?): Long
-
-    // end::delete[]
 
     // end::delete[]
 
@@ -151,9 +147,10 @@ interface PersonRepository : CrudRepository<Person, ObjectId>, JpaSpecificationE
         }
 
         // tag::specifications[]
+        // tag::repository[]
     }
     // end::allSpecifications[]
     // end::specifications[]
-    // tag::repository[]
+    // end::repository[]
 }
 

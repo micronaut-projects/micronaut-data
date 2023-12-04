@@ -47,8 +47,6 @@ interface ProductRepository : CrudRepository<Product, Long>, JpaSpecificationExe
     fun countDistinctByManufacturerName(name: String): Single<Long>
     // end::reactive[]
 
-    // end::reactive[]
-
     // tag::procedure[]
     @Procedure(named = "calculateSum")
     fun calculateSum(productId: Long): Long
