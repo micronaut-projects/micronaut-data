@@ -763,8 +763,8 @@ fun testAnnotationMetadata() {
 <div class="sect1">
 <h2 id="_4_0_0">4.0.0</h2>
 <div class="sectionbody">
-<div class="sect4">
-<h5 id="_repositories_validation">Repositories validation</h5>
+<div class="sect2">
+<h3 id="_repositories_validation">Repositories validation</h3>
 <div class="paragraph">
 <p>Default repository interfaces no longer have Jakarta Validation annotations to validate the entity and the ID.
 To add the validation, annotate the repository&#8217;s generic type argument with Jakarta Validation annotations:</p>
@@ -777,14 +777,14 @@ public interface BookRepository implements CrudRepository&lt;@jakarta.validation
 </div>
 </div>
 </div>
-<div class="sect4">
-<h5 id="_repositories_now_return_list">Repositories now return <code>List</code></h5>
+<div class="sect2">
+<h3 id="_repositories_now_return_list">Repositories now return <code>List</code></h3>
 <div class="paragraph">
 <p>Find all return type changed to be <code>List</code> instead of <code>Iterable</code></p>
 </div>
 </div>
-<div class="sect4">
-<h5 id="_hibernate_transaction_manager">Hibernate transaction manager</h5>
+<div class="sect2">
+<h3 id="_hibernate_transaction_manager">Hibernate transaction manager</h3>
 <div class="paragraph">
 <p>The signature of the Hibernate transaction manager has changed to include <code>org.hibernate.Session</code> instead of a data source connection:</p>
 </div>
@@ -795,15 +795,15 @@ public TransactionOperations&lt;org.hibernate.Session&gt; hibernateTransactionOp
 </div>
 </div>
 </div>
-<div class="sect4">
-<h5 id="_transaction_manager">Transaction manager</h5>
+<div class="sect2">
+<h3 id="_transaction_manager">Transaction manager</h3>
 <div class="paragraph">
 <p>Micronaut 4 comes with a rewritten transaction propagation and management. It replaces the previous implementation forked form Spring Framework.
 The new implementation has a newly added connection management, allowing to share a connection between multiple repositories and services without an open transaction. The are new method supporting extracting the current transaction status <code>TransactionOperations#findTransactionStatus</code>. The <code>TransactionStatus</code> now includes information about the connection and the transaction definition.</p>
 </div>
 </div>
-<div class="sect4">
-<h5 id="_async_and_reactive_repositories">Async and Reactive repositories</h5>
+<div class="sect2">
+<h3 id="_async_and_reactive_repositories">Async and Reactive repositories</h3>
 <div class="paragraph">
 <p>Async and reactive repositories are no longer throw <code>EmptyResultException</code> if the entity is not found.</p>
 </div>
@@ -928,8 +928,8 @@ The new implementation has a newly added connection management, allowing to shar
 </tr>
 </tbody>
 </table>
-<div class="sect3">
-<h4 id="_micronaut_data_and_lombok">Micronaut Data and Lombok</h4>
+<div class="sect2">
+<h3 id="_micronaut_data_and_lombok">Micronaut Data and Lombok</h3>
 <div class="paragraph">
 <p>If you intend to use Lombok with Micronaut Data then you must place the Lombok annotation processor <strong>before</strong> the Micronaut processors in your build configuration since Micronaut needs to see the mutations to the AST that Lombok applies.</p>
 </div>
@@ -2315,6 +2315,34 @@ public interface UserRepositoryWithWhere {
 
     @Where("@.enabled = false")
     List&lt;User&gt; findDisabled();
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">package example
+
+import io.micronaut.data.annotation.Where
+
+interface UserRepositoryWithWhere {
+
+    // ...
+
+    @Where("@.enabled = false")
+    List&lt;User&gt; findDisabled()
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
+
+import io.micronaut.data.annotation.Where
+
+interface UserRepositoryWithWhere {
+    // ...
+    @Where("@.enabled = false")
+    fun findDisabled(): List&lt;User&gt;
 }</code></pre>
 </div>
 </div>
@@ -10197,8 +10225,8 @@ public class CountryRegion {
 <div class="paragraph">
 <p>In addition if you don&#8217;t want to repeat the above annotation definition on every entity it is handy to define a meta-annotation where the above annotation definition is applied to another annotation that you add to your class.</p>
 </div>
-<div class="sect3">
-<h4 id="_escaping_tablecolumn_name_identifiers">Escaping Table/Column Name Identifiers</h4>
+<div class="sect2">
+<h3 id="_escaping_tablecolumn_name_identifiers">Escaping Table/Column Name Identifiers</h3>
 <div class="paragraph">
 <p>In some cases it may be necessary to escape table and/or column names if characters are used within the names that are invalid without the presence of escaping.</p>
 </div>
@@ -10214,8 +10242,8 @@ public class CountryRegion {
 <p>Micronaut Data will generate SQL statements that escape table and column names within queries using the escape character that is appropriate for the configured SQL dialect.</p>
 </div>
 </div>
-<div class="sect3">
-<h4 id="_overriding_default_query_alias">Overriding default query alias</h4>
+<div class="sect2">
+<h3 id="_overriding_default_query_alias">Overriding default query alias</h3>
 <div class="paragraph">
 <p>The default query alias is the table name followed by an underscore. If you want to change it, specify it in the <a href="../api/io/micronaut/data/annotation/MappedEntity.html">@MappedEntity</a> annotation:</p>
 </div>
@@ -11240,8 +11268,7 @@ data class Manufacturer(
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@JdbcRepository(dialect = Dialect.H2)
 public interface ProductRepository extends CrudRepository&lt;Product, Long&gt; {
-    @Join(value = "manufacturer", type = Join.Type.FETCH)
-    // <b class="conum">(1)</b>
+    @Join(value = "manufacturer", type = Join.Type.FETCH) // <b class="conum">(1)</b>
     List&lt;Product&gt; list();
 }</code></pre>
 </div>
@@ -11349,7 +11376,11 @@ For <a href="#pagination">Pagination</a> queries that return a <a href="../api/i
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">    @Query("SELECT *, m_.name as m_name, m_.id as m_id FROM product p INNER JOIN manufacturer m_ ON p.manufacturer_id = m_.id WHERE p.name like :name limit 5")
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">    @Query("""
+        SELECT *, m_.name as m_name, m_.id as m_id
+        FROM product p
+        INNER JOIN manufacturer m_ ON p.manufacturer_id = m_.id
+        WHERE p.name like :name limit 5""")
     @Join(value = "manufacturer", alias = "m_")
     List&lt;Product&gt; searchProducts(String name);</code></pre>
 </div>
@@ -13616,7 +13647,7 @@ interface PersonRepository extends CrudRepository&lt;Person, ObjectId&gt;, JpaSp
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@MongoRepository
 interface PersonRepository : CrudRepository&lt;Person, ObjectId&gt;, JpaSpecificationExecutor&lt;Person&gt; {
-}</code></pre>
+    }</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -15327,7 +15358,7 @@ interface PersonRepository extends CrudRepository&lt;Person, ObjectId&gt;, JpaSp
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@MongoRepository
 interface PersonRepository : CrudRepository&lt;Person, ObjectId&gt;, JpaSpecificationExecutor&lt;Person&gt; {
-}</code></pre>
+    }</code></pre>
 </div>
 </div>
 <div class="paragraph">
