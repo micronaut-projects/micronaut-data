@@ -23,6 +23,7 @@ micronaut {
 
 dependencies {
     compileOnly projects.micronautDataProcessor
+    compileOnly mnSerde.micronaut.serde.api
     implementation projects.micronautDataR2dbc
     implementation mnSql.micronaut.jdbc.hikari
     implementation(libs.managed.jakarta.transaction.api)
@@ -30,6 +31,6 @@ dependencies {
     runtimeOnly mnR2dbc.r2dbc.postgresql
     runtimeOnly mnSql.postgresql
 
+    testImplementation mnSerde.micronaut.serde.api
     testImplementation mn.micronaut.http.client
-    implementation mnSerde.micronaut.serde.api
 }
