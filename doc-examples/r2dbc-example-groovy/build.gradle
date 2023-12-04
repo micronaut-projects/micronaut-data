@@ -31,5 +31,5 @@ dependencies {
     runtimeOnly mnSql.postgresql
 
     testImplementation mn.micronaut.http.client
-    compileOnly mnSerde.micronaut.serde.api
+    implementation mnSerde.micronaut.serde.api
 }
