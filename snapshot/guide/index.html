@@ -6520,7 +6520,7 @@ The <code>schema-generate</code> setting is only useful for demos and testing tr
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">compileOnly(<span class="hljs-string">"jakarta.persistence:jakarta.persistence-api:3.0.0")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">compileOnly(<span class="hljs-string">"jakarta.persistence:jakarta.persistence-api")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -6528,7 +6528,6 @@ The <code>schema-generate</code> setting is only useful for demos and testing tr
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;jakarta.persistence&lt;/groupId&gt;
     &lt;artifactId&gt;jakarta.persistence-api&lt;/artifactId&gt;
-    &lt;version&gt;3.0.0&lt;/version&gt;
     &lt;scope&gt;provided&lt;/scope&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
@@ -8786,7 +8785,23 @@ The semantics of the <code>FOR UPDATE</code> clause may vary depending on the da
 
 
 <div class="paragraph">
-<p>In some cases, you need to build a query programmatically and at the runtime; for that, Micronaut Data implements a subset of Jakarta Persistence Criteria API 3.0, which can be used for Micronaut Data JDBC and R2DBC features.</p>
+<p>In some cases, you need to build a query programmatically and at the runtime; for that, Micronaut Data implements a subset of Jakarta Persistence Criteria API 3.0, which can be used for Micronaut Data JDBC and R2DBC features. To utilize this feature add the following dependency:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"jakarta.persistence:jakarta.persistence-api")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;jakarta.persistence&lt;/groupId&gt;
+    &lt;artifactId&gt;jakarta.persistence-api&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div></p>
 </div>
 <div class="paragraph">
 <p>To implement queries that cannot be defined at the compile-time Micronaut Data introduces <a href="../api/io/micronaut/data/repository/JpaSpecificationExecutor.html">JpaSpecificationExecutor</a> repository interface that can be used to extend your repository interface:</p>
@@ -13624,7 +13639,23 @@ It&#8217;s possible to define the converter result type using <a href="../api/io
 
 
 <div class="paragraph">
-<p>In some cases, you need to build a query programmatically and at the runtime; for that, Micronaut Data implements a subset of Jakarta Persistence Criteria API 3.0, which can be used for Micronaut Data MongoDB features.</p>
+<p>In some cases, you need to build a query programmatically and at the runtime; for that, Micronaut Data implements a subset of Jakarta Persistence Criteria API 3.0, which can be used for Micronaut Data MongoDB features. To utilize this feature add the following dependency:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"jakarta.persistence:jakarta.persistence-api")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;jakarta.persistence&lt;/groupId&gt;
+    &lt;artifactId&gt;jakarta.persistence-api&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div></p>
 </div>
 <div class="paragraph">
 <p>To implement queries that cannot be defined at the compile-time Micronaut Data introduces <a href="../api/io/micronaut/data/repository/JpaSpecificationExecutor.html">JpaSpecificationExecutor</a> repository interface that can be used to extend your repository interface:</p>
@@ -15335,7 +15366,23 @@ abstract class AbstractBookRepository : CrudRepository&lt;Book, String&gt; {
 
 
 <div class="paragraph">
-<p>In some cases, you need to build a query programmatically and at the runtime; for that, Micronaut Data implements a subset of Jakarta Persistence Criteria API 3.0, which can be used for Micronaut Data Azure Cosmos features.</p>
+<p>In some cases, you need to build a query programmatically and at the runtime; for that, Micronaut Data implements a subset of Jakarta Persistence Criteria API 3.0, which can be used for Micronaut Data Azure Cosmos features. To utilize this feature add the following dependency:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"jakarta.persistence:jakarta.persistence-api")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;jakarta.persistence&lt;/groupId&gt;
+    &lt;artifactId&gt;jakarta.persistence-api&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div></p>
 </div>
 <div class="paragraph">
 <p>To implement queries that cannot be defined at the compile-time Micronaut Data introduces <a href="../api/io/micronaut/data/repository/JpaSpecificationExecutor.html">JpaSpecificationExecutor</a> repository interface that can be used to extend your repository interface:</p>
