@@ -78,7 +78,7 @@ dependencies {
     testCompileOnly projects.micronautDataProcessor
 
     testResourcesService mnSql.mariadb.java.client
-    testResourcesService libs.drivers.jdbc.oracle
+    testResourcesService mnSql.ojdbc11
     testResourcesService mnSql.mysql.connector.java
     testResourcesService mnSql.postgresql
     testResourcesService mnSql.mssql.jdbc
