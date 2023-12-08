@@ -28,11 +28,6 @@ managed-jakarta-transaction-api = "2.0.1"
 
 spring-data = "3.2.0"
 
-# JDBC Drivers
-
-# Need to leave it here because micronaut-sql uses older version. When it's upgraded there then we can remove this declaration here
-oracle-jdbc-driver = "23.3.0.23.09"
-
 # Testing and benchmarking
 
 benchmark-spring-data = "2023.1.0"
@@ -96,10 +91,6 @@ managed-jakarta-persistence-api = { module = "jakarta.persistence:jakarta.persis
 
 spring-data-jpa = { module = "org.springframework.data:spring-data-jpa", version.ref = "spring-data" }
 spring-data-commons = { module = "org.springframework.data:spring-data-commons", version.ref = "spring-data" }
-
-# JDBC
-
-drivers-jdbc-oracle = { module = "com.oracle.database.jdbc:ojdbc8", version.ref = "oracle-jdbc-driver" }
 
 # AZURE COSMOS
 
