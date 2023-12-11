@@ -66,6 +66,8 @@
                                 
                                 <div class="toc-item" style="margin-left:0"><a href="#spring"><strong>11</strong><span>Spring Data Support</span></a></div>
                                 
+                                <div class="toc-item" style="margin-left:0"><a href="#dataGuides"><strong>12</strong><span>Guides</span></a></div>
+                                
                             </div>
                         </div>
                     </li>
@@ -322,6 +324,8 @@
         <div class="toc-item" style="margin-left:0px" id="toc-item-graal"><a href="#graal"><strong>10</strong><span>Going Native with GraalVM</span></a></div>
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-spring"><a href="#spring"><strong>11</strong><span>Spring Data Support</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-dataGuides"><a href="#dataGuides"><strong>12</strong><span>Guides</span></a></div>
         
         </div>
     </div>
@@ -6179,6 +6183,18 @@ The examples are using <code>block</code> to retrieve the result, in your applic
 </tr>
 </table>
 </div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+See the guide for <a href="https://guides.micronaut.io/latest/micronaut-data-hibernate-reactive.html">Access a Database with Micronaut Data and Hibernate Reactive</a> to learn more.
+</td>
+</tr>
+</table>
+</div>
 </div>
 
 <h1 id="dbc"><a class="anchor" href="#dbc"></a>6 Micronaut Data JDBC and R2DBC</h1>
@@ -7046,6 +7062,18 @@ datasources.default.dialect=H2</code></pre>
 </td>
 <td class="content">
 The dialect setting in configuration does <strong>not</strong> replace the need to ensure the correct dialect is set at the repository. If the dialect is H2 in configuration, the repository should have <code>@JdbcRepository(dialect = Dialect.H2)</code> / <code>@R2dbcRepository(dialect = Dialect.H2)</code>. Because repositories are computed at compile time, the configuration value is not known at that time.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+See the guide for <a href="https://guides.micronaut.io/latest/micronaut-data-jdbc-repository.html">Access a Database with Micronaut Data JDBC</a> to learn more.
 </td>
 </tr>
 </table>
@@ -8199,6 +8227,18 @@ override fun &lt;S : Book&gt; saveAll(entities: Iterable&lt;S&gt;): Flow&lt;S&gt
 </div>
 <div class="paragraph">
 <p>Note that persistence events are most commonly used to pre-populate database properties prior to performing an insert (for example encoding a password etc.) these types of operations typically don&#8217;t involve blocking I/O and are safe to perform.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+See the guide for <a href="https://guides.micronaut.io/latest/micronaut-data-r2dbc-repository.html">Access a Database with Micronaut Data R2DBC</a> to learn more.
+</td>
+</tr>
+</table>
 </div>
 
 <h2 id="dbcRepositories"><a class="anchor" href="#dbcRepositories"></a>6.3 Repositories</h2>
@@ -14512,6 +14552,18 @@ interface StudentRepository : CrudRepository&lt;Student, ObjectId&gt; {
 }</code></pre>
 </div>
 </div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+See the guides for <a href="https://guides.micronaut.io/latest/micronaut-data-mongodb-synchronous.html">Access a MongoDB Database with Micronaut Data MongoDB</a> and <a href="https://guides.micronaut.io/latest/micronaut-data-mongodb-asynchronous.html">Access a MongoDB Database Asynchronously with Micronaut Data MongoDB and Reactive Streams</a> to learn more.
+</td>
+</tr>
+</table>
+</div>
 
 <h1 id="azureCosmos"><a class="anchor" href="#azureCosmos"></a>8 Micronaut Data Azure Cosmos</h1>
 
@@ -16864,6 +16916,26 @@ You can add additional method candidates by creating a library that depends on <
 </div>
 </div></p>
 </div>
+</div>
+
+<h1 id="dataGuides"><a class="anchor" href="#dataGuides"></a>12 Guides</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/dataGuides.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Read from the following list of guides to learn more about working with Micronaut Data in the Micronaut Framework:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://guides.micronaut.io/latest/tag-micronaut_data.html">Micronaut Data Guides</a></p>
+</li>
+</ul>
 </div>
 
     </div>
