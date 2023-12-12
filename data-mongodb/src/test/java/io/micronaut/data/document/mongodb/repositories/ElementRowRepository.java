@@ -1,5 +1,6 @@
 package io.micronaut.data.document.mongodb.repositories;
 
+import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.document.mongodb.entities.ElementRow;
 import io.micronaut.data.mongodb.annotation.MongoAggregateQuery;
 import io.micronaut.data.mongodb.annotation.MongoRepository;
@@ -19,9 +20,21 @@ public interface ElementRowRepository extends CrudRepository<ElementRow, ObjectI
         + "{ $project: { _id: 0, segregatedCount: { $arrayToObject: '$segregatedCount'}, totalCount: 1} } ]")
     ElementCountResponse customAggregateCount(long eventId, String rowState);
 
+    @MongoAggregateQuery("""
+        [{ $match: {$and: [{ eventId: :eventId}, {rowState: :rowState}] } },
+        { $group: { _id: '$subType', count: { $sum: 1 }, total: { $sum: 1 } } },
+        { $group: { _id: null, segregatedCount: { $push: { k: '$_id', v: '$count'} }, totalCount: { $sum: '$total'}} },
+        { $project: { _id: 0, segregatedCount: { $arrayToObject: '$segregatedCount'}, totalCount: 1} } ]
+        """)
+    @ParameterExpression(name = "eventId", expression = "#{customDto.eventId}")
+    @ParameterExpression(name = "rowState", expression = "#{customDto.rowState}")
+    ElementCountResponse customAggregateCountExpression(CustomDto customDto);
+
     @MongoAggregateQuery("[{ $match: {subType: :subType} },"
         + "{$group: {_id: '', eventIds: {$push: '$eventId'}}}, {$project: {eventIds:  1, _id:  0}}]")
     ElementEventIdsResponse customAggregateEventIds(String subType);
+
+    record CustomDto(long eventId, String rowState) {}
 
     @Serdeable
     class ElementCountResponse {

@@ -216,5 +216,10 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
         public Object getValue() {
             return p.getValue();
         }
+
+        @Override
+        public boolean isExpression() {
+            return p.isExpression();
+        }
     }
 }

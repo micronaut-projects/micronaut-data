@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Expandable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.TypeDef;
@@ -145,11 +146,16 @@ public interface BookRepository extends ReactorPageableRepository<Book, Long>, R
     @Query("SELECT b FROM Book b WHERE b.author = :author")
     Flux<Book> findByAuthor(Author author);
 
-    @Query("INSERT INTO Book(title, pages, author) VALUES (:title, :pages, :author)")
+    @Query("INSERT INTO Book(title, totalPages) VALUES (:title, :totalPages)")
     Mono<Void> saveCustom(Collection<Book> books);
 
-    @Query("INSERT INTO Book(title, pages, author) VALUES (:title, :pages, :author)")
+    @Query("INSERT INTO Book(title, totalPages) VALUES (:title, :totalPages)")
     Mono<Void> saveCustomSingle(Book book);
+
+    @Query("INSERT INTO Book(title, totalPages) VALUES (:title, :totalPages)")
+    @ParameterExpression(name = "title", expression = "#{book.title + 'XYZ'}")
+    @ParameterExpression(name = "totalPages", expression = "#{book.totalPages}")
+    Mono<Void> saveCustomSingleExpressions(Book book);
 
     @Query("DELETE FROM Book WHERE title = :title")
     Mono<Integer> deleteCustom(Collection<Book> books);

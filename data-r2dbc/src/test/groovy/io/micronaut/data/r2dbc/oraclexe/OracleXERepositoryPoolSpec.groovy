@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.r2dbc.oraclexe
 
-import spock.lang.IgnoreIf
-
 class OracleXERepositoryPoolSpec extends OracleXERepositorySpec {
 
     @Override

@@ -92,6 +92,11 @@ public @interface DataMethodQueryParameter {
     String META_MEMBER_EXPANDABLE = "expandable";
 
     /**
+     * The member name that holds expression flag.
+     */
+    String META_MEMBER_EXPRESSION = "expression";
+
+    /**
      * @return The query parameter name
      */
     String name() default "";

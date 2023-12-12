@@ -89,6 +89,11 @@ public class QueryParameter implements Named, BindingParameter {
         PersistentPropertyPath outgoingQueryParameterProperty = bindingContext.getOutgoingQueryParameterProperty();
         return new QueryParameterBinding() {
             @Override
+            public String getName() {
+                return name;
+            }
+
+            @Override
             public String getKey() {
                 return name;
             }

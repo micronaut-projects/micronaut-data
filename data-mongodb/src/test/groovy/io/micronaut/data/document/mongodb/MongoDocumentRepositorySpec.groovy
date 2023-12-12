@@ -572,6 +572,35 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
         elementRowRepository.deleteAll()
     }
 
+    void 'test aggregate with collection expressions'() {
+        given:
+        def eventId1 = 1L
+        def eventId2 = 2L
+        elementRowRepository.saveAll(List.of(new ElementRow(eventId: eventId1, rowState: "ACTIVE", subType: "VCP"),
+                new ElementRow(eventId: eventId1, rowState: "ACTIVE", subType: "VCP"),
+                new ElementRow(eventId: eventId2, rowState: "INACTIVE", subType: "VCP"),
+                new ElementRow(eventId: eventId1, rowState: "ACTIVE", subType: "TP"),
+                new ElementRow(eventId: eventId2, rowState: "ACTIVE", subType: "TP")))
+        when:
+        def result = elementRowRepository.customAggregateCountExpression(new ElementRowRepository.CustomDto(eventId1, "ACTIVE"))
+        then:
+        result
+        result.totalCount == 3
+        result.segregatedCount["VCP"] == 2
+        result.segregatedCount["TP"] == 1
+        when:
+        def arrayResult = elementRowRepository.customAggregateEventIds("VCP")
+        then:
+        arrayResult
+        def eventIds = arrayResult.eventIds
+        eventIds.size() == 3
+        eventIds[0] == eventId1
+        eventIds[1] == eventId1
+        eventIds[2] == eventId2
+        cleanup:
+        elementRowRepository.deleteAll()
+    }
+
     @Memoized
     MongoExecutorPersonRepository getMongoExecutorPersonRepository() {
         return context.getBean(MongoExecutorPersonRepository)
