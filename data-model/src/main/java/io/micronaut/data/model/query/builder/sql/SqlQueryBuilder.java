@@ -961,6 +961,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 builder = "BEGIN " + builder + " RETURNING JSON_VALUE(" + columnName + ",'$." + identityName + "') INTO " + formatParameter(key + 1) + "; END;";
             }
             parameterBindings.add(new QueryParameterBinding() {
+
+                @Override
+                public String getName() {
+                    return String.valueOf(key);
+                }
+
                 @Override
                 public String getKey() {
                     return String.valueOf(key);
@@ -1007,6 +1013,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     String[] path = asStringPath(associations, property);
                     parameterBindings.add(new QueryParameterBinding() {
                         @Override
+                        public String getName() {
+                            return key;
+                        }
+
+                        @Override
                         public String getKey() {
                             return key;
                         }
@@ -1041,6 +1052,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
                 String key = String.valueOf(values.size());
                 parameterBindings.add(new QueryParameterBinding() {
+
+                    @Override
+                    public String getName() {
+                        return key;
+                    }
+
                     @Override
                     public String getKey() {
                         return key;
@@ -1105,6 +1122,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         String key = String.valueOf(values.size());
                         String[] path = asStringPath(associations, property);
                         parameterBindings.add(new QueryParameterBinding() {
+
+                            @Override
+                            public String getName() {
+                                return key;
+                            }
+
                             @Override
                             public String getKey() {
                                 return key;

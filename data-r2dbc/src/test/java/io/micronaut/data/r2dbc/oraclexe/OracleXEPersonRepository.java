@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.r2dbc.oraclexe;
 
+import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
@@ -41,4 +42,7 @@ public interface OracleXEPersonRepository extends PersonRepository {
     @Query("INSERT INTO person(id, name, age, enabled) VALUES (\"PERSON_SEQ\".nextval, :name, :age, 1)")
     int saveCustomSingle(Person people);
 
+    @Override
+    @Query("INSERT INTO person(id, name, age, enabled) VALUES (\"PERSON_SEQ\".nextval, :name, :age, 1)")
+    int saveCustomSingleExpression(Person person);
 }

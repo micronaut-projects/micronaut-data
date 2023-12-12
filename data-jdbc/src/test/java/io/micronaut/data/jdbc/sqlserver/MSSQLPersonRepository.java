@@ -41,4 +41,7 @@ public interface MSSQLPersonRepository extends PersonRepository {
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, 1)")
     int saveCustomSingle(Person people);
 
+    @Override
+    @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, 1)")
+    int saveCustomSingleExpression(Person person);
 }

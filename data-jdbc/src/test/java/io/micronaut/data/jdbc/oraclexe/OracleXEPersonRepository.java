@@ -41,4 +41,7 @@ public interface OracleXEPersonRepository extends PersonRepository {
     @Query("INSERT INTO person(id, name, age, enabled) VALUES (\"PERSON_SEQ\".nextval, :name, :age, 1)")
     int saveCustomSingle(Person people);
 
+    @Override
+    @Query("INSERT INTO person(id, name, age, enabled) VALUES (\"PERSON_SEQ\".nextval, :name, :age, 1)")
+    int saveCustomSingleExpression(Person person);
 }

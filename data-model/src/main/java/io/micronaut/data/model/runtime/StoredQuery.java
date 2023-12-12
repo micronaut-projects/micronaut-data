@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.model.runtime;
 
+import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.naming.Named;
 import io.micronaut.core.reflect.ReflectionUtils;
@@ -222,6 +224,16 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      */
     default boolean isJsonEntity() {
         return false;
+    }
+
+    /**
+     * Parameter expressions.
+     * @return Parameter expressions.
+     * @since 4.5.0
+     */
+    @Experimental
+    default Map<String, AnnotationValue<?>> getParameterExpressions() {
+        return Map.of();
     }
 
     /**

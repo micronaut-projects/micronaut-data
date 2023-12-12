@@ -36,6 +36,10 @@ public interface OracleXEPersonReactiveRepository extends PersonReactiveReposito
     @Query("INSERT INTO person(id, name, age, enabled) VALUES (\"PERSON_SEQ\".nextval, :name, :age, 1)")
     Mono<Long> saveCustomSingle(Person people);
 
+    @Override
+    @Query("INSERT INTO person(id, name, age, enabled) VALUES (\"PERSON_SEQ\".nextval, :name, :age, 1)")
+    Mono<Long> saveCustomSingleExpression(Person person);
+
     @Procedure
     Mono<Integer> add1(int input);
 

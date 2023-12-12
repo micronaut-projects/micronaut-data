@@ -12,10 +12,12 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MicronautTest
@@ -96,6 +98,25 @@ class BookRepositorySpec {
         bookRepository.deleteById(id);
         // end::delete[]
         assertEquals(0, bookRepository.count());
+    }
+
+    @Test
+    void testExpressions() {
+        assertEquals(0, bookRepository.count());
+
+        Book book = new Book();
+        book.setTitle("The Stand");
+        book.setPages(1000);
+        bookRepository.insertCustomExp(book);
+        assertNull(book.getId()); // Custom query doesn't update generated ID
+        assertEquals(1, bookRepository.count());
+        Iterator<Book> iterator = bookRepository.findAll().iterator();
+        assertTrue(iterator.hasNext());
+
+        book = iterator.next();
+        assertNotNull(book);
+        assertEquals("The StandABC", book.getTitle()); // Modified by expression
+
     }
 
     @Test

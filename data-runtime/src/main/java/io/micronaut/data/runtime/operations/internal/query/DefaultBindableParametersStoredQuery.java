@@ -16,6 +16,7 @@
 package io.micronaut.data.runtime.operations.internal.query;
 
 import io.micronaut.aop.InvocationContext;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanWrapper;
@@ -30,6 +31,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
+import io.micronaut.inject.annotation.EvaluatedAnnotationValue;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -97,7 +99,22 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
         RuntimePersistentProperty<Object> persistentProperty = null;
         Argument<?> argument = null;
         if (value == null) {
-            if (binding.getParameterIndex() != -1) {
+            if (binding.isExpression()) {
+                requireInvocationContext(invocationContext);
+                AnnotationValue<?> annotationValue = storedQuery.getParameterExpressions().get(binding.getName());
+                if (annotationValue == null) {
+                    throw new IllegalStateException("Required annotation value for parameter expression: " + binding.getName());
+                }
+                if (annotationValue instanceof EvaluatedAnnotationValue<?> evaluatedAnnotationValue) {
+                    evaluatedAnnotationValue = evaluatedAnnotationValue.withArguments(
+                        invocationContext.getTarget(),
+                        invocationContext.getParameterValues()
+                    );
+                    value = evaluatedAnnotationValue.get("expression", Argument.OBJECT_ARGUMENT).orElseThrow();
+                } else {
+                    throw new IllegalStateException("Required evaluated annotation value for parameter expression: " + binding.getName());
+                }
+            } else if (binding.getParameterIndex() != -1) {
                 requireInvocationContext(invocationContext);
                 value = resolveParameterValue(binding, invocationContext.getParameterValues());
                 argument = invocationContext.getArguments()[binding.getParameterIndex()];

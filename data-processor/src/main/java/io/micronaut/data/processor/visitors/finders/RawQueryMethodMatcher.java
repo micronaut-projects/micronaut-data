@@ -16,10 +16,13 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.context.annotation.Parameter;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.data.annotation.DataAnnotationUtils;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.expressions.EvaluatedExpressionReference;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.annotation.TypeRole;
@@ -30,12 +33,20 @@ import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.criteria.impl.SourceParameterExpressionImpl;
+import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MatchFailedException;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.Utils;
+import io.micronaut.expressions.context.DefaultExpressionCompilationContextFactory;
+import io.micronaut.expressions.context.ExpressionCompilationContext;
+import io.micronaut.expressions.parser.CompoundEvaluatedEvaluatedExpressionParser;
+import io.micronaut.expressions.parser.compilation.ExpressionVisitorContext;
 import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.inject.ast.ElementQuery;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
+import io.micronaut.inject.ast.PropertyElement;
+import io.micronaut.inject.processing.ProcessingException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -76,6 +87,8 @@ public class RawQueryMethodMatcher implements MethodMatcher {
 
                 @Override
                 public MethodMatchInfo buildMatchInfo(MethodMatchContext matchContext) {
+                    boolean implicitQueries = matchContext.getRepositoryClass().booleanValue(RepositoryConfiguration.class, "implicitQueries").orElse(true);
+
                     MethodElement methodElement = matchContext.getMethodElement();
 
                     ParameterElement[] parameters = matchContext.getParameters();
@@ -93,9 +106,11 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                     String query = matchContext.getAnnotationMetadata().stringValue(Query.class).orElseThrow(IllegalStateException::new);
                     DataMethod.OperationType operationType = findOperationType(methodElement.getName(), query, readOnly);
 
+                    // Don't use implicit entity interceptors for implicit-query repositories
+                    // Otherwise JPA's implicit interceptors will not use a custom query
                     FindersUtils.InterceptorMatch entry = FindersUtils.resolveInterceptorTypeByOperationType(
                             entityParameter != null,
-                            entitiesParameter != null,
+                        entitiesParameter != null,
                             operationType,
                             matchContext);
                     ClassElement resultType = entry.returnType();
@@ -140,7 +155,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
 
                     methodMatchInfo.dto(isDto);
 
-                    buildRawQuery(matchContext, methodMatchInfo, entityParameter, entitiesParameter, operationType);
+                    buildRawQuery(matchContext, methodMatchInfo, entityParameter, entitiesParameter, operationType, implicitQueries);
 
                     if (entityParameter != null) {
                         methodMatchInfo.addParameterRole(TypeRole.ENTITY, entityParameter.getName());
@@ -197,7 +212,8 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                                MethodMatchInfo methodMatchInfo,
                                ParameterElement entityParameter,
                                ParameterElement entitiesParameter,
-                               DataMethod.OperationType operationType) {
+                               DataMethod.OperationType operationType,
+                               boolean implicitQueries) {
         MethodElement methodElement = matchContext.getMethodElement();
         String queryString = methodElement.stringValue(Query.class).orElseThrow(() ->
                 new IllegalStateException("Should only be called if Query has value!")
@@ -220,11 +236,11 @@ public class RawQueryMethodMatcher implements MethodMatcher {
         String cq = matchContext.getAnnotationMetadata().stringValue(Query.class, "countQuery")
                 .orElse(null);
         QueryResult countQueryResult = cq == null ? null : getQueryResult(matchContext, cq, parameters, namedParameters, entityParam, persistentEntity);
-        boolean encodeEntityParameters = persistentEntity != null || operationType == DataMethod.OperationType.INSERT;
-        if (encodeEntityParameters && (operationType == DataMethod.OperationType.INSERT &&
-            DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(matchContext.getAnnotationMetadata()))) {
-                encodeEntityParameters = false;
-
+        boolean encodeEntityParameters;
+        if (implicitQueries) {
+            encodeEntityParameters = persistentEntity != null || operationType == DataMethod.OperationType.INSERT;
+        } else {
+            encodeEntityParameters = false;
         }
         methodMatchInfo
                 .isRawQuery(true)
@@ -241,6 +257,10 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                                        SourcePersistentEntity persistentEntity) {
         Matcher matcher = VARIABLE_PATTERN.matcher(queryString.replace("\\:", ""));
 
+        List<AnnotationValue<ParameterExpression>> parameterExpressions = matchContext.getMethodElement()
+            .getAnnotationMetadata()
+            .getAnnotationValuesByType(ParameterExpression.class);
+
         List<QueryParameterBinding> parameterBindings = new ArrayList<>(parameters.size());
         List<String> queryParts = new ArrayList<>();
         int index = 1;
@@ -252,58 +272,23 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             }
             lastOffset = matcher.end(3);
             String name = matcher.group(3);
+            BindingContext bindingContext;
             if (namedParameters) {
-                Optional<ParameterElement> element = parameters.stream()
-                        .filter(p -> p.stringValue(Parameter.class).orElse(p.getName()).equals(name))
-                        .findFirst();
-                if (element.isPresent()) {
-                    PersistentPropertyPath propertyPath = matchContext.getRootEntity().getPropertyPath(name);
-                    BindingContext bindingContext = BindingContext.create()
-                            .name(name)
-                            .incomingMethodParameterProperty(propertyPath)
-                            .outgoingQueryParameterProperty(propertyPath);
-                    parameterBindings.add(bindingParameter(matchContext, element.get()).bind(bindingContext));
-                } else if (persistentEntity != null) {
-                    PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(name);
-                    if (propertyPath == null) {
-                        throw new MatchFailedException("Cannot update non-existent property: " + name);
-                    } else {
-                        BindingContext bindingContext = BindingContext.create()
-                                .name(name)
-                                .incomingMethodParameterProperty(propertyPath)
-                                .outgoingQueryParameterProperty(propertyPath);
-                        parameterBindings.add(bindingParameter(matchContext, entityParam, true).bind(bindingContext));
-                    }
-                } else {
-                    throw new MatchFailedException("No method parameter found for named Query parameter: " + name);
-                }
+                bindingContext = BindingContext.create().name(name);
             } else {
-                Optional<ParameterElement> element = parameters.stream()
-                        .filter(p -> p.stringValue(Parameter.class).orElse(p.getName()).equals(name))
-                        .findFirst();
-                if (element.isPresent()) {
-                    PersistentPropertyPath propertyPath = matchContext.getRootEntity().getPropertyPath(name);
-                    BindingContext bindingContext = BindingContext.create()
-                            .index(index++)
-                            .incomingMethodParameterProperty(propertyPath)
-                            .outgoingQueryParameterProperty(propertyPath);
-                    parameterBindings.add(bindingParameter(matchContext, element.get()).bind(bindingContext));
-                } else if (persistentEntity != null) {
-                    PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(name);
-                    if (propertyPath == null) {
-                        matchContext.fail("Cannot update non-existent property: " + name);
-                    } else {
-                        BindingContext bindingContext = BindingContext.create()
-                                .index(index++)
-                                .incomingMethodParameterProperty(propertyPath)
-                                .outgoingQueryParameterProperty(propertyPath);
-                        parameterBindings.add(bindingParameter(matchContext, entityParam, true).bind(bindingContext));
-                    }
-                } else {
-                    throw new MatchFailedException("No method parameter found for named Query parameter: " + name);
-                }
+                bindingContext = BindingContext.create().index(index++);
             }
+            QueryParameterBinding queryParameterBinding = addBinding(
+                matchContext,
+                parameters,
+                parameterExpressions,
+                entityParam,
+                persistentEntity,
+                name,
+                bindingContext);
+            parameterBindings.add(queryParameterBinding);
         }
+
         queryString = queryString.replace("\\:", ":");
         if (queryParts.isEmpty()) {
             queryParts.add(queryString);
@@ -334,16 +319,93 @@ public class RawQueryMethodMatcher implements MethodMatcher {
         };
     }
 
-    private SourceParameterExpressionImpl bindingParameter(MethodMatchContext matchContext, ParameterElement element) {
+    public static QueryParameterBinding addBinding(MethodMatchContext matchContext,
+                                                   List<ParameterElement> parameters,
+                                                   List<AnnotationValue<ParameterExpression>> parameterExpressions,
+                                                   ParameterElement entityParam,
+                                                   SourcePersistentEntity persistentEntity,
+                                                   String name,
+                                                   BindingContext bindingContext) {
+        Optional<AnnotationValue<ParameterExpression>> parameterExpression = parameterExpressions.stream()
+            .filter(av -> av.stringValue("name").orElse("").equals(name))
+            .findFirst();
+        if (parameterExpression.isPresent()) {
+            ClassElement type = extractExpressionType(matchContext, parameterExpression.orElseThrow());
+
+            PersistentPropertyPath propertyPath = matchContext.getRootEntity().getPropertyPath(name);
+            bindingContext = bindingContext
+                .incomingMethodParameterProperty(propertyPath)
+                .outgoingQueryParameterProperty(propertyPath);
+
+            return bindingParameter(matchContext, name, type)
+                .bind(bindingContext);
+        }
+        Optional<ParameterElement> element = parameters.stream()
+            .filter(p -> p.stringValue(Parameter.class).orElse(p.getName()).equals(name))
+            .findFirst();
+        if (element.isPresent()) {
+            PersistentPropertyPath propertyPath = matchContext.getRootEntity().getPropertyPath(name);
+            bindingContext = bindingContext
+                .incomingMethodParameterProperty(propertyPath)
+                .outgoingQueryParameterProperty(propertyPath);
+            return bindingParameter(matchContext, element.get())
+                .bind(bindingContext);
+        }
+        if (persistentEntity != null) {
+            PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(name);
+            if (propertyPath == null) {
+                throw new MatchFailedException("Cannot update non-existent property: " + name);
+            } else {
+                bindingContext = bindingContext
+                    .incomingMethodParameterProperty(propertyPath)
+                    .outgoingQueryParameterProperty(propertyPath);
+                return bindingParameter(matchContext, entityParam, true)
+                    .bind(bindingContext);
+            }
+        }
+        throw new MatchFailedException("No method parameter found for named Query parameter: " + name);
+    }
+
+    private static SourceParameterExpressionImpl bindingParameter(MethodMatchContext matchContext, ParameterElement element) {
         return bindingParameter(matchContext, element, false);
     }
 
-    private SourceParameterExpressionImpl bindingParameter(MethodMatchContext matchContext, ParameterElement element, boolean isEntityParameter) {
+    private static SourceParameterExpressionImpl bindingParameter(MethodMatchContext matchContext, ParameterElement element, boolean isEntityParameter) {
         return new SourceParameterExpressionImpl(
                 Utils.getConfiguredDataTypes(matchContext.getRepositoryClass()),
                 matchContext.getParameters(),
                 element,
                 isEntityParameter);
+    }
+
+    private static SourceParameterExpressionImpl bindingParameter(MethodMatchContext matchContext,
+                                                                  String name,
+                                                                  ClassElement type) {
+        return new SourceParameterExpressionImpl(
+                Utils.getConfiguredDataTypes(matchContext.getRepositoryClass()),
+            name,
+            type);
+    }
+
+
+    /**
+     * Extract the expression type.
+     * @param matchContext The match context
+     * @param parameterExpression The parameter expression
+     * @return the type
+     */
+    public static ClassElement extractExpressionType(MatchContext matchContext, AnnotationValue<ParameterExpression> parameterExpression) {
+        Object expressionValue = parameterExpression.getValues().get("expression");
+        if (expressionValue instanceof String) {
+            throw new ProcessingException(matchContext.getMethodElement(), "Expected an expression '#{...}' found a string!");
+        }
+        EvaluatedExpressionReference ref = (EvaluatedExpressionReference) expressionValue;
+        DefaultExpressionCompilationContextFactory factory = new DefaultExpressionCompilationContextFactory(matchContext.getVisitorContext());
+        ExpressionCompilationContext compilationContext = factory.buildContextForMethod(ref, matchContext.getMethodElement());
+        String expression = (String) ref.annotationValue();
+        return new CompoundEvaluatedEvaluatedExpressionParser(expression)
+            .parse()
+            .resolveClassElement(new ExpressionVisitorContext(compilationContext, matchContext.getVisitorContext(), null));
     }
 
 }
