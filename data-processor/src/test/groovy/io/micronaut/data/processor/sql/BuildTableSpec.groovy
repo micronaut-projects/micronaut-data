@@ -131,7 +131,6 @@ class Test {
         sql == 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"date_created" TIMESTAMP WITH TIME ZONE);'
     }
 
-//    @PendingFeature(reason = "Waiting for https://github.com/micronaut-projects/micronaut-core/pull/4343")
     void "test custom parent entity with generics"() {
         given:
         def entity = buildJpaEntity('test.Test', '''
