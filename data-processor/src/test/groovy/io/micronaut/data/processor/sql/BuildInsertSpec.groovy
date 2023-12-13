@@ -25,7 +25,6 @@ import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.ast.ClassElement
 import io.micronaut.inject.writer.BeanDefinitionVisitor
-import spock.lang.PendingFeature
 import spock.lang.Unroll
 
 import static io.micronaut.data.processor.visitors.TestUtils.getDataInterceptor
@@ -315,7 +314,6 @@ interface MyInterface extends CrudRepository<Person, Long> {
         getParameterPropertyPaths(method) == ['name', 'age', 'enabled', 'publicId', 'company.myId'] as String[]
     }
 
-    @PendingFeature(reason = "Bug in Micronaut core. Fixed by https://github.com/micronaut-projects/micronaut-core/commit/f6a488677d587be309d5b0abd8925c9a098cfdf9")
     void "test build SQL insert statement for repo with no super interface"() {
         given:
         BeanDefinition beanDefinition = buildBeanDefinition('test.TestBookPageRepository' + BeanDefinitionVisitor.PROXY_SUFFIX, """
@@ -330,7 +328,7 @@ import io.micronaut.data.tck.entities.ShelfBook;
 
 @Repository
 @RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false)
-interface TestBookPageRepository extends io.micronaut.data.tck.repositories.BookPageRepository {
+interface TestBookPageRepository extends io.micronaut.data.tck.repositories.ShelfBookRepository {
 
 }
 """)
@@ -339,7 +337,7 @@ interface TestBookPageRepository extends io.micronaut.data.tck.repositories.Book
         expect:
 
         getQuery(method) == 'INSERT INTO "shelf_book" ("shelf_id","book_id") VALUES (?,?)'
-        getParameterPropertyPaths(method) == ['name', 'age', 'enabled', 'publicId'] as String[]
+        getParameterPropertyPaths(method) == ['shelf.id', 'book.id'] as String[]
     }
 
     void "test build SQL update"() {
