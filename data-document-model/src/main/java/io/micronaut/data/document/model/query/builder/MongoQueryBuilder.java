@@ -810,7 +810,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
                     } else if (projection instanceof QueryModel.MaxProjection) {
                         addProjection(groupObj, pp, "$max", propertyPersistName);
                     } else if (projection instanceof QueryModel.CountDistinctProjection) {
-                        throw new UnsupportedOperationException("Not implemented yet");
+                        // TODO: Implement count distinct properly
+                        // this was the same as count before https://github.com/micronaut-projects/micronaut-data/issues/2695
+                        countObj.put("$count", "result");
                     } else {
                         projectionObj.put(propertyPersistName, 1);
                     }
