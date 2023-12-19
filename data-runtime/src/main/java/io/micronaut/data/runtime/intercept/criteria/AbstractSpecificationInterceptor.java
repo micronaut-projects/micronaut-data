@@ -210,7 +210,11 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                 criteriaQuery.where(predicate);
             }
         }
-        criteriaQuery.select(criteriaBuilder.count(root));
+        if (criteriaQuery.isDistinct()) {
+            criteriaQuery.select(criteriaBuilder.countDistinct(root));
+        } else {
+            criteriaQuery.select(criteriaBuilder.count(root));
+        }
         QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(sqlQueryBuilder);
         storedQuery = QueryResultStoredQuery.count(context.getName(), context.getAnnotationMetadata(), queryResult, rootEntity);
         return storedQuery;

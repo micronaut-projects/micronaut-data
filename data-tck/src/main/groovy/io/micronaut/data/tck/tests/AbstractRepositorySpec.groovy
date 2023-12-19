@@ -546,6 +546,12 @@ abstract class AbstractRepositorySpec extends Specification {
 
     void "test distinct"() {
         given:
+        def student1 = studentRepository.save(new Student(name: "Peter"))
+        def student2 = studentRepository.save(new Student(name: "Ivone"))
+        def book1 = bookRepository.save(new Book(title: "The Roman Triumph", totalPages: 700, students: Set.of(student2)))
+        def book2 = bookRepository.save(new Book(title: "Pompeii", totalPages: 450, students: Set.of(student1, student2)))
+        def book3 = bookRepository.save(new Book(title: "Roman Presences", totalPages: 300, students: Set.of(student1, student2)))
+
         personRepository.deleteAll()
         when:"People with same name diff age are saved"
         personRepository.save(new Person(name: "Fred", age: 50))
@@ -557,6 +563,20 @@ abstract class AbstractRepositorySpec extends Specification {
         personRepository.findAll(distinct()).size() == 2
         names.size() == 1
         names[0] == "Fred"
+
+        when:
+        def bookTitles = List.of(book1.title, book2.title, book3.title)
+        def students = studentRepository.findAll (StudentRepository.byBookTitles(bookTitles))
+        // without distinct logic applied in StudentRepository.byBookTitles this would return more count than
+        // student.size() because of left join
+        def studentCount = studentRepository.count(StudentRepository.byBookTitles(bookTitles))
+        then:
+        students.size() == 2
+        studentCount == 2
+        cleanup:
+        personRepository.deleteAll()
+        studentRepository.deleteAll()
+        bookRepository.deleteAll()
     }
 
     void "test save many"() {
