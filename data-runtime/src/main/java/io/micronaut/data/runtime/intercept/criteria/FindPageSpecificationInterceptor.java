@@ -21,7 +21,6 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 
 import java.util.List;
@@ -38,7 +37,7 @@ public class FindPageSpecificationInterceptor extends AbstractSpecificationInter
     /**
      * Default constructor.
      *
-     * @param operations            The operations
+     * @param operations The operations
      */
     protected FindPageSpecificationInterceptor(RepositoryOperations operations) {
         super(operations);
@@ -52,22 +51,19 @@ public class FindPageSpecificationInterceptor extends AbstractSpecificationInter
 
         Pageable pageable = getPageable(context);
         if (pageable.isUnpaged()) {
-            PreparedQuery<?, ?> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.FIND_PAGE);
-            Iterable<?> iterable = operations.findAll(preparedQuery);
+            Iterable<?> iterable = findAll(methodKey, context, Type.FIND_PAGE);
             List<Object> resultList = (List<Object>) CollectionUtils.iterableToList(iterable);
             return Page.of(
-                    resultList,
-                    pageable,
-                    resultList.size()
+                resultList,
+                pageable,
+                resultList.size()
             );
         }
-        PreparedQuery<?, ?> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.FIND_PAGE);
-        PreparedQuery<?, Number> countQuery = preparedQueryForCriteria(methodKey, context, Type.COUNT);
 
-        Iterable<?> iterable = operations.findAll(preparedQuery);
+        Iterable<?> iterable = findAll(methodKey, context, Type.FIND_PAGE);
         List<Object> resultList = (List<Object>) CollectionUtils.iterableToList(iterable);
 
-        Number count = operations.findOne(countQuery);
+        Number count = count(methodKey, context);
 
         Page page = Page.of(resultList, getPageable(context), count != null ? count.longValue() : 0);
         Class<Object> rt = context.getReturnType().getType();

@@ -19,7 +19,6 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 import org.reactivestreams.Publisher;
 
@@ -42,10 +41,9 @@ public class ExistsReactiveSpecificationInterceptor extends AbstractReactiveSpec
 
     @Override
     public Publisher<Boolean> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Publisher<Boolean>> context) {
-        PreparedQuery<?, Boolean> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.EXISTS);
         return Publishers.convertPublisher(
             conversionService,
-            reactiveOperations.exists(preparedQuery),
+            existsReactive(methodKey, context),
             context.getReturnType().getType()
         );
     }

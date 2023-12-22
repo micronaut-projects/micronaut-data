@@ -19,10 +19,8 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 
-import java.util.Iterator;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -45,15 +43,6 @@ public class CountAsyncSpecificationInterceptor extends AbstractAsyncSpecificati
 
     @Override
     public CompletionStage<Number> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, CompletionStage<Number>> context) {
-        PreparedQuery<?, Long> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.COUNT);
-        return asyncOperations.findAll(preparedQuery)
-                .thenApply(longs -> {
-                    long result = 0L;
-                    Iterator<Long> i = longs.iterator();
-                    if (i.hasNext()) {
-                        result = i.next();
-                    }
-                    return result;
-                });
+        return countAsync(methodKey, context).thenApply(number -> convertNumberToReturnType(context, number));
     }
 }
