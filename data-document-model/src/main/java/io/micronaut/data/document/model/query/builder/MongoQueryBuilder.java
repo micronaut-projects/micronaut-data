@@ -794,6 +794,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
                     throw new UnsupportedOperationException("Not implemented yet");
                 } else if (projection instanceof QueryModel.IdProjection) {
                     projectionObj.put(MONGO_ID_FIELD, 1);
+                } else if (projection instanceof QueryModel.CountDistinctRootProjection) {
+                    // TODO: Implement count distinct against entity id(s)
+                    countObj.put("$count", "result");
                 } else if (projection instanceof QueryModel.PropertyProjection pp) {
                     String propertyName = pp.getPropertyName();
                     PersistentPropertyPath propertyPath = entity.getPropertyPath(propertyName);
@@ -812,9 +815,6 @@ public final class MongoQueryBuilder implements QueryBuilder {
                     } else if (projection instanceof QueryModel.CountDistinctProjection) {
                         // TODO: Implement count distinct properly
                         // this was the same as count before https://github.com/micronaut-projects/micronaut-data/issues/2695
-                        countObj.put("$count", "result");
-                    } else if (projection instanceof QueryModel.CountDistinctRootProjection) {
-                        // TODO: Implement count distinct against entity id(s)
                         countObj.put("$count", "result");
                     } else {
                         projectionObj.put(propertyPersistName, 1);
