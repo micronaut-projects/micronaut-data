@@ -1145,4 +1145,29 @@ interface StudentRepository extends GenericRepository<Student, Long> {
             getQuery(method) == 'SELECT MAX(student_.id) FROM io.micronaut.data.tck.entities.Student AS student_ WHERE (student_.id IN (:p1))'
             getResultDataType(method) == DataType.LONG
     }
+
+    void "test count query for entity with composite id"() {
+        given:
+        def repository = buildRepository('test.UserRoleRepository', """
+
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.jdbc.entities.UserRole;
+import io.micronaut.data.tck.jdbc.entities.UserRoleId;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
+
+    int count();
+
+    int countDistinct();
+}
+""")
+        def countQuery = getQuery(repository.getRequiredMethod("count"))
+        def countDistinctQuery = getQuery(repository.getRequiredMethod("countDistinct"))
+
+        expect:
+        countQuery == 'SELECT COUNT(*) FROM `user_role_composite` user_role_'
+        countDistinctQuery == 'SELECT COUNT(DISTINCT( CONCAT(user_role_.`id_user_id`,user_role_.`id_role_id`))) FROM `user_role_composite` user_role_'
+    }
 }

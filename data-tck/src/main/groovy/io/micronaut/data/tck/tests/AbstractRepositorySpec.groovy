@@ -48,7 +48,9 @@ import io.micronaut.data.tck.entities.Person
 import io.micronaut.data.tck.entities.Student
 import io.micronaut.data.tck.entities.TimezoneBasicTypes
 import io.micronaut.data.tck.jdbc.entities.Role
+import io.micronaut.data.tck.jdbc.entities.User
 import io.micronaut.data.tck.jdbc.entities.UserRole
+import io.micronaut.data.tck.jdbc.entities.UserRoleId
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.transaction.SynchronousTransactionManager
 import io.micronaut.transaction.TransactionCallback
@@ -558,11 +560,22 @@ abstract class AbstractRepositorySpec extends Specification {
         personRepository.save(new Person(name: "Fred", age: 18))
         def names = personRepository.findDistinctName()
 
+        io.micronaut.data.tck.jdbc.entities.User user1 = userRepository.save(new io.micronaut.data.tck.jdbc.entities.User("user1@email.com"))
+        io.micronaut.data.tck.jdbc.entities.Role role1 = roleRepository.save(new io.micronaut.data.tck.jdbc.entities.Role("manager"))
+        io.micronaut.data.tck.jdbc.entities.Role role2 = roleRepository.save(new io.micronaut.data.tck.jdbc.entities.Role("developer"))
+        userRoleRepository.save(new io.micronaut.data.tck.jdbc.entities.UserRole(new io.micronaut.data.tck.jdbc.entities.UserRoleId(user1, role1)))
+        userRoleRepository.save(new io.micronaut.data.tck.jdbc.entities.UserRole(new io.micronaut.data.tck.jdbc.entities.UserRoleId(user1, role2)))
+        def userRoleCount = userRoleRepository.count()
+        def userRoleDistinctCount = userRoleRepository.countDistinct()
+
         then:"Distinct works as expected"
         personRepository.findDistinct().size() == 2
         personRepository.findAll(distinct()).size() == 2
         names.size() == 1
         names[0] == "Fred"
+
+        userRoleCount == 2
+        userRoleDistinctCount == 2
 
         when:
         def bookTitles = List.of(book1.title, book2.title, book3.title)
@@ -570,6 +583,7 @@ abstract class AbstractRepositorySpec extends Specification {
         // without distinct logic applied in StudentRepository.byBookTitles this would return more count than
         // student.size() because of left join
         def studentCount = studentRepository.count(StudentRepository.byBookTitles(bookTitles))
+
         then:
         students.size() == 2
         studentCount == 2
@@ -577,6 +591,9 @@ abstract class AbstractRepositorySpec extends Specification {
         personRepository.deleteAll()
         studentRepository.deleteAll()
         bookRepository.deleteAll()
+        userRoleRepository.deleteAll()
+        userRepository.deleteAll()
+        roleRepository.deleteAll()
     }
 
     void "test save many"() {

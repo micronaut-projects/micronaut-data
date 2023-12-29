@@ -97,9 +97,8 @@ public final class QueryModelSelectionVisitor implements SelectionVisitor {
                 }
             }
             case COUNT_DISTINCT -> {
-                if (expression instanceof PersistentEntityRoot persistentEntityRoot) {
-                    PersistentProperty identity = persistentEntityRoot.getPersistentEntity().getIdentity();
-                    return Projections.countDistinct(identity.getName());
+                if (expression instanceof PersistentEntityRoot) {
+                    return Projections.countDistinctRoot();
                 } else if (expression instanceof PersistentPropertyPath) {
                     return Projections.countDistinct(((PersistentPropertyPath<?>) expression).getPathAsString());
                 } else {

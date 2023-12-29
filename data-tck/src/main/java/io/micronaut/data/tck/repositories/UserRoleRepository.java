@@ -43,6 +43,8 @@ public interface UserRoleRepository extends GenericRepository<UserRole, UserRole
 
     int count();
 
+    int countDistinct();
+
     @Join("role")
     Iterable<Role> findRoleByUser(User user);
 
