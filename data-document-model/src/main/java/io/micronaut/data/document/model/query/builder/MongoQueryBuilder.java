@@ -795,7 +795,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 } else if (projection instanceof QueryModel.IdProjection) {
                     projectionObj.put(MONGO_ID_FIELD, 1);
                 } else if (projection instanceof QueryModel.CountDistinctRootProjection) {
-                    // TODO: Implement count distinct against entity id(s)
+                    // same as count
                     countObj.put("$count", "result");
                 } else if (projection instanceof QueryModel.PropertyProjection pp) {
                     String propertyName = pp.getPropertyName();
@@ -813,8 +813,8 @@ public final class MongoQueryBuilder implements QueryBuilder {
                     } else if (projection instanceof QueryModel.MaxProjection) {
                         addProjection(groupObj, pp, "$max", propertyPersistName);
                     } else if (projection instanceof QueryModel.CountDistinctProjection) {
-                        // TODO: Implement count distinct properly
-                        // this was the same as count before https://github.com/micronaut-projects/micronaut-data/issues/2695
+                        // before adding support for count distinct in https://github.com/micronaut-projects/micronaut-data/issues/2695
+                        // it was producing the same query as this
                         countObj.put("$count", "result");
                     } else {
                         projectionObj.put(propertyPersistName, 1);
