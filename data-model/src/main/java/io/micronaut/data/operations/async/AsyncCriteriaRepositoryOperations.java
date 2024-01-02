@@ -16,15 +16,12 @@
 package io.micronaut.data.operations.async;
 
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.data.operations.RepositoryOperations;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.CriteriaUpdate;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
 /**

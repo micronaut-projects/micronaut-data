@@ -16,13 +16,9 @@
 package io.micronaut.data.operations.reactive;
 
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.async.annotation.SingleResult;
-import io.micronaut.data.operations.RepositoryOperations;
-import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.CriteriaUpdate;
-import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 

@@ -16,9 +16,6 @@
 package io.micronaut.data.operations.reactive;
 
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.data.operations.CriteriaRepositoryOperations;
-import io.micronaut.data.operations.RepositoryOperations;
-import io.micronaut.data.operations.async.AsyncCriteriaRepositoryOperations;
 
 /**
  * The operations capable of supporting reactive access.

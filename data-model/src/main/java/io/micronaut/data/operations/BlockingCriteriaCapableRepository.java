@@ -16,7 +16,6 @@
 package io.micronaut.data.operations;
 
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.data.operations.reactive.ReactiveCriteriaRepositoryOperations;
 
 /**
  * An async or reactive {@link CriteriaRepositoryOperations} capable of supporting blocking access.
