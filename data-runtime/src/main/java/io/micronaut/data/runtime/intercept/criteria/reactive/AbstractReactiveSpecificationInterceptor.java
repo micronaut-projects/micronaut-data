@@ -27,6 +27,7 @@ import io.micronaut.data.operations.reactive.ReactiveCriteriaRepositoryOperation
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Mono;
 
 import java.util.Set;
 
@@ -96,7 +97,8 @@ public abstract class AbstractReactiveSpecificationInterceptor<T, R> extends Abs
         if (reactiveCriteriaOperations != null) {
             return reactiveCriteriaOperations.findOne(buildExistsQuery(context, methodJoinPaths));
         }
-        return reactiveOperations.findOne(preparedQueryForCriteria(methodKey, context, Type.EXISTS, methodJoinPaths));
+        return Mono.from(reactiveOperations.findOne(preparedQueryForCriteria(methodKey, context, Type.EXISTS, methodJoinPaths)))
+            .map(one -> one instanceof Boolean aBoolean ? aBoolean : one != null);
     }
 
     protected final Publisher<Number> deleteAllReactive(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {

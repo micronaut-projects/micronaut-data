@@ -102,7 +102,8 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
         if (asyncCriteriaOperations != null) {
             return asyncCriteriaOperations.findOne(buildExistsQuery(context, methodJoinPaths));
         }
-        return asyncOperations.findOne(preparedQueryForCriteria(methodKey, context, Type.EXISTS, methodJoinPaths));
+        return asyncOperations.findOne(preparedQueryForCriteria(methodKey, context, Type.EXISTS, methodJoinPaths))
+            .thenApply(one -> one instanceof Boolean aBoolean ? aBoolean : one != null);
     }
 
     protected final CompletionStage<Number> deleteAllAsync(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {

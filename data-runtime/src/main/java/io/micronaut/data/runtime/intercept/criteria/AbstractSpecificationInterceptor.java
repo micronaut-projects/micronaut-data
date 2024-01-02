@@ -172,7 +172,8 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         if (criteriaRepositoryOperations != null) {
             return criteriaRepositoryOperations.findOne(buildExistsQuery(context, methodJoinPaths));
         }
-        return operations.findOne(preparedQueryForCriteria(methodKey, context, Type.EXISTS, methodJoinPaths));
+        Object one = operations.findOne(preparedQueryForCriteria(methodKey, context, Type.EXISTS, methodJoinPaths));
+        return one instanceof Boolean aBoolean ? aBoolean : one != null;
     }
 
     protected final Optional<Number> deleteAll(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
