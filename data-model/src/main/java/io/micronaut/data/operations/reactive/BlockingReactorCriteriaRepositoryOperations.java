@@ -15,13 +15,13 @@
  */
 package io.micronaut.data.operations.reactive;
 
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.async.propagation.ReactorPropagation;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.data.operations.BlockingCriteriaCapableRepository;
 import io.micronaut.data.operations.CriteriaRepositoryOperations;
-import io.micronaut.data.operations.RepositoryOperations;
 import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.CriteriaUpdate;
@@ -37,6 +37,7 @@ import java.util.Optional;
  * @author Denis Stepanov
  * @since 4.5.0
  */
+@Experimental
 public interface BlockingReactorCriteriaRepositoryOperations extends CriteriaRepositoryOperations,
     BlockingCriteriaCapableRepository,
     ReactorCriteriaCapableRepository {
