@@ -161,10 +161,13 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     @NonNull
     protected final Long count(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
         Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
+        Long count;
         if (criteriaRepositoryOperations != null) {
-            return criteriaRepositoryOperations.findOne(buildCountQuery(context));
+            count =  criteriaRepositoryOperations.findOne(buildCountQuery(context));
+        } else {
+            count = operations.findOne(preparedQueryForCriteria(methodKey, context, Type.COUNT, methodJoinPaths));
         }
-        return operations.findOne(preparedQueryForCriteria(methodKey, context, Type.COUNT, methodJoinPaths));
+        return count == null ? 0 : count;
     }
 
     protected final boolean exists(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
@@ -204,7 +207,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         if (type == Type.FIND_ALL || type == Type.FIND_ONE || type == Type.FIND_PAGE) {
             storedQuery = buildFind(methodKey, context, type, methodJoinPaths);
         } else if (type == Type.COUNT) {
-            storedQuery = buildCount(methodKey, context, methodJoinPaths);
+            storedQuery = buildCount(methodKey, context);
         } else if (type == Type.DELETE_ALL) {
             storedQuery = buildDeleteAll(context, sqlQueryBuilder);
         } else if (type == Type.UPDATE_ALL) {
@@ -281,8 +284,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     }
 
     private <E> StoredQuery<E, ?> buildCount(RepositoryMethodKey methodKey,
-                                             MethodInvocationContext<T, R> context,
-                                             Set<JoinPath> methodJoinPaths) {
+                                             MethodInvocationContext<T, R> context) {
         CriteriaQuery<Long> criteriaQuery = buildCountQuery(context);
         QueryBuilder sqlQueryBuilder = getQueryBuilder(methodKey, context);
         QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(sqlQueryBuilder);

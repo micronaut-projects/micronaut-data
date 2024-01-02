@@ -65,7 +65,8 @@ public interface BlockingReactorCriteriaRepositoryOperations extends CriteriaRep
         return reactive().findAll(query)
             .collectList()
             .contextWrite(getContextView())
-            .block();
+            .blockOptional()
+            .orElseGet(List::of);
     }
 
     @Override

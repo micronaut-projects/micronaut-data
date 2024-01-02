@@ -63,9 +63,9 @@ public class FindPageSpecificationInterceptor extends AbstractSpecificationInter
         Iterable<?> iterable = findAll(methodKey, context, Type.FIND_PAGE);
         List<Object> resultList = (List<Object>) CollectionUtils.iterableToList(iterable);
 
-        Number count = count(methodKey, context);
+        Long count = count(methodKey, context);
 
-        Page page = Page.of(resultList, getPageable(context), count != null ? count.longValue() : 0);
+        Page page = Page.of(resultList, getPageable(context), count);
         Class<Object> rt = context.getReturnType().getType();
         if (rt.isInstance(page)) {
             return page;
