@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.operations;
 
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -31,6 +32,7 @@ import java.util.Optional;
  * @author Denis Stepanov
  * @since 4.5.0
  */
+@Experimental
 public interface CriteriaRepositoryOperations {
 
     /**

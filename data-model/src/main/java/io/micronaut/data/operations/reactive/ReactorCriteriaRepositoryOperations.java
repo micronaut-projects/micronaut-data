@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.operations.reactive;
 
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
 import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -28,6 +29,7 @@ import reactor.core.publisher.Mono;
  * @author Denis Stepanov
  * @since 4.5.0
  */
+@Experimental
 public interface ReactorCriteriaRepositoryOperations extends ReactiveCriteriaRepositoryOperations {
 
     @Override

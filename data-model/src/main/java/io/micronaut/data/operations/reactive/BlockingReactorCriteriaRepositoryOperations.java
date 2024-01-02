@@ -32,10 +32,10 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Implementation of {@link RepositoryOperations} that blocks every call from {@link ReactorReactiveRepositoryOperations}.
+ * Implementation of {@link CriteriaRepositoryOperations} that blocks every call from {@link ReactorCriteriaCapableRepository}.
  *
  * @author Denis Stepanov
- * @since 3.3.0
+ * @since 4.5.0
  */
 public interface BlockingReactorCriteriaRepositoryOperations extends CriteriaRepositoryOperations,
     BlockingCriteriaCapableRepository,

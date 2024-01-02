@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.operations.async;
 
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaDelete;
@@ -30,6 +31,7 @@ import java.util.concurrent.CompletionStage;
  * @author Denis Stepanov
  * @since 4.5.0
  */
+@Experimental
 public interface AsyncCriteriaRepositoryOperations extends AsyncCriteriaCapableRepository {
 
     @Override

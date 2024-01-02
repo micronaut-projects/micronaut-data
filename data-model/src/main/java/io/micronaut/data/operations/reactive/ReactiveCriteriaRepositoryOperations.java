@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.operations.reactive;
 
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.async.annotation.SingleResult;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -29,6 +30,7 @@ import org.reactivestreams.Publisher;
  * @author Denis Stepanov
  * @since 4.5.0
  */
+@Experimental
 public interface ReactiveCriteriaRepositoryOperations extends ReactiveCriteriaCapableRepository {
 
     @Override
