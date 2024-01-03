@@ -115,8 +115,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     protected static final String EQUALS = " = ";
     protected static final String NOT_EQUALS = " != ";
     protected static final String ALIAS_REPLACE_QUOTED = "@\\.";
-    protected static final String ALIAS_REPLACE = "@.";
     protected static final String JSON_COLUMN = "column";
+    private static final String CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID = "Cannot query on ID with entity that has no ID";
+
     protected final Map<Class, CriterionHandler> queryHandlers = new HashMap<>(30);
 
     {
@@ -780,7 +781,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     } else if (entity.hasIdentity()) {
                         PersistentProperty identity = entity.getIdentity();
                         if (identity == null) {
-                            throw new IllegalArgumentException("Cannot query on ID with entity that has no ID");
+                            throw new IllegalArgumentException(CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID);
                         }
                         StringBuilder sbSelectionProps = new StringBuilder();
                         appendPropertyProjection(annotationMetadata, queryState.getEntity(), sbSelectionProps, asQueryPropertyPath(queryState.getRootAlias(), identity), null);
@@ -796,7 +797,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                             queryString.append(selectionProps[0]);
                         }
                     } else {
-                        throw new IllegalArgumentException("Cannot query on ID with entity that has no ID");
+                        throw new IllegalArgumentException(CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID);
                     }
                     queryString.append("))");
                 } else if (projection instanceof QueryModel.IdProjection) {
@@ -809,11 +810,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     } else if (entity.hasIdentity()) {
                         PersistentProperty identity = entity.getIdentity();
                         if (identity == null) {
-                            throw new IllegalArgumentException("Cannot query on ID with entity that has no ID");
+                            throw new IllegalArgumentException(CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID);
                         }
                         appendPropertyProjection(annotationMetadata, queryState.getEntity(), queryString, asQueryPropertyPath(queryState.getRootAlias(), identity), null);
                     } else {
-                        throw new IllegalArgumentException("Cannot query on ID with entity that has no ID");
+                        throw new IllegalArgumentException(CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID);
                     }
                 } else if (projection instanceof QueryModel.PropertyProjection pp) {
                     String alias = pp.getAlias().orElse(null);
