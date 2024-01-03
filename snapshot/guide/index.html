@@ -5646,6 +5646,7 @@ interface ProductRepository : CrudRepository&lt;Product, Long&gt;, JpaSpecificat
     object Specifications {
 
         fun nameEquals(name: String) = Specification&lt;Product&gt; { root, _, criteriaBuilder -&gt;
+            check(criteriaBuilder.javaClass.getName().startsWith("org.hibernate"))
             criteriaBuilder.equal(root.get&lt;String&gt;("name"), name)
         }
 

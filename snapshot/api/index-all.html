@@ -998,6 +998,10 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/operations/async/AsyncCapableRepository.html#async()" class="member-name-link">async()</a> - Method in interface io.micronaut.data.operations.async.<a href="io/micronaut/data/operations/async/AsyncCapableRepository.html" title="interface in io.micronaut.data.operations.async">AsyncCapableRepository</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/operations/async/AsyncCriteriaCapableRepository.html#async()" class="member-name-link">async()</a> - Method in interface io.micronaut.data.operations.async.<a href="io/micronaut/data/operations/async/AsyncCriteriaCapableRepository.html" title="interface in io.micronaut.data.operations.async">AsyncCriteriaCapableRepository</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/operations/async/AsyncCriteriaRepositoryOperations.html#async()" class="member-name-link">async()</a> - Method in interface io.micronaut.data.operations.async.<a href="io/micronaut/data/operations/async/AsyncCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.async">AsyncCriteriaRepositoryOperations</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/operations/async/AsyncCapableRepository.html" class="type-name-link" title="interface in io.micronaut.data.operations.async">AsyncCapableRepository</a> - Interface in <a href="io/micronaut/data/operations/async/package-summary.html">io.micronaut.data.operations.async</a></dt>
 <dd>
 <div class="block">A <a href="io/micronaut/data/operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations"><code>RepositoryOperations</code></a> capable of supporting asynchronous access.</div>
@@ -1005,6 +1009,16 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/connection/async/AsyncConnectionOperations.html" class="type-name-link" title="interface in io.micronaut.data.connection.async">AsyncConnectionOperations</a>&lt;<a href="io/micronaut/data/connection/async/AsyncConnectionOperations.html" title="type parameter in AsyncConnectionOperations">C</a>&gt; - Interface in <a href="io/micronaut/data/connection/async/package-summary.html">io.micronaut.data.connection.async</a></dt>
 <dd>
 <div class="block">An interface for async connection manager.</div>
+</dd>
+<dt><a href="io/micronaut/data/operations/async/AsyncCriteriaCapableRepository.html" class="type-name-link" title="interface in io.micronaut.data.operations.async">AsyncCriteriaCapableRepository</a> - Interface in <a href="io/micronaut/data/operations/async/package-summary.html">io.micronaut.data.operations.async</a></dt>
+<dd>
+<div class="block">The repository operations capable of supporting asynchronous access.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/async/AbstractAsyncSpecificationInterceptor.html#asyncCriteriaOperations" class="member-name-link">asyncCriteriaOperations</a> - Variable in class io.micronaut.data.runtime.intercept.criteria.async.<a href="io/micronaut/data/runtime/intercept/criteria/async/AbstractAsyncSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria.async">AbstractAsyncSpecificationInterceptor</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/operations/async/AsyncCriteriaRepositoryOperations.html" class="type-name-link" title="interface in io.micronaut.data.operations.async">AsyncCriteriaRepositoryOperations</a> - Interface in <a href="io/micronaut/data/operations/async/package-summary.html">io.micronaut.data.operations.async</a></dt>
+<dd>
+<div class="block">The repository operations that support executing criteria queries.</div>
 </dd>
 <dt><a href="io/micronaut/data/repository/async/AsyncCrudRepository.html" class="type-name-link" title="interface in io.micronaut.data.repository.async">AsyncCrudRepository</a>&lt;<a href="io/micronaut/data/repository/async/AsyncCrudRepository.html" title="type parameter in AsyncCrudRepository">E</a>,<wbr><a href="io/micronaut/data/repository/async/AsyncCrudRepository.html" title="type parameter in AsyncCrudRepository">ID</a>&gt; - Interface in <a href="io/micronaut/data/repository/async/package-summary.html">io.micronaut.data.repository.async</a></dt>
 <dd>
@@ -1291,9 +1305,21 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/data/operations/reactive/BlockingExecutorReactorRepositoryOperations.html#block(java.util.function.Function)" class="member-name-link">block(Function&lt;ReactorReactiveRepositoryOperations, Mono&lt;T&gt;&gt;)</a> - Method in interface io.micronaut.data.operations.reactive.<a href="io/micronaut/data/operations/reactive/BlockingExecutorReactorRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">BlockingExecutorReactorRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/operations/BlockingCriteriaCapableRepository.html#blocking()" class="member-name-link">blocking()</a> - Method in interface io.micronaut.data.operations.<a href="io/micronaut/data/operations/BlockingCriteriaCapableRepository.html" title="interface in io.micronaut.data.operations">BlockingCriteriaCapableRepository</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/operations/reactive/BlockingReactorCriteriaRepositoryOperations.html#blocking()" class="member-name-link">blocking()</a> - Method in interface io.micronaut.data.operations.reactive.<a href="io/micronaut/data/operations/reactive/BlockingReactorCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">BlockingReactorCriteriaRepositoryOperations</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/operations/BlockingCriteriaCapableRepository.html" class="type-name-link" title="interface in io.micronaut.data.operations">BlockingCriteriaCapableRepository</a> - Interface in <a href="io/micronaut/data/operations/package-summary.html">io.micronaut.data.operations</a></dt>
+<dd>
+<div class="block">An async or reactive <a href="io/micronaut/data/operations/CriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations"><code>CriteriaRepositoryOperations</code></a> capable of supporting blocking access.</div>
+</dd>
 <dt><a href="io/micronaut/data/operations/reactive/BlockingExecutorReactorRepositoryOperations.html" class="type-name-link" title="interface in io.micronaut.data.operations.reactive">BlockingExecutorReactorRepositoryOperations</a> - Interface in <a href="io/micronaut/data/operations/reactive/package-summary.html">io.micronaut.data.operations.reactive</a></dt>
 <dd>
 <div class="block">Implementation of <a href="io/micronaut/data/operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations"><code>RepositoryOperations</code></a> that blocks every call from <a href="io/micronaut/data/operations/reactive/ReactorReactiveRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive"><code>ReactorReactiveRepositoryOperations</code></a>.</div>
+</dd>
+<dt><a href="io/micronaut/data/operations/reactive/BlockingReactorCriteriaRepositoryOperations.html" class="type-name-link" title="interface in io.micronaut.data.operations.reactive">BlockingReactorCriteriaRepositoryOperations</a> - Interface in <a href="io/micronaut/data/operations/reactive/package-summary.html">io.micronaut.data.operations.reactive</a></dt>
+<dd>
+<div class="block">Implementation of <a href="io/micronaut/data/operations/CriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations"><code>CriteriaRepositoryOperations</code></a> that blocks every call from <a href="io/micronaut/data/operations/reactive/ReactorCriteriaCapableRepository.html" title="interface in io.micronaut.data.operations.reactive"><code>ReactorCriteriaCapableRepository</code></a>.</div>
 </dd>
 <dt><a href="io/micronaut/data/operations/reactive/BlockingReactorRepositoryOperations.html" class="type-name-link" title="interface in io.micronaut.data.operations.reactive">BlockingReactorRepositoryOperations</a> - Interface in <a href="io/micronaut/data/operations/reactive/package-summary.html">io.micronaut.data.operations.reactive</a></dt>
 <dd>
@@ -1359,6 +1385,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Builds a batch drop tables statement.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html#buildCountQuery(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">buildCountQuery(MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.<a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#buildCreateTableStatements(io.micronaut.data.model.PersistentEntity)" class="member-name-link">buildCreateTableStatements(PersistentEntity)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
 <dd>
 <div class="block">Builds the create table statement.</div>
@@ -1377,11 +1405,15 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/options/MongoOptionsUtils.html#buildDeleteOptions(io.micronaut.core.annotation.AnnotationMetadata,boolean)" class="member-name-link">buildDeleteOptions(AnnotationMetadata, boolean)</a> - Static method in class io.micronaut.data.mongodb.operations.options.<a href="io/micronaut/data/mongodb/operations/options/MongoOptionsUtils.html" title="class in io.micronaut.data.mongodb.operations.options">MongoOptionsUtils</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html#buildDeleteQuery(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">buildDeleteQuery(MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.<a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#buildDropTableStatements(io.micronaut.data.model.PersistentEntity)" class="member-name-link">buildDropTableStatements(PersistentEntity)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
 <dd>
 <div class="block">Builds the drop table statement.</div>
 </dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/MethodNameParser.html#builder()" class="member-name-link">builder()</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/MethodNameParser.html" title="class in io.micronaut.data.processor.visitors.finders">MethodNameParser</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html#buildExistsQuery(io.micronaut.aop.MethodInvocationContext,java.util.Set)" class="member-name-link">buildExistsQuery(MethodInvocationContext&lt;T, R&gt;, Set&lt;JoinPath&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.<a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/options/MongoOptionsUtils.html#buildFindOptions(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">buildFindOptions(AnnotationMetadata)</a> - Static method in class io.micronaut.data.mongodb.operations.options.<a href="io/micronaut/data/mongodb/operations/options/MongoOptionsUtils.html" title="class in io.micronaut.data.mongodb.operations.options">MongoOptionsUtils</a></dt>
 <dd>&nbsp;</dd>
@@ -1477,6 +1509,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Encode the given query for the passed annotation metadata and query.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html#buildQuery(io.micronaut.aop.MethodInvocationContext,io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor.Type,java.util.Set)" class="member-name-link">buildQuery(MethodInvocationContext&lt;T, R&gt;, AbstractSpecificationInterceptor.Type, Set&lt;JoinPath&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.<a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/document/model/query/builder/MongoQueryBuilder.html#buildQuery(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.QueryModel)" class="member-name-link">buildQuery(AnnotationMetadata, QueryModel)</a> - Method in class io.micronaut.data.document.model.query.builder.<a href="io/micronaut/data/document/model/query/builder/MongoQueryBuilder.html" title="class in io.micronaut.data.document.model.query.builder">MongoQueryBuilder</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaDelete.html#buildQuery(io.micronaut.data.model.query.builder.QueryBuilder)" class="member-name-link">buildQuery(QueryBuilder)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaDelete.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaDelete</a></dt>
@@ -1520,6 +1554,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/document/model/query/builder/MongoQueryBuilder.html#buildUpdate(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.QueryModel,java.util.Map)" class="member-name-link">buildUpdate(AnnotationMetadata, QueryModel, Map&lt;String, Object&gt;)</a> - Method in class io.micronaut.data.document.model.query.builder.<a href="io/micronaut/data/document/model/query/builder/MongoQueryBuilder.html" title="class in io.micronaut.data.document.model.query.builder">MongoQueryBuilder</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/options/MongoOptionsUtils.html#buildUpdateOptions(io.micronaut.core.annotation.AnnotationMetadata,boolean)" class="member-name-link">buildUpdateOptions(AnnotationMetadata, boolean)</a> - Static method in class io.micronaut.data.mongodb.operations.options.<a href="io/micronaut/data/mongodb/operations/options/MongoOptionsUtils.html" title="class in io.micronaut.data.mongodb.operations.options">MongoOptionsUtils</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html#buildUpdateQuery(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">buildUpdateQuery(MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.<a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#buildWhereClause(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.QueryModel.Junction,io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.QueryState)" class="member-name-link">buildWhereClause(AnnotationMetadata, QueryModel.Junction, AbstractSqlLikeQueryBuilder.QueryState)</a> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
 <dd>
@@ -2326,6 +2362,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Count the records.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html#count(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">count(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.<a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/cosmos/operations/DefaultReactiveCosmosRepositoryOperations.html#count(io.micronaut.data.model.runtime.PagedQuery)" class="member-name-link">count(PagedQuery&lt;T&gt;)</a> - Method in class io.micronaut.data.cosmos.operations.<a href="io/micronaut/data/cosmos/operations/DefaultReactiveCosmosRepositoryOperations.html" title="class in io.micronaut.data.cosmos.operations">DefaultReactiveCosmosRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#count(io.micronaut.data.model.runtime.PagedQuery)" class="member-name-link">count(PagedQuery&lt;T&gt;)</a> - Method in class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations</a></dt>
@@ -2384,6 +2422,8 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/factory/Projections.html#COUNT_PROJECTION" class="member-name-link">COUNT_PROJECTION</a> - Static variable in class io.micronaut.data.model.query.factory.<a href="io/micronaut/data/model/query/factory/Projections.html" title="class in io.micronaut.data.model.query.factory">Projections</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/async/AbstractAsyncSpecificationInterceptor.html#countAsync(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">countAsync(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.async.<a href="io/micronaut/data/runtime/intercept/criteria/async/AbstractAsyncSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria.async">AbstractAsyncSpecificationInterceptor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/intercept/async/CountAsyncInterceptor.html" class="type-name-link" title="interface in io.micronaut.data.intercept.async">CountAsyncInterceptor</a>&lt;<a href="io/micronaut/data/intercept/async/CountAsyncInterceptor.html" title="type parameter in CountAsyncInterceptor">T</a>&gt; - Interface in <a href="io/micronaut/data/intercept/async/package-summary.html">io.micronaut.data.intercept.async</a></dt>
 <dd>
 <div class="block">An interceptor that executes a a count of all records asynchronously.</div>
@@ -2425,6 +2465,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/annotation/Query.html#countQuery()" class="member-name-link">countQuery()</a> - Element in annotation interface io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/Query.html" title="annotation interface in io.micronaut.data.annotation">Query</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html#countQueryResult(io.micronaut.data.model.query.builder.QueryResult)" class="member-name-link">countQueryResult(QueryResult)</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/reactive/AbstractReactiveSpecificationInterceptor.html#countReactive(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">countReactive(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.reactive.<a href="io/micronaut/data/runtime/intercept/criteria/reactive/AbstractReactiveSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria.reactive">AbstractReactiveSpecificationInterceptor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/intercept/reactive/CountReactiveInterceptor.html" class="type-name-link" title="interface in io.micronaut.data.intercept.reactive">CountReactiveInterceptor</a>&lt;<a href="io/micronaut/data/intercept/reactive/CountReactiveInterceptor.html" title="type parameter in CountReactiveInterceptor">T</a>,<wbr><a href="io/micronaut/data/intercept/reactive/CountReactiveInterceptor.html" title="type parameter in CountReactiveInterceptor">R</a>&gt; - Interface in <a href="io/micronaut/data/intercept/reactive/package-summary.html">io.micronaut.data.intercept.reactive</a></dt>
 <dd>
@@ -2651,6 +2693,12 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/repository/jpa/criteria/CriteriaQueryBuilder.html" class="type-name-link" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaQueryBuilder</a>&lt;<a href="io/micronaut/data/repository/jpa/criteria/CriteriaQueryBuilder.html" title="type parameter in CriteriaQueryBuilder">R</a>&gt; - Interface in <a href="io/micronaut/data/repository/jpa/criteria/package-summary.html">io.micronaut.data.repository.jpa.criteria</a></dt>
 <dd>
 <div class="block">Query criteria builder specification.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html#criteriaRepositoryOperations" class="member-name-link">criteriaRepositoryOperations</a> - Variable in class io.micronaut.data.runtime.intercept.criteria.<a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/operations/CriteriaRepositoryOperations.html" class="type-name-link" title="interface in io.micronaut.data.operations">CriteriaRepositoryOperations</a> - Interface in <a href="io/micronaut/data/operations/package-summary.html">io.micronaut.data.operations</a></dt>
+<dd>
+<div class="block">The repository operations that support executing criteria queries.</div>
 </dd>
 <dt><a href="io/micronaut/data/repository/jpa/criteria/CriteriaUpdateBuilder.html" class="type-name-link" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaUpdateBuilder</a>&lt;<a href="io/micronaut/data/repository/jpa/criteria/CriteriaUpdateBuilder.html" title="type parameter in CriteriaUpdateBuilder">E</a>&gt; - Interface in <a href="io/micronaut/data/repository/jpa/criteria/package-summary.html">io.micronaut.data.repository.jpa.criteria</a></dt>
 <dd>
@@ -3786,6 +3834,22 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/operations/ReactorToAsyncOperationsAdaptor.html#deleteAll(io.micronaut.data.model.runtime.DeleteBatchOperation)" class="member-name-link">deleteAll(DeleteBatchOperation&lt;T&gt;)</a> - Method in class io.micronaut.data.runtime.operations.<a href="io/micronaut/data/runtime/operations/ReactorToAsyncOperationsAdaptor.html" title="class in io.micronaut.data.runtime.operations">ReactorToAsyncOperationsAdaptor</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/operations/async/AsyncCriteriaRepositoryOperations.html#deleteAll(jakarta.persistence.criteria.CriteriaDelete)" class="member-name-link">deleteAll(CriteriaDelete&lt;Number&gt;)</a> - Method in interface io.micronaut.data.operations.async.<a href="io/micronaut/data/operations/async/AsyncCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.async">AsyncCriteriaRepositoryOperations</a></dt>
+<dd>
+<div class="block">Executes a delete for the given query and parameter values.</div>
+</dd>
+<dt><a href="io/micronaut/data/operations/CriteriaRepositoryOperations.html#deleteAll(jakarta.persistence.criteria.CriteriaDelete)" class="member-name-link">deleteAll(CriteriaDelete&lt;Number&gt;)</a> - Method in interface io.micronaut.data.operations.<a href="io/micronaut/data/operations/CriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations">CriteriaRepositoryOperations</a></dt>
+<dd>
+<div class="block">Executes a delete for the given query and parameter values.</div>
+</dd>
+<dt><a href="io/micronaut/data/operations/reactive/BlockingReactorCriteriaRepositoryOperations.html#deleteAll(jakarta.persistence.criteria.CriteriaDelete)" class="member-name-link">deleteAll(CriteriaDelete&lt;Number&gt;)</a> - Method in interface io.micronaut.data.operations.reactive.<a href="io/micronaut/data/operations/reactive/BlockingReactorCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">BlockingReactorCriteriaRepositoryOperations</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/operations/reactive/ReactiveCriteriaRepositoryOperations.html#deleteAll(jakarta.persistence.criteria.CriteriaDelete)" class="member-name-link">deleteAll(CriteriaDelete&lt;Number&gt;)</a> - Method in interface io.micronaut.data.operations.reactive.<a href="io/micronaut/data/operations/reactive/ReactiveCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactiveCriteriaRepositoryOperations</a></dt>
+<dd>
+<div class="block">Executes a delete for the given query and parameter values.</div>
+</dd>
+<dt><a href="io/micronaut/data/operations/reactive/ReactorCriteriaRepositoryOperations.html#deleteAll(jakarta.persistence.criteria.CriteriaDelete)" class="member-name-link">deleteAll(CriteriaDelete&lt;Number&gt;)</a> - Method in interface io.micronaut.data.operations.reactive.<a href="io/micronaut/data/operations/reactive/ReactorCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactorCriteriaRepositoryOperations</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/repository/async/AsyncCrudRepository.html#deleteAll(java.lang.Iterable)" class="member-name-link">deleteAll(Iterable&lt;? extends E&gt;)</a> - Method in interface io.micronaut.data.repository.async.<a href="io/micronaut/data/repository/async/AsyncCrudRepository.html" title="interface in io.micronaut.data.repository.async">AsyncCrudRepository</a></dt>
 <dd>
 <div class="block">Deletes the given entities.</div>
@@ -3852,7 +3916,11 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html#deleteAll(io.micronaut.data.repository.jpa.criteria.PredicateSpecification)" class="member-name-link">deleteAll(PredicateSpecification&lt;T&gt;)</a> - Method in interface io.micronaut.data.repository.jpa.reactive.<a href="io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html" title="interface in io.micronaut.data.repository.jpa.reactive">ReactorJpaSpecificationExecutor</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html#deleteAll(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">deleteAll(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.<a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html#deleteAll(io.micronaut.data.model.runtime.DeleteBatchOperation)" class="member-name-link">deleteAll(DeleteBatchOperation&lt;T&gt;)</a> - Method in class io.micronaut.data.mongodb.operations.<a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/async/AbstractAsyncSpecificationInterceptor.html#deleteAllAsync(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">deleteAllAsync(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.async.<a href="io/micronaut/data/runtime/intercept/criteria/async/AbstractAsyncSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria.async">AbstractAsyncSpecificationInterceptor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/intercept/async/DeleteAllAsyncInterceptor.html" class="type-name-link" title="interface in io.micronaut.data.intercept.async">DeleteAllAsyncInterceptor</a>&lt;<a href="io/micronaut/data/intercept/async/DeleteAllAsyncInterceptor.html" title="type parameter in DeleteAllAsyncInterceptor">T</a>,<wbr><a href="io/micronaut/data/intercept/async/DeleteAllAsyncInterceptor.html" title="type parameter in DeleteAllAsyncInterceptor">R</a>&gt; - Interface in <a href="io/micronaut/data/intercept/async/package-summary.html">io.micronaut.data.intercept.async</a></dt>
 <dd>
@@ -3870,6 +3938,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">An interceptor that executes a batch delete.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/reactive/AbstractReactiveSpecificationInterceptor.html#deleteAllReactive(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">deleteAllReactive(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.reactive.<a href="io/micronaut/data/runtime/intercept/criteria/reactive/AbstractReactiveSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria.reactive">AbstractReactiveSpecificationInterceptor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/intercept/reactive/DeleteAllReactiveInterceptor.html" class="type-name-link" title="interface in io.micronaut.data.intercept.reactive">DeleteAllReactiveInterceptor</a>&lt;<a href="io/micronaut/data/intercept/reactive/DeleteAllReactiveInterceptor.html" title="type parameter in DeleteAllReactiveInterceptor">T</a>,<wbr><a href="io/micronaut/data/intercept/reactive/DeleteAllReactiveInterceptor.html" title="type parameter in DeleteAllReactiveInterceptor">R</a>&gt; - Interface in <a href="io/micronaut/data/intercept/reactive/package-summary.html">io.micronaut.data.intercept.reactive</a></dt>
 <dd>
 <div class="block">An interceptor that executes a batch delete reactively.</div>
@@ -4895,6 +4965,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns whether an instance was found for the given <a href="io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a>.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html#exists(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">exists(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.<a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html#exists(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">exists(PreparedQuery&lt;T, Boolean&gt;)</a> - Method in class io.micronaut.data.mongodb.operations.<a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html#exists(io.micronaut.data.repository.jpa.criteria.PredicateSpecification)" class="member-name-link">exists(PredicateSpecification&lt;T&gt;)</a> - Method in interface io.micronaut.data.repository.jpa.reactive.<a href="io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html" title="interface in io.micronaut.data.repository.jpa.reactive">ReactorJpaSpecificationExecutor</a></dt>
@@ -4914,6 +4986,8 @@ loadScripts(document, 'script');</script>
 <div class="block">A exists operation.</div>
 </dd>
 <dt><a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.Type.html#EXISTS" class="member-name-link">EXISTS</a> - Enum constant in enum class io.micronaut.data.runtime.intercept.criteria.<a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.Type.html" title="enum class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor.Type</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/async/AbstractAsyncSpecificationInterceptor.html#existsAsync(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">existsAsync(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.async.<a href="io/micronaut/data/runtime/intercept/criteria/async/AbstractAsyncSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria.async">AbstractAsyncSpecificationInterceptor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/criteria/async/ExistsAsyncSpecificationInterceptor.html" class="type-name-link" title="class in io.micronaut.data.runtime.intercept.criteria.async">ExistsAsyncSpecificationInterceptor</a> - Class in <a href="io/micronaut/data/runtime/intercept/criteria/async/package-summary.html">io.micronaut.data.runtime.intercept.criteria.async</a></dt>
 <dd>
@@ -4958,6 +5032,8 @@ loadScripts(document, 'script');</script>
 <div class="block">Exists method matcher.</div>
 </dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/ExistsMethodMatcher.html#%3Cinit%3E()" class="member-name-link">ExistsMethodMatcher()</a> - Constructor for class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/ExistsMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">ExistsMethodMatcher</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/reactive/AbstractReactiveSpecificationInterceptor.html#existsReactive(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">existsReactive(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.reactive.<a href="io/micronaut/data/runtime/intercept/criteria/reactive/AbstractReactiveSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria.reactive">AbstractReactiveSpecificationInterceptor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/criteria/reactive/ExistsReactiveSpecificationInterceptor.html" class="type-name-link" title="class in io.micronaut.data.runtime.intercept.criteria.reactive">ExistsReactiveSpecificationInterceptor</a> - Class in <a href="io/micronaut/data/runtime/intercept/criteria/reactive/package-summary.html">io.micronaut.data.runtime.intercept.criteria.reactive</a></dt>
 <dd>
@@ -5194,6 +5270,22 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Finds a page of records.</div>
 </dd>
+<dt><a href="io/micronaut/data/operations/async/AsyncCriteriaRepositoryOperations.html#findAll(jakarta.persistence.criteria.CriteriaQuery)" class="member-name-link">findAll(CriteriaQuery&lt;T&gt;)</a> - Method in interface io.micronaut.data.operations.async.<a href="io/micronaut/data/operations/async/AsyncCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.async">AsyncCriteriaRepositoryOperations</a></dt>
+<dd>
+<div class="block">Finds all results for the given query.</div>
+</dd>
+<dt><a href="io/micronaut/data/operations/CriteriaRepositoryOperations.html#findAll(jakarta.persistence.criteria.CriteriaQuery)" class="member-name-link">findAll(CriteriaQuery&lt;T&gt;)</a> - Method in interface io.micronaut.data.operations.<a href="io/micronaut/data/operations/CriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations">CriteriaRepositoryOperations</a></dt>
+<dd>
+<div class="block">Finds all results for the given query.</div>
+</dd>
+<dt><a href="io/micronaut/data/operations/reactive/BlockingReactorCriteriaRepositoryOperations.html#findAll(jakarta.persistence.criteria.CriteriaQuery)" class="member-name-link">findAll(CriteriaQuery&lt;T&gt;)</a> - Method in interface io.micronaut.data.operations.reactive.<a href="io/micronaut/data/operations/reactive/BlockingReactorCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">BlockingReactorCriteriaRepositoryOperations</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/operations/reactive/ReactiveCriteriaRepositoryOperations.html#findAll(jakarta.persistence.criteria.CriteriaQuery)" class="member-name-link">findAll(CriteriaQuery&lt;T&gt;)</a> - Method in interface io.micronaut.data.operations.reactive.<a href="io/micronaut/data/operations/reactive/ReactiveCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactiveCriteriaRepositoryOperations</a></dt>
+<dd>
+<div class="block">Finds all results for the given query.</div>
+</dd>
+<dt><a href="io/micronaut/data/operations/reactive/ReactorCriteriaRepositoryOperations.html#findAll(jakarta.persistence.criteria.CriteriaQuery)" class="member-name-link">findAll(CriteriaQuery&lt;T&gt;)</a> - Method in interface io.micronaut.data.operations.reactive.<a href="io/micronaut/data/operations/reactive/ReactorCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactorCriteriaRepositoryOperations</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/repository/MongoQueryExecutor.html#findAll(java.lang.Iterable)" class="member-name-link">findAll(Iterable&lt;Bson&gt;)</a> - Method in interface io.micronaut.data.mongodb.repository.<a href="io/micronaut/data/mongodb/repository/MongoQueryExecutor.html" title="interface in io.micronaut.data.mongodb.repository">MongoQueryExecutor</a></dt>
 <dd>
 <div class="block">Finds all results.</div>
@@ -5340,6 +5432,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Finds a page of records.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html#findAll(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor.Type)" class="member-name-link">findAll(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;, AbstractSpecificationInterceptor.Type)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.<a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/cosmos/operations/DefaultReactiveCosmosRepositoryOperations.html#findAll(io.micronaut.data.model.runtime.PagedQuery)" class="member-name-link">findAll(PagedQuery&lt;T&gt;)</a> - Method in class io.micronaut.data.cosmos.operations.<a href="io/micronaut/data/cosmos/operations/DefaultReactiveCosmosRepositoryOperations.html" title="class in io.micronaut.data.cosmos.operations">DefaultReactiveCosmosRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html#findAll(io.micronaut.data.model.runtime.PagedQuery)" class="member-name-link">findAll(PagedQuery&lt;T&gt;)</a> - Method in class io.micronaut.data.mongodb.operations.<a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations</a></dt>
@@ -5366,6 +5460,8 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html#findAll(io.micronaut.data.repository.jpa.criteria.QuerySpecification,io.micronaut.data.model.Pageable)" class="member-name-link">findAll(QuerySpecification&lt;T&gt;, Pageable)</a> - Method in interface io.micronaut.data.repository.jpa.reactive.<a href="io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html" title="interface in io.micronaut.data.repository.jpa.reactive">ReactorJpaSpecificationExecutor</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/async/AbstractAsyncSpecificationInterceptor.html#findAllAsync(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor.Type)" class="member-name-link">findAllAsync(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;, AbstractSpecificationInterceptor.Type)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.async.<a href="io/micronaut/data/runtime/intercept/criteria/async/AbstractAsyncSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria.async">AbstractAsyncSpecificationInterceptor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/intercept/async/FindAllAsyncInterceptor.html" class="type-name-link" title="interface in io.micronaut.data.intercept.async">FindAllAsyncInterceptor</a>&lt;<a href="io/micronaut/data/intercept/async/FindAllAsyncInterceptor.html" title="type parameter in FindAllAsyncInterceptor">T</a>&gt; - Interface in <a href="io/micronaut/data/intercept/async/package-summary.html">io.micronaut.data.intercept.async</a></dt>
 <dd>
 <div class="block">An interceptor that executes a query and returns an iterable result asynchronously.</div>
@@ -5382,6 +5478,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">An interceptor that doesn't execute a query but instead just lists all the results.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/reactive/AbstractReactiveSpecificationInterceptor.html#findAllReactive(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor.Type)" class="member-name-link">findAllReactive(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;, AbstractSpecificationInterceptor.Type)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.reactive.<a href="io/micronaut/data/runtime/intercept/criteria/reactive/AbstractReactiveSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria.reactive">AbstractReactiveSpecificationInterceptor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/intercept/reactive/FindAllReactiveInterceptor.html" class="type-name-link" title="interface in io.micronaut.data.intercept.reactive">FindAllReactiveInterceptor</a>&lt;<a href="io/micronaut/data/intercept/reactive/FindAllReactiveInterceptor.html" title="type parameter in FindAllReactiveInterceptor">T</a>,<wbr><a href="io/micronaut/data/intercept/reactive/FindAllReactiveInterceptor.html" title="type parameter in FindAllReactiveInterceptor">R</a>&gt; - Interface in <a href="io/micronaut/data/intercept/reactive/package-summary.html">io.micronaut.data.intercept.reactive</a></dt>
 <dd>
 <div class="block">An interceptor that executes a <a href="io/micronaut/data/annotation/Query.html" title="annotation interface in io.micronaut.data.annotation"><code>Query</code></a> and a <code>Publisher</code> that
@@ -5571,6 +5669,22 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Finds one result.</div>
 </dd>
+<dt><a href="io/micronaut/data/operations/async/AsyncCriteriaRepositoryOperations.html#findOne(jakarta.persistence.criteria.CriteriaQuery)" class="member-name-link">findOne(CriteriaQuery&lt;R&gt;)</a> - Method in interface io.micronaut.data.operations.async.<a href="io/micronaut/data/operations/async/AsyncCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.async">AsyncCriteriaRepositoryOperations</a></dt>
+<dd>
+<div class="block">Find one by Query.</div>
+</dd>
+<dt><a href="io/micronaut/data/operations/CriteriaRepositoryOperations.html#findOne(jakarta.persistence.criteria.CriteriaQuery)" class="member-name-link">findOne(CriteriaQuery&lt;R&gt;)</a> - Method in interface io.micronaut.data.operations.<a href="io/micronaut/data/operations/CriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations">CriteriaRepositoryOperations</a></dt>
+<dd>
+<div class="block">Find one by Query.</div>
+</dd>
+<dt><a href="io/micronaut/data/operations/reactive/BlockingReactorCriteriaRepositoryOperations.html#findOne(jakarta.persistence.criteria.CriteriaQuery)" class="member-name-link">findOne(CriteriaQuery&lt;R&gt;)</a> - Method in interface io.micronaut.data.operations.reactive.<a href="io/micronaut/data/operations/reactive/BlockingReactorCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">BlockingReactorCriteriaRepositoryOperations</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/operations/reactive/ReactiveCriteriaRepositoryOperations.html#findOne(jakarta.persistence.criteria.CriteriaQuery)" class="member-name-link">findOne(CriteriaQuery&lt;R&gt;)</a> - Method in interface io.micronaut.data.operations.reactive.<a href="io/micronaut/data/operations/reactive/ReactiveCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactiveCriteriaRepositoryOperations</a></dt>
+<dd>
+<div class="block">Find one by Query.</div>
+</dd>
+<dt><a href="io/micronaut/data/operations/reactive/ReactorCriteriaRepositoryOperations.html#findOne(jakarta.persistence.criteria.CriteriaQuery)" class="member-name-link">findOne(CriteriaQuery&lt;R&gt;)</a> - Method in interface io.micronaut.data.operations.reactive.<a href="io/micronaut/data/operations/reactive/ReactorCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactorCriteriaRepositoryOperations</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#findOne(java.lang.Class,java.lang.Object)" class="member-name-link">findOne(Class&lt;T&gt;, Object)</a> - Method in class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/operations/async/AsyncRepositoryOperations.html#findOne(java.lang.Class,java.lang.Object)" class="member-name-link">findOne(Class&lt;T&gt;, Object)</a> - Method in interface io.micronaut.data.operations.async.<a href="io/micronaut/data/operations/async/AsyncRepositoryOperations.html" title="interface in io.micronaut.data.operations.async">AsyncRepositoryOperations</a></dt>
@@ -5667,9 +5781,13 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Finds one result.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html#findOne(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor.Type)" class="member-name-link">findOne(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;, AbstractSpecificationInterceptor.Type)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.<a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html#findOne(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">findOne(PreparedQuery&lt;T, R&gt;)</a> - Method in class io.micronaut.data.mongodb.operations.<a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html#findOne(java.lang.Class,java.lang.Object)" class="member-name-link">findOne(Class&lt;T&gt;, Object)</a> - Method in class io.micronaut.data.mongodb.operations.<a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/async/AbstractAsyncSpecificationInterceptor.html#findOneAsync(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor.Type)" class="member-name-link">findOneAsync(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;, AbstractSpecificationInterceptor.Type)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.async.<a href="io/micronaut/data/runtime/intercept/criteria/async/AbstractAsyncSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria.async">AbstractAsyncSpecificationInterceptor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/intercept/async/FindOneAsyncInterceptor.html" class="type-name-link" title="interface in io.micronaut.data.intercept.async">FindOneAsyncInterceptor</a>&lt;<a href="io/micronaut/data/intercept/async/FindOneAsyncInterceptor.html" title="type parameter in FindOneAsyncInterceptor">T</a>&gt; - Interface in <a href="io/micronaut/data/intercept/async/package-summary.html">io.micronaut.data.intercept.async</a></dt>
 <dd>
@@ -5687,6 +5805,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">An interceptor that executes a <a href="io/micronaut/data/annotation/Query.html" title="annotation interface in io.micronaut.data.annotation"><code>Query</code></a> and returns a single entity result.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/reactive/AbstractReactiveSpecificationInterceptor.html#findOneReactive(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor.Type)" class="member-name-link">findOneReactive(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;, AbstractSpecificationInterceptor.Type)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.reactive.<a href="io/micronaut/data/runtime/intercept/criteria/reactive/AbstractReactiveSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria.reactive">AbstractReactiveSpecificationInterceptor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/intercept/reactive/FindOneReactiveInterceptor.html" class="type-name-link" title="interface in io.micronaut.data.intercept.reactive">FindOneReactiveInterceptor</a>&lt;<a href="io/micronaut/data/intercept/reactive/FindOneReactiveInterceptor.html" title="type parameter in FindOneReactiveInterceptor">T</a>,<wbr><a href="io/micronaut/data/intercept/reactive/FindOneReactiveInterceptor.html" title="type parameter in FindOneReactiveInterceptor">R</a>&gt; - Interface in <a href="io/micronaut/data/intercept/reactive/package-summary.html">io.micronaut.data.intercept.reactive</a></dt>
 <dd>
 <div class="block">An interceptor that executes a query reactively and returns a reactive type that emits a single result
@@ -6609,6 +6729,12 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/hibernate/reactive/operations/HibernateReactorRepositoryOperations.html#getCriteriaBuilder()" class="member-name-link">getCriteriaBuilder()</a> - Method in interface io.micronaut.data.hibernate.reactive.operations.<a href="io/micronaut/data/hibernate/reactive/operations/HibernateReactorRepositoryOperations.html" title="interface in io.micronaut.data.hibernate.reactive.operations">HibernateReactorRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/operations/async/AsyncCriteriaRepositoryOperations.html#getCriteriaBuilder()" class="member-name-link">getCriteriaBuilder()</a> - Method in interface io.micronaut.data.operations.async.<a href="io/micronaut/data/operations/async/AsyncCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.async">AsyncCriteriaRepositoryOperations</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/operations/CriteriaRepositoryOperations.html#getCriteriaBuilder()" class="member-name-link">getCriteriaBuilder()</a> - Method in interface io.micronaut.data.operations.<a href="io/micronaut/data/operations/CriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations">CriteriaRepositoryOperations</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/operations/reactive/ReactiveCriteriaRepositoryOperations.html#getCriteriaBuilder()" class="member-name-link">getCriteriaBuilder()</a> - Method in interface io.micronaut.data.operations.reactive.<a href="io/micronaut/data/operations/reactive/ReactiveCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactiveCriteriaRepositoryOperations</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html#getCriteriaDeleteBuilder(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getCriteriaDeleteBuilder(MethodInvocationContext&lt;?, ?&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.<a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor</a></dt>
 <dd>
 <div class="block">Find <a href="io/micronaut/data/repository/jpa/criteria/CriteriaDeleteBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>CriteriaDeleteBuilder</code></a>
@@ -7168,6 +7294,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getMethod()" class="member-name-link">getMethod()</a> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/MatchContext.html#getMethodElement()" class="member-name-link">getMethodElement()</a> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html#getMethodJoinPaths(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getMethodJoinPaths(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.<a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#getMethodProducingItemType(io.micronaut.inject.ast.MethodElement)" class="member-name-link">getMethodProducingItemType(MethodElement)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
 <dd>&nbsp;</dd>
@@ -13917,7 +14045,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Prepared query decorator.</div>
 </dd>
-<dt><a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html#preparedQueryForCriteria(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor.Type)" class="member-name-link">preparedQueryForCriteria(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;, AbstractSpecificationInterceptor.Type)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.<a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor</a></dt>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html#preparedQueryForCriteria(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor.Type,java.util.Set)" class="member-name-link">preparedQueryForCriteria(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;, AbstractSpecificationInterceptor.Type, Set&lt;JoinPath&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.<a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#preparedQueryResolver" class="member-name-link">preparedQueryResolver</a> - Variable in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="class in io.micronaut.data.runtime.intercept">AbstractQueryInterceptor</a></dt>
 <dd>&nbsp;</dd>
@@ -14927,6 +15055,12 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/operations/reactive/ReactiveCapableRepository.html#reactive()" class="member-name-link">reactive()</a> - Method in interface io.micronaut.data.operations.reactive.<a href="io/micronaut/data/operations/reactive/ReactiveCapableRepository.html" title="interface in io.micronaut.data.operations.reactive">ReactiveCapableRepository</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/operations/reactive/ReactiveCriteriaCapableRepository.html#reactive()" class="member-name-link">reactive()</a> - Method in interface io.micronaut.data.operations.reactive.<a href="io/micronaut/data/operations/reactive/ReactiveCriteriaCapableRepository.html" title="interface in io.micronaut.data.operations.reactive">ReactiveCriteriaCapableRepository</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/operations/reactive/ReactiveCriteriaRepositoryOperations.html#reactive()" class="member-name-link">reactive()</a> - Method in interface io.micronaut.data.operations.reactive.<a href="io/micronaut/data/operations/reactive/ReactiveCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactiveCriteriaRepositoryOperations</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/operations/reactive/ReactorCriteriaCapableRepository.html#reactive()" class="member-name-link">reactive()</a> - Method in interface io.micronaut.data.operations.reactive.<a href="io/micronaut/data/operations/reactive/ReactorCriteriaCapableRepository.html" title="interface in io.micronaut.data.operations.reactive">ReactorCriteriaCapableRepository</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/operations/reactive/ReactorReactiveCapableRepository.html#reactive()" class="member-name-link">reactive()</a> - Method in interface io.micronaut.data.operations.reactive.<a href="io/micronaut/data/operations/reactive/ReactorReactiveCapableRepository.html" title="interface in io.micronaut.data.operations.reactive">ReactorReactiveCapableRepository</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/r2dbc/operations/ReactorReactiveCapableRepository.html#reactive()" class="member-name-link">reactive()</a> - Method in interface io.micronaut.data.r2dbc.operations.<a href="io/micronaut/data/r2dbc/operations/ReactorReactiveCapableRepository.html" title="interface in io.micronaut.data.r2dbc.operations">ReactorReactiveCapableRepository</a></dt>
@@ -14966,6 +15100,16 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/hibernate/reactive/repository/jpa/intercept/ReactiveCountSpecificationInterceptor.html#%3Cinit%3E(io.micronaut.data.operations.RepositoryOperations)" class="member-name-link">ReactiveCountSpecificationInterceptor(RepositoryOperations)</a> - Constructor for class io.micronaut.data.hibernate.reactive.repository.jpa.intercept.<a href="io/micronaut/data/hibernate/reactive/repository/jpa/intercept/ReactiveCountSpecificationInterceptor.html" title="class in io.micronaut.data.hibernate.reactive.repository.jpa.intercept">ReactiveCountSpecificationInterceptor</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
+</dd>
+<dt><a href="io/micronaut/data/operations/reactive/ReactiveCriteriaCapableRepository.html" class="type-name-link" title="interface in io.micronaut.data.operations.reactive">ReactiveCriteriaCapableRepository</a> - Interface in <a href="io/micronaut/data/operations/reactive/package-summary.html">io.micronaut.data.operations.reactive</a></dt>
+<dd>
+<div class="block">The operations capable of supporting reactive access.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/reactive/AbstractReactiveSpecificationInterceptor.html#reactiveCriteriaOperations" class="member-name-link">reactiveCriteriaOperations</a> - Variable in class io.micronaut.data.runtime.intercept.criteria.reactive.<a href="io/micronaut/data/runtime/intercept/criteria/reactive/AbstractReactiveSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria.reactive">AbstractReactiveSpecificationInterceptor</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/operations/reactive/ReactiveCriteriaRepositoryOperations.html" class="type-name-link" title="interface in io.micronaut.data.operations.reactive">ReactiveCriteriaRepositoryOperations</a> - Interface in <a href="io/micronaut/data/operations/reactive/package-summary.html">io.micronaut.data.operations.reactive</a></dt>
+<dd>
+<div class="block">The repository operations that support executing criteria queries.</div>
 </dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/ReactiveEntitiesOperations.html" class="type-name-link" title="class in io.micronaut.data.runtime.operations.internal">ReactiveEntitiesOperations</a>&lt;<a href="io/micronaut/data/runtime/operations/internal/ReactiveEntitiesOperations.html" title="type parameter in ReactiveEntitiesOperations">T</a>,<wbr><a href="io/micronaut/data/runtime/operations/internal/ReactiveEntitiesOperations.html" title="type parameter in ReactiveEntitiesOperations">Exc</a> extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a>&gt; - Class in <a href="io/micronaut/data/runtime/operations/internal/package-summary.html">io.micronaut.data.runtime.operations.internal</a></dt>
 <dd>
@@ -15046,6 +15190,14 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/connection/reactive/ReactorConnectionOperations.html" class="type-name-link" title="interface in io.micronaut.data.connection.reactive">ReactorConnectionOperations</a>&lt;<a href="io/micronaut/data/connection/reactive/ReactorConnectionOperations.html" title="type parameter in ReactorConnectionOperations">C</a>&gt; - Interface in <a href="io/micronaut/data/connection/reactive/package-summary.html">io.micronaut.data.connection.reactive</a></dt>
 <dd>
 <div class="block">Special version of <a href="io/micronaut/data/connection/reactive/ReactiveStreamsConnectionOperations.html" title="interface in io.micronaut.data.connection.reactive"><code>ReactiveStreamsConnectionOperations</code></a> that is exposing Reactor publishers.</div>
+</dd>
+<dt><a href="io/micronaut/data/operations/reactive/ReactorCriteriaCapableRepository.html" class="type-name-link" title="interface in io.micronaut.data.operations.reactive">ReactorCriteriaCapableRepository</a> - Interface in <a href="io/micronaut/data/operations/reactive/package-summary.html">io.micronaut.data.operations.reactive</a></dt>
+<dd>
+<div class="block">The operations capable of supporting reactive access.</div>
+</dd>
+<dt><a href="io/micronaut/data/operations/reactive/ReactorCriteriaRepositoryOperations.html" class="type-name-link" title="interface in io.micronaut.data.operations.reactive">ReactorCriteriaRepositoryOperations</a> - Interface in <a href="io/micronaut/data/operations/reactive/package-summary.html">io.micronaut.data.operations.reactive</a></dt>
+<dd>
+<div class="block">The repository operations that support executing criteria queries.</div>
 </dd>
 <dt><a href="io/micronaut/data/repository/reactive/ReactorCrudRepository.html" class="type-name-link" title="interface in io.micronaut.data.repository.reactive">ReactorCrudRepository</a>&lt;<a href="io/micronaut/data/repository/reactive/ReactorCrudRepository.html" title="type parameter in ReactorCrudRepository">E</a>,<wbr><a href="io/micronaut/data/repository/reactive/ReactorCrudRepository.html" title="type parameter in ReactorCrudRepository">ID</a>&gt; - Interface in <a href="io/micronaut/data/repository/reactive/package-summary.html">io.micronaut.data.repository.reactive</a></dt>
 <dd>
@@ -18430,6 +18582,22 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/operations/ReactorToAsyncOperationsAdaptor.html#updateAll(io.micronaut.data.model.runtime.UpdateBatchOperation)" class="member-name-link">updateAll(UpdateBatchOperation&lt;T&gt;)</a> - Method in class io.micronaut.data.runtime.operations.<a href="io/micronaut/data/runtime/operations/ReactorToAsyncOperationsAdaptor.html" title="class in io.micronaut.data.runtime.operations">ReactorToAsyncOperationsAdaptor</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/operations/async/AsyncCriteriaRepositoryOperations.html#updateAll(jakarta.persistence.criteria.CriteriaUpdate)" class="member-name-link">updateAll(CriteriaUpdate&lt;Number&gt;)</a> - Method in interface io.micronaut.data.operations.async.<a href="io/micronaut/data/operations/async/AsyncCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.async">AsyncCriteriaRepositoryOperations</a></dt>
+<dd>
+<div class="block">Executes an update for the given query and parameter values.</div>
+</dd>
+<dt><a href="io/micronaut/data/operations/CriteriaRepositoryOperations.html#updateAll(jakarta.persistence.criteria.CriteriaUpdate)" class="member-name-link">updateAll(CriteriaUpdate&lt;Number&gt;)</a> - Method in interface io.micronaut.data.operations.<a href="io/micronaut/data/operations/CriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations">CriteriaRepositoryOperations</a></dt>
+<dd>
+<div class="block">Executes an update for the given query and parameter values.</div>
+</dd>
+<dt><a href="io/micronaut/data/operations/reactive/BlockingReactorCriteriaRepositoryOperations.html#updateAll(jakarta.persistence.criteria.CriteriaUpdate)" class="member-name-link">updateAll(CriteriaUpdate&lt;Number&gt;)</a> - Method in interface io.micronaut.data.operations.reactive.<a href="io/micronaut/data/operations/reactive/BlockingReactorCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">BlockingReactorCriteriaRepositoryOperations</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/operations/reactive/ReactiveCriteriaRepositoryOperations.html#updateAll(jakarta.persistence.criteria.CriteriaUpdate)" class="member-name-link">updateAll(CriteriaUpdate&lt;Number&gt;)</a> - Method in interface io.micronaut.data.operations.reactive.<a href="io/micronaut/data/operations/reactive/ReactiveCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactiveCriteriaRepositoryOperations</a></dt>
+<dd>
+<div class="block">Executes an update for the given query and parameter values.</div>
+</dd>
+<dt><a href="io/micronaut/data/operations/reactive/ReactorCriteriaRepositoryOperations.html#updateAll(jakarta.persistence.criteria.CriteriaUpdate)" class="member-name-link">updateAll(CriteriaUpdate&lt;Number&gt;)</a> - Method in interface io.micronaut.data.operations.reactive.<a href="io/micronaut/data/operations/reactive/ReactorCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactorCriteriaRepositoryOperations</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/repository/async/AsyncCrudRepository.html#updateAll(java.lang.Iterable)" class="member-name-link">updateAll(Iterable&lt;S&gt;)</a> - Method in interface io.micronaut.data.repository.async.<a href="io/micronaut/data/repository/async/AsyncCrudRepository.html" title="interface in io.micronaut.data.repository.async">AsyncCrudRepository</a></dt>
 <dd>
 <div class="block">This method issues an explicit update for the given entities.</div>
@@ -18482,11 +18650,15 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html#updateAll(io.micronaut.data.repository.jpa.criteria.UpdateSpecification)" class="member-name-link">updateAll(UpdateSpecification&lt;T&gt;)</a> - Method in interface io.micronaut.data.repository.jpa.reactive.<a href="io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html" title="interface in io.micronaut.data.repository.jpa.reactive">ReactorJpaSpecificationExecutor</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html#updateAll(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">updateAll(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.<a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html#updateAll(io.micronaut.data.model.runtime.UpdateBatchOperation)" class="member-name-link">updateAll(UpdateBatchOperation&lt;T&gt;)</a> - Method in class io.micronaut.data.mongodb.operations.<a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/operations/reactive/BlockingExecutorReactorRepositoryOperations.html#updateAll(io.micronaut.data.model.runtime.UpdateBatchOperation)" class="member-name-link">updateAll(UpdateBatchOperation&lt;T&gt;)</a> - Method in interface io.micronaut.data.operations.reactive.<a href="io/micronaut/data/operations/reactive/BlockingExecutorReactorRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">BlockingExecutorReactorRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/operations/reactive/BlockingReactorRepositoryOperations.html#updateAll(io.micronaut.data.model.runtime.UpdateBatchOperation)" class="member-name-link">updateAll(UpdateBatchOperation&lt;T&gt;)</a> - Method in interface io.micronaut.data.operations.reactive.<a href="io/micronaut/data/operations/reactive/BlockingReactorRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">BlockingReactorRepositoryOperations</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/async/AbstractAsyncSpecificationInterceptor.html#updateAllAsync(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">updateAllAsync(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.async.<a href="io/micronaut/data/runtime/intercept/criteria/async/AbstractAsyncSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria.async">AbstractAsyncSpecificationInterceptor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/criteria/async/UpdateAllAsyncSpecificationInterceptor.html" class="type-name-link" title="class in io.micronaut.data.runtime.intercept.criteria.async">UpdateAllAsyncSpecificationInterceptor</a> - Class in <a href="io/micronaut/data/runtime/intercept/criteria/async/package-summary.html">io.micronaut.data.runtime.intercept.criteria.async</a></dt>
 <dd>
@@ -18508,6 +18680,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Interface for the interceptor that handles updating a list or iterable of objects.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/reactive/AbstractReactiveSpecificationInterceptor.html#updateAllReactive(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">updateAllReactive(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.reactive.<a href="io/micronaut/data/runtime/intercept/criteria/reactive/AbstractReactiveSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria.reactive">AbstractReactiveSpecificationInterceptor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/criteria/reactive/UpdateAllReactiveSpecificationInterceptor.html" class="type-name-link" title="class in io.micronaut.data.runtime.intercept.criteria.reactive">UpdateAllReactiveSpecificationInterceptor</a> - Class in <a href="io/micronaut/data/runtime/intercept/criteria/reactive/package-summary.html">io.micronaut.data.runtime.intercept.criteria.reactive</a></dt>
 <dd>
 <div class="block">Implementation of async <code>updateAll(Specification)</code>.</div>

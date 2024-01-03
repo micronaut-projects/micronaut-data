@@ -51,7 +51,7 @@ loadScripts(document, 'script');</script>
 </ul>
 <ul class="sub-nav-list">
 <li>Detail:&nbsp;</li>
-<li>Field&nbsp;|&nbsp;</li>
+<li><a href="#field-detail">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor-detail">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method-detail">Method</a></li>
 </ul>
@@ -123,6 +123,15 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="field-summary" id="field-summary">
 <h2>Field Summary</h2>
+<div class="caption"><span>Fields</span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Field</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>protected final <a href="../../../operations/CriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations">CriteriaRepositoryOperations</a></code></div>
+<div class="col-second even-row-color"><code><a href="#criteriaRepositoryOperations" class="member-name-link">criteriaRepositoryOperations</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+</div>
 <div class="inherited-list">
 <h3 id="fields-inherited-from-class-io.micronaut.data.runtime.intercept.AbstractQueryInterceptor">Fields inherited from class&nbsp;io.micronaut.data.runtime.intercept.<a href="../AbstractQueryInterceptor.html" title="class in io.micronaut.data.runtime.intercept">AbstractQueryInterceptor</a></h3>
 <code><a href="../AbstractQueryInterceptor.html#conversionService">conversionService</a>, <a href="../AbstractQueryInterceptor.html#operations">operations</a>, <a href="../AbstractQueryInterceptor.html#preparedQueryResolver">preparedQueryResolver</a></code></div>
@@ -156,6 +165,46 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;E&gt;&nbsp;@NonNull jakarta.persistence.criteria.CriteriaQuery&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildCountQuery(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">buildCountQuery</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">T</a>,<wbr><a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">R</a>&gt;&nbsp;context)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;E&gt;&nbsp;jakarta.persistence.criteria.CriteriaDelete&lt;E&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildDeleteQuery(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">buildDeleteQuery</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">T</a>,<wbr><a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">R</a>&gt;&nbsp;context)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;E&gt;&nbsp;jakarta.persistence.criteria.CriteriaQuery&lt;E&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildExistsQuery(io.micronaut.aop.MethodInvocationContext,java.util.Set)" class="member-name-link">buildExistsQuery</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">T</a>,<wbr><a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">R</a>&gt;&nbsp;context,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;annotationJoinPaths)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;N&gt;&nbsp;jakarta.persistence.criteria.CriteriaQuery&lt;N&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildQuery(io.micronaut.aop.MethodInvocationContext,io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor.Type,java.util.Set)" class="member-name-link">buildQuery</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">T</a>,<wbr><a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">R</a>&gt;&nbsp;context,
+ <a href="AbstractSpecificationInterceptor.Type.html" title="enum class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor.Type</a>&nbsp;type,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;methodJoinPaths)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;E&gt;&nbsp;jakarta.persistence.criteria.CriteriaUpdate&lt;E&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildUpdateQuery(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">buildUpdateQuery</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">T</a>,<wbr><a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">R</a>&gt;&nbsp;context)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#count(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">count</a><wbr>(<a href="../../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+ io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">T</a>,<wbr><a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">R</a>&gt;&nbsp;context)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#deleteAll(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">deleteAll</a><wbr>(<a href="../../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+ io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">T</a>,<wbr><a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">R</a>&gt;&nbsp;context)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#exists(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">exists</a><wbr>(<a href="../../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+ io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">T</a>,<wbr><a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">R</a>&gt;&nbsp;context)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;?&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findAll(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor.Type)" class="member-name-link">findAll</a><wbr>(<a href="../../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+ io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">T</a>,<wbr><a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">R</a>&gt;&nbsp;context,
+ <a href="AbstractSpecificationInterceptor.Type.html" title="enum class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor.Type</a>&nbsp;type)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findOne(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor.Type)" class="member-name-link">findOne</a><wbr>(<a href="../../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+ io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">T</a>,<wbr><a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">R</a>&gt;&nbsp;context,
+ <a href="AbstractSpecificationInterceptor.Type.html" title="enum class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor.Type</a>&nbsp;type)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;K&gt;&nbsp;@NonNull <a href="../../../repository/jpa/criteria/CriteriaDeleteBuilder.html" title="interface in io.micronaut.data.repository.jpa.criteria">CriteriaDeleteBuilder</a>&lt;K&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getCriteriaDeleteBuilder(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getCriteriaDeleteBuilder</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
@@ -180,21 +229,30 @@ loadScripts(document, 'script');</script>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Find <a href="../../../repository/jpa/criteria/DeleteSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>DeleteSpecification</code></a> in context.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;K&gt;&nbsp;@Nullable <a href="../../../repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">QuerySpecification</a>&lt;K&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getQuerySpecification(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getQuerySpecification</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMethodJoinPaths(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getMethodJoinPaths</a><wbr>(<a href="../../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+ io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">T</a>,<wbr><a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">R</a>&gt;&nbsp;context)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;K&gt;&nbsp;@Nullable <a href="../../../repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">QuerySpecification</a>&lt;K&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getQuerySpecification(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getQuerySpecification</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Find <a href="../../../repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a> in context.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;K&gt;&nbsp;@Nullable <a href="../../../repository/jpa/criteria/UpdateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">UpdateSpecification</a>&lt;K&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getUpdateSpecification(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getUpdateSpecification</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;K&gt;&nbsp;@Nullable <a href="../../../repository/jpa/criteria/UpdateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">UpdateSpecification</a>&lt;K&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getUpdateSpecification(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getUpdateSpecification</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Find <a href="../../../repository/jpa/criteria/UpdateSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>UpdateSpecification</code></a> in context.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;E,<wbr>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;E,<wbr>
 QR&gt;&nbsp;@NonNull <a href="../../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>QR&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#preparedQueryForCriteria(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor.Type)" class="member-name-link">preparedQueryForCriteria</a><wbr>(<a href="../../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#preparedQueryForCriteria(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor.Type,java.util.Set)" class="member-name-link">preparedQueryForCriteria</a><wbr>(<a href="../../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
  io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">T</a>,<wbr><a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">R</a>&gt;&nbsp;context,
- <a href="AbstractSpecificationInterceptor.Type.html" title="enum class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor.Type</a>&nbsp;type)</code></div>
+ <a href="AbstractSpecificationInterceptor.Type.html" title="enum class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor.Type</a>&nbsp;type,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;methodJoinPaths)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#updateAll(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">updateAll</a><wbr>(<a href="../../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+ io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">T</a>,<wbr><a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">R</a>&gt;&nbsp;context)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
@@ -214,6 +272,20 @@ QR&gt;&nbsp;@NonNull <a href="../../../model/runtime/PreparedQuery.html" title="
 </section>
 <section class="details">
 <ul class="details-list">
+<!-- ============ FIELD DETAIL =========== -->
+<li>
+<section class="field-details" id="field-detail">
+<h2>Field Details</h2>
+<ul class="member-list">
+<li>
+<section class="detail" id="criteriaRepositoryOperations">
+<h3>criteriaRepositoryOperations</h3>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="../../../operations/CriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations">CriteriaRepositoryOperations</a></span>&nbsp;<span class="element-name">criteriaRepositoryOperations</span></div>
+</section>
+</li>
+</ul>
+</section>
+</li>
 <!-- ========= CONSTRUCTOR DETAIL ======== -->
 <li>
 <section class="constructor-details" id="constructor-detail">
@@ -239,13 +311,107 @@ QR&gt;&nbsp;@NonNull <a href="../../../model/runtime/PreparedQuery.html" title="
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="preparedQueryForCriteria(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor.Type)">
+<section class="detail" id="findAll(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor.Type)">
+<h3>findAll</h3>
+<div class="member-signature"><span class="annotations">@NonNull
+</span><span class="modifiers">protected final</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;?&gt;</span>&nbsp;<span class="element-name">findAll</span><wbr><span class="parameters">(<a href="../../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+ io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">T</a>,<wbr><a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">R</a>&gt;&nbsp;context,
+ <a href="AbstractSpecificationInterceptor.Type.html" title="enum class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor.Type</a>&nbsp;type)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="findOne(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor.Type)">
+<h3>findOne</h3>
+<div class="member-signature"><span class="annotations">@NonNull
+</span><span class="modifiers">protected final</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>&nbsp;<span class="element-name">findOne</span><wbr><span class="parameters">(<a href="../../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+ io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">T</a>,<wbr><a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">R</a>&gt;&nbsp;context,
+ <a href="AbstractSpecificationInterceptor.Type.html" title="enum class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor.Type</a>&nbsp;type)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="getMethodJoinPaths(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)">
+<h3>getMethodJoinPaths</h3>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;</span>&nbsp;<span class="element-name">getMethodJoinPaths</span><wbr><span class="parameters">(<a href="../../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+ io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">T</a>,<wbr><a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">R</a>&gt;&nbsp;context)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="count(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)">
+<h3>count</h3>
+<div class="member-signature"><span class="annotations">@NonNull
+</span><span class="modifiers">protected final</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a></span>&nbsp;<span class="element-name">count</span><wbr><span class="parameters">(<a href="../../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+ io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">T</a>,<wbr><a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">R</a>&gt;&nbsp;context)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="exists(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)">
+<h3>exists</h3>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">exists</span><wbr><span class="parameters">(<a href="../../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+ io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">T</a>,<wbr><a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">R</a>&gt;&nbsp;context)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="deleteAll(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)">
+<h3>deleteAll</h3>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</span>&nbsp;<span class="element-name">deleteAll</span><wbr><span class="parameters">(<a href="../../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+ io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">T</a>,<wbr><a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">R</a>&gt;&nbsp;context)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="updateAll(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)">
+<h3>updateAll</h3>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</span>&nbsp;<span class="element-name">updateAll</span><wbr><span class="parameters">(<a href="../../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+ io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">T</a>,<wbr><a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">R</a>&gt;&nbsp;context)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="preparedQueryForCriteria(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor.Type,java.util.Set)">
 <h3>preparedQueryForCriteria</h3>
 <div class="member-signature"><span class="annotations">@NonNull
 </span><span class="modifiers">protected final</span>&nbsp;<span class="type-parameters">&lt;E,<wbr>
 QR&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>QR&gt;</span>&nbsp;<span class="element-name">preparedQueryForCriteria</span><wbr><span class="parameters">(<a href="../../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
  io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">T</a>,<wbr><a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">R</a>&gt;&nbsp;context,
- <a href="AbstractSpecificationInterceptor.Type.html" title="enum class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor.Type</a>&nbsp;type)</span></div>
+ <a href="AbstractSpecificationInterceptor.Type.html" title="enum class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor.Type</a>&nbsp;type,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;methodJoinPaths)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="buildExistsQuery(io.micronaut.aop.MethodInvocationContext,java.util.Set)">
+<h3>buildExistsQuery</h3>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>
+<span class="return-type">jakarta.persistence.criteria.CriteriaQuery&lt;E&gt;</span>&nbsp;<span class="element-name">buildExistsQuery</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">T</a>,<wbr><a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">R</a>&gt;&nbsp;context,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;annotationJoinPaths)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="buildUpdateQuery(io.micronaut.aop.MethodInvocationContext)">
+<h3>buildUpdateQuery</h3>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>
+<span class="return-type">jakarta.persistence.criteria.CriteriaUpdate&lt;E&gt;</span>&nbsp;<span class="element-name">buildUpdateQuery</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">T</a>,<wbr><a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">R</a>&gt;&nbsp;context)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="buildDeleteQuery(io.micronaut.aop.MethodInvocationContext)">
+<h3>buildDeleteQuery</h3>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>
+<span class="return-type">jakarta.persistence.criteria.CriteriaDelete&lt;E&gt;</span>&nbsp;<span class="element-name">buildDeleteQuery</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">T</a>,<wbr><a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">R</a>&gt;&nbsp;context)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="buildCountQuery(io.micronaut.aop.MethodInvocationContext)">
+<h3>buildCountQuery</h3>
+<div class="member-signature"><span class="annotations">@NonNull
+</span><span class="modifiers">protected final</span>&nbsp;<span class="type-parameters">&lt;E&gt;</span>
+<span class="return-type">@NonNull jakarta.persistence.criteria.CriteriaQuery&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;</span>&nbsp;<span class="element-name">buildCountQuery</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">T</a>,<wbr><a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">R</a>&gt;&nbsp;context)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="buildQuery(io.micronaut.aop.MethodInvocationContext,io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor.Type,java.util.Set)">
+<h3>buildQuery</h3>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="type-parameters">&lt;N&gt;</span>
+<span class="return-type">jakarta.persistence.criteria.CriteriaQuery&lt;N&gt;</span>&nbsp;<span class="element-name">buildQuery</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">T</a>,<wbr><a href="AbstractSpecificationInterceptor.html" title="type parameter in AbstractSpecificationInterceptor">R</a>&gt;&nbsp;context,
+ <a href="AbstractSpecificationInterceptor.Type.html" title="enum class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor.Type</a>&nbsp;type,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="../../../model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;methodJoinPaths)</span></div>
 </section>
 </li>
 <li>
