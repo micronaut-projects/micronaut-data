@@ -18,7 +18,6 @@ package io.micronaut.data.runtime.intercept.criteria.async;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 
 /**
@@ -41,9 +40,7 @@ public class UpdateAllAsyncSpecificationInterceptor extends AbstractAsyncSpecifi
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        PreparedQuery<?, Number> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.UPDATE_ALL);
-        return asyncOperations.executeUpdate(preparedQuery)
-                .thenApply(n -> convertNumberToReturnType(context, n));
+        return updateAllAsync(methodKey, context).thenApply(n -> convertNumberToReturnType(context, n));
     }
 
 }

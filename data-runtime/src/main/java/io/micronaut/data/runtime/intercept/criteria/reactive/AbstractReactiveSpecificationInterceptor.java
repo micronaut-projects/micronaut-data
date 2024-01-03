@@ -15,11 +15,21 @@
  */
 package io.micronaut.data.runtime.intercept.criteria.reactive;
 
+import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.intercept.RepositoryMethodKey;
+import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
+import io.micronaut.data.operations.reactive.ReactiveCriteriaCapableRepository;
+import io.micronaut.data.operations.reactive.ReactiveCriteriaRepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor;
+import org.reactivestreams.Publisher;
+import reactor.core.publisher.Mono;
+
+import java.util.Set;
 
 /**
  * Abstract reactive specification interceptor.
@@ -32,6 +42,7 @@ import io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterce
 public abstract class AbstractReactiveSpecificationInterceptor<T, R> extends AbstractSpecificationInterceptor<T, R> {
 
     protected final ReactiveRepositoryOperations reactiveOperations;
+    protected final ReactiveCriteriaRepositoryOperations reactiveCriteriaOperations;
 
     /**
      * Default constructor.
@@ -45,5 +56,64 @@ public abstract class AbstractReactiveSpecificationInterceptor<T, R> extends Abs
         } else {
             throw new DataAccessException("Datastore of type [" + operations.getClass() + "] does not support reactive operations");
         }
+        if (operations instanceof ReactiveCriteriaRepositoryOperations reactiveCriteriaRepositoryOperations) {
+            reactiveCriteriaOperations = reactiveCriteriaRepositoryOperations;
+        } else if (operations instanceof ReactiveCriteriaCapableRepository repository) {
+            reactiveCriteriaOperations = repository.reactive();
+        } else {
+            reactiveCriteriaOperations = null;
+        }
+    }
+
+    @NonNull
+    protected final Publisher<Object> findAllReactive(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context, Type type) {
+        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
+        if (reactiveCriteriaOperations != null) {
+            return reactiveCriteriaOperations.findAll(buildQuery(context, type, methodJoinPaths));
+        }
+        return reactiveOperations.findAll(preparedQueryForCriteria(methodKey, context, type, methodJoinPaths));
+    }
+
+    @NonNull
+    protected final Publisher<Object> findOneReactive(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context, Type type) {
+        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
+        if (reactiveCriteriaOperations != null) {
+            return reactiveCriteriaOperations.findOne(buildQuery(context, type, methodJoinPaths));
+        }
+        return reactiveOperations.findOne(preparedQueryForCriteria(methodKey, context, type, methodJoinPaths));
+    }
+
+    @NonNull
+    protected final Publisher<Long> countReactive(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
+        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
+        if (reactiveCriteriaOperations != null) {
+            return reactiveCriteriaOperations.findOne(buildCountQuery(context));
+        }
+        return reactiveOperations.findOne(preparedQueryForCriteria(methodKey, context, Type.COUNT, methodJoinPaths));
+    }
+
+    protected final Publisher<Boolean> existsReactive(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
+        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
+        if (reactiveCriteriaOperations != null) {
+            return reactiveCriteriaOperations.findOne(buildExistsQuery(context, methodJoinPaths));
+        }
+        return Mono.from(reactiveOperations.findOne(preparedQueryForCriteria(methodKey, context, Type.EXISTS, methodJoinPaths)))
+            .map(one -> one instanceof Boolean aBoolean ? aBoolean : one != null);
+    }
+
+    protected final Publisher<Number> deleteAllReactive(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
+        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
+        if (reactiveCriteriaOperations != null) {
+            return reactiveCriteriaOperations.deleteAll(buildDeleteQuery(context));
+        }
+        return reactiveOperations.executeDelete(preparedQueryForCriteria(methodKey, context, Type.DELETE_ALL, methodJoinPaths));
+    }
+
+    protected final Publisher<Number> updateAllReactive(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
+        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
+        if (reactiveCriteriaOperations != null) {
+            return reactiveCriteriaOperations.updateAll(buildUpdateQuery(context));
+        }
+        return reactiveOperations.executeUpdate(preparedQueryForCriteria(methodKey, context, Type.UPDATE_ALL, methodJoinPaths));
     }
 }

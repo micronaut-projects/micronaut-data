@@ -740,6 +740,34 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
             result.size() == 0
     }
 
+    void "test distinct count criteria"() {
+        given:
+            relPersonRepo.deleteAll()
+            10.times {
+                def person = new RelPerson()
+                person.name = 'Person'
+                relPersonRepo.save(person)
+            }
+        when:
+            def result = relPersonRepo.findOne(RelPersonRepository.Specifications.countDistinct())
+        then:
+            result == 10
+    }
+
+    void "test count criteria "() {
+        given:
+            relPersonRepo.deleteAll()
+            10.times {
+                def person = new RelPerson()
+                person.name = 'Person'
+                relPersonRepo.save(person)
+            }
+        when:
+            def result = relPersonRepo.findOne(RelPersonRepository.Specifications.countDistinct())
+        then:
+            result == 10
+    }
+
     void "test order by embedded field"() {
         when:
             def e1 = userWithWhereRepository.save(new UserWithWhere(id: UUID.randomUUID(), email: "where1@somewhere.com", deleted: false))

@@ -74,6 +74,9 @@ interface ProductRepository : CrudRepository<Product, Long>, JpaSpecificationExe
     object Specifications {
 
         fun nameEquals(name: String) = Specification<Product> { root, _, criteriaBuilder ->
+            // end::spec[]
+            check(criteriaBuilder.javaClass.getName().startsWith("org.hibernate"))
+            // tag::spec[]
             criteriaBuilder.equal(root.get<String>("name"), name)
         }
 

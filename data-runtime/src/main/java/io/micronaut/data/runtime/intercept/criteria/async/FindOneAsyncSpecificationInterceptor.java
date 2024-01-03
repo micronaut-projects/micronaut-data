@@ -18,7 +18,6 @@ package io.micronaut.data.runtime.intercept.criteria.async;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 
 /**
@@ -41,7 +40,6 @@ public class FindOneAsyncSpecificationInterceptor extends AbstractAsyncSpecifica
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        PreparedQuery<?, ?> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.FIND_ONE);
-        return asyncOperations.findOne(preparedQuery).thenApply(o -> convertOne(context, o));
+        return findOneAsync(methodKey, context, Type.FIND_ONE).thenApply(o -> convertOne(context, o));
     }
 }
