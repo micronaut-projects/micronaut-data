@@ -20,7 +20,6 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.type.ReturnType;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 import org.reactivestreams.Publisher;
 
@@ -44,9 +43,8 @@ public class UpdateAllReactiveSpecificationInterceptor extends AbstractReactiveS
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        PreparedQuery<?, Number> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.UPDATE_ALL);
         ReturnType<Object> returnType = context.getReturnType();
-        Publisher<Number> publisher = reactiveOperations.executeUpdate(preparedQuery);
+        Publisher<Number> publisher = updateAllReactive(methodKey, context);
         return Publishers.convertPublisher(conversionService, publisher, returnType.getType());
     }
 

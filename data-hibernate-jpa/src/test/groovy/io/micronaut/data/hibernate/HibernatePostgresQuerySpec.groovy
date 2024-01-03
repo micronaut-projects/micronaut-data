@@ -16,6 +16,7 @@
 package io.micronaut.data.hibernate
 
 import io.micronaut.context.annotation.Property
+import io.micronaut.data.hibernate.entities.RelPerson
 import io.micronaut.data.hibernate.entities.UserWithWhere
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject

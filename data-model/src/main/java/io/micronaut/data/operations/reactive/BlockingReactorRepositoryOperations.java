@@ -177,7 +177,8 @@ public interface BlockingReactorRepositoryOperations extends RepositoryOperation
         return reactive().findAll(query)
             .contextWrite(getContextView())
             .collectList()
-            .block();
+            .blockOptional()
+            .orElseGet(List::of);
     }
 
     @Override

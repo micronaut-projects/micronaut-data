@@ -21,7 +21,6 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 
 import java.util.List;
@@ -56,17 +55,13 @@ public class FindPageAsyncSpecificationInterceptor extends AbstractAsyncSpecific
 
         Pageable pageable = getPageable(context);
         if (pageable.isUnpaged()) {
-            PreparedQuery<?, ?> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.FIND_PAGE);
-            return asyncOperations.findAll(preparedQuery).thenApply(iterable -> {
+            return findAllAsync(methodKey, context, Type.FIND_PAGE).thenApply(iterable -> {
                 List<?> resultList = CollectionUtils.iterableToList(iterable);
                 return Page.of(resultList, pageable, resultList.size());
             });
         }
-        PreparedQuery<?, ?> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.FIND_PAGE);
-        PreparedQuery<?, Number> countQuery = preparedQueryForCriteria(methodKey, context, Type.COUNT);
-
-        return asyncOperations.findAll(preparedQuery).thenCompose(iterable -> asyncOperations.findOne(countQuery)
-                .thenApply(count -> Page.of(CollectionUtils.iterableToList(iterable), pageable, count.longValue())));
+        return findAllAsync(methodKey, context, Type.FIND_PAGE).thenCompose(iterable -> countAsync(methodKey, context)
+            .thenApply(count -> Page.of(CollectionUtils.iterableToList(iterable), pageable, count.longValue())));
 
     }
 
