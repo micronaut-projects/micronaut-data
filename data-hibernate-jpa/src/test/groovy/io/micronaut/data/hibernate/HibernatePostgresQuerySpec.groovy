@@ -25,7 +25,6 @@ import jakarta.inject.Inject
 @Property(name = "datasources.default.name", value = "mydb")
 @Property(name = 'datasources.default.db-type', value = 'postgres')
 @Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
-@Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
 class HibernatePostgresQuerySpec extends AbstractHibernateQuerySpec {
 
     @Inject

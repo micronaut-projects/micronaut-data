@@ -60,7 +60,6 @@ import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -222,7 +221,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         return preparedQueryDecorator.decorate(preparedQuery);
     }
 
-    @NotNull
+    @NonNull
     private Pageable findPageable(MethodInvocationContext<T, R> context) {
         Pageable pageable = Pageable.UNPAGED;
         for (Object param : context.getParameterValues()) {
@@ -234,7 +233,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         return pageable;
     }
 
-    @NotNull
+    @NonNull
     private QueryBuilder getQueryBuilder(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
         return sqlQueryBuilderForRepositories.computeIfAbsent(methodKey, repositoryMethodKey -> {
                 Class<QueryBuilder> builder = context.getAnnotationMetadata().classValue(RepositoryConfiguration.class, "queryBuilder")
@@ -291,7 +290,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         return QueryResultStoredQuery.count(context.getName(), context.getAnnotationMetadata(), queryResult, getRequiredRootEntity(context));
     }
 
-    @NotNull
+    @NonNull
     protected final <E> CriteriaQuery<Long> buildCountQuery(MethodInvocationContext<T, R> context) {
         Class<E> rootEntity = getRequiredRootEntity(context);
         QuerySpecification<E> specification = getQuerySpecification(context);
