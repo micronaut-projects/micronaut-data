@@ -383,6 +383,16 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
         e.name == "abc"
 
         when:
+        def cnt = entityWithIdClassRepository.count()
+        def cntDistinct = entityWithIdClassRepository.countDistinct()
+        def cntDistinctName = entityWithIdClassRepository.countDistinctName()
+
+        then:
+        cnt == 3
+        cntDistinct <= cnt
+        cntDistinctName <= cntDistinctName
+
+        when:
         entityWithIdClassRepository.delete(e)
         def result = entityWithIdClassRepository.findById(k)
 

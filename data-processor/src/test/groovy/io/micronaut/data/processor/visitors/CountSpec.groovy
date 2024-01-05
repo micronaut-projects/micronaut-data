@@ -61,8 +61,8 @@ interface MyInterface extends GenericRepository<Person, Long> {
         method                    | returnType              | arguments     | interceptor              | resultType | expectedQuery
         "count"                   | "Long"                  | "String name" | CountInterceptor         | Long       | "SELECT COUNT(person_)"
         "countByName"             | "Long"                  | "String name" | CountInterceptor         | Long       | "SELECT COUNT(person_)"
-        "countDistinct"           | "Long"                  | "String name" | CountInterceptor         | Long       | "SELECT COUNT(DISTINCT(person_.id))"
-        "countDistinctByName"     | "Long"                  | "String name" | CountInterceptor         | Long       | "SELECT COUNT(DISTINCT(person_.id))"
+        "countDistinct"           | "Long"                  | "String name" | CountInterceptor         | Long       | "SELECT COUNT(DISTINCT(person_))"
+        "countDistinctByName"     | "Long"                  | "String name" | CountInterceptor         | Long       | "SELECT COUNT(DISTINCT(person_))"
         "countDistinctName"       | "Long"                  | "String name" | CountInterceptor         | Long       | "SELECT COUNT(DISTINCT(person_.name))"
         "countDistinctNameByName" | "Long"                  | "String name" | CountInterceptor         | Long       | "SELECT COUNT(DISTINCT(person_.name))"
         "countDistinctNameByName" | "Single<Long>"          | "String name" | CountReactiveInterceptor | Long       | "SELECT COUNT(DISTINCT(person_.name))"

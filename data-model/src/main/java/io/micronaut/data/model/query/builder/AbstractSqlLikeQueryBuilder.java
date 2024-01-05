@@ -116,7 +116,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     protected static final String NOT_EQUALS = " != ";
     protected static final String ALIAS_REPLACE_QUOTED = "@\\.";
     protected static final String JSON_COLUMN = "column";
-    private static final String CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID = "Cannot query on ID with entity that has no ID";
+    protected static final String CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID = "Cannot query on ID with entity that has no ID";
 
     protected final Map<Class, CriterionHandler> queryHandlers = new HashMap<>(30);
 
@@ -413,7 +413,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         };
     }
 
-    private QueryPropertyPath asQueryPropertyPath(String tableAlias, PersistentProperty persistentProperty) {
+    protected final QueryPropertyPath asQueryPropertyPath(String tableAlias, PersistentProperty persistentProperty) {
         return new QueryPropertyPath(asPersistentPropertyPath(persistentProperty), tableAlias);
     }
 
@@ -765,41 +765,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     }
                     appendComma = false;
                 } else if (projection instanceof QueryModel.CountDistinctRootProjection) {
-                    queryString.append("COUNT(DISTINCT(");
-                    // If id is composite identity or embedded id then we need to do CONCAT
-                    // all id properties. It is safe as none portion of such id should be null
-                    // For regular single field id we just select that field COUNT(DISTINCT(id_field))
-                    // and we are doing CONCAT because COUNT(DISTINCT *) is not supported
-                    if (entity.hasCompositeIdentity()) {
-                        queryString.append(" CONCAT(");
-                        for (PersistentProperty identity : entity.getCompositeIdentity()) {
-                            appendPropertyProjection(annotationMetadata, entity, queryString, asQueryPropertyPath(queryState.getRootAlias(), identity), null);
-                            queryString.append(COMMA);
-                        }
-                        queryString.setLength(queryString.length() - 1);
-                        queryString.append(CLOSE_BRACKET);
-                    } else if (entity.hasIdentity()) {
-                        PersistentProperty identity = entity.getIdentity();
-                        if (identity == null) {
-                            throw new IllegalArgumentException(CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID);
-                        }
-                        StringBuilder sbSelectionProps = new StringBuilder();
-                        appendPropertyProjection(annotationMetadata, queryState.getEntity(), sbSelectionProps, asQueryPropertyPath(queryState.getRootAlias(), identity), null);
-                        String[] selectionProps = sbSelectionProps.toString().split(",");
-                        if (selectionProps.length > 1) {
-                            queryString.append(" CONCAT(");
-                            for (String selectionProp : selectionProps) {
-                                queryString.append(selectionProp).append(COMMA);
-                            }
-                            queryString.setLength(queryString.length() - 1);
-                            queryString.append(CLOSE_BRACKET);
-                        } else {
-                            queryString.append(selectionProps[0]);
-                        }
-                    } else {
-                        throw new IllegalArgumentException(CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID);
-                    }
-                    queryString.append("))");
+                    appendProjectionRowCountDistinct(queryString, queryState, entity, annotationMetadata, tableAlias);
                 } else if (projection instanceof QueryModel.IdProjection) {
                     if (entity.hasCompositeIdentity()) {
                         for (PersistentProperty identity : entity.getCompositeIdentity()) {
@@ -916,7 +882,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         selectAllColumnsFromJoinPaths(queryState, queryString, queryState.getQueryModel().getJoinPaths(), null);
     }
 
-    private void appendPropertyProjection(AnnotationMetadata annotationMetadata, PersistentEntity entity, StringBuilder sb, QueryPropertyPath propertyPath, String columnAlias) {
+    protected final void appendPropertyProjection(AnnotationMetadata annotationMetadata, PersistentEntity entity, StringBuilder sb, QueryPropertyPath propertyPath, String columnAlias) {
         boolean jsonEntity = isJsonEntity(annotationMetadata, entity);
         if (!computePropertyPaths() || jsonEntity) {
             sb.append(propertyPath.getTableAlias()).append(DOT);
@@ -1127,6 +1093,19 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param logicalName The alias to the table name
      */
     protected abstract void appendProjectionRowCount(StringBuilder queryString, String logicalName);
+
+    /**
+     * Appends a row count distinct projection to the query string.
+     *
+     * @param queryString The query string
+     * @param queryState The query state
+     * @param entity The persistent entity
+     * @param annotationMetadata The query annotation metadata
+     * @param logicalName The alias to the table name
+     */
+    protected abstract void appendProjectionRowCountDistinct(StringBuilder queryString, QueryState queryState,
+                                                             PersistentEntity entity, AnnotationMetadata annotationMetadata,
+                                                             String logicalName);
 
     private void handleAssociationCriteria(CriteriaContext ctx, AssociationQuery associationQuery) {
         QueryState queryState = ctx.getQueryState();
