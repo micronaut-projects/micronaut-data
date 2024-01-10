@@ -32,7 +32,6 @@ import java.lang.annotation.*;
 @Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.FIELD, ElementType.METHOD})
 @Documented
 @Introspected(
-    excludedAnnotations = Transient.class,
     indexed = {
         @Introspected.IndexedAnnotation(annotation = Id.class),
         @Introspected.IndexedAnnotation(annotation = Version.class),

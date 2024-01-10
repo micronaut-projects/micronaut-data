@@ -82,7 +82,6 @@ class Test {
         introspection.getIndexedProperty(MappedProperty, "test_name").get().name == 'name'
     }
 
-    @PendingFeature
     void "test mapping javax.persistent entity with a @Transient Field"() {
         given:
         BeanIntrospection introspection = buildBeanIntrospection('test.Test', CLAZZ)
