@@ -65,12 +65,13 @@ class KCriteriaBuilderExtKtTest(var runtimeCriteriaBuilder: RuntimeCriteriaBuild
                     (root[TestEntity::age] lt 40)
                     (root[TestEntity::age] le 50)
                 }
+                root[TestEntity::name] inList listOf("AAA", "BBB")
             }
         }
         val criteriaQuery = query.build(runtimeCriteriaBuilder) as QueryResultPersistentEntityCriteriaQuery
         val q = criteriaQuery.buildQuery(SqlQueryBuilder()).query
 
-        Assertions.assertEquals( """SELECT MIN(test_entity_."name") FROM "test_entity" test_entity_ WHERE ((test_entity_."enabled" = TRUE OR test_entity_."enabled" = FALSE OR test_entity_."enabled" IS NULL OR test_entity_."enabled" IS NOT NULL) AND NOT(test_entity_."enabled" = ?) AND NOT(test_entity_."enabled" != ?) AND NOT(test_entity_."enabled" = ?) AND NOT(test_entity_."enabled" != ?) AND (test_entity_."name" < ? OR test_entity_."name" <= ?) AND test_entity_."name" > ? AND test_entity_."name" >= ? AND ((test_entity_."age" >= ? AND test_entity_."age" <= ?) OR test_entity_."age" > ? OR test_entity_."age" >= ? OR test_entity_."age" < ? OR test_entity_."age" <= ?))""", q)
+        Assertions.assertEquals( """SELECT MIN(test_entity_."name") FROM "test_entity" test_entity_ WHERE ((test_entity_."enabled" = TRUE OR test_entity_."enabled" = FALSE OR test_entity_."enabled" IS NULL OR test_entity_."enabled" IS NOT NULL) AND NOT(test_entity_."enabled" = ?) AND NOT(test_entity_."enabled" != ?) AND NOT(test_entity_."enabled" = ?) AND NOT(test_entity_."enabled" != ?) AND (test_entity_."name" < ? OR test_entity_."name" <= ?) AND test_entity_."name" > ? AND test_entity_."name" >= ? AND ((test_entity_."age" >= ? AND test_entity_."age" <= ?) OR test_entity_."age" > ? OR test_entity_."age" >= ? OR test_entity_."age" < ? OR test_entity_."age" <= ?) AND test_entity_."name" IN (?))""", q)
     }
 
     @Test
@@ -85,6 +86,7 @@ class KCriteriaBuilderExtKtTest(var runtimeCriteriaBuilder: RuntimeCriteriaBuild
                     root[TestEntity::enabled].ne(bool)
                     root[TestEntity::enabled].equal(bool)
                     root[TestEntity::enabled].notEqual(bool)
+                    root[TestEntity::name] inList listOf("AAA", "BBB")
                 }
                 or {
                     root[TestEntity::enabled].eq(str)
@@ -103,7 +105,7 @@ class KCriteriaBuilderExtKtTest(var runtimeCriteriaBuilder: RuntimeCriteriaBuild
         val criteriaQuery = query.build(runtimeCriteriaBuilder) as QueryResultPersistentEntityCriteriaQuery
         val q = criteriaQuery.buildQuery(SqlQueryBuilder()).query
 
-        Assertions.assertEquals("""SELECT MIN(test_entity_."name") FROM "test_entity" test_entity_ WHERE (NOT(test_entity_."enabled" = ?) AND NOT(test_entity_."enabled" != ?) AND NOT(test_entity_."enabled" = ?) AND NOT(test_entity_."enabled" != ?) AND (test_entity_."enabled" = ? OR test_entity_."enabled" != ? OR test_entity_."enabled" = ? OR test_entity_."enabled" != ?) AND test_entity_."description" = ? AND test_entity_."description" != ? AND test_entity_."description" = ? AND test_entity_."description" != ?)""", q)
+        Assertions.assertEquals("""SELECT MIN(test_entity_."name") FROM "test_entity" test_entity_ WHERE (NOT(test_entity_."enabled" = ?) AND NOT(test_entity_."enabled" != ?) AND NOT(test_entity_."enabled" = ?) AND NOT(test_entity_."enabled" != ?) AND test_entity_."name" NOT IN (?) AND (test_entity_."enabled" = ? OR test_entity_."enabled" != ? OR test_entity_."enabled" = ? OR test_entity_."enabled" != ?) AND test_entity_."description" = ? AND test_entity_."description" != ? AND test_entity_."description" = ? AND test_entity_."description" != ?)""", q)
     }
 
     @Test
