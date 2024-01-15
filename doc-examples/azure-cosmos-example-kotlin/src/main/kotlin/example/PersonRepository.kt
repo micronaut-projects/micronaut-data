@@ -100,6 +100,10 @@ interface PersonRepository : CrudRepository<Person, String>, JpaSpecificationExe
                 root[Person::age] lt age
             }
         }
+
+        fun nameInList(names: List<String>) = where<Person> {
+            root[Person::name] inList names
+        }
         // end::or[]
 
         // end::specifications[]
@@ -134,4 +138,3 @@ interface PersonRepository : CrudRepository<Person, String>, JpaSpecificationExe
     // end::specifications[]
     // tag::repository[]
 }
-

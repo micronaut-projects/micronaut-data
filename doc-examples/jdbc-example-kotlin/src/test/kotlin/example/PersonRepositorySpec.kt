@@ -20,14 +20,14 @@ internal class PersonRepositorySpec {
     @BeforeEach
     fun beforeEach() {
         personRepository.saveAll(listOf(
-                Person(
-                        "Denis",
-                        13
-                ),
-                Person(
-                        "Josh",
-                        22
-                )
+            Person(
+                "Denis",
+                13
+            ),
+            Person(
+                "Josh",
+                22
+            )
         ))
     }
 

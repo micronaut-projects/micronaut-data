@@ -11,6 +11,8 @@ import io.micronaut.data.repository.jpa.criteria.DeleteSpecification
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
+import io.micronaut.data.runtime.criteria.get
+import io.micronaut.data.runtime.criteria.where
 import java.util.*
 
 // tag::repository[]
@@ -92,6 +94,10 @@ interface PersonRepository : CrudRepository<Person, Long>, JpaSpecificationExecu
 
         fun ageIsLessThan(age: Int) = PredicateSpecification<Person> { root, criteriaBuilder ->
             criteriaBuilder.lessThan(root.get("age"), age)
+        }
+
+        fun nameInList(names: List<String>) = where<Person> {
+            root[Person::name] inList names
         }
 
         // end::specifications[]

@@ -20,7 +20,21 @@ import io.micronaut.data.repository.jpa.criteria.CriteriaDeleteBuilder
 import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder
 import io.micronaut.data.repository.jpa.criteria.CriteriaUpdateBuilder
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
-import jakarta.persistence.criteria.*
+import io.micronaut.data.repository.jpa.criteria.QuerySpecification
+import jakarta.persistence.criteria.CriteriaBuilder
+import jakarta.persistence.criteria.CriteriaDelete
+import jakarta.persistence.criteria.CriteriaQuery
+import jakarta.persistence.criteria.CriteriaUpdate
+import jakarta.persistence.criteria.Expression
+import jakarta.persistence.criteria.From
+import jakarta.persistence.criteria.Join
+import jakarta.persistence.criteria.JoinType
+import jakarta.persistence.criteria.ListJoin
+import jakarta.persistence.criteria.Path
+import jakarta.persistence.criteria.Predicate
+import jakarta.persistence.criteria.Root
+import jakarta.persistence.criteria.Selection
+import jakarta.persistence.criteria.SetJoin
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 
@@ -110,7 +124,6 @@ class WherePredicate<T>(var where: Where<T>.() -> Unit) : PredicateSpecification
 
 @Experimental
 class SelectQuery<T, V>(var root: Root<T>, var query: CriteriaQuery<V>, var criteriaBuilder: CriteriaBuilder) : WhereQuery<T>(root, criteriaBuilder) {
-
 
     fun select(prop: KProperty<V>) {
         select(prop.asPath(root))
@@ -253,6 +266,8 @@ class Where<T>(var root: Root<T>, var criteriaBuilder: CriteriaBuilder) {
 
     infix fun Expression<*>.ne(other: Expression<*>) = addPredicateExp(criteriaBuilder::notEqual, other)
 
+    infix fun <Y> Expression<out Y?>.inList(other: Collection<Y>) = addInListPredicate(other)
+
     infix fun <Y : Comparable<Y>> Expression<out Y?>.greaterThan(other: Y) = addComparablePredicate(criteriaBuilder::greaterThan, other)
 
     infix fun <Y : Comparable<Y>> Expression<out Y?>.greaterThan(other: Expression<out Y?>) = addComparablePredicate(criteriaBuilder::greaterThan, other)
@@ -312,6 +327,10 @@ class Where<T>(var root: Root<T>, var criteriaBuilder: CriteriaBuilder) {
 
     private inline fun <Y : Number?, K : Number?> Expression<out Y?>.addNumberPredicate(fn: (Expression<out Y?>, Expression<out K?>) -> Predicate, value: Expression<out K?>) {
         addPredicate(fn.invoke(this, value))
+    }
+
+    private fun <Y> Expression<out Y?>.addInListPredicate(values: Collection<Y>) {
+        addPredicate(criteriaBuilder.`in`(this).apply { values.forEach { value(it) } })
     }
 
     private fun addPredicate(predicate: Predicate) {

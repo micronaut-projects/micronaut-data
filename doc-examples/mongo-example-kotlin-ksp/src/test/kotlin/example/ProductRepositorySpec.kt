@@ -1,6 +1,7 @@
 package example
 
 import example.ProductRepository.Specifications.manufacturerNameEquals
+import example.ProductRepository.Specifications.nameInList
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.*
@@ -22,14 +23,14 @@ internal class ProductRepositorySpec : AbstractMongoSpec() {
     fun setupData() {
         val apple = manufacturerRepository.save("Apple")
         productRepository.saveAll(listOf(
-                Product(null,
-                        "MacBook",
-                        apple
-                ),
-                Product(null,
-                        "iPhone",
-                        apple
-                )
+            Product(null,
+                "MacBook",
+                apple
+            ),
+            Product(null,
+                "iPhone",
+                apple
+            )
         ))
     }
 
@@ -37,7 +38,7 @@ internal class ProductRepositorySpec : AbstractMongoSpec() {
     fun testJoinSpec() {
         val list = productRepository.list()
         assertTrue(
-                list.all { it.manufacturer?.name == "Apple" }
+            list.all { it.manufacturer?.name == "Apple" }
         )
     }
 
@@ -45,12 +46,12 @@ internal class ProductRepositorySpec : AbstractMongoSpec() {
     fun testAsync() {
         // tag::async[]
         val total = productRepository.findByNameRegex(".*o.*")
-                .thenCompose { product -> productRepository.countByManufacturerName(product.manufacturer?.name) }
-                .get(1000, TimeUnit.SECONDS)
+            .thenCompose { product -> productRepository.countByManufacturerName(product.manufacturer?.name) }
+            .get(1000, TimeUnit.SECONDS)
 
         assertEquals(
-                2,
-                total
+            2,
+            total
         )
         // end::async[]
     }
@@ -59,16 +60,16 @@ internal class ProductRepositorySpec : AbstractMongoSpec() {
     fun testReactive() {
         // tag::reactive[]
         val total = productRepository.queryByNameRegex(".*o.*")
-                .flatMap { product ->
-                    productRepository.countDistinctByManufacturerName(product.manufacturer?.name)
-                            .toMaybe()
-                }
-                .defaultIfEmpty(0L)
-                .blockingGet()
+            .flatMap { product ->
+                productRepository.countDistinctByManufacturerName(product.manufacturer?.name)
+                    .toMaybe()
+            }
+            .defaultIfEmpty(0L)
+            .blockingGet()
 
         assertEquals(
-                2,
-                total
+            2,
+            total
         )
         // end::reactive[]
     }
@@ -77,13 +78,28 @@ internal class ProductRepositorySpec : AbstractMongoSpec() {
     fun testCriteriaJoin() {
         val samsung = manufacturerRepository.save("Samsung")
         productRepository.save(
-                Product(null,
-                        "Android",
-                        samsung
-                )
+            Product(null,
+                "Android",
+                samsung
+            )
         )
         assertEquals(2, productRepository.findAll(manufacturerNameEquals("Apple")).size)
         assertEquals(1, productRepository.findAll(manufacturerNameEquals("Samsung")).size)
+    }
+
+    @Test
+    fun testCriteriaInList() {
+        val samsung = manufacturerRepository.save("Samsung")
+        productRepository.save(
+            Product(null,
+                "Android",
+                samsung
+            )
+        )
+        assertEquals(3, productRepository.findAll(nameInList(listOf("Apple", "Samsung"))).size)
+        assertEquals(2, productRepository.findAll(nameInList(listOf("Android", "iPhone"))).size)
+        assertEquals(2, productRepository.findAll(nameInList(listOf("iPhone", "Samsung"))).size)
+        assertEquals(1, productRepository.findAll(nameInList(listOf("Android", "Samsung"))).size)
     }
 
 }
