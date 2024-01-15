@@ -91,6 +91,8 @@ interface PersonRepository : CrudRepository<Person, String>, JpaSpecificationExe
         fun nameEquals(name: String?) = where<Person> { root[Person::name] eq name }
 
         fun ageIsLessThan(age: Int) = where<Person> { root[Person::age] lt age }
+
+        fun nameInList(names: List<String>) = where<Person> { root[Person::name] inList names }
         // end::where[]
 
         // tag::or[]

@@ -290,6 +290,8 @@ class Where<T>(var root: Root<T>, var criteriaBuilder: CriteriaBuilder) {
 
     infix fun <Y : Number> Expression<out Y?>.le(other: Expression<out Y?>) = addNumberPredicate(criteriaBuilder::le, other)
 
+    infix fun <Y> Expression<out Y?>.inList(other: Collection<Y>) = addInListPredicate(other)
+
     private inline fun <Y> Expression<out Y?>.addPredicate(fn: (Expression<out Y>, Y) -> Predicate, value: Y) {
         addPredicate(fn.invoke(this, value))
     }
@@ -312,6 +314,10 @@ class Where<T>(var root: Root<T>, var criteriaBuilder: CriteriaBuilder) {
 
     private inline fun <Y : Number?, K : Number?> Expression<out Y?>.addNumberPredicate(fn: (Expression<out Y?>, Expression<out K?>) -> Predicate, value: Expression<out K?>) {
         addPredicate(fn.invoke(this, value))
+    }
+
+    private fun <Y> Expression<out Y?>.addInListPredicate(values: Collection<Y>) {
+        addPredicate(criteriaBuilder.`in`(this).apply { values.forEach { value(it) } })
     }
 
     private fun addPredicate(predicate: Predicate) {

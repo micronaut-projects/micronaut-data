@@ -3,6 +3,7 @@ package example
 import example.PersonRepository.Specifications.ageIsLessThan
 import example.PersonRepository.Specifications.interestsContains
 import example.PersonRepository.Specifications.nameEquals
+import example.PersonRepository.Specifications.nameInList
 import example.PersonRepository.Specifications.updateName
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification.not
@@ -159,5 +160,18 @@ class PersonRepositorySpec : AbstractMongoSpec() {
         people = personRepository.findAll(interestsContains( "hiking"))
         Assertions.assertEquals(1, people.size)
         Assertions.assertEquals("Josh", people[0].name)
+    }
+
+    @Test
+    fun testFindInList() {
+        val twoPeople = personRepository.findAll(PredicateSpecification.where(nameInList(listOf("Denis", "Josh"))))
+        val denis = personRepository.findAll(PredicateSpecification.where(nameInList(listOf("Denis"))))
+        val josh = personRepository.findAll(PredicateSpecification.where(nameInList(listOf("Josh"))))
+
+        Assertions.assertEquals(2, twoPeople.size)
+        Assertions.assertEquals(1, denis.size)
+        Assertions.assertEquals("Denis", denis.first().name)
+        Assertions.assertEquals(1, josh.size)
+        Assertions.assertEquals("Josh", josh.first().name)
     }
 }
