@@ -9335,6 +9335,9 @@ public interface UpdateSpecification&lt;T&gt; {
         null
     }
 
+    fun nameInList(names: List&lt;String&gt;) = where&lt;Person&gt; {
+        root[Person::name] inList names
+    }
 }</code></pre>
 </div>
 </div>
@@ -13969,6 +13972,8 @@ fun count(spec: QuerySpecification&lt;Person&gt;?): Long</code></pre>
 
     fun ageIsLessThan(age: Int) = where&lt;Person&gt; { root[Person::age] lt age }
 
+    fun nameInList(names: List&lt;String&gt;) = where&lt;Person&gt; { root[Person::name] inList names }
+
     fun nameOrAgeMatches(age: Int, name: String?) = where&lt;Person&gt; {
         or {
             root[Person::name] eq name
@@ -14187,6 +14192,8 @@ public interface UpdateSpecification&lt;T&gt; {
 
     fun ageIsLessThan(age: Int) = where&lt;Person&gt; { root[Person::age] lt age }
 
+    fun nameInList(names: List&lt;String&gt;) = where&lt;Person&gt; { root[Person::name] inList names }
+
     fun nameOrAgeMatches(age: Int, name: String?) = where&lt;Person&gt; {
         or {
             root[Person::name] eq name
@@ -14363,6 +14370,8 @@ public interface DeleteSpecification&lt;T&gt; {
     fun nameEquals(name: String?) = where&lt;Person&gt; { root[Person::name] eq name }
 
     fun ageIsLessThan(age: Int) = where&lt;Person&gt; { root[Person::age] lt age }
+
+    fun nameInList(names: List&lt;String&gt;) = where&lt;Person&gt; { root[Person::name] inList names }
 
     fun nameOrAgeMatches(age: Int, name: String?) = where&lt;Person&gt; {
         or {
@@ -15708,6 +15717,8 @@ fun count(spec: QuerySpecification&lt;Person&gt;?): Long</code></pre>
 
     fun ageIsLessThan(age: Int) = where&lt;Person&gt; { root[Person::age] lt age }
 
+    fun nameInList(names: List&lt;String&gt;) = where&lt;Person&gt; { root[Person::name] inList names }
+
     fun nameOrAgeMatches(age: Int, name: String?) = where&lt;Person&gt; {
         or {
             root[Person::name] eq name
@@ -16016,6 +16027,8 @@ public interface UpdateSpecification&lt;T&gt; {
 
     fun ageIsLessThan(age: Int) = where&lt;Person&gt; { root[Person::age] lt age }
 
+    fun nameInList(names: List&lt;String&gt;) = where&lt;Person&gt; { root[Person::name] inList names }
+
     fun nameOrAgeMatches(age: Int, name: String?) = where&lt;Person&gt; {
         or {
             root[Person::name] eq name
@@ -16183,6 +16196,8 @@ public interface DeleteSpecification&lt;T&gt; {
     fun nameEquals(name: String?) = where&lt;Person&gt; { root[Person::name] eq name }
 
     fun ageIsLessThan(age: Int) = where&lt;Person&gt; { root[Person::age] lt age }
+
+    fun nameInList(names: List&lt;String&gt;) = where&lt;Person&gt; { root[Person::name] inList names }
 
     fun nameOrAgeMatches(age: Int, name: String?) = where&lt;Person&gt; {
         or {
