@@ -2,6 +2,7 @@ package example
 
 import example.PersonRepository.Specifications.ageIsLessThan
 import example.PersonRepository.Specifications.nameEquals
+import example.PersonRepository.Specifications.nameInList
 import example.PersonRepository.Specifications.setNewName
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
@@ -25,14 +26,14 @@ internal class PersonSuspendRepositorySpec {
     fun beforeEach() {
         runBlocking {
             personRepository.saveAll(listOf(
-                    Person(
-                            "Denis",
-                            13
-                    ),
-                    Person(
-                            "Josh",
-                            22
-                    )
+                Person(
+                    "Denis",
+                    13
+                ),
+                Person(
+                    "Josh",
+                    22
+                )
             )).toList()
         }
     }
@@ -116,5 +117,17 @@ internal class PersonSuspendRepositorySpec {
         Assertions.assertEquals(2, countAgeLess30Page.totalPages)
         Assertions.assertEquals(1, countAgeLess30Page.content.size)
         Assertions.assertEquals("Denis", countAgeLess30Page.content[0].name)
+    }
+
+    @Test
+    fun testInListWithPagination() = runBlocking {
+        val people = personRepository.findAll(nameInList(listOf("Denis", "Josh")), Sort.of(Sort.Order.asc("name"))).toList()
+        val peoplePage = personRepository.findAll(nameInList(listOf("Denis", "Josh")),  Pageable.from(0,1, Sort.of(Sort.Order.asc("name"))))
+        Assertions.assertEquals(2, people.size)
+        Assertions.assertEquals("Denis", people[0].name)
+        Assertions.assertEquals("Josh", people[1].name)
+        Assertions.assertEquals(2, peoplePage.totalPages)
+        Assertions.assertEquals(1, peoplePage.content.size)
+        Assertions.assertEquals("Denis", peoplePage.content[0].name)
     }
 }

@@ -2,6 +2,7 @@ package example
 
 import example.PersonRepository.Specifications.ageIsLessThan
 import example.PersonRepository.Specifications.nameEquals
+import example.PersonRepository.Specifications.nameInList
 import example.PersonRepository.Specifications.updateName
 import jakarta.inject.Inject
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
@@ -23,14 +24,14 @@ class PersonRepositorySpec : AbstractAzureCosmosTest() {
     @BeforeEach
     fun beforeEach() {
         personRepository.saveAll(listOf(
-                Person(
-                        "Denis",
-                        13
-                ),
-                Person(
-                        "Josh",
-                        22
-                )
+            Person(
+                "Denis",
+                13
+            ),
+            Person(
+                "Josh",
+                22
+            )
         ))
     }
 
@@ -51,6 +52,7 @@ class PersonRepositorySpec : AbstractAzureCosmosTest() {
         val countAgeLess30NotDenis: Long = personRepository.count(ageIsLessThan(30).and(not(nameEquals("Denis"))))
 
         val people = personRepository.findAll(PredicateSpecification.where(nameEquals("Denis").or(nameEquals("Josh"))))
+
         // end::find[]
         Assertions.assertNotNull(denis)
         Assertions.assertEquals(2, countAgeLess30)
@@ -63,9 +65,9 @@ class PersonRepositorySpec : AbstractAzureCosmosTest() {
     fun testFindDto() {
         val stats = personRepository.findOne(query<Person, PersonAgeStatsDto> {
             multiselect(
-                    max(Person::age).alias(PersonAgeStatsDto::maxAge),
-                    min(Person::age).alias(PersonAgeStatsDto::minAge),
-                    avg(Person::age).alias(PersonAgeStatsDto::avgAge)
+                max(Person::age).alias(PersonAgeStatsDto::maxAge),
+                min(Person::age).alias(PersonAgeStatsDto::minAge),
+                avg(Person::age).alias(PersonAgeStatsDto::avgAge)
             )
             where {
                 or {
@@ -144,4 +146,16 @@ class PersonRepositorySpec : AbstractAzureCosmosTest() {
         Assertions.assertEquals(1, all.size)
     }
 
+    @Test
+    fun testFindInList() {
+        val twoPeople = personRepository.findAll(PredicateSpecification.where(nameInList(listOf("Denis", "Josh"))))
+        val denis = personRepository.findAll(PredicateSpecification.where(nameInList(listOf("Denis"))))
+        val josh = personRepository.findAll(PredicateSpecification.where(nameInList(listOf("Josh"))))
+
+        Assertions.assertEquals(2, twoPeople.size)
+        Assertions.assertEquals(1, denis.size)
+        Assertions.assertEquals("Denis", denis.first().name)
+        Assertions.assertEquals(1, josh.size)
+        Assertions.assertEquals("Josh", josh.first().name)
+    }
 }
