@@ -302,7 +302,11 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                 criteriaQuery.where(predicate);
             }
         }
-        return criteriaQuery.select(criteriaBuilder.count(root));
+        if (criteriaQuery.isDistinct()) {
+            return criteriaQuery.select(criteriaBuilder.countDistinct(root));
+        } else {
+            return criteriaQuery.select(criteriaBuilder.count(root));
+        }
     }
 
     private <E> StoredQuery<E, Object> buildFind(RepositoryMethodKey methodKey,

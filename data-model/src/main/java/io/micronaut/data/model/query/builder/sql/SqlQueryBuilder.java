@@ -1739,6 +1739,47 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
+    protected void appendProjectionRowCountDistinct(StringBuilder queryString, QueryState queryState,
+                                                    PersistentEntity entity, AnnotationMetadata annotationMetadata,
+                                                    String logicalName) {
+        queryString.append("COUNT(DISTINCT(");
+        // If id is composite identity or embedded id then we need to do CONCAT
+        // all id properties. It is safe as none portion of such id should be null
+        // For regular single field id we just select that field COUNT(DISTINCT(id_field))
+        // and we are doing CONCAT because COUNT(DISTINCT *) is not supported
+        if (entity.hasCompositeIdentity()) {
+            queryString.append(" CONCAT(");
+            for (PersistentProperty identity : entity.getCompositeIdentity()) {
+                appendPropertyProjection(annotationMetadata, entity, queryString, asQueryPropertyPath(queryState.getRootAlias(), identity), null);
+                queryString.append(COMMA);
+            }
+            queryString.setLength(queryString.length() - 1);
+            queryString.append(CLOSE_BRACKET);
+        } else if (entity.hasIdentity()) {
+            PersistentProperty identity = entity.getIdentity();
+            if (identity == null) {
+                throw new IllegalArgumentException(CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID);
+            }
+            StringBuilder sbSelectionProps = new StringBuilder();
+            appendPropertyProjection(annotationMetadata, queryState.getEntity(), sbSelectionProps, asQueryPropertyPath(queryState.getRootAlias(), identity), null);
+            String[] selectionProps = sbSelectionProps.toString().split(",");
+            if (selectionProps.length > 1) {
+                queryString.append(" CONCAT(");
+                for (String selectionProp : selectionProps) {
+                    queryString.append(selectionProp).append(COMMA);
+                }
+                queryString.setLength(queryString.length() - 1);
+                queryString.append(CLOSE_BRACKET);
+            } else {
+                queryString.append(selectionProps[0]);
+            }
+        } else {
+            throw new IllegalArgumentException(CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID);
+        }
+        queryString.append("))");
+    }
+
+    @Override
     protected void appendForUpdate(QueryPosition queryPosition, QueryModel query, StringBuilder queryBuilder) {
         if (query.isForUpdate()) {
             boolean isSqlServer = Dialect.SQL_SERVER.equals(dialect);

@@ -282,7 +282,7 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
 
     @Override
     public boolean isDistinct() {
-        return false;
+        return distinct;
     }
 
     @Override

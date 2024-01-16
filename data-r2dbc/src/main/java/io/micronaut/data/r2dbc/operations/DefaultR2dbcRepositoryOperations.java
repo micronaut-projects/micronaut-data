@@ -483,11 +483,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
                 SqlTypeMapper<Row, R> mapper = createMapper(preparedQuery, Row.class);
                 if (mapper instanceof SqlResultEntityTypeMapper<Row, R> entityTypeMapper) {
-                    final boolean hasJoins = !preparedQuery.getJoinFetchPaths().isEmpty();
-                    if (!hasJoins) {
-                        // Every row represents the entity record, we can return it directly
-                        return executeAndMapEachRow(statement, entityTypeMapper::readEntity);
-                    }
                     SqlResultEntityTypeMapper.PushingMapper<Row, List<R>> rowsMapper = entityTypeMapper.readAllWithJoins();
                     return executeAndMapEachRow(statement, row -> {
                         rowsMapper.processRow(row);

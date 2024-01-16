@@ -233,6 +233,15 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
+    protected void appendProjectionRowCountDistinct(StringBuilder queryString, QueryState queryState, PersistentEntity entity, AnnotationMetadata annotationMetadata, String logicalName) {
+        queryString.append(COUNT_DISTINCT)
+            .append(OPEN_BRACKET)
+            .append(logicalName)
+            .append(CLOSE_BRACKET)
+            .append(CLOSE_BRACKET);
+    }
+
+    @Override
     protected final boolean computePropertyPaths() {
         return false;
     }
