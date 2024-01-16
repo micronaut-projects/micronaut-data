@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
 @MicronautTest
-class KCriteriaBuilderExtKtTest(var runtimeCriteriaBuilder: RuntimeCriteriaBuilder) {
+class KCriteriaBuilderExtKtTest(private val runtimeCriteriaBuilder: RuntimeCriteriaBuilder) {
 
     @Test
     fun testBasic() {

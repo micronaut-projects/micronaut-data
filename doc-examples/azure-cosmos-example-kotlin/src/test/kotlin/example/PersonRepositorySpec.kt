@@ -2,7 +2,11 @@ package example
 
 import example.PersonRepository.Specifications.ageIsLessThan
 import example.PersonRepository.Specifications.nameEquals
+<<<<<<< Updated upstream
 import example.PersonRepository.Specifications.nameInList
+=======
+import example.PersonRepository.Specifications.nameOrAgeMatches
+>>>>>>> Stashed changes
 import example.PersonRepository.Specifications.updateName
 import jakarta.inject.Inject
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
@@ -52,12 +56,16 @@ class PersonRepositorySpec : AbstractAzureCosmosTest() {
         val countAgeLess30NotDenis: Long = personRepository.count(ageIsLessThan(30).and(not(nameEquals("Denis"))))
 
         val people = personRepository.findAll(PredicateSpecification.where(nameEquals("Denis").or(nameEquals("Josh"))))
+
+        val peopleWithNameOrAge = personRepository.findAll(nameOrAgeMatches(22, "Denis"))
         // end::find[]
+
         Assertions.assertNotNull(denis)
         Assertions.assertEquals(2, countAgeLess30)
         Assertions.assertEquals(1, countAgeLess20)
         Assertions.assertEquals(1, countAgeLess30NotDenis)
         Assertions.assertEquals(2, people.size)
+        Assertions.assertEquals(2, peopleWithNameOrAge.size)
     }
 
     @Test
