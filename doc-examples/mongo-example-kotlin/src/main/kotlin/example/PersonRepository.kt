@@ -104,7 +104,7 @@ interface PersonRepository : CrudRepository<Person, ObjectId>, JpaSpecificationE
         // end::where[]
 
         // tag::or[]
-        fun nameOrAgeMatches(age: Int, name: String?) = query<Person> {
+        fun nameOrAgeMatches(age: Int, name: String) = query<Person> {
             where {
                 or {
                     root[Person::name] eq name

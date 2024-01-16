@@ -4,11 +4,8 @@ import example.PersonRepository.Specifications.ageIsLessThan
 import example.PersonRepository.Specifications.ageIsLessThan2
 import example.PersonRepository.Specifications.nameEquals
 import example.PersonRepository.Specifications.nameEquals2
-<<<<<<< Updated upstream
 import example.PersonRepository.Specifications.nameInList
-=======
 import example.PersonRepository.Specifications.nameOrAgeMatches
->>>>>>> Stashed changes
 import example.PersonRepository.Specifications.setNewName2
 import jakarta.inject.Inject
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
@@ -51,14 +48,18 @@ internal class PersonSuspendRepositorySpec : AbstractMongoSpec() {
         val countAgeLess20: Long = personRepository.count(ageIsLessThan(20))
         val countAgeLess30NotDenis: Long = personRepository.count(ageIsLessThan2(30).and(not(nameEquals2("Denis"))))
         val people = personRepository.findAll(PredicateSpecification.where(nameEquals("Denis").or(nameEquals("Josh")))).toList()
-        val peopleWithAgeOrName = personRepository.findAll(nameOrAgeMatches(22, "Josh")).toList()
         // end::find[]
         Assertions.assertNotNull(denis)
         Assertions.assertEquals(2, countAgeLess30)
         Assertions.assertEquals(1, countAgeLess20)
         Assertions.assertEquals(1, countAgeLess30NotDenis)
         Assertions.assertEquals(2, people.size)
-        Assertions.assertEquals(2, peopleWithAgeOrName.size)
+    }
+
+    @Test
+    fun testNameOrAgeMatches() = runBlocking {
+        val peopleWithNameOrAge = personRepository.findAll(nameOrAgeMatches(22, "Josh")).toList()
+        Assertions.assertEquals(2, peopleWithNameOrAge.size)
     }
 
     @Test
