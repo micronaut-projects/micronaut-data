@@ -115,7 +115,7 @@ jobs:
       artifacts-sha256: ${{ steps.set-hash.outputs.artifacts-sha256 }}
     steps:
       - name: Download artifacts-sha256
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+        uses: actions/download-artifact@6b208ae046db98c579e8a3aa621ab581ff575935 # v4.1.1
         with:
           name: artifacts-sha256
       # The SLSA provenance generator expects the hash digest of artifacts to be passed as a job
@@ -150,7 +150,7 @@ jobs:
       - name: Download artifacts
         # Important: update actions/download-artifact to v4 only when generator_generic_slsa3.yml is also compatible.
         # See https://github.com/slsa-framework/slsa-github-generator/issues/3068
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+        uses: actions/download-artifact@6b208ae046db98c579e8a3aa621ab581ff575935 # v4.1.1
         with:
           name: gradle-build-outputs
           path: build/repo
