@@ -28,3 +28,7 @@ A JPA-specific alternative to specifying the joins to a query is to use JPA 2.1 
 snippet::example.ProductRepository[project-base="doc-examples/hibernate-example", source="main",tags="entitygraph", indent="0"]
 
 <1> The `attributePaths` member is used to specify the paths to include in the Entity graph.
+
+=== Tests
+
+Please note that in tests using join collections, to make sure joins are consistently fetched the test might need to be made non-transactional using `@MicronautTest(transactional = false)`.
