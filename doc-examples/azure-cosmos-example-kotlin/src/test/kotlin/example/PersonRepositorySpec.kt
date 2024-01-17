@@ -1,9 +1,9 @@
 package example
 
 import example.PersonRepository.Specifications.ageIsLessThan
+import example.PersonRepository.Specifications.nameAndAgeMatch
 import example.PersonRepository.Specifications.nameEquals
 import example.PersonRepository.Specifications.nameInList
-import example.PersonRepository.Specifications.nameOrAgeMatches
 import example.PersonRepository.Specifications.updateName
 import jakarta.inject.Inject
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
@@ -62,8 +62,9 @@ class PersonRepositorySpec : AbstractAzureCosmosTest() {
     }
 
     @Test
-    fun testNameOrAgeMatches() {
-        val peopleWithNameOrAge = personRepository.findAll(nameOrAgeMatches(22, "Josh"))
+    fun testNameAndAgeMatch() {
+        personRepository.save(Person("Josh", 14))
+        val peopleWithNameOrAge = personRepository.findAll(nameAndAgeMatch(25, "Josh"))
         Assertions.assertEquals(2, peopleWithNameOrAge.size)
     }
 

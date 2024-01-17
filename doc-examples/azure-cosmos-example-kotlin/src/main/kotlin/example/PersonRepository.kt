@@ -97,12 +97,17 @@ interface PersonRepository : CrudRepository<Person, String>, JpaSpecificationExe
         // end::where[]
 
         // tag::or[]
-        fun nameOrAgeMatches(age: Int, name: String?) = query<Person> {
+        fun nameOrAgeMatches(age: Int, name: String?) = where<Person> {
+            or {
+                root[Person::name] eq name
+                root[Person::age] lt age
+            }
+        }
+
+        fun nameAndAgeMatch(age: Int, name: String) = query<Person> {
             where {
-                or {
-                    root[Person::name] eq name
-                    root[Person::age] lt age
-                }
+                root[Person::name] eq name
+                root[Person::age] lt age
             }
         }
         // end::or[]
