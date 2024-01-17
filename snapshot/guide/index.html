@@ -5264,6 +5264,12 @@ override fun findAll(): List&lt;Product&gt;</code></pre>
 </table>
 </div>
 </div>
+<div class="sect2">
+<h3 id="_tests">Tests</h3>
+<div class="paragraph">
+<p>Please note that in tests using join collections, to make sure joins are consistently fetched the test might need to be made non-transactional using <code>@MicronautTest(transactional = false)</code>.</p>
+</div>
+</div>
 
 <h2 id="hibernateExplicitQueries"><a class="anchor" href="#hibernateExplicitQueries"></a>4.5 Explicit queries</h2>
 
