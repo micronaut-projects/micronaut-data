@@ -73,7 +73,7 @@ public class NamingStrategies {
         }
     }
     /**
-     * Example: foobar.
+     * Example: FOOBAR.
      */
     @TypeHint(UpperCase.class)
     public static class UpperCase implements NamingStrategy {
