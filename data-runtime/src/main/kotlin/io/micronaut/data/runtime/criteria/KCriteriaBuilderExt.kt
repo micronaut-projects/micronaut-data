@@ -128,6 +128,10 @@ class SelectQuery<T, V>(var root: Root<T>, var query: CriteriaQuery<V>, var crit
         query.multiselect(*props)
     }
 
+    fun distinct() {
+        query.distinct(true)
+    }
+
     override fun where(dsl: Where<T>.() -> Unit) {
         super.where(dsl)
         query.where(predicate)
