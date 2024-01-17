@@ -59,12 +59,12 @@ public class CountSpecificationInterceptor extends AbstractSpecificationIntercep
 
     @Override
     public Number intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Number> context) {
-        Specification specification = getSpecification(context);
+        Specification specification = getSpecification(context, true);
         final EntityManager entityManager = jpaOperations.getCurrentEntityManager();
         final CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         final CriteriaQuery<Long> query = criteriaBuilder.createQuery(Long.class);
         final Root<?> root = query.from(getRequiredRootEntity(context));
-        final Predicate predicate = specification.toPredicate(root, query, criteriaBuilder);
+        final Predicate predicate = specification != null ? specification.toPredicate(root, query, criteriaBuilder) : null;
         if (predicate != null) {
             query.where(predicate);
         }

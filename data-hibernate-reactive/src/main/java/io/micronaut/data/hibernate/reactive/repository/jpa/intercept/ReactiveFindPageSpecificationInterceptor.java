@@ -69,7 +69,7 @@ public class ReactiveFindPageSpecificationInterceptor extends AbstractSpecificat
         Class<Object> rootEntity = getRequiredRootEntity(context);
         final CriteriaQuery<Object> query = criteriaBuilder.createQuery(rootEntity);
         final Root<Object> root = query.from(rootEntity);
-        final Predicate predicate = specification.toPredicate(root, query, criteriaBuilder);
+        final Predicate predicate = specification != null ? specification.toPredicate(root, query, criteriaBuilder) : null;
         if (predicate != null) {
             query.where(predicate);
         }
@@ -93,7 +93,7 @@ public class ReactiveFindPageSpecificationInterceptor extends AbstractSpecificat
             }).flatMap(results -> {
                 final CriteriaQuery<Long> countQuery = criteriaBuilder.createQuery(Long.class);
                 final Root<Object> countRoot = countQuery.from(rootEntity);
-                final Predicate countPredicate = specification.toPredicate(countRoot, countQuery, criteriaBuilder);
+                final Predicate countPredicate = specification != null ? specification.toPredicate(countRoot, countQuery, criteriaBuilder) : null;
                 if (countPredicate != null) {
                     countQuery.where(countPredicate);
                 }
