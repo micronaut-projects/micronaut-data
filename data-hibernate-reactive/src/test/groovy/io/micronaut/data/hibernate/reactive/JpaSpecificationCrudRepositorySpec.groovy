@@ -47,6 +47,8 @@ class JpaSpecificationCrudRepositorySpec extends Specification implements Postgr
     void "test JPA specification count"() {
         expect:
         crudRepository.count(ageGreaterThanThirty()).block() == 4
+        // test with null specification as param is nullable
+        crudRepository.count((io.micronaut.data.jpa.repository.criteria.Specification<Person>) null).block() >= 4
         def results = crudRepository.findAll(ageGreaterThanThirty()).collectList().block()
         results.size() == 4
         results.every({ it instanceof Person})
@@ -65,6 +67,9 @@ class JpaSpecificationCrudRepositorySpec extends Specification implements Postgr
         page2.content*.name == ["Bob", "Jeff"]
         page1.size == 2
         page1.content*.name == ["James", "Fred"]
+
+        // test with null specification
+        crudRepository.findAll((io.micronaut.data.jpa.repository.criteria.Specification<Person>) null).collectList().block().size() >= 4
     }
 
 }

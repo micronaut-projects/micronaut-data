@@ -72,13 +72,13 @@ public class FindPageSpecificationInterceptor extends AbstractSpecificationInter
         if (context.getParameterValues().length != 2) {
             throw new IllegalStateException("Expected exactly 2 arguments to method");
         }
-        Specification specification = getSpecification(context);
+        Specification specification = getSpecification(context, true);
         final EntityManager entityManager = jpaOperations.getCurrentEntityManager();
         final CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         Class<Object> rootEntity = getRequiredRootEntity(context);
         final CriteriaQuery<Object> query = criteriaBuilder.createQuery(rootEntity);
         final Root<Object> root = query.from(rootEntity);
-        final Predicate predicate = specification.toPredicate(root, query, criteriaBuilder);
+        final Predicate predicate = specification != null ? specification.toPredicate(root, query, criteriaBuilder) : null;
         if (predicate != null) {
             query.where(predicate);
         }
@@ -103,7 +103,7 @@ public class FindPageSpecificationInterceptor extends AbstractSpecificationInter
             final List<Object> results = typedQuery.getResultList();
             final CriteriaQuery<Long> countQuery = criteriaBuilder.createQuery(Long.class);
             final Root<?> countRoot = countQuery.from(rootEntity);
-            final Predicate countPredicate = specification.toPredicate(countRoot, countQuery, criteriaBuilder);
+            final Predicate countPredicate = specification != null ? specification.toPredicate(countRoot, countQuery, criteriaBuilder) : null;
             if (countPredicate != null) {
                 countQuery.where(countPredicate);
             }

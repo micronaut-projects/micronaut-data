@@ -52,12 +52,20 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     /**
      * Find {@link Specification} in context.
      * @param context The context
+     * @param nullable whether specification can be null
      * @return found specification
      */
-    protected Specification getSpecification(MethodInvocationContext<?, ?> context) {
+    protected Specification getSpecification(MethodInvocationContext<?, ?> context, boolean nullable) {
         final Object parameterValue = context.getParameterValues()[0];
         if (parameterValue instanceof Specification) {
             return (Specification) parameterValue;
+        }
+        if (parameterValue == null) {
+            if (nullable) {
+                // Specification is nullable parameter
+                return null;
+            }
+            throw new IllegalArgumentException("Specification may not be null.");
         }
         throw new IllegalArgumentException("Argument must be an instance of: " + Specification.class);
     }

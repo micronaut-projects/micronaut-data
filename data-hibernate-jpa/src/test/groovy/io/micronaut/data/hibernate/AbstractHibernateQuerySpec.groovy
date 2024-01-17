@@ -22,6 +22,7 @@ import io.micronaut.data.hibernate.entities.UserWithWhere
 import io.micronaut.data.jpa.repository.criteria.Specification
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.EntityIdClass
@@ -683,6 +684,16 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
             value.totalSize == 2
             value.content.size() == 2
         when:
+            value = bookRepository.findAll((Specification<Book>)null, Pageable.from(0))
+            def count = bookRepository.count((PredicateSpecification<Book>) null)
+        then:
+            count
+            value.totalSize > 2
+            value.totalSize == count
+            value.content.size() > 2
+            def optBook = value.content.stream().filter(b -> b.title == "The Stand").findFirst()
+            optBook.present
+        when:
             value = bookRepository.findAll(testJoin("Stephen King"), Pageable.from(0)
                     .order(new Sort.Order("author.name")).order(new Sort.Order("title")))
         then:
@@ -735,6 +746,10 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
         then:
             result.size() == 1
             result[0].id == child1.id
+        when:"findAll using null PredicateSpecification"
+            result = relPersonRepo.findAll((PredicateSpecification<RelPerson>) null)
+        then:
+            result.size() > 1
         when:
             result = (List<RelPerson>) relPersonRepo.findAll(RelPersonRepository.Specifications.findRelPersonByParentAndFriends(parent.id, List.of(child1Friend1.id, child1Friend2.id, child2Friend1.id)))
         then:
