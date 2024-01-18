@@ -200,4 +200,14 @@ public interface QueryBuilder {
     default boolean supportsForUpdate() {
         return false;
     }
+
+    /**
+     * Gets an indicator telling COUNT DISTINCT (against root, which will count ids) is supported by the query builder.
+     * By default, it is supported.
+     *
+     * @return true if query builder supports COUNT DISTINCT, otherwise false
+     */
+    default boolean supportsCountDistinct() {
+        return true;
+    }
 }

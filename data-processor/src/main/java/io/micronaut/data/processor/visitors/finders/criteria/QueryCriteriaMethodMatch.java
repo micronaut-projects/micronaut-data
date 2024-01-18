@@ -192,24 +192,19 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         }
         QueryResult countQueryResult = null;
         if (matchContext.isTypeInRole(genericReturnType, TypeRole.PAGE)) {
-//                SourcePersistentEntityCriteriaQuery<Object> count = cb.createQuery();
-//                count.select(cb.count(query.getRoots().iterator().next()));
-//                CommonAbstractCriteria countQueryCriteria = defineQuery(matchContext, matchContext.getRootEntity(), cb);
-
             QueryModel countQuery = QueryModel.from(queryModel.getPersistentEntity());
-            countQuery.projections().count();
+            // for paging count query use count distinct against id to make sure correct
+            // number is returned in case of joins
+            if (queryBuilder.supportsCountDistinct()) {
+                countQuery.projections().countDistinct();
+            } else {
+                countQuery.projections().count();
+            }
             QueryModel.Junction junction = queryModel.getCriteria();
             for (QueryModel.Criterion criterion : junction.getCriteria()) {
                 countQuery.add(criterion);
             }
-            // Joins are skipped for count query for OneToMany, ManyToMany
-            // however skipping joins from criteria could cause issues (in many to many?)
             for (JoinPath joinPath : queryModel.getJoinPaths()) {
-                Association association = joinPath.getAssociation();
-                if (association != null && !association.getKind().isSingleEnded()) {
-                    // skip OneToMany and ManyToMany
-                    continue;
-                }
                 Join.Type joinType = joinPath.getJoinType();
                 switch (joinType) {
                     case INNER:

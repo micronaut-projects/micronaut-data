@@ -104,9 +104,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
         then:"it is configured correctly"
         listAnn.interceptor() == FindPageInterceptor
         findAnn.interceptor() == FindPageInterceptor
-        findMethod.getValue(Query.class, "countQuery", String).get() == "SELECT COUNT($alias) FROM io.micronaut.data.model.entities.Person AS $alias WHERE (${alias}.name = :p1)"
-//        findMethod.stringValues(DataMethod.class, DataMethod.META_MEMBER_COUNT_PARAMETERS + "Names") == ['p1'] as String[]
-
+        findMethod.getValue(Query.class, "countQuery", String).get() == "SELECT COUNT(DISTINCT($alias)) FROM io.micronaut.data.model.entities.Person AS $alias WHERE (${alias}.name = :p1)"
     }
 
     void "test count query with join many to one"() {
@@ -215,7 +213,7 @@ interface MyInterface extends GenericRepository<Author, Long> {
         query.contains(expectedJoin)
         println(query)
         countQuery.contains("$alias")
-        !countQuery.contains(expectedJoin)
+        countQuery.contains(expectedJoin)
         println(countQuery)
 
         where:

@@ -100,6 +100,11 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     }
 
     @Override
+    public boolean supportsCountDistinct() {
+        return false;
+    }
+
+    @Override
     protected NamingStrategy getNamingStrategy(PersistentEntity entity) {
         return entity.findNamingStrategy().orElse(RAW_NAMING_STRATEGY);
     }

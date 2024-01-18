@@ -37,6 +37,12 @@ public interface ProjectionList {
     ProjectionList count();
 
     /**
+     * Distinct count the number of records returned.
+     * @return The projection list
+     */
+    ProjectionList countDistinct();
+
+    /**
      * Count the number of records returned.
      * @param property The property name to count
      * @return The projection list

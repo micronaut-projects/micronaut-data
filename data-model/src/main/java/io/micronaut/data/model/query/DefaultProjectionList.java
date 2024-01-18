@@ -81,6 +81,12 @@ class DefaultProjectionList implements ProjectionList {
     }
 
     @Override
+    public ProjectionList countDistinct() {
+        add(Projections.countDistinctRoot());
+        return this;
+    }
+
+    @Override
     public ProjectionList countDistinct(String property) {
         add(Projections.countDistinct(property));
         return this;
