@@ -21,7 +21,6 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
-import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
