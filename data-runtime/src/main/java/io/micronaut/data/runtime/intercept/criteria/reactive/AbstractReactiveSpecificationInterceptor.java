@@ -87,7 +87,7 @@ public abstract class AbstractReactiveSpecificationInterceptor<T, R> extends Abs
     protected final Publisher<Long> countReactive(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
         Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
         if (reactiveCriteriaOperations != null) {
-            return reactiveCriteriaOperations.findOne(buildCountQuery(context));
+            return reactiveCriteriaOperations.findOne(buildCountQuery(context, false));
         }
         return reactiveOperations.findOne(preparedQueryForCriteria(methodKey, context, Type.COUNT, methodJoinPaths));
     }

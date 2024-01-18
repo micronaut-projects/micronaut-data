@@ -162,7 +162,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
         Long count;
         if (criteriaRepositoryOperations != null) {
-            count =  criteriaRepositoryOperations.findOne(buildCountQuery(context));
+            count =  criteriaRepositoryOperations.findOne(buildCountQuery(context, false));
         } else {
             count = operations.findOne(preparedQueryForCriteria(methodKey, context, Type.COUNT, methodJoinPaths));
         }
@@ -284,14 +284,14 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
 
     private <E> StoredQuery<E, ?> buildCount(RepositoryMethodKey methodKey,
                                              MethodInvocationContext<T, R> context) {
-        CriteriaQuery<Long> criteriaQuery = buildCountQuery(context);
         QueryBuilder sqlQueryBuilder = getQueryBuilder(methodKey, context);
+        CriteriaQuery<Long> criteriaQuery = buildCountQuery(context, sqlQueryBuilder.supportsCountDistinct());
         QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(sqlQueryBuilder);
         return QueryResultStoredQuery.count(context.getName(), context.getAnnotationMetadata(), queryResult, getRequiredRootEntity(context));
     }
 
     @NonNull
-    protected final <E> CriteriaQuery<Long> buildCountQuery(MethodInvocationContext<T, R> context) {
+    protected final <E> CriteriaQuery<Long> buildCountQuery(MethodInvocationContext<T, R> context, boolean distinct) {
         Class<E> rootEntity = getRequiredRootEntity(context);
         QuerySpecification<E> specification = getQuerySpecification(context);
         CriteriaQuery<Long> criteriaQuery = criteriaBuilder.createQuery(Long.class);
@@ -302,7 +302,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                 criteriaQuery.where(predicate);
             }
         }
-        if (criteriaQuery.isDistinct()) {
+        if (distinct) {
             return criteriaQuery.select(criteriaBuilder.countDistinct(root));
         } else {
             return criteriaQuery.select(criteriaBuilder.count(root));
