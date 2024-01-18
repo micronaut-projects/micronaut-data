@@ -43,6 +43,9 @@ import java.util.stream.Stream;
 
 public abstract class BookRepository implements PageableRepository<Book, Long>, JpaSpecificationExecutor<Book>, SimpleBookRepository {
 
+    @Override
+    public abstract @NonNull Book save(@NonNull Book book);
+
     @Join(value = "author", alias = "auth")
     public abstract Book queryByTitle(String title);
 
