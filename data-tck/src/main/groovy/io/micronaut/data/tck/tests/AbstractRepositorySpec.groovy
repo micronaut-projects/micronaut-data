@@ -2602,6 +2602,20 @@ abstract class AbstractRepositorySpec extends Specification {
         cleanupData()
     }
 
+    void "test findBy and count with multiple parameters"() {
+        given:
+        saveSampleBooks()
+        def bookTitles = List.of("The Stand", "Pet Cemetery")
+        when:
+        def books = bookRepository.findByTitleInAndTotalPagesGreaterThan(bookTitles, 1)
+        def cnt = bookRepository.countByTitleInAndTotalPagesGreaterThan(bookTitles, 1)
+        then:
+        books.size() == 2
+        cnt == 2
+        cleanup:
+        cleanupData()
+    }
+
     private GregorianCalendar getYearMonthDay(Date dateCreated) {
         def cal = dateCreated.toCalendar()
         def localDate = LocalDate.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH))

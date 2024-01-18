@@ -815,6 +815,16 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
             userWithWhereRepository.deleteAll(List.of(e1, e2))
     }
 
+    void "test findBy and count with multiple parameters"() {
+        when:
+        def bookTitles = List.of("The Stand", "Pet Cemetery")
+        def books = bookRepository.findByTitleInAndTotalPagesGreaterThan(bookTitles, 1)
+        def cnt = bookRepository.countByTitleInAndTotalPagesGreaterThan(bookTitles, 1)
+        then:
+        books.size() == 2
+        cnt == 2
+    }
+
     private static Specification<Book> testJoin(String value) {
         return ((root, query, criteriaBuilder) -> criteriaBuilder.equal(root.join("author").get("name"), value))
     }
