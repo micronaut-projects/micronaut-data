@@ -11,6 +11,7 @@ import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
 import io.micronaut.data.runtime.criteria.get
+import io.micronaut.data.runtime.criteria.query
 import io.micronaut.data.runtime.criteria.update
 import io.micronaut.data.runtime.criteria.where
 import java.util.*
@@ -98,6 +99,13 @@ interface PersonRepository : CrudRepository<Person, String>, JpaSpecificationExe
         // tag::or[]
         fun nameOrAgeMatches(age: Int, name: String?) = where<Person> {
             or {
+                root[Person::name] eq name
+                root[Person::age] lt age
+            }
+        }
+
+        fun nameAndAgeMatch(age: Int, name: String) = query<Person> {
+            where {
                 root[Person::name] eq name
                 root[Person::age] lt age
             }

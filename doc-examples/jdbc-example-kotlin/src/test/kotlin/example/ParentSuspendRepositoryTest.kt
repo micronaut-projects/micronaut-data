@@ -1,11 +1,15 @@
 package example
 
+import example.ParentSuspendRepository.Specifications.childNameInList
+import io.micronaut.data.model.Pageable
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import jakarta.inject.Inject
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Assertions.assertEquals
 
 @MicronautTest
 class ParentSuspendRepositoryTest {
@@ -38,5 +42,33 @@ class ParentSuspendRepositoryTest {
         val found2 = repository.findById(saved.id!!).get()
         assertTrue(found2.name.endsWith(" mod!"))
         assertTrue(found2.children.size == 3)
+    }
+
+    @Test
+    fun `findAll with specifications`() = runBlocking {
+        val denis = Parent(
+            "Denis",
+            listOf(
+                Child("A"),
+                Child("B"),
+                Child("C")
+            )
+        )
+        repository.save(denis)
+
+        val josh = Parent(
+            "Josh",
+            listOf(
+                Child("B"),
+                Child("C"),
+                Child("D")
+            )
+        )
+        repository.save(josh)
+
+        val result = repository.findAll(childNameInList(listOf("A", "B", "D")), Pageable.from(0, 1))
+
+        assertEquals(1, result.content.size)
+        assertEquals(2, result.totalSize)
     }
 }

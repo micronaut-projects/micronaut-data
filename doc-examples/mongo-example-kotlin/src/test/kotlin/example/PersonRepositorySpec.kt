@@ -4,6 +4,7 @@ import example.PersonRepository.Specifications.ageIsLessThan
 import example.PersonRepository.Specifications.interestsContains
 import example.PersonRepository.Specifications.nameEquals
 import example.PersonRepository.Specifications.nameInList
+import example.PersonRepository.Specifications.nameOrAgeMatches
 import example.PersonRepository.Specifications.updateName
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification.not
@@ -13,7 +14,6 @@ import io.micronaut.data.runtime.criteria.where
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import jakarta.inject.Inject
 import org.junit.jupiter.api.*
-import java.util.*
 
 @MicronautTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -60,6 +60,12 @@ class PersonRepositorySpec : AbstractMongoSpec() {
         Assertions.assertEquals(1, countAgeLess20)
         Assertions.assertEquals(1, countAgeLess30NotDenis)
         Assertions.assertEquals(2, people.size)
+    }
+
+    @Test
+    fun testNameOrAgeMatches() {
+        val peopleWithNameOrAge = personRepository.findAll(nameOrAgeMatches(22, "Josh"))
+        Assertions.assertEquals(2, peopleWithNameOrAge.size)
     }
 
     @Test

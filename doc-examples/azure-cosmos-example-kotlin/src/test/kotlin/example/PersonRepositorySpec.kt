@@ -1,6 +1,7 @@
 package example
 
 import example.PersonRepository.Specifications.ageIsLessThan
+import example.PersonRepository.Specifications.nameAndAgeMatch
 import example.PersonRepository.Specifications.nameEquals
 import example.PersonRepository.Specifications.nameInList
 import example.PersonRepository.Specifications.updateName
@@ -58,6 +59,13 @@ class PersonRepositorySpec : AbstractAzureCosmosTest() {
         Assertions.assertEquals(1, countAgeLess20)
         Assertions.assertEquals(1, countAgeLess30NotDenis)
         Assertions.assertEquals(2, people.size)
+    }
+
+    @Test
+    fun testNameAndAgeMatch() {
+        personRepository.save(Person("Josh", 14))
+        val peopleWithNameOrAge = personRepository.findAll(nameAndAgeMatch(25, "Josh"))
+        Assertions.assertEquals(2, peopleWithNameOrAge.size)
     }
 
     @Test

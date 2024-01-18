@@ -7,16 +7,12 @@ import io.micronaut.data.annotation.Relation
 
 @MappedEntity
 data class Child(
+    val name: String,
 
-        val name: String,
-
-        @Relation(Relation.Kind.MANY_TO_ONE)
+    @Relation(Relation.Kind.MANY_TO_ONE)
     val parent: Parent? = null,
 
-        @field:Id @GeneratedValue val id: Int? = null
-
-
-
+    @field:Id @GeneratedValue val id: Int? = null
 ) {
 
     override fun equals(other: Any?): Boolean {
