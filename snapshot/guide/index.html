@@ -13980,10 +13980,12 @@ fun count(spec: QuerySpecification&lt;Person&gt;?): Long</code></pre>
 
     fun nameInList(names: List&lt;String&gt;) = where&lt;Person&gt; { root[Person::name] inList names }
 
-    fun nameOrAgeMatches(age: Int, name: String?) = where&lt;Person&gt; {
-        or {
-            root[Person::name] eq name
-            root[Person::age] lt age
+    fun nameOrAgeMatches(age: Int, name: String) = query&lt;Person&gt; {
+        where {
+            or {
+                root[Person::name] eq name
+                root[Person::age] lt age
+            }
         }
     }
 
@@ -14200,10 +14202,12 @@ public interface UpdateSpecification&lt;T&gt; {
 
     fun nameInList(names: List&lt;String&gt;) = where&lt;Person&gt; { root[Person::name] inList names }
 
-    fun nameOrAgeMatches(age: Int, name: String?) = where&lt;Person&gt; {
-        or {
-            root[Person::name] eq name
-            root[Person::age] lt age
+    fun nameOrAgeMatches(age: Int, name: String) = query&lt;Person&gt; {
+        where {
+            or {
+                root[Person::name] eq name
+                root[Person::age] lt age
+            }
         }
     }
 
@@ -14379,10 +14383,12 @@ public interface DeleteSpecification&lt;T&gt; {
 
     fun nameInList(names: List&lt;String&gt;) = where&lt;Person&gt; { root[Person::name] inList names }
 
-    fun nameOrAgeMatches(age: Int, name: String?) = where&lt;Person&gt; {
-        or {
-            root[Person::name] eq name
-            root[Person::age] lt age
+    fun nameOrAgeMatches(age: Int, name: String) = query&lt;Person&gt; {
+        where {
+            or {
+                root[Person::name] eq name
+                root[Person::age] lt age
+            }
         }
     }
 
@@ -15732,6 +15738,13 @@ fun count(spec: QuerySpecification&lt;Person&gt;?): Long</code></pre>
         }
     }
 
+    fun nameAndAgeMatch(age: Int, name: String) = query&lt;Person&gt; {
+        where {
+            root[Person::name] eq name
+            root[Person::age] lt age
+        }
+    }
+
 }</code></pre>
 </div>
 </div>
@@ -16042,6 +16055,13 @@ public interface UpdateSpecification&lt;T&gt; {
         }
     }
 
+    fun nameAndAgeMatch(age: Int, name: String) = query&lt;Person&gt; {
+        where {
+            root[Person::name] eq name
+            root[Person::age] lt age
+        }
+    }
+
     fun updateName(newName: String, existingName: String) = update&lt;Person&gt; {
         set(Person::name, newName)
         where {
@@ -16207,6 +16227,13 @@ public interface DeleteSpecification&lt;T&gt; {
 
     fun nameOrAgeMatches(age: Int, name: String?) = where&lt;Person&gt; {
         or {
+            root[Person::name] eq name
+            root[Person::age] lt age
+        }
+    }
+
+    fun nameAndAgeMatch(age: Int, name: String) = query&lt;Person&gt; {
+        where {
             root[Person::name] eq name
             root[Person::age] lt age
         }
