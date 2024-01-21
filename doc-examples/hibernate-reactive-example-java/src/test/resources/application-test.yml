@@ -8,4 +8,4 @@ jpa:
 test-resources:
   containers:
     mysql:
-      image-name: "mysql:8.0.30"
+      image-name: "mysql:8.2.0"

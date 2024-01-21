@@ -2,3 +2,8 @@ micronaut:
   http:
     client:
       read-timeout: 5m
+
+test-resources:
+  containers:
+    mysql:
+      image-name: mysql:8.2.0
