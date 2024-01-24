@@ -1032,7 +1032,7 @@ import io.micronaut.data.tck.entities.Book;
 interface BookRepository extends GenericRepository<Book, Long> {
 
     @Join(value = "author", type = Join.Type.FETCH)
-    List<UserGroupMembership> findAllByPublisherZipCodeAndAuthor_SpecName(String zipCode, String specName);
+    List<Book> findAllByPublisherZipCodeAndAuthor_SpecName(String zipCode, String specName);
 }
 """
         )
