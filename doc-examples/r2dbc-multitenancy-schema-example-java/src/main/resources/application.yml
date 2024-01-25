@@ -20,4 +20,4 @@ r2dbc:
 test-resources:
   containers:
     mysql:
-      image-name: mysql:8.2.0
+      image-name: mysql:8.2

@@ -22,6 +22,6 @@ import spock.lang.Stepwise
 
 @MicronautTest(transactional = true, packages = "io.micronaut.data.tck.entities")
 @Stepwise
-@Property(name = "test-resources.containers.mysql.image-name", value = "mysql:8.2.0")
+@Property(name = "test-resources.containers.mysql.image-name", value = "mysql:8.2")
 class MySqlCrudRepositorySpec extends AbstractCrudRepositorySpec implements MySqlHibernateReactiveProperties {
 }
