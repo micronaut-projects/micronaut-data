@@ -160,7 +160,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         );
 
         if (result.isDto() && !result.isRuntimeDtoConversion()) {
-            List<SourcePersistentProperty> dtoProjectionProperties = getDtoProjectionProperties(matchContext.getRootEntity(), resultType);
+            List<SourcePersistentProperty> dtoProjectionProperties = getDtoProjectionProperties(matchContext, matchContext.getRootEntity(), resultType);
             if (!dtoProjectionProperties.isEmpty()) {
                 Root<?> root = query.getRoots().iterator().next();
                 List<Selection<?>> selectionList = dtoProjectionProperties.stream()

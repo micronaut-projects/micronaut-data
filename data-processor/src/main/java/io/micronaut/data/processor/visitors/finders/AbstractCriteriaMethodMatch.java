@@ -792,11 +792,12 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     /**
      * Find DTO properties.
      *
+     * @param matchContext The method match context
      * @param entity     The entity
      * @param returnType The result
      * @return DTO properties
      */
-    protected List<SourcePersistentProperty> getDtoProjectionProperties(SourcePersistentEntity entity,
+    protected List<SourcePersistentProperty> getDtoProjectionProperties(MethodMatchContext matchContext, SourcePersistentEntity entity,
                                                                         ClassElement returnType) {
         return returnType.getBeanProperties().stream()
             .filter(dtoProperty -> {
@@ -825,8 +826,13 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                     // Convert anything to a string or an object
                     return pp;
                 }
-                if (!TypeUtils.areTypesCompatible(dtoPropertyType, pp.getType())) {
-                    throw new MatchFailedException("Property [" + propertyName + "] of type [" + dtoPropertyType.getName() + "] is not compatible with equivalent property of type [" + pp.getType().getName() + "] declared in entity: " + entity.getName());
+                boolean compatibleTypes = TypeUtils.areTypesCompatible(dtoPropertyType, pp.getType());
+                if (!compatibleTypes) {
+                    // Check if these are compatible non-simple field types (kind of nested DTOs)
+                    List<SourcePersistentProperty> props = getDtoProjectionProperties(matchContext, new SourcePersistentEntity(pp.getType(), matchContext::getEntity), dtoPropertyType);
+                    if (props.isEmpty()) {
+                        throw new MatchFailedException("Property [" + propertyName + "] of type [" + dtoPropertyType.getName() + "] is not compatible with equivalent property of type [" + pp.getType().getName() + "] declared in entity: " + entity.getName());
+                    }
                 }
                 return pp;
             }).toList();

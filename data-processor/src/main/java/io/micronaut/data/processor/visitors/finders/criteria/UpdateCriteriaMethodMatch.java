@@ -178,7 +178,7 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         );
 
         if (result.isDto() && !result.isRuntimeDtoConversion()) {
-            List<SourcePersistentProperty> dtoProjectionProperties = getDtoProjectionProperties(matchContext.getRootEntity(), resultType);
+            List<SourcePersistentProperty> dtoProjectionProperties = getDtoProjectionProperties(matchContext, matchContext.getRootEntity(), resultType);
             if (!dtoProjectionProperties.isEmpty()) {
                 List<Selection<?>> selectionList = dtoProjectionProperties.stream()
                     .map(p -> {
