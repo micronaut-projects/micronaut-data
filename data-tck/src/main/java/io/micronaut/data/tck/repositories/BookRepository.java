@@ -33,6 +33,7 @@ import io.micronaut.data.tck.entities.Author;
 import io.micronaut.data.tck.entities.AuthorBooksDto;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.entities.BookDto;
+import io.micronaut.data.tck.entities.BookDtoWithAuthorDto;
 import io.micronaut.data.tck.entities.Genre;
 
 import java.util.ArrayList;
@@ -172,4 +173,6 @@ public abstract class BookRepository implements PageableRepository<Book, Long>, 
     abstract List<Book> findByTitleInAndTotalPagesGreaterThan(List<String> titles, int totalPages);
 
     abstract Long countByTitleInAndTotalPagesGreaterThan(List<String> titles, int totalPages);
+
+    abstract Optional<BookDtoWithAuthorDto> queryByTitleContains(String title);
 }

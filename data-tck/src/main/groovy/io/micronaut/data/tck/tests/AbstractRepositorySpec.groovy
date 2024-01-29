@@ -48,9 +48,7 @@ import io.micronaut.data.tck.entities.Person
 import io.micronaut.data.tck.entities.Student
 import io.micronaut.data.tck.entities.TimezoneBasicTypes
 import io.micronaut.data.tck.jdbc.entities.Role
-import io.micronaut.data.tck.jdbc.entities.User
 import io.micronaut.data.tck.jdbc.entities.UserRole
-import io.micronaut.data.tck.jdbc.entities.UserRoleId
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.transaction.SynchronousTransactionManager
 import io.micronaut.transaction.TransactionCallback
@@ -1330,6 +1328,18 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
             authors.size() == 3
             authors.forEach { assert it.books.size() == 0 }
+    }
+
+    void "test DTO with nested DTO"() {
+        given:
+        saveSampleBooks()
+
+        when:
+        def optBook = bookRepository.queryByTitleContains("Stand")
+
+        then:
+        optBook.present
+        optBook.get().author
     }
 
     void "stream joined"() {
