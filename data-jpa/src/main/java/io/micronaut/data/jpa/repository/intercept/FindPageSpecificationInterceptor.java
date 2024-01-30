@@ -107,7 +107,11 @@ public class FindPageSpecificationInterceptor extends AbstractSpecificationInter
             if (countPredicate != null) {
                 countQuery.where(countPredicate);
             }
-            countQuery.select(criteriaBuilder.count(countRoot));
+            if (countQuery.isDistinct()) {
+                countQuery.select(criteriaBuilder.countDistinct(countRoot));
+            } else {
+                countQuery.select(criteriaBuilder.count(countRoot));
+            }
             Long singleResult = entityManager.createQuery(countQuery).getSingleResult();
 
             return Page.of(

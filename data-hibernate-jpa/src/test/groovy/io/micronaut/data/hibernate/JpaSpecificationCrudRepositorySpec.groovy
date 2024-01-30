@@ -102,6 +102,10 @@ class JpaSpecificationCrudRepositorySpec extends Specification {
         results.size() == 4
         results.every({ it instanceof Person})
 
+        def pageReq = Pageable.from(0, 2, Sort.of(Sort.Order.asc("age")))
+        def page = crudRepository.findAll(JpaSpecificationCrudRepository.Specifications.ageGreaterThanThirty(true), pageReq)
+        page.totalSize <= 4
+
         def sorted = crudRepository.findAll(JpaSpecificationCrudRepository.Specifications.ageGreaterThanThirty(), Sort.of(Sort.Order.asc("age")))
 
         sorted.first().name == "James"

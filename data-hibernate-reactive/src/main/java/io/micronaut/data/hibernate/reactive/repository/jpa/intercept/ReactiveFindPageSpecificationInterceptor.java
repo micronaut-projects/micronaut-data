@@ -97,7 +97,11 @@ public class ReactiveFindPageSpecificationInterceptor extends AbstractSpecificat
                 if (countPredicate != null) {
                     countQuery.where(countPredicate);
                 }
-                countQuery.select(criteriaBuilder.count(countRoot));
+                if (countQuery.isDistinct()) {
+                    countQuery.select(criteriaBuilder.countDistinct(countRoot));
+                } else {
+                    countQuery.select(criteriaBuilder.count(countRoot));
+                }
                 return Mono.fromCompletionStage(() -> session.createQuery(countQuery).getSingleResult())
                     .map(total -> Page.of(results, pageable, total));
             });
