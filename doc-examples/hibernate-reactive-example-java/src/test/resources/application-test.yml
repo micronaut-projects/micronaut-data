@@ -5,7 +5,3 @@ jpa:
         connection:
           db-type: "mysql"
         show_sql: true
-test-resources:
-  containers:
-    mysql:
-      image-name: "mysql:8.2"

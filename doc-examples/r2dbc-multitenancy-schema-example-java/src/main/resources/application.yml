@@ -16,8 +16,3 @@ r2dbc:
         - foo
         - bar
       dialect: MYSQL
-
-test-resources:
-  containers:
-    mysql:
-      image-name: mysql:8.2

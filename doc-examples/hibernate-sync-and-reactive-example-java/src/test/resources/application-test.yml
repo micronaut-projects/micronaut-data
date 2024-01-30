@@ -22,8 +22,3 @@ jpa:
           url: ${datasources.sync.url}
           username: ${datasources.sync.username}
           password: ${datasources.sync.password}
-
-test-resources:
-  containers:
-    mysql:
-      image-name: mysql:8.2
