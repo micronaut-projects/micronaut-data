@@ -36,9 +36,6 @@ dependencies {
     // Needed for test resources
     testResourcesService mnSql.mysql.connector.java
     testResourcesService mnSql.postgresql
-
-    // See https://github.com/eclipse-vertx/vertx-sql-client/issues/1059
-    testRuntimeOnly mnSql.ongres.scram.client
 }
 
 micronaut {
