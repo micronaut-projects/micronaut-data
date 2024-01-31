@@ -39,7 +39,6 @@ dependencies {
     runtimeOnly mnSql.vertx.pg.client
 
     testResourcesService mnSql.postgresql
-    testRuntimeOnly mnSql.ongres.scram.client
 
     runtimeOnly libs.kotlin.reflect
 }
