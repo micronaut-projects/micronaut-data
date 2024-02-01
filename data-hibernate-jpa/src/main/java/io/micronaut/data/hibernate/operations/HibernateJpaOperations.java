@@ -49,6 +49,7 @@ import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
+import io.micronaut.data.runtime.operations.ExecutorAsyncOperationsSupportingCriteria;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
 import io.micronaut.transaction.TransactionOperations;
 import jakarta.inject.Named;
@@ -568,7 +569,8 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
             synchronized (this) { // double check
                 executorAsyncOperations = this.asyncOperations;
                 if (executorAsyncOperations == null) {
-                    executorAsyncOperations = new ExecutorAsyncOperations(
+                    executorAsyncOperations = new ExecutorAsyncOperationsSupportingCriteria(
+                        this,
                         this,
                         executorService != null ? executorService : newLocalThreadPool()
                     );

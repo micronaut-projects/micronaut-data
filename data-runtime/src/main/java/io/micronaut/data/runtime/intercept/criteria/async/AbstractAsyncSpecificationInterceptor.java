@@ -56,12 +56,14 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
      */
     protected AbstractAsyncSpecificationInterceptor(RepositoryOperations operations) {
         super(operations);
-        if (operations instanceof AsyncCapableRepository) {
-            this.asyncOperations = ((AsyncCapableRepository) operations).async();
+        if (operations instanceof AsyncCapableRepository asyncCapableRepository) {
+            this.asyncOperations = asyncCapableRepository.async();
         } else {
             throw new DataAccessException("Datastore of type [" + operations.getClass() + "] does not support asynchronous operations");
         }
         if (operations instanceof AsyncCriteriaRepositoryOperations asyncCriteriaRepositoryOperations) {
+            asyncCriteriaOperations = asyncCriteriaRepositoryOperations;
+        } else if (asyncOperations instanceof AsyncCriteriaRepositoryOperations asyncCriteriaRepositoryOperations) {
             asyncCriteriaOperations = asyncCriteriaRepositoryOperations;
         } else if (operations instanceof AsyncCriteriaCapableRepository repository) {
             asyncCriteriaOperations = repository.async();
