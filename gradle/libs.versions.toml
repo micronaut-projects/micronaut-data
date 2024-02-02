@@ -112,15 +112,6 @@ benchmark-spring-data-bom = { module = "org.springframework.data:spring-data-bom
 
 # TESTCONTAINERS
 
-testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
-testcontainers-spock = { module = "org.testcontainers:spock" }
-testcontainers-postgresql = { module = "org.testcontainers:postgresql" }
-testcontainers-mysql = { module = "org.testcontainers:mysql" }
-testcontainers-mariadb = { module = "org.testcontainers:mariadb" }
-testcontainers-mssqlserver = { module = "org.testcontainers:mssqlserver" }
-testcontainers-oracle = { module = "org.testcontainers:oracle-xe" }
-testcontainers-r2dbc = { module = "org.testcontainers:r2dbc" }
-testcontainers-mongodb = { module = "org.testcontainers:mongodb" }
 testcontainers-azure = { module = "org.testcontainers:azure" }
 
 # PLUGINS

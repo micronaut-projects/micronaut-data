@@ -21,13 +21,11 @@ dependencies {
 
     testImplementation mnReactor.micronaut.reactor
 
-    testImplementation platform(libs.testcontainers.bom)
-    testImplementation libs.testcontainers.spock
-    testImplementation libs.testcontainers.mysql
-    testImplementation libs.testcontainers.mariadb
-    testImplementation libs.testcontainers.postgresql
-    testImplementation libs.testcontainers.mssqlserver
-    testImplementation libs.testcontainers.oracle
+    implementation(mnTestResources.testcontainers.mysql)
+    implementation(mnTestResources.testcontainers.mariadb)
+    implementation(mnTestResources.testcontainers.postgres)
+    implementation(mnTestResources.testcontainers.mssql)
+    implementation(mnTestResources.testcontainers.oracle.xe)
 
     testCompileOnly mn.micronaut.inject.groovy
 
