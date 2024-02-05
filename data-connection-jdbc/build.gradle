@@ -21,7 +21,7 @@ dependencies {
 
     testImplementation mnReactor.micronaut.reactor
 
-    implementation(mnTestResources.testcontainers.mysql)
+    testImplementation(mnTestResources.testcontainers.mysql)
     implementation(mnTestResources.testcontainers.mariadb)
     implementation(mnTestResources.testcontainers.postgres)
     implementation(mnTestResources.testcontainers.mssql)
