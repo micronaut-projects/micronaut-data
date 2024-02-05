@@ -24,7 +24,7 @@ dependencies {
     testImplementation(mnTestResources.testcontainers.mysql)
     testImplementation(mnTestResources.testcontainers.mariadb)
     testImplementation(mnTestResources.testcontainers.postgres)
-    implementation(mnTestResources.testcontainers.mssql)
+    testImplementation(mnTestResources.testcontainers.mssql)
     implementation(mnTestResources.testcontainers.oracle.xe)
 
     testCompileOnly mn.micronaut.inject.groovy
