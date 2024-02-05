@@ -6,5 +6,5 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 	implementation mnMongo.mongo.core
 	implementation mnMongo.mongo.driver
-    implementation(mnTestResources.testcontainers.mongodb)
+    testImplementation(mnTestResources.testcontainers.mongodb)
 }
