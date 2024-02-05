@@ -37,7 +37,7 @@ dependencies {
     testImplementation mnValidation.micronaut.validation
     testImplementation mnValidation.micronaut.validation.processor
 
-    implementation(mnTestResources.testcontainers.mysql)
+    testImplementation(mnTestResources.testcontainers.mysql)
     testImplementation(mnTestResources.testcontainers.mariadb)
     testImplementation(mnTestResources.testcontainers.postgres)
     testImplementation(mnTestResources.testcontainers.mssql)
