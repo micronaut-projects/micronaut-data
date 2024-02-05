@@ -23,7 +23,7 @@ dependencies {
 
     testImplementation(mnTestResources.testcontainers.mysql)
     testImplementation(mnTestResources.testcontainers.mariadb)
-    implementation(mnTestResources.testcontainers.postgres)
+    testImplementation(mnTestResources.testcontainers.postgres)
     implementation(mnTestResources.testcontainers.mssql)
     implementation(mnTestResources.testcontainers.oracle.xe)
 
