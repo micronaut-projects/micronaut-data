@@ -1,13 +1,22 @@
 package example
 
+import io.micronaut.data.model.Pageable
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
-import io.micronaut.data.runtime.criteria.get
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
-import org.junit.jupiter.api.Assertions.assertTrue
 import jakarta.inject.Inject
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.MethodOrderer
+import org.junit.jupiter.api.Order
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestMethodOrder
+import org.junit.jupiter.api.Timeout
+import org.junit.jupiter.api.assertThrows
 import java.util.*
 
 @MicronautTest(transactional = false, rollback = false)
@@ -169,6 +178,31 @@ class HibernateTxTest {
 
             val found2 = repositorySuspended.findOne(PredicateSpecification { root, criteriaBuilder ->  criteriaBuilder.equal(root.get<String>("name"), "abc")})
             Assertions.assertEquals(found2!!.id, saved.id)
+        }
+    }
+
+    @Test
+    @Disabled
+    fun coroutineCriteriaFailing() {
+        runBlocking {
+            val parent1 = Parent("abc", Collections.emptyList())
+            val parent2 = Parent("abc", Collections.emptyList())
+            val saved1 = repositorySuspended.save(parent1)
+            val saved2 = repositorySuspended.save(parent2)
+
+
+            // failing scenario with thrown exception
+            val throwsException = repositorySuspended.findAll { root, query, criteriaBuilder -> criteriaBuilder.equal(root.get<String>("name"), "abc") }
+            Assertions.assertEquals(listOf(saved1.name, saved2.name), throwsException.toList().map { it.name })
+
+            // failing scenario with wrong results
+            val unpaginatedResult = repositorySuspended.findAll(
+                { root, query, criteriaBuilder -> criteriaBuilder.equal(root.get<String>("name"), "abc") },
+                Pageable.from(0, 1)
+            )
+            Assertions.assertEquals(1, unpaginatedResult.content.size) // this fails
+            Assertions.assertEquals(listOf(saved1.name), unpaginatedResult.map { it.name }) // this fails
+            Assertions.assertEquals(2, unpaginatedResult.totalSize)
         }
     }
 
