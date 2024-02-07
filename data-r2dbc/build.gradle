@@ -43,9 +43,7 @@ dependencies {
     testImplementation mn.micronaut.http.server.netty
     testImplementation mn.micronaut.http.client
 
-    testImplementation platform(libs.testcontainers.bom)
-
-    testImplementation libs.testcontainers.r2dbc
+    testImplementation(mnTestResources.testcontainers.r2dbc)
 
     // oracle
     testImplementation mnR2dbc.r2dbc.oracle

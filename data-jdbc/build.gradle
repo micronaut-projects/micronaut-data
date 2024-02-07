@@ -37,13 +37,11 @@ dependencies {
     testImplementation mnValidation.micronaut.validation
     testImplementation mnValidation.micronaut.validation.processor
 
-    testImplementation platform(libs.testcontainers.bom)
-    testImplementation libs.testcontainers.spock
-    testImplementation libs.testcontainers.mysql
-    testImplementation libs.testcontainers.mariadb
-    testImplementation libs.testcontainers.postgresql
-    testImplementation libs.testcontainers.mssqlserver
-    testImplementation libs.testcontainers.oracle
+    testImplementation(mnTestResources.testcontainers.mysql)
+    testImplementation(mnTestResources.testcontainers.mariadb)
+    testImplementation(mnTestResources.testcontainers.postgres)
+    testImplementation(mnTestResources.testcontainers.mssql)
+    testImplementation(mnTestResources.testcontainers.oracle.xe)
 
     testCompileOnly mn.micronaut.inject.groovy
 
