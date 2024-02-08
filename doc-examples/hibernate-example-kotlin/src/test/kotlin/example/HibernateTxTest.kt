@@ -1,11 +1,11 @@
 package example
 
+import io.micronaut.data.model.Pageable
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
-import io.micronaut.data.runtime.criteria.get
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
-import org.junit.jupiter.api.Assertions.assertTrue
 import jakarta.inject.Inject
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.assertThrows
-import org.junit.jupiter.api.*
 import java.util.*
 
 @MicronautTest(transactional = false, rollback = false)
@@ -182,7 +181,7 @@ class HibernateTxTest {
     }
 
     @Test
-    fun coroutineCriteriaFailing() {
+    fun coroutineCriteria2() {
         runBlocking {
             val parent1 = Parent("abc", Collections.emptyList())
             val parent2 = Parent("abc", Collections.emptyList())
