@@ -18,7 +18,6 @@ package io.micronaut.data.runtime.intercept.criteria;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 
 /**
@@ -40,7 +39,6 @@ public class ExistsSpecificationInterceptor extends AbstractSpecificationInterce
 
     @Override
     public Boolean intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Boolean> context) {
-        PreparedQuery<?, Boolean> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.EXISTS);
-        return operations.exists(preparedQuery);
+        return exists(methodKey, context);
     }
 }

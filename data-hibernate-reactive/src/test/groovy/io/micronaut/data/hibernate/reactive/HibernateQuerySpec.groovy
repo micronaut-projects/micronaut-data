@@ -28,6 +28,10 @@ import io.micronaut.data.tck.entities.EntityWithIdClass
 import io.micronaut.data.tck.entities.Student
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import jakarta.persistence.criteria.CriteriaBuilder
+import jakarta.persistence.criteria.CriteriaQuery
+import jakarta.persistence.criteria.Predicate
+import jakarta.persistence.criteria.Root
 import org.hibernate.LazyInitializationException
 import spock.lang.Issue
 import spock.lang.PendingFeature
@@ -614,7 +618,12 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
     }
 
     private static io.micronaut.data.jpa.repository.criteria.Specification<Book> testJoin(String value) {
-        return ((root, query, criteriaBuilder) -> criteriaBuilder.equal(root.join("author").get("name"), value))
+        return ((root, query, criteriaBuilder) -> {
+            if (!criteriaBuilder.getClass().getName().startsWith("org.hibernate")) {
+                throw new IllegalStateException();
+            }
+            return criteriaBuilder.equal(root.join("author").get("name"), value)
+        })
     }
 
 }

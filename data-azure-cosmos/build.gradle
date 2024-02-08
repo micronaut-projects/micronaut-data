@@ -40,8 +40,7 @@ dependencies {
     testImplementation mnReactor.micronaut.reactor
     testImplementation(libs.managed.jakarta.persistence.api)
     testImplementation mnValidation.micronaut.validation
-    testImplementation platform(libs.testcontainers.bom)
-    testImplementation libs.testcontainers.spock
+    testImplementation(platform(mnTestResources.boms.testcontainers))
     testImplementation libs.testcontainers.azure
     testImplementation mn.micronaut.inject.java.test
 

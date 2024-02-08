@@ -43,11 +43,13 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
+import io.micronaut.data.operations.CriteriaRepositoryOperations;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
+import io.micronaut.data.runtime.operations.ExecutorAsyncOperationsSupportingCriteria;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
 import io.micronaut.transaction.TransactionOperations;
 import jakarta.inject.Named;
@@ -56,7 +58,10 @@ import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.FlushModeType;
 import jakarta.persistence.ParameterMode;
 import jakarta.persistence.Tuple;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.CriteriaUpdate;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.graph.RootGraph;
@@ -87,7 +92,7 @@ import java.util.stream.Stream;
 @RequiresSyncHibernate
 @EachBean(DataSource.class)
 final class HibernateJpaOperations extends AbstractHibernateOperations<Session, CommonQueryContract, Query<?>>
-    implements JpaRepositoryOperations, AsyncCapableRepository, ReactiveCapableRepository {
+    implements JpaRepositoryOperations, AsyncCapableRepository, ReactiveCapableRepository, CriteriaRepositoryOperations {
 
     private final SessionFactory sessionFactory;
     private final TransactionOperations<Session> transactionOperations;
@@ -276,7 +281,6 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
             collectPagedResults(sessionFactory.getCriteriaBuilder(), session, pagedQuery, collector);
             return collector.result;
         });
-
     }
 
     @Override
@@ -470,7 +474,11 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
                 }
                 return List.of((R) result);
             } else {
-                throw new IllegalStateException("Not supported!");
+                if (preparedQuery.isNative()) {
+                    Iterable<?> result = findAll(preparedQuery);
+                    return (List<R>) result;
+                }
+                throw new IllegalStateException("Only native query supports update RETURNING operations.");
             }
         });
     }
@@ -561,7 +569,8 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
             synchronized (this) { // double check
                 executorAsyncOperations = this.asyncOperations;
                 if (executorAsyncOperations == null) {
-                    executorAsyncOperations = new ExecutorAsyncOperations(
+                    executorAsyncOperations = new ExecutorAsyncOperationsSupportingCriteria(
+                        this,
                         this,
                         executorService != null ? executorService : newLocalThreadPool()
                     );
@@ -604,6 +613,31 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
 
     private boolean hasEntityGraph(AnnotationMetadata annotationMetadata) {
         return annotationMetadata.hasAnnotation(EntityGraph.class);
+    }
+
+    @Override
+    public CriteriaBuilder getCriteriaBuilder() {
+        return sessionFactory.getCriteriaBuilder();
+    }
+
+    @Override
+    public <R> R findOne(CriteriaQuery<R> query) {
+        return executeRead(session -> session.createQuery(query).uniqueResult());
+    }
+
+    @Override
+    public <T> List<T> findAll(CriteriaQuery<T> query) {
+        return executeRead(session -> session.createQuery(query).getResultList());
+    }
+
+    @Override
+    public Optional<Number> updateAll(CriteriaUpdate<Number> query) {
+        return Optional.ofNullable(executeWrite(session -> session.createMutationQuery(query).executeUpdate()));
+    }
+
+    @Override
+    public Optional<Number> deleteAll(CriteriaDelete<Number> query) {
+        return Optional.ofNullable(executeWrite(session -> session.createMutationQuery(query).executeUpdate()));
     }
 
     private final class ListResultCollector<R> extends ResultCollector<R> {

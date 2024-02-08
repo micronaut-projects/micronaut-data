@@ -101,9 +101,13 @@ public final class FindPageSpecificationInterceptor extends AbstractQueryInterce
                     final List<Object> results = typedQuery.getResultList();
                     final CriteriaQuery<Long> countQuery = criteriaBuilder.createQuery(Long.class);
                     final Root<?> countRoot = countQuery.from(getRequiredRootEntity(context));
-                    final Predicate countPredicate = specification.toPredicate(countRoot, query, criteriaBuilder);
+                    final Predicate countPredicate = specification.toPredicate(countRoot, countQuery, criteriaBuilder);
                     countQuery.where(countPredicate);
-                    countQuery.select(criteriaBuilder.count(countRoot));
+                    if (countQuery.isDistinct()) {
+                        countQuery.select(criteriaBuilder.countDistinct(countRoot));
+                    } else {
+                        countQuery.select(criteriaBuilder.count(countRoot));
+                    }
 
                     return new PageImpl<>(
                             results,

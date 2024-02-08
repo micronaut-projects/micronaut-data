@@ -1,5 +1,8 @@
 package example
 
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
+import io.micronaut.data.repository.jpa.criteria.QuerySpecification
+import io.micronaut.data.runtime.criteria.get
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import org.junit.jupiter.api.Assertions.assertTrue
 import jakarta.inject.Inject
@@ -152,6 +155,21 @@ class HibernateTxTest {
         }
         Assertions.assertEquals(0, service.count())
         Assertions.assertEquals(0, service.countForCustomDb())
+    }
+
+    @Test
+    @Order(12)
+    fun coroutineCriteria() {
+        runBlocking {
+            val parent = Parent("abc", Collections.emptyList())
+            val saved = repositorySuspended.save(parent)
+
+            val found1 = repositorySuspended.findOne(QuerySpecification { root, query, criteriaBuilder -> criteriaBuilder.equal(root.get<String>("name"), "abc")})
+            Assertions.assertEquals(found1!!.id, saved.id)
+
+            val found2 = repositorySuspended.findOne(PredicateSpecification { root, criteriaBuilder ->  criteriaBuilder.equal(root.get<String>("name"), "abc")})
+            Assertions.assertEquals(found2!!.id, saved.id)
+        }
     }
 
 }

@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.processor.sql
 
+import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -28,10 +29,13 @@ import spock.lang.PendingFeature
 import spock.lang.Unroll
 
 import static io.micronaut.data.processor.visitors.TestUtils.getDataInterceptor
+import static io.micronaut.data.processor.visitors.TestUtils.getDataResultType
 import static io.micronaut.data.processor.visitors.TestUtils.getDataTypes
+import static io.micronaut.data.processor.visitors.TestUtils.getOperationType
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterPropertyPaths
 import static io.micronaut.data.processor.visitors.TestUtils.getQuery
 import static io.micronaut.data.processor.visitors.TestUtils.getRawQuery
+import static io.micronaut.data.processor.visitors.TestUtils.getResultDataType
 
 class BuildInsertSpec extends AbstractDataSpec {
 
@@ -378,7 +382,7 @@ import java.util.UUID;
 @Repository
 @RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false)
 @io.micronaut.context.annotation.Executable
-interface MyInterface extends CrudRepository<Food, UUID> {
+interface MyInterface extends GenericRepository<Food, UUID> {
 
     @Query("INSERT INTO food(key, carbohydrates) VALUES (:key, :carbohydrates)")
     void saveCustom(java.util.List<Food> food);
@@ -386,7 +390,7 @@ interface MyInterface extends CrudRepository<Food, UUID> {
     @Query("INSERT INTO food(key, carbohydrates) VALUES (:key, :carbohydrates)")
     void saveCustomSingle(Food food);
 
-    Food saveCustom2(UUID fid, String key, int carbohydrates, Meal meal);
+    Food save(UUID fid, String key, int carbohydrates, Meal meal);
 
 }
 """)
@@ -401,9 +405,67 @@ interface MyInterface extends CrudRepository<Food, UUID> {
         getRawQuery(saveCustomSingle) == 'INSERT INTO food(key, carbohydrates) VALUES (?, ?)'
         getParameterPropertyPaths(saveCustomSingle) == ["key", "carbohydrates"] as String[]
         when:
-        def save = beanDefinition.findPossibleMethods("saveCustom2").findFirst().get()
+        def save = beanDefinition.findPossibleMethods("save").findFirst().get()
         then:
         getQuery(save) == 'INSERT INTO "food" ("key","carbohydrates","portion_grams","created_on","updated_on","fk_meal_id","fk_alt_meal","loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name","fresh","fid") VALUES (?,?,?,?,?,?,?,?,?,?)'
         getDataInterceptor(save) == "io.micronaut.data.intercept.SaveOneInterceptor"
+    }
+
+    void "POSTGRES test build save returning "() {
+        given:
+            def repository = buildRepository('test.BookRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.Author;
+
+@JdbcRepository(dialect= Dialect.POSTGRES)
+@io.micronaut.context.annotation.Executable
+interface BookRepository extends GenericRepository<Book, Long> {
+
+    Book saveReturning(Book book);
+
+}
+""")
+        when:
+            def saveReturningMethod = repository.findPossibleMethods("saveReturning").findFirst().get()
+        then:
+            getQuery(saveReturningMethod) == 'INSERT INTO "book" ("author_id","genre_id","title","total_pages","publisher_id","last_updated") VALUES (?,?,?,?,?,?) RETURNING "author_id","genre_id","title","total_pages","publisher_id","last_updated","id"'
+            getDataResultType(saveReturningMethod) == "io.micronaut.data.tck.entities.Book"
+            getParameterPropertyPaths(saveReturningMethod) == ["author.id", "genre.id", "title", "totalPages", "publisher.id", "lastUpdated"] as String[]
+            getDataInterceptor(saveReturningMethod) == "io.micronaut.data.intercept.SaveEntityInterceptor"
+            getResultDataType(saveReturningMethod) == DataType.ENTITY
+            getOperationType(saveReturningMethod) == DataMethod.OperationType.INSERT_RETURNING
+    }
+
+    void "POSTGRES test build save all"() {
+        given:
+            def repository = buildRepository('test.BookRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.Author;
+import java.time.LocalDateTime;
+
+@JdbcRepository(dialect= Dialect.POSTGRES)
+@io.micronaut.context.annotation.Executable
+interface BookRepository extends GenericRepository<Book, Long> {
+
+    List<Book> saveReturning(List<Book> books);
+
+}
+""")
+        when:
+            def saveReturningMethod = repository.findPossibleMethods("saveReturning").findFirst().get()
+        then:
+            getQuery(saveReturningMethod) == 'INSERT INTO "book" ("author_id","genre_id","title","total_pages","publisher_id","last_updated") VALUES (?,?,?,?,?,?) RETURNING "author_id","genre_id","title","total_pages","publisher_id","last_updated","id"'
+            getDataResultType(saveReturningMethod) == "io.micronaut.data.tck.entities.Book"
+            getParameterPropertyPaths(saveReturningMethod) == ["author.id", "genre.id", "title", "totalPages", "publisher.id", "lastUpdated"] as String[]
+            getDataInterceptor(saveReturningMethod) == "io.micronaut.data.intercept.SaveAllInterceptor"
+            getResultDataType(saveReturningMethod) == DataType.ENTITY
+            getOperationType(saveReturningMethod) == DataMethod.OperationType.INSERT_RETURNING
     }
 }

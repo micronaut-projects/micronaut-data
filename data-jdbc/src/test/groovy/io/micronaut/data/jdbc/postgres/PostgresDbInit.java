@@ -51,7 +51,7 @@ public class PostgresDbInit implements BeanCreatedEventListener<BasicJdbcConfigu
                     // Ignore if already exists
                 }
                 try (CallableStatement st = connection.prepareCall("""
-CREATE PROCEDURE add1(IN myInput integer, OUT myOutput integer)
+CREATE OR REPLACE PROCEDURE add1(IN myInput integer, OUT myOutput integer)
 LANGUAGE plpgsql
 AS $$
 BEGIN

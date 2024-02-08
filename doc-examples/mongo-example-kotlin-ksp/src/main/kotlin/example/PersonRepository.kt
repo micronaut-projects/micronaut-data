@@ -81,14 +81,11 @@ interface PersonRepository : CrudRepository<Person, ObjectId>, JpaSpecificationE
     override
     // tag::delete[]
     fun deleteAll(spec: PredicateSpecification<Person>?): Long
-
     // end::delete[]
+
     override
     // tag::delete[]
     fun deleteAll(spec: DeleteSpecification<Person>?): Long
-
-    // end::delete[]
-
     // end::delete[]
 
     // tag::method_collection_contains[]
@@ -151,9 +148,10 @@ interface PersonRepository : CrudRepository<Person, ObjectId>, JpaSpecificationE
         }
 
         // tag::specifications[]
+        // tag::repository[]
     }
     // end::allSpecifications[]
     // end::specifications[]
-    // tag::repository[]
+    // end::repository[]
 }
 

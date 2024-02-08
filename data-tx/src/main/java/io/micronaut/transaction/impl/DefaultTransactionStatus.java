@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.transaction.TransactionDefinition;
+import io.micronaut.transaction.support.TransactionSynchronization;
 
 /**
  * The default transaction status.
@@ -159,6 +160,12 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
         public void setRollbackOnly() {
             super.setRollbackOnly();
             existingTransaction.setGlobalRollbackOnly();
+        }
+
+        @Override
+        public void registerSynchronization(TransactionSynchronization synchronization) {
+            // The synchronization should be bound to the current TX
+            existingTransaction.registerSynchronization(synchronization);
         }
     }
 }

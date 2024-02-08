@@ -19,7 +19,6 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 import org.reactivestreams.Publisher;
 
@@ -43,8 +42,7 @@ public class DeleteAllReactiveSpecificationInterceptor extends AbstractReactiveS
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        PreparedQuery<?, Number> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.DELETE_ALL);
-        Publisher<?> publisher = reactiveOperations.executeDelete(preparedQuery);
+        Publisher<?> publisher = deleteAllReactive(methodKey, context);
         return Publishers.convertPublisher(conversionService, publisher, context.getReturnType().getType());
     }
 

@@ -139,5 +139,5 @@ graal:
   title: Going Native with GraalVM
 spring:
   title: Spring Data Support
-
+dataGuides: Guides
 

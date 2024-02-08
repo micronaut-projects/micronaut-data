@@ -30,6 +30,19 @@ class VersionGeneratingEntityEventListenerSpec extends Specification {
         then:
             entity.ver
     }
+
+    void "test primitive version set"() {
+        when:
+            def entity = new ThePrimitiveEntity()
+            def mockEvent = new DefaultEntityEventContext(PersistentEntity.of(ThePrimitiveEntity), entity)
+            entityEventListener.prePersist(mockEvent)
+        then:
+            entity.ver == 0
+        when:
+            entityEventListener.preUpdate(mockEvent)
+        then:
+            entity.ver == 1
+    }
 }
 
 @MappedEntity
@@ -40,4 +53,14 @@ class TheEntity {
 
     @Version
     Instant ver
+}
+
+@MappedEntity
+class ThePrimitiveEntity {
+    @Id
+    @AutoPopulated
+    UUID uuid
+
+    @Version
+    long ver
 }

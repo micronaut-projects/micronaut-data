@@ -48,11 +48,11 @@ public abstract class OracleXEBookRepository extends BookRepository {
     @Procedure("add1")
     public abstract int add1Aliased(int input);
 
-    public abstract Book updateReturning(Book book);
-
-    public abstract String updateReturningTitle(Book book);
-
-    public abstract String updateReturningTitle(@Id Long id, String title);
-
-    public abstract String updateByIdReturningTitle(Long id, String title);
+//    public abstract Book updateReturning(Book book);
+//
+//    public abstract String updateReturningTitle(Book book);
+//
+//    public abstract String updateReturningTitle(@Id Long id, String title);
+//
+//    public abstract String updateByIdReturningTitle(Long id, String title);
 }

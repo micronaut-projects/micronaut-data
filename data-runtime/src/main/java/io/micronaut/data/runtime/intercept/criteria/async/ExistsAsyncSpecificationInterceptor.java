@@ -18,7 +18,6 @@ package io.micronaut.data.runtime.intercept.criteria.async;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 
 import java.util.concurrent.CompletionStage;
@@ -42,7 +41,6 @@ public class ExistsAsyncSpecificationInterceptor extends AbstractAsyncSpecificat
 
     @Override
     public CompletionStage<Boolean> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, CompletionStage<Boolean>> context) {
-        PreparedQuery<?, Boolean> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.EXISTS);
-        return asyncOperations.exists(preparedQuery);
+        return existsAsync(methodKey, context);
     }
 }

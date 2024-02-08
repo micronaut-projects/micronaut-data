@@ -1,8 +1,10 @@
 package io.micronaut.data.hibernate.entities;
 
+import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.Where;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -17,6 +19,8 @@ public class UserWithWhere {
     private UUID id;
     private String email;
     private Boolean deleted;
+    @Embedded
+    private Audit audit = new Audit();
 
     public UUID getId() {
         return id;
@@ -40,5 +44,13 @@ public class UserWithWhere {
 
     public void setDeleted(Boolean deleted) {
         this.deleted = deleted;
+    }
+
+    public Audit getAudit() {
+        return audit;
+    }
+
+    public void setAudit(Audit audit) {
+        this.audit = audit;
     }
 }

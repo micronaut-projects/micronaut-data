@@ -487,23 +487,15 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * Does supports batch for update queries.
      *
      * @param persistentEntity The persistent entity
-     * @param dialect          The dialect
+     * @param sqlStoredQuery   The sqlStoredQuery
      * @return true if supported
      */
-    protected boolean isSupportsBatchInsert(PersistentEntity persistentEntity, Dialect dialect) {
-        switch (dialect) {
-            case SQL_SERVER:
-                return false;
-            case MYSQL:
-            case ORACLE:
-                if (persistentEntity.getIdentity() != null) {
-                    // Oracle and MySql doesn't support a batch with returning generated ID: "DML Returning cannot be batched"
-                    return !persistentEntity.getIdentity().isGenerated();
-                }
-                return false;
-            default:
-                return true;
+    protected boolean isSupportsBatchInsert(PersistentEntity persistentEntity, SqlStoredQuery<?, ?> sqlStoredQuery) {
+        // Oracle and MySql doesn't support a batch with returning generated ID: "DML Returning cannot be batched"
+        if (sqlStoredQuery.getOperationType() == OperationType.INSERT_RETURNING) {
+            return false;
         }
+        return isSupportsBatchInsert(persistentEntity, sqlStoredQuery.getDialect());
     }
 
     /**
@@ -513,8 +505,30 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param dialect          The dialect
      * @return true if supported
      */
-    protected boolean isSupportsBatchUpdate(PersistentEntity persistentEntity, Dialect dialect) {
-        return true;
+    protected boolean isSupportsBatchInsert(PersistentEntity persistentEntity, Dialect dialect) {
+        // Oracle and MySql doesn't support a batch with returning generated ID: "DML Returning cannot be batched"
+        return switch (dialect) {
+            case SQL_SERVER -> false;
+            case MYSQL, ORACLE -> {
+                if (persistentEntity.getIdentity() != null) {
+                    // Oracle and MySql doesn't support a batch with returning generated ID: "DML Returning cannot be batched"
+                    yield !persistentEntity.getIdentity().isGenerated();
+                }
+                yield false;
+            }
+            default -> true;
+        };
+    }
+
+    /**
+     * Does supports batch for update queries.
+     *
+     * @param persistentEntity The persistent entity
+     * @param sqlStoredQuery   The sqlStoredQuery
+     * @return true if supported
+     */
+    protected boolean isSupportsBatchUpdate(PersistentEntity persistentEntity, SqlStoredQuery<?, ?> sqlStoredQuery) {
+        return sqlStoredQuery.getOperationType() != OperationType.UPDATE_RETURNING;
     }
 
     /**
@@ -532,7 +546,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * Creates {@link SqlTypeMapper} for reading results from single column into an entity. For now, we support reading from JSON column,
      * however in support we might add XML support etc.
      *
-     * @param sqlPreparedQuery the SQL prepared query
+     * @param sqlStoredQuery the SQL prepared query
      * @param columnName the column name where we are reading from
      * @param jsonDataType the JSON representation type
      * @param resultSetType resultSetType the result set type (different for R2dbc and Jdbc)
@@ -542,13 +556,13 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param <T> the entity type
      * @param <R> the result type
      */
-    protected final <T, R> SqlTypeMapper<RS, R> createQueryResultMapper(SqlPreparedQuery<?, ?> sqlPreparedQuery, String columnName, JsonDataType jsonDataType, Class<RS> resultSetType,
+    protected final <T, R> SqlTypeMapper<RS, R> createQueryResultMapper(SqlStoredQuery<?, ?> sqlStoredQuery, String columnName, JsonDataType jsonDataType, Class<RS> resultSetType,
                                                                         RuntimePersistentEntity<T> persistentEntity, BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
-        QueryResultInfo queryResultInfo = sqlPreparedQuery.getQueryResultInfo();
+        QueryResultInfo queryResultInfo = sqlStoredQuery.getQueryResultInfo();
         if (queryResultInfo != null && queryResultInfo.getType() != io.micronaut.data.annotation.QueryResult.Type.JSON) {
             throw new IllegalStateException("Unexpected query result type: " + queryResultInfo.getType());
         }
-        return createJsonQueryResultMapper(sqlPreparedQuery, columnName, jsonDataType, resultSetType, persistentEntity, loadListener);
+        return createJsonQueryResultMapper(sqlStoredQuery, columnName, jsonDataType, resultSetType, persistentEntity, loadListener);
     }
 
     /**
@@ -596,7 +610,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param queryResultInfo the query result info, if not null will hold info about result type
      * @return true if result is JSON
      */
-    protected final boolean isJsonResult(PreparedQuery<?, ?> preparedQuery, QueryResultInfo queryResultInfo) {
+    protected final boolean isJsonResult(StoredQuery<?, ?> preparedQuery, QueryResultInfo queryResultInfo) {
         if (preparedQuery.isCount()) {
             return false;
         }
@@ -652,7 +666,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     /**
      * Creates {@link JsonQueryResultMapper} for JSON deserialization.
      *
-     * @param sqlPreparedQuery the SQL prepared query
+     * @param sqlStoredQuery the SQL prepared query
      * @param columnName the column name where query result is stored
      * @param jsonDataType the json representation type
      * @param resultSetType the result set type
@@ -661,10 +675,10 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @return the {@link JsonQueryResultMapper}
      * @param <T> the entity type
      */
-    private <T, R> JsonQueryResultMapper<T, RS, R> createJsonQueryResultMapper(SqlPreparedQuery<?, ?> sqlPreparedQuery, String columnName, JsonDataType jsonDataType, Class<RS> resultSetType,
+    private <T, R> JsonQueryResultMapper<T, RS, R> createJsonQueryResultMapper(SqlStoredQuery<?, ?> sqlStoredQuery, String columnName, JsonDataType jsonDataType, Class<RS> resultSetType,
                                                                                RuntimePersistentEntity<T> persistentEntity, BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
         return new JsonQueryResultMapper<>(columnName, jsonDataType, persistentEntity, columnNameResultSetReader,
-            sqlJsonColumnMapperProvider.getJsonColumnReader(sqlPreparedQuery, resultSetType), loadListener);
+            sqlJsonColumnMapperProvider.getJsonColumnReader(sqlStoredQuery, resultSetType), loadListener);
     }
 
     /**
@@ -682,7 +696,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @return The new mapper
      * @since 4.2.0
      */
-    protected <E, R> SqlTypeMapper<RS, R> createMapper(SqlPreparedQuery<E, R> preparedQuery, Class<RS> rsType) {
+    protected <E, R> SqlTypeMapper<RS, R> createMapper(SqlStoredQuery<E, R> preparedQuery, Class<RS> rsType) {
         BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener;
         RuntimePersistentEntity<E> persistentEntity = preparedQuery.getPersistentEntity();
         boolean isEntityResult = preparedQuery.getResultDataType() == DataType.ENTITY;

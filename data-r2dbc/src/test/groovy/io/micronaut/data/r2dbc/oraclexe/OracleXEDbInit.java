@@ -46,7 +46,7 @@ public class OracleXEDbInit implements BeanCreatedEventListener<DefaultBasicR2db
         try {
             try (Connection connection = DriverManager.getConnection(url, info)) {
                 try (CallableStatement st = connection.prepareCall("""
-CREATE PROCEDURE add1(myInput IN number, myOutput OUT number) IS
+CREATE OR REPLACE PROCEDURE add1(myInput IN number, myOutput OUT number) IS
 BEGIN
 myOutput := myInput + 1;
 END;

@@ -1,0 +1,3 @@
+Read from the following list of guides to learn more about working with Micronaut Data in the Micronaut Framework:
+
+- https://guides.micronaut.io/latest/tag-micronaut_data.html[Micronaut Data Guides]

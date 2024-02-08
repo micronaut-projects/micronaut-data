@@ -73,9 +73,18 @@ public interface SpringCrudRepository extends CrudRepository<Person, Long>, JpaS
 
     class Specifications {
         public static Specification<Person> ageGreaterThanThirty() {
-            return (root, query, criteriaBuilder) -> criteriaBuilder.greaterThan(
+            return ageGreaterThanThirty(false);
+        }
+
+        public static Specification<Person> ageGreaterThanThirty(boolean countDistinct) {
+            return (root, query, criteriaBuilder) -> {
+                if (countDistinct && query.getResultType() == Long.class) {
+                    query.distinct(true);
+                }
+                return criteriaBuilder.greaterThan(
                     root.get("age"), 30
-            );
+                );
+            };
         }
 
         public static Specification<Person> nameEquals(String name) {

@@ -47,6 +47,14 @@ interface ProductRepository : CrudRepository<Product, ObjectId>, JpaSpecificatio
             manufacturer[Manufacturer::name] eq name
         }
 
+        fun nameInList(names: List<String>) = where<Product> {
+            val manufacturer = root.joinOne(Product::manufacturer)
+            or {
+                root[Product::name] inList names
+                manufacturer[Manufacturer::name] inList names
+            }
+        }
+
         // tag::specifications[]
     }
 

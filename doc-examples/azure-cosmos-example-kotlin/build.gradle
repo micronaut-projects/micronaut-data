@@ -28,5 +28,6 @@ dependencies {
 
     runtimeOnly mnLogging.logback.classic
 
+    testImplementation(platform(mnTestResources.boms.testcontainers))
     testImplementation libs.testcontainers.azure
 }

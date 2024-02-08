@@ -27,4 +27,5 @@ public interface JpaShipmentRepository extends CrudRepository<Shipment, Shipment
 
     Shipment findByShipmentIdCountryAndShipmentIdCity(String country, String city);
 
+    long countDistinct();
 }

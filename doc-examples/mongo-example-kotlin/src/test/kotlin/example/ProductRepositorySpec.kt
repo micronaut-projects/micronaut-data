@@ -1,6 +1,7 @@
 package example
 
 import example.ProductRepository.Specifications.manufacturerNameEquals
+import example.ProductRepository.Specifications.nameInList
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.*
@@ -86,4 +87,18 @@ internal class ProductRepositorySpec : AbstractMongoSpec() {
         assertEquals(1, productRepository.findAll(manufacturerNameEquals("Samsung")).size)
     }
 
+    @Test
+    fun testCriteriaInList() {
+        val samsung = manufacturerRepository.save("Samsung")
+        productRepository.save(
+            Product(null,
+                "Android",
+                samsung
+            )
+        )
+        assertEquals(3, productRepository.findAll(nameInList(listOf("Apple", "Samsung"))).size)
+        assertEquals(2, productRepository.findAll(nameInList(listOf("Android", "iPhone"))).size)
+        assertEquals(2, productRepository.findAll(nameInList(listOf("iPhone", "Samsung"))).size)
+        assertEquals(1, productRepository.findAll(nameInList(listOf("Android", "Samsung"))).size)
+    }
 }

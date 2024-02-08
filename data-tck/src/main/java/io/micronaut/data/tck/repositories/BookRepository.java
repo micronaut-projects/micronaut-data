@@ -44,7 +44,7 @@ import java.util.stream.Stream;
 public abstract class BookRepository implements PageableRepository<Book, Long>, JpaSpecificationExecutor<Book>, SimpleBookRepository {
 
     @Override
-    public abstract Book save(Book book);
+    public abstract @NonNull Book save(@NonNull Book book);
 
     @Join(value = "author", alias = "auth")
     public abstract Book queryByTitle(String title);
@@ -168,4 +168,8 @@ public abstract class BookRepository implements PageableRepository<Book, Long>, 
 
     @Join(value = "chapters", type = Join.Type.LEFT_FETCH)
     public abstract List<Book> findAllByChaptersTitleAndTitle(String chapterTitle, String title);
+
+    abstract List<Book> findByTitleInAndTotalPagesGreaterThan(List<String> titles, int totalPages);
+
+    abstract Long countByTitleInAndTotalPagesGreaterThan(List<String> titles, int totalPages);
 }

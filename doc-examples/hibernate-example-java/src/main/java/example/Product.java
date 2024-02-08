@@ -1,8 +1,11 @@
 
 package example;
 
+// tag::entity[]
+// tag::entitywithprocedures[]
 import jakarta.persistence.*;
 
+// end::entity[]
 @NamedStoredProcedureQuery(name = "calculateSum",
     procedureName = "calculateSumInternal",
     parameters = {
@@ -10,9 +13,11 @@ import jakarta.persistence.*;
         @StoredProcedureParameter(name = "result", mode = ParameterMode.OUT, type = Long.class)
     }
 )
+// tag::entity[]
 @Entity
-public class Product {
+class Product {
 
+    // end::entitywithprocedures[]
     @Id
     @GeneratedValue
     private Long id;
@@ -52,3 +57,4 @@ public class Product {
         this.manufacturer = manufacturer;
     }
 }
+// end::entity[]

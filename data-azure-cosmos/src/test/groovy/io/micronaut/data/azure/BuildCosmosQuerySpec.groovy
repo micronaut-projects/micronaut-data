@@ -204,6 +204,22 @@ $source
 
     }
 
+    void "test  count distinct not supported"() {
+        when:
+        buildRepository('test.FamilyRepository', """
+import io.micronaut.data.cosmos.annotation.CosmosRepository;
+import io.micronaut.data.azure.entities.Family;
+@CosmosRepository
+interface FamilyRepository extends GenericRepository<Family, String> {
+    long countDistinct();
+}
+""")
+
+        then:
+        def ex = thrown(Exception)
+        ex.message.contains('Unable to implement Repository method: FamilyRepository.countDistinct(). Count distinct is not supported by Micronaut Data Azure Cosmos')
+    }
+
     static String getQuery(AnnotationMetadataProvider metadata) {
         return metadata.getAnnotation(Query).stringValue().get()
     }

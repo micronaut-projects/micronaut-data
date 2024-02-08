@@ -20,7 +20,6 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 import org.reactivestreams.Publisher;
 
@@ -44,11 +43,10 @@ public class CountReactiveSpecificationInterceptor extends AbstractReactiveSpeci
 
     @Override
     public Publisher<Number> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Publisher<Number>> context) {
-        PreparedQuery<?, Long> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.COUNT);
         return Publishers.convertPublisher(
-                conversionService,
-                reactiveOperations.findAll(preparedQuery),
-                context.getReturnType().getType()
+            conversionService,
+            count(methodKey, context),
+            context.getReturnType().getType()
         );
     }
 }

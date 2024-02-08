@@ -46,8 +46,9 @@ The following code illustrates an example that integrates a `JdbcTemplate` insta
 
 snippet::example.AbstractBookRepository[project-base="doc-examples/jdbc-spring-template-example",source="main",tags="clazz"]
 
-<1> Inject the `org.springframework.jdbc.core.JdbcTemplate` configured by the application.
-<2> Now the `JdbcTemplate` API can be used to implement repository methods.
+<1> Inject the `java.sql.DataSource` configured by the application.
+<2> Instantiate a `JdbcTemplate` object using the injected `DataSource`.
+<3> Now the `JdbcTemplate` API can be used to implement repository methods.
 
 In addition, the transaction manager for Spring JDBC needs to be set in application configuration.
 

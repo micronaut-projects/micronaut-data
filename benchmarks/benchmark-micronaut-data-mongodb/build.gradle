@@ -6,7 +6,6 @@ dependencies {
     annotationProcessor projects.micronautDataDocumentProcessor
     implementation projects.micronautDataMongodb
     implementation mnMongo.mongo.driver
-    testImplementation platform(libs.testcontainers.bom)
-    testImplementation libs.testcontainers.mongodb
+    implementation(mnTestResources.testcontainers.mongodb)
     runtimeOnly mn.snakeyaml
 }

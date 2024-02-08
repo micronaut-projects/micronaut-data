@@ -79,16 +79,8 @@ public interface AuthorRepository extends CrudRepository<Author, Long> {
     @Join("books")
     List<Author> listAll();
 
-    List<AuthorDtoWithBooks> searchAll();
-
-    @Join("books")
-    List<AuthorDtoWithBooks> queryAll();
-
     @Join(value = "books", type = Join.Type.LEFT_FETCH)
     List<Author> findByIdIsNotNull();
-
-    @Join(value = "books", type = Join.Type.LEFT_FETCH)
-    List<AuthorDtoWithBooks> retrieveByIdIsNotNull();
 
     @Join(value = "books", type = Join.Type.LEFT_FETCH)
     Stream<Author> queryByIdIsNotNull();
@@ -96,8 +88,27 @@ public interface AuthorRepository extends CrudRepository<Author, Long> {
     @Join(value = "books", type = Join.Type.RIGHT_FETCH)
     List<Author> findByNameIsNotNull();
 
+    List<AuthorDtoWithBooks> searchAll();
+
+    @Join("books")
+    List<AuthorDtoWithBooks> queryAll();
+
+    @Join(value = "books", type = Join.Type.LEFT_FETCH)
+    List<AuthorDtoWithBooks> retrieveByIdIsNotNull();
+
     @Join(value = "books", type = Join.Type.RIGHT_FETCH)
     List<AuthorDtoWithBooks> searchByNameIsNotNull();
+
+    List<AuthorDtoWithBooks> readAll();
+
+    @Join("books")
+    List<AuthorDtoWithBooks> read();
+
+    @Join(value = "books", type = Join.Type.LEFT_FETCH)
+    List<AuthorDtoWithBooks> readByIdIsNotNull();
+
+    @Join(value = "books", type = Join.Type.RIGHT_FETCH)
+    List<AuthorDtoWithBooks> readByNameIsNotNull();
 
     void updateNickname(@Id Long id, @Parameter("nickName") @Nullable String nickName);
 

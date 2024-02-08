@@ -64,6 +64,7 @@ public final class UpdateMethodMatcher extends AbstractMethodMatcher {
     public UpdateMethodMatcher() {
         super(MethodNameParser.builder()
             .match(QueryMatchId.PREFIX, "update", "modify")
+            .tryMatch(QueryMatchId.ALL_OR_ONE, ALL_OR_ONE)
             .tryMatchLastOccurrencePrefixed(QueryMatchId.RETURNING, null, RETURNING)
             .tryMatchFirstOccurrencePrefixed(QueryMatchId.PREDICATE, BY)
             .build());

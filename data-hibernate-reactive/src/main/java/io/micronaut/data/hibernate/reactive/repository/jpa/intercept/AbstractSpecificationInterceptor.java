@@ -73,6 +73,10 @@ public abstract class AbstractSpecificationInterceptor extends AbstractPublisher
         if (parameterValue instanceof Specification) {
             return (Specification<Object>) parameterValue;
         }
+        if (parameterValue == null) {
+            // parameter is nullable
+            return null;
+        }
         throw new IllegalArgumentException("Argument must be an instance of: " + Specification.class);
     }
 

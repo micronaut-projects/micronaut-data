@@ -28,4 +28,6 @@ dependencies {
     runtimeOnly mnSql.micronaut.jdbc.tomcat
     runtimeOnly mnLogging.logback.classic
     runtimeOnly mnSql.h2
+
+    runtimeOnly libs.kotlin.reflect
 }

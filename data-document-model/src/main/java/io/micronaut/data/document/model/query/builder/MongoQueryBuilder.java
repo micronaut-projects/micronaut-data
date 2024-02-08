@@ -788,7 +788,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
             for (QueryModel.Projection projection : projectionList) {
                 if (projection instanceof QueryModel.LiteralProjection literalProjection) {
                     projectionObj.put("val", singletonMap("$literal", asLiteral(literalProjection.getValue())));
-                } else if (projection instanceof QueryModel.CountProjection) {
+                } else if (projection instanceof QueryModel.CountProjection || projection instanceof QueryModel.CountDistinctRootProjection) {
+                    // before adding support for count distinct in https://github.com/micronaut-projects/micronaut-data/issues/2695
+                    // it was producing the same query as this, same as count basically
                     countObj.put("$count", "result");
                 } else if (projection instanceof QueryModel.DistinctProjection) {
                     throw new UnsupportedOperationException("Not implemented yet");
@@ -810,7 +812,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
                     } else if (projection instanceof QueryModel.MaxProjection) {
                         addProjection(groupObj, pp, "$max", propertyPersistName);
                     } else if (projection instanceof QueryModel.CountDistinctProjection) {
-                        throw new UnsupportedOperationException("Not implemented yet");
+                        throw new UnsupportedOperationException("Count distinct against property is not supported by Micronaut Data MongoDB.");
                     } else {
                         projectionObj.put(propertyPersistName, 1);
                     }

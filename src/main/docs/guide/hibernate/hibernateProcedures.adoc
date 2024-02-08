@@ -1,11 +1,14 @@
 It's possible to execute a stored procedure using the JPA provider:
 
-snippet::example.ProductRepository[project-base="doc-examples/hibernate-example", source="main",tags="join"]
+Repository with procedure methods:
 
-snippet::example.Product[project-base="doc-examples/hibernate-example", source="main",]
+snippet::example.ProductRepository[project-base="doc-examples/hibernate-example", source="main", tags="procedure"]
+
+An entity with named procedures defined:
+
+snippet::example.Product[project-base="doc-examples/hibernate-example", source="main", tags="entitywithprocedures"]
 
 <1> The definition is referencing the named stored procedure defined in `Product` entity
 <2> The definition is referencing the native database procedure name
-
 
 NOTE: The output parameter, if present, is defined as the last output parameter of the procedure

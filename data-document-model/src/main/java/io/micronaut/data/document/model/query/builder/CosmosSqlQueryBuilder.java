@@ -95,6 +95,11 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     }
 
     @Override
+    protected void appendProjectionRowCountDistinct(StringBuilder queryString, QueryState queryState, PersistentEntity entity, AnnotationMetadata annotationMetadata, String logicalName) {
+        throw new UnsupportedOperationException("Count distinct is not supported by Micronaut Data Azure Cosmos.");
+    }
+
+    @Override
     protected NamingStrategy getNamingStrategy(PersistentEntity entity) {
         return entity.findNamingStrategy().orElse(RAW_NAMING_STRATEGY);
     }

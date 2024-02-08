@@ -68,4 +68,6 @@ public interface PersonCrudRepository extends JpaRepository<Person, Long>, Perso
     @Override
     @QueryHint(name = "jakarta.persistence.FlushModeType", value = "AUTO")
     Long updatePerson(@Id Long id, int age);
+
+    long countDistinct();
 }

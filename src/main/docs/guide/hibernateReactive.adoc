@@ -107,5 +107,6 @@ snippet::example.BookRepositorySpec[project-base="doc-examples/hibernate-reactiv
 
 NOTE: The examples are using `block` to retrieve the result, in your application you should never block the reactive repository as it can lead to performance problems, and it might not be supported by the backing implementation.
 
+TIP: See the guide for https://guides.micronaut.io/latest/micronaut-data-hibernate-reactive.html[Access a Database with Micronaut Data and Hibernate Reactive] to learn more.
 
 

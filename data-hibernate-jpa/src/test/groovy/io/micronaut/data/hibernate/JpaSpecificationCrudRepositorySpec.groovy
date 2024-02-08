@@ -69,6 +69,10 @@ class JpaSpecificationCrudRepositorySpec extends Specification {
         }, Pageable.from(0, 10))
         then:
         page.size() == 3
+        when:"findAll with null specification"
+        page = crudRepository.findAll((io.micronaut.data.jpa.repository.criteria.Specification<Person>) null, Pageable.from(0, 10))
+        then:"all results are returned"
+        page.size() == 3
     }
 
     void "test save many"() {
@@ -92,9 +96,15 @@ class JpaSpecificationCrudRepositorySpec extends Specification {
     void "test JPA specification count"() {
         expect:
         crudRepository.count(JpaSpecificationCrudRepository.Specifications.ageGreaterThanThirty()) == 4
+        def cnt = crudRepository.count((io.micronaut.data.jpa.repository.criteria.Specification<Person>) null)
+        cnt >= 4
         def results = crudRepository.findAll(JpaSpecificationCrudRepository.Specifications.ageGreaterThanThirty())
         results.size() == 4
         results.every({ it instanceof Person})
+
+        def pageReq = Pageable.from(0, 2, Sort.of(Sort.Order.asc("age")))
+        def page = crudRepository.findAll(JpaSpecificationCrudRepository.Specifications.ageGreaterThanThirty(true), pageReq)
+        page.totalSize <= 4
 
         def sorted = crudRepository.findAll(JpaSpecificationCrudRepository.Specifications.ageGreaterThanThirty(), Sort.of(Sort.Order.asc("age")))
 

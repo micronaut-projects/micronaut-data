@@ -11,4 +11,6 @@ import java.util.List;
 public interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, EntityIdClass> {
     List<EntityWithIdClass> findById1(Long id1);
     List<EntityWithIdClass> findById2(Long id2);
+    long countDistinct();
+    long countDistinctName();
 }

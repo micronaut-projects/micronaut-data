@@ -105,11 +105,11 @@ public class VersionGeneratingEntityEventListener implements EntityEventListener
         }
         if (Temporal.class.isAssignableFrom(type)) {
             return newTemporal(type);
-        } else if (type == Integer.class) {
+        } else if (type == Integer.class || type == int.class) {
             return (Integer) previousValue + 1;
-        } else if (type == Long.class) {
+        } else if (type == Long.class || type == long.class) {
             return (Long) previousValue + 1L;
-        } else if (type == Short.class) {
+        } else if (type == Short.class || type == short.class) {
             return (Short) previousValue + (short) 1;
         } else {
             throw new DataAccessException("Unsupported @Version type: " + type);
@@ -119,11 +119,11 @@ public class VersionGeneratingEntityEventListener implements EntityEventListener
     private Object init(Class<?> valueType) {
         if (Temporal.class.isAssignableFrom(valueType)) {
             return newTemporal(valueType);
-        } else if (valueType == Integer.class) {
+        } else if (valueType == Integer.class || valueType == int.class) {
             return 0;
-        } else if (valueType == Long.class) {
+        } else if (valueType == Long.class || valueType == long.class) {
             return 0L;
-        } else if (valueType == Short.class) {
+        } else if (valueType == Short.class || valueType == short.class) {
             return (short) 0;
         } else {
             throw new DataAccessException("Unsupported @Version type: " + valueType);

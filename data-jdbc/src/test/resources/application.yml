@@ -8,7 +8,7 @@ test-resources:
     mysql:
       startup-timeout: 300s
     oracle:
-      startup-timeout: 300s
+      startup-timeout: 600s
       image-name: gvenzl/oracle-free
       db-name: test
     postgres:

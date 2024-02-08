@@ -16,7 +16,7 @@ If running project in native image, custom naming strategy needs to have `io.mic
 
 In addition if you don't want to repeat the above annotation definition on every entity it is handy to define a meta-annotation where the above annotation definition is applied to another annotation that you add to your class.
 
-==== Escaping Table/Column Name Identifiers
+=== Escaping Table/Column Name Identifiers
 
 In some cases it may be necessary to escape table and/or column names if characters are used within the names that are invalid without the presence of escaping.
 
@@ -29,7 +29,7 @@ In this case you should set the `escape` member of the ann:data.annotation.Mappe
 
 Micronaut Data will generate SQL statements that escape table and column names within queries using the escape character that is appropriate for the configured SQL dialect.
 
-==== Overriding default query alias
+=== Overriding default query alias
 
 The default query alias is the table name followed by an underscore. If you want to change it, specify it in the ann:data.annotation.MappedEntity[] annotation:
 

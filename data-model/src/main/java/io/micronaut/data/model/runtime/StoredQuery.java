@@ -252,8 +252,16 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
          */
         DELETE,
         /**
+         * An delete returning operation.
+         */
+        DELETE_RETURNING,
+        /**
          * An insert operation.
          */
-        INSERT
+        INSERT,
+        /**
+         * An insert returning operation.
+         */
+        INSERT_RETURNING,
     }
 }

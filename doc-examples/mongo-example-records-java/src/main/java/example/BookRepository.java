@@ -107,7 +107,7 @@ interface BookRepository extends CrudRepository<Book, ObjectId> { // <2>
     List<Person> customAggregate(String t);
 
     @MongoUpdateQuery(filter = "{title:{$regex: :t}}", update = "{$set:{name: 'tom'}}")
-    List<Book> customUpdate(String t);
+    void customUpdate(String t);
 
     @MongoDeleteQuery(filter = "{title:{$regex: :t}}", collation = "{locale:'en_US', numericOrdering:true}")
     void customDelete(String t);

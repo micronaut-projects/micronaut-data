@@ -18,7 +18,6 @@ package io.micronaut.data.runtime.intercept.criteria;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 
 /**
@@ -41,10 +40,9 @@ public class FindOneSpecificationInterceptor extends AbstractSpecificationInterc
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        PreparedQuery<?, ?> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.FIND_ONE);
         return convertOne(
-                context,
-                operations.findOne(preparedQuery)
+            context,
+            findOne(methodKey, context, Type.FIND_ONE)
         );
     }
 }

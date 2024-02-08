@@ -50,6 +50,7 @@ public final class DeleteMethodMatcher extends AbstractMethodMatcher {
         super(MethodNameParser.builder()
             .match(QueryMatchId.PREFIX, "delete", "remove", "erase", "eliminate")
             .tryMatch(QueryMatchId.ALL_OR_ONE, ALL_OR_ONE)
+            .tryMatchLastOccurrencePrefixed(QueryMatchId.RETURNING, null, RETURNING)
             .tryMatchFirstOccurrencePrefixed(QueryMatchId.PREDICATE, BY)
             .failOnRest("Delete method doesn't support projections")
             .build());
@@ -59,6 +60,7 @@ public final class DeleteMethodMatcher extends AbstractMethodMatcher {
     protected MethodMatch match(MethodMatchContext matchContext, List<MethodNameParser.Match> matches) {
         ParameterElement[] parameters = matchContext.getParameters();
         boolean isSpecificDelete = matches.stream().anyMatch(m -> m.id() == QueryMatchId.PREDICATE);
+        boolean isReturning = matches.stream().anyMatch(m -> m.id() == QueryMatchId.RETURNING);
         ParameterElement entityParameter = null;
         ParameterElement entitiesParameter = null;
         if (matchContext.getParametersNotInRole().size() == 1) {
@@ -79,10 +81,10 @@ public final class DeleteMethodMatcher extends AbstractMethodMatcher {
             }
         }
         if (entityParameter == null && entitiesParameter == null) {
-            if (!TypeUtils.isValidBatchUpdateReturnType(matchContext.getMethodElement())) {
+            if (!isReturning && !TypeUtils.isValidBatchUpdateReturnType(matchContext.getMethodElement())) {
                 return null;
             }
-            return new DeleteCriteriaMethodMatch(matches);
+            return new DeleteCriteriaMethodMatch(matches, isReturning);
         }
 
         SourcePersistentEntity rootEntity = matchContext.getRootEntity();
@@ -98,7 +100,7 @@ public final class DeleteMethodMatcher extends AbstractMethodMatcher {
         ParameterElement finalEntityParameter = entityParameter;
         ParameterElement finalEntitiesParameter = entitiesParameter;
         if (generateInIdList) {
-            return new DeleteCriteriaMethodMatch(matches) {
+            return new DeleteCriteriaMethodMatch(matches, isReturning) {
 
                 @Override
                 protected boolean supportedByImplicitQueries() {
@@ -134,7 +136,7 @@ public final class DeleteMethodMatcher extends AbstractMethodMatcher {
 
         ParameterElement entityParam = entityParameter == null ? entitiesParameter : entityParameter;
 
-        return new DeleteCriteriaMethodMatch(matches) {
+        return new DeleteCriteriaMethodMatch(matches, isReturning) {
 
             @Override
             protected boolean supportedByImplicitQueries() {

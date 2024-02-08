@@ -896,13 +896,14 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
          *
          * @param row The row
          */
-        void processRow(RS row);
+        void processRow(@NonNull RS row);
 
         /**
          * The result created by pushed rows.
          *
          * @return the result
          */
+        @Nullable
         R getResult();
 
     }

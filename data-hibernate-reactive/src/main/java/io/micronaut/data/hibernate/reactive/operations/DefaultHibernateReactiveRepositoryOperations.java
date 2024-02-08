@@ -40,13 +40,16 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
+import io.micronaut.data.operations.reactive.ReactorCriteriaRepositoryOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
 import jakarta.persistence.EntityGraph;
 import jakarta.persistence.FlushModeType;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.CriteriaUpdate;
 import org.hibernate.SessionFactory;
 import org.hibernate.reactive.stage.Stage;
 import reactor.core.publisher.Flux;
@@ -66,7 +69,7 @@ import java.util.function.Function;
 @EachBean(SessionFactory.class)
 @Internal
 final class DefaultHibernateReactiveRepositoryOperations extends AbstractHibernateOperations<Stage.Session, Stage.AbstractQuery, Stage.SelectionQuery<?>>
-        implements HibernateReactorRepositoryOperations {
+        implements HibernateReactorRepositoryOperations, ReactorCriteriaRepositoryOperations {
 
     private final SessionFactory sessionFactory;
     private final Stage.SessionFactory stageSessionFactory;
@@ -405,6 +408,27 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     @Override
     public ConversionService getConversionService() {
         return dataConversionService;
+    }
+
+    @Override
+    public <R> Mono<R> findOne(CriteriaQuery<R> query) {
+        return withSession(session -> helper.monoFromCompletionStage(() -> session.createQuery(query).getSingleResult()));
+    }
+
+    @Override
+    public <T> Flux<T> findAll(CriteriaQuery<T> query) {
+        return withSession(session -> helper.monoFromCompletionStage(() -> session.createQuery(query).getResultList()))
+            .flatMapIterable(res -> res);
+    }
+
+    @Override
+    public Mono<Number> updateAll(CriteriaUpdate<Number> query) {
+        return withSession(session -> helper.monoFromCompletionStage(() -> session.createQuery(query).executeUpdate()).map(n -> n));
+    }
+
+    @Override
+    public Mono<Number> deleteAll(CriteriaDelete<Number> query) {
+        return withSession(session -> helper.monoFromCompletionStage(() -> session.createQuery(query).executeUpdate()).map(n -> n));
     }
 
     private final class ListResultCollector<R> extends ResultCollector<R> {

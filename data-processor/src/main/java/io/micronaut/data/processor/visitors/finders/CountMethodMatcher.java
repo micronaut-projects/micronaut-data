@@ -68,8 +68,7 @@ public final class CountMethodMatcher extends AbstractMethodMatcher {
                         Expression<Long> count = distinct ? cb.countDistinct(propertyPath) : cb.count(propertyPath);
                         query.multiselect(count);
                     } else {
-                        // TODO: correct distinct
-                        Expression<Long> count = cb.count(root);
+                        Expression<Long> count = distinct ? cb.countDistinct(root) : cb.count(root);
                         query.multiselect(count);
                     }
                 }

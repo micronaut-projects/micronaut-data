@@ -38,7 +38,7 @@ public class PostgresDbInit implements BeanCreatedEventListener<BasicJdbcConfigu
         try {
             try (Connection connection = DriverManager.getConnection(configuration.getUrl(), info)) {
                 try (CallableStatement st = connection.prepareCall("""
-CREATE PROCEDURE add1(IN myInput integer, OUT myOutput integer)
+CREATE OR REPLACE PROCEDURE add1(IN myInput integer, OUT myOutput integer)
 LANGUAGE plpgsql
 AS $$
 BEGIN

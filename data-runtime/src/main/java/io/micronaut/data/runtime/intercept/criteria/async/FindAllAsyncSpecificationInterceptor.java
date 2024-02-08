@@ -19,7 +19,6 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 
 import java.util.Collections;
@@ -46,16 +45,15 @@ public class FindAllAsyncSpecificationInterceptor extends AbstractAsyncSpecifica
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        PreparedQuery<?, ?> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.FIND_ALL);
-        CompletionStage<? extends Iterable<?>>  future = asyncOperations.findAll(preparedQuery);
+        CompletionStage<? extends Iterable<?>> future = findAllAsync(methodKey, context, Type.FIND_ALL);
         return future.thenApply((Function<Iterable<?>, Iterable<Object>>) iterable -> {
             Argument<?> argument = findReturnType(context, LIST_OF_OBJECTS);
             if (argument.getType().isInstance(iterable)) {
                 return (Iterable<Object>) iterable;
             }
             Iterable<Object> result = (Iterable<Object>) operations.getConversionService().convert(
-                    iterable,
-                    argument
+                iterable,
+                argument
             ).orElse(null);
             return result == null ? Collections.emptyList() : result;
         });
