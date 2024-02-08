@@ -138,7 +138,12 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     protected final Iterable<?> findAll(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context, Type type) {
         Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
         if (criteriaRepositoryOperations != null) {
-            return criteriaRepositoryOperations.findAll(buildQuery(context, type, methodJoinPaths));
+            CriteriaQuery<Object> query = buildQuery(context, type, methodJoinPaths);
+            Pageable pageable = getPageable(context);
+            if (pageable != null) {
+                return criteriaRepositoryOperations.findAll(query, (int) pageable.getOffset(), pageable.getSize());
+            }
+            return criteriaRepositoryOperations.findAll(query);
         }
         return operations.findAll(preparedQueryForCriteria(methodKey, context, type, methodJoinPaths));
     }
