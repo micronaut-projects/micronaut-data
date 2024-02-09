@@ -80,8 +80,8 @@ import java.util.List;
 @io.micronaut.context.annotation.Executable
 interface MyInterface extends CrudRepository<Person, Long> {
 
-    List<Person> list(String name);   
-    
+    List<Person> list(String name);
+
     int count(String name);
 }
 """)
@@ -196,6 +196,33 @@ interface MyInterface extends CrudRepository<Person, Long> {
         deleteIds.synthesize(DataMethod).idType() == Long
         deleteIds.synthesize(DataMethod).interceptor() == DeleteAllInterceptor
 
+    }
+
+    void "test allow not implementing a default method"() {
+        given:
+        BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
+package test;
+
+import io.micronaut.data.model.entities.Person;
+import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.annotation.Repository;
+import java.util.List;
+
+@Repository
+@io.micronaut.context.annotation.Executable
+interface MyInterface extends CrudRepository<Person, Long> {
+
+    default List<Person> findPeopleByName(String firstName, String surname) {
+        return list(firstName + " " + surname);
+    }
+
+    List<Person> list(String name);
+
+}
+""")
+
+        expect:
+        def list = beanDefinition.getRequiredMethod("list", String.class)
     }
 
 
