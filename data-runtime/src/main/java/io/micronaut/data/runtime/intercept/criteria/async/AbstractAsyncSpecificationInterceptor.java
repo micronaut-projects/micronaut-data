@@ -22,6 +22,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.RepositoryMethodKey;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
@@ -29,6 +30,7 @@ import io.micronaut.data.operations.async.AsyncCriteriaCapableRepository;
 import io.micronaut.data.operations.async.AsyncCriteriaRepositoryOperations;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor;
+import jakarta.persistence.criteria.CriteriaQuery;
 
 import java.util.List;
 import java.util.Set;
@@ -76,7 +78,12 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
     protected final CompletionStage<Iterable<Object>> findAllAsync(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context, Type type) {
         Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
         if (asyncCriteriaOperations != null) {
-            return asyncCriteriaOperations.findAll(buildQuery(context, type, methodJoinPaths)).thenApply(m -> m);
+            CriteriaQuery<Object> criteriaQuery = buildQuery(context, type, methodJoinPaths);
+            Pageable pageable = getPageable(context);
+            if (pageable != null) {
+                return asyncCriteriaOperations.findAll(criteriaQuery, (int) pageable.getOffset(), pageable.getSize()).thenApply(m -> m);
+            }
+            return asyncCriteriaOperations.findAll(criteriaQuery).thenApply(m -> m);
         }
         return asyncOperations.findAll(preparedQueryForCriteria(methodKey, context, type, methodJoinPaths));
     }

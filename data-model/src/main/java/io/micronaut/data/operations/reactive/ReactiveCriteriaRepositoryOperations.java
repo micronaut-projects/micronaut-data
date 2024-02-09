@@ -63,6 +63,17 @@ public interface ReactiveCriteriaRepositoryOperations extends ReactiveCriteriaCa
     <T> Publisher<T> findAll(@NonNull CriteriaQuery<T> query);
 
     /**
+     * Finds all results for the given query.
+     * @param query The query
+     * @param offset The offset
+     * @param limit The limit
+     * @param <T> The generic type
+     * @return All result publisher
+     */
+    @NonNull
+    <T> Publisher<T> findAll(@NonNull CriteriaQuery<T> query, int offset, int limit);
+
+    /**
      * Executes an update for the given query and parameter values. If it is possible to
      * return the number of objects updated, then do so.
      * @param query The prepared query
