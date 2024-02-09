@@ -297,19 +297,25 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     processMethodInfo(methodMatchContext, methodInfo);
                     return;
                 }
-                if (matchContext.isPossiblyFailing()) {
-                    matchContext.logPossibleFailures();
-                } else {
-                    String messageStart = matchContext.getUnableToImplementMessage();
-                    context.fail(messageStart + "No possible implementations found.", element);
+                if (!element.isDefault()) {
+                    if (matchContext.isPossiblyFailing()) {
+                        matchContext.logPossibleFailures();
+                    } else {
+                        String messageStart = matchContext.getUnableToImplementMessage();
+                        context.fail(messageStart + "No possible implementations found.", element);
+                    }
+                    this.failing = true;
                 }
-                this.failing = true;
             } catch (MatchFailedException e) {
-                context.fail(matchContext.getUnableToImplementMessage() + e.getMessage(), e.getElement() == null ? element : e.getElement());
-                this.failing = true;
+                if (!element.isDefault()) {
+                    context.fail(matchContext.getUnableToImplementMessage() + e.getMessage(), e.getElement() == null ? element : e.getElement());
+                    this.failing = true;
+                }
             } catch (Exception e) {
-                matchContext.fail(e.getMessage());
-                this.failing = true;
+                if (!element.isDefault()) {
+                    matchContext.fail(e.getMessage());
+                    this.failing = true;
+                }
             }
         }
     }
@@ -399,6 +405,9 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
         ClassElement runtimeInterceptor = methodInfo.getRuntimeInterceptor();
         if (runtimeInterceptor == null) {
+            if (element.isDefault()) {
+                return;
+            }
             throw new MatchFailedException("Unable to implement Repository method: " + currentRepository.getSimpleName() + "." + element.getName() + "(..). No possible runtime implementations found.", element);
         }
 
