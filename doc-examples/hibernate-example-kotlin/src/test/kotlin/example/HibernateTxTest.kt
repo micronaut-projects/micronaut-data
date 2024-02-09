@@ -1,6 +1,7 @@
 package example
 
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Sort
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
@@ -198,6 +199,36 @@ class HibernateTxTest {
             Assertions.assertEquals(1, unpaginatedPage.content.size)
             Assertions.assertEquals(listOf(saved1.name), unpaginatedPage.content.map { it.name })
             Assertions.assertEquals(2, unpaginatedPage.totalSize)
+        }
+    }
+
+    @Test
+    fun coroutineCriteria3() {
+        runBlocking {
+            val parent1 = Parent("BA", Collections.emptyList())
+            val parent2 = Parent("AB", Collections.emptyList())
+            val parent3 = Parent("AC", Collections.emptyList())
+            val parent4 = Parent("AA", Collections.emptyList())
+            repositorySuspended.save(parent1)
+            repositorySuspended.save(parent2)
+            repositorySuspended.save(parent3)
+            repositorySuspended.save(parent4)
+
+            val sortAsc = repositorySuspended.findAll(
+                { root, query, criteriaBuilder -> criteriaBuilder.like(root.get("name"), "A%") },
+                Pageable.from(0, 1, Sort.of(Sort.Order.asc("name")))
+            )
+            Assertions.assertEquals(1, sortAsc.content.size)
+            Assertions.assertEquals(listOf(parent4.name), sortAsc.content.map { it.name })
+            Assertions.assertEquals(3, sortAsc.totalSize)
+
+            val sortDesc = repositorySuspended.findAll(
+                { root, query, criteriaBuilder -> criteriaBuilder.like(root.get("name"), "A%") },
+                Pageable.from(0, 1, Sort.of(Sort.Order.desc("name")))
+            )
+            Assertions.assertEquals(1, sortDesc.content.size)
+            Assertions.assertEquals(listOf(parent3.name), sortDesc.content.map { it.name })
+            Assertions.assertEquals(3, sortDesc.totalSize)
         }
     }
 

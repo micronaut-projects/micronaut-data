@@ -340,15 +340,12 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         CriteriaQueryBuilder<N> builder = getCriteriaQueryBuilder(context, methodJoinPaths);
         CriteriaQuery<N> criteriaQuery = builder.build(criteriaBuilder);
 
-        if (type == Type.FIND_ALL) {
-            Pageable pageable = findPageable(context);
-            for (Object param : context.getParameterValues()) {
-                if (param instanceof Sort sort && param != pageable) {
-                    if (sort.isSorted()) {
-                        Root<?> root = criteriaQuery.getRoots().stream().findFirst().orElseThrow(() -> new IllegalStateException("The root not found!"));
-                        criteriaQuery.orderBy(getOrders(sort, root, criteriaBuilder));
-                        break;
-                    }
+        for (Object param : context.getParameterValues()) {
+            if (param instanceof Sort sort) {
+                if (sort.isSorted()) {
+                    Root<?> root = criteriaQuery.getRoots().stream().findFirst().orElseThrow(() -> new IllegalStateException("The root not found!"));
+                    criteriaQuery.orderBy(getOrders(sort, root, criteriaBuilder));
+                    break;
                 }
             }
         }
