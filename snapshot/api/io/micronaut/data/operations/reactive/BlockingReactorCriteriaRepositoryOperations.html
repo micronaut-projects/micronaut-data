@@ -113,14 +113,21 @@ extends <a href="../CriteriaRepositoryOperations.html" title="interface in io.mi
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Finds all results for the given query.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;R&gt;&nbsp;R</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#findOne(jakarta.persistence.criteria.CriteriaQuery)" class="member-name-link">findOne</a><wbr>(@NonNull jakarta.persistence.criteria.CriteriaQuery&lt;R&gt;&nbsp;query)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;T&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#findAll(jakarta.persistence.criteria.CriteriaQuery,int,int)" class="member-name-link">findAll</a><wbr>(@NonNull jakarta.persistence.criteria.CriteriaQuery&lt;T&gt;&nbsp;query,
+ int&nbsp;limit,
+ int&nbsp;offset)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Finds all results for the given query.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;R&gt;&nbsp;R</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#findOne(jakarta.persistence.criteria.CriteriaQuery)" class="member-name-link">findOne</a><wbr>(@NonNull jakarta.persistence.criteria.CriteriaQuery&lt;R&gt;&nbsp;query)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Find one by Query.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#updateAll(jakarta.persistence.criteria.CriteriaUpdate)" class="member-name-link">updateAll</a><wbr>(@NonNull jakarta.persistence.criteria.CriteriaUpdate&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;query)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#updateAll(jakarta.persistence.criteria.CriteriaUpdate)" class="member-name-link">updateAll</a><wbr>(@NonNull jakarta.persistence.criteria.CriteriaUpdate&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;query)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Executes an update for the given query and parameter values.</div>
 </div>
 </div>
@@ -189,6 +196,29 @@ extends <a href="../CriteriaRepositoryOperations.html" title="interface in io.mi
 <dd><code>T</code> - The generic type</dd>
 <dt>Parameters:</dt>
 <dd><code>query</code> - The query</dd>
+<dt>Returns:</dt>
+<dd>An iterable result</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="findAll(jakarta.persistence.criteria.CriteriaQuery,int,int)">
+<h3>findAll</h3>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;T&gt;</span>&nbsp;<span class="element-name">findAll</span><wbr><span class="parameters">(@NonNull
+ @NonNull jakarta.persistence.criteria.CriteriaQuery&lt;T&gt;&nbsp;query,
+ int&nbsp;limit,
+ int&nbsp;offset)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../CriteriaRepositoryOperations.html#findAll(jakarta.persistence.criteria.CriteriaQuery,int,int)">CriteriaRepositoryOperations</a></code></span></div>
+<div class="block">Finds all results for the given query.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../CriteriaRepositoryOperations.html#findAll(jakarta.persistence.criteria.CriteriaQuery,int,int)">findAll</a></code>&nbsp;in interface&nbsp;<code><a href="../CriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations">CriteriaRepositoryOperations</a></code></dd>
+<dt>Type Parameters:</dt>
+<dd><code>T</code> - The generic type</dd>
+<dt>Parameters:</dt>
+<dd><code>query</code> - The query</dd>
+<dd><code>limit</code> - The offset</dd>
+<dd><code>offset</code> - The limit</dd>
 <dt>Returns:</dt>
 <dd>An iterable result</dd>
 </dl>

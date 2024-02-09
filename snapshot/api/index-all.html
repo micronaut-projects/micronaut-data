@@ -522,11 +522,11 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPosition.html#AFTER_TABLE_NAME" class="member-name-link">AFTER_TABLE_NAME</a> - Enum constant in enum class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPosition.html" title="enum class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryPosition</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/SyncCascadeOperations.html#afterCascadedMany(T,java.util.List,java.lang.Iterable,java.util.List)" class="member-name-link">afterCascadedMany(T, List&lt;Association&gt;, Iterable&lt;Object&gt;, List&lt;Object&gt;)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncCascadeOperations.html" title="class in io.micronaut.data.runtime.operations.internal">SyncCascadeOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/ReactiveCascadeOperations.html#afterCascadedMany(T,java.util.List,java.lang.Iterable,java.util.List)" class="member-name-link">afterCascadedMany(T, List&lt;Association&gt;, Iterable&lt;Object&gt;, List&lt;Object&gt;)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/ReactiveCascadeOperations.html" title="class in io.micronaut.data.runtime.operations.internal">ReactiveCascadeOperations</a></dt>
 <dd>
 <div class="block">Process after a children element has been cascaded.</div>
 </dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/SyncCascadeOperations.html#afterCascadedOne(T,java.util.List,java.lang.Object,java.lang.Object)" class="member-name-link">afterCascadedOne(T, List&lt;Association&gt;, Object, Object)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncCascadeOperations.html" title="class in io.micronaut.data.runtime.operations.internal">SyncCascadeOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/ReactiveCascadeOperations.html#afterCascadedOne(T,java.util.List,java.lang.Object,java.lang.Object)" class="member-name-link">afterCascadedOne(T, List&lt;Association&gt;, Object, Object)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/ReactiveCascadeOperations.html" title="class in io.micronaut.data.runtime.operations.internal">ReactiveCascadeOperations</a></dt>
 <dd>
 <div class="block">Process after a child element has been cascaded.</div>
 </dd>
@@ -1651,7 +1651,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">How to cascade insert/delete operations to the associated entity.</div>
 </dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/SyncCascadeOperations.html#cascade(io.micronaut.core.annotation.AnnotationMetadata,java.lang.Class,boolean,io.micronaut.data.annotation.Relation.Cascade,io.micronaut.data.runtime.operations.internal.AbstractCascadeOperations.CascadeContext,io.micronaut.data.model.runtime.RuntimePersistentEntity,T,java.util.List)" class="member-name-link">cascade(AnnotationMetadata, Class&lt;?&gt;, boolean, Relation.Cascade, AbstractCascadeOperations.CascadeContext, RuntimePersistentEntity&lt;T&gt;, T, List&lt;AbstractCascadeOperations.CascadeOp&gt;)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncCascadeOperations.html" title="class in io.micronaut.data.runtime.operations.internal">SyncCascadeOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/ReactiveCascadeOperations.html#cascade(io.micronaut.core.annotation.AnnotationMetadata,java.lang.Class,boolean,io.micronaut.data.annotation.Relation.Cascade,io.micronaut.data.runtime.operations.internal.AbstractCascadeOperations.CascadeContext,io.micronaut.data.model.runtime.RuntimePersistentEntity,T,java.util.List)" class="member-name-link">cascade(AnnotationMetadata, Class&lt;?&gt;, boolean, Relation.Cascade, AbstractCascadeOperations.CascadeContext, RuntimePersistentEntity&lt;T&gt;, T, List&lt;AbstractCascadeOperations.CascadeOp&gt;)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/ReactiveCascadeOperations.html" title="class in io.micronaut.data.runtime.operations.internal">ReactiveCascadeOperations</a></dt>
 <dd>
 <div class="block">Cascade on the entity instance and collect cascade operations.</div>
 </dd>
@@ -1679,7 +1679,7 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/AbstractSyncEntityOperations.html#cascadePost(io.micronaut.data.annotation.Relation.Cascade)" class="member-name-link">cascadePost(Relation.Cascade)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractSyncEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSyncEntityOperations</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/ReactiveEntityOperations.html#cascadePost(io.micronaut.data.annotation.Relation.Cascade)" class="member-name-link">cascadePost(Relation.Cascade)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/ReactiveEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">ReactiveEntityOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html#cascadePost(io.micronaut.data.annotation.Relation.Cascade)" class="member-name-link">cascadePost(Relation.Cascade)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">SyncEntityOperations</a></dt>
 <dd>
 <div class="block">Cascade post operation.</div>
 </dd>
@@ -1691,7 +1691,7 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/AbstractSyncEntityOperations.html#cascadePre(io.micronaut.data.annotation.Relation.Cascade)" class="member-name-link">cascadePre(Relation.Cascade)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractSyncEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSyncEntityOperations</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/ReactiveEntityOperations.html#cascadePre(io.micronaut.data.annotation.Relation.Cascade)" class="member-name-link">cascadePre(Relation.Cascade)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/ReactiveEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">ReactiveEntityOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html#cascadePre(io.micronaut.data.annotation.Relation.Cascade)" class="member-name-link">cascadePre(Relation.Cascade)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">SyncEntityOperations</a></dt>
 <dd>
 <div class="block">Cascade pre operation.</div>
 </dd>
@@ -1726,7 +1726,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Compare the expected modifications and the received rows count.</div>
 </dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html#checkOptimisticLocking(long,long)" class="member-name-link">checkOptimisticLocking(long, long)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractReactiveEntitiesOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html#checkOptimisticLocking(long,long)" class="member-name-link">checkOptimisticLocking(long, long)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">SyncEntityOperations</a></dt>
 <dd>
 <div class="block">Compare the expected modifications and the received rows count.</div>
 </dd>
@@ -1796,7 +1796,7 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/AbstractSyncEntityOperations.html#collectAutoPopulatedPreviousValues()" class="member-name-link">collectAutoPopulatedPreviousValues()</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractSyncEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSyncEntityOperations</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html#collectAutoPopulatedPreviousValues()" class="member-name-link">collectAutoPopulatedPreviousValues()</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractReactiveEntitiesOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html#collectAutoPopulatedPreviousValues()" class="member-name-link">collectAutoPopulatedPreviousValues()</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">SyncEntityOperations</a></dt>
 <dd>
 <div class="block">Collect auto-populated values before pre-triggers modifies them.</div>
 </dd>
@@ -2148,7 +2148,7 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/AbstractSyncEntitiesOperations.html#conversionService" class="member-name-link">conversionService</a> - Variable in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractSyncEntitiesOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSyncEntitiesOperations</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html#conversionService" class="member-name-link">conversionService</a> - Variable in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractReactiveEntitiesOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html#conversionService" class="member-name-link">conversionService</a> - Variable in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">SyncEntityOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/query/BindableParametersStoredQuery.Binder.html#convert(java.lang.Class,java.lang.Object,io.micronaut.core.type.Argument)" class="member-name-link">convert(Class&lt;?&gt;, Object, Argument&lt;?&gt;)</a> - Method in interface io.micronaut.data.runtime.operations.internal.query.<a href="io/micronaut/data/runtime/operations/internal/query/BindableParametersStoredQuery.Binder.html" title="interface in io.micronaut.data.runtime.operations.internal.query">BindableParametersStoredQuery.Binder</a></dt>
 <dd>
@@ -3722,7 +3722,7 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/data/model/runtime/DelegatingQueryParameterBinding.html#%3Cinit%3E(io.micronaut.data.model.runtime.QueryParameterBinding)" class="member-name-link">DelegatingQueryParameterBinding(QueryParameterBinding)</a> - Constructor for class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/DelegatingQueryParameterBinding.html" title="class in io.micronaut.data.model.runtime">DelegatingQueryParameterBinding</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html#delete()" class="member-name-link">delete()</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractReactiveEntitiesOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html#delete()" class="member-name-link">delete()</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">SyncEntityOperations</a></dt>
 <dd>
 <div class="block">Delete one operation.</div>
 </dd>
@@ -3941,6 +3941,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html#deleteAll(io.micronaut.data.model.runtime.DeleteBatchOperation)" class="member-name-link">deleteAll(DeleteBatchOperation&lt;T&gt;)</a> - Method in class io.micronaut.data.mongodb.operations.<a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/operations/ExecutorAsyncOperationsSupportingCriteria.html#deleteAll(jakarta.persistence.criteria.CriteriaDelete)" class="member-name-link">deleteAll(CriteriaDelete&lt;Number&gt;)</a> - Method in class io.micronaut.data.runtime.operations.<a href="io/micronaut/data/runtime/operations/ExecutorAsyncOperationsSupportingCriteria.html" title="class in io.micronaut.data.runtime.operations">ExecutorAsyncOperationsSupportingCriteria</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/operations/ExecutorReactiveOperationsSupportingCriteria.html#deleteAll(jakarta.persistence.criteria.CriteriaDelete)" class="member-name-link">deleteAll(CriteriaDelete&lt;Number&gt;)</a> - Method in class io.micronaut.data.runtime.operations.<a href="io/micronaut/data/runtime/operations/ExecutorReactiveOperationsSupportingCriteria.html" title="class in io.micronaut.data.runtime.operations">ExecutorReactiveOperationsSupportingCriteria</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/criteria/async/AbstractAsyncSpecificationInterceptor.html#deleteAllAsync(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">deleteAllAsync(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.async.<a href="io/micronaut/data/runtime/intercept/criteria/async/AbstractAsyncSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria.async">AbstractAsyncSpecificationInterceptor</a></dt>
 <dd>&nbsp;</dd>
@@ -4511,7 +4513,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Context object for event receivers.</div>
 </dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html#entityEventListener" class="member-name-link">entityEventListener</a> - Variable in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractReactiveEntitiesOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html#entityEventListener" class="member-name-link">entityEventListener</a> - Variable in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">SyncEntityOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/event/EntityEventListener.html" class="type-name-link" title="interface in io.micronaut.data.event">EntityEventListener</a>&lt;<a href="io/micronaut/data/event/EntityEventListener.html" title="type parameter in EntityEventListener">T</a>&gt; - Interface in <a href="io/micronaut/data/event/package-summary.html">io.micronaut.data.event</a></dt>
 <dd>
@@ -4747,7 +4749,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Exception utils.</div>
 </dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html#execute()" class="member-name-link">execute()</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractReactiveEntitiesOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html#execute()" class="member-name-link">execute()</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">SyncEntityOperations</a></dt>
 <dd>
 <div class="block">Execute update.</div>
 </dd>
@@ -4935,6 +4937,12 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/operations/ExecutorReactiveOperationsSupportingCriteria.html" class="type-name-link" title="class in io.micronaut.data.runtime.operations">ExecutorReactiveOperationsSupportingCriteria</a> - Class in <a href="io/micronaut/data/runtime/operations/package-summary.html">io.micronaut.data.runtime.operations</a></dt>
+<dd>
+<div class="block">A variation of <a href="io/micronaut/data/runtime/operations/ExecutorReactiveOperations.html" title="class in io.micronaut.data.runtime.operations"><code>ExecutorReactiveOperations</code></a> that supports <a href="io/micronaut/data/operations/reactive/ReactiveCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive"><code>ReactiveCriteriaRepositoryOperations</code></a>.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/operations/ExecutorReactiveOperationsSupportingCriteria.html#%3Cinit%3E(io.micronaut.data.runtime.operations.ExecutorAsyncOperationsSupportingCriteria,io.micronaut.data.runtime.convert.DataConversionService)" class="member-name-link">ExecutorReactiveOperationsSupportingCriteria(ExecutorAsyncOperationsSupportingCriteria, DataConversionService)</a> - Constructor for class io.micronaut.data.runtime.operations.<a href="io/micronaut/data/runtime/operations/ExecutorReactiveOperationsSupportingCriteria.html" title="class in io.micronaut.data.runtime.operations">ExecutorReactiveOperationsSupportingCriteria</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/impl/DefaultTransactionStatus.html#existingTx(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.impl.DefaultTransactionStatus)" class="member-name-link">existingTx(ConnectionStatus&lt;C&gt;, DefaultTransactionStatus&lt;C&gt;)</a> - Static method in class io.micronaut.transaction.impl.<a href="io/micronaut/transaction/impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/cosmos/operations/DefaultReactiveCosmosRepositoryOperations.html#exists(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">exists(PreparedQuery&lt;T, Boolean&gt;)</a> - Method in class io.micronaut.data.cosmos.operations.<a href="io/micronaut/data/cosmos/operations/DefaultReactiveCosmosRepositoryOperations.html" title="class in io.micronaut.data.cosmos.operations">DefaultReactiveCosmosRepositoryOperations</a></dt>
@@ -5116,7 +5124,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Fail compilation with the given message for the current method.</div>
 </dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html#failed(java.lang.Exception,java.lang.String)" class="member-name-link">failed(Exception, String)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractReactiveEntitiesOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html#failed(java.lang.Exception,java.lang.String)" class="member-name-link">failed(Exception, String)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">SyncEntityOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/MethodNameParser.Builder.html#failOnRest(java.lang.String)" class="member-name-link">failOnRest(String)</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/MethodNameParser.Builder.html" title="class in io.micronaut.data.processor.visitors.finders">MethodNameParser.Builder</a></dt>
 <dd>&nbsp;</dd>
@@ -5316,6 +5324,22 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/data/operations/reactive/ReactorCriteriaRepositoryOperations.html#findAll(jakarta.persistence.criteria.CriteriaQuery)" class="member-name-link">findAll(CriteriaQuery&lt;T&gt;)</a> - Method in interface io.micronaut.data.operations.reactive.<a href="io/micronaut/data/operations/reactive/ReactorCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactorCriteriaRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/operations/async/AsyncCriteriaRepositoryOperations.html#findAll(jakarta.persistence.criteria.CriteriaQuery,int,int)" class="member-name-link">findAll(CriteriaQuery&lt;T&gt;, int, int)</a> - Method in interface io.micronaut.data.operations.async.<a href="io/micronaut/data/operations/async/AsyncCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.async">AsyncCriteriaRepositoryOperations</a></dt>
+<dd>
+<div class="block">Finds all results for the given query.</div>
+</dd>
+<dt><a href="io/micronaut/data/operations/CriteriaRepositoryOperations.html#findAll(jakarta.persistence.criteria.CriteriaQuery,int,int)" class="member-name-link">findAll(CriteriaQuery&lt;T&gt;, int, int)</a> - Method in interface io.micronaut.data.operations.<a href="io/micronaut/data/operations/CriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations">CriteriaRepositoryOperations</a></dt>
+<dd>
+<div class="block">Finds all results for the given query.</div>
+</dd>
+<dt><a href="io/micronaut/data/operations/reactive/BlockingReactorCriteriaRepositoryOperations.html#findAll(jakarta.persistence.criteria.CriteriaQuery,int,int)" class="member-name-link">findAll(CriteriaQuery&lt;T&gt;, int, int)</a> - Method in interface io.micronaut.data.operations.reactive.<a href="io/micronaut/data/operations/reactive/BlockingReactorCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">BlockingReactorCriteriaRepositoryOperations</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/operations/reactive/ReactiveCriteriaRepositoryOperations.html#findAll(jakarta.persistence.criteria.CriteriaQuery,int,int)" class="member-name-link">findAll(CriteriaQuery&lt;T&gt;, int, int)</a> - Method in interface io.micronaut.data.operations.reactive.<a href="io/micronaut/data/operations/reactive/ReactiveCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactiveCriteriaRepositoryOperations</a></dt>
+<dd>
+<div class="block">Finds all results for the given query.</div>
+</dd>
+<dt><a href="io/micronaut/data/operations/reactive/ReactorCriteriaRepositoryOperations.html#findAll(jakarta.persistence.criteria.CriteriaQuery,int,int)" class="member-name-link">findAll(CriteriaQuery&lt;T&gt;, int, int)</a> - Method in interface io.micronaut.data.operations.reactive.<a href="io/micronaut/data/operations/reactive/ReactorCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactorCriteriaRepositoryOperations</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/repository/MongoQueryExecutor.html#findAll(java.lang.Iterable)" class="member-name-link">findAll(Iterable&lt;Bson&gt;)</a> - Method in interface io.micronaut.data.mongodb.repository.<a href="io/micronaut/data/mongodb/repository/MongoQueryExecutor.html" title="interface in io.micronaut.data.mongodb.repository">MongoQueryExecutor</a></dt>
 <dd>
 <div class="block">Finds all results.</div>
@@ -5491,6 +5515,12 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html#findAll(io.micronaut.data.repository.jpa.criteria.QuerySpecification,io.micronaut.data.model.Pageable)" class="member-name-link">findAll(QuerySpecification&lt;T&gt;, Pageable)</a> - Method in interface io.micronaut.data.repository.jpa.reactive.<a href="io/micronaut/data/repository/jpa/reactive/ReactorJpaSpecificationExecutor.html" title="interface in io.micronaut.data.repository.jpa.reactive">ReactorJpaSpecificationExecutor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/operations/ExecutorAsyncOperationsSupportingCriteria.html#findAll(jakarta.persistence.criteria.CriteriaQuery)" class="member-name-link">findAll(CriteriaQuery&lt;T&gt;)</a> - Method in class io.micronaut.data.runtime.operations.<a href="io/micronaut/data/runtime/operations/ExecutorAsyncOperationsSupportingCriteria.html" title="class in io.micronaut.data.runtime.operations">ExecutorAsyncOperationsSupportingCriteria</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/operations/ExecutorReactiveOperationsSupportingCriteria.html#findAll(jakarta.persistence.criteria.CriteriaQuery)" class="member-name-link">findAll(CriteriaQuery&lt;T&gt;)</a> - Method in class io.micronaut.data.runtime.operations.<a href="io/micronaut/data/runtime/operations/ExecutorReactiveOperationsSupportingCriteria.html" title="class in io.micronaut.data.runtime.operations">ExecutorReactiveOperationsSupportingCriteria</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/operations/ExecutorAsyncOperationsSupportingCriteria.html#findAll(jakarta.persistence.criteria.CriteriaQuery,int,int)" class="member-name-link">findAll(CriteriaQuery&lt;T&gt;, int, int)</a> - Method in class io.micronaut.data.runtime.operations.<a href="io/micronaut/data/runtime/operations/ExecutorAsyncOperationsSupportingCriteria.html" title="class in io.micronaut.data.runtime.operations">ExecutorAsyncOperationsSupportingCriteria</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/operations/ExecutorReactiveOperationsSupportingCriteria.html#findAll(jakarta.persistence.criteria.CriteriaQuery,int,int)" class="member-name-link">findAll(CriteriaQuery&lt;T&gt;, int, int)</a> - Method in class io.micronaut.data.runtime.operations.<a href="io/micronaut/data/runtime/operations/ExecutorReactiveOperationsSupportingCriteria.html" title="class in io.micronaut.data.runtime.operations">ExecutorReactiveOperationsSupportingCriteria</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/criteria/async/AbstractAsyncSpecificationInterceptor.html#findAllAsync(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor.Type)" class="member-name-link">findAllAsync(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;, AbstractSpecificationInterceptor.Type)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.async.<a href="io/micronaut/data/runtime/intercept/criteria/async/AbstractAsyncSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria.async">AbstractAsyncSpecificationInterceptor</a></dt>
 <dd>&nbsp;</dd>
@@ -5818,6 +5848,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html#findOne(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">findOne(PreparedQuery&lt;T, R&gt;)</a> - Method in class io.micronaut.data.mongodb.operations.<a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/operations/ExecutorAsyncOperationsSupportingCriteria.html#findOne(jakarta.persistence.criteria.CriteriaQuery)" class="member-name-link">findOne(CriteriaQuery&lt;R&gt;)</a> - Method in class io.micronaut.data.runtime.operations.<a href="io/micronaut/data/runtime/operations/ExecutorAsyncOperationsSupportingCriteria.html" title="class in io.micronaut.data.runtime.operations">ExecutorAsyncOperationsSupportingCriteria</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/operations/ExecutorReactiveOperationsSupportingCriteria.html#findOne(jakarta.persistence.criteria.CriteriaQuery)" class="member-name-link">findOne(CriteriaQuery&lt;R&gt;)</a> - Method in class io.micronaut.data.runtime.operations.<a href="io/micronaut/data/runtime/operations/ExecutorReactiveOperationsSupportingCriteria.html" title="class in io.micronaut.data.runtime.operations">ExecutorReactiveOperationsSupportingCriteria</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html#findOne(java.lang.Class,java.lang.Object)" class="member-name-link">findOne(Class&lt;T&gt;, Object)</a> - Method in class io.micronaut.data.mongodb.operations.<a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
@@ -6229,6 +6261,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#FROM_CLAUSE" class="member-name-link">FROM_CLAUSE</a> - Static variable in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/FindersUtils.DynamicClassElement.html#fromArray()" class="member-name-link">fromArray()</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/FindersUtils.DynamicClassElement.html" title="class in io.micronaut.data.processor.visitors.finders">FindersUtils.DynamicClassElement</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/operations/ExecutorReactiveOperations.html#fromCompletableFuture(java.util.function.Supplier)" class="member-name-link">fromCompletableFuture(Supplier&lt;CompletableFuture&lt;R&gt;&gt;)</a> - Method in class io.micronaut.data.runtime.operations.<a href="io/micronaut/data/runtime/operations/ExecutorReactiveOperations.html" title="class in io.micronaut.data.runtime.operations">ExecutorReactiveOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html#function(java.lang.String,java.lang.Class,jakarta.persistence.criteria.Expression...)" class="member-name-link">function(String, Class&lt;T&gt;, Expression&lt;?&gt;...)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractCriteriaBuilder</a></dt>
 <dd>
@@ -6770,6 +6804,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/operations/reactive/ReactiveCriteriaRepositoryOperations.html#getCriteriaBuilder()" class="member-name-link">getCriteriaBuilder()</a> - Method in interface io.micronaut.data.operations.reactive.<a href="io/micronaut/data/operations/reactive/ReactiveCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactiveCriteriaRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/operations/ExecutorAsyncOperationsSupportingCriteria.html#getCriteriaBuilder()" class="member-name-link">getCriteriaBuilder()</a> - Method in class io.micronaut.data.runtime.operations.<a href="io/micronaut/data/runtime/operations/ExecutorAsyncOperationsSupportingCriteria.html" title="class in io.micronaut.data.runtime.operations">ExecutorAsyncOperationsSupportingCriteria</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/operations/ExecutorReactiveOperationsSupportingCriteria.html#getCriteriaBuilder()" class="member-name-link">getCriteriaBuilder()</a> - Method in class io.micronaut.data.runtime.operations.<a href="io/micronaut/data/runtime/operations/ExecutorReactiveOperationsSupportingCriteria.html" title="class in io.micronaut.data.runtime.operations">ExecutorReactiveOperationsSupportingCriteria</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html#getCriteriaDeleteBuilder(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getCriteriaDeleteBuilder(MethodInvocationContext&lt;?, ?&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.<a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor</a></dt>
 <dd>
@@ -9512,7 +9548,7 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/criteria/UpdateAllSpecificationInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;Object, Object&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.<a href="io/micronaut/data/runtime/intercept/criteria/UpdateAllSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">UpdateAllSpecificationInterceptor</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/runtime/intercept/reactive/DefaultUpdateAllEntitiesReactiveInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;Object, Object&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.reactive.<a href="io/micronaut/data/runtime/intercept/reactive/DefaultUpdateAllEntitiesReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultUpdateAllEntitiesReactiveInterceptor</a></dt>
+<dt><a href="io/micronaut/data/runtime/intercept/reactive/DefaultSaveAllReactiveInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;Object, Object&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.reactive.<a href="io/micronaut/data/runtime/intercept/reactive/DefaultSaveAllReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultSaveAllReactiveInterceptor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/reactive/AbstractPublisherInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;Object, Object&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.reactive.<a href="io/micronaut/data/runtime/intercept/reactive/AbstractPublisherInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">AbstractPublisherInterceptor</a></dt>
 <dd>&nbsp;</dd>
@@ -13506,7 +13542,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
 &nbsp;</dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html#persist()" class="member-name-link">persist()</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractReactiveEntitiesOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html#persist()" class="member-name-link">persist()</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">SyncEntityOperations</a></dt>
 <dd>
 <div class="block">Persist one operation.</div>
 </dd>
@@ -13628,7 +13664,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Shared interface for a persistent element whether it be a type or a property.</div>
 </dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html#persistentEntity" class="member-name-link">persistentEntity</a> - Variable in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractReactiveEntitiesOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html#persistentEntity" class="member-name-link">persistentEntity</a> - Variable in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">SyncEntityOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/PersistentEntity.html" class="type-name-link" title="interface in io.micronaut.data.model">PersistentEntity</a> - Interface in <a href="io/micronaut/data/model/package-summary.html">io.micronaut.data.model</a></dt>
 <dd>
@@ -18293,7 +18329,7 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/AbstractSyncEntityOperations.html#triggerPost(java.util.function.Consumer)" class="member-name-link">triggerPost(Consumer&lt;EntityEventContext&lt;Object&gt;&gt;)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractSyncEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSyncEntityOperations</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/ReactiveEntityOperations.html#triggerPost(java.util.function.Consumer)" class="member-name-link">triggerPost(Consumer&lt;EntityEventContext&lt;Object&gt;&gt;)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/ReactiveEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">ReactiveEntityOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html#triggerPost(java.util.function.Consumer)" class="member-name-link">triggerPost(Consumer&lt;EntityEventContext&lt;Object&gt;&gt;)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">SyncEntityOperations</a></dt>
 <dd>
 <div class="block">Trigger post-actions on <a href="io/micronaut/data/event/EntityEventContext.html" title="interface in io.micronaut.data.event"><code>EntityEventContext</code></a>.</div>
 </dd>
@@ -18301,15 +18337,15 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Trigger the post load event.</div>
 </dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html#triggerPostPersist()" class="member-name-link">triggerPostPersist()</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractReactiveEntitiesOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html#triggerPostPersist()" class="member-name-link">triggerPostPersist()</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">SyncEntityOperations</a></dt>
 <dd>
 <div class="block">Trigger the post persist event.</div>
 </dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html#triggerPostRemove()" class="member-name-link">triggerPostRemove()</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractReactiveEntitiesOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html#triggerPostRemove()" class="member-name-link">triggerPostRemove()</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">SyncEntityOperations</a></dt>
 <dd>
 <div class="block">Trigger the post remove event.</div>
 </dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html#triggerPostUpdate()" class="member-name-link">triggerPostUpdate()</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractReactiveEntitiesOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html#triggerPostUpdate()" class="member-name-link">triggerPostUpdate()</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">SyncEntityOperations</a></dt>
 <dd>
 <div class="block">Trigger the post update event.</div>
 </dd>
@@ -18321,19 +18357,19 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/AbstractSyncEntityOperations.html#triggerPre(java.util.function.Function)" class="member-name-link">triggerPre(Function&lt;EntityEventContext&lt;Object&gt;, Boolean&gt;)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractSyncEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSyncEntityOperations</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/ReactiveEntityOperations.html#triggerPre(java.util.function.Function)" class="member-name-link">triggerPre(Function&lt;EntityEventContext&lt;Object&gt;, Boolean&gt;)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/ReactiveEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">ReactiveEntityOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html#triggerPre(java.util.function.Function)" class="member-name-link">triggerPre(Function&lt;EntityEventContext&lt;Object&gt;, Boolean&gt;)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">SyncEntityOperations</a></dt>
 <dd>
 <div class="block">Trigger pre-actions on <a href="io/micronaut/data/event/EntityEventContext.html" title="interface in io.micronaut.data.event"><code>EntityEventContext</code></a>.</div>
 </dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html#triggerPrePersist()" class="member-name-link">triggerPrePersist()</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractReactiveEntitiesOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html#triggerPrePersist()" class="member-name-link">triggerPrePersist()</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">SyncEntityOperations</a></dt>
 <dd>
 <div class="block">Trigger the pre persist event.</div>
 </dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html#triggerPreRemove()" class="member-name-link">triggerPreRemove()</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractReactiveEntitiesOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html#triggerPreRemove()" class="member-name-link">triggerPreRemove()</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">SyncEntityOperations</a></dt>
 <dd>
 <div class="block">Trigger the pre remove event.</div>
 </dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html#triggerPreUpdate()" class="member-name-link">triggerPreUpdate()</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractReactiveEntitiesOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html#triggerPreUpdate()" class="member-name-link">triggerPreUpdate()</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">SyncEntityOperations</a></dt>
 <dd>
 <div class="block">Trigger the pre update event.</div>
 </dd>
@@ -18498,7 +18534,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">The custom MongoDB filter.</div>
 </dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html#update()" class="member-name-link">update()</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractReactiveEntitiesOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html#update()" class="member-name-link">update()</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">SyncEntityOperations</a></dt>
 <dd>
 <div class="block">Update one operation.</div>
 </dd>
@@ -18700,6 +18736,8 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/operations/ExecutorAsyncOperationsSupportingCriteria.html#updateAll(jakarta.persistence.criteria.CriteriaUpdate)" class="member-name-link">updateAll(CriteriaUpdate&lt;Number&gt;)</a> - Method in class io.micronaut.data.runtime.operations.<a href="io/micronaut/data/runtime/operations/ExecutorAsyncOperationsSupportingCriteria.html" title="class in io.micronaut.data.runtime.operations">ExecutorAsyncOperationsSupportingCriteria</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/operations/ExecutorReactiveOperationsSupportingCriteria.html#updateAll(jakarta.persistence.criteria.CriteriaUpdate)" class="member-name-link">updateAll(CriteriaUpdate&lt;Number&gt;)</a> - Method in class io.micronaut.data.runtime.operations.<a href="io/micronaut/data/runtime/operations/ExecutorReactiveOperationsSupportingCriteria.html" title="class in io.micronaut.data.runtime.operations">ExecutorReactiveOperationsSupportingCriteria</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/criteria/async/AbstractAsyncSpecificationInterceptor.html#updateAllAsync(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">updateAllAsync(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.async.<a href="io/micronaut/data/runtime/intercept/criteria/async/AbstractAsyncSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria.async">AbstractAsyncSpecificationInterceptor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/criteria/async/UpdateAllAsyncSpecificationInterceptor.html" class="type-name-link" title="class in io.micronaut.data.runtime.intercept.criteria.async">UpdateAllAsyncSpecificationInterceptor</a> - Class in <a href="io/micronaut/data/runtime/intercept/criteria/async/package-summary.html">io.micronaut.data.runtime.intercept.criteria.async</a></dt>
@@ -18768,7 +18806,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">An interceptor that updates a single entity asynchronously.</div>
 </dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html#updateEntityId(io.micronaut.core.beans.BeanProperty,T,java.lang.Object)" class="member-name-link">updateEntityId(BeanProperty&lt;T, Object&gt;, T, Object)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractReactiveEntitiesOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html#updateEntityId(io.micronaut.core.beans.BeanProperty,T,java.lang.Object)" class="member-name-link">updateEntityId(BeanProperty&lt;T, Object&gt;, T, Object)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">SyncEntityOperations</a></dt>
 <dd>
 <div class="block">Update entity id.</div>
 </dd>
@@ -19328,7 +19366,7 @@ the order they are declared.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/AbstractSyncEntityOperations.html#veto(java.util.function.Predicate)" class="member-name-link">veto(Predicate&lt;T&gt;)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractSyncEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSyncEntityOperations</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/runtime/operations/internal/ReactiveEntityOperations.html#veto(java.util.function.Predicate)" class="member-name-link">veto(Predicate&lt;T&gt;)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/ReactiveEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">ReactiveEntityOperations</a></dt>
+<dt><a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html#veto(java.util.function.Predicate)" class="member-name-link">veto(Predicate&lt;T&gt;)</a> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/SyncEntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">SyncEntityOperations</a></dt>
 <dd>
 <div class="block">Veto an entity.</div>
 </dd>

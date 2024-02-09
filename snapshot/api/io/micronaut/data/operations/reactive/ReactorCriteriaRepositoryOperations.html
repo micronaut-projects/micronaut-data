@@ -110,14 +110,21 @@ extends <a href="ReactiveCriteriaRepositoryOperations.html" title="interface in 
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Finds all results for the given query.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;R&gt;&nbsp;reactor.core.publisher.Mono&lt;R&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findOne(jakarta.persistence.criteria.CriteriaQuery)" class="member-name-link">findOne</a><wbr>(@NonNull jakarta.persistence.criteria.CriteriaQuery&lt;R&gt;&nbsp;query)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;T&gt;&nbsp;reactor.core.publisher.Flux&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findAll(jakarta.persistence.criteria.CriteriaQuery,int,int)" class="member-name-link">findAll</a><wbr>(@NonNull jakarta.persistence.criteria.CriteriaQuery&lt;T&gt;&nbsp;query,
+ int&nbsp;offset,
+ int&nbsp;limit)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Finds all results for the given query.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;R&gt;&nbsp;reactor.core.publisher.Mono&lt;R&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findOne(jakarta.persistence.criteria.CriteriaQuery)" class="member-name-link">findOne</a><wbr>(@NonNull jakarta.persistence.criteria.CriteriaQuery&lt;R&gt;&nbsp;query)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Find one by Query.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>reactor.core.publisher.Mono&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#updateAll(jakarta.persistence.criteria.CriteriaUpdate)" class="member-name-link">updateAll</a><wbr>(@NonNull jakarta.persistence.criteria.CriteriaUpdate&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;query)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>reactor.core.publisher.Mono&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#updateAll(jakarta.persistence.criteria.CriteriaUpdate)" class="member-name-link">updateAll</a><wbr>(@NonNull jakarta.persistence.criteria.CriteriaUpdate&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;query)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Executes an update for the given query and parameter values.</div>
 </div>
 </div>
@@ -170,6 +177,29 @@ extends <a href="ReactiveCriteriaRepositoryOperations.html" title="interface in 
 <dd><code>T</code> - The generic type</dd>
 <dt>Parameters:</dt>
 <dd><code>query</code> - The query</dd>
+<dt>Returns:</dt>
+<dd>All result publisher</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="findAll(jakarta.persistence.criteria.CriteriaQuery,int,int)">
+<h3>findAll</h3>
+<div class="member-signature"><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">reactor.core.publisher.Flux&lt;T&gt;</span>&nbsp;<span class="element-name">findAll</span><wbr><span class="parameters">(@NonNull
+ @NonNull jakarta.persistence.criteria.CriteriaQuery&lt;T&gt;&nbsp;query,
+ int&nbsp;offset,
+ int&nbsp;limit)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="ReactiveCriteriaRepositoryOperations.html#findAll(jakarta.persistence.criteria.CriteriaQuery,int,int)">ReactiveCriteriaRepositoryOperations</a></code></span></div>
+<div class="block">Finds all results for the given query.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="ReactiveCriteriaRepositoryOperations.html#findAll(jakarta.persistence.criteria.CriteriaQuery,int,int)">findAll</a></code>&nbsp;in interface&nbsp;<code><a href="ReactiveCriteriaRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactiveCriteriaRepositoryOperations</a></code></dd>
+<dt>Type Parameters:</dt>
+<dd><code>T</code> - The generic type</dd>
+<dt>Parameters:</dt>
+<dd><code>query</code> - The query</dd>
+<dd><code>offset</code> - The offset</dd>
+<dd><code>limit</code> - The limit</dd>
 <dt>Returns:</dt>
 <dd>All result publisher</dd>
 </dl>
