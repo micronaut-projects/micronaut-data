@@ -19,6 +19,7 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.RepositoryMethodKey;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
@@ -26,6 +27,7 @@ import io.micronaut.data.operations.reactive.ReactiveCriteriaCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveCriteriaRepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor;
+import jakarta.persistence.criteria.CriteriaQuery;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
@@ -56,7 +58,9 @@ public abstract class AbstractReactiveSpecificationInterceptor<T, R> extends Abs
         } else {
             throw new DataAccessException("Datastore of type [" + operations.getClass() + "] does not support reactive operations");
         }
-        if (operations instanceof ReactiveCriteriaRepositoryOperations reactiveCriteriaRepositoryOperations) {
+        if (reactiveOperations instanceof ReactiveCriteriaRepositoryOperations reactiveCriteriaRepositoryOperations) {
+            reactiveCriteriaOperations = reactiveCriteriaRepositoryOperations;
+        } else if (operations instanceof ReactiveCriteriaRepositoryOperations reactiveCriteriaRepositoryOperations) {
             reactiveCriteriaOperations = reactiveCriteriaRepositoryOperations;
         } else if (operations instanceof ReactiveCriteriaCapableRepository repository) {
             reactiveCriteriaOperations = repository.reactive();
@@ -69,7 +73,12 @@ public abstract class AbstractReactiveSpecificationInterceptor<T, R> extends Abs
     protected final Publisher<Object> findAllReactive(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context, Type type) {
         Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
         if (reactiveCriteriaOperations != null) {
-            return reactiveCriteriaOperations.findAll(buildQuery(context, type, methodJoinPaths));
+            CriteriaQuery<Object> criteriaQuery = buildQuery(context, type, methodJoinPaths);
+            Pageable pageable = getPageable(context);
+            if (pageable != null) {
+                return reactiveCriteriaOperations.findAll(criteriaQuery, (int) pageable.getOffset(), pageable.getSize());
+            }
+            return reactiveCriteriaOperations.findAll(criteriaQuery);
         }
         return reactiveOperations.findAll(preparedQueryForCriteria(methodKey, context, type, methodJoinPaths));
     }

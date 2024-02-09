@@ -64,7 +64,7 @@ public class ExecutorAsyncOperations implements AsyncRepositoryOperations {
     }
 
     @Internal
-    <T> CompletableFuture<T> supplyAsync(Supplier<T> supplier) {
+    final <T> CompletableFuture<T> supplyAsync(Supplier<T> supplier) {
         CompletableFuture<T> cf = new CompletableFuture<>();
         PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
         CompletableFuture.supplyAsync(PropagatedContext.wrapCurrent(supplier), executor).whenComplete((value, throwable) -> {
