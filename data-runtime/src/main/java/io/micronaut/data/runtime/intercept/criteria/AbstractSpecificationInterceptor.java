@@ -319,7 +319,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                                                  Type type,
                                                  Set<JoinPath> methodJoinPaths) {
 
-        CriteriaQuery<Object> criteriaQuery = buildQuery(context, type, methodJoinPaths);
+        CriteriaQuery<Object> criteriaQuery = buildInternalQuery(context, type, methodJoinPaths);
         QueryBuilder sqlQueryBuilder = getQueryBuilder(methodKey, context);
         QueryResultPersistentEntityCriteriaQuery queryModelCriteriaQuery = (QueryResultPersistentEntityCriteriaQuery) criteriaQuery;
         QueryModel queryModel = queryModelCriteriaQuery.getQueryModel();
@@ -334,6 +334,25 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         Pageable pageable = findPageable(context);
         return QueryResultStoredQuery.many(context.getName(), context.getAnnotationMetadata(), queryResult, rootEntity,
             criteriaQuery.getResultType(), !pageable.isUnpaged(), joinPaths);
+    }
+
+    private <N> CriteriaQuery<N> buildInternalQuery(MethodInvocationContext<T, R> context, Type type, Set<JoinPath> methodJoinPaths) {
+        CriteriaQueryBuilder<N> builder = getCriteriaQueryBuilder(context, methodJoinPaths);
+        CriteriaQuery<N> criteriaQuery = builder.build(criteriaBuilder);
+
+        if (type == Type.FIND_ALL) {
+            Pageable pageable = findPageable(context);
+            for (Object param : context.getParameterValues()) {
+                if (param instanceof Sort sort && param != pageable) {
+                    if (sort.isSorted()) {
+                        Root<?> root = criteriaQuery.getRoots().stream().findFirst().orElseThrow(() -> new IllegalStateException("The root not found!"));
+                        criteriaQuery.orderBy(getOrders(sort, root, criteriaBuilder));
+                        break;
+                    }
+                }
+            }
+        }
+        return criteriaQuery;
     }
 
     protected final <N> CriteriaQuery<N> buildQuery(MethodInvocationContext<T, R> context, Type type, Set<JoinPath> methodJoinPaths) {
