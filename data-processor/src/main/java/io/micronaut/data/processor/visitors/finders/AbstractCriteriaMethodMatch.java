@@ -827,13 +827,16 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                     return pp;
                 }
                 boolean compatibleTypes = TypeUtils.areTypesCompatible(dtoPropertyType, pp.getType());
-                if (!compatibleTypes) {
-                    // Check if these are compatible non-simple field types (kind of nested DTOs)
-                    List<SourcePersistentProperty> props = getDtoProjectionProperties(matchContext, new SourcePersistentEntity(pp.getType(), matchContext::getEntity), dtoPropertyType);
-                    if (props.isEmpty()) {
-                        throw new MatchFailedException("Property [" + propertyName + "] of type [" + dtoPropertyType.getName() + "] is not compatible with equivalent property of type [" + pp.getType().getName() + "] declared in entity: " + entity.getName());
-                    }
+                if (compatibleTypes) {
+                    return pp;
                 }
+
+                // Check if these are compatible non-simple field types (kind of nested DTOs)
+                List<SourcePersistentProperty> props = getDtoProjectionProperties(matchContext, new SourcePersistentEntity(pp.getType(), matchContext::getEntity), dtoPropertyType);
+                if (props.isEmpty()) {
+                    throw new MatchFailedException("Property [" + propertyName + "] of type [" + dtoPropertyType.getName() + "] is not compatible with equivalent property of type [" + pp.getType().getName() + "] declared in entity: " + entity.getName());
+                }
+
                 return pp;
             }).toList();
     }
