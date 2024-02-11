@@ -727,7 +727,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                     joinFetchPaths,
                     sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, rsType),
                     loadListener,
-                    conversionService);
+                    conversionService,
+                    false);
             } else {
                 RuntimePersistentEntity<R> resultPersistentEntity = getEntity(resultType);
                 Collection<BeanProperty<R, Object>> beanProperties = resultPersistentEntity.getIntrospection().getBeanProperties();
@@ -738,7 +739,14 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                             return p;
                         }
                         RuntimePersistentProperty<E> entityProperty = persistentEntity.getPropertyByName(p.getName());
-                        if (entityProperty == null || !ReflectionUtils.getWrapperType(entityProperty.getType()).equals(ReflectionUtils.getWrapperType(p.getType()))) {
+                        if (entityProperty == null) {
+                            return p;
+                        }
+                        Class<?> dtoPropertyType = ReflectionUtils.getWrapperType(p.getType());
+                        Class<?> entityPropertyType = ReflectionUtils.getWrapperType(entityProperty.getType());
+                        if (!dtoPropertyType.equals(entityPropertyType)
+                            && !TypeUtils.areTypesCompatible(dtoPropertyType, entityPropertyType)
+                            && !TypeUtils.isDtoCompatibleWithEntity(dtoPropertyType, entityPropertyType)) {
                             return p;
                         }
                         return new BeanPropertyWithAnnotationMetadata<>(
@@ -753,7 +761,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                     joinFetchPaths,
                     sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, rsType),
                     null,
-                    conversionService);
+                    conversionService,
+                    true);
             }
         }
         return new SqlTypeMapper<>() {

@@ -185,12 +185,7 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
         return (SourcePersistentProperty) super.getIdentityByName(name);
     }
 
-    /**
-     * Obtains a PersistentProperty representing id or version property by name.
-     *
-     * @param name The name of the id or version property
-     * @return The PersistentProperty used as id or version or null if it doesn't exist
-     */
+    @Override
     public SourcePersistentProperty getIdOrVersionPropertyByName(String name) {
         if (ArrayUtils.isNotEmpty(ids)) {
             SourcePersistentProperty persistentProp = Arrays.stream(ids)

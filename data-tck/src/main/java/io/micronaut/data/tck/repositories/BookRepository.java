@@ -174,5 +174,9 @@ public abstract class BookRepository implements PageableRepository<Book, Long>, 
 
     abstract Long countByTitleInAndTotalPagesGreaterThan(List<String> titles, int totalPages);
 
-    abstract Optional<BookDtoWithAuthorDto> queryByTitleContains(String title);
+    @Join(value = "author")
+    public abstract Optional<BookDtoWithAuthorDto> queryByTitleContains(String title);
+
+    // Returns DTO without joined author
+    public abstract Optional<BookDtoWithAuthorDto> findByTitleStartingWith(String title);
 }

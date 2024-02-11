@@ -1340,6 +1340,14 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
         optBook.present
         optBook.get().author
+
+        when:
+        optBook = bookRepository.findByTitleStartingWith("The Stand")
+
+        then:
+        optBook.present
+        // author not joined, should be null in DTO
+        !optBook.get().author
     }
 
     void "stream joined"() {

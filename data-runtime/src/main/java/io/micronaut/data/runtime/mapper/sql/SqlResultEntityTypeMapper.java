@@ -52,6 +52,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.UUID;
 import java.util.function.BiFunction;
 
 /**
@@ -71,6 +72,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
     private final SqlJsonColumnReader<RS> jsonColumnReader;
     private final DataConversionService conversionService;
     private final BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener;
+    private final boolean isDto;
     private boolean callNext = true;
 
     /**
@@ -86,8 +88,9 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             String prefix,
             @NonNull RuntimePersistentEntity<R> entity,
             @NonNull ResultReader<RS, String> resultReader,
-            @Nullable SqlJsonColumnReader<RS> jsonColumnReader, DataConversionService conversionService) {
-        this(entity, resultReader, Collections.emptySet(), prefix, jsonColumnReader, conversionService, null);
+            @Nullable SqlJsonColumnReader<RS> jsonColumnReader,
+            DataConversionService conversionService) {
+        this(entity, resultReader, Collections.emptySet(), prefix, jsonColumnReader, conversionService, null, false);
     }
 
     /**
@@ -104,7 +107,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             @NonNull ResultReader<RS, String> resultReader,
             @Nullable Set<JoinPath> joinPaths,
             @Nullable SqlJsonColumnReader<RS> jsonColumnReader, DataConversionService conversionService) {
-        this(entity, resultReader, joinPaths, null, jsonColumnReader, conversionService, null);
+        this(entity, resultReader, joinPaths, null, jsonColumnReader, conversionService, null, false);
     }
 
     /**
@@ -116,14 +119,17 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      * @param jsonColumnReader  The json column reader
      * @param loadListener      The event listener
      * @param conversionService The conversion service
+     * @param isDto             Whether reading/mapping DTO projection
      */
     public SqlResultEntityTypeMapper(
             @NonNull RuntimePersistentEntity<R> entity,
             @NonNull ResultReader<RS, String> resultReader,
             @Nullable Set<JoinPath> joinPaths,
             @Nullable SqlJsonColumnReader<RS> jsonColumnReader,
-            @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener, DataConversionService conversionService) {
-        this(entity, resultReader, joinPaths, null, jsonColumnReader, conversionService, loadListener);
+            @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener,
+            DataConversionService conversionService,
+            boolean isDto) {
+        this(entity, resultReader, joinPaths, null, jsonColumnReader, conversionService, loadListener, isDto);
     }
 
     /**
@@ -136,6 +142,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      * @param jsonColumnReader  The json column reader
      * @param eventListener     The event listener used for trigger post load if configured
      * @param conversionService The conversion service
+     * @param isDto             Whether reading/mapping DTO projection
      */
     private SqlResultEntityTypeMapper(
             @NonNull RuntimePersistentEntity<R> entity,
@@ -143,7 +150,9 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             @Nullable Set<JoinPath> joinPaths,
             String startingPrefix,
             @Nullable SqlJsonColumnReader<RS> jsonColumnReader,
-            DataConversionService conversionService, @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener) {
+            DataConversionService conversionService,
+            @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> eventListener,
+            boolean isDto) {
         this.conversionService = conversionService;
         ArgumentUtils.requireNonNull("entity", entity);
         ArgumentUtils.requireNonNull("resultReader", resultReader);
@@ -160,6 +169,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             this.joinPaths = Collections.emptyMap();
         }
         this.startingPrefix = startingPrefix;
+        this.isDto = isDto;
     }
 
     @Override
@@ -622,6 +632,11 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
     private <K> Object readEntityId(RS rs, MappingContext<K> ctx) {
         RuntimePersistentProperty<K> identity = ctx.persistentEntity.getIdentity();
         if (identity == null) {
+            // DTO might not have ID mapped, and in this case to maintain relation
+            // we set random UUID as id to be able to read and make relation
+            if (isDto) {
+                return UUID.randomUUID();
+            }
             return null;
         }
         if (identity instanceof Embedded) {
