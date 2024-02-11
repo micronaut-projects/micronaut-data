@@ -422,6 +422,20 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     }
 
     @Override
+    public <T> Flux<T> findAll(CriteriaQuery<T> query, int offset, int limit) {
+        return withSession(session -> helper.monoFromCompletionStage(() -> {
+            Stage.SelectionQuery<T> sessionQuery = session.createQuery(query);
+            if (offset != -1) {
+                sessionQuery = sessionQuery.setFirstResult(offset);
+            }
+            if (limit != -1) {
+                sessionQuery = sessionQuery.setMaxResults(limit);
+            }
+            return sessionQuery.getResultList();
+        })).flatMapIterable(res -> res);
+    }
+
+    @Override
     public Mono<Number> updateAll(CriteriaUpdate<Number> query) {
         return withSession(session -> helper.monoFromCompletionStage(() -> session.createQuery(query).executeUpdate()).map(n -> n));
     }

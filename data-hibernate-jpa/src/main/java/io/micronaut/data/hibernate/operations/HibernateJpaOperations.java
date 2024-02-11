@@ -49,7 +49,9 @@ import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
+import io.micronaut.data.runtime.operations.ExecutorAsyncOperationsSupportingCriteria;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
+import io.micronaut.data.runtime.operations.ExecutorReactiveOperationsSupportingCriteria;
 import io.micronaut.transaction.TransactionOperations;
 import jakarta.inject.Named;
 import jakarta.persistence.EntityManager;
@@ -568,7 +570,8 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
             synchronized (this) { // double check
                 executorAsyncOperations = this.asyncOperations;
                 if (executorAsyncOperations == null) {
-                    executorAsyncOperations = new ExecutorAsyncOperations(
+                    executorAsyncOperations = new ExecutorAsyncOperationsSupportingCriteria(
+                        this,
                         this,
                         executorService != null ? executorService : newLocalThreadPool()
                     );
@@ -583,9 +586,9 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     @Override
     public ReactiveRepositoryOperations reactive() {
         if (dataConversionService instanceof DataConversionService asDataConversionService) {
-            return new ExecutorReactiveOperations(async(), asDataConversionService);
+            return new ExecutorReactiveOperationsSupportingCriteria((ExecutorAsyncOperationsSupportingCriteria) async(), asDataConversionService);
         }
-        return new ExecutorReactiveOperations(async(), null);
+        return new ExecutorReactiveOperationsSupportingCriteria((ExecutorAsyncOperationsSupportingCriteria) async(), null);
     }
 
     @NonNull
@@ -626,6 +629,20 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     @Override
     public <T> List<T> findAll(CriteriaQuery<T> query) {
         return executeRead(session -> session.createQuery(query).getResultList());
+    }
+
+    @Override
+    public <T> List<T> findAll(CriteriaQuery<T> query, int offset, int limit) {
+        return executeRead(session -> {
+            Query<T> sessionQuery = session.createQuery(query);
+            if (offset != -1) {
+                sessionQuery = sessionQuery.setFetchSize(offset);
+            }
+            if (limit != -1) {
+                sessionQuery = sessionQuery.setMaxResults(limit);
+            }
+            return sessionQuery.getResultList();
+        });
     }
 
     @Override

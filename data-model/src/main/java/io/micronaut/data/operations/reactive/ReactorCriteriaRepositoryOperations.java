@@ -39,6 +39,9 @@ public interface ReactorCriteriaRepositoryOperations extends ReactiveCriteriaRep
     <T> Flux<T> findAll(@NonNull CriteriaQuery<T> query);
 
     @Override
+    <T> Flux<T> findAll(@NonNull CriteriaQuery<T> query, int offset, int limit);
+
+    @Override
     Mono<Number> updateAll(@NonNull CriteriaUpdate<Number> query);
 
     @Override

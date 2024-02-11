@@ -15,13 +15,11 @@
  */
 package io.micronaut.data.hibernate.reactive
 
-import io.micronaut.context.annotation.Property
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Stepwise
 
 
 @MicronautTest(transactional = true, packages = "io.micronaut.data.tck.entities")
 @Stepwise
-@Property(name = "test-resources.containers.mysql.image-name", value = "mysql:8.2")
 class MySqlCrudRepositorySpec extends AbstractCrudRepositorySpec implements MySqlHibernateReactiveProperties {
 }

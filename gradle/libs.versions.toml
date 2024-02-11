@@ -1,23 +1,23 @@
 [versions]
-micronaut = "4.3.1"
+micronaut = "4.3.4"
 micronaut-platform = "4.2.1"
 micronaut-docs = "2.0.0"
-micronaut-gradle-plugin = "4.2.1"
-micronaut-testresources = "2.3.1"
+micronaut-gradle-plugin = "4.3.2"
+micronaut-testresources = "2.3.3"
 
 micronaut-azure = "5.3.0"
 micronaut-reactor = "3.2.1"
 micronaut-rxjava2 = "2.2.1"
 micronaut-r2dbc = "5.3.0"
-micronaut-serde = "2.7.1"
-micronaut-sql = "5.4.1"
+micronaut-serde = "2.8.1"
+micronaut-sql = "5.5.0"
 micronaut-spring = "5.4.0"
 micronaut-test = "4.1.1"
 micronaut-mongo = "5.2.0"
 micronaut-kotlin = "4.2.0"
 micronaut-multitenancy = "5.2.1"
-micronaut-validation = "4.3.0"
-micronaut-logging = "1.2.2"
+micronaut-validation = "4.4.0"
+micronaut-logging = "1.2.3"
 micronaut-flyway = "7.1.0"
 
 groovy = "4.0.18"
@@ -112,15 +112,6 @@ benchmark-spring-data-bom = { module = "org.springframework.data:spring-data-bom
 
 # TESTCONTAINERS
 
-testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
-testcontainers-spock = { module = "org.testcontainers:spock" }
-testcontainers-postgresql = { module = "org.testcontainers:postgresql" }
-testcontainers-mysql = { module = "org.testcontainers:mysql" }
-testcontainers-mariadb = { module = "org.testcontainers:mariadb" }
-testcontainers-mssqlserver = { module = "org.testcontainers:mssqlserver" }
-testcontainers-oracle = { module = "org.testcontainers:oracle-xe" }
-testcontainers-r2dbc = { module = "org.testcontainers:r2dbc" }
-testcontainers-mongodb = { module = "org.testcontainers:mongodb" }
 testcontainers-azure = { module = "org.testcontainers:azure" }
 
 # PLUGINS

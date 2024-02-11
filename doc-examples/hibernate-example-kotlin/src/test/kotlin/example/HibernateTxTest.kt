@@ -1,10 +1,22 @@
 package example
 
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Sort
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
+import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
-import org.junit.jupiter.api.Assertions.assertTrue
 import jakarta.inject.Inject
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.MethodOrderer
+import org.junit.jupiter.api.Order
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestMethodOrder
+import org.junit.jupiter.api.Timeout
+import org.junit.jupiter.api.assertThrows
 import java.util.*
 
 @MicronautTest(transactional = false, rollback = false)
@@ -152,6 +164,72 @@ class HibernateTxTest {
         }
         Assertions.assertEquals(0, service.count())
         Assertions.assertEquals(0, service.countForCustomDb())
+    }
+
+    @Test
+    @Order(12)
+    fun coroutineCriteria() {
+        runBlocking {
+            val parent = Parent("abc", Collections.emptyList())
+            val saved = repositorySuspended.save(parent)
+
+            val found1 = repositorySuspended.findOne(QuerySpecification { root, query, criteriaBuilder -> criteriaBuilder.equal(root.get<String>("name"), "abc")})
+            Assertions.assertEquals(found1!!.id, saved.id)
+
+            val found2 = repositorySuspended.findOne(PredicateSpecification { root, criteriaBuilder ->  criteriaBuilder.equal(root.get<String>("name"), "abc")})
+            Assertions.assertEquals(found2!!.id, saved.id)
+        }
+    }
+
+    @Test
+    fun coroutineCriteria2() {
+        runBlocking {
+            val parent1 = Parent("abc", Collections.emptyList())
+            val parent2 = Parent("abc", Collections.emptyList())
+            val saved1 = repositorySuspended.save(parent1)
+            val saved2 = repositorySuspended.save(parent2)
+
+            val flowResult = repositorySuspended.findAll { root, query, criteriaBuilder -> criteriaBuilder.equal(root.get<String>("name"), "abc") }
+            Assertions.assertEquals(listOf(saved1.name, saved2.name), flowResult.toList().map { it.name })
+
+            val unpaginatedPage = repositorySuspended.findAll(
+                { root, query, criteriaBuilder -> criteriaBuilder.equal(root.get<String>("name"), "abc") },
+                Pageable.from(0, 1)
+            )
+            Assertions.assertEquals(1, unpaginatedPage.content.size)
+            Assertions.assertEquals(listOf(saved1.name), unpaginatedPage.content.map { it.name })
+            Assertions.assertEquals(2, unpaginatedPage.totalSize)
+        }
+    }
+
+    @Test
+    fun coroutineCriteria3() {
+        runBlocking {
+            val parent1 = Parent("BA", Collections.emptyList())
+            val parent2 = Parent("AB", Collections.emptyList())
+            val parent3 = Parent("AC", Collections.emptyList())
+            val parent4 = Parent("AA", Collections.emptyList())
+            repositorySuspended.save(parent1)
+            repositorySuspended.save(parent2)
+            repositorySuspended.save(parent3)
+            repositorySuspended.save(parent4)
+
+            val sortAsc = repositorySuspended.findAll(
+                { root, query, criteriaBuilder -> criteriaBuilder.like(root.get("name"), "A%") },
+                Pageable.from(0, 1, Sort.of(Sort.Order.asc("name")))
+            )
+            Assertions.assertEquals(1, sortAsc.content.size)
+            Assertions.assertEquals(listOf(parent4.name), sortAsc.content.map { it.name })
+            Assertions.assertEquals(3, sortAsc.totalSize)
+
+            val sortDesc = repositorySuspended.findAll(
+                { root, query, criteriaBuilder -> criteriaBuilder.like(root.get("name"), "A%") },
+                Pageable.from(0, 1, Sort.of(Sort.Order.desc("name")))
+            )
+            Assertions.assertEquals(1, sortDesc.content.size)
+            Assertions.assertEquals(listOf(parent3.name), sortDesc.content.map { it.name })
+            Assertions.assertEquals(3, sortDesc.totalSize)
+        }
     }
 
 }
