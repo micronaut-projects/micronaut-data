@@ -29,6 +29,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
  * The type utils for DTO and persistent entity type.
  */
 @Internal
+@SuppressWarnings({"java:S1872"})
 final class TypeUtils {
 
     private TypeUtils() {
