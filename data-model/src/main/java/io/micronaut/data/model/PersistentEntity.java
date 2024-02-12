@@ -410,6 +410,7 @@ public interface PersistentEntity extends PersistentElement {
      *
      * @param name The name of the id or version property
      * @return The PersistentProperty used as id or version or null if it doesn't exist
+     * @since 4.7.0
      */
     PersistentProperty getIdOrVersionPropertyByName(String name);
 
