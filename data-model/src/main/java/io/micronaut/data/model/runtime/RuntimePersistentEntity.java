@@ -370,13 +370,10 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
     @Override
     public RuntimePersistentProperty<T> getIdOrVersionPropertyByName(String name) {
         if (ArrayUtils.isNotEmpty(identity)) {
-            RuntimePersistentProperty<T> persistentProp = Arrays.stream(identity)
-                .filter(p -> p.getName().equals(name))
-                .findFirst()
-                .orElse(null);
-
-            if (persistentProp != null) {
-                return persistentProp;
+            for (RuntimePersistentProperty<T> identityProperty : identity) {
+                if (identityProperty.getName().equals(name)) {
+                    return identityProperty;
+                }
             }
         }
 

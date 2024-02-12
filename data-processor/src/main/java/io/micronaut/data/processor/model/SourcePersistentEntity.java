@@ -188,13 +188,10 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
     @Override
     public SourcePersistentProperty getIdOrVersionPropertyByName(String name) {
         if (ArrayUtils.isNotEmpty(ids)) {
-            SourcePersistentProperty persistentProp = Arrays.stream(ids)
-                    .filter(p -> p.getName().equals(name))
-                    .findFirst()
-                    .orElse(null);
-
-            if (persistentProp != null) {
-                return persistentProp;
+            for (SourcePersistentProperty id : ids) {
+                if (id.getName().equals(name)) {
+                    return id;
+                }
             }
         }
 
