@@ -1,0 +1,14 @@
+[
+  {
+    "name": "org.hibernate.event.spi.PreInsertEventListener[]",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "org.hibernate.event.spi.PreDeleteEventListener[]",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "org.hibernate.event.spi.PreUpdateEventListener[]",
+    "unsafeAllocated": true
+  }
+]
