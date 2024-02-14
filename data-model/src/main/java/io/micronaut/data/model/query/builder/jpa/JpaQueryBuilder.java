@@ -295,6 +295,18 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
+    protected void appendCompoundPropertyProjection(QueryState queryState, StringBuilder queryString, PersistentProperty property, PersistentPropertyPath propertyPath, String columnAlias) {
+        if (property instanceof Embedded) {
+            queryString.append(queryState.getRootAlias()).append(DOT).append(propertyPath.getPath());
+            if (columnAlias != null) {
+                queryString.append(AS_CLAUSE).append(columnAlias);
+            }
+            return;
+        }
+        super.appendCompoundPropertyProjection(queryState, queryString, property, propertyPath, columnAlias);
+    }
+
+    @Override
     protected NamingStrategy getNamingStrategy(PersistentEntity entity) {
         return JPA_NAMING_STRATEGY;
     }
