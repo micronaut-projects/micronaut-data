@@ -4,10 +4,16 @@ import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
+import io.micronaut.data.runtime.criteria.get
+import io.micronaut.data.runtime.criteria.joinMany
+import io.micronaut.data.runtime.criteria.query
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import jakarta.inject.Inject
+import jakarta.persistence.criteria.JoinType
+import jakarta.persistence.criteria.ListJoin
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
+import org.hibernate.query.sqm.tree.domain.SqmListJoin
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -229,6 +235,52 @@ class HibernateTxTest {
             Assertions.assertEquals(1, sortDesc.content.size)
             Assertions.assertEquals(listOf(parent3.name), sortDesc.content.map { it.name })
             Assertions.assertEquals(3, sortDesc.totalSize)
+        }
+    }
+
+    @Test
+    fun coroutineCriteria4() {
+        runBlocking {
+            val parent1 = Parent("abc", mutableListOf()).apply { children.add(Child("cde", parent = this)) }
+            val parent2 = Parent("cde", mutableListOf()).apply { children.add(Child("abc", parent = this)) }
+            val saved1 = repositorySuspended.save(parent1)
+            val saved2 = repositorySuspended.save(parent2)
+
+            val query = query {
+                val children: ListJoin<Parent, Child> = if (query.resultType.kotlin != Long::class) {
+                    root.fetch<Parent, Child>("children", JoinType.LEFT) as SqmListJoin<Parent, Child>
+                }  else {
+                    root.joinMany(Parent::children)
+                }
+
+                where {
+                    or {
+                        root[Parent::name] inList listOf("abc", "cde")
+                        children[Child::name] inList listOf("abc", "cde")
+                    }
+                }
+            }
+
+            val flowResult = repositorySuspended.findAll(query)
+            Assertions.assertEquals(listOf(saved1.name, saved2.name), flowResult.toList().map { it.name })
+
+            val page0 = repositorySuspended.findAll(query, Pageable.from(0, 1))
+            Assertions.assertEquals(1, page0.content.size)
+            Assertions.assertEquals(listOf(saved1.name), page0.content.map { it.name })
+            Assertions.assertEquals(listOf(saved1.children.first().name), page0.content.map { it.children.first().name })
+            Assertions.assertEquals(2, page0.totalSize)
+
+            val page1 = repositorySuspended.findAll(query, Pageable.from(1, 1))
+            Assertions.assertEquals(1, page1.content.size)
+            Assertions.assertEquals(listOf(saved2.name), page1.content.map { it.name })
+            Assertions.assertEquals(listOf(saved2.children.first().name), page1.content.map { it.children.first().name })
+            Assertions.assertEquals(2, page1.totalSize)
+
+            val unpaged = repositorySuspended.findAll(query, Pageable.UNPAGED)
+            Assertions.assertEquals(2, unpaged.content.size)
+            Assertions.assertEquals(listOf(saved1.name, saved2.name), unpaged.content.map { it.name })
+            Assertions.assertEquals(listOf(saved1.children.first().name, saved2.children.first().name), unpaged.content.map { it.children.first().name })
+            Assertions.assertEquals(2, unpaged.totalSize)
         }
     }
 
