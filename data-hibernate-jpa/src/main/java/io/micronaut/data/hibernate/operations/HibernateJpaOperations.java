@@ -636,7 +636,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
         return executeRead(session -> {
             Query<T> sessionQuery = session.createQuery(query);
             if (offset != -1) {
-                sessionQuery = sessionQuery.setFetchSize(offset);
+                sessionQuery = sessionQuery.setFirstResult(offset);
             }
             if (limit != -1) {
                 sessionQuery = sessionQuery.setMaxResults(limit);
