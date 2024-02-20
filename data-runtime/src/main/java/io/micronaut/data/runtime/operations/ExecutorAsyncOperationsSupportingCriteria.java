@@ -67,6 +67,11 @@ public final class ExecutorAsyncOperationsSupportingCriteria extends ExecutorAsy
     }
 
     @Override
+    public <T> CompletionStage<List<T>> findAll(CriteriaQuery<T> query, int offset, int limit) {
+        return supplyAsync(() -> criteriaRepositoryOperations.findAll(query, offset, limit));
+    }
+
+    @Override
     public CompletionStage<Number> updateAll(CriteriaUpdate<Number> query) {
         return supplyAsync(() -> criteriaRepositoryOperations.updateAll(query).orElse(null));
     }

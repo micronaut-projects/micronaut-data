@@ -19,6 +19,8 @@ import io.micronaut.data.model.Pageable
 import io.micronaut.data.tck.entities.AuthorBooksDto
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.BookDto
+import io.micronaut.data.tck.entities.Shipment
+import io.micronaut.data.tck.entities.ShipmentId
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import org.hibernate.Hibernate
 import spock.lang.Shared
@@ -33,9 +35,14 @@ class DtoSpec extends Specification {
     @Inject
     @Shared
     BookRepository bookRepository
+
     @Inject
     @Shared
     BookDtoRepository bookDtoRepository
+
+    @Inject
+    @Shared
+    JpaShipmentRepository shipmentRepository
 
     def setup() {
         bookRepository.saveAuthorBooks([
@@ -93,6 +100,28 @@ class DtoSpec extends Specification {
         result.size == 10
         result.content.every { it instanceof BookDto }
         result.content.every { it.title.startsWith("The")}
+    }
+
+    void "test dto projection with embedded id"() {
+        given:
+        def id = new ShipmentId("a", "b")
+        shipmentRepository.save(new Shipment(id, "test"))
+
+        def id2 = new ShipmentId("a", "c")
+        shipmentRepository.save(new Shipment(id2, "test2"))
+
+        def id3 = new ShipmentId("b", "d")
+        shipmentRepository.save(new Shipment(id3, "test3"))
+        when:
+        def shipments = shipmentRepository.findAllByShipmentIdCountry("a")
+        def shipmentDtos = shipmentRepository.queryAllByShipmentIdCountry("a")
+        then:
+        shipmentDtos.size() == 2
+        shipmentDtos.every{ it.shipmentId()}
+        shipmentDtos.every{ it.shipmentId().country == "a"}
+        shipments.size() == 2
+        cleanup:
+        shipmentRepository.deleteAll()
     }
 
 }

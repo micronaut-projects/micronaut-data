@@ -62,6 +62,17 @@ public interface AsyncCriteriaRepositoryOperations extends AsyncCriteriaCapableR
     <T> CompletionStage<List<T>> findAll(@NonNull CriteriaQuery<T> query);
 
     /**
+     * Finds all results for the given query.
+     *
+     * @param query  The query
+     * @param offset The offset
+     * @param limit  The limit
+     * @param <T>    The generic type
+     * @return An iterable result
+     */
+    <T> CompletionStage<List<T>> findAll(@NonNull CriteriaQuery<T> query, int offset, int limit);
+
+    /**
      * Executes an update for the given query and parameter values. If it is possible to
      * return the number of objects updated, then do so.
      * @param query The prepared query

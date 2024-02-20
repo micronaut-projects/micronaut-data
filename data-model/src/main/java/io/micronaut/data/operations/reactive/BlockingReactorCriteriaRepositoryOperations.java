@@ -70,6 +70,15 @@ public interface BlockingReactorCriteriaRepositoryOperations extends CriteriaRep
     }
 
     @Override
+    default <T> List<T> findAll(@NonNull CriteriaQuery<T> query, int limit, int offset) {
+        return reactive().findAll(query, limit, offset)
+            .collectList()
+            .contextWrite(getContextView())
+            .blockOptional()
+            .orElseGet(List::of);
+    }
+
+    @Override
     default Optional<Number> updateAll(@NonNull CriteriaUpdate<Number> query) {
         return reactive().updateAll(query)
             .contextWrite(getContextView())

@@ -22,6 +22,8 @@ import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
 
+import static io.micronaut.data.processor.visitors.TestUtils.getQuery
+
 class DtoSpec extends AbstractDataSpec {
 
     void "test build DTO with raw @Query method doesn't fail to compile"() {
@@ -403,4 +405,24 @@ class AuthorDto {
             listAllMethod.isTrue(DataMethod, DataMethod.META_MEMBER_DTO)
     }
 
+    void "test embedded id in DTO"() {
+        given:
+        def repository = buildRepository('test.TestRepository', '''
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Shipment;
+import io.micronaut.data.tck.entities.ShipmentDto;
+import io.micronaut.data.tck.entities.ShipmentId;
+@Repository
+interface TestRepository extends GenericRepository<Shipment, ShipmentId> {
+    List<ShipmentDto> searchByShipmentIdCountry(String country);
+}
+''')
+        expect:"The repository to compile"
+        repository != null
+        when:
+        def queryFindByText = getQuery(repository.getRequiredMethod("searchByShipmentIdCountry", String))
+        then:
+        queryFindByText == 'SELECT shipment_.shipmentId AS shipmentId,shipment_.field AS field FROM io.micronaut.data.tck.entities.Shipment AS shipment_ WHERE (shipment_.shipmentId.country = :p1)'
+    }
 }

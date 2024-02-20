@@ -138,7 +138,12 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     protected final Iterable<?> findAll(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context, Type type) {
         Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
         if (criteriaRepositoryOperations != null) {
-            return criteriaRepositoryOperations.findAll(buildQuery(context, type, methodJoinPaths));
+            CriteriaQuery<Object> query = buildQuery(context, type, methodJoinPaths);
+            Pageable pageable = getPageable(context);
+            if (pageable != null) {
+                return criteriaRepositoryOperations.findAll(query, (int) pageable.getOffset(), pageable.getSize());
+            }
+            return criteriaRepositoryOperations.findAll(query);
         }
         return operations.findAll(preparedQueryForCriteria(methodKey, context, type, methodJoinPaths));
     }
@@ -314,7 +319,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                                                  Type type,
                                                  Set<JoinPath> methodJoinPaths) {
 
-        CriteriaQuery<Object> criteriaQuery = buildQuery(context, type, methodJoinPaths);
+        CriteriaQuery<Object> criteriaQuery = buildInternalQuery(context, type, methodJoinPaths);
         QueryBuilder sqlQueryBuilder = getQueryBuilder(methodKey, context);
         QueryResultPersistentEntityCriteriaQuery queryModelCriteriaQuery = (QueryResultPersistentEntityCriteriaQuery) criteriaQuery;
         QueryModel queryModel = queryModelCriteriaQuery.getQueryModel();
@@ -331,7 +336,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
             criteriaQuery.getResultType(), !pageable.isUnpaged(), joinPaths);
     }
 
-    protected final <N> CriteriaQuery<N> buildQuery(MethodInvocationContext<T, R> context, Type type, Set<JoinPath> methodJoinPaths) {
+    private <N> CriteriaQuery<N> buildInternalQuery(MethodInvocationContext<T, R> context, Type type, Set<JoinPath> methodJoinPaths) {
         CriteriaQueryBuilder<N> builder = getCriteriaQueryBuilder(context, methodJoinPaths);
         CriteriaQuery<N> criteriaQuery = builder.build(criteriaBuilder);
 
@@ -344,6 +349,22 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                         criteriaQuery.orderBy(getOrders(sort, root, criteriaBuilder));
                         break;
                     }
+                }
+            }
+        }
+        return criteriaQuery;
+    }
+
+    protected final <N> CriteriaQuery<N> buildQuery(MethodInvocationContext<T, R> context, Type type, Set<JoinPath> methodJoinPaths) {
+        CriteriaQueryBuilder<N> builder = getCriteriaQueryBuilder(context, methodJoinPaths);
+        CriteriaQuery<N> criteriaQuery = builder.build(criteriaBuilder);
+
+        for (Object param : context.getParameterValues()) {
+            if (param instanceof Sort sort) {
+                if (sort.isSorted()) {
+                    Root<?> root = criteriaQuery.getRoots().stream().findFirst().orElseThrow(() -> new IllegalStateException("The root not found!"));
+                    criteriaQuery.orderBy(getOrders(sort, root, criteriaBuilder));
+                    break;
                 }
             }
         }

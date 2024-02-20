@@ -190,7 +190,7 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
                 .map(number -> convertNumberArgumentIfNecessary(number, operation.getResultArgument()));
     }
 
-    private <R> Mono<R> fromCompletableFuture(Supplier<CompletableFuture<R>> futureSupplier) {
+    protected final <R> Mono<R> fromCompletableFuture(Supplier<CompletableFuture<R>> futureSupplier) {
         return Mono.fromCompletionStage(PropagatedContext.wrapCurrent(futureSupplier));
     }
 
