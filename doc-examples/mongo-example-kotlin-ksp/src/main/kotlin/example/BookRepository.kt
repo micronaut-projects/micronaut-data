@@ -102,7 +102,7 @@ interface BookRepository : CrudRepository<Book, ObjectId> { // <2>
     fun customAggregate(t: String): List<Person>
 
     @MongoUpdateQuery(filter = "{title:{\$regex: :t}}", update = "{\$set:{name: 'tom'}}")
-    fun customUpdate(t: String): List<Book>
+    fun customUpdate(t: String)
 
     @MongoDeleteQuery(filter = "{title:{\$regex: :t}}", collation = "{locale:'en_US', numericOrdering:true}")
     fun customDelete(t: String)

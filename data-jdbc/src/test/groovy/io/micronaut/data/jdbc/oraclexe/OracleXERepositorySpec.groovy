@@ -16,8 +16,10 @@
 package io.micronaut.data.jdbc.oraclexe
 
 import groovy.transform.Memoized
+import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
+import spock.lang.PendingFeature
 
 class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTestPropertyProvider {
 
@@ -205,6 +207,56 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
             books6.size() == 0
         cleanup:
             cleanupBooks()
+    }
+
+    @PendingFeature
+    void "test update returning book"() {
+        given:
+            setupBooks()
+        when:
+            def book = bookRepository.findByTitle("Pet Cemetery")
+            book.title = "Xyz"
+            Book newBook = bookRepository.updateReturning(book)
+            book.title = "old"
+        then:
+            newBook.title == "Xyz"
+    }
+
+    @PendingFeature
+    void "test update returning book title"() {
+        given:
+            setupBooks()
+        when:
+            def book = bookRepository.findByTitle("Pet Cemetery")
+            book.title = "Xyz"
+            String newTitle = bookRepository.updateReturningTitle(book)
+        then:
+            newTitle == "Xyz"
+            bookRepository.findById(book.id).get().title == "Xyz"
+    }
+
+    @PendingFeature
+    void "test update returning book title 2"() {
+        given:
+            setupBooks()
+            def book = bookRepository.findByTitle("Pet Cemetery")
+        when:
+            String newTitle = bookRepository.updateReturningTitle(book.id, "Xyz")
+        then:
+            newTitle == "Xyz"
+            bookRepository.findById(book.id).get().title == "Xyz"
+    }
+
+    @PendingFeature
+    void "test update returning book title 3"() {
+        given:
+            setupBooks()
+            def book = bookRepository.findByTitle("Pet Cemetery")
+        when:
+            String newTitle = bookRepository.updateByIdReturningTitle(book.id, "Xyz")
+        then:
+            newTitle == "Xyz"
+            bookRepository.findById(book.id).get().title == "Xyz"
     }
 
 }

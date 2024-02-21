@@ -134,6 +134,15 @@ public class Projections {
     }
 
     /**
+     * Projection that signifies to return only distinct results against an entity, meaning its identity property/properties.
+     *
+     * @return count distinct projection for the entity
+     */
+    public static QueryModel.CountDistinctRootProjection countDistinctRoot() {
+        return new QueryModel.CountDistinctRootProjection();
+    }
+
+    /**
      * Defines a group by projection for datastores that support it.
      *
      * @param property The property name
@@ -142,5 +151,14 @@ public class Projections {
      */
     public static QueryModel.GroupPropertyProjection groupProperty(String property) {
         return new QueryModel.GroupPropertyProjection(property);
+    }
+
+    /**
+     * Defines a projection of the root entity.
+     *
+     * @return The projection
+     */
+    public static QueryModel.RootEntityProjection rootEntity() {
+        return new QueryModel.RootEntityProjection();
     }
 }

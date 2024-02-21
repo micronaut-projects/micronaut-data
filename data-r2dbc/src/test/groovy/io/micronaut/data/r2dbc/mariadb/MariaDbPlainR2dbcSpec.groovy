@@ -32,4 +32,9 @@ class MariaDbPlainR2dbcSpec extends PlainR2dbcSpec implements MariaDbTestPropert
     String getInsertQuery() {
         return 'INSERT INTO author (name) VALUES (?)'
     }
+
+    @Override
+    protected String getSelectByIdQuery() {
+        return 'SELECT * FROM author WHERE id=?'
+    }
 }

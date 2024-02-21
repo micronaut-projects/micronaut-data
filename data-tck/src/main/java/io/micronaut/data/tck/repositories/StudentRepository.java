@@ -20,11 +20,17 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Version;
 import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
+import io.micronaut.data.repository.jpa.criteria.QuerySpecification;
+import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.entities.Student;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.SetJoin;
 
+import java.util.List;
 import java.util.Optional;
 
-public interface StudentRepository extends CrudRepository<Student, Long> {
+public interface StudentRepository extends CrudRepository<Student, Long>, JpaSpecificationExecutor<Student> {
 
     void updateByIdAndVersion(Long id, Long version, String name);
 
@@ -36,4 +42,15 @@ public interface StudentRepository extends CrudRepository<Student, Long> {
 
     @Join(value = "books", type = Join.Type.FETCH)
     Optional<Student> findByName(String name);
+
+    static QuerySpecification<Student> byBookTitles(List<String> bookTitles) {
+        return (root, query, criteriaBuilder) -> {
+            boolean isCountQuery = query.getResultType().equals(Long.class);
+            if (isCountQuery) {
+                query.distinct(true);
+            }
+            SetJoin<Student, Book> join = root.joinSet("books", JoinType.LEFT);
+            return join.get("title").in(bookTitles);
+        };
+    }
 }

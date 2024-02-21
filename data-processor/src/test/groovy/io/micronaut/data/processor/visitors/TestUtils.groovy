@@ -99,6 +99,14 @@ class TestUtils {
         return metadata.getAnnotation(DataMethod).booleanValue(DataMethod.META_MEMBER_EXPANDABLE_QUERY)
     }
 
+    static DataType getResultDataType(AnnotationMetadataProvider metadata) {
+        return metadata.getAnnotation(DataMethod).enumValue(DataMethod.META_MEMBER_RESULT_DATA_TYPE, DataType).orElse(null)
+    }
+
+    static DataMethod.OperationType getOperationType(AnnotationMetadataProvider metadata) {
+        return metadata.getAnnotation(DataMethod).enumValue(DataMethod.META_MEMBER_OPERATION_TYPE, DataMethod.OperationType).orElse(null)
+    }
+
     static DataType[] getDataTypes(AnnotationValue<DataMethod> annotationValue) {
         return annotationValue.getAnnotations(DataMethod.META_MEMBER_PARAMETERS, DataMethodQueryParameter)
                 .stream()

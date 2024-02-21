@@ -47,6 +47,7 @@ class JpaEmbeddedIdSpec extends Specification {
 
         then:
         repository.count() == 4
+        repository.countDistinct() == 4
         entity != null
 
         when:"the entity is updated"

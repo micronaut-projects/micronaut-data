@@ -13,15 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.intercept;
 
 /**
- * An interceptor that does execute the procedure.
- *
- * @param <T> The declaring type
- * @param <R> The return result
- * @author Denis Stepanov
- * @since 4.2.0
+ * Entities used in data-processor tests can be added here without need to add them to data-tck for every test we add.
  */
-public interface ProcedureInterceptor<T, R> extends DataInterceptor<T, R> {
-}
+package io.micronaut.data.processor.entity;

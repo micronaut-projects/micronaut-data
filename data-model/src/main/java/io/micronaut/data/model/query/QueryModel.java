@@ -1362,6 +1362,14 @@ public interface QueryModel extends Criteria {
     }
 
     /**
+     * A projection used to project the root entity.
+     * @since 4.2.0
+     */
+    class RootEntityProjection extends Projection {
+
+    }
+
+    /**
      * A projection of a simple literal.
      */
     class LiteralProjection extends Projection {
@@ -1459,7 +1467,7 @@ public interface QueryModel extends Criteria {
     }
 
     /**
-     * Projection to count distinct property names.
+     * Projection to count distinct property name.
      */
     class CountDistinctProjection extends PropertyProjection {
         /**
@@ -1469,6 +1477,12 @@ public interface QueryModel extends Criteria {
         public CountDistinctProjection(String property) {
             super(property);
         }
+    }
+
+    /**
+     * Projection to count distinct entity will do count distinct against identity or composite identity.
+     */
+    class CountDistinctRootProjection extends Projection {
     }
 
     /**

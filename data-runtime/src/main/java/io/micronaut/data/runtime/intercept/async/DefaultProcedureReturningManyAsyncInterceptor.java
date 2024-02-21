@@ -18,35 +18,35 @@ package io.micronaut.data.runtime.intercept.async;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.intercept.async.ProcedureAsyncInterceptor;
-import io.micronaut.data.intercept.reactive.ProcedureReactiveInterceptor;
+import io.micronaut.data.intercept.async.ProcedureReturningManyAsyncInterceptor;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 
 import java.util.concurrent.CompletionStage;
 
 /**
- * The default implementation of {@link ProcedureReactiveInterceptor}.
+ * The default implementation of {@link ProcedureReturningManyAsyncInterceptor}.
  *
  * @param <T> The return type
+ * @param <R> The result type
  * @author Denis Stepanov
  * @since 4.2.0
  */
 @Internal
-public class DefaultProcedureAsyncInterceptor<T> extends AbstractConvertCompletionStageInterceptor<T> implements ProcedureAsyncInterceptor<Object, CompletionStage<T>> {
+public final class DefaultProcedureReturningManyAsyncInterceptor<T, R> extends AbstractAsyncInterceptor2<T, Iterable<R>> implements ProcedureReturningManyAsyncInterceptor<T, R> {
 
     /**
      * Default constructor.
      *
      * @param datastore The operations
      */
-    DefaultProcedureAsyncInterceptor(RepositoryOperations datastore) {
+    DefaultProcedureReturningManyAsyncInterceptor(RepositoryOperations datastore) {
         super(datastore);
     }
 
     @Override
-    protected CompletionStage<T> interceptCompletionStage(RepositoryMethodKey methodKey, MethodInvocationContext<Object, CompletionStage<T>> context) {
-        PreparedQuery<?, T> preparedQuery = prepareQuery(methodKey, context, null);
+    public CompletionStage<? extends Iterable<R>> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<? extends Iterable<R>>> context) {
+        PreparedQuery<?, R> preparedQuery = prepareQuery(methodKey, context, null);
         return asyncDatastoreOperations.execute(preparedQuery);
     }
 

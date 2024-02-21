@@ -339,7 +339,8 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
         if (pageable != Pageable.UNPAGED) {
             Sort sort = pageable.getSort();
             if (sort.isSorted()) {
-                queryStr += QUERY_BUILDER.buildOrderBy(queryStr, getEntity(preparedQuery.getRootEntity()), AnnotationMetadata.EMPTY_METADATA, sort).getQuery();
+                queryStr += QUERY_BUILDER.buildOrderBy(queryStr, getEntity(preparedQuery.getRootEntity()), AnnotationMetadata.EMPTY_METADATA, sort,
+                    preparedQuery.isNative()).getQuery();
             }
         }
         collectResults(session, queryStr, preparedQuery, collector);

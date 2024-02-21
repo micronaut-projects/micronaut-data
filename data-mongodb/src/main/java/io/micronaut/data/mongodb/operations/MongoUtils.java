@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
@@ -39,6 +40,8 @@ import org.bson.types.ObjectId;
 
 import java.time.Instant;
 import java.util.Date;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Mongo internal utils.
@@ -118,6 +121,16 @@ public final class MongoUtils {
                 return Instant.ofEpochMilli(bsonValue.asDateTime().getValue());
             case NULL:
                 return null;
+            case DOCUMENT:
+                BsonDocument bsonDocument = bsonValue.asDocument();
+                Set<String> keys = bsonDocument.keySet();
+                Map<String, Object> result = CollectionUtils.newHashMap(keys.size());
+                for (String key : keys) {
+                    result.put(key, toValue(bsonDocument.get(key)));
+                }
+                return result;
+            case ARRAY:
+                return bsonValue.asArray().stream().map(MongoUtils::toValue).toList();
             default:
                 throw new IllegalStateException("Not implemented for: " + bsonValue.getBsonType());
         }

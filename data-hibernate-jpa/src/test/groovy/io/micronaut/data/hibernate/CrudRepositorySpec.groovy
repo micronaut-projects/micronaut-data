@@ -60,6 +60,7 @@ class CrudRepositorySpec extends Specification {
         crudRepository.get(person.id).name == 'Fred'
         crudRepository.existsById(person.id)
         crudRepository.count() == 3
+        crudRepository.countDistinct() == 3
         crudRepository.count("Fred") == 1
         crudRepository.findAll().size() == 3
         crudRepository.listPeople("Fred").size() == 1

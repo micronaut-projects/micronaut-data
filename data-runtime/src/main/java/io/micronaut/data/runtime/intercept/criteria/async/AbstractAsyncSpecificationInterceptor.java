@@ -16,15 +16,25 @@
 package io.micronaut.data.runtime.intercept.criteria.async;
 
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.intercept.RepositoryMethodKey;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
+import io.micronaut.data.operations.async.AsyncCriteriaCapableRepository;
+import io.micronaut.data.operations.async.AsyncCriteriaRepositoryOperations;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor;
+import jakarta.persistence.criteria.CriteriaQuery;
 
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CompletionStage;
 
 /**
  * Abstract async specification interceptor.
@@ -34,10 +44,12 @@ import java.util.List;
  * @author Denis Stepanov
  * @since 3.2
  */
+@Internal
 public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends AbstractSpecificationInterceptor<T, R> {
     protected static final Argument<List<Object>> LIST_OF_OBJECTS = Argument.listOf(Object.class);
 
     protected final AsyncRepositoryOperations asyncOperations;
+    protected final AsyncCriteriaRepositoryOperations asyncCriteriaOperations;
 
     /**
      * Default constructor.
@@ -46,11 +58,77 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
      */
     protected AbstractAsyncSpecificationInterceptor(RepositoryOperations operations) {
         super(operations);
-        if (operations instanceof AsyncCapableRepository) {
-            this.asyncOperations = ((AsyncCapableRepository) operations).async();
+        if (operations instanceof AsyncCapableRepository asyncCapableRepository) {
+            this.asyncOperations = asyncCapableRepository.async();
         } else {
             throw new DataAccessException("Datastore of type [" + operations.getClass() + "] does not support asynchronous operations");
         }
+        if (operations instanceof AsyncCriteriaRepositoryOperations asyncCriteriaRepositoryOperations) {
+            asyncCriteriaOperations = asyncCriteriaRepositoryOperations;
+        } else if (asyncOperations instanceof AsyncCriteriaRepositoryOperations asyncCriteriaRepositoryOperations) {
+            asyncCriteriaOperations = asyncCriteriaRepositoryOperations;
+        } else if (operations instanceof AsyncCriteriaCapableRepository repository) {
+            asyncCriteriaOperations = repository.async();
+        } else {
+            asyncCriteriaOperations = null;
+        }
+    }
+
+    @NonNull
+    protected final CompletionStage<Iterable<Object>> findAllAsync(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context, Type type) {
+        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
+        if (asyncCriteriaOperations != null) {
+            CriteriaQuery<Object> criteriaQuery = buildQuery(context, type, methodJoinPaths);
+            Pageable pageable = getPageable(context);
+            if (pageable != null) {
+                return asyncCriteriaOperations.findAll(criteriaQuery, (int) pageable.getOffset(), pageable.getSize()).thenApply(m -> m);
+            }
+            return asyncCriteriaOperations.findAll(criteriaQuery).thenApply(m -> m);
+        }
+        return asyncOperations.findAll(preparedQueryForCriteria(methodKey, context, type, methodJoinPaths));
+    }
+
+    @NonNull
+    protected final CompletionStage<Object> findOneAsync(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context, Type type) {
+        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
+        if (asyncCriteriaOperations != null) {
+            return asyncCriteriaOperations.findOne(buildQuery(context, type, methodJoinPaths));
+        }
+        return asyncOperations.findOne(preparedQueryForCriteria(methodKey, context, type, methodJoinPaths));
+    }
+
+    @NonNull
+    protected final CompletionStage<Number> countAsync(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
+        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
+        if (asyncCriteriaOperations != null) {
+            return asyncCriteriaOperations.findOne(buildCountQuery(context)).thenApply(n -> n);
+        }
+        return asyncOperations.findOne(preparedQueryForCriteria(methodKey, context, Type.COUNT, methodJoinPaths));
+    }
+
+    protected final CompletionStage<Boolean> existsAsync(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
+        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
+        if (asyncCriteriaOperations != null) {
+            return asyncCriteriaOperations.findOne(buildExistsQuery(context, methodJoinPaths));
+        }
+        return asyncOperations.findOne(preparedQueryForCriteria(methodKey, context, Type.EXISTS, methodJoinPaths))
+            .thenApply(one -> one instanceof Boolean aBoolean ? aBoolean : one != null);
+    }
+
+    protected final CompletionStage<Number> deleteAllAsync(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
+        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
+        if (asyncCriteriaOperations != null) {
+            return asyncCriteriaOperations.deleteAll(buildDeleteQuery(context));
+        }
+        return asyncOperations.executeDelete(preparedQueryForCriteria(methodKey, context, Type.DELETE_ALL, methodJoinPaths));
+    }
+
+    protected final CompletionStage<Number> updateAllAsync(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
+        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
+        if (asyncCriteriaOperations != null) {
+            return asyncCriteriaOperations.updateAll(buildUpdateQuery(context));
+        }
+        return asyncOperations.executeUpdate(preparedQueryForCriteria(methodKey, context, Type.UPDATE_ALL, methodJoinPaths));
     }
 
     protected final Argument<?> getReturnType(MethodInvocationContext<?, ?> context) {
@@ -66,8 +144,9 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
 
     /**
      * Convert a number argument if necessary.
+     *
      * @param context The method context
-     * @param number The number
+     * @param number  The number
      * @return The result
      */
     @Nullable
@@ -82,7 +161,7 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
         }
         if (!type.isInstance(number)) {
             return (Number) operations.getConversionService().convert(number, firstTypeVar)
-                    .orElseThrow(() -> new IllegalStateException("Unsupported number type for return type: " + firstTypeVar));
+                .orElseThrow(() -> new IllegalStateException("Unsupported number type for return type: " + firstTypeVar));
         } else {
             return number;
         }

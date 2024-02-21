@@ -33,6 +33,7 @@ import io.micronaut.data.operations.reactive.ReactorReactiveRepositoryOperations
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 
@@ -143,8 +144,8 @@ public final class ReactorToAsyncOperationsAdaptor implements AsyncRepositoryOpe
     }
 
     @Override
-    public <R> CompletionStage<R> execute(PreparedQuery<?, R> preparedQuery) {
-        return toCompletionStage(reactiveOperations.execute(preparedQuery));
+    public <R> CompletionStage<List<R>> execute(PreparedQuery<?, R> preparedQuery) {
+        return toCompletionStage(reactiveOperations.execute(preparedQuery).collectList());
     }
 
     @NonNull

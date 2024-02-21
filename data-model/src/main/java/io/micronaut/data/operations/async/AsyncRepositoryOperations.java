@@ -22,6 +22,7 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.runtime.*;
 
+import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 
@@ -189,7 +190,7 @@ public interface AsyncRepositoryOperations {
      * @since 4.2.0
      */
     @NonNull
-    default <R> CompletionStage<R> execute(@NonNull PreparedQuery<?, R> preparedQuery) {
+    default <R> CompletionStage<List<R>> execute(@NonNull PreparedQuery<?, R> preparedQuery) {
         throw new DataAccessException("Current repository: " + getClass() + " doesn't support method 'execute'!");
     }
 

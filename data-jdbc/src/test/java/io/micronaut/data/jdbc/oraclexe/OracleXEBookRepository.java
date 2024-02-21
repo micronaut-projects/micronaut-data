@@ -16,6 +16,7 @@
 package io.micronaut.data.jdbc.oraclexe;
 
 import io.micronaut.data.annotation.Expandable;
+import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.annotation.sql.Procedure;
@@ -46,4 +47,12 @@ public abstract class OracleXEBookRepository extends BookRepository {
 
     @Procedure("add1")
     public abstract int add1Aliased(int input);
+
+//    public abstract Book updateReturning(Book book);
+//
+//    public abstract String updateReturningTitle(Book book);
+//
+//    public abstract String updateReturningTitle(@Id Long id, String title);
+//
+//    public abstract String updateByIdReturningTitle(Long id, String title);
 }

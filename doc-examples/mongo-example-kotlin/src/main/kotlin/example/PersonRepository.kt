@@ -12,6 +12,7 @@ import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
 import io.micronaut.data.runtime.criteria.get
+import io.micronaut.data.runtime.criteria.query
 import io.micronaut.data.runtime.criteria.update
 import io.micronaut.data.runtime.criteria.where
 import jakarta.persistence.criteria.CriteriaBuilder
@@ -71,12 +72,10 @@ interface PersonRepository : CrudRepository<Person, ObjectId>, JpaSpecificationE
     override
     // tag::count[]
     fun count(spec: QuerySpecification<Person>?): Long
-
     // end::count[]
     override
     // tag::update[]
     fun updateAll(spec: UpdateSpecification<Person>?): Long
-
     // end::update[]
     override
     // tag::delete[]
@@ -86,8 +85,6 @@ interface PersonRepository : CrudRepository<Person, ObjectId>, JpaSpecificationE
     override
     // tag::delete[]
     fun deleteAll(spec: DeleteSpecification<Person>?): Long
-
-    // end::delete[]
 
     // end::delete[]
 
@@ -102,13 +99,17 @@ interface PersonRepository : CrudRepository<Person, ObjectId>, JpaSpecificationE
         fun nameEquals(name: String?) = where<Person> { root[Person::name] eq name }
 
         fun ageIsLessThan(age: Int) = where<Person> { root[Person::age] lt age }
+
+        fun nameInList(names: List<String>) = where<Person> { root[Person::name] inList names }
         // end::where[]
 
         // tag::or[]
-        fun nameOrAgeMatches(age: Int, name: String?) = where<Person> {
-            or {
-                root[Person::name] eq name
-                root[Person::age] lt age
+        fun nameOrAgeMatches(age: Int, name: String) = query<Person> {
+            where {
+                or {
+                    root[Person::name] eq name
+                    root[Person::age] lt age
+                }
             }
         }
         // end::or[]
@@ -151,9 +152,10 @@ interface PersonRepository : CrudRepository<Person, ObjectId>, JpaSpecificationE
         }
 
         // tag::specifications[]
+        // tag::repository[]
     }
     // end::allSpecifications[]
     // end::specifications[]
-    // tag::repository[]
+    // end::repository[]
 }
 

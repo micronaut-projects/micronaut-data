@@ -152,16 +152,11 @@ public abstract class AbstractPersistentEntityJoinSupport<J, E> implements Persi
         if (joinType == null) {
             return null;
         }
-        switch (joinType) {
-            case LEFT:
-                return io.micronaut.data.annotation.Join.Type.LEFT;
-            case RIGHT:
-                return io.micronaut.data.annotation.Join.Type.RIGHT;
-            case INNER:
-                return io.micronaut.data.annotation.Join.Type.INNER;
-            default:
-                return null;
-        }
+        return switch (joinType) {
+            case LEFT -> io.micronaut.data.annotation.Join.Type.LEFT;
+            case RIGHT -> io.micronaut.data.annotation.Join.Type.RIGHT;
+            case INNER -> io.micronaut.data.annotation.Join.Type.INNER;
+        };
     }
 
     @Override

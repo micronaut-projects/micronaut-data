@@ -4,6 +4,8 @@ import example.PersonRepository.Specifications.ageIsLessThan
 import example.PersonRepository.Specifications.ageIsLessThan2
 import example.PersonRepository.Specifications.nameEquals
 import example.PersonRepository.Specifications.nameEquals2
+import example.PersonRepository.Specifications.nameInList
+import example.PersonRepository.Specifications.nameOrAgeMatches
 import example.PersonRepository.Specifications.setNewName2
 import jakarta.inject.Inject
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
@@ -55,6 +57,12 @@ internal class PersonSuspendRepositorySpec : AbstractMongoSpec() {
     }
 
     @Test
+    fun testNameOrAgeMatches() = runBlocking {
+        val peopleWithNameOrAge = personRepository.findAll(nameOrAgeMatches(22, "Josh")).toList()
+        Assertions.assertEquals(2, peopleWithNameOrAge.size)
+    }
+
+    @Test
     fun testDelete() = runBlocking {
         val empty: PredicateSpecification<Person>? = null
         var all = personRepository.findAll(empty).toList()
@@ -84,5 +92,19 @@ internal class PersonSuspendRepositorySpec : AbstractMongoSpec() {
         Assertions.assertEquals(2, all.size)
         Assertions.assertTrue(all.stream().anyMatch { p: Person -> p.name == "Steven" })
         Assertions.assertTrue(all.stream().anyMatch { p: Person -> p.name == "Josh" })
+    }
+
+
+    @Test
+    fun testFindInList() = runBlocking {
+        val twoPeople = personRepository.findAll(PredicateSpecification.where(nameInList(listOf("Denis", "Josh")))).toList()
+        val denis = personRepository.findAll(PredicateSpecification.where(nameInList(listOf("Denis")))).toList()
+        val josh = personRepository.findAll(PredicateSpecification.where(nameInList(listOf("Josh")))).toList()
+
+        Assertions.assertEquals(2, twoPeople.size)
+        Assertions.assertEquals(1, denis.size)
+        Assertions.assertEquals("Denis", denis.first().name)
+        Assertions.assertEquals(1, josh.size)
+        Assertions.assertEquals("Josh", josh.first().name)
     }
 }

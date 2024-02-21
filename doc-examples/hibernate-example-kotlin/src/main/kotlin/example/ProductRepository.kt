@@ -15,11 +15,13 @@ import java.util.concurrent.CompletableFuture
 // tag::join[]
 // tag::async[]
 // tag::specifications[]
+// tag::procedure[]
 @Repository
 interface ProductRepository : CrudRepository<Product, Long>, JpaSpecificationExecutor<Product> {
 // end::join[]
 // end::async[]
 // end::specifications[]
+// end::procedure[]
 
     // tag::join[]
     @Join(value = "manufacturer", type = Join.Type.FETCH) // <1>
@@ -43,8 +45,6 @@ interface ProductRepository : CrudRepository<Product, Long>, JpaSpecificationExe
     fun queryByNameContains(str: String): Maybe<Product>
 
     fun countDistinctByManufacturerName(name: String): Single<Long>
-    // end::reactive[]
-
     // end::reactive[]
 
     // tag::procedure[]
@@ -74,6 +74,9 @@ interface ProductRepository : CrudRepository<Product, Long>, JpaSpecificationExe
     object Specifications {
 
         fun nameEquals(name: String) = Specification<Product> { root, _, criteriaBuilder ->
+            // end::spec[]
+            check(criteriaBuilder.javaClass.getName().startsWith("org.hibernate"))
+            // tag::spec[]
             criteriaBuilder.equal(root.get<String>("name"), name)
         }
 
@@ -88,7 +91,9 @@ interface ProductRepository : CrudRepository<Product, Long>, JpaSpecificationExe
 // tag::join[]
 // tag::async[]
 // tag::specifications[]
+// tag::procedure[]
 }
 // end::join[]
 // end::async[]
 // end::specifications[]
+// end::procedure[]

@@ -233,6 +233,15 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
+    protected void appendProjectionRowCountDistinct(StringBuilder queryString, QueryState queryState, PersistentEntity entity, AnnotationMetadata annotationMetadata, String logicalName) {
+        queryString.append(COUNT_DISTINCT)
+            .append(OPEN_BRACKET)
+            .append(logicalName)
+            .append(CLOSE_BRACKET)
+            .append(CLOSE_BRACKET);
+    }
+
+    @Override
     protected final boolean computePropertyPaths() {
         return false;
     }
@@ -283,6 +292,18 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     protected void appendCompoundAssociationProjection(QueryState queryState, StringBuilder queryString, Association association, PersistentPropertyPath propertyPath, String alias) {
         String joinAlias = queryState.computeAlias(propertyPath.getPath());
         queryString.append(joinAlias).append(AS_CLAUSE).append(alias != null ? alias : association.getName());
+    }
+
+    @Override
+    protected void appendCompoundPropertyProjection(QueryState queryState, StringBuilder queryString, PersistentProperty property, PersistentPropertyPath propertyPath, String columnAlias) {
+        if (property instanceof Embedded) {
+            queryString.append(queryState.getRootAlias()).append(DOT).append(propertyPath.getPath());
+            if (columnAlias != null) {
+                queryString.append(AS_CLAUSE).append(columnAlias);
+            }
+            return;
+        }
+        super.appendCompoundPropertyProjection(queryState, queryString, property, propertyPath, columnAlias);
     }
 
     @Override

@@ -287,7 +287,7 @@ import io.micronaut.data.document.tck.entities.Book;
 interface MyInterface2 extends GenericRepository<Book, String> {
 
     @MongoUpdateQuery(filter = \"{title:{\$eq: :t}}\", update = \"{\$set:{name: \\"tom\\"}}\", collation = \"{ locale: 'en_US', numericOrdering: true}\")
-    List<Book> customUpdate(String t);
+    void customUpdate(String t);
 
 }
 """
@@ -315,7 +315,7 @@ import io.micronaut.data.document.tck.entities.Book;
 interface MyInterface2 extends GenericRepository<Book, String> {
 
     @MongoUpdateQuery(filter = \"{title:{\$eq: :t}}\", update = \"{\$set:{name: \\"tom\\"}}\")
-    List<Book> customUpdate(String t);
+    void customUpdate(String t);
 
 }
 """
@@ -344,7 +344,7 @@ import io.micronaut.data.document.tck.entities.Book;
 interface MyInterface2 extends GenericRepository<Book, String> {
 
     @MongoUpdateQuery(update = \"{\$set:{name: \\"tom\\"}}\")
-    List<Book> customUpdate(String t);
+    void customUpdate(String t);
 
 }
 """
@@ -553,16 +553,43 @@ interface PersonRepository extends GenericRepository<Person, String> {
     LocalDate findMaxDateOfBirth();
 
     LocalDate findMinDateOfBirth();
+
+    int count();
+
+    int countDistinctByAge(int age);
 }
 """
             )
 
         when:
             def findMaxDateOfBirthQuery = repository.getRequiredMethod("findMaxDateOfBirth").getAnnotation(Query).stringValue().get()
-            def findMinDateOfBirth = repository.getRequiredMethod("findMinDateOfBirth").getAnnotation(Query).stringValue().get()
+            def findMinDateOfBirthQuery = repository.getRequiredMethod("findMinDateOfBirth").getAnnotation(Query).stringValue().get()
+            def countQuery = repository.getRequiredMethod("count").getAnnotation(Query).stringValue().get()
+            def countDistinctByAgeQuery = repository.getRequiredMethod("countDistinctByAge", int).getAnnotation(Query).stringValue().get()
 
         then:
             findMaxDateOfBirthQuery == '[{$group:{dateOfBirth:{$max:\'$dateOfBirth\'},_id:null}}]'
-            findMinDateOfBirth == '[{$group:{dateOfBirth:{$min:\'$dateOfBirth\'},_id:null}}]'
+            findMinDateOfBirthQuery == '[{$group:{dateOfBirth:{$min:\'$dateOfBirth\'},_id:null}}]'
+            countQuery == '[{$count:\'result\'}]'
+            countDistinctByAgeQuery == '[{$match:{age:{$eq:{$mn_qp:0}}}},{$count:\'result\'}]'
+    }
+
+    void "test count distinct by property not supported"() {
+        when:
+        buildRepository('test.PersonRepository', """
+import io.micronaut.data.mongodb.annotation.*;
+import java.time.LocalDate;
+import io.micronaut.data.document.tck.entities.Person;
+import java.util.Optional;
+
+@MongoRepository
+interface PersonRepository extends GenericRepository<Person, String> {
+    int countDistinctName();
+}
+"""
+        )
+        then:
+        def ex = thrown(Exception)
+        ex.message.contains('Unable to implement Repository method: PersonRepository.countDistinctName(). Count distinct against property is not supported by Micronaut Data MongoDB')
     }
 }

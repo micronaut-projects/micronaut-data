@@ -22,6 +22,7 @@ import io.micronaut.data.hibernate.entities.UserWithWhere
 import io.micronaut.data.jpa.repository.criteria.Specification
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.EntityIdClass
@@ -83,6 +84,8 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
             def found = userWithWhereRepository.findById(e.id)
         then:
             found.isPresent()
+        cleanup:
+            userWithWhereRepository.deleteById(e.id)
     }
 
     void "test @where on find one deleted"() {
@@ -312,12 +315,21 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
 
     void "author dto result from native query"() {
         when:
-        def author = authorRepository.getAuthorsByNativeQuery()
+        def sort = Sort.of(Sort.Order.desc("authorName"))
+        def authors = authorRepository.getAuthorsByNativeQuery(sort)
 
         then:
-        author
-        author.authorId
-        author.authorName
+        authors
+        authors.size() == 3
+        authors[0].authorId
+        authors[0].authorName
+        authors[1].authorId
+        authors[1].authorName
+        authors[2].authorId
+        authors[2].authorName
+        // verify sorted desc by authorName
+        authors[0].authorName >= authors[1].authorName
+        authors[1].authorName >= authors[2].authorName
     }
 
     void "entity with id class"() {
@@ -370,6 +382,16 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
         e.id1 == 11
         e.id2 == 22
         e.name == "abc"
+
+        when:
+        def cnt = entityWithIdClassRepository.count()
+        def cntDistinct = entityWithIdClassRepository.countDistinct()
+        def cntDistinctName = entityWithIdClassRepository.countDistinctName()
+
+        then:
+        cnt == 3
+        cntDistinct <= cnt
+        cntDistinctName <= cntDistinctName
 
         when:
         entityWithIdClassRepository.delete(e)
@@ -662,6 +684,16 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
             value.totalSize == 2
             value.content.size() == 2
         when:
+            value = bookRepository.findAll((Specification<Book>)null, Pageable.from(0))
+            def count = bookRepository.count((PredicateSpecification<Book>) null)
+        then:
+            count
+            value.totalSize > 2
+            value.totalSize == count
+            value.content.size() > 2
+            def optBook = value.content.stream().filter(b -> b.title == "The Stand").findFirst()
+            optBook.present
+        when:
             value = bookRepository.findAll(testJoin("Stephen King"), Pageable.from(0)
                     .order(new Sort.Order("author.name")).order(new Sort.Order("title")))
         then:
@@ -714,6 +746,10 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
         then:
             result.size() == 1
             result[0].id == child1.id
+        when:"findAll using null PredicateSpecification"
+            result = relPersonRepo.findAll((PredicateSpecification<RelPerson>) null)
+        then:
+            result.size() > 1
         when:
             result = (List<RelPerson>) relPersonRepo.findAll(RelPersonRepository.Specifications.findRelPersonByParentAndFriends(parent.id, List.of(child1Friend1.id, child1Friend2.id, child2Friend1.id)))
         then:
@@ -727,6 +763,66 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
             result = (List<RelPerson>) relPersonRepo.findAll(RelPersonRepository.Specifications.findRelPersonByChildren(List.of(child1Friend1.id, child1Friend2.id, child2Friend1.id)))
         then:
             result.size() == 0
+    }
+
+    void "test distinct count criteria"() {
+        given:
+            relPersonRepo.deleteAll()
+            10.times {
+                def person = new RelPerson()
+                person.name = 'Person'
+                relPersonRepo.save(person)
+            }
+        when:
+            def result = relPersonRepo.findOne(RelPersonRepository.Specifications.countDistinct())
+        then:
+            result == 10
+    }
+
+    void "test count criteria "() {
+        given:
+            relPersonRepo.deleteAll()
+            10.times {
+                def person = new RelPerson()
+                person.name = 'Person'
+                relPersonRepo.save(person)
+            }
+        when:
+            def result = relPersonRepo.findOne(RelPersonRepository.Specifications.countDistinct())
+        then:
+            result == 10
+    }
+
+    void "test order by embedded field"() {
+        when:
+            def e1 = userWithWhereRepository.save(new UserWithWhere(id: UUID.randomUUID(), email: "where1@somewhere.com", deleted: false))
+            def u2 = new UserWithWhere(id: UUID.randomUUID(), email: "where2@somewhere.com", deleted: false)
+            u2.audit.createdTime = u2.audit.createdTime.plusSeconds(30)
+            def e2 = userWithWhereRepository.save(u2)
+            def found1 = userWithWhereRepository.findById(e1.id)
+            def found2 = userWithWhereRepository.findById(e2.id)
+        then:
+            found1.present
+            found2.present
+        when:"Sorted by embedded field works"
+            def sortedItems = userWithWhereRepository.findAllByIdInList(List.of(e1.id, e2.id), Sort.of(Sort.Order.desc("audit.createdTime", false)))
+        then:
+            sortedItems
+            sortedItems.size() == 2
+            sortedItems[0].id == e2.id
+            sortedItems[1].id == e1.id
+        cleanup:
+            userWithWhereRepository.deleteAll(List.of(e1, e2))
+    }
+
+    void "test findBy and count with multiple parameters"() {
+        when:
+        def bookTitles = List.of("The Stand", "Pet Cemetery")
+        def books = bookRepository.findByTitleInAndTotalPagesGreaterThan(bookTitles, 1)
+        def cnt = bookRepository.countByTitleInAndTotalPagesGreaterThan(bookTitles, 1)
+        then:
+        books.size() == 2
+        cnt == 2
     }
 
     private static Specification<Book> testJoin(String value) {

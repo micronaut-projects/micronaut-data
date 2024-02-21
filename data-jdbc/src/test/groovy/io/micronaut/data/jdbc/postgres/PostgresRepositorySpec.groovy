@@ -16,8 +16,12 @@
 package io.micronaut.data.jdbc.postgres
 
 import groovy.transform.Memoized
+import io.micronaut.data.model.Sort
+import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
+
+import java.time.LocalDateTime
 
 class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresTestPropertyProvider {
 
@@ -154,6 +158,11 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
     }
 
     @Memoized
+    PostgresDtoTestService getDtoTestService() {
+        context.getBean(PostgresDtoTestService)
+    }
+
+    @Memoized
     @Override
     boolean isSupportsArrays() {
         return true
@@ -176,15 +185,25 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
         given:
             setupBooks()
         when:
-            def books1 = bookRepository.listNativeBooksNullableSearch(null)
+            def books1 = bookRepository.listNativeBooksNullableSearch(null, null)
+            def books1Sorted = bookRepository.listNativeBooksNullableSearch(null, Sort.of(Sort.Order.asc("title")))
         then:
             books1.size() == 8
+            books1Sorted.size() == 8
+            // verify native query with given sort returned sorted results as expected
+            def book1Titles = books1.stream().map(b -> b.title).sorted().toList()
+            book1Titles.size() == 8
+            for (int i = 0; i < book1Titles.size(); i++) {
+                def title = book1Titles[i]
+                def book1Sorted = books1Sorted[i]
+                title == book1Sorted.title
+            }
         when:
-            def books2 = bookRepository.listNativeBooksNullableSearch("The Stand")
+            def books2 = bookRepository.listNativeBooksNullableSearch("The Stand", null)
         then:
             books2.size() == 1
         when:
-            def books3 = bookRepository.listNativeBooksNullableSearch("Xyz")
+            def books3 = bookRepository.listNativeBooksNullableSearch("Xyz", null)
         then:
             books3.size() == 0
         when:
@@ -221,5 +240,367 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
             books12.size() == 1
     }
 
+    void "test update returning book"() {
+        given:
+            setupBooks()
+        when:
+            def book = bookRepository.findByTitle("Pet Cemetery")
+            book.title = "Xyz"
+            Book newBook = bookRepository.updateReturning(book)
+            book.title = "old"
+        then:
+            newBook.title == "Xyz"
+            newBook.postLoad == 1
+            newBook.postUpdate == 1
+            book.postLoad == 1
+            book.preUpdate == 1
+    }
+
+    void "test update returning books"() {
+        given:
+            setupBooks()
+        when:
+            def book = bookRepository.findByTitle("Pet Cemetery")
+            def books = bookRepository.findByAuthorName(book.author.name)
+            books.forEach {
+                it.title += "UPDATED"
+            }
+            List<Book> newBooks = bookRepository.updateReturning(books)
+            book.title = "old"
+        then:
+            newBooks.size() == 2
+            newBooks.forEach {
+                assert it.title.endsWith("UPDATED")
+                assert it.postLoad == 1
+                assert it.postUpdate == 1
+            }
+            books.forEach {
+                assert it.postLoad == 1
+                assert it.preUpdate == 1
+            }
+    }
+
+    void "test insert returning book"() {
+        given:
+            setupBooks()
+            def book = bookRepository.findByTitle("Pet Cemetery")
+            def bookToCreate = new Book(title: "My book", totalPages: 123, author: book.author)
+        when:
+            def newBook = bookRepository.saveReturning(
+                    bookToCreate
+            )
+        then:
+            newBook.id
+            !newBook.is(bookToCreate)
+            bookToCreate.prePersist == 1
+            newBook.postLoad == 1
+            newBook.postPersist == 1
+            bookRepository.findById(newBook.id).get().title == "My book"
+            bookRepository.findByTitle("My book")
+    }
+
+    void "test insert returning books"() {
+        given:
+            setupBooks()
+            def book = bookRepository.findByTitle("Pet Cemetery")
+
+            def booksToCreate = List.of(
+                    new Book(title: "My book 1", totalPages: 123, author: book.author),
+                    new Book(title: "My book 2", totalPages: 123, author: book.author),
+                    new Book(title: "My book 3", totalPages: 123, author: book.author),
+            )
+        when:
+            def newBooks = bookRepository.saveReturning(
+                    booksToCreate
+            )
+        then:
+            newBooks.size() == 3
+            newBooks[0].id
+            !newBooks[0].is(booksToCreate[0])
+            newBooks[0].title == "My book 1"
+            newBooks[1].title == "My book 2"
+            newBooks[2].title == "My book 3"
+            def newBook = newBooks[0]
+            bookRepository.findById(newBook.id).get().title == "My book 1"
+            bookRepository.findByTitle("My book 1")
+            booksToCreate.forEach {
+                assert it.prePersist == 1
+            }
+            newBooks.forEach {
+                assert it.postLoad == 1
+                assert it.postPersist == 1
+            }
+    }
+
+    void "test custom insert returning book"() {
+        given:
+            setupBooks()
+            def book = bookRepository.findByTitle("Pet Cemetery")
+        when:
+            def newBook = bookRepository.customInsertReturningBook(
+                    book.getAuthor().getId(),
+                    null,
+                    "My book",
+                    123,
+                    null,
+                    LocalDateTime.now()
+            )
+        then:
+            bookRepository.findById(newBook.id).get().title == "My book"
+            bookRepository.findByTitle("My book")
+    }
+
+    void "test custom insert returning books"() {
+        given:
+            setupBooks()
+            def book = bookRepository.findByTitle("Pet Cemetery")
+        when:
+            def newBooks = bookRepository.customInsertReturningBooks(
+                    book.getAuthor().getId(),
+                    null,
+                    "My book",
+                    123,
+                    null,
+                    LocalDateTime.now()
+            )
+        then:
+            newBooks.size() == 1
+            def newBook = newBooks[0]
+            bookRepository.findById(newBook.id).get().title == "My book"
+            bookRepository.findByTitle("My book")
+    }
+
+    void "test update returning book title"() {
+        given:
+            setupBooks()
+        when:
+            def book = bookRepository.findByTitle("Pet Cemetery")
+            book.title = "Xyz"
+            String newTitle = bookRepository.updateReturningTitle(book)
+        then:
+            newTitle == "Xyz"
+            bookRepository.findById(book.id).get().title == "Xyz"
+    }
+
+    void "test update returning book title 2"() {
+        given:
+            setupBooks()
+            def book = bookRepository.findByTitle("Pet Cemetery")
+        when:
+            String newTitle = bookRepository.updateReturningTitle(book.id, "Xyz")
+        then:
+            newTitle == "Xyz"
+            bookRepository.findById(book.id).get().title == "Xyz"
+    }
+
+    void "test update returning book title 3"() {
+        given:
+            setupBooks()
+            def book = bookRepository.findByTitle("Pet Cemetery")
+        when:
+            String newTitle = bookRepository.updateByIdReturningTitle(book.id, "Xyz")
+        then:
+            newTitle == "Xyz"
+            bookRepository.findById(book.id).get().title == "Xyz"
+    }
+
+    void "test update all books with author and returning books"() {
+        given:
+            setupBooks()
+            def books = bookRepository.findAll()
+            def petCemetery = bookRepository.findByTitle("Pet Cemetery")
+        when:
+            def b = bookRepository.updateReturning(petCemetery.author.id)
+        then:
+            b.size() == books.size()
+        when:
+            def allBooks = bookRepository.findAll()
+        then:
+            allBooks.forEach {
+                assert it.author.id == petCemetery.author.id
+            }
+            b.forEach {
+                assert it.postLoad == 1
+            }
+    }
+
+    void "test update all books with author and returning a book"() {
+        given:
+            setupBooks()
+            def petCemetery = bookRepository.findByTitle("Pet Cemetery")
+        when:
+            def b = bookRepository.modifyReturning(petCemetery.author.id)
+        then:
+            b.author.id == petCemetery.author.id
+            b.postLoad == 1
+        when:
+            def allBooks = bookRepository.findAll()
+        then:
+            allBooks.forEach {
+                assert it.author.id == petCemetery.author.id
+            }
+    }
+
+    void "test custom update all books with author and returning books"() {
+        given:
+            setupBooks()
+            def books = bookRepository.findAll()
+            def petCemetery = bookRepository.findByTitle("Pet Cemetery")
+        when:
+            def b = bookRepository.customUpdateReturningBooks(petCemetery.author.id)
+        then:
+            b.size() == books.size()
+        when:
+            def allBooks = bookRepository.findAll()
+        then:
+            allBooks.forEach {
+                assert it.author.id == petCemetery.author.id
+            }
+            b.forEach {
+                assert it.postLoad == 1
+            }
+    }
+
+    void "test custom update all books with author and returning a book"() {
+        given:
+            setupBooks()
+            def petCemetery = bookRepository.findByTitle("Pet Cemetery")
+        when:
+            def b = bookRepository.customUpdateReturningBook(petCemetery.author.id)
+        then:
+            b.author.id == petCemetery.author.id
+            b.postLoad == 1
+        when:
+            def allBooks = bookRepository.findAll()
+        then:
+            allBooks.forEach {
+                assert it.author.id == petCemetery.author.id
+            }
+    }
+
+    void "test delete returning book"() {
+        given:
+            setupBooks()
+        when:
+            def book = bookRepository.findByTitle("Pet Cemetery")
+            Book deletedBook = bookRepository.deleteReturning(book)
+        then:
+            deletedBook.id == book.id
+            deletedBook.title == book.title
+            deletedBook.postLoad == 1
+    }
+
+    void "test delete returning book custom query"() {
+        given:
+            setupBooks()
+        when:
+            def book = bookRepository.findByTitle("Pet Cemetery")
+            Book deletedBook = bookRepository.customDeleteOne(book.id)
+        then:
+            deletedBook.id == book.id
+            deletedBook.title == book.title
+            deletedBook.postLoad == 1
+    }
+
+    void "test delete returning title book"() {
+        given:
+            setupBooks()
+        when:
+            def book = bookRepository.findByTitle("Pet Cemetery")
+            String deletedTitle = bookRepository.deleteReturningTitle(book)
+        then:
+            deletedTitle == book.title
+            bookRepository.findById(book.id).isEmpty()
+    }
+
+    void "test delete returning last updated book"() {
+        given:
+            setupBooks()
+        when:
+            def book = bookRepository.findByTitle("Pet Cemetery")
+            LocalDateTime lastUpdated = bookRepository.deleteReturningLastUpdated(book.id, book.title)
+        then:
+            lastUpdated == book.lastUpdated
+            bookRepository.findById(book.id).isEmpty()
+    }
+
+    void "test delete returning last updated book 2"() {
+        given:
+            setupBooks()
+        when:
+            def book = bookRepository.findByTitle("Pet Cemetery")
+            LocalDateTime lastUpdated = bookRepository.deleteByIdAndTitleReturningLastUpdated(book.id, book.title)
+        then:
+            lastUpdated == book.lastUpdated
+            bookRepository.findById(book.id).isEmpty()
+    }
+
+    void "test delete returning books"() {
+        given:
+            setupBooks()
+        when:
+            def book = bookRepository.findByTitle("Pet Cemetery")
+            def books = bookRepository.findByAuthorName(book.author.name)
+            List<Book> deletedBooks = bookRepository.deleteReturning(books)
+        then:
+            deletedBooks.size() == books.size()
+            deletedBooks[0].id == books[0].id
+            deletedBooks[0].title == books[0].title
+            bookRepository.findByAuthorName(book.author.name).isEmpty()
+    }
+
+    void "test delete returning author books"() {
+        given:
+            setupBooks()
+        when:
+            def book = bookRepository.findByTitle("Pet Cemetery")
+            def books = bookRepository.findByAuthorName(book.author.name)
+            List<Book> deletedBooks = bookRepository.deleteReturning(book.author.id)
+        then:
+            deletedBooks.size() == books.size()
+            deletedBooks[0].id == books[0].id
+            deletedBooks[0].title == books[0].title
+            bookRepository.findByAuthorName(book.author.name).isEmpty()
+    }
+
+    void "test custom delete all"() {
+        given:
+            setupBooks()
+        when:
+            def allBooks = bookRepository.findAll().sort {it.id }
+            def deletedBooks = bookRepository.customDeleteAll().sort {it.id }
+        then:
+            allBooks.size() == deletedBooks.size()
+            allBooks.eachWithIndex { book, index ->
+                def deletedBook = deletedBooks[index]
+                assert book.id == deletedBook.id
+                assert book.title == deletedBook.title
+            }
+    }
+
+    void "test DTO with and without constructor"() {
+        when:"Retrieve DTO using Jdbc Operations"
+        def result0 = dtoTestService.getDto(0, PostgresDtoTestService.DtoWithoutConstructor.class)
+        def result1 = dtoTestService.getDto(1, PostgresDtoTestService.DtoWithAllArgsConstructor.class)
+        def result2 = dtoTestService.getDto(2, PostgresDtoTestService.DtoRecord.class)
+        then:
+        result0.id == 0
+        result1.id == 1
+        result2.id() == 2
+        result0.tags == ["foo", "bar"]
+        result1.tags == ["foo", "bar"]
+        result2.tags() == ["foo", "bar"]
+        when:"Retrieve DTO using repository"
+        result0 = dtoTestService.getDtoUsingRepository(0, PostgresDtoTestService.DtoWithoutConstructor.class)
+        result1 = dtoTestService.getDtoUsingRepository(1, PostgresDtoTestService.DtoWithAllArgsConstructor.class)
+        result2 = dtoTestService.getDtoUsingRepository(2, PostgresDtoTestService.DtoRecord.class)
+        then:
+        result0.id == 0
+        result1.id == 1
+        result2.id() == 2
+        result0.tags == ["foo", "bar"]
+        result1.tags == ["foo", "bar"]
+        result2.tags() == ["foo", "bar"]
+    }
 
 }

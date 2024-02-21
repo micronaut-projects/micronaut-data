@@ -25,11 +25,9 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.AssociationUtils;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
-import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
 import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.query.JoinPath;
@@ -38,6 +36,8 @@ import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.StoredQuery;
+import io.micronaut.data.operations.BlockingCriteriaCapableRepository;
+import io.micronaut.data.operations.CriteriaRepositoryOperations;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.repository.jpa.criteria.CriteriaDeleteBuilder;
 import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder;
@@ -72,6 +72,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static io.micronaut.data.model.runtime.StoredQuery.*;
+
 /**
  * Abstract specification interceptor.
  *
@@ -83,9 +85,10 @@ import java.util.stream.Collectors;
 @Internal
 public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQueryInterceptor<T, R> {
 
+    protected final CriteriaRepositoryOperations criteriaRepositoryOperations;
     private final Map<RepositoryMethodKey, QueryBuilder> sqlQueryBuilderForRepositories = new ConcurrentHashMap<>();
     private final Map<RepositoryMethodKey, Set<JoinPath>> methodsJoinPaths = new ConcurrentHashMap<>();
-    private final RuntimeCriteriaBuilder criteriaBuilder;
+    private final CriteriaBuilder criteriaBuilder;
     private final MethodContextAwareStoredQueryDecorator storedQueryDecorator;
     private final PreparedQueryDecorator preparedQueryDecorator;
 
@@ -96,7 +99,16 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
      */
     protected AbstractSpecificationInterceptor(RepositoryOperations operations) {
         super(operations);
-        this.criteriaBuilder = operations.getApplicationContext().getBean(RuntimeCriteriaBuilder.class);
+        if (operations instanceof CriteriaRepositoryOperations criteriaOps) {
+            criteriaRepositoryOperations = criteriaOps;
+            criteriaBuilder = criteriaRepositoryOperations.getCriteriaBuilder();
+        } else if (operations instanceof BlockingCriteriaCapableRepository repository) {
+            criteriaRepositoryOperations = repository.blocking();
+            criteriaBuilder = criteriaRepositoryOperations.getCriteriaBuilder();
+        } else {
+            criteriaRepositoryOperations = null;
+            criteriaBuilder = operations.getApplicationContext().getBean(RuntimeCriteriaBuilder.class);
+        }
         if (operations instanceof MethodContextAwareStoredQueryDecorator) {
             storedQueryDecorator = (MethodContextAwareStoredQueryDecorator) operations;
         } else if (operations instanceof StoredQueryDecorator decorator) {
@@ -123,45 +135,89 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     }
 
     @NonNull
+    protected final Iterable<?> findAll(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context, Type type) {
+        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
+        if (criteriaRepositoryOperations != null) {
+            CriteriaQuery<Object> query = buildQuery(context, type, methodJoinPaths);
+            Pageable pageable = getPageable(context);
+            if (pageable != null) {
+                return criteriaRepositoryOperations.findAll(query, (int) pageable.getOffset(), pageable.getSize());
+            }
+            return criteriaRepositoryOperations.findAll(query);
+        }
+        return operations.findAll(preparedQueryForCriteria(methodKey, context, type, methodJoinPaths));
+    }
+
+    @NonNull
+    protected final Object findOne(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context, Type type) {
+        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
+        if (criteriaRepositoryOperations != null) {
+            return criteriaRepositoryOperations.findOne(buildQuery(context, type, methodJoinPaths));
+        }
+        return operations.findOne(preparedQueryForCriteria(methodKey, context, type, methodJoinPaths));
+    }
+
+    protected final Set<JoinPath> getMethodJoinPaths(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
+        return methodsJoinPaths.computeIfAbsent(methodKey, repositoryMethodKey ->
+            AssociationUtils.getJoinFetchPaths(context));
+    }
+
+    @NonNull
+    protected final Long count(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
+        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
+        Long count;
+        if (criteriaRepositoryOperations != null) {
+            count =  criteriaRepositoryOperations.findOne(buildCountQuery(context));
+        } else {
+            count = operations.findOne(preparedQueryForCriteria(methodKey, context, Type.COUNT, methodJoinPaths));
+        }
+        return count == null ? 0 : count;
+    }
+
+    protected final boolean exists(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
+        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
+        if (criteriaRepositoryOperations != null) {
+            return criteriaRepositoryOperations.findOne(buildExistsQuery(context, methodJoinPaths));
+        }
+        Object one = operations.findOne(preparedQueryForCriteria(methodKey, context, Type.EXISTS, methodJoinPaths));
+        return one instanceof Boolean aBoolean ? aBoolean : one != null;
+    }
+
+    protected final Optional<Number> deleteAll(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
+        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
+        if (criteriaRepositoryOperations != null) {
+            return criteriaRepositoryOperations.deleteAll(buildDeleteQuery(context));
+        }
+        return operations.executeDelete(preparedQueryForCriteria(methodKey, context, Type.DELETE_ALL, methodJoinPaths));
+    }
+
+    protected final Optional<Number> updateAll(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
+        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
+        if (criteriaRepositoryOperations != null) {
+            return criteriaRepositoryOperations.updateAll(buildUpdateQuery(context));
+        }
+        return operations.executeUpdate(preparedQueryForCriteria(methodKey, context, Type.UPDATE_ALL, methodJoinPaths));
+    }
+
+    @NonNull
     protected final <E, QR> PreparedQuery<E, QR> preparedQueryForCriteria(RepositoryMethodKey methodKey,
                                                                           MethodInvocationContext<T, R> context,
-                                                                          Type type) {
+                                                                          Type type,
+                                                                          Set<JoinPath> methodJoinPaths) {
 
-        Pageable pageable = Pageable.UNPAGED;
-        for (Object param : context.getParameterValues()) {
-            if (param instanceof Pageable) {
-                pageable = (Pageable) param;
-                break;
-            }
-        }
-
-        QueryBuilder sqlQueryBuilder = sqlQueryBuilderForRepositories.computeIfAbsent(methodKey, repositoryMethodKey -> {
-                    Class<QueryBuilder> builder = context.getAnnotationMetadata().classValue(RepositoryConfiguration.class, "queryBuilder")
-                            .orElseThrow(() -> new IllegalStateException("Cannot determine QueryBuilder"));
-                    BeanIntrospection<QueryBuilder> introspection = BeanIntrospection.getIntrospection(builder);
-                    if (introspection.getConstructorArguments().length == 1
-                            && introspection.getConstructorArguments()[0].getType() == AnnotationMetadata.class) {
-                        return introspection.instantiate(context.getAnnotationMetadata());
-                    }
-                    return introspection.instantiate();
-                }
-        );
-
+        Pageable pageable = findPageable(context);
+        QueryBuilder sqlQueryBuilder = getQueryBuilder(methodKey, context);
         StoredQuery<E, ?> storedQuery;
         if (type == Type.FIND_ALL || type == Type.FIND_ONE || type == Type.FIND_PAGE) {
-            Set<JoinPath> joinPaths = methodsJoinPaths.computeIfAbsent(methodKey, repositoryMethodKey ->
-                AssociationUtils.getJoinFetchPaths(context));
-            storedQuery = buildFind(context, type, pageable, sqlQueryBuilder, joinPaths);
+            storedQuery = buildFind(methodKey, context, type, methodJoinPaths);
         } else if (type == Type.COUNT) {
-            storedQuery = buildCount(context, sqlQueryBuilder);
+            storedQuery = buildCount(methodKey, context);
         } else if (type == Type.DELETE_ALL) {
             storedQuery = buildDeleteAll(context, sqlQueryBuilder);
         } else if (type == Type.UPDATE_ALL) {
             storedQuery = buildUpdateAll(context, sqlQueryBuilder);
         } else if (type == Type.EXISTS) {
-            Set<JoinPath> joinPaths = methodsJoinPaths.computeIfAbsent(methodKey, repositoryMethodKey ->
-                AssociationUtils.getJoinFetchPaths(context));
-          storedQuery = buildExists(context, sqlQueryBuilder, joinPaths);
+            storedQuery = buildExists(context, sqlQueryBuilder, methodJoinPaths);
         } else {
             throw new IllegalStateException("Unknown criteria type: " + type);
         }
@@ -170,58 +226,122 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         return preparedQueryDecorator.decorate(preparedQuery);
     }
 
+    @NonNull
+    private Pageable findPageable(MethodInvocationContext<T, R> context) {
+        Pageable pageable = Pageable.UNPAGED;
+        for (Object param : context.getParameterValues()) {
+            if (param instanceof Pageable) {
+                pageable = (Pageable) param;
+                break;
+            }
+        }
+        return pageable;
+    }
+
+    @NonNull
+    private QueryBuilder getQueryBuilder(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
+        return sqlQueryBuilderForRepositories.computeIfAbsent(methodKey, repositoryMethodKey -> {
+                Class<QueryBuilder> builder = context.getAnnotationMetadata().classValue(RepositoryConfiguration.class, "queryBuilder")
+                    .orElseThrow(() -> new IllegalStateException("Cannot determine QueryBuilder"));
+                BeanIntrospection<QueryBuilder> introspection = BeanIntrospection.getIntrospection(builder);
+                if (introspection.getConstructorArguments().length == 1
+                    && introspection.getConstructorArguments()[0].getType() == AnnotationMetadata.class) {
+                    return introspection.instantiate(context.getAnnotationMetadata());
+                }
+                return introspection.instantiate();
+            }
+        );
+    }
+
     private <E> StoredQuery<E, ?> buildExists(MethodInvocationContext<T, R> context, QueryBuilder sqlQueryBuilder, Set<JoinPath> annotationJoinPaths) {
-        Class<E> rootEntity = getRequiredRootEntity(context);
-        CriteriaQueryBuilder<E> builder = getCriteriaQueryBuilder(context, annotationJoinPaths);
-        CriteriaQuery<E> criteriaQuery = builder.build(criteriaBuilder);
+        CriteriaQuery<E> criteriaQuery = buildExistsQuery(context, annotationJoinPaths);
         QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(sqlQueryBuilder);
 
-        return QueryResultStoredQuery.single(DataMethod.OperationType.EXISTS, context.getName(), context.getAnnotationMetadata(),
-            queryResult, rootEntity);
+        return QueryResultStoredQuery.single(OperationType.EXISTS, context.getName(), context.getAnnotationMetadata(),
+            queryResult, getRequiredRootEntity(context));
+    }
+
+    protected final <E> CriteriaQuery<E> buildExistsQuery(MethodInvocationContext<T, R> context, Set<JoinPath> annotationJoinPaths) {
+        return this.<E>getCriteriaQueryBuilder(context, annotationJoinPaths).build(criteriaBuilder);
     }
 
     private <E> StoredQuery<E, ?> buildUpdateAll(MethodInvocationContext<T, R> context, QueryBuilder sqlQueryBuilder) {
-        CriteriaUpdateBuilder<E> criteriaUpdateBuilder = getCriteriaUpdateBuilder(context);
-        CriteriaUpdate<E> criteriaUpdate = criteriaUpdateBuilder.build(criteriaBuilder);
+        CriteriaUpdate<E> criteriaUpdate = buildUpdateQuery(context);
         QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaUpdate).buildQuery(sqlQueryBuilder);
-        return QueryResultStoredQuery.single(DataMethod.OperationType.UPDATE, context.getName(),
+        return QueryResultStoredQuery.single(OperationType.UPDATE, context.getName(),
             context.getAnnotationMetadata(), queryResult, (Class<E>) criteriaUpdate.getRoot().getJavaType());
     }
 
+    protected final <E> CriteriaUpdate<E> buildUpdateQuery(MethodInvocationContext<T, R> context) {
+        return this.<E>getCriteriaUpdateBuilder(context).build(criteriaBuilder);
+    }
+
     private <E> StoredQuery<E, ?> buildDeleteAll(MethodInvocationContext<T, R> context, QueryBuilder sqlQueryBuilder) {
-        CriteriaDeleteBuilder<E> criteriaDeleteBuilder = getCriteriaDeleteBuilder(context);
-        CriteriaDelete<E> criteriaDelete = criteriaDeleteBuilder.build(criteriaBuilder);
+        CriteriaDelete<E> criteriaDelete = buildDeleteQuery(context);
         QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaDelete).buildQuery(sqlQueryBuilder);
-        return QueryResultStoredQuery.single(DataMethod.OperationType.DELETE, context.getName(),
+        return QueryResultStoredQuery.single(OperationType.DELETE, context.getName(),
             context.getAnnotationMetadata(), queryResult, (Class<E>) criteriaDelete.getRoot().getJavaType());
     }
 
-    private <E> StoredQuery<E, ?> buildCount(MethodInvocationContext<T, R> context, QueryBuilder sqlQueryBuilder) {
-        StoredQuery<E, ?> storedQuery;
+    protected final <E> CriteriaDelete<E> buildDeleteQuery(MethodInvocationContext<T, R> context) {
+        return this.<E>getCriteriaDeleteBuilder(context).build(criteriaBuilder);
+    }
+
+    private <E> StoredQuery<E, ?> buildCount(RepositoryMethodKey methodKey,
+                                             MethodInvocationContext<T, R> context) {
+        CriteriaQuery<Long> criteriaQuery = buildCountQuery(context);
+        QueryBuilder sqlQueryBuilder = getQueryBuilder(methodKey, context);
+        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(sqlQueryBuilder);
+        return QueryResultStoredQuery.count(context.getName(), context.getAnnotationMetadata(), queryResult, getRequiredRootEntity(context));
+    }
+
+    @NonNull
+    protected final <E> CriteriaQuery<Long> buildCountQuery(MethodInvocationContext<T, R> context) {
         Class<E> rootEntity = getRequiredRootEntity(context);
         QuerySpecification<E> specification = getQuerySpecification(context);
-        PersistentEntityCriteriaQuery<Long> criteriaQuery = criteriaBuilder.createQuery(Long.class);
+        CriteriaQuery<Long> criteriaQuery = criteriaBuilder.createQuery(Long.class);
         Root<E> root = criteriaQuery.from(rootEntity);
-
         if (specification != null) {
             Predicate predicate = specification.toPredicate(root, criteriaQuery, criteriaBuilder);
             if (predicate != null) {
                 criteriaQuery.where(predicate);
             }
         }
-        criteriaQuery.select(criteriaBuilder.count(root));
-        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(sqlQueryBuilder);
-        storedQuery = QueryResultStoredQuery.count(context.getName(), context.getAnnotationMetadata(), queryResult, rootEntity);
-        return storedQuery;
+        if (criteriaQuery.isDistinct()) {
+            return criteriaQuery.select(criteriaBuilder.countDistinct(root));
+        } else {
+            return criteriaQuery.select(criteriaBuilder.count(root));
+        }
     }
 
-    private <E> StoredQuery<E, Object> buildFind(MethodInvocationContext<T, R> context, Type type, Pageable pageable, QueryBuilder sqlQueryBuilder,
-                                                 Set<JoinPath> annotationJoinPaths) {
+    private <E> StoredQuery<E, Object> buildFind(RepositoryMethodKey methodKey,
+                                                 MethodInvocationContext<T, R> context,
+                                                 Type type,
+                                                 Set<JoinPath> methodJoinPaths) {
+
+        CriteriaQuery<Object> criteriaQuery = buildInternalQuery(context, type, methodJoinPaths);
+        QueryBuilder sqlQueryBuilder = getQueryBuilder(methodKey, context);
+        QueryResultPersistentEntityCriteriaQuery queryModelCriteriaQuery = (QueryResultPersistentEntityCriteriaQuery) criteriaQuery;
+        QueryModel queryModel = queryModelCriteriaQuery.getQueryModel();
+        Collection<JoinPath> queryJoinPaths = queryModel.getJoinPaths();
+        QueryResult queryResult = sqlQueryBuilder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel);
+        Set<JoinPath> joinPaths = mergeJoinPaths(methodJoinPaths, queryJoinPaths).stream().filter(jp -> jp.getJoinType().isFetch()).collect(Collectors.toSet());
         Class<E> rootEntity = getRequiredRootEntity(context);
-        CriteriaQueryBuilder<Object> builder = getCriteriaQueryBuilder(context, annotationJoinPaths);
-        CriteriaQuery<Object> criteriaQuery = builder.build(criteriaBuilder);
+        if (type == Type.FIND_ONE) {
+            return QueryResultStoredQuery.single(OperationType.QUERY, context.getName(), context.getAnnotationMetadata(),
+                queryResult, rootEntity, criteriaQuery.getResultType(), joinPaths);
+        }
+        Pageable pageable = findPageable(context);
+        return QueryResultStoredQuery.many(context.getName(), context.getAnnotationMetadata(), queryResult, rootEntity,
+            criteriaQuery.getResultType(), !pageable.isUnpaged(), joinPaths);
+    }
+
+    private <N> CriteriaQuery<N> buildInternalQuery(MethodInvocationContext<T, R> context, Type type, Set<JoinPath> methodJoinPaths) {
+        CriteriaQueryBuilder<N> builder = getCriteriaQueryBuilder(context, methodJoinPaths);
+        CriteriaQuery<N> criteriaQuery = builder.build(criteriaBuilder);
 
         if (type == Type.FIND_ALL) {
+            Pageable pageable = findPageable(context);
             for (Object param : context.getParameterValues()) {
                 if (param instanceof Sort sort && param != pageable) {
                     if (sort.isSorted()) {
@@ -232,25 +352,31 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                 }
             }
         }
-        QueryResultPersistentEntityCriteriaQuery queryModelCriteriaQuery = (QueryResultPersistentEntityCriteriaQuery) criteriaQuery;
-        QueryModel queryModel = queryModelCriteriaQuery.getQueryModel();
-        Collection<JoinPath> queryJoinPaths = queryModel.getJoinPaths();
-        QueryResult queryResult = sqlQueryBuilder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel);
-        Set<JoinPath> joinPaths = mergeJoinPaths(annotationJoinPaths, queryJoinPaths).stream().filter(jp -> jp.getJoinType().isFetch()).collect(Collectors.toSet());
-        if (type == Type.FIND_ONE) {
-            return QueryResultStoredQuery.single(DataMethod.OperationType.QUERY, context.getName(), context.getAnnotationMetadata(),
-                queryResult, rootEntity, criteriaQuery.getResultType(), joinPaths);
+        return criteriaQuery;
+    }
+
+    protected final <N> CriteriaQuery<N> buildQuery(MethodInvocationContext<T, R> context, Type type, Set<JoinPath> methodJoinPaths) {
+        CriteriaQueryBuilder<N> builder = getCriteriaQueryBuilder(context, methodJoinPaths);
+        CriteriaQuery<N> criteriaQuery = builder.build(criteriaBuilder);
+
+        for (Object param : context.getParameterValues()) {
+            if (param instanceof Sort sort) {
+                if (sort.isSorted()) {
+                    Root<?> root = criteriaQuery.getRoots().stream().findFirst().orElseThrow(() -> new IllegalStateException("The root not found!"));
+                    criteriaQuery.orderBy(getOrders(sort, root, criteriaBuilder));
+                    break;
+                }
+            }
         }
-        return QueryResultStoredQuery.many(context.getName(), context.getAnnotationMetadata(), queryResult, rootEntity,
-            criteriaQuery.getResultType(), !pageable.isUnpaged(), joinPaths);
+        return criteriaQuery;
     }
 
     /**
      * Find {@link io.micronaut.data.repository.jpa.criteria.QuerySpecification} in context.
      *
      * @param context The context
+     * @param <K>     the specification entity root type
      * @return found specification
-     * @param <K> the specification entity root type
      */
     @Nullable
     protected <K> QuerySpecification<K> getQuerySpecification(MethodInvocationContext<?, ?> context) {
@@ -272,10 +398,10 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
      * Find {@link io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder}
      * or {@link io.micronaut.data.repository.jpa.criteria.QuerySpecification} in context.
      *
-     * @param context The context
+     * @param context   The context
      * @param joinPaths The join fetch paths
+     * @param <K>       the result type
      * @return found specification
-     * @param <K> the result type
      */
     @NonNull
     protected <K> CriteriaQueryBuilder<K> getCriteriaQueryBuilder(MethodInvocationContext<?, ?> context, Set<JoinPath> joinPaths) {
@@ -295,21 +421,22 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                 }
             }
             if (CollectionUtils.isNotEmpty(joinPaths)) {
-                PersistentEntityFrom<K, ?> criteriaEntity = ((PersistentEntityFrom<K, ?>) root);
                 for (JoinPath joinPath : joinPaths) {
-                    join(criteriaEntity, joinPath);
+                    join(root, joinPath);
                 }
             }
             return criteriaQuery;
         };
     }
 
-    private <K> void join(PersistentEntityFrom<K, ?> criteriaEntity, JoinPath joinPath) {
-        Optional<String> optAlias = joinPath.getAlias();
-        if (optAlias.isPresent()) {
-            criteriaEntity.join(joinPath.getPath(), joinPath.getJoinType(), optAlias.get());
-        } else {
-            criteriaEntity.join(joinPath.getPath(), joinPath.getJoinType());
+    private void join(Root<?> root, JoinPath joinPath) {
+        if (root instanceof PersistentEntityFrom<?, ?> persistentEntityFrom) {
+            Optional<String> optAlias = joinPath.getAlias();
+            if (optAlias.isPresent()) {
+                persistentEntityFrom.join(joinPath.getPath(), joinPath.getJoinType(), optAlias.get());
+            } else {
+                persistentEntityFrom.join(joinPath.getPath(), joinPath.getJoinType());
+            }
         }
     }
 
@@ -329,8 +456,8 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
      * Find {@link io.micronaut.data.repository.jpa.criteria.DeleteSpecification} in context.
      *
      * @param context The context
+     * @param <K>     the specification entity root type
      * @return found specification
-     * @param <K> the specification entity root type
      */
     @Nullable
     protected <K> DeleteSpecification<K> getDeleteSpecification(MethodInvocationContext<?, ?> context) {
@@ -353,8 +480,8 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
      * or {@link io.micronaut.data.repository.jpa.criteria.QuerySpecification} in context.
      *
      * @param context The context
+     * @param <K>     the result type
      * @return found specification
-     * @param <K> the result type
      */
     @NonNull
     protected <K> CriteriaDeleteBuilder<K> getCriteriaDeleteBuilder(MethodInvocationContext<?, ?> context) {
@@ -381,8 +508,8 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
      * Find {@link io.micronaut.data.repository.jpa.criteria.UpdateSpecification} in context.
      *
      * @param context The context
+     * @param <K>     the specification entity root type
      * @return found specification
-     * @param <K> the specification entity root type
      */
     @Nullable
     protected <K> UpdateSpecification<K> getUpdateSpecification(MethodInvocationContext<?, ?> context) {
@@ -402,8 +529,8 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
      * or {@link io.micronaut.data.repository.jpa.criteria.QuerySpecification} in context.
      *
      * @param context The context
+     * @param <K>     the result type
      * @return found specification
-     * @param <K> the result type
      */
     @NonNull
     protected <K> CriteriaUpdateBuilder<K> getCriteriaUpdateBuilder(MethodInvocationContext<?, ?> context) {

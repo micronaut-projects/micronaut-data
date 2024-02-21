@@ -17,6 +17,7 @@ dependencies {
     implementation mn.micronaut.http.client
     implementation projects.micronautDataHibernateReactive
     implementation mnReactor.micronaut.reactor
+    implementation mnValidation.validation
     compileOnly mnSerde.micronaut.serde.api
     runtimeOnly mnLogging.logback.classic
     runtimeOnly mnSql.vertx.mysql.client

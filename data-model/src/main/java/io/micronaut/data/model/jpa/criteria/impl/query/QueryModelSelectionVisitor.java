@@ -98,8 +98,7 @@ public final class QueryModelSelectionVisitor implements SelectionVisitor {
             }
             case COUNT_DISTINCT -> {
                 if (expression instanceof PersistentEntityRoot) {
-                    // TODO
-                    return Projections.countDistinct(((PersistentPropertyPath<?>) expression).getPathAsString());
+                    return Projections.countDistinctRoot();
                 } else if (expression instanceof PersistentPropertyPath) {
                     return Projections.countDistinct(((PersistentPropertyPath<?>) expression).getPathAsString());
                 } else {
@@ -130,8 +129,9 @@ public final class QueryModelSelectionVisitor implements SelectionVisitor {
         }
         if (distinct) {
             addProjection(Projections.distinct());
+        } else {
+            addProjection(Projections.rootEntity());
         }
-        // default
     }
 
     @Override

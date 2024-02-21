@@ -25,6 +25,8 @@ import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.criteria.QueryCriteriaMethodMatch;
 import jakarta.persistence.criteria.Expression;
 
+import java.util.List;
+
 /**
  * Count method match.
  *
@@ -32,34 +34,43 @@ import jakarta.persistence.criteria.Expression;
  * @since 3.2
  */
 @Internal
-public final class CountMethodMatcher extends AbstractPatternMethodMatcher {
+public final class CountMethodMatcher extends AbstractMethodMatcher {
 
     public CountMethodMatcher() {
-        super(true, "count");
+        super(MethodNameParser.builder()
+            .match(QueryMatchId.PREFIX, "count")
+            .tryMatch(QueryMatchId.DISTINCT, DISTINCT)
+            .tryMatchFirstOccurrencePrefixed(QueryMatchId.PREDICATE, BY)
+            .takeRest(QueryMatchId.PROJECTION)
+            .build());
     }
 
     @Override
-    protected MethodMatch match(MethodMatchContext matchContext, java.util.regex.Matcher matcher) {
+    protected MethodMatch match(MethodMatchContext matchContext, List<MethodNameParser.Match> matches) {
         if (TypeUtils.isValidCountReturnType(matchContext)) {
-            return new QueryCriteriaMethodMatch(matcher) {
+            return new QueryCriteriaMethodMatch(matches) {
+
+                boolean distinct = false;
 
                 @Override
-                protected <T> String applyProjections(String querySequence, PersistentEntityRoot<T> root, PersistentEntityCriteriaQuery<T> query, PersistentEntityCriteriaBuilder cb) {
-                    boolean distinct = false;
-                    if (querySequence.startsWith("Distinct")) {
-                        distinct = true;
-                        querySequence = querySequence.substring("Distinct".length());
-                    }
-                    if (StringUtils.isNotEmpty(querySequence)) {
-                        Expression<?> propertyPath = getProperty(root, querySequence);
+                protected <T> void applyDistinct(PersistentEntityCriteriaQuery<T> query) {
+                    distinct = true;
+                }
+
+                @Override
+                protected <T> void applyProjections(String projectionPart,
+                                                    PersistentEntityRoot<T> root,
+                                                    PersistentEntityCriteriaQuery<T> query,
+                                                    PersistentEntityCriteriaBuilder cb,
+                                                    String returnTypeName) {
+                    if (StringUtils.isNotEmpty(projectionPart)) {
+                        Expression<?> propertyPath = getProperty(root, projectionPart);
                         Expression<Long> count = distinct ? cb.countDistinct(propertyPath) : cb.count(propertyPath);
                         query.multiselect(count);
                     } else {
-                        // TODO: correct distinct
-                        Expression<Long> count = cb.count(root);
+                        Expression<Long> count = distinct ? cb.countDistinct(root) : cb.count(root);
                         query.multiselect(count);
                     }
-                    return "";
                 }
 
                 @Override

@@ -407,8 +407,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         return executeAndMapEachRow(statement, mapper).onErrorResume(errorHandler(dialect)).as(DefaultR2dbcRepositoryOperations::toSingleResult);
     }
 
-    private static <T> Mono<T> executeAndMapEachReadableSingle(Statement statement, Dialect dialect, Function<Readable, T> mapper) {
-        return executeAndMapEachReadable(statement, mapper).onErrorResume(errorHandler(dialect)).as(DefaultR2dbcRepositoryOperations::toSingleResult);
+    private static <T> Flux<T> executeAndMapEachReadable(Statement statement, Dialect dialect, Function<Readable, T> mapper) {
+        return executeAndMapEachReadable(statement, mapper).onErrorResume(errorHandler(dialect));
     }
 
     private static Mono<Number> executeAndGetRowsUpdatedSingle(Statement statement, Dialect dialect) {
@@ -483,11 +483,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
                 SqlTypeMapper<Row, R> mapper = createMapper(preparedQuery, Row.class);
                 if (mapper instanceof SqlResultEntityTypeMapper<Row, R> entityTypeMapper) {
-                    final boolean hasJoins = !preparedQuery.getJoinFetchPaths().isEmpty();
-                    if (!hasJoins) {
-                        // Every row represents the entity record, we can return it directly
-                        return executeAndMapEachRow(statement, entityTypeMapper::readEntity);
-                    }
                     SqlResultEntityTypeMapper.PushingMapper<Row, List<R>> rowsMapper = entityTypeMapper.readAllWithJoins();
                     return executeAndMapEachRow(statement, row -> {
                         rowsMapper.processRow(row);
@@ -537,9 +532,9 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
         @NonNull
         @Override
-        public <R> Mono<R> execute(@NonNull PreparedQuery<?, R> pq) {
+        public <R> Flux<R> execute(@NonNull PreparedQuery<?, R> pq) {
             SqlPreparedQuery<?, R> preparedQuery = getSqlPreparedQuery(pq);
-            return executeWriteMono(preparedQuery, connection -> {
+            return executeWriteFlux(preparedQuery, connection -> {
                 if (preparedQuery.isProcedure()) {
                     int outIndex = preparedQuery.getQueryBindings().size();
                     Statement statement = prepareStatement(connection::createStatement, preparedQuery, true, true);
@@ -548,9 +543,9 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         statement = statement.bind(outIndex, Parameters.out(preparedQuery.getResultType()));
                     }
                     if (preparedQuery.getResultArgument().isVoid()) {
-                        return executeAndGetRowsUpdated(statement).then(Mono.empty());
+                        return executeAndGetRowsUpdated(statement).thenMany(Flux.empty());
                     }
-                    return executeAndMapEachReadableSingle(statement, preparedQuery.getDialect(), readable -> readable.get(0, preparedQuery.getResultType()));
+                    return executeAndMapEachReadable(statement, preparedQuery.getDialect(), readable -> readable.get(0, preparedQuery.getResultType()));
                 } else {
                     throw new IllegalStateException("Not implemented");
                 }
@@ -576,7 +571,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
                 final RuntimePersistentEntity<T> persistentEntity = storedQuery.getPersistentEntity();
                 final R2dbcOperationContext ctx = createContext(operation, status, storedQuery);
-                if (!isSupportsBatchInsert(persistentEntity, storedQuery.getDialect())) {
+                if (!isSupportsBatchInsert(persistentEntity, storedQuery)) {
                     return concatMono(
                         operation.split().stream()
                             .map(persistOp -> {
@@ -711,7 +706,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
                 final R2dbcOperationContext ctx = createContext(operation, connection, storedQuery);
                 final RuntimePersistentEntity<T> persistentEntity = storedQuery.getPersistentEntity();
-                if (!isSupportsBatchUpdate(persistentEntity, storedQuery.getDialect())) {
+                if (!isSupportsBatchUpdate(persistentEntity, storedQuery)) {
                     return concatMono(
                         operation.split().stream()
                             .map(updateOp -> {

@@ -1,15 +1,11 @@
 
 package example
 
-import jakarta.persistence.Entity
-import jakarta.persistence.FetchType
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.Id
-import jakarta.persistence.ManyToOne
-import jakarta.persistence.NamedStoredProcedureQuery
-import jakarta.persistence.ParameterMode
-import jakarta.persistence.StoredProcedureParameter
+// tag::entity[]
+// tag::entitywithprocedures[]
+import jakarta.persistence.*
 
+// end::entity[]
 @NamedStoredProcedureQuery(
     name = "calculateSum",
     procedureName = "calculateSumInternal",
@@ -19,8 +15,11 @@ import jakarta.persistence.StoredProcedureParameter
         type = Long::class
     ), StoredProcedureParameter(name = "result", mode = ParameterMode.OUT, type = Long::class)]
 )
+// tag::entity[]
 @Entity
 data class Product(
+
+    // end::entitywithprocedures[]
     @Id
     @GeneratedValue
     var id: Long?,
@@ -28,3 +27,4 @@ data class Product(
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     var manufacturer: Manufacturer
 )
+// end::entity[]

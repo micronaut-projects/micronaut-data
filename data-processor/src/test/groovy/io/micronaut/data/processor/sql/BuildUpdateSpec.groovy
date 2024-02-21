@@ -22,6 +22,7 @@ import io.micronaut.data.intercept.async.UpdateAsyncInterceptor
 import io.micronaut.data.intercept.reactive.UpdateReactiveInterceptor
 import io.micronaut.data.model.DataType
 import io.micronaut.data.processor.visitors.AbstractDataSpec
+import spock.lang.PendingFeature
 import spock.lang.Unroll
 
 import static io.micronaut.data.processor.visitors.TestUtils.*
@@ -43,8 +44,8 @@ interface PersonRepository extends CrudRepository<Person, Long> {
     $type updatePerson(@Id Long id, String name);
 
     @Query("UPDATE person SET name = 'test' WHERE id = :id")
-    $type customUpdate(Long id); 
-    
+    $type customUpdate(Long id);
+
 }
 """)
         def method = repository.findPossibleMethods("updatePerson").findFirst().get()
@@ -286,6 +287,7 @@ interface BookRepository extends CrudRepository<Book, Long> {
             getParameterBindingIndexes(updateAuthorCustomMethod) == ["1", "0"] as String[]
             getDataTypes(updateAuthorCustomMethod) == [DataType.ENTITY, DataType.LONG]
             getParameterPropertyPaths(updateAuthorCustomMethod) == ["author", "id"] as String[]
+            getResultDataType(updateAuthorCustomMethod) == DataType.LONG
         when:
             def updateAuthorMethod = repository.findPossibleMethods("updateAuthor").findFirst().get()
         then:
@@ -294,6 +296,226 @@ interface BookRepository extends CrudRepository<Book, Long> {
             getParameterBindingPaths(updateAuthorMethod) == ["id", "", ""] as String[]
             getParameterPropertyPaths(updateAuthorMethod) == ["author.id", "lastUpdated", "id"] as String[]
             getDataTypes(updateAuthorMethod) == [DataType.LONG, DataType.TIMESTAMP, DataType.LONG]
+            getResultDataType(updateAuthorMethod) == DataType.LONG
 
     }
+
+    void "test build update returning no supported"() {
+        when:
+            buildRepository('test.BookRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.Author;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
+interface BookRepository extends GenericRepository<Book, Long> {
+
+    Book updateReturning(Book book);
+
+}
+""")
+        then:
+            def ex = thrown(RuntimeException)
+            ex.message.contains("Dialect: MYSQL doesn't support UPDATE ... RETURNING clause")
+    }
+
+    void "POSTGRES test build update returning "() {
+        given:
+            def repository = buildRepository('test.BookRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.Author;
+
+@JdbcRepository(dialect= Dialect.POSTGRES)
+@io.micronaut.context.annotation.Executable
+interface BookRepository extends GenericRepository<Book, Long> {
+
+    Book updateReturning(Book book);
+
+}
+""")
+        when:
+            def updateReturningCustomMethod = repository.findPossibleMethods("updateReturning").findFirst().get()
+        then:
+            getQuery(updateReturningCustomMethod) == 'UPDATE "book" SET "author_id"=?,"genre_id"=?,"title"=?,"total_pages"=?,"publisher_id"=?,"last_updated"=? WHERE ("id" = ?) RETURNING "id","author_id","genre_id","title","total_pages","publisher_id","last_updated"'
+            getDataResultType(updateReturningCustomMethod) == "io.micronaut.data.tck.entities.Book"
+            getParameterPropertyPaths(updateReturningCustomMethod) == ["author.id", "genre.id", "title", "totalPages", "publisher.id", "lastUpdated", "id"] as String[]
+            getDataInterceptor(updateReturningCustomMethod) == "io.micronaut.data.intercept.UpdateEntityInterceptor"
+            getResultDataType(updateReturningCustomMethod) == DataType.ENTITY
+    }
+
+    void "POSTGRES test build update returning property"() {
+        given:
+            def repository = buildRepository('test.BookRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.Author;
+
+@JdbcRepository(dialect= Dialect.POSTGRES)
+@io.micronaut.context.annotation.Executable
+interface BookRepository extends GenericRepository<Book, Long> {
+
+    String updateReturningTitle(Book book);
+
+}
+""")
+        when:
+            def updateReturningCustomMethod = repository.findPossibleMethods("updateReturningTitle").findFirst().get()
+        then:
+            getQuery(updateReturningCustomMethod) == 'UPDATE "book" SET "author_id"=?,"genre_id"=?,"title"=?,"total_pages"=?,"publisher_id"=?,"last_updated"=? WHERE ("id" = ?) RETURNING "title"'
+            getParameterPropertyPaths(updateReturningCustomMethod) == ["author.id", "genre.id", "title", "totalPages", "publisher.id", "lastUpdated", "id"] as String[]
+            getDataResultType(updateReturningCustomMethod) == "java.lang.String"
+            getDataInterceptor(updateReturningCustomMethod) == "io.micronaut.data.intercept.UpdateReturningOneInterceptor"
+            getResultDataType(updateReturningCustomMethod) == DataType.STRING
+    }
+
+    void "POSTGRES test build update returning property 2"() {
+        given:
+            def repository = buildRepository('test.BookRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.Author;
+import java.time.LocalDateTime;
+
+@JdbcRepository(dialect= Dialect.POSTGRES)
+@io.micronaut.context.annotation.Executable
+interface BookRepository extends GenericRepository<Book, Long> {
+
+    LocalDateTime updateReturningLastUpdated(@Id Long id, String title);
+
+}
+""")
+        when:
+            def updateReturningCustomMethod = repository.findPossibleMethods("updateReturningLastUpdated").findFirst().get()
+        then:
+            getQuery(updateReturningCustomMethod) == 'UPDATE "book" SET "title"=?,"last_updated"=? WHERE ("id" = ?) RETURNING "last_updated"'
+            getParameterPropertyPaths(updateReturningCustomMethod) == ["title", "lastUpdated", "id"] as String[]
+            getDataResultType(updateReturningCustomMethod) == "java.time.LocalDateTime"
+            getDataInterceptor(updateReturningCustomMethod) == "io.micronaut.data.intercept.UpdateReturningOneInterceptor"
+            getResultDataType(updateReturningCustomMethod) == DataType.TIMESTAMP
+    }
+
+    void "POSTGRES test build update returning property 3"() {
+        given:
+            def repository = buildRepository('test.BookRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.Author;
+import java.time.LocalDateTime;
+
+@JdbcRepository(dialect= Dialect.POSTGRES)
+@io.micronaut.context.annotation.Executable
+interface BookRepository extends GenericRepository<Book, Long> {
+
+    LocalDateTime updateByIdReturningLastUpdated(Long id, String title);
+
+}
+""")
+        when:
+            def updateReturningCustomMethod = repository.findPossibleMethods("updateByIdReturningLastUpdated").findFirst().get()
+        then:
+            getQuery(updateReturningCustomMethod) == 'UPDATE "book" SET "title"=?,"last_updated"=? WHERE ("id" = ?) RETURNING "last_updated"'
+            getParameterPropertyPaths(updateReturningCustomMethod) == ["title", "lastUpdated", "id"] as String[]
+            getDataResultType(updateReturningCustomMethod) == "java.time.LocalDateTime"
+            getDataInterceptor(updateReturningCustomMethod) == "io.micronaut.data.intercept.UpdateReturningOneInterceptor"
+            getResultDataType(updateReturningCustomMethod) == DataType.TIMESTAMP
+    }
+
+    void "POSTGRES test build update all"() {
+        given:
+            def repository = buildRepository('test.BookRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.Author;
+import java.time.LocalDateTime;
+
+@JdbcRepository(dialect= Dialect.POSTGRES)
+@io.micronaut.context.annotation.Executable
+interface BookRepository extends GenericRepository<Book, Long> {
+
+    List<Book> updateReturning(Long authorId);
+
+}
+""")
+        when:
+            def updateReturningCustomMethod = repository.findPossibleMethods("updateReturning").findFirst().get()
+        then:
+            getQuery(updateReturningCustomMethod) == 'UPDATE "book" SET "author_id"=?,"last_updated"=? RETURNING "id","author_id","genre_id","title","total_pages","publisher_id","last_updated"'
+            getParameterPropertyPaths(updateReturningCustomMethod) == ["author.id", "lastUpdated"] as String[]
+            getDataResultType(updateReturningCustomMethod) == "io.micronaut.data.tck.entities.Book"
+            getDataInterceptor(updateReturningCustomMethod) == "io.micronaut.data.intercept.UpdateReturningManyInterceptor"
+            getResultDataType(updateReturningCustomMethod) == DataType.ENTITY
+    }
+
+    void "POSTGRES test build update all 2"() {
+        given:
+            def repository = buildRepository('test.BookRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.Author;
+import java.time.LocalDateTime;
+
+@JdbcRepository(dialect= Dialect.POSTGRES)
+@io.micronaut.context.annotation.Executable
+interface BookRepository extends GenericRepository<Book, Long> {
+
+    List<Book> updateReturning(List<Book> books);
+
+}
+""")
+        when:
+            def updateReturningCustomMethod = repository.findPossibleMethods("updateReturning").findFirst().get()
+        then:
+            getQuery(updateReturningCustomMethod) == 'UPDATE "book" SET "author_id"=?,"genre_id"=?,"title"=?,"total_pages"=?,"publisher_id"=?,"last_updated"=? WHERE ("id" = ?) RETURNING "id","author_id","genre_id","title","total_pages","publisher_id","last_updated"'
+            getParameterPropertyPaths(updateReturningCustomMethod) == ["author.id", "genre.id", "title", "totalPages", "publisher.id", "lastUpdated", "id"] as String[]
+            getDataResultType(updateReturningCustomMethod) == "io.micronaut.data.tck.entities.Book"
+            getDataInterceptor(updateReturningCustomMethod) == "io.micronaut.data.intercept.UpdateAllEntitiesInterceptor"
+            getResultDataType(updateReturningCustomMethod) == DataType.ENTITY
+    }
+
+//    void "ORACLE test build update returning "() {
+//        given:
+//            def repository = buildRepository('test.BookRepository', """
+//import io.micronaut.data.jdbc.annotation.JdbcRepository;
+//import io.micronaut.data.model.query.builder.sql.Dialect;
+//import io.micronaut.data.repository.GenericRepository;
+//import io.micronaut.data.tck.entities.Book;
+//import io.micronaut.data.tck.entities.Author;
+//
+//@JdbcRepository(dialect= Dialect.ORACLE)
+//@io.micronaut.context.annotation.Executable
+//interface BookRepository extends GenericRepository<Book, Long> {
+//
+//    Book updateReturning(Book book);
+//
+//}
+//""")
+//        when:
+//            def updateReturningCustomMethod = repository.findPossibleMethods("updateReturning").findFirst().get()
+//        then:
+//            getQuery(updateReturningCustomMethod) == 'UPDATE "BOOK" SET "AUTHOR_ID"=?,"GENRE_ID"=?,"TITLE"=?,"TOTAL_PAGES"=?,"PUBLISHER_ID"=?,"LAST_UPDATED"=? WHERE ("ID" = ?) RETURNING "ID","AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED" INTO "ID","AUTHOR_ID","GENRE_ID","TITLE","TOTAL_PAGES","PUBLISHER_ID","LAST_UPDATED"'
+//            getDataResultType(updateReturningCustomMethod) == "io.micronaut.data.tck.entities.Book"
+//            getParameterPropertyPaths(updateReturningCustomMethod) == ["author.id", "genre.id", "title", "totalPages", "publisher.id", "lastUpdated", "id"] as String[]
+//            getDataInterceptor(updateReturningCustomMethod) == "io.micronaut.data.intercept.UpdateReturningInterceptor"
+//    }
+
 }

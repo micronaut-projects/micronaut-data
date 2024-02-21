@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 original authors
+ * Copyright 2017-2023 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,51 +17,40 @@ package io.micronaut.data.runtime.intercept;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.type.ReturnType;
-import io.micronaut.data.intercept.ProcedureInterceptor;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.intercept.InsertReturningOneInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 
-import java.util.Optional;
+import java.util.List;
 
 /**
- * The default implementation of {@link ProcedureInterceptor}.
- *
+ * Default implementation of {@link io.micronaut.data.intercept.InsertReturningOneInterceptor}.
  * @param <T> The declaring type
- * @param <R> The return generic type
+ * @param <R> The return type
  * @author Denis Stepanov
  * @since 4.2.0
  */
 @Internal
-public class DefaultProcedureInterceptor<T, R> extends AbstractQueryInterceptor<T, R> implements ProcedureInterceptor<T, R> {
+public final class DefaultInsertReturningOneInterceptor<T, R> extends AbstractQueryInterceptor<T, R> implements InsertReturningOneInterceptor<T, R> {
 
     /**
      * Default constructor.
-     *
      * @param datastore The operations
      */
-    DefaultProcedureInterceptor(RepositoryOperations datastore) {
+    public DefaultInsertReturningOneInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
     }
 
     @Override
     public R intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
-        PreparedQuery<?, R> preparedQuery = prepareQuery(methodKey, context, null);
-        Optional<R> result = operations.execute(preparedQuery);
-        ReturnType<R> returnType = context.getReturnType();
-        if (returnType.isVoid()) {
+        PreparedQuery<?, R> preparedQuery = (PreparedQuery<?, R>) prepareQuery(methodKey, context);
+        List<R> results = operations.execute(preparedQuery);
+        if (results.isEmpty()) {
             return null;
         }
-        if (returnType.isOptional()) {
-            if (result.isEmpty()) {
-                return (R) result;
-            }
-            return (R) result.map(r -> convertOne(context, r));
-        }
-        return (R) convertOne(
-                context,
-                result.orElse(null)
-        );
+        return operations.getConversionService().
+            convertRequired(results.get(0), context.getExecutableMethod().getReturnType().asArgument());
     }
 }

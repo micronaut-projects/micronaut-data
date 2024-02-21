@@ -15,16 +15,23 @@
  */
 package io.micronaut.data.processor.sql
 
+import io.micronaut.core.annotation.AnnotationMetadata
+import io.micronaut.data.annotation.Join
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.PersistentEntity
+
 import io.micronaut.data.model.entities.Invoice
+import io.micronaut.data.model.query.QueryModel
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
+import io.micronaut.data.processor.entity.ActivityPeriodEntity
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Restaurant
 import io.micronaut.data.tck.jdbc.entities.EmployeeGroup
+import io.micronaut.inject.ExecutableMethod
 import spock.lang.Issue
 import spock.lang.Unroll
 
@@ -37,6 +44,7 @@ import static io.micronaut.data.processor.visitors.TestUtils.getParameterBinding
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterPropertyPaths
 import static io.micronaut.data.processor.visitors.TestUtils.getQuery
 import static io.micronaut.data.processor.visitors.TestUtils.getRawQuery
+import static io.micronaut.data.processor.visitors.TestUtils.getResultDataType
 import static io.micronaut.data.processor.visitors.TestUtils.isExpandableQuery
 
 class BuildQuerySpec extends AbstractDataSpec {
@@ -107,6 +115,7 @@ interface MyInterface2 extends CrudRepository<CustomBook, Long> {
         then:
             query == 'SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[:nickNames]'
             rawQuery == 'SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[?]'
+            getResultDataType(method) == DataType.ENTITY
     }
 
     void "test join on repository type that inherits from CrudRepository"() {
@@ -368,7 +377,7 @@ interface MealRepository extends CrudRepository<Meal, Long> {
             def countMethod = repository.getRequiredMethod("countDistinctByFoodsAlternativeMealCurrentBloodGlucoseInList", List)
 
         then:
-            getQuery(countMethod) == 'SELECT COUNT(*) FROM `meal` meal_ INNER JOIN `food` meal_foods_ ON meal_.`mid`=meal_foods_.`fk_meal_id` AND meal_foods_.fresh = \'Y\' INNER JOIN `meal` meal_foods_alternative_meal_ ON meal_foods_.`fk_alt_meal`=meal_foods_alternative_meal_.`mid` AND meal_foods_alternative_meal_.actual = \'Y\' WHERE (meal_foods_alternative_meal_.`current_blood_glucose` IN (?) AND (meal_.actual = \'Y\'))'
+            getQuery(countMethod) == 'SELECT COUNT(DISTINCT(meal_.`mid`)) FROM `meal` meal_ INNER JOIN `food` meal_foods_ ON meal_.`mid`=meal_foods_.`fk_meal_id` AND meal_foods_.fresh = \'Y\' INNER JOIN `meal` meal_foods_alternative_meal_ ON meal_foods_.`fk_alt_meal`=meal_foods_alternative_meal_.`mid` AND meal_foods_alternative_meal_.actual = \'Y\' WHERE (meal_foods_alternative_meal_.`current_blood_glucose` IN (?) AND (meal_.actual = \'Y\'))'
             isExpandableQuery(countMethod)
             anyParameterExpandable(countMethod)
 
@@ -437,7 +446,7 @@ interface CitiesRepository extends CrudRepository<City, Long> {
         def query = getQuery(repository.getRequiredMethod("countDistinctByCountryRegionCountryUuid", UUID))
 
         expect:
-        query == 'SELECT COUNT(*) FROM `T_CITY` city_ INNER JOIN `CountryRegion` city_country_region_ ON city_.`country_region_id`=city_country_region_.`id` INNER JOIN `country` city_country_region_country_ ON city_country_region_.`countryId`=city_country_region_country_.`uuid` WHERE (city_country_region_country_.`uuid` = ?)'
+        query == 'SELECT COUNT(DISTINCT(city_.`id`)) FROM `T_CITY` city_ INNER JOIN `CountryRegion` city_country_region_ ON city_.`country_region_id`=city_country_region_.`id` INNER JOIN `country` city_country_region_country_ ON city_country_region_.`countryId`=city_country_region_country_.`uuid` WHERE (city_country_region_country_.`uuid` = ?)'
 
     }
 
@@ -460,7 +469,7 @@ interface FacesRepository extends CrudRepository<Face, Long> {
         def query = getQuery(repository.getRequiredMethod("countDistinctByNoseId", Long))
 
         expect:
-        query == 'SELECT COUNT(*) FROM `face` face_ INNER JOIN `nose` face_nose_ ON face_.`id`=face_nose_.`face_id` WHERE (face_nose_.`id` = ?)'
+        query == 'SELECT COUNT(DISTINCT(face_.`id`)) FROM `face` face_ INNER JOIN `nose` face_nose_ ON face_.`id`=face_nose_.`face_id` WHERE (face_nose_.`id` = ?)'
 
     }
 
@@ -586,7 +595,7 @@ interface PageRepository extends GenericRepository<Page, Long> {
         chaptersBookJoinQuery == "SELECT page_book_chapters_.`id`,page_book_chapters_.`pages`,page_book_chapters_.`book_id`,page_book_chapters_.`title`,page_book_chapters_book_.`author_id` AS book_author_id,page_book_chapters_book_.`genre_id` AS book_genre_id,page_book_chapters_book_.`title` AS book_title,page_book_chapters_book_.`total_pages` AS book_total_pages,page_book_chapters_book_.`publisher_id` AS book_publisher_id,page_book_chapters_book_.`last_updated` AS book_last_updated FROM `page` page_ INNER JOIN `book` page_book_ ON page_.`book_id`=page_book_.`id` INNER JOIN `chapter` page_book_chapters_ ON page_book_.`id`=page_book_chapters_.`book_id` INNER JOIN `book` page_book_chapters_book_ ON page_book_chapters_.`book_id`=page_book_chapters_book_.`id` WHERE (page_.`id` = ? AND page_.`num` = ?)"
         chaptersBookJoinJoins.size() == 1
         chaptersBookJoinJoins.keySet() == ["book"] as Set
-
+        getResultDataType(method) == DataType.ENTITY
     }
 
     void "test many-to-many using mappedBy"() {
@@ -614,7 +623,7 @@ interface StudentRepository extends GenericRepository<Student, Long> {
 
         expect:
         query.contains("FROM `student` student_ INNER JOIN `book_student`")
-
+        getResultDataType(method) == DataType.ENTITY
     }
 
     void "test many-to-many from inverse association"() {
@@ -642,6 +651,7 @@ interface BookRepository extends GenericRepository<Book, Long> {
 
         expect:
         query.contains("FROM `book` book_ INNER JOIN `book_student`")
+        getResultDataType(method) == DataType.ENTITY
 
     }
 
@@ -745,6 +755,9 @@ interface AuthorRepository extends GenericRepository<Author, Long> {
         findByNameCountQuery == 'SELECT COUNT(*) FROM `author` author_ WHERE (author_.`name` = ? AND (author_.nick_name =?))'
         findByNickNameQuery == 'SELECT author_.`id`,author_.`name`,author_.`nick_name` FROM `author` author_ WHERE (author_.`nick_name` = ? AND (author_.name =?))'
         findByNickNameCountQuery == 'SELECT COUNT(*) FROM `author` author_ WHERE (author_.`nick_name` = ? AND (author_.name =?))'
+        getResultDataType(findAllMethod) == DataType.ENTITY
+        getResultDataType(findByNameMethod) == DataType.ENTITY
+        getResultDataType(findByNickNameMethod) == DataType.ENTITY
     }
 
     void "test distinct query"() {
@@ -853,6 +866,7 @@ class CustomBook {
 
         expect:
         findAllQuery == 'SELECT custom_book_.`id`,custom_book_.`title`,custom_book_.`pages`,custom_book_.`author_id2`,custom_book_author_.`id2` AS author_id2,custom_book_author_.`name` AS author_name FROM `custom_book` custom_book_ INNER JOIN `custom_author` custom_book_author_ ON custom_book_.`author_id2`=custom_book_author_.`id2`'
+        getResultDataType(findAllMethod) == DataType.ENTITY
     }
 
     void "test DTO with association and join"() {
@@ -881,6 +895,7 @@ interface AuthorRepository extends GenericRepository<Author, Long> {
 
         expect:
             queryAllQuery == 'SELECT author_.`id`,author_books_.`id` AS books_id,author_books_.`author_id` AS books_author_id,author_books_.`genre_id` AS books_genre_id,author_books_.`title` AS books_title,author_books_.`total_pages` AS books_total_pages,author_books_.`publisher_id` AS books_publisher_id,author_books_.`last_updated` AS books_last_updated FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id`'
+            getResultDataType(queryAllMethod) == DataType.OBJECT
     }
 
     void "test many-to-one with properties starting with the same prefix"() {
@@ -1017,7 +1032,7 @@ import io.micronaut.data.tck.entities.Book;
 interface BookRepository extends GenericRepository<Book, Long> {
 
     @Join(value = "author", type = Join.Type.FETCH)
-    List<UserGroupMembership> findAllByPublisherZipCodeAndAuthor_SpecName(String zipCode, String specName);
+    List<Book> findAllByPublisherZipCodeAndAuthor_SpecName(String zipCode, String specName);
 }
 """
         )
@@ -1045,5 +1060,114 @@ interface H2NoIdEntityRepository extends CrudRepository<NoIdEntity, Long> {
 ''')
         then:
             noExceptionThrown()
+    }
+
+    void "test embedded id join"() {
+        given:
+        def repository = buildRepository('test.TestRepository', '''
+
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.processor.entity.ActivityPeriodEntity;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface TestRepository extends GenericRepository<ActivityPeriodEntity, UUID> {
+
+    @Join(value = "persons.id.person", type = Join.Type.LEFT)
+    List<ActivityPeriodEntity> findAll();
+}
+
+''')
+        expect:"The repository to compile"
+        repository != null
+        when:
+        def queryFindAll = getQuery(repository.getRequiredMethod("findAll"))
+        then:
+        queryFindAll == 'SELECT activity_period_entity_.`id`,activity_period_entity_.`name`,activity_period_entity_.`description`,activity_period_entity_.`type` FROM `activity_period` activity_period_entity_ LEFT JOIN `activity_period_person` activity_period_entity_persons_ ON activity_period_entity_.`id`=activity_period_entity_persons_.`activity_period_id` LEFT JOIN `activity_person` activity_period_entity_persons_id_person_ ON activity_period_entity_persons_.`person_id`=activity_period_entity_persons_id_person_.`id`'
+        when:
+        def test = QueryModel.from(PersistentEntity.of(ActivityPeriodEntity))
+        test.join("persons.id.person", Join.Type.LEFT, null)
+        def builder = new SqlQueryBuilder(Dialect.H2)
+        def result = builder.buildQuery(AnnotationMetadata.EMPTY_METADATA, test)
+        def query = result.query
+        then:
+        query == queryFindAll
+    }
+
+    void "test project enum"() {
+        when:
+            def repository = buildRepository('test.PetRepository', """
+import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Pet;
+import reactor.core.publisher.Flux;
+
+@Repository
+interface PetRepository extends GenericRepository<Pet, UUID> {
+
+    Flux<Pet.PetType> listDistinctType();
+
+}
+"""
+            )
+
+
+            def method = repository.getRequiredMethod("listDistinctType")
+        then:
+            getQuery(method) == 'SELECT DISTINCT pet_.type FROM io.micronaut.data.tck.entities.Pet AS pet_'
+            getResultDataType(method) == DataType.STRING
+    }
+
+    void "test project max"() {
+        when:
+            def repository = buildRepository('test.StudentRepository', """
+import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Pet;
+import io.micronaut.data.tck.entities.Student;
+
+@Repository
+interface StudentRepository extends GenericRepository<Student, Long> {
+
+    int findMaxIdByIdIn(List<Long> ids);
+
+}
+"""
+            )
+
+
+            def method = repository.getRequiredMethod("findMaxIdByIdIn", List)
+        then:
+            getQuery(method) == 'SELECT MAX(student_.id) FROM io.micronaut.data.tck.entities.Student AS student_ WHERE (student_.id IN (:p1))'
+            getResultDataType(method) == DataType.LONG
+    }
+
+    void "test count query for entity with composite id"() {
+        given:
+        def repository = buildRepository('test.UserRoleRepository', """
+
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.jdbc.entities.UserRole;
+import io.micronaut.data.tck.jdbc.entities.UserRoleId;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
+
+    int count();
+
+    int countDistinct();
+}
+""")
+        def countQuery = getQuery(repository.getRequiredMethod("count"))
+        def countDistinctQuery = getQuery(repository.getRequiredMethod("countDistinct"))
+
+        expect:
+        countQuery == 'SELECT COUNT(*) FROM `user_role_composite` user_role_'
+        countDistinctQuery == 'SELECT COUNT(DISTINCT( CONCAT(user_role_.`id_user_id`,user_role_.`id_role_id`))) FROM `user_role_composite` user_role_'
     }
 }

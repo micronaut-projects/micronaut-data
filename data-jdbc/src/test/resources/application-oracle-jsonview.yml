@@ -15,9 +15,3 @@ datasources:
     db-type: oracle
     dialect: oracle
     schema-generate: NONE
-test-resources:
-  containers:
-    oracle:
-      image-name: gvenzl/oracle-free:23.2-faststart
-      startup-timeout: 600s
-      db-name: test

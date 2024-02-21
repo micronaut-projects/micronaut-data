@@ -32,6 +32,7 @@ import io.micronaut.data.operations.RepositoryOperations;
 import reactor.util.context.Context;
 import reactor.util.context.ContextView;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -135,10 +136,11 @@ public interface BlockingReactorRepositoryOperations extends RepositoryOperation
     }
 
     @Override
-    default <R> Optional<R> execute(PreparedQuery<?, R> preparedQuery) {
+    default <R> List<R> execute(PreparedQuery<?, R> preparedQuery) {
         return reactive().execute(preparedQuery)
             .contextWrite(getContextView())
-            .blockOptional();
+            .collectList()
+            .block();
     }
 
     @Override
@@ -175,7 +177,8 @@ public interface BlockingReactorRepositoryOperations extends RepositoryOperation
         return reactive().findAll(query)
             .contextWrite(getContextView())
             .collectList()
-            .block();
+            .blockOptional()
+            .orElseGet(List::of);
     }
 
     @Override

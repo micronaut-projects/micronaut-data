@@ -20,8 +20,10 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.async.propagation.ReactorPropagation;
 import io.micronaut.core.propagation.PropagatedContextElement;
-import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
+import io.micronaut.data.connection.reactive.ReactiveConnectionStatus;
+import io.micronaut.data.connection.reactive.ReactiveConnectionSynchronization;
+import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.NoTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
@@ -107,24 +109,19 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
      * Execute the transaction with provided transaction status.
      *
      * @param transactionStatus The transaction status
-     * @param definition The definition
-     * @param handler The handler
-     * @param <T> The transaction type
+     * @param definition        The definition
+     * @param handler           The handler
+     * @param <T>               The transaction type
      * @return The published result
      */
-    protected  <T> Flux<T> withTransactionFlux(ReactiveTransactionStatus<C> transactionStatus, TransactionDefinition definition, TransactionalCallback<C, T> handler) {
+    protected <T> Flux<T> withTransactionFlux(ReactiveTransactionStatus<C> transactionStatus, TransactionDefinition definition, TransactionalCallback<C, T> handler) {
         TransactionDefinition.Propagation propagationBehavior = definition.getPropagationBehavior();
         if (transactionStatus != null) {
             if (propagationBehavior == TransactionDefinition.Propagation.NOT_SUPPORTED || propagationBehavior == TransactionDefinition.Propagation.NEVER) {
                 return Flux.error(propagationNotSupported(propagationBehavior));
             }
             if (propagationBehavior == TransactionDefinition.Propagation.REQUIRES_NEW) {
-                return connectionOperations.withConnectionFlux(definition.getConnectionDefinition(), connectionStatus ->
-                    executeTransactionFlux(
-                        new DefaultReactiveTransactionStatus<>(connectionStatus, true, definition),
-                        handler
-                    )
-                );
+                return openNewConnectionAndTx(definition, handler);
             }
             return executeCallbackFlux(
                 existingTransaction(transactionStatus, definition),
@@ -134,11 +131,14 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
         if (propagationBehavior == TransactionDefinition.Propagation.MANDATORY) {
             return Flux.error(expectedTransaction());
         }
-        return connectionOperations.withConnectionFlux(definition.getConnectionDefinition(), connectionStatus ->
-            executeTransactionFlux(
-                new DefaultReactiveTransactionStatus<>(connectionStatus, true, definition),
-                handler
-            )
+        return openNewConnectionAndTx(definition, handler);
+    }
+
+    private <T> Flux<T> openNewConnectionAndTx(TransactionDefinition definition, TransactionalCallback<C, T> handler) {
+        return connectionOperations.withConnectionFlux(definition.getConnectionDefinition(), connectionStatus -> {
+                DefaultReactiveTransactionStatus<C> txStatus = new DefaultReactiveTransactionStatus<>(connectionStatus, true, definition);
+                return executeTransactionFlux(txStatus, handler);
+            }
         );
     }
 
@@ -155,12 +155,7 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
                     return Mono.error(propagationNotSupported(propagationBehavior));
                 }
                 if (propagationBehavior == TransactionDefinition.Propagation.REQUIRES_NEW) {
-                    return connectionOperations.withConnectionMono(definition.getConnectionDefinition(), connectionStatus ->
-                        executeTransactionMono(
-                            new DefaultReactiveTransactionStatus<>(connectionStatus, true, definition),
-                            handler
-                        )
-                    );
+                    return openNewConnectionAndTxMono(definition, handler);
                 }
                 return executeCallbackMono(
                     existingTransaction(transactionStatus, definition),
@@ -170,13 +165,17 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
             if (propagationBehavior == TransactionDefinition.Propagation.MANDATORY) {
                 return Mono.error(expectedTransaction());
             }
-            return connectionOperations.withConnectionMono(definition.getConnectionDefinition(), connectionStatus ->
-                executeTransactionMono(
-                    new DefaultReactiveTransactionStatus<>(connectionStatus, true, definition),
-                    handler
-                )
-            );
+            return openNewConnectionAndTxMono(definition, handler);
         });
+    }
+
+    private <T> Mono<T> openNewConnectionAndTxMono(TransactionDefinition definition, Function<ReactiveTransactionStatus<C>, Mono<T>> handler) {
+        return connectionOperations.withConnectionMono(definition.getConnectionDefinition(), connectionStatus ->
+            executeTransactionMono(
+                new DefaultReactiveTransactionStatus<>(connectionStatus, true, definition),
+                handler
+            )
+        );
     }
 
     /**
@@ -190,14 +189,22 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
     @NonNull
     protected <R> Flux<R> executeTransactionFlux(@NonNull DefaultReactiveTransactionStatus<C> txStatus,
                                                  @NonNull TransactionalCallback<C, R> handler) {
-        return Flux.usingWhen(
-            Mono.fromDirect(
-                beginTransaction(txStatus.getConnectionStatus(), txStatus.getTransactionDefinition())
-            ).thenMany(Mono.just(txStatus)),
-            status -> executeCallbackFlux(status, handler),
-            this::doCommit,
-            this::doRollback,
-            this::doCancel);
+        ReactiveConnectionStatus<C> connectionStatus = (ReactiveConnectionStatus<C>) txStatus.getConnectionStatus();
+        connectionStatus.registerReactiveSynchronization(new ReactiveConnectionSynchronization() {
+            @Override
+            public Publisher<Void> onCancel() {
+                return doCancel(txStatus);
+            }
+        });
+        return Flux.from(
+            new SyncCompleteAndErrorPublisher<>(
+                Mono.fromDirect(beginTransaction(txStatus.getConnectionStatus(), txStatus.getTransactionDefinition()))
+                    .thenMany(Mono.just(txStatus))
+                    .flatMap(status -> executeCallbackFlux(status, handler)),
+                () -> doCommit(txStatus),
+                throwable -> doRollback(txStatus, throwable),
+                false)
+        );
     }
 
     /**
@@ -211,14 +218,24 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
     @NonNull
     protected <R> Mono<R> executeTransactionMono(@NonNull DefaultReactiveTransactionStatus<C> txStatus,
                                                  @NonNull Function<ReactiveTransactionStatus<C>, Mono<R>> handler) {
-        return Mono.usingWhen(
-            Mono.fromDirect(
-                beginTransaction(txStatus.getConnectionStatus(), txStatus.getTransactionDefinition())
-            ).thenReturn(txStatus),
-            status -> executeCallbackMono(status, handler),
-            this::doCommit,
-            this::doRollback,
-            this::doCancel);
+
+        ReactiveConnectionStatus<C> connectionStatus = (ReactiveConnectionStatus<C>) txStatus.getConnectionStatus();
+        connectionStatus.registerReactiveSynchronization(new ReactiveConnectionSynchronization() {
+            @Override
+            public Publisher<Void> onCancel() {
+                return doCancel(txStatus);
+            }
+
+        });
+        return Mono.from(
+            new SyncCompleteAndErrorPublisher<>(
+                Mono.fromDirect(beginTransaction(txStatus.getConnectionStatus(), txStatus.getTransactionDefinition()))
+                    .thenMany(Mono.just(txStatus))
+                    .flatMap(status -> executeCallbackMono(status, handler)),
+                () -> doCommit(txStatus),
+                throwable -> doRollback(txStatus, throwable),
+                true)
+        );
     }
 
     /**
@@ -300,6 +317,7 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
 
     /**
      * Cancels the TX operation.
+     *
      * @param status The TX status
      * @return the canceling publisher
      */

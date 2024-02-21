@@ -19,6 +19,7 @@ import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.data.model.jpa.criteria.*
 import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery
+import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import jakarta.persistence.criteria.*
 import spock.lang.Specification
@@ -269,7 +270,11 @@ abstract class AbstractCriteriaSpec extends Specification {
     }
 
     private static String getSqlQuery(def query) {
-        return ((QueryResultPersistentEntityCriteriaQuery) query).buildQuery(new SqlQueryBuilder()).getQuery()
+        return getSqlQuery(query, Dialect.ANSI)
+    }
+
+    private static String getSqlQuery(def query, Dialect dialect) {
+        return ((QueryResultPersistentEntityCriteriaQuery) query).buildQuery(new SqlQueryBuilder(dialect)).getQuery()
     }
 
     @CompileStatic

@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.reflect.ReflectionUtils;
+import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.intercept.annotation.DataMethod;
@@ -77,6 +78,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     private final List<QueryParameterBinding> queryParameters;
     private final boolean rawQuery;
     private final boolean jsonEntity;
+    private final OperationType operationType;
 
     /**
      * The default constructor.
@@ -114,7 +116,13 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
             Optional<String> rawCountQueryString = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_COUNT_QUERY);
             this.rawQuery = rawCountQueryString.isPresent();
             this.query = rawCountQueryString.orElse(query);
-            this.queryParts = method.stringValues(DataMethod.class, DataMethod.META_MEMBER_EXPANDABLE_COUNT_QUERY);
+            String[] countQueryParts = method.stringValues(DataMethod.class, DataMethod.META_MEMBER_EXPANDABLE_COUNT_QUERY);
+            // for countBy queries this is empty, and we should use DataMethod.META_MEMBER_EXPANDABLE_QUERY value
+            if (ArrayUtils.isNotEmpty(countQueryParts)) {
+                this.queryParts = countQueryParts;
+            } else {
+                this.queryParts = method.stringValues(DataMethod.class, DataMethod.META_MEMBER_EXPANDABLE_QUERY);
+            }
         } else {
             Optional<String> rawQueryString = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY);
             this.rawQuery = rawQueryString.isPresent();
@@ -183,6 +191,9 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
             this.queryParameters = queryParameters;
         }
         this.jsonEntity = DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(annotationMetadata);
+        this.operationType = method.enumValue(DataMethod.NAME, DataMethod.META_MEMBER_OPERATION_TYPE, DataMethod.OperationType.class)
+            .map(op -> OperationType.valueOf(op.name()))
+            .orElse(OperationType.QUERY);
     }
 
     @Override
@@ -239,6 +250,11 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     @Override
     public boolean isProcedure() {
         return isProcedure;
+    }
+
+    @Override
+    public OperationType getOperationType() {
+        return operationType;
     }
 
     /**

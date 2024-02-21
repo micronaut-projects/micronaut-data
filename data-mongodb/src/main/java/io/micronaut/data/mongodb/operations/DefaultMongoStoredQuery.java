@@ -111,8 +111,6 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 runtimeEntityRegistry,
                 conversionService,
                 persistentEntity,
-                storedQuery.getAnnotationMetadata().enumValue(DataMethod.NAME, DataMethod.META_MEMBER_OPERATION_TYPE, DataMethod.OperationType.class)
-                        .orElseThrow(IllegalStateException::new),
                 storedQuery.getAnnotationMetadata().stringValue(Query.class, "update").orElse(null));
     }
 
@@ -122,7 +120,6 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                             RuntimeEntityRegistry runtimeEntityRegistry,
                             ConversionService conversionService,
                             RuntimePersistentEntity<E> persistentEntity,
-                            DataMethod.OperationType operationType,
                             String updateJson) {
         super(storedQuery, persistentEntity);
         this.storedQuery = storedQuery;
@@ -131,7 +128,8 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         this.runtimeEntityRegistry = runtimeEntityRegistry;
         this.conversionService = conversionService;
         this.persistentEntity = persistentEntity;
-        if (operationType == DataMethod.OperationType.QUERY || operationType == DataMethod.OperationType.EXISTS || operationType == DataMethod.OperationType.COUNT) {
+        OperationType operationType = storedQuery.getOperationType();
+        if (operationType == OperationType.QUERY || operationType == OperationType.EXISTS || operationType == OperationType.COUNT) {
             String query = storedQuery.getQuery();
             String filterParameter = getParameterInRole(MongoRoles.FILTER_ROLE);
             String filterOptionsParameter = getParameterInRole(MongoRoles.FIND_OPTIONS_ROLE);
@@ -152,14 +150,14 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 aggregateData = null;
                 findData = new FindData(BsonDocument.parse(query));
             }
-            isCount = operationType == DataMethod.OperationType.COUNT || storedQuery.isCount() || query.contains("$count");
+            isCount = operationType == OperationType.COUNT || storedQuery.isCount() || query.contains("$count");
         } else {
             aggregateData = null;
             findData = null;
             isCount = false;
         }
 
-        if (operationType == DataMethod.OperationType.DELETE) {
+        if (operationType == OperationType.DELETE) {
             String query = storedQuery.getQuery();
             deleteData = new DeleteData(
                     StringUtils.isEmpty(query) ? EMPTY : BsonDocument.parse(query),
@@ -170,7 +168,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             deleteData = null;
         }
 
-        if (operationType == DataMethod.OperationType.UPDATE) {
+        if (operationType == OperationType.UPDATE) {
             if (StringUtils.isEmpty(updateJson)) {
                 throw new IllegalStateException("Update query is expected!");
             }

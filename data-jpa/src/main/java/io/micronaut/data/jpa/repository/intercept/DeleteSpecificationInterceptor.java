@@ -55,12 +55,12 @@ public class DeleteSpecificationInterceptor extends AbstractSpecificationInterce
 
     @Override
     public Number intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Number> context) {
-        Specification specification = getSpecification(context);
+        Specification specification = getSpecification(context, true);
         final EntityManager entityManager = jpaOperations.getCurrentEntityManager();
         final CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         final CriteriaDelete criteriaDelete = criteriaBuilder.createCriteriaDelete(getRequiredRootEntity(context));
         final Root<?> root = criteriaDelete.from(getRequiredRootEntity(context));
-        Predicate predicate = specification.toPredicate(root, null, criteriaBuilder);
+        Predicate predicate = specification != null ? specification.toPredicate(root, null, criteriaBuilder) : null;
         if (predicate != null) {
             criteriaDelete.where(predicate);
         }

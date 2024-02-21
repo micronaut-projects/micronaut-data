@@ -335,7 +335,7 @@ interface MyRepository {
         def result = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity)
 
         expect:
-        result.query == 'INSERT INTO "person" ("name","age","enabled","public_id","company_my_id") VALUES (?,?,?,?,?)'
+        result.query == 'INSERT INTO "person" ("name","age","enabled","public_id","company_id") VALUES (?,?,?,?,?)'
         result.parameters.equals('1': 'name', '2': 'age', '3': 'enabled', '4': "publicId", '5': 'company.myId')
     }
 

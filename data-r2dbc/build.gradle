@@ -43,9 +43,7 @@ dependencies {
     testImplementation mn.micronaut.http.server.netty
     testImplementation mn.micronaut.http.client
 
-    testImplementation platform(libs.testcontainers.bom)
-
-    testImplementation libs.testcontainers.r2dbc
+    testImplementation(mnTestResources.testcontainers.r2dbc)
 
     // oracle
     testImplementation mnR2dbc.r2dbc.oracle
@@ -78,7 +76,7 @@ dependencies {
     testCompileOnly projects.micronautDataProcessor
 
     testResourcesService mnSql.mariadb.java.client
-    testResourcesService libs.drivers.jdbc.oracle
+    testResourcesService mnSql.ojdbc11
     testResourcesService mnSql.mysql.connector.java
     testResourcesService mnSql.postgresql
     testResourcesService mnSql.mssql.jdbc

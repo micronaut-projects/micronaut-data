@@ -16,6 +16,8 @@
 package io.micronaut.data.hibernate
 
 import io.micronaut.context.annotation.Property
+import io.micronaut.data.hibernate.entities.RelPerson
+import io.micronaut.data.hibernate.entities.UserWithWhere
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 
@@ -34,5 +36,22 @@ class HibernatePostgresQuerySpec extends AbstractHibernateQuerySpec {
             animalRepository.add1Indexed(123) == 124
             animalRepository.add1(123) == 124
             animalRepository.add1Alias(123) == 124
+    }
+
+    void "test updateReturning"() {
+        given:
+        def saved = new UserWithWhere(id: UUID.randomUUID(), email: "test@email.com", deleted: true)
+        userWithWhereRepository.save(saved)
+        when:"Update returning custom native query executed"
+        userWithWhereRepository.updateEmailById(saved.id, "test1@email.com")
+        def obj = userWithWhereRepository.updateReturningCustom("test2@email.com", false, saved.id)
+        then:"Object is returned"
+        noExceptionThrown()
+        obj
+        obj.email == "test2@email.com"
+        when:"Update email using native query and returning"
+        def updatedEmail = userWithWhereRepository.updateAndReturnEmail("test3@email.com", saved.id)
+        then:"Updated email value is returned"
+        updatedEmail == "test3@email.com"
     }
 }

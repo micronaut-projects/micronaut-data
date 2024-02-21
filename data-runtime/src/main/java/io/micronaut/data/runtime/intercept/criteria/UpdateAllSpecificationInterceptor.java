@@ -19,7 +19,6 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.ReturnType;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 
 /**
@@ -42,9 +41,8 @@ public class UpdateAllSpecificationInterceptor extends AbstractSpecificationInte
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        PreparedQuery<?, Number> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.UPDATE_ALL);
         ReturnType<Object> rt = context.getReturnType();
-        Number result = operations.executeUpdate(preparedQuery).orElse(0);
+        Number result = updateAll(methodKey, context).orElse(0);
         if (rt.isVoid()) {
             return null;
         }

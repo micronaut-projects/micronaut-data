@@ -20,6 +20,7 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
@@ -47,6 +48,8 @@ import io.micronaut.data.model.runtime.BatchOperation;
 import io.micronaut.data.model.runtime.DefaultStoredDataOperation;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
+import io.micronaut.data.model.runtime.DeleteReturningBatchOperation;
+import io.micronaut.data.model.runtime.DeleteReturningOperation;
 import io.micronaut.data.model.runtime.EntityInstanceOperation;
 import io.micronaut.data.model.runtime.EntityOperation;
 import io.micronaut.data.model.runtime.InsertBatchOperation;
@@ -649,6 +652,21 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     }
 
     /**
+     * Get the delete operation for the given context.
+     *
+     * @param context The context
+     * @param entity  The entity
+     * @param <E>     The entity type
+     * @param <K>     The result type
+     * @return The paged query
+     */
+    @NonNull
+    @Experimental
+    protected <E, K> DeleteReturningOperation<E, K> getDeleteReturningOperation(@NonNull MethodInvocationContext<T, ?> context, @NonNull E entity) {
+        return new DefaultDeleteReturningOperation<>(context, entity);
+    }
+
+    /**
      * Get the delete all batch operation for the given context.
      *
      * @param context The context
@@ -657,7 +675,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      */
     @NonNull
     protected <E> DeleteBatchOperation<E> getDeleteAllBatchOperation(@NonNull MethodInvocationContext<T, ?> context) {
-        @SuppressWarnings("unchecked") Class<E> rootEntity = getRequiredRootEntity(context);
+        Class<E> rootEntity = getRequiredRootEntity(context);
         return new DefaultDeleteAllBatchOperation<>(context, rootEntity);
     }
 
@@ -671,8 +689,24 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      */
     @NonNull
     protected <E> DeleteBatchOperation<E> getDeleteBatchOperation(@NonNull MethodInvocationContext<T, ?> context, @NonNull Iterable<E> iterable) {
-        @SuppressWarnings("unchecked") Class<E> rootEntity = getRequiredRootEntity(context);
+        Class<E> rootEntity = getRequiredRootEntity(context);
         return getDeleteBatchOperation(context, rootEntity, iterable);
+    }
+
+    /**
+     * Get the delete returning batch operation for the given context.
+     *
+     * @param context  The context
+     * @param iterable The iterable
+     * @param <E>      The entity type
+     * @param <K>      The result type
+     * @return The paged query
+     */
+    @Experimental
+    @NonNull
+    protected <E, K> DeleteReturningBatchOperation<E, K> getDeleteReturningBatchOperation(@NonNull MethodInvocationContext<T, ?> context, @NonNull Iterable<E> iterable) {
+        Class<E> rootEntity = getRequiredRootEntity(context);
+        return new DefaultDeleteReturningBatchOperation<>(context, rootEntity, iterable);
     }
 
     /**
@@ -806,9 +840,44 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      *
      * @param <E> The entity type
      */
-    private class DefaultDeleteOperation<E> extends AbstractEntityInstanceOperation<E> implements DeleteOperation<E> {
+    private final class DefaultDeleteOperation<E> extends AbstractEntityInstanceOperation<E> implements DeleteOperation<E> {
         DefaultDeleteOperation(MethodInvocationContext<?, ?> method, E entity) {
             super(method, entity);
+        }
+    }
+
+    /**
+     * Default implementation of {@link DeleteReturningOperation}.
+     *
+     * @param <E> The entity type
+     * @param <K> The result type
+     */
+    private final class DefaultDeleteReturningOperation<E, K> extends AbstractEntityInstanceOperation<E> implements DeleteReturningOperation<E, K> {
+        DefaultDeleteReturningOperation(MethodInvocationContext<?, ?> method, E entity) {
+            super(method, entity);
+        }
+
+        @Override
+        public StoredQuery<E, K> getStoredQuery() {
+            return (StoredQuery<E, K>) super.getStoredQuery();
+        }
+    }
+
+    /**
+     * Default implementation of {@link DeleteReturningBatchOperation}.
+     *
+     * @param <E> The entity type
+     * @param <K> The result type
+     */
+    private final class DefaultDeleteReturningBatchOperation<E, K> extends DefaultDeleteBatchOperation<E> implements DeleteReturningBatchOperation<E, K> {
+
+        DefaultDeleteReturningBatchOperation(MethodInvocationContext<?, ?> method, @NonNull Class<E> rootEntity, Iterable<E> iterable) {
+            super(method, rootEntity, iterable);
+        }
+
+        @Override
+        public StoredQuery<E, K> getStoredQuery() {
+            return (StoredQuery<E, K>) super.getStoredQuery();
         }
     }
 
@@ -832,7 +901,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     }
 
-    private abstract class AbstractEntityInstanceOperation<E> extends AbstractEntityOperation<E> implements EntityInstanceOperation<E> {
+    private abstract sealed class AbstractEntityInstanceOperation<E> extends AbstractEntityOperation<E> implements EntityInstanceOperation<E> {
         private final E entity;
 
         AbstractEntityInstanceOperation(MethodInvocationContext<?, ?> method, E entity) {
@@ -848,7 +917,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     }
 
-    private abstract class AbstractEntityOperation<E> extends AbstractPreparedDataOperation<E> implements EntityOperation<E> {
+    private abstract sealed class AbstractEntityOperation<E> extends AbstractPreparedDataOperation<E> implements EntityOperation<E> {
         protected final MethodInvocationContext<?, ?> method;
         protected final Class<E> rootEntity;
         protected StoredQuery<E, ?> storedQuery;
@@ -905,7 +974,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      *
      * @param <E> The entity type
      */
-    private class DefaultInsertBatchOperation<E> extends DefaultBatchOperation<E> implements InsertBatchOperation<E> {
+    private final class DefaultInsertBatchOperation<E> extends DefaultBatchOperation<E> implements InsertBatchOperation<E> {
         DefaultInsertBatchOperation(MethodInvocationContext<?, ?> method, @NonNull Class<E> rootEntity, Iterable<E> iterable) {
             super(method, rootEntity, iterable);
         }
@@ -925,7 +994,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      *
      * @param <E> The entity type
      */
-    private class DefaultDeleteAllBatchOperation<E> extends DefaultBatchOperation<E> implements DeleteBatchOperation<E> {
+    private final class DefaultDeleteAllBatchOperation<E> extends DefaultBatchOperation<E> implements DeleteBatchOperation<E> {
 
         DefaultDeleteAllBatchOperation(MethodInvocationContext<?, ?> method, @NonNull Class<E> rootEntity) {
             super(method, rootEntity, Collections.emptyList());
@@ -947,7 +1016,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      *
      * @param <E> The entity type
      */
-    private class DefaultDeleteBatchOperation<E> extends DefaultBatchOperation<E> implements DeleteBatchOperation<E> {
+    private sealed class DefaultDeleteBatchOperation<E> extends DefaultBatchOperation<E> implements DeleteBatchOperation<E> {
 
         DefaultDeleteBatchOperation(MethodInvocationContext<?, ?> method, @NonNull Class<E> rootEntity, Iterable<E> iterable) {
             super(method, rootEntity, iterable);
@@ -968,7 +1037,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      *
      * @param <E> The entity type
      */
-    private class DefaultUpdateBatchOperation<E> extends DefaultBatchOperation<E> implements UpdateBatchOperation<E> {
+    private final class DefaultUpdateBatchOperation<E> extends DefaultBatchOperation<E> implements UpdateBatchOperation<E> {
 
         DefaultUpdateBatchOperation(MethodInvocationContext<?, ?> method, @NonNull Class<E> rootEntity, Iterable<E> iterable) {
             super(method, rootEntity, iterable);
@@ -989,7 +1058,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      *
      * @param <E> The entity type
      */
-    private class DefaultBatchOperation<E> extends AbstractEntityOperation<E> implements BatchOperation<E> {
+    private sealed class DefaultBatchOperation<E> extends AbstractEntityOperation<E> implements BatchOperation<E> {
         protected final Iterable<E> iterable;
 
         public DefaultBatchOperation(MethodInvocationContext<?, ?> method, @NonNull Class<E> rootEntity, Iterable<E> iterable) {

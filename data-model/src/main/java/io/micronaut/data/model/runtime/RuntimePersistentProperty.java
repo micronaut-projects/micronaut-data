@@ -27,6 +27,7 @@ import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 
+import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
@@ -193,5 +194,22 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     @Override
     public String toString() {
         return getOwner().getSimpleName() + "." + getName();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getOwner(), getName());
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (obj == null || obj.getClass() != this.getClass()) {
+            return false;
+        }
+        RuntimePersistentProperty other = (RuntimePersistentProperty) obj;
+        return Objects.equals(other.getOwner(), getOwner()) && Objects.equals(other.getName(), getName());
     }
 }

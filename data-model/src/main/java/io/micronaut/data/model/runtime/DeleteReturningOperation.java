@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.intercept.async;
-
-import io.micronaut.data.intercept.DataInterceptor;
+package io.micronaut.data.model.runtime;
 
 /**
- * An interceptor that does execute the procedure and returns a result asynchronously.
+ * A delete returning operation that updates the given entity and returns a result.
  *
- * @param <T> The declaring type
- * @param <R> The return result
+ * @param <E> The entity type
+ * @param <R> The result type
  * @author Denis Stepanov
  * @since 4.2.0
  */
-public interface ProcedureAsyncInterceptor<T, R> extends DataInterceptor<T, R> {
+public interface DeleteReturningOperation<E, R> extends DeleteOperation<E> {
+
+    @Override
+    StoredQuery<E, R> getStoredQuery();
 }

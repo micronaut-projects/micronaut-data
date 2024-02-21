@@ -21,7 +21,6 @@ import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
@@ -55,16 +54,12 @@ public class FindPageReactiveSpecificationInterceptor extends AbstractReactiveSp
 
         Pageable pageable = getPageable(context);
         if (pageable.isUnpaged()) {
-            PreparedQuery<?, ?> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.FIND_PAGE);
-            Flux<?> results = Flux.from(reactiveOperations.findAll(preparedQuery));
+            Flux<?> results = Flux.from(findAllReactive(methodKey, context, Type.FIND_PAGE));
             result = results.collectList().map(resultList -> Page.of(resultList, pageable, resultList.size()));
         } else {
-            PreparedQuery<?, ?> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.FIND_PAGE);
-            PreparedQuery<?, Number> countQuery = preparedQueryForCriteria(methodKey, context, Type.COUNT);
-
-            result = Flux.from(reactiveOperations.findAll(preparedQuery))
+            result = Flux.from(findAllReactive(methodKey, context, Type.FIND_PAGE))
                 .collectList()
-                .flatMap(list -> Mono.from(reactiveOperations.findOne(countQuery))
+                .flatMap(list -> Mono.from(countReactive(methodKey, context))
                     .map(count -> Page.of(list, getPageable(context), count.longValue())));
         }
         return Publishers.convertPublisher(conversionService, result, context.getReturnType().getType());

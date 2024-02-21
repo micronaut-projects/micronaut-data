@@ -24,9 +24,11 @@ import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.ParameterExpression;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Selection;
 import jakarta.persistence.metamodel.EntityType;
 import jakarta.persistence.metamodel.SingularAttribute;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -55,20 +57,16 @@ public interface PersistentEntityCriteriaUpdate<T> extends CriteriaUpdate<T> {
     PersistentEntityRoot<T> getRoot();
 
     @Override
-    @NonNull
-    <Y, X extends Y> PersistentEntityCriteriaUpdate<T> set(@NonNull SingularAttribute<? super T, Y> attribute, @Nullable X value);
+    @NonNull <Y, X extends Y> PersistentEntityCriteriaUpdate<T> set(@NonNull SingularAttribute<? super T, Y> attribute, @Nullable X value);
 
     @Override
-    @NonNull
-    <Y> PersistentEntityCriteriaUpdate<T> set(@NonNull SingularAttribute<? super T, Y> attribute, @NonNull Expression<? extends Y> value);
+    @NonNull <Y> PersistentEntityCriteriaUpdate<T> set(@NonNull SingularAttribute<? super T, Y> attribute, @NonNull Expression<? extends Y> value);
 
     @Override
-    @NonNull
-    <Y, X extends Y> PersistentEntityCriteriaUpdate<T> set(@NonNull Path<Y> attribute, @Nullable X value);
+    @NonNull <Y, X extends Y> PersistentEntityCriteriaUpdate<T> set(@NonNull Path<Y> attribute, @Nullable X value);
 
     @Override
-    @NonNull
-    <Y> PersistentEntityCriteriaUpdate<T> set(@NonNull Path<Y> attribute, @NonNull Expression<? extends Y> value);
+    @NonNull <Y> PersistentEntityCriteriaUpdate<T> set(@NonNull Path<Y> attribute, @NonNull Expression<? extends Y> value);
 
     @Override
     @NonNull
@@ -84,4 +82,39 @@ public interface PersistentEntityCriteriaUpdate<T> extends CriteriaUpdate<T> {
 
     @NonNull
     Set<ParameterExpression<?>> getParameters();
+
+    /**
+     * The returning result of the query.
+     *
+     * @param selection The selection to return
+     * @return The update criteria.
+     * @since 4.2.0
+     */
+    @Experimental
+    @NonNull
+    PersistentEntityCriteriaUpdate<T> returning(@NonNull Selection<? extends T> selection);
+
+
+    /**
+     * The returning result of the query.
+     *
+     * @param selections The multi selection to return
+     * @return The update criteria.
+     * @since 4.2.0
+     */
+    @Experimental
+    @NonNull
+    PersistentEntityCriteriaUpdate<T> returningMulti(@NonNull Selection<?>... selections);
+
+    /**
+     * The returning result of the query.
+     *
+     * @param selectionList The multi selection to return
+     * @return The update criteria.
+     * @since 4.2.0
+     */
+    @Experimental
+    @NonNull
+    PersistentEntityCriteriaUpdate<T> returningMulti(@NonNull List<Selection<?>> selectionList);
+
 }

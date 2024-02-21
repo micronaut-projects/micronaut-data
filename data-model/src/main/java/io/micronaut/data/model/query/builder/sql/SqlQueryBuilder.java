@@ -943,6 +943,19 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     @NonNull
     @Override
     public QueryResult buildInsert(AnnotationMetadata repositoryMetadata, PersistentEntity entity) {
+        return buildInsert(repositoryMetadata, entity, false);
+    }
+
+    @Override
+    public QueryResult buildInsertReturning(AnnotationMetadata repositoryMetadata, PersistentEntity entity) {
+        if (!getDialect().supportsInsertReturning()) {
+            throw new IllegalStateException("Dialect: " + getDialect() + " doesn't support INSERT ... RETURNING clause");
+        }
+        return buildInsert(repositoryMetadata, entity, true);
+    }
+
+    @NonNull
+    private QueryResult buildInsert(AnnotationMetadata repositoryMetadata, PersistentEntity entity, boolean isReturning) {
         boolean escape = shouldEscape(entity);
         final String unescapedTableName = getUnescapedTableName(entity);
 
@@ -987,44 +1000,53 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
             Collection<? extends PersistentProperty> persistentProperties = entity.getPersistentProperties();
             List<String> columns = new ArrayList<>();
+            List<String> resultColumns = new ArrayList<>();
             List<String> values = new ArrayList<>();
 
             for (PersistentProperty prop : persistentProperties) {
-                if (!prop.isGenerated()) {
-                    traversePersistentProperties(prop, (associations, property) -> {
-                        addWriteExpression(values, prop);
-
-                        String key = String.valueOf(values.size());
-                        String[] path = asStringPath(associations, property);
-                        parameterBindings.add(new QueryParameterBinding() {
-                            @Override
-                            public String getKey() {
-                                return key;
-                            }
-
-                            @Override
-                            public DataType getDataType() {
-                                return property.getDataType();
-                            }
-
-                            @Override
-                            public JsonDataType getJsonDataType() {
-                                return property.getJsonDataType();
-                            }
-
-                            @Override
-                            public String[] getPropertyPath() {
-                                return path;
-                            }
-                        });
-
+                traversePersistentProperties(prop, (associations, property) -> {
+                    if (prop.isGenerated()) {
                         String columnName = getMappedName(namingStrategy, associations, property);
                         if (escape) {
                             columnName = quote(columnName);
                         }
-                        columns.add(columnName);
+                        resultColumns.add(columnName);
+                        return;
+                    }
+
+                    addWriteExpression(values, prop);
+
+                    String key = String.valueOf(values.size());
+                    String[] path = asStringPath(associations, property);
+                    parameterBindings.add(new QueryParameterBinding() {
+                        @Override
+                        public String getKey() {
+                            return key;
+                        }
+
+                        @Override
+                        public DataType getDataType() {
+                            return property.getDataType();
+                        }
+
+                        @Override
+                        public JsonDataType getJsonDataType() {
+                            return property.getJsonDataType();
+                        }
+
+                        @Override
+                        public String[] getPropertyPath() {
+                            return path;
+                        }
                     });
-                }
+
+                    String columnName = getMappedName(namingStrategy, associations, property);
+                    if (escape) {
+                        columnName = quote(columnName);
+                    }
+                    columns.add(columnName);
+                    resultColumns.add(columnName);
+                });
             }
             PersistentProperty version = entity.getVersion();
             if (version != null) {
@@ -1058,13 +1080,22 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     columnName = quote(columnName);
                 }
                 columns.add(columnName);
+                resultColumns.add(columnName);
             }
 
             PersistentProperty identity = entity.getIdentity();
             if (identity != null) {
                 traversePersistentProperties(identity, (associations, property) -> {
+                    String columnName = getMappedName(namingStrategy, associations, property);
+                    if (escape) {
+                        columnName = quote(columnName);
+                    }
+
                     boolean isSequence = false;
                     if (isNotForeign(associations)) {
+
+                        resultColumns.add(columnName);
+
                         Optional<AnnotationValue<GeneratedValue>> generated = property.findAnnotation(GeneratedValue.class);
                         if (generated.isPresent()) {
                             GeneratedValue.Type idGeneratorType = generated
@@ -1110,10 +1141,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
                     }
 
-                    String columnName = getMappedName(namingStrategy, associations, property);
-                    if (escape) {
-                        columnName = quote(columnName);
-                    }
                     columns.add(columnName);
                 });
             }
@@ -1121,6 +1148,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             builder = INSERT_INTO + getTableName(entity) +
                 " (" + String.join(",", columns) + CLOSE_BRACKET + " " +
                 "VALUES (" + String.join(String.valueOf(COMMA), values) + CLOSE_BRACKET;
+
+            if (isReturning) {
+                builder += RETURNING + String.join(",", resultColumns);
+            }
         }
         return QueryResult.of(
                 builder,
@@ -1705,6 +1736,47 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 .append(OPEN_BRACKET)
                 .append('*')
                 .append(CLOSE_BRACKET);
+    }
+
+    @Override
+    protected void appendProjectionRowCountDistinct(StringBuilder queryString, QueryState queryState,
+                                                    PersistentEntity entity, AnnotationMetadata annotationMetadata,
+                                                    String logicalName) {
+        queryString.append("COUNT(DISTINCT(");
+        // If id is composite identity or embedded id then we need to do CONCAT
+        // all id properties. It is safe as none portion of such id should be null
+        // For regular single field id we just select that field COUNT(DISTINCT(id_field))
+        // and we are doing CONCAT because COUNT(DISTINCT *) is not supported
+        if (entity.hasCompositeIdentity()) {
+            queryString.append(" CONCAT(");
+            for (PersistentProperty identity : entity.getCompositeIdentity()) {
+                appendPropertyProjection(annotationMetadata, entity, queryString, asQueryPropertyPath(queryState.getRootAlias(), identity), null);
+                queryString.append(COMMA);
+            }
+            queryString.setLength(queryString.length() - 1);
+            queryString.append(CLOSE_BRACKET);
+        } else if (entity.hasIdentity()) {
+            PersistentProperty identity = entity.getIdentity();
+            if (identity == null) {
+                throw new IllegalArgumentException(CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID);
+            }
+            StringBuilder sbSelectionProps = new StringBuilder();
+            appendPropertyProjection(annotationMetadata, queryState.getEntity(), sbSelectionProps, asQueryPropertyPath(queryState.getRootAlias(), identity), null);
+            String[] selectionProps = sbSelectionProps.toString().split(",");
+            if (selectionProps.length > 1) {
+                queryString.append(" CONCAT(");
+                for (String selectionProp : selectionProps) {
+                    queryString.append(selectionProp).append(COMMA);
+                }
+                queryString.setLength(queryString.length() - 1);
+                queryString.append(CLOSE_BRACKET);
+            } else {
+                queryString.append(selectionProps[0]);
+            }
+        } else {
+            throw new IllegalArgumentException(CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID);
+        }
+        queryString.append("))");
     }
 
     @Override

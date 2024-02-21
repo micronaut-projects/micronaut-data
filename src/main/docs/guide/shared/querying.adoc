@@ -87,6 +87,10 @@ The following table summarizes the possible alternative patterns, behaviour and 
 |A primitive or wrapper `boolean`
 |Checks whether a record exists matching properties
 
+|`save`, `persist`, `store`, `insert` with an entity or entities method parameter
+|A `void` or an entity
+|Inserts one or many instances
+
 |`delete`, `remove`, `erase`, `eliminate` with an entity or entities method parameter
 |A `void` or `Number` return type
 |Delete one or many entries
@@ -110,6 +114,18 @@ The following table summarizes the possible alternative patterns, behaviour and 
 |`update` with by method parameters to match (annotated @Id or @Version) followed by method parameters to update
 |A `void` or `Number` return type
 |Batch update where parameter/s represents an entity's property (must be named the same)
+
+|`saveReturning` all of the save variations plus a suffix `Returning`
+|An entity type or any types that can be returned by the query
+|Insert with a returning clause (Might not be supported by a DIALECT or an implementation)
+
+|`updateReturning` all of the update variations plus a suffix `Returning`
+|An entity type or any types that can be returned by the query
+|Update with a returning clause (Might not be supported by a DIALECT or an implementation)
+
+|`deleteReturning` all of the delete variations plus a suffix `Returning`
+|An entity type or any types that can be returned by the query
+|Delete with a returning clause (Might not be supported by a DIALECT or an implementation)
 
 |===
 
