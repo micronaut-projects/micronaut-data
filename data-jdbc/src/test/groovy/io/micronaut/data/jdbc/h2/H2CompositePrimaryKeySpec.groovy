@@ -55,7 +55,7 @@ class H2CompositePrimaryKeySpec extends Specification {
 
         when:"Querying for an entity by ID"
         project = projectRepository.findById(id).orElse(null)
-        def projects = projectRepository.findByProjectIdIn(List.of(id))
+        def projects = projectRepository.findByProjectIdIn(List.of(id, new ProjectId(100, 200)))
 
         then:"The entity is retrieved"
         project != null
@@ -95,7 +95,7 @@ class H2CompositePrimaryKeySpec extends Specification {
         queryModel = QueryModel.from(PersistentEntity.of(Project))
         q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel.inList("projectId", new QueryParameter("projectIds")))
         then:
-        q.query == 'SELECT project_."project_id_department_id",project_."project_id_project_id",LOWER(project_.name) AS name,project_.name AS db_name,UPPER(project_.org) AS org FROM "project" project_ WHERE (project_."project_id" IN (?))'
-        q.parameters == ["1": "projectId"]
+        q.query == 'SELECT project_."project_id_department_id",project_."project_id_project_id",LOWER(project_.name) AS name,project_.name AS db_name,UPPER(project_.org) AS org FROM "project" project_ WHERE ((project_."project_id_department_id",project_."project_id_project_id") IN (?,?))'
+        q.parameters == ["1": "projectId.departmentId", "2": "projectId.projectId"]
     }
 }

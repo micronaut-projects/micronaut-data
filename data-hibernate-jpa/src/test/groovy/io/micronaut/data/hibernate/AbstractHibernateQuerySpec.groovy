@@ -29,6 +29,8 @@ import io.micronaut.data.tck.entities.EntityIdClass
 import io.micronaut.data.tck.entities.EntityWithIdClass
 import io.micronaut.data.tck.entities.Product
 import io.micronaut.data.tck.entities.Student
+import io.micronaut.data.tck.jdbc.entities.Project
+import io.micronaut.data.tck.jdbc.entities.ProjectId
 import io.micronaut.data.tck.tests.AbstractQuerySpec
 import jakarta.inject.Inject
 import org.hibernate.LazyInitializationException
@@ -70,6 +72,10 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
     @Shared
     @Inject
     RelPersonRepository relPersonRepo
+
+    @Shared
+    @Inject
+    JpaProjectRepository projectRepository
 
     void "test @where with nullable property values"() {
         when:
@@ -823,6 +829,32 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
         then:
         books.size() == 2
         cnt == 2
+    }
+
+    void "test CRUD with composite ID"() {
+        when:"An entity is saved"
+        def id = new ProjectId(10, 1)
+        def p = new Project(id, "Project 1")
+        p.setOrg("test")
+        def project = projectRepository.save(p)
+
+        then:"The save worked"
+        project.projectId.departmentId == 10
+        project.projectId.projectId == 1
+
+        when:"Querying for an entity by id in list"
+        def projects = projectRepository.findByProjectIdIn(List.of(id, new ProjectId(1000, 10001)))
+
+        then:"The entity is retrieved"
+        projects.size()
+        projects.contains(project)
+
+        when:"A delete is executed"
+        projectRepository.deleteById(id)
+        project = projectRepository.findById(id).orElse(null)
+
+        then:"The object was deleted"
+        project == null
     }
 
     private static Specification<Book> testJoin(String value) {
