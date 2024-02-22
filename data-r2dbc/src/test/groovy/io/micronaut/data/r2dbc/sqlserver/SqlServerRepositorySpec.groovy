@@ -158,6 +158,12 @@ class SqlServerRepositorySpec extends AbstractRepositorySpec implements SqlServe
         return context.getBean(MSPageRepository)
     }
 
+    @Memoized
+    @Override
+    ProjectRepository getProjectRepository() {
+        return context.getBean(MSProjectRepository)
+    }
+
     @Override
     boolean supportsNullCharacter() {
         false

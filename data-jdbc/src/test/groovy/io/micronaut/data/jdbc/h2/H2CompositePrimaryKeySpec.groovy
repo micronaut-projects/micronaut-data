@@ -95,7 +95,7 @@ class H2CompositePrimaryKeySpec extends Specification {
         queryModel = QueryModel.from(PersistentEntity.of(Project))
         q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel.inList("projectId", new QueryParameter("projectIds")))
         then:
-        q.query == 'SELECT project_."project_id_department_id",project_."project_id_project_id",LOWER(project_.name) AS name,project_.name AS db_name,UPPER(project_.org) AS org FROM "project" project_ WHERE ((project_."project_id_department_id",project_."project_id_project_id") IN (?,?))'
+        q.query == 'SELECT project_."project_id_department_id",project_."project_id_project_id",LOWER(project_.name) AS name,project_.name AS db_name,UPPER(project_.org) AS org FROM "project" project_ WHERE (project_."project_id_department_id" IN (?) AND project_."project_id_project_id" IN (?))'
         q.parameters == ["1": "projectId.departmentId", "2": "projectId.projectId"]
     }
 }

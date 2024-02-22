@@ -152,4 +152,10 @@ class SqlServerRepositorySpec extends AbstractRepositorySpec implements MSSQLTes
     PageRepository getPageRepository() {
         return context.getBean(MSPageRepository)
     }
+
+    @Memoized
+    @Override
+    ProjectRepository getProjectRepository() {
+        return context.getBean(MSProjectRepository)
+    }
 }

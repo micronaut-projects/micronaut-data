@@ -33,6 +33,7 @@ import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
@@ -205,18 +206,25 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
     }
 
     private Object resolveParameterValue(QueryParameterBinding queryParameterBinding, Object[] parameterArray) {
-        Object value;
-        value = parameterArray[queryParameterBinding.getParameterIndex()];
+        Object value = parameterArray[queryParameterBinding.getParameterIndex()];
         String[] parameterBindingPath = queryParameterBinding.getParameterBindingPath();
         if (parameterBindingPath != null) {
             for (String prop : parameterBindingPath) {
                 if (value == null) {
                     break;
                 }
-                value = BeanWrapper.getWrapper(value).getRequiredProperty(prop, Argument.OBJECT_ARGUMENT);
+                if (value instanceof Collection<?> collection) {
+                    value = collection.stream().map(item -> getPropertyValue(item, prop)).toList();
+                } else {
+                    value = getPropertyValue(value, prop);
+                }
             }
         }
         return value;
+    }
+
+    private Object getPropertyValue(Object value, String prop) {
+        return BeanWrapper.getWrapper(value).getRequiredProperty(prop, Argument.OBJECT_ARGUMENT);
     }
 
     private List<Object> expandValue(Object value, @Nullable DataType dataType) {

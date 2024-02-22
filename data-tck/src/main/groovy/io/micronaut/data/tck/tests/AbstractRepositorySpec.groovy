@@ -47,6 +47,8 @@ import io.micronaut.data.tck.entities.Page
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.data.tck.entities.Student
 import io.micronaut.data.tck.entities.TimezoneBasicTypes
+import io.micronaut.data.tck.jdbc.entities.Project
+import io.micronaut.data.tck.jdbc.entities.ProjectId
 import io.micronaut.data.tck.jdbc.entities.Role
 import io.micronaut.data.tck.jdbc.entities.User
 import io.micronaut.data.tck.jdbc.entities.UserRole
@@ -105,6 +107,7 @@ abstract class AbstractRepositorySpec extends Specification {
     abstract BasicTypesRepository getBasicTypeRepository()
     abstract TimezoneBasicTypesRepository getTimezoneBasicTypeRepository()
     abstract PageRepository getPageRepository()
+    abstract ProjectRepository getProjectRepository()
 
     abstract Map<String, String> getProperties()
 
@@ -2614,6 +2617,34 @@ abstract class AbstractRepositorySpec extends Specification {
         cnt == 2
         cleanup:
         cleanupData()
+    }
+
+    void "test find by embedded id IN"() {
+        when:"An entity is saved"
+        def id = new ProjectId(10, 1)
+        def p = new Project(id, "Project 1")
+        p.setOrg("test")
+        def project = projectRepository.save(p)
+
+        then:"The save worked"
+        project.projectId.departmentId == 10
+        project.projectId.projectId == 1
+
+        when:"Querying for an entity by id IN"
+        def projects = projectRepository.findByProjectIdIn(List.of(id, new ProjectId(100, 200)))
+
+        then:"The entities are found"
+        projects.size()
+        projects.contains(project)
+
+        when:"A delete is executed"
+        projectRepository.deleteById(id)
+        project = projectRepository.findById(id).orElse(null)
+        projects = projectRepository.findByProjectIdIn(List.of(id))
+
+        then:"The object was deleted"
+        project == null
+        projects.empty
     }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {

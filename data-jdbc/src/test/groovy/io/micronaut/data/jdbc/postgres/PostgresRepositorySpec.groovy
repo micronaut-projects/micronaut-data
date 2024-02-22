@@ -158,6 +158,12 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
     }
 
     @Memoized
+    @Override
+    ProjectRepository getProjectRepository() {
+        return context.getBean(PostgresProjectRepository)
+    }
+
+    @Memoized
     PostgresDtoTestService getDtoTestService() {
         context.getBean(PostgresDtoTestService)
     }

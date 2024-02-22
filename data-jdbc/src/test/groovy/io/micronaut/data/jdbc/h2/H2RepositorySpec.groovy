@@ -32,6 +32,7 @@ import io.micronaut.data.tck.repositories.MealRepository
 import io.micronaut.data.tck.repositories.NoseRepository
 import io.micronaut.data.tck.repositories.PageRepository
 import io.micronaut.data.tck.repositories.PersonRepository
+import io.micronaut.data.tck.repositories.ProjectRepository
 import io.micronaut.data.tck.repositories.RegionRepository
 import io.micronaut.data.tck.repositories.RoleRepository
 import io.micronaut.data.tck.repositories.StudentRepository
@@ -102,6 +103,9 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
 
     @Shared
     H2PageRepository pageRepo = context.getBean(H2PageRepository)
+
+    @Shared
+    H2ProjectRepository projectRepo = context.getBean(H2ProjectRepository)
 
     @Override
     NoseRepository getNoseRepository() {
@@ -213,6 +217,11 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
     @Override
     PageRepository getPageRepository() {
         return pageRepo
+    }
+
+    @Override
+    ProjectRepository getProjectRepository() {
+        return projectRepo
     }
 
     @Override

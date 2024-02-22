@@ -155,6 +155,12 @@ class MySqlRepositorySpec extends AbstractRepositorySpec implements MySQLTestPro
         return context.getBean(MySqlPageRepository)
     }
 
+    @Memoized
+    @Override
+    ProjectRepository getProjectRepository() {
+        return context.getBean(MySqlProjectRepository)
+    }
+
     def "for update is in the correct location"() {
         given:
             setupBooks()

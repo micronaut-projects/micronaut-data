@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.mysql;
+package io.micronaut.data.jdbc.postgres;
 
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.tck.repositories.PageRepository;
+import io.micronaut.data.tck.repositories.ProjectRepository;
 
-@JdbcRepository(dialect = Dialect.MYSQL)
-public interface MySqlPageRepository extends PageRepository {}
+@JdbcRepository(dialect = Dialect.POSTGRES)
+public interface PostgresProjectRepository extends ProjectRepository {
+}

@@ -1170,4 +1170,25 @@ interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
         countQuery == 'SELECT COUNT(*) FROM `user_role_composite` user_role_'
         countDistinctQuery == 'SELECT COUNT(DISTINCT( CONCAT(user_role_.`id_user_id`,user_role_.`id_role_id`))) FROM `user_role_composite` user_role_'
     }
+
+    void "test find by embedded id IN"() {
+        given:
+        def repository = buildRepository('test.ProjectRepository', """
+
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.jdbc.entities.Project;
+import io.micronaut.data.tck.jdbc.entities.ProjectId;
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface ProjectRepository extends GenericRepository<Project, ProjectId> {
+
+    List<Project> findByProjectIdIn(List<ProjectId> projectIds);
+}
+""")
+        def findByProjectIdInQuery = getQuery(repository.getRequiredMethod("findByProjectIdIn", List))
+
+        expect:
+        findByProjectIdInQuery == 'SELECT project_."project_id_department_id",project_."project_id_project_id",LOWER(project_.name) AS name,project_.name AS db_name,UPPER(project_.org) AS org FROM "project" project_ WHERE (project_."project_id_department_id" IN (?) AND project_."project_id_project_id" IN (?))'
+    }
 }

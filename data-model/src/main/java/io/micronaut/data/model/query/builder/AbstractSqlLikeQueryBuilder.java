@@ -258,22 +258,16 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             Object value = inQuery.getValue();
             QueryPropertyPath propertyPath = ctx.getRequiredProperty(inQuery.getProperty(), QueryModel.In.class);
             StringBuilder whereClause = ctx.query();
-            appendCriteriaForIn(whereClause, ctx.getAnnotationMetadata(), ctx.getPersistentEntity(),
-                ctx, propertyPath.getPropertyPath(), propertyPath, value, false);
+            appendCriteriaForOperator(whereClause, ctx.getAnnotationMetadata(), ctx.getPersistentEntity(),
+                ctx, propertyPath, value, " IN ");
         });
 
         addCriterionHandler(QueryModel.NotIn.class, (ctx, inQuery) -> {
+            Object value = inQuery.getValue();
             QueryPropertyPath propertyPath = ctx.getRequiredProperty(inQuery.getProperty(), QueryModel.In.class);
             StringBuilder whereClause = ctx.query();
-            appendPropertyRef(whereClause, ctx.getAnnotationMetadata(), ctx.getPersistentEntity(), propertyPath);
-            whereClause.append(" NOT IN (");
-            Object value = inQuery.getValue();
-            if (value instanceof BindingParameter) {
-                ctx.pushParameter((BindingParameter) value, newBindingContext(propertyPath.propertyPath).expandable());
-            } else {
-                asLiterals(ctx.query(), value);
-            }
-            whereClause.append(CLOSE_BRACKET);
+            appendCriteriaForOperator(whereClause, ctx.getAnnotationMetadata(), ctx.getPersistentEntity(),
+                ctx, propertyPath, value, " NOT IN ");
         });
 
         addCriterionHandler(QueryModel.ArrayContains.class, (ctx, criterion) -> {
@@ -1381,16 +1375,23 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                                            Object value,
                                            String operator) {
 
+        boolean isInOperator = operator.contains(" IN ");
         if (value instanceof BindingParameter bindingParameter) {
             boolean computePropertyPaths = computePropertyPaths();
             boolean jsonEntity = isJsonEntity(annotationMetadata, persistentEntity);
             if (!computePropertyPaths || jsonEntity) {
                 appendPropertyRef(whereClause, annotationMetadata, persistentEntity, propertyPath);
                 whereClause.append(operator);
-                propertyParameterCreator.pushParameter(
-                    bindingParameter,
-                    newBindingContext(parameterPropertyPath, propertyPath.propertyPath)
-                );
+                if (isInOperator) {
+                    whereClause.append(OPEN_BRACKET);
+                }
+                BindingParameter.BindingContext bindingContext = isInOperator
+                    ? newBindingContext(parameterPropertyPath, propertyPath.propertyPath).expandable()
+                    : newBindingContext(parameterPropertyPath, propertyPath.propertyPath);
+                propertyParameterCreator.pushParameter(bindingParameter, bindingContext);
+                if (isInOperator) {
+                    whereClause.append(CLOSE_BRACKET);
+                }
                 return;
             }
 
@@ -1410,17 +1411,23 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 whereClause.append(columnName);
 
                 whereClause.append(operator);
+                if (isInOperator) {
+                    whereClause.append(OPEN_BRACKET);
+                }
                 String writeTransformer = getDataTransformerWriteValue(currentAlias, property).orElse(null);
+                BindingParameter.BindingContext bindingContext = isInOperator
+                    ? newBindingContext(parameterPropertyPath, PersistentPropertyPath.of(associations, property)).expandable()
+                    : newBindingContext(parameterPropertyPath, PersistentPropertyPath.of(associations, property));
                 Runnable pushParameter = () -> {
-                    propertyParameterCreator.pushParameter(
-                        bindingParameter,
-                        newBindingContext(parameterPropertyPath, PersistentPropertyPath.of(associations, property))
-                    );
+                    propertyParameterCreator.pushParameter(bindingParameter, bindingContext);
                 };
                 if (writeTransformer != null) {
                     appendTransformed(whereClause, writeTransformer, pushParameter);
                 } else {
                     pushParameter.run();
+                }
+                if (isInOperator) {
+                    whereClause.append(CLOSE_BRACKET);
                 }
                 whereClause.append(LOGICAL_AND);
                 needsTrimming[0] = true;
@@ -1432,89 +1439,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         } else {
             appendPropertyRef(whereClause, annotationMetadata, persistentEntity, propertyPath);
-            whereClause.append(operator).append(asLiteral(value));
-        }
-    }
-
-    private void appendCriteriaForIn(StringBuilder whereClause,
-                                           AnnotationMetadata annotationMetadata,
-                                           PersistentEntity persistentEntity,
-                                           PropertyParameterCreator propertyParameterCreator,
-                                           PersistentPropertyPath parameterPropertyPath,
-                                           QueryPropertyPath propertyPath,
-                                           Object value,
-                                           boolean negate) {
-        String operator = negate ? " NOT IN " : " IN ";
-        if (value instanceof BindingParameter bindingParameter) {
-            boolean computePropertyPaths = computePropertyPaths();
-            boolean jsonEntity = isJsonEntity(annotationMetadata, persistentEntity);
-            if (!computePropertyPaths || jsonEntity) {
-                appendPropertyRef(whereClause, annotationMetadata, persistentEntity, propertyPath);
+            if (isInOperator) {
+                // TODO: Expand if Embeddable param
                 whereClause.append(operator).append(OPEN_BRACKET);
-                propertyParameterCreator.pushParameter((BindingParameter) value, newBindingContext(propertyPath.propertyPath).expandable());
+                asLiterals(whereClause, value);
                 whereClause.append(CLOSE_BRACKET);
-                return;
+            } else {
+                whereClause.append(operator).append(asLiteral(value));
             }
-
-            String currentAlias = propertyPath.getTableAlias();
-            NamingStrategy namingStrategy = propertyPath.getNamingStrategy();
-            boolean shouldEscape = propertyPath.shouldEscape();
-            StringBuilder fieldBuff = new StringBuilder();
-            List<PropertyBindingInfo> propertyBindingInfos = new ArrayList<>();
-            traversePersistentPropertiesForCriteria(propertyPath.getAssociations(), propertyPath.getProperty(), (associations, property) -> {
-                if (!fieldBuff.isEmpty()) {
-                    fieldBuff.append(COMMA);
-                }
-                if (currentAlias != null) {
-                    fieldBuff.append(currentAlias).append(DOT);
-                }
-
-                String columnName = getMappedName(namingStrategy, associations, property);
-                if (shouldEscape) {
-                    columnName = quote(columnName);
-                }
-                fieldBuff.append(columnName);
-
-                String writeTransformer = getDataTransformerWriteValue(currentAlias, property).orElse(null);
-                propertyBindingInfos.add(new PropertyBindingInfo(PersistentPropertyPath.of(associations, property), writeTransformer));
-            });
-
-            boolean multiFields = fieldBuff.indexOf(String.valueOf(COMMA)) != -1;
-            if (multiFields) {
-                whereClause.append(OPEN_BRACKET);
-            }
-            whereClause.append(fieldBuff);
-            if (multiFields) {
-                whereClause.append(CLOSE_BRACKET);
-            }
-            whereClause.append(operator);
-            whereClause.append(OPEN_BRACKET);
-            Iterator<PropertyBindingInfo> propertyBindingInfoIterator = propertyBindingInfos.iterator();
-            while (propertyBindingInfoIterator.hasNext()) {
-                PropertyBindingInfo propertyBindingInfo = propertyBindingInfoIterator.next();
-                Runnable pushParameter = () -> {
-                    propertyParameterCreator.pushParameter(
-                        bindingParameter,
-                        newBindingContext(parameterPropertyPath, propertyBindingInfo.persistentPropertyPath()).expandable()
-                    );
-                };
-                if (propertyBindingInfo.writeTransform() != null) {
-                    appendTransformed(whereClause, propertyBindingInfo.writeTransform(), pushParameter);
-                } else {
-                    pushParameter.run();
-                }
-                if (propertyBindingInfoIterator.hasNext()) {
-                    whereClause.append(COMMA);
-                }
-            }
-            whereClause.append(CLOSE_BRACKET);
-
-        } else {
-            // TODO: Expand if Embeddable param
-            appendPropertyRef(whereClause, annotationMetadata, persistentEntity, propertyPath);
-            whereClause.append(operator).append(OPEN_BRACKET);
-            asLiterals(whereClause, value);
-            whereClause.append(CLOSE_BRACKET);
         }
     }
 
@@ -2720,8 +2652,5 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
     protected enum QueryPosition {
         AFTER_TABLE_NAME, END_OF_QUERY
-    }
-
-    private record PropertyBindingInfo(PersistentPropertyPath persistentPropertyPath, String writeTransform) {
     }
 }
