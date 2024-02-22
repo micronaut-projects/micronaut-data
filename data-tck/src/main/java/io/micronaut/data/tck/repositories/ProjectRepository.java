@@ -18,12 +18,14 @@ package io.micronaut.data.tck.repositories;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
+import io.micronaut.data.repository.jpa.criteria.QuerySpecification;
 import io.micronaut.data.tck.jdbc.entities.Project;
 import io.micronaut.data.tck.jdbc.entities.ProjectId;
 
 import java.util.List;
 
-public interface ProjectRepository extends CrudRepository<Project, ProjectId> {
+public interface ProjectRepository extends CrudRepository<Project, ProjectId>, JpaSpecificationExecutor<Project> {
 
     void update(@Id ProjectId projectId, String name);
 
@@ -33,4 +35,8 @@ public interface ProjectRepository extends CrudRepository<Project, ProjectId> {
 
     @Query(value = "INSERT INTO project (name,org,project_id_department_id,project_id_project_id) VALUES (UPPER(:name),:org,:departmentId,:projectId)")
     void customSave(String name, String org, int departmentId, int projectId);
+
+    static QuerySpecification<Project> byIds(List<ProjectId> ids) {
+        return (root, query, criteriaBuilder) -> root.get("projectId").in(ids);
+    }
 }

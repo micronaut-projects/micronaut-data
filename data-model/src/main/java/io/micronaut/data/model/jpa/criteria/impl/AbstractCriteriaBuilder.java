@@ -67,6 +67,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -925,6 +926,11 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
                     }
 
                     @Override
+                    public @Nullable String[] getParameterBindingPath() {
+                        return getBindingPath(bindingContext.getIncomingMethodParameterProperty(), outgoingQueryParameterProperty);
+                    }
+
+                    @Override
                     public boolean isExpandable() {
                         return bindingContext.isExpandable();
                     }
@@ -936,6 +942,28 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
                 };
             }
         };
+    }
+
+    private String[] getBindingPath(PersistentPropertyPath parameterProperty, PersistentPropertyPath bindedPath) {
+        if (parameterProperty == null) {
+            return asStringPath(bindedPath.getAssociations(), bindedPath.getProperty());
+        }
+        List<String> parameterPath = Arrays.asList(asStringPath(parameterProperty.getAssociations(), parameterProperty.getProperty()));
+        List<String> path = new LinkedList<>(Arrays.asList(asStringPath(bindedPath.getAssociations(), bindedPath.getProperty())));
+        if (path.equals(parameterPath)) {
+            return null;
+        }
+        int fromIndex = 0;
+        for (int i = 0; i < path.size() && i < parameterPath.size(); i++) {
+            String pp = parameterPath.get(i);
+            String p = path.get(i);
+            if (pp.equals(p)) {
+                fromIndex++;
+                continue;
+            }
+            break;
+        }
+        return path.subList(fromIndex, path.size()).toArray(new String[0]);
     }
 
     /**

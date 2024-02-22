@@ -1440,7 +1440,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         } else {
             appendPropertyRef(whereClause, annotationMetadata, persistentEntity, propertyPath);
             if (isInOperator) {
-                // TODO: Expand if Embeddable param
                 whereClause.append(operator).append(OPEN_BRACKET);
                 asLiterals(whereClause, value);
                 whereClause.append(CLOSE_BRACKET);

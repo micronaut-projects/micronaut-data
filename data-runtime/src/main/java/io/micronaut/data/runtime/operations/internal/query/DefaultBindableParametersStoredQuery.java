@@ -156,6 +156,10 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
                     }
                 }
             }
+        } else if (binding.getParameterBindingPath() != null && value instanceof Collection<?>) {
+            // For list of embedded values passed in criteria.
+            // Is there a better way to know we need to convert it that way?
+            value = resolveParameterValue(binding, value);
         }
 
         if (persistentProperty != null) {
@@ -206,7 +210,10 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
     }
 
     private Object resolveParameterValue(QueryParameterBinding queryParameterBinding, Object[] parameterArray) {
-        Object value = parameterArray[queryParameterBinding.getParameterIndex()];
+        return resolveParameterValue(queryParameterBinding, parameterArray[queryParameterBinding.getParameterIndex()]);
+    }
+
+    private Object resolveParameterValue(QueryParameterBinding queryParameterBinding, Object value) {
         String[] parameterBindingPath = queryParameterBinding.getParameterBindingPath();
         if (parameterBindingPath != null) {
             for (String prop : parameterBindingPath) {

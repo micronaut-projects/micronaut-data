@@ -2647,6 +2647,13 @@ abstract class AbstractRepositorySpec extends Specification {
         then:"The entities are not found"
         projectsNotIn.empty
 
+        when:"Query IN using criteria"
+        projects = projectRepository.findAll(ProjectRepository.byIds(List.of(id)))
+
+        then:
+        !projects.empty
+        projects.contains(project)
+
         when:"A delete is executed"
         projectRepository.deleteById(id)
         project = projectRepository.findById(id).orElse(null)
