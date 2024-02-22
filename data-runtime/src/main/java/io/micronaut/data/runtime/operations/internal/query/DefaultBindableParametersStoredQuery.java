@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.type.Argument;
+import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
@@ -33,6 +34,7 @@ import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -156,7 +158,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
                     }
                 }
             }
-        } else if (binding.getParameterBindingPath() != null && value instanceof Collection<?>) {
+        } else if (isCollectionOfEmbeddedValues(value, binding)) {
             // For list of embedded values passed in criteria.
             // Is there a better way to know we need to convert it that way?
             value = resolveParameterValue(binding, value);
@@ -207,6 +209,19 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
             }
             binder.bindMany(binding, values);
         }
+    }
+
+    private boolean isCollectionOfEmbeddedValues(Object value, QueryParameterBinding binding) {
+        if (!(value instanceof Collection<?>)) {
+            return false;
+        }
+        String[] parameterBindingPath = binding.getParameterBindingPath();
+        if (ArrayUtils.isEmpty(parameterBindingPath)) {
+            return false;
+        }
+        String[] requiredPropertyPath = binding.getRequiredPropertyPath();
+        return requiredPropertyPath.length > parameterBindingPath.length &&
+            Arrays.asList(requiredPropertyPath).containsAll(Arrays.asList(parameterBindingPath));
     }
 
     private Object resolveParameterValue(QueryParameterBinding queryParameterBinding, Object[] parameterArray) {
