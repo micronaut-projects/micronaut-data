@@ -214,6 +214,8 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
                     break;
                 }
                 if (value instanceof Collection<?> collection) {
+                    // This is the case when there is collection of embedded values (like composite key)
+                    // so we extract collection of each embedded property and use as parameter (for IN/NOT IN)
                     value = collection.stream().map(item -> getPropertyValue(item, prop)).toList();
                 } else {
                     value = getPropertyValue(value, prop);

@@ -2622,20 +2622,30 @@ abstract class AbstractRepositorySpec extends Specification {
     void "test find by embedded id IN"() {
         when:"An entity is saved"
         def id = new ProjectId(10, 1)
-        def p = new Project(id, "Project 1")
-        p.setOrg("test")
-        def project = projectRepository.save(p)
+        projectRepository.customSave("Project 1", "test", id.departmentId, id.projectId)
+        def optProject = projectRepository.findById(id)
 
         then:"The save worked"
+        optProject.present
+        def project = optProject.get()
         project.projectId.departmentId == 10
         project.projectId.projectId == 1
 
         when:"Querying for an entity by id IN"
         def projects = projectRepository.findByProjectIdIn(List.of(id, new ProjectId(100, 200)))
+        def projectsNotIn = projectRepository.findByProjectIdNotIn(List.of(new ProjectId(100, 200)))
 
         then:"The entities are found"
-        projects.size()
+        !projects.empty
         projects.contains(project)
+        !projectsNotIn.empty
+        projectsNotIn.contains(project)
+
+        when:"Querying for an entity by id NOT IN"
+        projectsNotIn = projectRepository.findByProjectIdNotIn(List.of(id))
+
+        then:"The entities are not found"
+        projectsNotIn.empty
 
         when:"A delete is executed"
         projectRepository.deleteById(id)

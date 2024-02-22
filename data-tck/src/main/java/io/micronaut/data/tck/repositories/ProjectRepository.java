@@ -16,6 +16,7 @@
 package io.micronaut.data.tck.repositories;
 
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.jdbc.entities.Project;
 import io.micronaut.data.tck.jdbc.entities.ProjectId;
@@ -27,4 +28,9 @@ public interface ProjectRepository extends CrudRepository<Project, ProjectId> {
     void update(@Id ProjectId projectId, String name);
 
     List<Project> findByProjectIdIn(List<ProjectId> projectIds);
+
+    List<Project> findByProjectIdNotIn(List<ProjectId> projectIds);
+
+    @Query(value = "INSERT INTO project (name,org,project_id_department_id,project_id_project_id) VALUES (UPPER(:name),:org,:departmentId,:projectId)")
+    void customSave(String name, String org, int departmentId, int projectId);
 }

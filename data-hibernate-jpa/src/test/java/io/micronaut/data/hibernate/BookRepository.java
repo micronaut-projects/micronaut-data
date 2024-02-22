@@ -40,6 +40,9 @@ public abstract class BookRepository extends io.micronaut.data.tck.repositories.
         super(authorRepository);
     }
 
+    @Override
+    public abstract Book save(Book book);
+
     /**
      * @deprecated Order by 'author.name' case without a join. Hibernate will do the cross join if the association property is accessed by the property path without join.
      */
