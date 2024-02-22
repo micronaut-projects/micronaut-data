@@ -1438,7 +1438,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             }
 
         } else {
-            // TODO: Expand values for embedded field (composite id).
+            if (isInOperator && propertyPath.getProperty() instanceof Embedded) {
+                throw new IllegalStateException("IN operator is not supported for the embedded field [" + propertyPath.getProperty().getName() + "]");
+            }
             appendPropertyRef(whereClause, annotationMetadata, persistentEntity, propertyPath);
             if (isInOperator) {
                 whereClause.append(operator).append(OPEN_BRACKET);

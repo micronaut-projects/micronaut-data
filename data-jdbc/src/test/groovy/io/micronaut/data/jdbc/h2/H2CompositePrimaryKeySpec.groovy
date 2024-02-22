@@ -16,7 +16,6 @@
 package io.micronaut.data.jdbc.h2
 
 import io.micronaut.core.annotation.AnnotationMetadata
-import io.micronaut.data.annotation.Join
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.QueryModel
 import io.micronaut.data.model.query.QueryParameter
@@ -97,5 +96,12 @@ class H2CompositePrimaryKeySpec extends Specification {
         then:
         q.query == 'SELECT project_."project_id_department_id",project_."project_id_project_id",LOWER(project_.name) AS name,project_.name AS db_name,UPPER(project_.org) AS org FROM "project" project_ WHERE (project_."project_id_department_id" IN (?) AND project_."project_id_project_id" IN (?))'
         q.parameters == ["1": "projectId.departmentId", "2": "projectId.projectId"]
+
+        when:
+        queryModel = QueryModel.from(PersistentEntity.of(Project)).inList("projectId", List.of(new ProjectId(10, 20)))
+        encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel)
+        then:
+        def ex = thrown(IllegalStateException)
+        ex.message == 'IN operator is not supported for the embedded field [projectId]'
     }
 }
