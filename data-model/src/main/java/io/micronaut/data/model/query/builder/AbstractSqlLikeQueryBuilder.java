@@ -1439,7 +1439,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         } else {
             if (isInOperator && propertyPath.getProperty() instanceof Embedded) {
-                throw new IllegalStateException("IN operator is not supported for the embedded field [" + propertyPath.getProperty().getName() + "]");
+                throw new IllegalStateException("Building from QueryModel using IN operator is not supported for the embedded field ["
+                    + propertyPath.getProperty().getName() + "]");
             }
             appendPropertyRef(whereClause, annotationMetadata, persistentEntity, propertyPath);
             if (isInOperator) {

@@ -102,6 +102,6 @@ class H2CompositePrimaryKeySpec extends Specification {
         encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel)
         then:
         def ex = thrown(IllegalStateException)
-        ex.message == 'IN operator is not supported for the embedded field [projectId]'
+        ex.message == 'Building from QueryModel using IN operator is not supported for the embedded field [projectId]'
     }
 }
