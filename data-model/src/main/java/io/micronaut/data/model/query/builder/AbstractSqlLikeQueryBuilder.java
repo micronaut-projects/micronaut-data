@@ -1438,6 +1438,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             }
 
         } else {
+            // TODO: Expand values for embedded field (composite id).
             appendPropertyRef(whereClause, annotationMetadata, persistentEntity, propertyPath);
             if (isInOperator) {
                 whereClause.append(operator).append(OPEN_BRACKET);
