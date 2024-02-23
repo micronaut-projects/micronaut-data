@@ -53,8 +53,8 @@ public abstract class AbstractReactiveSpecificationInterceptor<T, R> extends Abs
      */
     protected AbstractReactiveSpecificationInterceptor(RepositoryOperations operations) {
         super(operations);
-        if (operations instanceof ReactiveCapableRepository) {
-            this.reactiveOperations = ((ReactiveCapableRepository) operations).reactive();
+        if (operations instanceof ReactiveCapableRepository reactiveCapableRepository) {
+            this.reactiveOperations = reactiveCapableRepository.reactive();
         } else {
             throw new DataAccessException("Datastore of type [" + operations.getClass() + "] does not support reactive operations");
         }

@@ -81,8 +81,8 @@ public class PersistentPropertyPath {
      * @return new instance of {@link PersistentPropertyPath} or {@link PersistentAssociationPath}
      */
     public static PersistentPropertyPath of(List<Association> associations, @NonNull PersistentProperty property, @Nullable String path) {
-        if (property instanceof Association) {
-            return new PersistentAssociationPath(associations, (Association) property, path);
+        if (property instanceof Association association) {
+            return new PersistentAssociationPath(associations, association, path);
         }
         return new PersistentPropertyPath(associations, property, path);
     }
@@ -96,10 +96,10 @@ public class PersistentPropertyPath {
      * @return The root bean - possibly modified
      */
     public Object setPropertyValue(Object bean, Object value) {
-        if (!(property instanceof RuntimePersistentProperty)) {
+        if (!(property instanceof RuntimePersistentProperty runtimeProperty)) {
             throw new IllegalStateException("Expected runtime property!");
         }
-        return setProperty(associations, (RuntimePersistentProperty) property, bean, value);
+        return setProperty(associations, runtimeProperty, bean, value);
     }
 
     private Object setProperty(List<Association> associations, RuntimePersistentProperty property, Object bean, Object value) {
@@ -134,7 +134,7 @@ public class PersistentPropertyPath {
      * @return The value
      */
     public Object getPropertyValue(Object bean) {
-        if (!(property instanceof RuntimePersistentProperty)) {
+        if (!(property instanceof RuntimePersistentProperty p)) {
             throw new IllegalStateException("Expected runtime property!");
         }
         Object value = bean;
@@ -146,7 +146,6 @@ public class PersistentPropertyPath {
                 return null;
             }
         }
-        RuntimePersistentProperty<Object> p = (RuntimePersistentProperty<Object>) property;
         if (value != null) {
             BeanProperty<Object, Object> beanProperty = p.getProperty();
             value = beanProperty.get(value);

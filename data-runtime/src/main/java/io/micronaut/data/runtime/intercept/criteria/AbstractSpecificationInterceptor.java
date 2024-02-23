@@ -126,7 +126,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                 }
             };
         }
-        preparedQueryDecorator = operations instanceof PreparedQueryDecorator ? (PreparedQueryDecorator) operations : new PreparedQueryDecorator() {
+        preparedQueryDecorator = operations instanceof PreparedQueryDecorator decorator ? decorator : new PreparedQueryDecorator() {
             @Override
             public <E, K> PreparedQuery<E, K> decorate(PreparedQuery<E, K> preparedQuery) {
                 return preparedQuery;
@@ -230,8 +230,8 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     private Pageable findPageable(MethodInvocationContext<T, R> context) {
         Pageable pageable = Pageable.UNPAGED;
         for (Object param : context.getParameterValues()) {
-            if (param instanceof Pageable) {
-                pageable = (Pageable) param;
+            if (param instanceof Pageable pageableParam) {
+                pageable = pageableParam;
                 break;
             }
         }
@@ -381,11 +381,11 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     @Nullable
     protected <K> QuerySpecification<K> getQuerySpecification(MethodInvocationContext<?, ?> context) {
         final Object parameterValue = context.getParameterValues()[0];
-        if (parameterValue instanceof QuerySpecification) {
-            return (QuerySpecification) parameterValue;
+        if (parameterValue instanceof QuerySpecification querySpecification) {
+            return querySpecification;
         }
-        if (parameterValue instanceof PredicateSpecification) {
-            return QuerySpecification.where((PredicateSpecification) parameterValue);
+        if (parameterValue instanceof PredicateSpecification predicateSpecification) {
+            return QuerySpecification.where(predicateSpecification);
         }
         Argument<?> parameterArgument = context.getArguments()[0];
         if (parameterArgument.isAssignableFrom(QuerySpecification.class) || parameterArgument.isAssignableFrom(PredicateSpecification.class)) {
@@ -406,8 +406,8 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     @NonNull
     protected <K> CriteriaQueryBuilder<K> getCriteriaQueryBuilder(MethodInvocationContext<?, ?> context, Set<JoinPath> joinPaths) {
         final Object parameterValue = context.getParameterValues()[0];
-        if (parameterValue instanceof CriteriaQueryBuilder) {
-            return (CriteriaQueryBuilder) parameterValue;
+        if (parameterValue instanceof CriteriaQueryBuilder criteriaQueryBuilder) {
+            return criteriaQueryBuilder;
         }
         return criteriaBuilder -> {
             Class<K> rootEntity = getRequiredRootEntity(context);
@@ -462,11 +462,11 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     @Nullable
     protected <K> DeleteSpecification<K> getDeleteSpecification(MethodInvocationContext<?, ?> context) {
         final Object parameterValue = context.getParameterValues()[0];
-        if (parameterValue instanceof DeleteSpecification) {
-            return (DeleteSpecification) parameterValue;
+        if (parameterValue instanceof DeleteSpecification deleteSpecification) {
+            return deleteSpecification;
         }
-        if (parameterValue instanceof PredicateSpecification) {
-            return DeleteSpecification.where((PredicateSpecification) parameterValue);
+        if (parameterValue instanceof PredicateSpecification predicateSpecification) {
+            return DeleteSpecification.where(predicateSpecification);
         }
         Argument<?> parameterArgument = context.getArguments()[0];
         if (parameterArgument.isAssignableFrom(DeleteSpecification.class) || parameterArgument.isAssignableFrom(PredicateSpecification.class)) {
@@ -486,8 +486,8 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     @NonNull
     protected <K> CriteriaDeleteBuilder<K> getCriteriaDeleteBuilder(MethodInvocationContext<?, ?> context) {
         final Object parameterValue = context.getParameterValues()[0];
-        if (parameterValue instanceof CriteriaDeleteBuilder) {
-            return (CriteriaDeleteBuilder) parameterValue;
+        if (parameterValue instanceof CriteriaDeleteBuilder criteriaDeleteBuilder) {
+            return criteriaDeleteBuilder;
         }
         return criteriaBuilder -> {
             Class<K> rootEntity = getRequiredRootEntity(context);
@@ -514,8 +514,8 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     @Nullable
     protected <K> UpdateSpecification<K> getUpdateSpecification(MethodInvocationContext<?, ?> context) {
         final Object parameterValue = context.getParameterValues()[0];
-        if (parameterValue instanceof UpdateSpecification) {
-            return (UpdateSpecification) parameterValue;
+        if (parameterValue instanceof UpdateSpecification updateSpecification) {
+            return updateSpecification;
         }
         Argument<?> parameterArgument = context.getArguments()[0];
         if (parameterArgument.isAssignableFrom(UpdateSpecification.class) || parameterArgument.isAssignableFrom(PredicateSpecification.class)) {
@@ -535,8 +535,8 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     @NonNull
     protected <K> CriteriaUpdateBuilder<K> getCriteriaUpdateBuilder(MethodInvocationContext<?, ?> context) {
         final Object parameterValue = context.getParameterValues()[0];
-        if (parameterValue instanceof CriteriaUpdateBuilder) {
-            return (CriteriaUpdateBuilder) parameterValue;
+        if (parameterValue instanceof CriteriaUpdateBuilder criteriaUpdateBuilder) {
+            return criteriaUpdateBuilder;
         }
         return criteriaBuilder -> {
             Class<K> rootEntity = getRequiredRootEntity(context);

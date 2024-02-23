@@ -99,8 +99,8 @@ public final class QueryModelSelectionVisitor implements SelectionVisitor {
             case COUNT_DISTINCT -> {
                 if (expression instanceof PersistentEntityRoot) {
                     return Projections.countDistinctRoot();
-                } else if (expression instanceof PersistentPropertyPath) {
-                    return Projections.countDistinct(((PersistentPropertyPath<?>) expression).getPathAsString());
+                } else if (expression instanceof PersistentPropertyPath<?> persistentPropertyPath) {
+                    return Projections.countDistinct(persistentPropertyPath.getPathAsString());
                 } else {
                     throw new IllegalStateException("Illegal expression: " + expression + " for count distinct selection!");
                 }
@@ -167,8 +167,8 @@ public final class QueryModelSelectionVisitor implements SelectionVisitor {
     }
 
     private void addProjection(QueryModel.Projection projection) {
-        if (projection instanceof QueryModel.PropertyProjection && alias != null) {
-            ((QueryModel.PropertyProjection) projection).setAlias(alias);
+        if (projection instanceof QueryModel.PropertyProjection propertyProjection && alias != null) {
+            propertyProjection.setAlias(alias);
         }
         queryModel.projections().add(projection);
     }

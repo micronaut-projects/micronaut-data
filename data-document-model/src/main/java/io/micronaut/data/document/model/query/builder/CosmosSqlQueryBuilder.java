@@ -396,8 +396,8 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
             appendPropertyRef(whereClause, ctx.getAnnotationMetadata(), ctx.getPersistentEntity(), propertyPath);
             whereClause.append(COMMA);
             Object value = criterion.getValue();
-            if (value instanceof BindingParameter) {
-                ctx.pushParameter((BindingParameter) value, newBindingContext(propertyPath.getPropertyPath()));
+            if (value instanceof BindingParameter bindingParameter) {
+                ctx.pushParameter(bindingParameter, newBindingContext(propertyPath.getPropertyPath()));
             } else {
                 asLiterals(ctx.query(), value);
             }
