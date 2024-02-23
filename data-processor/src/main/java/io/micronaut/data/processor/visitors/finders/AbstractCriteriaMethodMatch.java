@@ -629,7 +629,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             path = path.join(association.getName());
         }
         Path<Object> exp;
-        if (pp.getProperty() instanceof Association && ((Association) pp.getProperty()).getKind() != Relation.Kind.EMBEDDED) {
+        if (pp.getProperty() instanceof Association association && association.getKind() != Relation.Kind.EMBEDDED) {
             exp = path.join(pp.getProperty().getName());
         } else {
             exp = path.get(pp.getProperty().getName());

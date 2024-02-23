@@ -1,5 +1,6 @@
 package example;
 
+import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 import io.micronaut.http.annotation.Header;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -74,7 +75,7 @@ class BookJdbcDatasourceMultiTenancySpec {
     }
 
     private long getBooksCount(DataSource ds) throws SQLException {
-        if (ds instanceof io.micronaut.data.connection.jdbc.advice.DelegatingDataSource delegatingDataSource) {
+        if (ds instanceof DelegatingDataSource delegatingDataSource) {
             ds = delegatingDataSource.getTargetDataSource();
         }
         try (Connection connection = ds.getConnection()) {

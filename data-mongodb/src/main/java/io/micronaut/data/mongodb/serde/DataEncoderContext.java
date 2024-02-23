@@ -170,8 +170,8 @@ final class DataEncoderContext implements Serializer.EncoderContext {
     @Override
     public <T> Serializer<? super T> findSerializer(Argument<? extends T> type) throws SerdeException {
         Codec<? extends T> codec = codecRegistry.get(type.getType(), codecRegistry);
-        if (codec instanceof MappedCodec) {
-            return ((MappedCodec<T>) codec).serializer;
+        if (codec instanceof MappedCodec mappedCodec) {
+            return mappedCodec.serializer;
         }
         if (codec != null && !(codec instanceof IterableCodec) && !(Map.class.isAssignableFrom(codec.getEncoderClass()))) {
             return new CodecBsonDecoder<>((Codec<T>) codec);

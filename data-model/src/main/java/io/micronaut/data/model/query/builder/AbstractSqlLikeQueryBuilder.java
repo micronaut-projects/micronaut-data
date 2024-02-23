@@ -75,7 +75,7 @@ import java.util.stream.Collectors;
  * @author graemerocher
  * @since 1.0.0
  */
-@SuppressWarnings("checkstyle:FileLength")
+@SuppressWarnings("FileLength")
 public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     public static final String ORDER_BY_CLAUSE = " ORDER BY ";
     protected static final String SELECT_CLAUSE = "SELECT ";
@@ -260,8 +260,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             appendPropertyRef(whereClause, ctx.getAnnotationMetadata(), ctx.getPersistentEntity(), propertyPath);
             whereClause.append(" IN (");
             Object value = inQuery.getValue();
-            if (value instanceof BindingParameter) {
-                ctx.pushParameter((BindingParameter) value, newBindingContext(propertyPath.propertyPath).expandable());
+            if (value instanceof BindingParameter bindingParameter) {
+                ctx.pushParameter(bindingParameter, newBindingContext(propertyPath.propertyPath).expandable());
             } else {
                 asLiterals(ctx.query(), value);
             }
@@ -274,8 +274,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             appendPropertyRef(whereClause, ctx.getAnnotationMetadata(), ctx.getPersistentEntity(), propertyPath);
             whereClause.append(" NOT IN (");
             Object value = inQuery.getValue();
-            if (value instanceof BindingParameter) {
-                ctx.pushParameter((BindingParameter) value, newBindingContext(propertyPath.propertyPath).expandable());
+            if (value instanceof BindingParameter bindingParameter) {
+                ctx.pushParameter(bindingParameter, newBindingContext(propertyPath.propertyPath).expandable());
             } else {
                 asLiterals(ctx.query(), value);
             }
@@ -332,14 +332,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      */
     @NonNull
     protected String asLiteral(@Nullable Object value) {
-        if (value instanceof LiteralExpression) {
-            value = ((LiteralExpression<?>) value).getValue();
+        if (value instanceof LiteralExpression<?> literalExpression) {
+            value = literalExpression.getValue();
         }
         if (value == null) {
             return "NULL";
         }
-        if (value instanceof Number) {
-            return Long.toString(((Number) value).longValue());
+        if (value instanceof Number number) {
+            return Long.toString(number.longValue());
         }
         if (value instanceof Boolean) {
             return value.toString().toUpperCase(Locale.ROOT);
@@ -551,14 +551,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     @NonNull
     protected String getPathOnlyAliasName(JoinPath joinPath) {
         return joinPath.getAlias().orElseGet(() -> {
-            String p = "";
+            var p = new StringBuilder();
             for (Association ass : joinPath.getAssociationPath()) {
-                p += ass.getAliasName();
+                p.append(ass.getAliasName());
                 if (ass.hasDeclaredAliasName() && ass != joinPath.getAssociation()) {
-                    p += "_";
+                    p.append('_');
                 }
             }
-            return p;
+            return p.toString();
         });
     }
 
@@ -752,8 +752,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     selectAllColumns(annotationMetadata, queryState, queryString);
                     return;
                 }
-                if (projection instanceof QueryModel.LiteralProjection) {
-                    queryString.append(asLiteral(((QueryModel.LiteralProjection) projection).getValue()));
+                if (projection instanceof QueryModel.LiteralProjection literalProjection) {
+                    queryString.append(asLiteral(literalProjection.getValue()));
                 } else if (projection instanceof QueryModel.CountProjection) {
                     appendProjectionRowCount(queryString, tableAlias);
                 } else if (projection instanceof QueryModel.DistinctProjection) {
@@ -1498,8 +1498,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     }
 
     private void appendPlaceholderOrLiteral(CriteriaContext ctx, QueryPropertyPath propertyPath, Object value) {
-        if (value instanceof BindingParameter) {
-            ctx.pushParameter((BindingParameter) value, newBindingContext(propertyPath.propertyPath));
+        if (value instanceof BindingParameter bindingParameter) {
+            ctx.pushParameter(bindingParameter, newBindingContext(propertyPath.propertyPath));
             return;
         }
         ctx.query().append(asLiteral(value));
@@ -1569,7 +1569,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         List<Map.Entry<QueryPropertyPath, Object>> update = propertiesToUpdate.entrySet().stream()
             .map(e -> {
                 QueryPropertyPath propertyPath = findProperty(queryState, e.getKey(), null);
-                if (propertyPath.getProperty() instanceof Association && ((Association) propertyPath.getProperty()).isForeignKey()) {
+                if (propertyPath.getProperty() instanceof Association association && association.isForeignKey()) {
                     throw new IllegalArgumentException("Foreign key associations cannot be updated as part of a batch update statement");
                 }
                 return new AbstractMap.SimpleEntry<>(propertyPath, e.getValue());
@@ -1595,9 +1595,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     }
                     queryString.append(propertyPath.getPath()).append('=');
                 }
-                if (entry.getValue() instanceof BindingParameter) {
+                if (entry.getValue() instanceof BindingParameter bindingParameter) {
                     appendUpdateSetParameter(queryString, tableAlias, prop, () -> {
-                        queryState.pushParameter((BindingParameter) entry.getValue(), newBindingContext(propertyPath.propertyPath));
+                        queryState.pushParameter(bindingParameter, newBindingContext(propertyPath.propertyPath));
                     });
                 } else {
                     queryString.append(asLiteral(entry.getValue()));
@@ -1614,7 +1614,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             NamingStrategy namingStrategy = getNamingStrategy(queryState.getEntity());
             for (Map.Entry<QueryPropertyPath, Object> entry : update) {
                 QueryPropertyPath propertyPath = entry.getKey();
-                if (entry.getValue() instanceof BindingParameter) {
+                if (entry.getValue() instanceof BindingParameter bindingParameter) {
                     traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), (associations, property) -> {
                         String tableAlias = propertyPath.getTableAlias();
                         if (tableAlias != null) {
@@ -1627,7 +1627,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         queryString.append(columnName).append('=');
                         appendUpdateSetParameter(queryString, tableAlias, property, () -> {
                             queryState.pushParameter(
-                                (BindingParameter) entry.getValue(),
+                                bindingParameter,
                                 newBindingContext(
                                     propertyPath.propertyPath,
                                     PersistentPropertyPath.of(associations, property, asPath(associations, property))
@@ -1688,9 +1688,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param appendParameter The append parameter action
      */
     protected void appendTransformed(StringBuilder sb, String transformed, Runnable appendParameter) {
-        int parameterPosition = transformed.indexOf("?");
+        int parameterPosition = transformed.indexOf('?');
         if (parameterPosition > -1) {
-            if (transformed.lastIndexOf("?") != parameterPosition) {
+            if (transformed.lastIndexOf('?') != parameterPosition) {
                 throw new IllegalStateException("Only one parameter placeholder is allowed!");
             }
             sb.append(transformed, 0, parameterPosition);

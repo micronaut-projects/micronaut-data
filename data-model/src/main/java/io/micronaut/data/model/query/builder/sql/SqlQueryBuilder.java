@@ -59,7 +59,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -110,7 +110,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     private static final String JDBC_REPO_ANNOTATION = "io.micronaut.data.jdbc.annotation.JdbcRepository";
 
     private final Dialect dialect;
-    private final Map<Dialect, DialectConfig> perDialectConfig = new HashMap<>(3);
+    private final Map<Dialect, DialectConfig> perDialectConfig = new EnumMap<>(Dialect.class);
     private Pattern positionalParameterPattern;
 
 
@@ -190,8 +190,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     @Override
     protected String asLiteral(Object value) {
-        if ((dialect == Dialect.SQL_SERVER || dialect == Dialect.ORACLE) && value instanceof Boolean) {
-            return ((Boolean) value).booleanValue() ? "1" : "0";
+        if ((dialect == Dialect.SQL_SERVER || dialect == Dialect.ORACLE) && value instanceof Boolean vBoolean) {
+            return vBoolean ? "1" : "0";
         }
         return super.asLiteral(value);
     }
@@ -585,11 +585,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         .map(isUnique -> isUnique ? "UNIQUE " : "")
                         .orElse(""))
                .append("INDEX ");
-        indexBuilder.append(indexName).append(" ON " +
-                        Optional.ofNullable(config.tableName)
-                                .orElseThrow(() -> new NullPointerException("Table name cannot be null")) +
-                        " (" +
-                        provideColumnList(config));
+        indexBuilder.append(indexName).append(" ON ").append(Optional.ofNullable(config.tableName)
+                .orElseThrow(() -> new NullPointerException("Table name cannot be null"))).append(" (").append(provideColumnList(config));
 
         if (dialect == Dialect.ORACLE) {
             indexBuilder.append(")");
@@ -1543,10 +1540,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         List<String> onRightColumns = new ArrayList<>();
 
         Association association = null;
-        if (leftProperty instanceof Association) {
-            association = (Association) leftProperty;
-        } else if (rightProperty instanceof Association) {
-            association = (Association) rightProperty;
+        if (leftProperty instanceof Association associationLeft) {
+            association = associationLeft;
+        } else if (rightProperty instanceof Association associationRight) {
+            association = associationRight;
         }
         if (association != null) {
             Optional<Association> inverse = association.getInverseSide().map(Function.identity());
@@ -1559,14 +1556,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                                 .stream()
                                 .map(ann -> ann.stringValue(isOwner ? "name" : "referencedColumnName").orElse(null))
                                 .filter(Objects::nonNull)
-                                .collect(Collectors.toList())
+                                .toList()
                 );
                 onRightColumns.addAll(
                         joinColumnsHolder.getAnnotations(VALUE_MEMBER)
                                 .stream()
                                 .map(ann -> ann.stringValue(isOwner ? "referencedColumnName" : "name").orElse(null))
                                 .filter(Objects::nonNull)
-                                .collect(Collectors.toList())
+                                .toList()
                 );
             }
         }

@@ -361,7 +361,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                     .idEq(new QueryParameter(idName));
             List<String> updateProperties = persistentEntity.getPersistentProperties()
                     .stream().filter(p ->
-                            !((p instanceof Association) && ((Association) p).isForeignKey()) &&
+                            !(p instanceof Association association && association.isForeignKey()) &&
                                     p.getAnnotationMetadata().booleanValue(AutoPopulated.class, "updateable").orElse(true)
                     )
                     .map(PersistentProperty::getName)
@@ -467,8 +467,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     }
 
     protected final <E, R> SqlPreparedQuery<E, R> getSqlPreparedQuery(PreparedQuery<E, R> preparedQuery) {
-        if (preparedQuery instanceof SqlPreparedQuery) {
-            return (SqlPreparedQuery<E, R>) preparedQuery;
+        if (preparedQuery instanceof SqlPreparedQuery<E, R> sqlPreparedQuery) {
+            return sqlPreparedQuery;
         }
         throw new IllegalStateException("Expected for prepared query to be of type: SqlPreparedQuery got: " + preparedQuery.getClass().getName());
     }

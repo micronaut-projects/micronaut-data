@@ -98,14 +98,13 @@ final class LiteralsAsParametersQueryModelPredicateVisitor extends QueryModelPre
 
     @NotNull
     private ParameterExpression<?> asParameter(Object exp) {
-        if (exp instanceof ParameterExpression) {
-            return (ParameterExpression<?>) exp;
+        if (exp instanceof ParameterExpression<?> parameterExpression) {
+            return parameterExpression;
         }
         Objects.requireNonNull(exp);
         Class<Object> type;
         Object value;
-        if (exp instanceof LiteralExpression) {
-            LiteralExpression literalExpression = (LiteralExpression<?>) exp;
+        if (exp instanceof LiteralExpression literalExpression) {
             type = literalExpression.getJavaType();
             value = literalExpression.getValue();
         } else if (exp instanceof Expression) {

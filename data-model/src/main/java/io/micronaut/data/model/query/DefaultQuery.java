@@ -272,8 +272,7 @@ public class DefaultQuery implements QueryModel {
      * @return This query instance
      */
     @Override
-    public @NonNull
-    DefaultQuery eq(@NonNull String property, @NonNull Object parameter) {
+    public @NonNull DefaultQuery eq(@NonNull String property, @NonNull Object parameter) {
         criteria.add(Restrictions.eq(property, parameter));
         return this;
     }
@@ -285,12 +284,10 @@ public class DefaultQuery implements QueryModel {
      * @return This query instance
      */
     @Override
-    public @NonNull
-    DefaultQuery allEq(@NonNull Map<String, Object> values) {
+    public @NonNull DefaultQuery allEq(@NonNull Map<String, Object> values) {
         QueryModel.Junction conjunction = conjunction();
-        for (String property : values.keySet()) {
-            Object value = values.get(property);
-            conjunction.add(Restrictions.eq(property, value));
+        for (var entry : values.entrySet()) {
+            conjunction.add(Restrictions.eq(entry.getKey(), entry.getValue()));
         }
         return this;
     }

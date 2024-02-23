@@ -545,16 +545,16 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     }
 
     private String addRawQueryParameterPlaceholders(QueryBuilder queryEncoder, String query, List<String> queryParts) {
-        if (queryEncoder instanceof SqlQueryBuilder) {
+        if (queryEncoder instanceof SqlQueryBuilder sqlQueryBuilder) {
             Iterator<String> iterator = queryParts.iterator();
             String first = iterator.next();
             if (queryParts.size() < 2) {
                 return first;
             }
-            StringBuilder sb = new StringBuilder(first);
+            var sb = new StringBuilder(first);
             int i = 1;
             while (iterator.hasNext()) {
-                sb.append(((SqlQueryBuilder) queryEncoder).formatParameter(i++).getName());
+                sb.append(sqlQueryBuilder.formatParameter(i++).getName());
                 sb.append(iterator.next());
             }
             return sb.toString();

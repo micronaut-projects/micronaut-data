@@ -35,7 +35,6 @@ import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 
 import java.lang.reflect.Array;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -225,13 +224,11 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         if (value == null) {
             return 1;
         }
-        if (value instanceof Collection) {
-            return ((Collection) value).size();
-        } else if (value instanceof Iterable) {
+        if (value instanceof Collection<?> collection) {
+            return collection.size();
+        } else if (value instanceof Iterable<?> iterable) {
             int i = 0;
-            Iterator<?> iterator = ((Iterable<?>) value).iterator();
-            while (iterator.hasNext()) {
-                iterator.next();
+            for (Object o : iterable) {
                 i++;
             }
             return i;

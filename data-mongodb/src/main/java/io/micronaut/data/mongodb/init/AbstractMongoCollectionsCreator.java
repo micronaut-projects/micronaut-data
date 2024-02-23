@@ -66,8 +66,8 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
     protected <M> M getMongoFactory(Class<M> mongoFactoryClass, BeanLocator beanLocator, AbstractMongoConfiguration mongoConfiguration) {
         if (mongoConfiguration instanceof DefaultMongoConfiguration) {
             return beanLocator.getBean(mongoFactoryClass);
-        } else if (mongoConfiguration instanceof NamedMongoConfiguration) {
-            Qualifier<M> qualifier = Qualifiers.byName(((NamedMongoConfiguration) mongoConfiguration).getServerName());
+        } else if (mongoConfiguration instanceof NamedMongoConfiguration namedMongoConfiguration) {
+            Qualifier<M> qualifier = Qualifiers.byName(namedMongoConfiguration.getServerName());
             return beanLocator.getBean(mongoFactoryClass, qualifier);
         } else {
             throw new IllegalStateException("Cannot get MongoDB client for unrecognized configuration: " + mongoConfiguration);
