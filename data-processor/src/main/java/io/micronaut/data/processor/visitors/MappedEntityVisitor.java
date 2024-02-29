@@ -63,7 +63,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
     public static final int POSITION = 100;
 
     private final Map<String, SourcePersistentEntity> entityMap = new HashMap<>(50);
-    private final Function<ClassElement, SourcePersistentEntity> entityResolver = new Function<ClassElement, SourcePersistentEntity>() {
+    private final Function<ClassElement, SourcePersistentEntity> entityResolver = new Function<>() {
         @Override
         public SourcePersistentEntity apply(ClassElement classElement) {
             return entityMap.computeIfAbsent(classElement.getName(), s -> new SourcePersistentEntity(classElement, this));

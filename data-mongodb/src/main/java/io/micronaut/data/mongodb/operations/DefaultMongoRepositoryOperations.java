@@ -256,7 +256,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
         return withClientSession(clientSession -> {
             MongoIterable<R> iterable = (MongoIterable<R>) findAll(clientSession, getMongoPreparedQuery(preparedQuery), true);
             MongoCursor<R> iterator = iterable.iterator();
-            Spliterators.AbstractSpliterator<R> spliterator = new Spliterators.AbstractSpliterator<R>(Long.MAX_VALUE,
+            Spliterators.AbstractSpliterator<R> spliterator = new Spliterators.AbstractSpliterator<>(Long.MAX_VALUE,
                     Spliterator.ORDERED | Spliterator.IMMUTABLE) {
                 @Override
                 public boolean tryAdvance(Consumer<? super R> action) {
@@ -770,7 +770,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
     }
 
     private <T> MongoEntityOperation<T> createMongoReplaceOneOperation(MongoOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, T entity) {
-        return new MongoEntityOperation<T>(ctx, persistentEntity, entity, false) {
+        return new MongoEntityOperation<>(ctx, persistentEntity, entity, false) {
 
             final MongoDatabase mongoDatabase = getDatabase(persistentEntity, ctx.repositoryType);
             final MongoCollection<BsonDocument> collection = getCollection(mongoDatabase, persistentEntity, BsonDocument.class);
@@ -802,7 +802,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                                                                               RuntimePersistentEntity<T> persistentEntity,
                                                                               Iterable<T> entities,
                                                                               MongoStoredQuery<T, ?> storedQuery) {
-        return new MongoEntitiesOperation<T>(ctx, persistentEntity, entities, false) {
+        return new MongoEntitiesOperation<>(ctx, persistentEntity, entities, false) {
 
             @Override
             protected void collectAutoPopulatedPreviousValues() {
@@ -831,7 +831,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
     }
 
     private <T> MongoEntitiesOperation<T> createMongoReplaceOneInBulkOperation(MongoOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, Iterable<T> entities) {
-        return new MongoEntitiesOperation<T>(ctx, persistentEntity, entities, false) {
+        return new MongoEntitiesOperation<>(ctx, persistentEntity, entities, false) {
 
             final MongoDatabase mongoDatabase = getDatabase(persistentEntity, ctx.repositoryType);
             final MongoCollection<BsonDocument> collection = getCollection(mongoDatabase, persistentEntity, BsonDocument.class);
@@ -868,7 +868,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
     }
 
     private <T> MongoEntityOperation<T> createMongoDeleteOneOperation(MongoOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, T entity) {
-        return new MongoEntityOperation<T>(ctx, persistentEntity, entity, false) {
+        return new MongoEntityOperation<>(ctx, persistentEntity, entity, false) {
 
             final MongoDatabase mongoDatabase = getDatabase(persistentEntity, ctx.repositoryType);
             final MongoCollection<T> collection = getCollection(mongoDatabase, persistentEntity, persistentEntity.getIntrospection().getBeanType());
@@ -894,7 +894,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
     }
 
     private <T> MongoEntitiesOperation<T> createMongoDeleteManyOperation(MongoOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, Iterable<T> entities) {
-        return new MongoEntitiesOperation<T>(ctx, persistentEntity, entities, false) {
+        return new MongoEntitiesOperation<>(ctx, persistentEntity, entities, false) {
 
             final MongoDatabase mongoDatabase = getDatabase(persistentEntity, ctx.repositoryType);
             final MongoCollection<T> collection = getCollection(mongoDatabase, persistentEntity, persistentEntity.getIntrospection().getBeanType());
@@ -928,7 +928,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                                                                               RuntimePersistentEntity<T> persistentEntity,
                                                                               Iterable<T> entities,
                                                                               MongoStoredQuery<T, ?> storedQuery) {
-        return new MongoEntitiesOperation<T>(ctx, persistentEntity, entities, false) {
+        return new MongoEntitiesOperation<>(ctx, persistentEntity, entities, false) {
 
             @Override
             protected void execute() throws RuntimeException {
@@ -953,7 +953,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
     }
 
     private <T> MongoEntitiesOperation<T> createMongoInsertManyOperation(MongoOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, Iterable<T> entities) {
-        return new MongoEntitiesOperation<T>(ctx, persistentEntity, entities, true) {
+        return new MongoEntitiesOperation<>(ctx, persistentEntity, entities, true) {
 
             @Override
             protected void execute() throws RuntimeException {
