@@ -70,7 +70,7 @@ class BookR2dbcDatasourceMultiTenancySpec {
         assertEquals(0, fooBookClient.findAll().size());
     }
 
-    private long getBooksCount(ConnectionFactory cf) throws SQLException {
+    private long getBooksCount(ConnectionFactory cf) {
         return Mono.from(cf.create())
             .flatMap(c -> Mono.from(c.createStatement("select count(*) from book").execute()))
             .flatMap(r -> Mono.from(r.map(readable -> (Long) readable.get(0))))

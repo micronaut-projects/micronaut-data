@@ -181,7 +181,7 @@ final class DataSerdeRegistry implements SerdeRegistry {
                 }
 
                 @Override
-                public void serialize(Encoder encoder, EncoderContext context, Argument<? extends Object> type, Object value) throws IOException {
+                public void serialize(Encoder encoder, EncoderContext context, Argument<? extends Object> type, Object value) {
                     throw new IllegalStateException("Create specific call is required!");
                 }
 
