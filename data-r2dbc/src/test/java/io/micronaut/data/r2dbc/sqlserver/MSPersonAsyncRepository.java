@@ -12,9 +12,11 @@ import java.util.concurrent.CompletableFuture;
 @R2dbcRepository(dialect = Dialect.SQL_SERVER)
 public interface MSPersonAsyncRepository extends PersonAsyncRepository {
 
+    @Override
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, 1)")
     CompletableFuture<Long> saveCustom(List<Person> people);
 
+    @Override
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, 1)")
     CompletableFuture<Long> saveCustomSingle(Person people);
 

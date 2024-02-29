@@ -65,6 +65,7 @@ public abstract class AbstractPersistentEntityJoinSupport<J, E> implements Persi
 
     protected final Map<String, PersistentAssociationPath> joins = new LinkedHashMap<>();
 
+    @Override
     public abstract PersistentEntity getPersistentEntity();
 
     protected abstract <X, Y> PersistentAssociationPath<X, Y> createJoinAssociation(@NonNull Association association,

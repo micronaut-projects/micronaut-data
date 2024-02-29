@@ -15,6 +15,7 @@ public abstract class SongRepository2 implements CrudRepository<SongEntity2, Obj
     @MongoUpdateOptions(upsert = true)
     public abstract <S extends SongEntity2> S update(@Valid @NotNull S entity);
 
+    @Override
     @MongoUpdateOptions(upsert = true)
     public abstract <S extends SongEntity2> S save(@Valid @NotNull S entity);
 }

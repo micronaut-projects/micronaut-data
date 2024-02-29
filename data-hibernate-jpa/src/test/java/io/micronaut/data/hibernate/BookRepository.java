@@ -43,6 +43,7 @@ public abstract class BookRepository extends io.micronaut.data.tck.repositories.
     /**
      * @deprecated Order by 'author.name' case without a join. Hibernate will do the cross join if the association property is accessed by the property path without join.
      */
+    @Override
     @Query(value = "SELECT book_ FROM Book book_", countQuery = "SELECT count(book_) FROM Book book_ ")
     @Join(value = "author", type = Join.Type.FETCH)
     @Deprecated
@@ -92,6 +93,7 @@ public abstract class BookRepository extends io.micronaut.data.tck.repositories.
     @Query("UPDATE Book SET author = :author WHERE id = :id")
     public abstract long updateAuthorCustomQuery(Long id, Author author);
 
+    @Override
     public abstract long updateAuthor(@Id Long id, Author author);
 
     @Query("SELECT b FROM Book b WHERE b.author = :author")

@@ -1022,6 +1022,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             super(method, rootEntity, iterable);
         }
 
+        @Override
         public List<DeleteOperation<E>> split() {
             List<DeleteOperation<E>> deletes = new ArrayList<>(10);
             for (E e : iterable) {
@@ -1043,6 +1044,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             super(method, rootEntity, iterable);
         }
 
+        @Override
         public List<UpdateOperation<E>> split() {
             List<UpdateOperation<E>> updates = new ArrayList<>(10);
             for (E e : iterable) {

@@ -163,7 +163,7 @@ import io.micronaut.data.repository.CrudRepository;
 interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, EntityIdClass> {
     List<EntityWithIdClass> findById1(Long id1);
     List<EntityWithIdClass> findById2(Long id2);
-    long count();
+    @Override long count();
     long countDistinct();
     long countDistinctName();
 }

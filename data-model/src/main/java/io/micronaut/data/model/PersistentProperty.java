@@ -39,6 +39,7 @@ public interface PersistentProperty extends PersistentElement {
      * The name of the property.
      * @return The property name
      */
+    @Override
     @NonNull String getName();
 
     /**

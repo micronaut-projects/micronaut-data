@@ -24,11 +24,14 @@ import io.micronaut.data.tck.entities.TotalDto;
 @R2dbcRepository(dialect = Dialect.H2)
 public interface H2PersonRepository extends io.micronaut.data.tck.repositories.PersonRepository {
 
+    @Override
     Person save(String name, int age);
 
+    @Override
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
     int saveCustom(String name, int age);
 
+    @Override
     @Query("select count(*) as total from person")
     TotalDto getTotal();
 }
