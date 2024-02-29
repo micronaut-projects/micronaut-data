@@ -14,7 +14,7 @@ Few important things to note. Since Micronaut Data pre-computes the table and co
 
 If running project in native image, custom naming strategy needs to have `io.micronaut.core.annotation.TypeHint(CustomNamingStrategy.class)` annotation where custom naming strategy class is `CustomNamingStrategy`.
 
-In addition if you don't want to repeat the above annotation definition on every entity it is handy to define a meta-annotation where the above annotation definition is applied to another annotation that you add to your class.
+In addition, if you don't want to repeat the above annotation definition on every entity it is handy to define a meta-annotation where the above annotation definition is applied to another annotation that you add to your class.
 
 === Escaping Table/Column Name Identifiers
 

@@ -334,7 +334,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         QueryResult queryResult = methodInfo.getQueryResult();
         if (queryResult != null) {
             if (methodInfo.isRawQuery()) {
-                // no need to annotation since already annotated, just replace the
+                // no need to annotation since already annotated, just replace
                 // the computed parameter names
                 parameterBinding = queryResult.getParameterBindings();
 

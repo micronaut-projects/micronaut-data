@@ -55,8 +55,8 @@ import java.util.StringJoiner;
 import java.util.function.BiFunction;
 
 /**
- * A {@link io.micronaut.data.runtime.mapper.TypeMapper} that can take a {@link RuntimePersistentEntity} and a {@link ResultReader} and materialize an instance using
- * using column naming conventions mapped by the entity.
+ * A {@link io.micronaut.data.runtime.mapper.TypeMapper} that can take a {@link RuntimePersistentEntity} and a {@link ResultReader}
+ * and materialize an instance using column naming conventions mapped by the entity.
  *
  * @param <RS> The result set type
  * @param <R>  The result type

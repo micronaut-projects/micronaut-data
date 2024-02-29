@@ -95,9 +95,8 @@ public class DefaultQuery implements QueryModel {
         return projections.getProjectionList();
     }
 
-
     /**
-     * Obtain the joint for for a given association.
+     * Obtain the joint for a given association.
      * @param path The path to the association
      * @return The join type
      */

@@ -18,7 +18,7 @@ package io.micronaut.data.intercept.reactive;
 import io.micronaut.data.intercept.DataInterceptor;
 
 /**
- * An interceptor that saves a updates entity reactively.
+ * An interceptor that saves an updates entity reactively.
  *
  * @param <T> The declaring type
  * @param <R> The result type

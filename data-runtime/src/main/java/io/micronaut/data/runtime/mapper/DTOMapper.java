@@ -32,7 +32,7 @@ import io.micronaut.data.runtime.convert.DataConversionService;
 
 /**
  * A {@link BeanIntrospectionMapper} that reads the result using the specified
- * {@link PersistentEntity} and {@link ResultReader} and using the {@link #map(Object, Class)} allows mapping a result to a introspected Data Transfer Object (DTO).
+ * {@link PersistentEntity} and {@link ResultReader} and using the {@link #map(Object, Class)} allows mapping a result to an introspected Data Transfer Object (DTO).
  *
  * @param <T> The entity type
  * @param <S> The source type.

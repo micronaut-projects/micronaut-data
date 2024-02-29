@@ -322,7 +322,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     /**
-     * Builds the create table statement. Designed for testing and not production usage. For production a
+     * Builds the creation table statement. Designed for testing and not production usage. For production a
      * SQL migration tool such as Flyway or Liquibase is recommended.
      *
      * @param entity The entity
@@ -694,7 +694,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     }
                     break;
                 case ORACLE:
-                    // for Oracle we use sequences so just add NOT NULL
+                    // for Oracle, we use sequences so just add NOT NULL
                     // then alter the table for sequences
                     if (type == UUID) {
                         column += " NOT NULL DEFAULT SYS_GUID()";
@@ -822,7 +822,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     queryBuffer.append(COMMA);
 
                     boolean includeIdentity = association.isForeignKey();
-                    // in the case of a foreign key association the ID is not in the table
+                    // in the case of a foreign key association the ID is not in the table,
                     // so we need to retrieve it
                     traversePersistentProperties(associatedEntity, includeIdentity, true, (propertyAssociations, prop) -> {
                         String columnName;

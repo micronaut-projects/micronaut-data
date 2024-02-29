@@ -8,6 +8,6 @@ snippet::example.Product[project-base="doc-examples/mongo-example", source="main
 
 Then attempt to read the `Product` entity back without specifying a join an exception will occur since the `manufacturer` association is not `Nullable`.
 
-There are few ways around this, one way is to declare at the repository level to always fetch `manufacturer`, another is declare the `@Nullable` annotation on the `manufacturer` argument to allow it to be declared `null` (or in Kotlin add `?` to the end of the constructor argument name). Which approach you choose is dependent on the design of the application.
+There are few ways around this, one way is to declare at the repository level to always fetch `manufacturer`, another is declared the `@Nullable` annotation on the `manufacturer` argument to allow it to be declared `null` (or in Kotlin add `?` to the end of the constructor argument name). Which approach you choose is dependent on the design of the application.
 
 The following section provides more coverage on handling joins.

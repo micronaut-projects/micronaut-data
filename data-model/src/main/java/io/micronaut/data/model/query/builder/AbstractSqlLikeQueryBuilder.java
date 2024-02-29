@@ -2529,8 +2529,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         /**
          * Default constructor.
          *
-         * @param name The name of the place holder
-         * @param key  The key to set the value of the place holder
+         * @param name The name of the placeholder
+         * @param key  The key to set the value of the placeholder
          */
         public Placeholder(String name, String key) {
             this.name = name;
@@ -2543,14 +2543,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         /**
-         * @return The place holder name
+         * @return The placeholder name
          */
         public String getName() {
             return name;
         }
 
         /**
-         * This the precomputed key to set the place holder. In SQL this would be the index.
+         * This the precomputed key to set the placeholder. In SQL this would be the index.
          *
          * @return The key used to set the placeholder.
          */

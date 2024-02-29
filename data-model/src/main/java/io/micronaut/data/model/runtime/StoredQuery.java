@@ -236,7 +236,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
          */
         COUNT,
         /**
-         * A exists operation.
+         * An exists operation.
          */
         EXISTS,
         /**

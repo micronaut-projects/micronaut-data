@@ -209,7 +209,7 @@ public interface ResultReader<RS, IDX> {
     }
 
     /**
-     * Read a int value for the given name.
+     * Read an int value for the given name.
      * @param resultSet The result set
      * @param name The name (such as the column name)
      * @return The int value

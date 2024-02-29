@@ -16,7 +16,7 @@
 package io.micronaut.data.intercept;
 
 /**
- * An interceptor that executes a a count of all records.
+ * An interceptor that executes a count of all records.
  *
  * @param <T> The declaring type
  * @author graemerocher

@@ -309,7 +309,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     }
 
     /**
-     * Obtains the root entity or throws an exception if it not available.
+     * Obtains the root entity or throws an exception if it is not available.
      *
      * @param context The context
      * @param <E>     The entity type

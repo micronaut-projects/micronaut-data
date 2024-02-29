@@ -385,7 +385,7 @@ public final class Restrictions {
     }
 
     /**
-     * Case insensitive like.
+     * Case-insensitive like.
      */
     public static class PropertyIlike extends SinglePropertyExpressionRestriction<String> {
 

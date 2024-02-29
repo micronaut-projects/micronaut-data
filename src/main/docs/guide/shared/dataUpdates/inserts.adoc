@@ -14,4 +14,4 @@ The insert method can have a custom query defined by ann:data.annotation.Query[]
 
 snippet::example.BookRepository[project-base="doc-examples/hibernate-example", source="main", tags="inserts", indent="0"]
 
-TIP: It is not possible to use the entity as the return type in partial updates because it would require an additional select to retrieve the additional information. A number type (int, long, etc) can be returned to indicate the number of rows updated. The updated row count should be checked in most scenarios to ensure the update actually affected the row.
+TIP: It is not possible to use the entity as the return type in partial updates because it would require an additional select to retrieve the additional information. A number type (int, long, etc.) can be returned to indicate the number of rows updated. The updated row count should be checked in most scenarios to ensure the update actually affected the row.
