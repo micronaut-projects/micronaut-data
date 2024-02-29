@@ -45,12 +45,6 @@ import java.util.stream.IntStream;
  */
 public final class ProcedureMethodMatcher implements MethodMatcher {
 
-    /**
-     * Default constructor.
-     */
-    public ProcedureMethodMatcher() {
-    }
-
     @Override
     public int getOrder() {
         // should run first
