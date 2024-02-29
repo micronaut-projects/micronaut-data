@@ -2204,7 +2204,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     }
 
     /**
-     * If and when {@link io.micronaut.data.annotation.EntityRepresentation} annotation with JSON type is used for the repository method but dialect does not support
+     * If and when {@link EntityRepresentation} annotation with JSON type is used for the repository method but dialect does not support
      * JSON entity representations this will throw {@link IllegalArgumentException}.
      *
      * @param entity the persistent entity
@@ -2216,12 +2216,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     }
 
     /**
-     * Checks whether {@link io.micronaut.data.annotation.EntityRepresentation} annotation with JSON type is used for the repository method.
+     * Checks whether {@link EntityRepresentation} annotation with JSON type is used for the repository method.
      * If current dialect does not support handling JSON entity representations, {@link IllegalArgumentException} is thrown.
      *
      * @param annotationMetadata the annotation metadata
      * @param entity the persistent entity
-     * @return true if {@link io.micronaut.data.annotation.EntityRepresentation} annotation with JSON type is used for the repository method
+     * @return true if {@link EntityRepresentation} annotation with JSON type is used for the repository method
      */
     protected boolean isJsonEntity(AnnotationMetadata annotationMetadata, PersistentEntity entity) {
         boolean jsonEntity = DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(annotationMetadata);

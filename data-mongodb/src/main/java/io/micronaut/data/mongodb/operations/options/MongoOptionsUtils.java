@@ -30,6 +30,7 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.mongodb.annotation.MongoAggregateOptions;
 import io.micronaut.data.mongodb.annotation.MongoCollation;
 import io.micronaut.data.mongodb.annotation.MongoDeleteOptions;
 import io.micronaut.data.mongodb.annotation.MongoUpdateOptions;
@@ -125,8 +126,8 @@ public final class MongoOptionsUtils {
     }
 
     public static Optional<MongoAggregationOptions> buildAggregateOptions(AnnotationMetadata annotationMetadata) {
-        AnnotationValue<io.micronaut.data.mongodb.annotation.MongoAggregateOptions> optionsAnn = annotationMetadata
-                .getAnnotation(io.micronaut.data.mongodb.annotation.MongoAggregateOptions.class);
+        AnnotationValue<MongoAggregateOptions> optionsAnn = annotationMetadata
+                .getAnnotation(MongoAggregateOptions.class);
         if (optionsAnn == null) {
             return Optional.empty();
         }

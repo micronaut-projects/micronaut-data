@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.exceptions.DataAccessException;
 
+import java.sql.Array;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,10 +54,10 @@ final class MapperUtils {
         } else if (value.getClass().isArray()) {
             Object[] arr = (Object[]) value;
             collection = Arrays.asList(arr);
-        } else if (value instanceof java.sql.Array) {
+        } else if (value instanceof Array) {
             Object[] arr;
             try {
-                arr = (Object[]) ((java.sql.Array) value).getArray();
+                arr = (Object[]) ((Array) value).getArray();
             } catch (SQLException e) {
                 throw new DataAccessException("Unable to read SQL array", e);
             }

@@ -7,7 +7,7 @@ import jakarta.annotation.Generated;
 import java.math.BigDecimal;
 
 @Generated(value = "org.hibernate.jpamodelgen.JPAMetaModelEntityProcessor")
-@StaticMetamodel(io.micronaut.data.runtime.criteria.OtherEntity.class)
+@StaticMetamodel(OtherEntity.class)
 public abstract class OtherEntity_ {
 
 	public static volatile SingularAttribute<OtherEntity, Boolean> enabled2;

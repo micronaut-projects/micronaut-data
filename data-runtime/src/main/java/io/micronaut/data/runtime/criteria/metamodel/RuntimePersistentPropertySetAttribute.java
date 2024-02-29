@@ -15,13 +15,15 @@
  */
 package io.micronaut.data.runtime.criteria.metamodel;
 
+import java.util.Set;
+
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import jakarta.persistence.metamodel.SetAttribute;
 
 @Internal
-final class RuntimePersistentPropertySetAttribute<T, E> extends RuntimePersistentPropertyPluralAttribute<T, java.util.Set<E>, E>
+final class RuntimePersistentPropertySetAttribute<T, E> extends RuntimePersistentPropertyPluralAttribute<T, Set<E>, E>
     implements SetAttribute<T, E> {
 
     public RuntimePersistentPropertySetAttribute(RuntimePersistentEntity<T> persistentEntity, RuntimePersistentProperty<T> persistentProperty) {
