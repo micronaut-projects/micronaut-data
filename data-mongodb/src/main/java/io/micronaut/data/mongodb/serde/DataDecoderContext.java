@@ -120,7 +120,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
                 }
 
                 @Override
-                public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) throws IOException {
+                public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) {
                     throw new IllegalStateException("Create specific call is required!");
                 }
             };
@@ -143,7 +143,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
                 }
 
                 @Override
-                public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) throws IOException {
+                public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) {
                     throw new IllegalStateException("Create specific call is required!");
                 }
             };
@@ -174,7 +174,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
                 }
 
                 @Override
-                public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) throws IOException {
+                public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) {
                     throw new IllegalStateException("Create specific call is required!");
                 }
             };
