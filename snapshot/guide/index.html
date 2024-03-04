@@ -335,7 +335,7 @@
         <h1>Micronaut Data</h1>
         <p></p>
         <p>Data Repository Support for Micronaut</p>
-        <p><strong>Version:</strong> <select style='max-width: 200px' onChange='window.document.location.href=this.options[this.selectedIndex].value;'><option selected='selected' value='https://micronaut-projects.github.io/micronaut-data/snapshot/guide/index.html'>SNAPSHOT</option><option value='https://micronaut-projects.github.io/micronaut-data/latest/guide/index.html'>LATEST</option></select> </p>
+        <p><strong>Version:</strong> 4.6.1-SNAPSHOT </p>
     </div>
     
 <h1 id="introduction"><a class="anchor" href="#introduction"></a>1 Introduction</h1>
@@ -5843,9 +5843,9 @@ jpa.default.properties.hibernate.connection.password=myPassword</code></pre>
     reactive=true
     [jpa.default.properties]
       [jpa.default.properties.hibernate]
+        show_sql=true
         [jpa.default.properties.hibernate.hbm2ddl]
           auto="create-drop"
-        show_sql=true
         [jpa.default.properties.hibernate.connection]
           url="jdbc:mysql://localhost:3307/my_db"
           username="myUser"
@@ -14731,10 +14731,10 @@ azure:
     endpoint="https://localhost:8081"
     key=""
     [azure.cosmos.database]
+      database-name="testDb"
       [azure.cosmos.database.throughput-settings]
         request-units=1000
-        auto-scale=false
-      database-name="testDb"</code></pre>
+        auto-scale=false</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -15192,12 +15192,12 @@ azure:
     endpoint="https://localhost:8081"
     key=""
     [azure.cosmos.database]
-      [azure.cosmos.database.throughput-settings]
-        request-units=1000
-        auto-scale=false
       database-name="testDb"
       packages="io.micronaut.data.azure.entities"
       update-policy="CREATE_IF_NOT_EXISTS"
+      [azure.cosmos.database.throughput-settings]
+        request-units=1000
+        auto-scale=false
       [[azure.cosmos.database.container-settings]]
         container-name="family"
         partition-key-path="/lastname"
