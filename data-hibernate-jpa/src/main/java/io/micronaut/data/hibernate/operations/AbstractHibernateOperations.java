@@ -620,14 +620,14 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
 
     private <T> void bindCriteriaSort(CriteriaQuery<T> criteriaQuery, Root<?> root, CriteriaBuilder builder, @NonNull Sort sort) {
         List<Order> orders = new ArrayList<>();
+        Path<?> path = null;
         for (Sort.Order order : sort.getOrderBy()) {
-            Path<String> path = root.get(order.getProperty());
-            Expression expression = order.isIgnoreCase() ? builder.lower(path) : path;
-            if (order.getDirection() == Sort.Order.Direction.DESC) {
-                orders.add(builder.desc(expression));
-            } else {
-                orders.add(builder.asc(expression));
+            String[] propertyArray = order.getProperty().split("\\.");
+            for (String property : propertyArray) {
+                path = path == null ? root.get(property) : path.get(property);
             }
+            Expression<?> expression = order.isIgnoreCase() && path != null ? builder.lower(path.type().as(String.class)) : path;
+            orders.add(order.isAscending() ? builder.asc(expression) : builder.desc(expression));
         }
         criteriaQuery.orderBy(orders);
     }

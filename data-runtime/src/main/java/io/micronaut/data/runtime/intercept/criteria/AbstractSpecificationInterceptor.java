@@ -56,12 +56,14 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.CriteriaUpdate;
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -555,9 +557,14 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
 
     private List<Order> getOrders(Sort sort, Root<?> root, CriteriaBuilder cb) {
         List<Order> orders = new ArrayList<>();
+        Path<?> path = null;
         for (Sort.Order order : sort.getOrderBy()) {
-            Path<Object> propertyPath = root.get(order.getProperty());
-            orders.add(order.isAscending() ? cb.asc(propertyPath) : cb.desc(propertyPath));
+            String[] propertyArray = order.getProperty().split("\\.");
+            for (String property : propertyArray) {
+                path = path == null ? root.get(property) : path.get(property);
+            }
+            Expression<?> expression = order.isIgnoreCase() && path != null ? cb.lower(path.type().as(String.class)) : path;
+            orders.add(order.isAscending() ? cb.asc(expression) : cb.desc(expression));
         }
         return orders;
     }
