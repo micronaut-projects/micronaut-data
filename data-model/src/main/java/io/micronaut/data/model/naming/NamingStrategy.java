@@ -44,7 +44,7 @@ import java.util.function.Function;
 public interface NamingStrategy {
 
     /**
-     * Constant for the default under score separated lower case strategy.
+     * Constant for the default underscore separated lower case strategy.
      */
     NamingStrategy DEFAULT = new NamingStrategies.UnderScoreSeparatedLowerCase();
 

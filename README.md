@@ -9,7 +9,7 @@ Micronaut Data is a database access toolkit that uses Ahead of Time (AoT) compil
 
 Micronaut Data is inspired by [GORM](https://gorm.grails.org) and [Spring Data](https://spring.io/projects/spring-data), however improves on those solutions in the following ways:
 
-* *Compilation Time model* - Both GORM and Spring Data maintain a runtime meta-model that uses reflection to model relationships between entities. This model consumes significant memory and memory requirements grow as your application size grows. The problem is worse when combined with Hibernate which maintains its own meta-model as you end up with duplicate meta-models. Micronaut Data instead moves this model into the compiler.
+* *Compilation Time model* - Both GORM and Spring Data maintain a runtime metamodel that uses reflection to model relationships between entities. This model consumes significant memory and memory requirements grow as your application size grows. The problem is worse when combined with Hibernate which maintains its own metamodel as you end up with duplicate metamodels. Micronaut Data instead moves this model into the compiler.
 * *No query translation* - Both GORM and Spring Data use regular expressions and pattern matching in combination with runtime generated proxies to translate a method definition on a Java interface into a query at runtime. No such runtime translation exists in Micronaut Data and this work is carried out by the Micronaut compiler at compilation time.
 * *No Reflection or Runtime Proxies* - Micronaut Data uses no reflection or runtime proxies, resulting in better performance, smaller stack traces and reduced memory consumption due to a complete lack of reflection caches (Note that the backing implementation, for example Hibernate, may use reflection).
 * *Type Safety* - Micronaut Data will actively check at compile time that a repository method can be implemented and fail compilation if it cannot.
@@ -30,24 +30,24 @@ Or for Micronaut Data JDBC:
 ```bash
 $ curl https://launch.micronaut.io/demo.zip?features=data-jdbc -o demo.zip
 $ unzip demo.zip -d demo
-```  
+```
 
-Note that you can append `&build=maven` to the URL to switch to a Maven build. 
+Note that you can append `&build=maven` to the URL to switch to a Maven build.
 
 
 ## Documentation
 
-See the [Documentation](https://micronaut-projects.github.io/micronaut-data/latest/guide/) for more information. 
+See the [Documentation](https://micronaut-projects.github.io/micronaut-data/latest/guide/) for more information.
 
 See the [Snapshot Documentation](https://micronaut-projects.github.io/micronaut-data/snapshot/guide/) for the current development docs.
 
 ## Snapshots and Releases
 
-Snaphots are automatically published to [JFrog OSS](https://oss.jfrog.org/artifactory/oss-snapshot-local/) using [Github Actions](https://github.com/micronaut-projects/micronaut-data/actions).
+Snaphots are automatically published to [JFrog OSS](https://oss.jfrog.org/artifactory/oss-snapshot-local/) using [GitHub Actions](https://github.com/micronaut-projects/micronaut-data/actions).
 
 See the documentation in the [Micronaut Docs](https://docs.micronaut.io/latest/guide/index.html#usingsnapshots) for how to configure your build to use snapshots.
 
-Releases are published to Maven Central via [Github Actions](https://github.com/micronaut-projects/micronaut-data/actions).
+Releases are published to Maven Central via [GitHub Actions](https://github.com/micronaut-projects/micronaut-data/actions).
 
 A release is performed with the following steps:
 

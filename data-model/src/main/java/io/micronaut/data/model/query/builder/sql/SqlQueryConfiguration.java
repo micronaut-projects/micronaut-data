@@ -40,7 +40,7 @@ public @interface SqlQueryConfiguration {
         Dialect dialect();
 
         /**
-         * A String format (see {@link String#format(String, Object...)} to format the appearance
+         * A String format (see {@link String#format(String, Object...)}) to format the appearance
          * of position parameters. It receives exactly one parameter which is the parameter index (starting from 1).
          * <p>
          * NOTE: If {@link #positionalParameterName()} is specified, the formatter will receive the custom name.
@@ -50,7 +50,7 @@ public @interface SqlQueryConfiguration {
         String positionalParameterFormat() default "?";
 
         /**
-         * A String format (see {@link String#format(String, Object...)} to format the parameter name.
+         * A String format (see {@link String#format(String, Object...)}) to format the parameter name.
          * It receives exactly one parameter which is the parameter index (starting from 1).
          *
          * @return The position parameter name.

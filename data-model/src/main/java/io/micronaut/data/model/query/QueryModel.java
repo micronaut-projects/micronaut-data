@@ -377,7 +377,7 @@ public interface QueryModel extends Criteria {
 
     /**
      * Whether to lock the selected entities.
-     * @return true if the the selected entities should be locked
+     * @return true if the selected entities should be locked
      */
     boolean isForUpdate();
 
@@ -1293,7 +1293,7 @@ public interface QueryModel extends Criteria {
         }
 
         /**
-         * Adds an additional criterion.
+         * Adds another criterion.
          * @param c The criterion
          * @return This junction
          */

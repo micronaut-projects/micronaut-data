@@ -56,7 +56,7 @@ public interface MongoPreparedQuery<E, R> extends PreparedQuery<E, R> {
     MongoUpdate getUpdateMany();
 
     /**
-     * @return The data to execute the delete many
+     * @return The data to execute to delete many
      */
     MongoDelete getDeleteMany();
 

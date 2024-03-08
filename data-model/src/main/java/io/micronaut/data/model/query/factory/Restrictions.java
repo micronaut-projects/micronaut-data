@@ -158,7 +158,7 @@ public class Restrictions {
     }
 
     /**
-     * Case insensitive like.
+     * Case-insensitive like.
      *
      * @param property The property
      * @param expression The expression

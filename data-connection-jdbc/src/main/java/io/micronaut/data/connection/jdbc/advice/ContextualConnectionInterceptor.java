@@ -30,7 +30,7 @@ import io.micronaut.inject.ExecutableMethod;
 import java.sql.Connection;
 
 /**
- * An interceptor that allows injecting a {@link Connection} that acts a proxy to lookup the connection for the current transaction.
+ * An interceptor that allows injecting a {@link Connection} that acts a proxy to look up the connection for the current transaction.
  *
  * @author graemerocher
  * @since 1.0

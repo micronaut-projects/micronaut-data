@@ -39,7 +39,7 @@ public interface JdbcSchemaHandler {
     void createSchema(Connection connection, Dialect dialect, String name);
 
     /**
-     * Uses the given schema..
+     * Uses the given schema.
      *
      * @param connection The JDBC connection
      * @param dialect The dialect

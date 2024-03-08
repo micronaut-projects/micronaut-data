@@ -25,7 +25,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Designates one of the indexes part of the indexes member within an Table annotation. Typically not used
+ * Designates one of the indexes part of the indexes member within a Table annotation. Typically not used
  * directly but instead mapped to via annotation such as {@code javax.persistence.Index}.
  *
  * @author Davide Pugliese

@@ -15,7 +15,7 @@ q.select(customer.get(Customer_.name))
 .where(cb.equal(item.get(Item_.product).get(Product_.productType), "printer"));
 ----
 
-Note that as of this writing you cannot use Micronaut Data annotations (those found in the io.micronaut.data.annotation package) to generate static JPA metadata, the only supported way is to use Jakarta Persistence annotations (located in the jakarta.persistence package) in combination with Hibernate JPA Static Metamodel Generator which will generate the metamodel even if at runtime you do not actually use Hibernate, but instead use Micronaut Data JDBC.
+Note that as of this writing you cannot use Micronaut Data annotations (those found in the io.micronaut.data.annotation package) to generate static JPA metadata, the only supported way is to use Jakarta Persistence annotations (located in the `jakarta.persistence` package) in combination with Hibernate JPA Static Metamodel Generator which will generate the metamodel even if at runtime you do not actually use Hibernate, but instead use Micronaut Data JDBC.
 
 To configure the metamodel generator simply add the following dependency to the annotation processor classpath:
 

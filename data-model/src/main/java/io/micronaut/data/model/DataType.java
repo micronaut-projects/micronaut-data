@@ -31,7 +31,7 @@ import java.time.*;
 import java.util.*;
 
 /**
- * Enum of basic data types allowing compile time computation which can then subsequently be used at runtime for fast
+ * Enum of basic data types allowing to compile time computation which can then subsequently be used at runtime for fast
  * switching.
  *
  * @author graemerocher

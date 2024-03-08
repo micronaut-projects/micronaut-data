@@ -187,7 +187,7 @@ public enum Dialect {
     /**
      * Whether the dialect supports UPDATE ... RETURNING clause.
      *
-     * @return true if does supports
+     * @return true if it does support
      * @since 4.2.0
      */
     public boolean supportsUpdateReturning() {
@@ -197,7 +197,7 @@ public enum Dialect {
     /**
      * Whether the dialect supports INSERT ... RETURNING clause.
      *
-     * @return true if does supports
+     * @return true if it does support
      * @since 4.2.0
      */
     public boolean supportsInsertReturning() {
@@ -207,7 +207,7 @@ public enum Dialect {
     /**
      * Whether the dialect supports DELETE ... RETURNING clause.
      *
-     * @return true if does supports
+     * @return true if it does support
      * @since 4.2.0
      */
     public boolean supportsDeleteReturning() {

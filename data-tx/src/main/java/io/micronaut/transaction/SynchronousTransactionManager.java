@@ -21,7 +21,7 @@ import io.micronaut.transaction.exceptions.*;
 
 /**
  * NOTICE: This is a fork of Spring's {@code PlatformTransactionManager} modernizing it
- * to use enums, Slf4j and decoupling from Spring.
+ * to use enums, SLF4J and decoupling from Spring.
  *
  * This is the central interface in Spring's transaction infrastructure.
  * Applications can use this directly, but it is not primarily meant as API:

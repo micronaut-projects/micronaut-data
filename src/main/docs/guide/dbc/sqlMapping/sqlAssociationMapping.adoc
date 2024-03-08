@@ -7,16 +7,16 @@ To specify a relation between two entities you need to use ann:data.annotation.R
 |*Description*
 
 |`Kind.ONE_TO_MANY`
-|One to many association
+|One-To-Many association
 
 |`Kind.ONE_TO_ONE`
-|One to one association
+|One-To-One association
 
 |`Kind.MANY_TO_MANY`
-|Many to many association
+|Many-To-Many association
 
 |`Kind.MANY_TO_ONE`
-|Many to one association
+|Many-To-One association
 
 |`Kind.EMBEDDED`
 |Embedded association

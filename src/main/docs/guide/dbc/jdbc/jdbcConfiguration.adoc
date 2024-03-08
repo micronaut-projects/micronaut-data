@@ -34,7 +34,7 @@ The `schema-generate` option is currently only recommended for simple applicatio
 
 === Setting the Dialect
 
-As seen in the configuration above you should also configure the dialect. Although queries are precomputed in the repository some cases (like pagination) still require the dialect to specified. The following table summarizes the supported dialects:
+As seen in the configuration above you should also configure the dialect. Although queries are precomputed in the repository some cases (like pagination) still require the dialect to specify. The following table summarizes the supported dialects:
 
 .Supported JDBC / R2DBC Dialects
 [cols=2*]

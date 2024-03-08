@@ -1,4 +1,4 @@
-Frequently, rather than retrieving all of the data for a particular entity, you may only want a single property or association of an entity or to perform some kind of computation and obtain just that result. This is where query projections come in.
+Frequently, rather than retrieving all the data for a particular entity, you may only want a single property or association of an entity or to perform some kind of computation and obtain just that result. This is where query projections come in.
 
 The simplest form of projection is to retrieve a property or association. For example:
 

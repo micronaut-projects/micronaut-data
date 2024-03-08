@@ -44,7 +44,7 @@ To create the database schema it is recommended you pair Micronaut Data with a S
 
 SQL migration tools provide more complete support for creating and evolving your schema across a range of databases.
 
-NOTE: Most of the database migration tools use JDBC driver to make DB changes. Therefore it is likely that you will in addition to the R2DBC driver need to include a https://micronaut-projects.github.io/micronaut-sql/latest/guide/#jdbc[JDBC driver module] for the schema migration to work.
+NOTE: Most of the database migration tools use JDBC driver to make DB changes. Therefore, it is likely that you will in addition to the R2DBC driver need to include a https://micronaut-projects.github.io/micronaut-sql/latest/guide/#jdbc[JDBC driver module] for the schema migration to work.
 
 If you want to quickly test out Micronaut Data R2DBC then you can set the `schema-generate` option of the data source to `create-drop` as well as the appropriate schema name:
 
@@ -58,7 +58,7 @@ The `schema-generate` option is currently only recommended for simple applicatio
 
 === Setting the Dialect
 
-As seen in the configuration above you should also configure the dialect. Although queries are precomputed in the repository some cases (like pagination) still require the dialect to specified. The following table summarizes the supported dialects:
+As seen in the configuration above you should also configure the dialect. Although queries are precomputed in the repository some cases (like pagination) still require the dialect to specify. The following table summarizes the supported dialects:
 
 .Supported JDBC / R2DBC Dialects
 [cols=2*]

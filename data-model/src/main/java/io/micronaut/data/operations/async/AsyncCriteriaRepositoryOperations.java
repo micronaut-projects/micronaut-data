@@ -81,7 +81,7 @@ public interface AsyncCriteriaRepositoryOperations extends AsyncCriteriaCapableR
     CompletionStage<Number> updateAll(@NonNull CriteriaUpdate<Number> query);
 
     /**
-     * Executes a delete for the given query and parameter values. If it is possible to
+     * Executes delete for the given query and parameter values. If it is possible to
      * return the number of objects deleted, then do so.
      * @param query The query
      * @return An optional number with the count of the number of records updated

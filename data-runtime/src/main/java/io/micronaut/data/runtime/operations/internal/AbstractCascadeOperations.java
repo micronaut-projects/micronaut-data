@@ -142,7 +142,7 @@ abstract class AbstractCascadeOperations {
             if (association.isForeignKey()) {
                 PersistentAssociationPath inverse = association.getInversePathSide().orElse(null);
                 if (inverse != null) {
-                    //don't cast to BeanProperty<T..> here because its the inverse, so we want to set the entity onto the newChild
+                    //don't cast to BeanProperty<T> here because it's the inverse, so we want to set the entity onto the newChild
                     newChild = inverse.setPropertyValue(newChild, entity);
                 }
             }

@@ -549,7 +549,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param sqlStoredQuery the SQL prepared query
      * @param columnName the column name where we are reading from
      * @param jsonDataType the JSON representation type
-     * @param resultSetType resultSetType the result set type (different for R2dbc and Jdbc)
+     * @param resultSetType resultSetType the result set type (different for R2DBC and JDBC)
      * @param persistentEntity the persistent entity
      * @param loadListener the load listener if needed after entity loaded
      * @return the {@link SqlTypeMapper} able to decode from column value into given type

@@ -568,7 +568,7 @@ final class DataConversionServiceFactory {
             }
             return chars;
         });
-        // Conversions needed for r2dbc since arrays are returned as Object[] and not converted to expected types
+        // Conversions needed for R2DBC since arrays are returned as Object[] and not converted to expected types
         conversionService.addConverter(Object[].class, short[].class, array -> {
            short[] shorts = new short[array.length];
             int i = 0;

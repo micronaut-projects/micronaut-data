@@ -90,7 +90,7 @@ public class TypeUtils {
     }
 
     /**
-     * Is the element an iterable of an dto.
+     * Is the element an iterable of a DTO.
      *
      * @param type The type
      * @return True if is
