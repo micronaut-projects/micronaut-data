@@ -18,6 +18,7 @@ package io.micronaut.data.repository.jpa.kotlin
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder
 import io.micronaut.data.repository.jpa.criteria.DeleteSpecification
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
@@ -52,6 +53,16 @@ interface CoroutineJpaSpecificationExecutor<T> {
     suspend fun findOne(spec: PredicateSpecification<T>?): T?
 
     /**
+     * Returns a single entity using build criteria query.
+     *
+     * @param builder The criteria query builder
+     * @param <R> the result type
+     *
+     * @return optional found result
+     */
+    suspend fun <R> findOne(builder: CriteriaQueryBuilder<R>?): R?
+
+    /**
      * Returns all entities matching the given [QuerySpecification].
      *
      * @param spec The query specification
@@ -66,6 +77,16 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @return found results
      */
     fun findAll(spec: PredicateSpecification<T>?): Flow<T>
+
+    /**
+     * Returns a single entity using build criteria query.
+     *
+     * @param builder The criteria query builder
+     * @param <R> the result type
+     *
+     * @return found results
+     */
+    fun <R> findAll(builder: CriteriaQueryBuilder<R>?): Flow<R>
 
     /**
      * Returns a [Page] of entities matching the given [QuerySpecification].
@@ -84,6 +105,17 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @return a page
      */
     suspend fun findAll(spec: PredicateSpecification<T>?, pageable: Pageable): Page<T>
+
+    /**
+     * Returns a single entity using build criteria query.
+     *
+     * @param builder The criteria query builder
+     * @param pageable The pageable object
+     * @param <R> the result type
+     *
+     * @return found results
+     */
+    suspend fun <R> findAll(builder: CriteriaQueryBuilder<R>?, pageable: Pageable): Page<R>
 
     /**
      * Returns all entities matching the given [QuerySpecification] and [Sort].

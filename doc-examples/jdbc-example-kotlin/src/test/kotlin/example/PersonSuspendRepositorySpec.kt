@@ -3,6 +3,7 @@ package example
 import example.PersonRepository.Specifications.ageIsLessThan
 import example.PersonRepository.Specifications.nameEquals
 import example.PersonRepository.Specifications.nameInList
+import example.PersonRepository.Specifications.nameOrAgeMatches
 import example.PersonRepository.Specifications.setNewName
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
@@ -130,5 +131,11 @@ internal class PersonSuspendRepositorySpec {
         Assertions.assertEquals(2, peoplePage.totalPages)
         Assertions.assertEquals(1, peoplePage.content.size)
         Assertions.assertEquals("Denis", peoplePage.content[0].name)
+    }
+
+    @Test
+    fun testStuff() = runBlocking {
+        val people = personRepository.findAll(nameOrAgeMatches("Denis", 24)).toList() ?: Assertions.fail()
+        Assertions.assertEquals(2, people.size)
     }
 }
