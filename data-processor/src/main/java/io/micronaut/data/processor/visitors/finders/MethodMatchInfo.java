@@ -28,7 +28,7 @@ import java.util.Map;
 
 /**
  * The method info. This class describes the pre-computed method handling for a
- * repository and is computed into a {@link io.micronaut.data.intercept.annotation.DataMethod} annotation
+ * repository and is computed into a {@link DataMethod} annotation
  * which is readable at runtime.
  *
  * @author graemerocher

@@ -44,7 +44,7 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * The Micronaut Data's Serde's {@link io.micronaut.serde.Serializer.EncoderContext}.
+ * The Micronaut Data's Serde's {@link Serializer.EncoderContext}.
  *
  * @author Denis Stepanov
  * @since 3.3

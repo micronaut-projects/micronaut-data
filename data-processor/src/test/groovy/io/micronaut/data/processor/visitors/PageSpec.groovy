@@ -78,10 +78,11 @@ interface MyInterface extends GenericRepository<Person, Long> {
         given:
         BeanDefinition beanDefinition = buildRepository('test.MyInterface' , """
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.entities.Person;
 
 @Repository
-@io.micronaut.context.annotation.Executable
+@Executable
 interface MyInterface extends GenericRepository<Person, Long> {
 
     Page<Person> list(Pageable pageable);

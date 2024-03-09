@@ -29,6 +29,7 @@ class JpaSaveSpec extends AbstractDataSpec {
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package test;
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.entities.Company;
 import io.micronaut.data.model.entities.Person;
 import io.micronaut.data.repository.CrudRepository;
@@ -39,13 +40,13 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.repository.GenericRepository;
 
 @Repository
-@io.micronaut.context.annotation.Executable
+@Executable
 interface MyInterface extends GenericRepository<Person, Long> {
 
     Person save(String name, int age, String publicId);
 
     Person save(String name, int age, String publicId, Company company);
-    
+
 }
 """)
 

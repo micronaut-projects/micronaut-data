@@ -49,7 +49,7 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * The Micronaut Data's Serde's {@link io.micronaut.serde.Deserializer.DecoderContext}.
+ * The Micronaut Data's Serde's {@link Deserializer.DecoderContext}.
  *
  * @author Denis Stepanov
  * @since 3.3

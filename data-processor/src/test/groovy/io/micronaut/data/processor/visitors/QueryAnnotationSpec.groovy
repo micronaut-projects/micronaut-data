@@ -58,6 +58,8 @@ ${entity('Movie', [title: String, enabled: Boolean])}
     void "test named parameter parsing"() {
         given:
         def repository = buildRepository('test.PersonRepository', """
+import java.util.List;
+
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Person;
@@ -68,7 +70,7 @@ interface PersonRepository extends GenericRepository<Person, Long> {
   @Query(
     value = "select * from person person_ where person_.name like :n",
     countQuery = "select count(*) from person person_ where person_.name like :n")
-  java.util.List<Person> findPeople(String n);
+  List<Person> findPeople(String n);
 }
 """)
         def method = repository.getRequiredMethod("findPeople", String)
@@ -97,13 +99,13 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 interface MovieRepository extends GenericRepository<Movie, Long> {
     @Query("$query")
     void deleteById(Long id);
-    
+
     @Query("$query")
     void updateById(Long id);
-    
-    @Query(value="WITH task AS (" + 
+
+    @Query(value="WITH task AS (" +
                 "SELECT test_id FROM test where foo != :key LIMIT 1 FOR UPDATE SKIP LOCKED" +
-           ")" + 
+           ")" +
                 "UPDATE test SET foo = :key FROM task WHERE test.test_id = task.test_id" +
                 "RETURNING test.*", readOnly=false)
     String nextTask(String key);
@@ -162,6 +164,7 @@ ${entity('Movie', [title: String, enabled: Boolean])}
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package test;
 
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.entities.Person;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.annotation.*;
@@ -173,11 +176,11 @@ import java.util.List;
 interface MyInterface {
 
     @Query("from Person p where p.name = :n")
-    List<Person> listPeople(String n);   
-    
+    List<Person> listPeople(String n);
+
     @Query(value = "select * from person p where p.name like :n",
             countQuery = "select count(*) from person p where p.name like :n")
-    io.micronaut.data.model.Page<Person> queryByName(String n, io.micronaut.data.model.Pageable p);
+    io.micronaut.data.model.Page<Person> queryByName(String n, Pageable p);
 }
 """)
 
@@ -204,6 +207,7 @@ interface MyInterface {
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package test;
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.entities.Person;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.annotation.Repository;
@@ -211,15 +215,15 @@ import io.micronaut.data.annotation.Query;
 import java.util.List;
 
 @Repository
-@io.micronaut.context.annotation.Executable
+@Executable
 interface MyInterface {
 
     @Query("from Person p where p.name = :n")
-    List<Person> listPeople(String n);   
-    
+    List<Person> listPeople(String n);
+
     @Query("from Person p where p.name = :n")
     Person queryByName(String n);
-    
+
     @Query("from Person p where p.name = :n")
     Person findPerson(String n);
 }

@@ -56,7 +56,7 @@ public @interface ReadOnly {
 
     /**
      * The transaction propagation type.
-     * <p>Defaults to {@link io.micronaut.transaction.TransactionDefinition.Propagation#REQUIRED}.
+     * <p>Defaults to {@link TransactionDefinition.Propagation#REQUIRED}.
      *
      * @return The propagation
      */
@@ -65,7 +65,7 @@ public @interface ReadOnly {
 
     /**
      * The transaction isolation level.
-     * <p>Defaults to {@link io.micronaut.transaction.TransactionDefinition.Isolation#DEFAULT}.
+     * <p>Defaults to {@link TransactionDefinition.Isolation#DEFAULT}.
      *
      * @return The isolation level
      */

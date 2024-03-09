@@ -23,7 +23,7 @@ import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 
 /**
- * The default implementation of {@link io.micronaut.data.intercept.ProcedureReturningManyInterceptor}.
+ * The default implementation of {@link ProcedureReturningManyInterceptor}.
  *
  * @param <T> The declaring type
  * @param <R> The return generic type

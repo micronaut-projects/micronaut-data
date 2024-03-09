@@ -41,6 +41,7 @@ class JpaOrderBySpec extends AbstractTypeElementSpec {
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package test;
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.entities.Person;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.repository.CrudRepository;
@@ -52,7 +53,7 @@ import io.micronaut.data.repository.GenericRepository;
 import java.net.URL;
 
 @Repository
-@io.micronaut.context.annotation.Executable
+@Executable
 interface MyInterface extends GenericRepository<Person, Long> {
 
     List<Person> queryByNameOrderByName(String n);

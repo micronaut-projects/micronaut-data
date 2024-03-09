@@ -26,8 +26,9 @@ class RecordsSpec extends AbstractDataSpec {
     void 'test build create table'() {
         given:
         def entity = buildEntity('test.Person', '''
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.*;
-record Person(@Id @GeneratedValue @io.micronaut.core.annotation.Nullable Long id, String name, int age) {}
+record Person(@Id @GeneratedValue @Nullable Long id, String name, int age) {}
 ''')
         SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ANSI)
         def sql = builder.buildBatchCreateTableStatement(entity)
@@ -42,10 +43,11 @@ record Person(@Id @GeneratedValue @io.micronaut.core.annotation.Nullable Long id
         given:
         def introspection = buildBeanIntrospection('test.Person', '''
 package test;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.*;
 
 @io.micronaut.data.annotation.MappedEntity
-record Person(@Id @GeneratedValue @io.micronaut.core.annotation.Nullable Long id, String name, int age) {}
+record Person(@Id @GeneratedValue @Nullable Long id, String name, int age) {}
 ''')
         def entity = PersistentEntity.of(introspection)
         def property = entity.getPropertyByName("name")

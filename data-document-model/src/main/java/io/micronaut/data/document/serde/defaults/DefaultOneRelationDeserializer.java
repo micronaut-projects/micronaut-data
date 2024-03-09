@@ -24,7 +24,7 @@ import io.micronaut.serde.util.CustomizableDeserializer;
 import jakarta.inject.Singleton;
 
 /**
- * Default {@link io.micronaut.data.document.serde.OneRelationDeserializer} implementation.
+ * Default {@link OneRelationDeserializer} implementation.
  *
  * @author radovanradic
  * @author Denis Stepanov

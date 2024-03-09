@@ -25,6 +25,7 @@ import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.impl.QueryModelPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.query.JoinPath;
@@ -264,12 +265,12 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         }
     }
 
-    private <T> io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> findOrderProperty(PersistentEntityRoot<T> root, String propertyName) {
+    private <T> PersistentPropertyPath<?> findOrderProperty(PersistentEntityRoot<T> root, String propertyName) {
         if (root.getPersistentEntity().getPropertyByName(propertyName) != null) {
             return root.get(propertyName);
         }
         // Look at association paths
-        io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> property = findProperty(root, propertyName);
+        PersistentPropertyPath<?> property = findProperty(root, propertyName);
         if (property != null) {
             return property;
         }

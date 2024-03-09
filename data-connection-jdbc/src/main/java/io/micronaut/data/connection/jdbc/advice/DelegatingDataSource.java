@@ -25,8 +25,8 @@ import java.util.logging.Logger;
 import javax.sql.DataSource;
 
 /**
- * JDBC {@link javax.sql.DataSource} implementation that delegates all calls
- * to a given target {@link javax.sql.DataSource}.
+ * JDBC {@link DataSource} implementation that delegates all calls
+ * to a given target {@link DataSource}.
  *
  * <p>This class is meant to be subclassed, with subclasses overriding only
  * those methods (such as {@link #getConnection()}) that should not simply

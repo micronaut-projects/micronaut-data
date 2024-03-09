@@ -40,6 +40,7 @@ class JpaUpdateSpec extends AbstractTypeElementSpec {
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package test;
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.entities.Person;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.annotation.Repository;
@@ -49,11 +50,11 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.repository.GenericRepository;
 
 @Repository
-@io.micronaut.context.annotation.Executable
+@Executable
 interface MyInterface extends GenericRepository<Person, Long> {
 
     void update(@Id Long myId, String name);
-    
+
     void updateByName(String nameToUpdate, String name);
 }
 """)
@@ -89,6 +90,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package test;
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.entities.Company;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.annotation.Repository;
@@ -98,11 +100,11 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.repository.GenericRepository;
 
 @Repository
-@io.micronaut.context.annotation.Executable
+@Executable
 interface MyInterface extends GenericRepository<Company, Long> {
 
     void update(@Id Long myId, String name);
-    
+
     void updateByName(String nameToUpdate, String name);
 }
 """)

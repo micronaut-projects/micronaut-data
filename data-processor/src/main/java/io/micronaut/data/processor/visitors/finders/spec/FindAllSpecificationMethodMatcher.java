@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.processor.visitors.finders.spec;
 
+import java.util.regex.Matcher;
+
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.intercept.annotation.DataMethod;
@@ -49,7 +51,7 @@ public class FindAllSpecificationMethodMatcher extends AbstractSpecificationMeth
     }
 
     @Override
-    protected MethodMatch match(MethodMatchContext matchContext, java.util.regex.Matcher matcher) {
+    protected MethodMatch match(MethodMatchContext matchContext, Matcher matcher) {
         if (TypeUtils.doesMethodProducesIterableOfAnEntityOrDto(matchContext.getMethodElement()) && isCorrectParameters(matchContext.getMethodElement())) {
             if (isFirstParameterMicronautDataQuerySpecification(matchContext.getMethodElement())) {
                 FindersUtils.InterceptorMatch e = FindersUtils.pickFindAllSpecInterceptor(matchContext, matchContext.getReturnType());

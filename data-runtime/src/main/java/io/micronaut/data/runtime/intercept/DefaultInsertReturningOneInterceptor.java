@@ -26,7 +26,7 @@ import io.micronaut.data.operations.RepositoryOperations;
 import java.util.List;
 
 /**
- * Default implementation of {@link io.micronaut.data.intercept.InsertReturningOneInterceptor}.
+ * Default implementation of {@link InsertReturningOneInterceptor}.
  * @param <T> The declaring type
  * @param <R> The return type
  * @author Denis Stepanov

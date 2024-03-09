@@ -44,6 +44,7 @@ import jakarta.persistence.metamodel.PluralAttribute;
 import jakarta.persistence.metamodel.SetAttribute;
 import jakarta.persistence.metamodel.SingularAttribute;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -123,7 +124,7 @@ public abstract class AbstractPersistentEntityJoinSupport<J, E> implements Persi
     }
 
     @Override
-    public <K, C extends java.util.Collection<K>> Expression<C> get(PluralAttribute<E, C, K> collection) {
+    public <K, C extends Collection<K>> Expression<C> get(PluralAttribute<E, C, K> collection) {
         return get(collection.getName());
     }
 

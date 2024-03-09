@@ -22,13 +22,13 @@ class TestAnnotationSpec extends AbstractDataSpec {
 
     void "test @Where on entity"() {
         when:
-        def repository = buildRepository('test.TestRepository', '''
+        def repository = buildRepository('test.TestRepository', '''import io.micronaut.data.tck.jdbc.entities.ProjectId;
 
 @Repository
 @io.micronaut.context.annotation.Executable
 interface TestRepository extends io.micronaut.data.tck.repositories.ProjectRepository {
     @Override
-    void update(@Id io.micronaut.data.tck.jdbc.entities.ProjectId projectId, String name);
+    void update(@Id ProjectId projectId, String name);
 }
 ''')
         then:

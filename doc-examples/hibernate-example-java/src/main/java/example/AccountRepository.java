@@ -3,6 +3,9 @@ package example;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.repository.CrudRepository;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+
 @Repository
-public interface AccountRepository extends CrudRepository<@jakarta.validation.Valid Account, @jakarta.validation.constraints.Min(0) Long> {
+public interface AccountRepository extends CrudRepository<@Valid Account, @Min(0) Long> {
 }

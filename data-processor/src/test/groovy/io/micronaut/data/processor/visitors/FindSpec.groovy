@@ -33,13 +33,14 @@ class FindSpec extends AbstractDataSpec {
 
     void "test find by with overlapping property paths 2"() {
         given:
-        BeanDefinition beanDefinition = buildRepository('test.PlayerRepository', '''
+        BeanDefinition beanDefinition = buildRepository('test.PlayerRepository', '''import javax.persistence.GenerationType;
+
 @javax.persistence.Entity
 @javax.persistence.Table(name = "player")
 class Player {
 
     @javax.persistence.Id
-    @javax.persistence.GeneratedValue(strategy=javax.persistence.GenerationType.IDENTITY)
+    @javax.persistence.GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
     private Team team;
     private String name;
@@ -74,7 +75,7 @@ class Player {
 class Team {
 
     @javax.persistence.Id
-    @javax.persistence.GeneratedValue(strategy=javax.persistence.GenerationType.IDENTITY)
+    @javax.persistence.GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
     private Integer externalTeamId;
     private String externalTeam;
@@ -134,7 +135,8 @@ interface PlayerRepository extends GenericRepository<Player, Long> {
 
     void "test find by with overlapping property paths"() {
         given:
-        BeanDefinition beanDefinition = buildRepository('test.DeviceInfoRepository', """
+        BeanDefinition beanDefinition = buildRepository('test.DeviceInfoRepository', """import io.micronaut.context.annotation.Executable;
+
 @javax.persistence.Entity
 class DeviceInfo {
 
@@ -189,7 +191,7 @@ class DeviceManufacturer {
 }
 
 @Repository
-@io.micronaut.context.annotation.Executable
+@Executable
 interface DeviceInfoRepository extends GenericRepository<DeviceInfo, Long> {
 
     DeviceInfo findByManufacturerDeviceId(String id);
@@ -257,12 +259,13 @@ interface PlayerRepository extends GenericRepository<Player, Integer> {
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package test;
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.entities.Person;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.repository.GenericRepository;
 
 @Repository
-@io.micronaut.context.annotation.Executable
+@Executable
 interface MyInterface extends GenericRepository<Person, Long> {
 
     Person find(Long id);
@@ -363,13 +366,14 @@ class Team {
     void "test embedded object on finders"() {
         given:
         def repository = buildRepository('test.RestaurantRepository', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Restaurant;
 import java.util.UUID;
 
 @JdbcRepository(dialect= Dialect.MYSQL)
-@io.micronaut.context.annotation.Executable
+@Executable
 interface RestaurantRepository extends CrudRepository<Restaurant, Long> {
 
     Restaurant findByAddressZipCodeLike(String name);
@@ -391,12 +395,13 @@ interface RestaurantRepository extends CrudRepository<Restaurant, Long> {
     void "test top"() {
         given:
             def repository = buildRepository('test.TestRepository', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Book;
 
 @JdbcRepository(dialect= Dialect.POSTGRES)
-@io.micronaut.context.annotation.Executable
+@Executable
 interface TestRepository extends CrudRepository<Book, Long> {
 
     List<Book> findTop30OrderByTitle();
@@ -413,13 +418,14 @@ interface TestRepository extends CrudRepository<Book, Long> {
     void "test project association"() {
         given:
             def repository = buildRepository('test.TestRepository', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.entities.Author;
 
 @JdbcRepository(dialect= Dialect.POSTGRES)
-@io.micronaut.context.annotation.Executable
+@Executable
 interface TestRepository extends CrudRepository<Book, Long> {
 
     Author findAuthorById(@Id Long id);

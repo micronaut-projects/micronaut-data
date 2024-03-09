@@ -21,7 +21,7 @@ import io.micronaut.data.model.Slice;
 import java.util.concurrent.CompletionStage;
 
 /**
- * An interceptor that executes a query and returns a {@link io.micronaut.data.model.Slice} asynchronously.
+ * An interceptor that executes a query and returns a {@link Slice} asynchronously.
  *
  * @param <T> The declaring type
  * @author graemerocher

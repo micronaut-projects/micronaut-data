@@ -7,6 +7,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.Version;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -15,7 +17,7 @@ public class FavoriteStudents {
 
     @Id
     private UUID id;
-    @jakarta.persistence.Version
+    @Version
     private Integer version;
 
     @OneToOne(cascade = CascadeType.ALL)

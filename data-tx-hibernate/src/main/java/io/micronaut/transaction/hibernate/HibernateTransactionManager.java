@@ -37,6 +37,7 @@ import org.hibernate.FlushMode;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.hibernate.TransactionException;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.resource.jdbc.spi.PhysicalConnectionHandlingMode;
 
@@ -174,7 +175,7 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
 
         try {
             transaction.commit();
-        } catch (org.hibernate.TransactionException ex) {
+        } catch (TransactionException ex) {
             // assumable from commit call to the underlying JDBC connection
             throw new TransactionSystemException("Could not commit Hibernate transaction", ex);
         } catch (PersistenceException ex) {
@@ -195,7 +196,7 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
 
         try {
             transaction.rollback();
-        } catch (org.hibernate.TransactionException ex) {
+        } catch (TransactionException ex) {
             throw new TransactionSystemException("Could not roll back Hibernate transaction", ex);
         } finally {
             if (!tx.getConnectionStatus().isNew()) {

@@ -40,7 +40,7 @@ import java.util.*;
  */
 public enum DataType {
     /**
-     * A big decimal such as {@link java.math.BigDecimal}.
+     * A big decimal such as {@link BigDecimal}.
      */
     BIGDECIMAL(BigDecimal.class, BigInteger.class),
     /**
@@ -60,11 +60,11 @@ public enum DataType {
      */
     CHARACTER(Character.class),
     /**
-     * A date such as {@link java.util.Date} or {@link java.time.LocalDate}.
+     * A date such as {@link java.util.Date} or {@link LocalDate}.
      */
     DATE(Date.class, java.sql.Date.class, LocalDate.class),
     /**
-     * A timestamp such as {@link java.sql.Timestamp} or {@link java.time.Instant}.
+     * A timestamp such as {@link Timestamp} or {@link Instant}.
      */
     TIMESTAMP(Timestamp.class, Instant.class, OffsetDateTime.class, ZonedDateTime.class),
     /**
