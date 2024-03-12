@@ -49,13 +49,10 @@ public enum PredicateBinaryOp {
 
     @Nullable
     public PredicateBinaryOp negate() {
-        switch (this) {
-            case EQUALS:
-                return NOT_EQUALS;
-            case NOT_EQUALS:
-                return EQUALS;
-            default:
-                return null;
-        }
+        return switch (this) {
+            case EQUALS -> NOT_EQUALS;
+            case NOT_EQUALS -> EQUALS;
+            default -> null;
+        };
     }
 }

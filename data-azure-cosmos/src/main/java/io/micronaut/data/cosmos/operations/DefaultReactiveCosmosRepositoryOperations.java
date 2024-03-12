@@ -688,38 +688,22 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
      * @return java class for the data type
      */
     private Class<?> getDataTypeClass(DataType dataType) {
-        switch (dataType) {
-            case STRING:
-            case JSON:
-                return String.class;
-            case UUID:
-                return UUID.class;
-            case LONG:
-                return Long.class;
-            case INTEGER:
-                return Integer.class;
-            case BOOLEAN:
-                return Boolean.class;
-            case BYTE:
-                return Byte.class;
-            case TIMESTAMP:
-            case DATE:
-                return Date.class;
-            case CHARACTER:
-                return Character.class;
-            case FLOAT:
-                return Float.class;
-            case SHORT:
-                return Short.class;
-            case DOUBLE:
-                return Double.class;
-            case BIGDECIMAL:
-                return BigDecimal.class;
-            case TIME:
-                return Time.class;
-            default:
-                return Object.class;
-        }
+        return switch (dataType) {
+            case STRING, JSON -> String.class;
+            case UUID -> UUID.class;
+            case LONG -> Long.class;
+            case INTEGER -> Integer.class;
+            case BOOLEAN -> Boolean.class;
+            case BYTE -> Byte.class;
+            case TIMESTAMP, DATE -> Date.class;
+            case CHARACTER -> Character.class;
+            case FLOAT -> Float.class;
+            case SHORT -> Short.class;
+            case DOUBLE -> Double.class;
+            case BIGDECIMAL -> BigDecimal.class;
+            case TIME -> Time.class;
+            default -> Object.class;
+        };
     }
 
     // Create, update, delete

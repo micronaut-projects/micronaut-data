@@ -65,43 +65,26 @@ public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> 
     @Nullable
     @Override
     public Object readDynamic(@NonNull Row resultSet, @NonNull Integer index, @NonNull DataType dataType) {
-        switch (dataType) {
-            case UUID:
-                return readUUID(resultSet, index);
-            case STRING:
-            case JSON:
-                return readString(resultSet, index);
-            case LONG:
-                return readConvertible(resultSet, index, Long.class);
-            case INTEGER:
+        return switch (dataType) {
+            case UUID -> readUUID(resultSet, index);
+            case STRING, JSON -> readString(resultSet, index);
+            case LONG -> readConvertible(resultSet, index, Long.class);
+            case INTEGER ->
                 // https://github.com/mirromutth/r2dbc-mysql/issues/177
-                return readConvertible(resultSet, index, Integer.class);
-            case BOOLEAN:
-                return resultSet.get(index, Boolean.class);
-            case BYTE:
-                return resultSet.get(index, Byte.class);
-            case TIME:
-                return readTime(resultSet, index);
-            case TIMESTAMP:
-                return readConvertible(resultSet, index, Timestamp.class);
-            case DATE:
-                return resultSet.get(index, Date.class);
-            case CHARACTER:
-                return resultSet.get(index, Character.class);
-            case FLOAT:
-                return resultSet.get(index, Float.class);
-            case SHORT:
-                return resultSet.get(index, Short.class);
-            case DOUBLE:
-                return resultSet.get(index, Double.class);
-            case BYTE_ARRAY:
-                return resultSet.get(index, byte[].class);
-            case BIGDECIMAL:
-                return resultSet.get(index, BigDecimal.class);
-            case OBJECT:
-            default:
-                return getRequiredValue(resultSet, index, Object.class);
-        }
+                    readConvertible(resultSet, index, Integer.class);
+            case BOOLEAN -> resultSet.get(index, Boolean.class);
+            case BYTE -> resultSet.get(index, Byte.class);
+            case TIME -> readTime(resultSet, index);
+            case TIMESTAMP -> readConvertible(resultSet, index, Timestamp.class);
+            case DATE -> resultSet.get(index, Date.class);
+            case CHARACTER -> resultSet.get(index, Character.class);
+            case FLOAT -> resultSet.get(index, Float.class);
+            case SHORT -> resultSet.get(index, Short.class);
+            case DOUBLE -> resultSet.get(index, Double.class);
+            case BYTE_ARRAY -> resultSet.get(index, byte[].class);
+            case BIGDECIMAL -> resultSet.get(index, BigDecimal.class);
+            default -> getRequiredValue(resultSet, index, Object.class);
+        };
     }
 
     private Object readConvertible(Row resultSet, int index, Class<?> clazz) {

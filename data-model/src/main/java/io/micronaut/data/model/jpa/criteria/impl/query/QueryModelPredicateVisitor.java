@@ -235,22 +235,15 @@ public class QueryModelPredicateVisitor implements PredicateVisitor {
         String leftProperty = getPropertyPath(left);
         String rightProperty = getPropertyPath(right);
 
-        switch (op) {
-            case EQUALS:
-                return Restrictions.eqProperty(leftProperty, rightProperty);
-            case NOT_EQUALS:
-                return Restrictions.neProperty(leftProperty, rightProperty);
-            case GREATER_THAN:
-                return Restrictions.gtProperty(leftProperty, rightProperty);
-            case GREATER_THAN_OR_EQUALS:
-                return Restrictions.geProperty(leftProperty, rightProperty);
-            case LESS_THAN:
-                return Restrictions.ltProperty(leftProperty, rightProperty);
-            case LESS_THAN_OR_EQUALS:
-                return Restrictions.leProperty(leftProperty, rightProperty);
-            default:
-                throw new IllegalStateException("Unsupported property to property operation: " + op);
-        }
+        return switch (op) {
+            case EQUALS -> Restrictions.eqProperty(leftProperty, rightProperty);
+            case NOT_EQUALS -> Restrictions.neProperty(leftProperty, rightProperty);
+            case GREATER_THAN -> Restrictions.gtProperty(leftProperty, rightProperty);
+            case GREATER_THAN_OR_EQUALS -> Restrictions.geProperty(leftProperty, rightProperty);
+            case LESS_THAN -> Restrictions.ltProperty(leftProperty, rightProperty);
+            case LESS_THAN_OR_EQUALS -> Restrictions.leProperty(leftProperty, rightProperty);
+            default -> throw new IllegalStateException("Unsupported property to property operation: " + op);
+        };
     }
 
     @Override
