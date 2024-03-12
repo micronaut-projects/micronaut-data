@@ -23,8 +23,10 @@ import io.micronaut.data.tck.entities.Person;
 @R2dbcRepository(dialect = Dialect.MYSQL)
 public interface MySqlPersonRepository extends io.micronaut.data.tck.repositories.PersonRepository {
 
+    @Override
     Person save(String name, int age);
 
+    @Override
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
     int saveCustom(String name, int age);
 

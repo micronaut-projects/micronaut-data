@@ -25,5 +25,6 @@ import io.micronaut.core.annotation.Nullable;
 @R2dbcRepository(dialect = Dialect.H2)
 public interface H2CarRepository extends CarRepository {
 
+    @Override
     void update(@Id Long id, @Nullable String name);
 }

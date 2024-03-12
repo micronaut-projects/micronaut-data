@@ -108,6 +108,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
      *
      * @param entity The entity instance
      */
+    @Override
     public void prepare(E entity) {
         if (isExpandableQuery()) {
             SqlQueryBuilder queryBuilder = sqlStoredQuery.getQueryBuilder();

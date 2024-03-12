@@ -1167,6 +1167,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
         PersistentPropertyPath getRequiredProperty(String name, Class<?> criterionClazz);
 
+        @Override
         default int pushParameter(@NonNull BindingParameter bindingParameter, @NonNull BindingParameter.BindingContext bindingContext) {
             return getQueryState().pushParameter(bindingParameter, bindingContext);
         }

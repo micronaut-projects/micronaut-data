@@ -47,6 +47,7 @@ public interface PersistentEntity extends PersistentElement {
      *
      * @return The entity name
      */
+    @Override
     @NonNull String getName();
 
     /**

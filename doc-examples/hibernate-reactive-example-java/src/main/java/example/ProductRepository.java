@@ -26,6 +26,7 @@ public interface ProductRepository extends ReactorCrudRepository<Product, Long>,
     // end::join[]
 
     // tag::entitygraph[]
+    @Override
     @EntityGraph(attributePaths = {"manufacturer", "title"}) // <1>
     Flux<Product> findAll();
     // end::entitygraph[]

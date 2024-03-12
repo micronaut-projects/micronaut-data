@@ -57,5 +57,6 @@ public interface PreparedQuery<E, R> extends PagedQuery<E>, StoredQuery<E, R>, P
      *
      * @return true if it is raw query
      */
+    @Override
     boolean isRawQuery();
 }

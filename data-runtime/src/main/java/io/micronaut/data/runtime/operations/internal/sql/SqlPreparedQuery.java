@@ -52,5 +52,6 @@ public interface SqlPreparedQuery<E, R> extends BindableParametersPreparedQuery<
      * @return the query result info
      * @since 4.0.0
      */
+    @Override
     QueryResultInfo getQueryResultInfo();
 }

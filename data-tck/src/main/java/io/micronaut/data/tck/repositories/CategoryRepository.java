@@ -26,6 +26,7 @@ import io.micronaut.data.tck.entities.Category;
 import java.util.List;
 
 public interface CategoryRepository extends CrudRepository<Category, Long> {
+    @Override
     @Join(value = "productList", type = Join.Type.LEFT_FETCH)
     List<Category> findAll();
 

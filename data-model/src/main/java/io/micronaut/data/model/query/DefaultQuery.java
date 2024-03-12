@@ -285,6 +285,7 @@ public class DefaultQuery implements QueryModel {
      * @param values The values
      * @return This query instance
      */
+    @Override
     public @NonNull
     DefaultQuery allEq(@NonNull Map<String, Object> values) {
         QueryModel.Junction conjunction = conjunction();

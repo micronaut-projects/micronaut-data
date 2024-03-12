@@ -26,14 +26,18 @@ import java.util.List;
 @JdbcRepository(dialect = Dialect.ORACLE)
 public interface OracleXEPersonRepository extends PersonRepository {
 
+    @Override
     Person save(String name, int age);
 
+    @Override
     @Query("INSERT INTO person(id, name, age, enabled) VALUES (\"PERSON_SEQ\".nextval, :name, :age, 1)")
     int saveCustom(String name, int age);
 
+    @Override
     @Query("INSERT INTO person(id, name, age, enabled) VALUES (\"PERSON_SEQ\".nextval, :name, :age, 1)")
     int saveCustom(List<Person> people);
 
+    @Override
     @Query("INSERT INTO person(id, name, age, enabled) VALUES (\"PERSON_SEQ\".nextval, :name, :age, 1)")
     int saveCustomSingle(Person people);
 

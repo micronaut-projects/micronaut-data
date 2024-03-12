@@ -26,6 +26,7 @@ import java.util.Optional;
 @R2dbcRepository(dialect = Dialect.H2)
 public interface H2BookDtoRepository extends BookDtoRepository {
 
+    @Override
     @Query("select * from book b where b.title = :title")
     Optional<BookDto> findByTitleWithQuery(String title);
 }

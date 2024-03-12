@@ -27,9 +27,11 @@ import java.util.concurrent.CompletableFuture;
 @R2dbcRepository(dialect = Dialect.ORACLE)
 public interface OracleXEPersonAsyncRepository extends PersonAsyncRepository {
 
+    @Override
     @Query("INSERT INTO person(id, name, age, enabled) VALUES (\"PERSON_SEQ\".nextval, :name, :age, 1)")
     CompletableFuture<Long> saveCustom(List<Person> people);
 
+    @Override
     @Query("INSERT INTO person(id, name, age, enabled) VALUES (\"PERSON_SEQ\".nextval, :name, :age, 1)")
     CompletableFuture<Long> saveCustomSingle(Person people);
 

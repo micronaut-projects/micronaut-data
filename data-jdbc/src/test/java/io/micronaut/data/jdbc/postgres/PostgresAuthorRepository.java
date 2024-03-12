@@ -27,6 +27,7 @@ import java.util.List;
 @JdbcRepository(dialect = Dialect.POSTGRES)
 public interface PostgresAuthorRepository extends AuthorRepository {
 
+    @Override
     @Join(value = "books", type = Join.Type.LEFT_FETCH)
     List<Author> listAll();
 

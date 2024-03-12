@@ -27,6 +27,7 @@ import java.util.Optional;
 @CosmosRepository
 public abstract class FamilyRepository implements PageableRepository<Family, String>, JpaSpecificationExecutor<Family> {
 
+    @Override
     @NonNull
     public abstract Optional<Family> findById(@NonNull String id);
 

@@ -12,6 +12,7 @@ import java.util.UUID;
 @Repository
 public interface RatingRepository extends ReactorCrudRepository<Rating, UUID> {
 
+    @Override
     @EntityGraph("RatingEntityGraph")
     Mono<Rating> findById(@NotNull UUID id);
 

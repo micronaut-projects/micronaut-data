@@ -88,6 +88,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      *
      * @return The query result type
      */
+    @Override
     @NonNull
     Argument<R> getResultArgument();
 

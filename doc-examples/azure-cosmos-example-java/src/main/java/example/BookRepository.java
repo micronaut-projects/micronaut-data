@@ -69,6 +69,7 @@ interface BookRepository extends CrudRepository<Book, String> { // <2>
     // end::update2[]
 
     // tag::deleteall[]
+    @Override
     void deleteAll();
     // end::deleteall[]
 

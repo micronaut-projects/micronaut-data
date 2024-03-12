@@ -30,6 +30,7 @@ public interface ReactorCriteriaCapableRepository extends ReactiveCriteriaCapabl
     /**
      * @return The reactive operations.
      */
+    @Override
     @NonNull
     ReactorCriteriaRepositoryOperations reactive();
 }
