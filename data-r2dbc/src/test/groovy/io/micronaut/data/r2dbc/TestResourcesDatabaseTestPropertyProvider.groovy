@@ -56,8 +56,9 @@ trait TestResourcesDatabaseTestPropertyProvider implements TestPropertyProvider 
     Map<String, String> getDataSourceProperties(String dataSourceName) {
         def prefix = 'r2dbc.datasources.' + dataSourceName
         def dialect = dialect()
+        def dbType = dbType()
         def options = [
-                (prefix + '.db-type')         : dbType(),
+                (prefix + '.db-type')         : dbType,
                 (prefix + '.schema-generate') : schemaGenerate(),
                 (prefix + '.dialect')         : dialect,
                 (prefix + '.packages')        : packages(),
@@ -76,6 +77,8 @@ trait TestResourcesDatabaseTestPropertyProvider implements TestPropertyProvider 
             // note: we use a Boolean which is in conflict with the return type of the method
             // but that's the only thing which works
             options += ['test-resources.containers.mssql.accept-license': true]
+        } else if (dbType == "mariadb") {
+            options += [(prefix + '.driver') : "mariadb"]
         }
 // TODO
 //        if (usePool()) {
