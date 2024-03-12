@@ -682,6 +682,19 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         column += " NOT NULL DEFAULT uuid_generate_v4()";
                     }
                     break;
+                case H2:
+                    if (type == SEQUENCE) {
+                        column += " NOT NULL";
+                    } else if (type == IDENTITY) {
+                        if (isPk) {
+                            column += " GENERATED ALWAYS AS IDENTITY";
+                        } else {
+                            column += " NOT NULL";
+                        }
+                    } else if (type == UUID) {
+                        column += " NOT NULL DEFAULT random_uuid()";
+                    }
+                    break;
                 case SQL_SERVER:
                     if (type == UUID) {
                         column += " NOT NULL DEFAULT newid()";
@@ -1179,6 +1192,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             case ORACLE:
                 return quote(sequenceName) + ".nextval";
             case POSTGRES:
+                return "nextval('" + sequenceName + "')";
+            case H2:
                 return "nextval('" + sequenceName + "')";
             case SQL_SERVER:
                 return "NEXT VALUE FOR " + quote(sequenceName);
