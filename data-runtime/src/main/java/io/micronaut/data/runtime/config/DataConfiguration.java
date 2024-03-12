@@ -36,6 +36,7 @@ public class DataConfiguration implements DataSettings {
     public static class PageableConfiguration {
         public static final int    DEFAULT_MAX_PAGE_SIZE = 100;
         public static final boolean DEFAULT_SORT_IGNORE_CASE = false;
+        public static final boolean DEFAULT_START_FROM_PAGE_ONE = false;
         public static final String DEFAULT_SORT_PARAMETER = "sort";
         public static final String DEFAULT_SIZE_PARAMETER = "size";
         public static final String DEFAULT_PAGE_PARAMETER = "page";
@@ -43,6 +44,7 @@ public class DataConfiguration implements DataSettings {
         private int maxPageSize = DEFAULT_MAX_PAGE_SIZE;
         private Integer defaultPageSize = null; // When is not specified the maxPageSize should be used
         private boolean sortIgnoreCase = DEFAULT_SORT_IGNORE_CASE;
+        private boolean startFromPageOne = DEFAULT_START_FROM_PAGE_ONE;
         private String sortParameterName = DEFAULT_SORT_PARAMETER;
         private String sizeParameterName = DEFAULT_SIZE_PARAMETER;
         private String pageParameterName = DEFAULT_PAGE_PARAMETER;
@@ -79,6 +81,23 @@ public class DataConfiguration implements DataSettings {
         }
 
         /**
+         * @return Whether the first page parameter starts at one
+         */
+        public boolean isStartFromPageOne() {
+            return startFromPageOne;
+        }
+
+        /**
+         * This parameter is used to shift the provided page number back one when this is true.
+         * So when the page parameter is entered as one, the first page (0) is provided.
+         *
+         * @param startFromPageOne Whether the first page is 1
+         */
+        public void setStartFromPageOne(boolean startFromPageOne) {
+            this.startFromPageOne = startFromPageOne;
+        }
+
+        /**
          * @return The maximum page size when binding {@link io.micronaut.data.model.Pageable} objects.
          */
         public int getMaxPageSize() {
@@ -95,7 +114,7 @@ public class DataConfiguration implements DataSettings {
 
         /**
          * @return the page size to use when binding {@link io.micronaut.data.model.Pageable}
-         * objects and no size parameter is used. By default is set to the same vale as {@link #maxPageSize}
+         * objects and no size parameter is used. By default is set to the same value as {@link #maxPageSize}
          */
         public int getDefaultPageSize() {
             return defaultPageSize == null ? maxPageSize : defaultPageSize;

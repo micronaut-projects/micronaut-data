@@ -72,10 +72,10 @@ class PageableRequestArgumentBinderSpec extends Specification {
     void 'test bind size #size and page #page with custom configuration'() {
         given:
         def configuration = new DataConfiguration.PageableConfiguration()
-        configuration.defaultPageSize=40
-        configuration.maxPageSize=200
-        configuration.sizeParameterName="perPage"
-        configuration.pageParameterName="myPage"
+        configuration.defaultPageSize = 40
+        configuration.maxPageSize = 200
+        configuration.sizeParameterName = "perPage"
+        configuration.pageParameterName = "myPage"
         PageableRequestArgumentBinder binder = new PageableRequestArgumentBinder(configuration)
         def get = HttpRequest.GET('/')
         get.parameters.add("perPage", size)
@@ -93,5 +93,39 @@ class PageableRequestArgumentBinderSpec extends Specification {
         "-1"   | "10" | 40       | 10  // negative    => uses default != max
         "-1"   | "0"  | 40       | 0   // negative    => uses default != max
         "junk" | "0"  | 40       | 0   // can't be parsed
+    }
+
+    @Unroll
+    void 'test page #page is or is not shifted with custom configuration for startFromPageOne #startFromPageOne'() {
+        given:
+        def configuration = new DataConfiguration.PageableConfiguration()
+        configuration.startFromPageOne = startFromPageOne
+        PageableRequestArgumentBinder binder = new PageableRequestArgumentBinder(configuration)
+        def get = HttpRequest.GET('/')
+        get.parameters.add("page", page)
+        Pageable p = binder.bind(ConversionContext.of(Pageable), get).get()
+
+        expect:
+        p.number == pageNumber
+
+        where:
+        page | pageNumber | startFromPageOne
+        "1"  | 0          | true  // first page is shifted to 0
+        "5"  | 4          | true  // fifth page is shifted to 4
+    }
+
+    void 'test IllegalArgumentException is thrown when startFromPageOne is true and page provided is 0'() {
+        given:
+        def configuration = new DataConfiguration.PageableConfiguration()
+        configuration.startFromPageOne = true
+        PageableRequestArgumentBinder binder = new PageableRequestArgumentBinder(configuration)
+        def get = HttpRequest.GET('/')
+        get.parameters.add("page", "0")
+
+        when:
+        binder.bind(ConversionContext.of(Pageable), get).get()
+
+        then:
+        thrown(IllegalArgumentException)
     }
 }
