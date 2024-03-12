@@ -524,8 +524,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                 }
                 BeanProperty<K, Object> property = rpp.getProperty();
                 if (rpp instanceof RuntimeAssociation<K> entityAssociation) {
-                    if (rpp instanceof Embedded) {
-                        Object value = readEntity(rs, ctx.embedded((Embedded) rpp), parent == null ? entity : parent, null);
+                    if (rpp instanceof Embedded embedded) {
+                        Object value = readEntity(rs, ctx.embedded(embedded), parent == null ? entity : parent, null);
                         entity = setProperty(property, entity, value);
                     } else {
                         final boolean isInverse = parent != null && entityAssociation.getKind().isSingleEnded() && isAssociation && ctx.association.getOwner() == entityAssociation.getAssociatedEntity();
@@ -624,8 +624,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         if (identity == null) {
             return null;
         }
-        if (identity instanceof Embedded) {
-            return readEntity(rs, ctx.embedded((Embedded) identity), null, null);
+        if (identity instanceof Embedded embedded) {
+            return readEntity(rs, ctx.embedded(embedded), null, null);
         }
         return readProperty(rs, ctx, identity);
     }
@@ -636,9 +636,9 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
 
     private Object convert(RuntimePersistentProperty<?> rpp, Object v) {
         Class<?> propertyType = rpp.getType();
-        if (v instanceof Array) {
+        if (v instanceof Array array) {
             try {
-                v = ((Array) v).getArray();
+                v = array.getArray();
             } catch (SQLException e) {
                 throw new DataAccessException("Error getting an array value: " + e.getMessage(), e);
             }

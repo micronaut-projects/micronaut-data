@@ -66,15 +66,13 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
         }
         QueryModel qm = QueryModel.from(entityRoot.getPersistentEntity());
         Joiner joiner = new Joiner();
-        if (predicate instanceof PredicateVisitable) {
-            PredicateVisitable predicate = (PredicateVisitable) this.predicate;
-            predicate.accept(createPredicateVisitor(qm));
-            predicate.accept(joiner);
+        if (predicate instanceof PredicateVisitable predicateVisitable) {
+            predicateVisitable.accept(createPredicateVisitor(qm));
+            predicateVisitable.accept(joiner);
         }
-        if (returning instanceof SelectionVisitable) {
-            SelectionVisitable selection = (SelectionVisitable) this.returning;
-            selection.accept(new QueryModelSelectionVisitor(qm, false));
-            selection.accept(joiner);
+        if (returning instanceof SelectionVisitable selectionVisitable) {
+            selectionVisitable.accept(new QueryModelSelectionVisitor(qm, false));
+            selectionVisitable.accept(joiner);
         }
         for (Map.Entry<String, Joiner.Joined> e : joiner.getJoins().entrySet()) {
             qm.join(e.getKey(), Optional.ofNullable(e.getValue().getType()).orElse(Join.Type.DEFAULT), e.getValue().getAlias());

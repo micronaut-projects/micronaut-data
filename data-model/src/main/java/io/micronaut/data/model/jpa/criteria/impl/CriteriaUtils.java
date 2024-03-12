@@ -67,8 +67,7 @@ public final class CriteriaUtils {
     }
 
     public static IExpression<Boolean> requireBoolExpression(Expression<?> exp) {
-        if (exp instanceof IExpression) {
-            IExpression<Boolean> expression = (IExpression<Boolean>) exp;
+        if (exp instanceof IExpression expression) {
             if (!expression.isBoolean()) {
                 throw new IllegalStateException("Expected a boolean expression! Got: " + exp);
             }
@@ -78,8 +77,7 @@ public final class CriteriaUtils {
     }
 
     public static <T> PersistentPropertyPath<T> requireBoolProperty(Expression<Boolean> exp) {
-        if (exp instanceof PersistentPropertyPath) {
-            PersistentPropertyPath<T> propertyPath = (PersistentPropertyPath<T>) exp;
+        if (exp instanceof PersistentPropertyPath propertyPath) {
             if (!propertyPath.isBoolean()) {
                 throw new IllegalStateException("Expected a boolean expression property! Got: " + exp);
             }
@@ -120,8 +118,8 @@ public final class CriteriaUtils {
             // TODO: validation
             return exp;
         }
-        if (exp instanceof LiteralExpression) {
-            if (((LiteralExpression<T>) exp).getValue() instanceof Comparable) {
+        if (exp instanceof LiteralExpression<T> tLiteralExpression) {
+            if (tLiteralExpression.getValue() instanceof Comparable) {
                 return exp;
             }
             throw new IllegalStateException("Expected a comparable expression property! Got: " + exp);
@@ -149,15 +147,15 @@ public final class CriteriaUtils {
     }
 
     public static <T> ParameterExpression<T> requireParameter(Expression<T> exp) {
-        if (exp instanceof ParameterExpression) {
-            return (ParameterExpression<T>) exp;
+        if (exp instanceof ParameterExpression<T> parameterExpression) {
+            return parameterExpression;
         }
         throw new IllegalStateException("Expression is expected to be a parameter! Got: " + exp);
     }
 
     public static <T> PersistentPropertyPath<T> requireProperty(Expression<? extends T> exp) {
-        if (exp instanceof PersistentPropertyPath) {
-            return (PersistentPropertyPath<T>) exp;
+        if (exp instanceof PersistentPropertyPath persistentPropertyPath) {
+            return persistentPropertyPath;
         }
         throw new IllegalStateException("Expression is expected to be a property path! Got: " + exp);
     }
@@ -212,13 +210,13 @@ public final class CriteriaUtils {
 
     private static void extractPredicateParameters(Expression<?> predicate, Set<ParameterExpression<?>> parameters) {
         if (predicate instanceof PersistentPropertyBinaryPredicate<?> pp) {
-            if (pp.getExpression() instanceof ParameterExpression) {
-                parameters.add((ParameterExpression<?>) pp.getExpression());
+            if (pp.getExpression() instanceof ParameterExpression<?> parameterExpression) {
+                parameters.add(parameterExpression);
             }
         } else if (predicate instanceof PersistentPropertyInValuesPredicate<?> pp) {
             for (Expression<?> expression : pp.getValues()) {
-                if (expression instanceof ParameterExpression) {
-                    parameters.add((ParameterExpression<?>) expression);
+                if (expression instanceof ParameterExpression<?> parameterExpression) {
+                    parameters.add(parameterExpression);
                 }
             }
         } else if (predicate instanceof ConjunctionPredicate conjunctionPredicate) {

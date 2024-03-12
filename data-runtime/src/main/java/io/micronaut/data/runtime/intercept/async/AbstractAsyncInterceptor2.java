@@ -48,8 +48,8 @@ abstract sealed class AbstractAsyncInterceptor2<T, R> extends AbstractQueryInter
      */
     protected AbstractAsyncInterceptor2(@NonNull RepositoryOperations datastore) {
         super(datastore);
-        if (datastore instanceof AsyncCapableRepository) {
-            this.asyncDatastoreOperations = ((AsyncCapableRepository) datastore).async();
+        if (datastore instanceof AsyncCapableRepository asyncCapableRepository) {
+            this.asyncDatastoreOperations = asyncCapableRepository.async();
         } else {
             throw new DataAccessException("Datastore of type [" + datastore.getClass() + "] does not support asynchronous operations");
         }

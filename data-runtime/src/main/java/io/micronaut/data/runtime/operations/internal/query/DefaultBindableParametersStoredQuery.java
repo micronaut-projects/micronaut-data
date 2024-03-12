@@ -224,14 +224,14 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
         if (value == null || dataType != null && dataType.isArray() && dataType != DataType.BYTE_ARRAY || value instanceof byte[]) {
             // not expanded
             return null;
-        } else if (value instanceof Iterable) {
-            return (List<Object>) CollectionUtils.iterableToList((Iterable<?>) value);
+        } else if (value instanceof Iterable<?> iterable) {
+            return (List<Object>) CollectionUtils.iterableToList(iterable);
         } else if (value.getClass().isArray()) {
             int len = Array.getLength(value);
             if (len == 0) {
                 return Collections.emptyList();
             } else {
-                List<Object> list = new ArrayList<>(len);
+                var list = new ArrayList<>(len);
                 for (int j = 0; j < len; j++) {
                     Object o = Array.get(value, j);
                     list.add(o);

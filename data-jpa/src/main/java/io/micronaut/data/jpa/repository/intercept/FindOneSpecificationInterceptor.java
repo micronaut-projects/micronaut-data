@@ -52,8 +52,8 @@ public class FindOneSpecificationInterceptor extends AbstractSpecificationInterc
      */
     protected FindOneSpecificationInterceptor(@NonNull RepositoryOperations operations) {
         super(operations);
-        if (operations instanceof JpaRepositoryOperations) {
-            this.jpaOperations = (JpaRepositoryOperations) operations;
+        if (operations instanceof JpaRepositoryOperations jpaRepositoryOperations) {
+            this.jpaOperations = jpaRepositoryOperations;
         } else {
             throw new IllegalStateException("Repository operations must be na instance of JpaRepositoryOperations");
         }

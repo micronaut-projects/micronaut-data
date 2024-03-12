@@ -92,7 +92,7 @@ public interface BeanIntrospectionMapper<D, R> extends TypeMapper<D, R> {
                     } else if (Iterable.class.isAssignableFrom(property.getType())) {
                         if (v instanceof Collection) {
                             property.set(instance, v);
-                        } else if (v instanceof Iterable iterable) {
+                        } else if (v instanceof Iterable<?> iterable) {
                             List<?> list = new ArrayList<>(CollectionUtils.iterableToList(iterable));
                             property.set(instance, convert(list, property.asArgument()));
                         } else {

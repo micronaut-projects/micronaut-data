@@ -59,8 +59,8 @@ public abstract class AbstractCountConvertCompletionStageInterceptor extends Abs
         }
         return cs.thenApply(it -> {
             if (isNumber(csValueArgument.getType())) {
-                if (it instanceof Iterable) {
-                    it = count((Iterable) it);
+                if (it instanceof Iterable<?> iterable) {
+                    it = count(iterable);
                 } else if (!(it instanceof Number)) {
                     it = it == null ? 0 : 1;
                 }

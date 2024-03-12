@@ -60,8 +60,8 @@ public class DefaultBindableParametersPreparedQuery<E, R> implements BindablePar
     }
 
     private static <X, Y> BindableParametersStoredQuery<X, Y> unwrap(StoredQuery<X, Y> storedQuery) {
-        if (storedQuery instanceof BindableParametersStoredQuery) {
-            return (BindableParametersStoredQuery<X, Y>) storedQuery;
+        if (storedQuery instanceof BindableParametersStoredQuery<X, Y> bindableParametersStoredQuery) {
+            return bindableParametersStoredQuery;
         }
         if (storedQuery instanceof DelegateStoredQuery) {
             return unwrap(storedQuery);

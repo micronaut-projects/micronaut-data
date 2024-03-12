@@ -40,8 +40,7 @@ interface RuntimePersistentEntityPath<T> extends PersistentEntityPath<T> {
         if (property == null) {
             throw new IllegalStateException("Cannot query entity [" + getPersistentEntity().getSimpleName() + "] on non-existent property: " + attributeName);
         }
-        if (this instanceof PersistentAssociationPath) {
-            PersistentAssociationPath<?, ?> associationPath = (PersistentAssociationPath) this;
+        if (this instanceof PersistentAssociationPath<?, ?> associationPath) {
             List<Association> associations = associationPath.getAssociations();
             List<Association> newAssociations = new ArrayList<>(associations.size() + 1);
             newAssociations.addAll(associations);

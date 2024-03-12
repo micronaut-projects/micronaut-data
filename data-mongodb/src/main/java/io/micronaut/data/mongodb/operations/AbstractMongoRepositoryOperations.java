@@ -119,15 +119,15 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
     protected abstract CodecRegistry getCodecRegistry(Dtb database);
 
     protected <E, R> MongoStoredQuery<E, R> getMongoStoredQuery(StoredQuery<E, R> storedQuery) {
-        if (storedQuery instanceof MongoStoredQuery) {
-            return (MongoStoredQuery<E, R>) storedQuery;
+        if (storedQuery instanceof MongoStoredQuery<E, R> mongoStoredQuery) {
+            return mongoStoredQuery;
         }
         throw new IllegalStateException("Expected for stored query to be of type: MongoStoredQuery");
     }
 
     protected <E, R> MongoPreparedQuery<E, R> getMongoPreparedQuery(PreparedQuery<E, R> preparedQuery) {
-        if (preparedQuery instanceof MongoPreparedQuery) {
-            return (MongoPreparedQuery<E, R>) preparedQuery;
+        if (preparedQuery instanceof MongoPreparedQuery<E, R> mongoPreparedQuery) {
+            return mongoPreparedQuery;
         }
         throw new IllegalStateException("Expected for prepared query to be of type: MongoPreparedQuery");
     }

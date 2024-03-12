@@ -94,8 +94,8 @@ public interface NamingStrategy {
      */
     default @NonNull String mappedName(@NonNull PersistentProperty property) {
         ArgumentUtils.requireNonNull("property", property);
-        if (property instanceof Association) {
-            return mappedName((Association) property);
+        if (property instanceof Association association) {
+            return mappedName(association);
         } else {
             return property.getAnnotationMetadata()
                     .stringValue(MappedProperty.class)

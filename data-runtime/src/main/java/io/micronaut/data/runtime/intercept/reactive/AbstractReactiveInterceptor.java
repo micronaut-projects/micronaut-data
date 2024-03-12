@@ -44,8 +44,8 @@ public abstract class AbstractReactiveInterceptor<T, R> extends AbstractQueryInt
      */
     protected AbstractReactiveInterceptor(@NonNull RepositoryOperations operations) {
         super(operations);
-        if (operations instanceof ReactiveCapableRepository) {
-            this.reactiveOperations = ((ReactiveCapableRepository) operations).reactive();
+        if (operations instanceof ReactiveCapableRepository reactiveCapableRepository) {
+            this.reactiveOperations = reactiveCapableRepository.reactive();
         } else {
             throw new DataAccessException("Datastore of type [" + operations.getClass() + "] does not support reactive operations");
         }
@@ -59,8 +59,8 @@ public abstract class AbstractReactiveInterceptor<T, R> extends AbstractQueryInt
      */
     protected Publisher<Integer> count(Publisher<?> publisher) {
         return Flux.from(publisher).map(v -> {
-            if (v instanceof Number) {
-                return ((Number) v).longValue();
+            if (v instanceof Number number) {
+                return number.longValue();
             }
             return 1L;
         }).reduce(0L, Long::sum).map(Long::intValue);

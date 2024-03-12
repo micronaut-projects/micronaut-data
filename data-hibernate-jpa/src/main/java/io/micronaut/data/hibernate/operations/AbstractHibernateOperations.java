@@ -453,8 +453,8 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
                         Collection<Object> coll;
                         if (value == null) {
                             coll = Collections.emptyList();
-                        } else if (value instanceof Collection) {
-                            coll = (Collection<Object>) value;
+                        } else if (value instanceof Collection collection) {
+                            coll = collection;
                         } else {
                             coll = Arrays.asList((Object[]) value);
                         }
@@ -633,8 +633,8 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
     }
 
     private <E, R> BindableParametersPreparedQuery<E, R> getBindableParametersPreparedQuery(PreparedQuery<E, R> preparedQuery) {
-        if (preparedQuery instanceof BindableParametersPreparedQuery) {
-            return (BindableParametersPreparedQuery<E, R>) preparedQuery;
+        if (preparedQuery instanceof BindableParametersPreparedQuery<E, R> bindableParametersPreparedQuery) {
+            return bindableParametersPreparedQuery;
         }
         throw new IllegalStateException("Expected for prepared query to be of type: BindableParametersPreparedQuery");
     }

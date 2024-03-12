@@ -74,8 +74,8 @@ public interface Association extends PersistentProperty {
                 .stringValue(Relation.class, "mappedBy")
                 .flatMap(s -> {
                     final PersistentProperty persistentProperty = getAssociatedEntity().getPropertyByPath(s).orElse(null);
-                    if (persistentProperty instanceof Association) {
-                        return Optional.of((Association) persistentProperty);
+                    if (persistentProperty instanceof Association association) {
+                        return Optional.of(association);
                     }
                     return Optional.empty();
                 });
@@ -91,8 +91,8 @@ public interface Association extends PersistentProperty {
                 .stringValue(Relation.class, "mappedBy")
                 .flatMap(s -> {
                     final PersistentPropertyPath persistentPropertyPath = getAssociatedEntity().getPropertyPath(s);
-                    if (persistentPropertyPath instanceof PersistentAssociationPath) {
-                        return Optional.of((PersistentAssociationPath) persistentPropertyPath);
+                    if (persistentPropertyPath instanceof PersistentAssociationPath persistentAssociationPath) {
+                        return Optional.of(persistentAssociationPath);
                     }
                     return Optional.empty();
                 });

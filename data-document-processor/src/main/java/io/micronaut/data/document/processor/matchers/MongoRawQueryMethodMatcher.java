@@ -100,9 +100,9 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
             removeAnnotation(hierarchy.getRootMetadata(), annotation);
             return;
         }
-        if (annotationMetadata instanceof MutableAnnotationMetadata) {
-            ((MutableAnnotationMetadata) annotationMetadata).removeAnnotation(annotation);
-            ((MutableAnnotationMetadata) annotationMetadata).removeStereotype(annotation);
+        if (annotationMetadata instanceof MutableAnnotationMetadata mutableAnnotationMetadata) {
+            mutableAnnotationMetadata.removeAnnotation(annotation);
+            mutableAnnotationMetadata.removeStereotype(annotation);
         }
     }
 

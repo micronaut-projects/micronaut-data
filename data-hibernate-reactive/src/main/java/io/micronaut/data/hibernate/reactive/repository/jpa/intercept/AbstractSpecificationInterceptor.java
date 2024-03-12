@@ -51,10 +51,10 @@ public abstract class AbstractSpecificationInterceptor extends AbstractPublisher
      */
     protected AbstractSpecificationInterceptor(RepositoryOperations operations) {
         super(operations);
-        if (operations instanceof ReactiveCapableRepository) {
-            ReactiveRepositoryOperations reactive = ((ReactiveCapableRepository) operations).reactive();
-            if (reactive instanceof HibernateReactorRepositoryOperations) {
-                this.operations = (HibernateReactorRepositoryOperations) reactive;
+        if (operations instanceof ReactiveCapableRepository reactiveCapableRepository) {
+            ReactiveRepositoryOperations reactive = reactiveCapableRepository.reactive();
+            if (reactive instanceof HibernateReactorRepositoryOperations hibernateReactorRepositoryOperations) {
+                this.operations = hibernateReactorRepositoryOperations;
             } else {
                 throw new IllegalStateException("Reactive repository operations must be na instance of HibernateReactorRepositoryOperations");
             }
@@ -70,8 +70,8 @@ public abstract class AbstractSpecificationInterceptor extends AbstractPublisher
      */
     protected Specification<Object> getSpecification(MethodInvocationContext<?, ?> context) {
         final Object parameterValue = context.getParameterValues()[0];
-        if (parameterValue instanceof Specification) {
-            return (Specification<Object>) parameterValue;
+        if (parameterValue instanceof Specification specification) {
+            return specification;
         }
         if (parameterValue == null) {
             // parameter is nullable
