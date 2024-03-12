@@ -87,7 +87,7 @@ public class PetRepository extends AbstractRepository implements IPetRepository 
     private Mono<Pet> map(Record4<Long, String, String, Long> record) {
         return ownerRepository.findById(record.get(PET_OWNER)).map(owner -> new Pet(record.get(PET_ID),
             record.get(PET_NAME),
-            Optional.ofNullable(record.get(PET_TYPE)).map(Pet.PetType::valueOf).orElse(null), (Owner) owner));
+            Optional.ofNullable(record.get(PET_TYPE)).map(Pet.PetType::valueOf).orElse(null), owner));
 
     }
 
