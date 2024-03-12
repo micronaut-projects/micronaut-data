@@ -35,7 +35,6 @@ public interface ConnectionCallback<R>  {
      *
      * @param connection The connection
      * @return The result
-     * @throws SQLException If an error occurs
      */
-    @NonNull R call(@NonNull Connection connection) throws SQLException;
+    @NonNull R call(@NonNull Connection connection);
 }

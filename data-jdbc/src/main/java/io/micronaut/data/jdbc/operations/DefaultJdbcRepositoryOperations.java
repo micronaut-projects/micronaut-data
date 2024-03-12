@@ -826,11 +826,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @Override
     public <R> R execute(@NonNull ConnectionCallback<R> callback) {
         return executeWrite(connection -> {
-            try {
-                return callback.call(connection);
-            } catch (SQLException e) {
-                throw new DataAccessException("Error executing SQL Callback: " + e.getMessage(), e);
-            }
+            return callback.call(connection);
         });
     }
 

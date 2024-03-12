@@ -61,7 +61,7 @@ class ProductRepositorySpec {
     }
 
     @Test
-    void testReactive() throws Exception {
+    void testReactive() {
         // tag::reactive[]
         long total = productRepository.queryByNameContains("o")
                 .flatMap(product -> productRepository.countDistinctByManufacturerName(product.getManufacturer().getName())
