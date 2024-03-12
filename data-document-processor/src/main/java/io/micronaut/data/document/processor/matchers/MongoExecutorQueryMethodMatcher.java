@@ -36,12 +36,6 @@ import java.util.Optional;
  */
 public class MongoExecutorQueryMethodMatcher implements MethodMatcher {
 
-    /**
-     * Default constructor.
-     */
-    public MongoExecutorQueryMethodMatcher() {
-    }
-
     @Override
     public final int getOrder() {
         // should run first and before `MongoExecutorQueryMethodMatcher`

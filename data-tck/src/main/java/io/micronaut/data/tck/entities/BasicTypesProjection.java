@@ -70,9 +70,6 @@ public class BasicTypesProjection {
     private Instant dateCreated;
     private Instant dateUpdated;
 
-    public BasicTypesProjection() {
-    }
-
     public Long getMyId() {
         return myId;
     }

@@ -1323,22 +1323,12 @@ public interface QueryModel extends Criteria {
      * A Criterion used to combine to criterion in a logical AND.
      */
     class Conjunction extends Junction {
-        /**
-         * Default constructor.
-         */
-        public Conjunction() {
-        }
     }
 
     /**
      * A Criterion used to combine to criterion in a logical OR.
      */
     class Disjunction extends Junction {
-        /**
-         * Default constructor.
-         */
-        public Disjunction() {
-        }
     }
 
     /**
