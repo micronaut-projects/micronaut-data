@@ -1,2 +1,27 @@
 [
+  {
+    "type": "io.micronaut.data.processor.visitors.finders.AbstractPatternMethodMatcher",
+    "member": "Field patternWithBySyntax",
+    "reason": "Removed deprecated code for Micronaut Framework 5."
+  },
+  {
+    "type": "io.micronaut.data.processor.visitors.finders.AbstractPatternMethodMatcher",
+    "member": "Field patternWithoutBySyntax",
+    "reason": "Removed deprecated code for Micronaut Framework 5."
+  },
+  {
+    "type": "io.micronaut.data.processor.visitors.finders.AbstractPatternMethodMatcher",
+    "member": "Constructor io.micronaut.data.processor.visitors.finders.AbstractPatternMethodMatcher(boolean,java.lang.String[])",
+    "reason": "Removed deprecated code for Micronaut Framework 5."
+  },
+  {
+    "type": "io.micronaut.data.processor.visitors.finders.AbstractPatternMethodMatcher",
+    "member": "Implemented interface io.micronaut.data.processor.visitors.finders.MethodMatcher",
+    "reason": "Removed deprecated code for Micronaut Framework 5."
+  },
+  {
+    "type": "io.micronaut.data.processor.visitors.finders.AbstractPatternMethodMatcher",
+    "member": "Implemented interface io.micronaut.core.order.Ordered",
+    "reason": "Removed deprecated code for Micronaut Framework 5."
+  }
 ]

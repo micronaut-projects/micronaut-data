@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 original authors
+ * Copyright 2017-2024 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,16 @@ package io.micronaut.data.hibernate;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.Where;
 import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.jpa.repository.JpaSpecificationExecutor;
-import io.micronaut.data.model.Page;
-import io.micronaut.data.model.Pageable;
 import io.micronaut.data.tck.entities.Author;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.repositories.AuthorRepository;
-
 import jakarta.transaction.Transactional;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -39,21 +36,6 @@ public abstract class BookRepository extends io.micronaut.data.tck.repositories.
     public BookRepository(AuthorRepository authorRepository) {
         super(authorRepository);
     }
-
-    /**
-     * @deprecated Order by 'author.name' case without a join. Hibernate will do the cross join if the association property is accessed by the property path without join.
-     */
-    @Query(value = "SELECT book_ FROM Book book_", countQuery = "SELECT count(book_) FROM Book book_ ")
-    @Join(value = "author", type = Join.Type.FETCH)
-    @Deprecated
-    public abstract Page<Book> listPageableCustomQuery(Pageable pageable);
-
-    /**
-     * @deprecated Order by 'author.name' case without a join. Hibernate will do the cross join if the association property is accessed by the property path without join.
-     */
-    @Query(value = "SELECT book_ FROM Book book_", countQuery = "SELECT count(book_) FROM Book book_ ")
-    @Deprecated
-    public abstract Page<Book> listPageableCustomQuery2(Pageable pageable);
 
     @EntityGraph(
             attributePaths = {
