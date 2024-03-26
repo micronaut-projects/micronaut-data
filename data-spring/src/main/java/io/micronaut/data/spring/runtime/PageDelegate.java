@@ -186,7 +186,7 @@ class PageDelegate<T> implements Page<T> {
         @Override
         public Iterator<Order> iterator() {
             Iterator<io.micronaut.data.model.Sort.Order> i = delegate.getOrderBy().iterator();
-            return new Iterator<Order>() {
+            return new Iterator<>() {
                 @Override
                 public boolean hasNext() {
                     return i.hasNext();

@@ -138,7 +138,7 @@ final class DataEncoderContext implements Serializer.EncoderContext {
                     Argument<Object> convertedType = Argument.of(converterPersistedType);
                     Serializer<? super Object> serializer = findSerializer(convertedType);
                     AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
-                    return new Serializer<Object>() {
+                    return new Serializer<>() {
 
                         @Override
                         public void serialize(Encoder encoder, EncoderContext context, Argument<?> type, Object value) throws IOException {

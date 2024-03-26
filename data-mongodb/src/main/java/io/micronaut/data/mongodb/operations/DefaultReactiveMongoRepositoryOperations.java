@@ -696,7 +696,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
     }
 
     private <T> MongoReactiveEntityOperation<T> createMongoInsertOneOperation(MongoOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, T entity) {
-        return new MongoReactiveEntityOperation<T>(ctx, persistentEntity, entity, true) {
+        return new MongoReactiveEntityOperation<>(ctx, persistentEntity, entity, true) {
 
             @Override
             protected void execute() throws RuntimeException {
@@ -721,7 +721,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
     }
 
     private <T> MongoReactiveEntityOperation<T> createMongoReplaceOneOperation(MongoOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, T entity) {
-        return new MongoReactiveEntityOperation<T>(ctx, persistentEntity, entity, false) {
+        return new MongoReactiveEntityOperation<>(ctx, persistentEntity, entity, false) {
 
             final MongoDatabase mongoDatabase = getDatabase(persistentEntity, ctx.repositoryType);
             final MongoCollection<BsonDocument> collection = getCollection(mongoDatabase, persistentEntity, BsonDocument.class);
@@ -758,7 +758,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
     }
 
     private <T> MongoReactiveEntitiesOperation<T> createMongoReplaceOneInBulkOperation(MongoOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, Iterable<T> entities) {
-        return new MongoReactiveEntitiesOperation<T>(ctx, persistentEntity, entities, false) {
+        return new MongoReactiveEntitiesOperation<>(ctx, persistentEntity, entities, false) {
 
             final MongoDatabase mongoDatabase = getDatabase(persistentEntity, ctx.repositoryType);
             final MongoCollection<BsonDocument> collection = getCollection(mongoDatabase, persistentEntity, BsonDocument.class);
@@ -809,7 +809,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
                                                                                       RuntimePersistentEntity<T> persistentEntity,
                                                                                       Iterable<T> entities,
                                                                                       MongoStoredQuery<T, ?> storedQuery) {
-        return new MongoReactiveEntitiesOperation<T>(ctx, persistentEntity, entities, false) {
+        return new MongoReactiveEntitiesOperation<>(ctx, persistentEntity, entities, false) {
 
             @Override
             protected void execute() throws RuntimeException {
@@ -837,7 +837,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
     }
 
     private <T> MongoReactiveEntityOperation<T> createMongoDeleteOneOperation(MongoOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, T entity) {
-        return new MongoReactiveEntityOperation<T>(ctx, persistentEntity, entity, false) {
+        return new MongoReactiveEntityOperation<>(ctx, persistentEntity, entity, false) {
 
             final MongoDatabase mongoDatabase = getDatabase(persistentEntity, ctx.repositoryType);
             final MongoCollection<T> collection = getCollection(mongoDatabase, persistentEntity, persistentEntity.getIntrospection().getBeanType());
@@ -875,7 +875,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
     }
 
     private <T> MongoReactiveEntitiesOperation<T> createMongoDeleteManyOperation(MongoOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, Iterable<T> entities) {
-        return new MongoReactiveEntitiesOperation<T>(ctx, persistentEntity, entities, false) {
+        return new MongoReactiveEntitiesOperation<>(ctx, persistentEntity, entities, false) {
 
             final MongoDatabase mongoDatabase = getDatabase(persistentEntity, ctx.repositoryType);
             final MongoCollection<T> collection = getCollection(mongoDatabase, persistentEntity, persistentEntity.getIntrospection().getBeanType());
@@ -925,7 +925,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
                                                                                       RuntimePersistentEntity<T> persistentEntity,
                                                                                       Iterable<T> entities,
                                                                                       MongoStoredQuery<T, Number> storedQuery) {
-        return new MongoReactiveEntitiesOperation<T>(ctx, persistentEntity, entities, false) {
+        return new MongoReactiveEntitiesOperation<>(ctx, persistentEntity, entities, false) {
 
             @Override
             protected void execute() throws RuntimeException {
@@ -952,7 +952,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
     }
 
     private <T> MongoReactiveEntitiesOperation<T> createMongoInsertManyOperation(MongoOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, Iterable<T> entities) {
-        return new MongoReactiveEntitiesOperation<T>(ctx, persistentEntity, entities, true) {
+        return new MongoReactiveEntitiesOperation<>(ctx, persistentEntity, entities, true) {
 
             @Override
             protected void execute() throws RuntimeException {
