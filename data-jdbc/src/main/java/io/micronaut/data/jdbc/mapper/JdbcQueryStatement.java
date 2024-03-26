@@ -19,6 +19,8 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.micronaut.data.model.DataType;
@@ -37,6 +39,7 @@ import java.util.Date;
 public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Integer> {
 
     private final ConversionService conversionService;
+    private final DataJdbcConfiguration jdbcConfiguration;
 
     public JdbcQueryStatement() {
         this(null);
@@ -49,22 +52,43 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
      * @since 3.1
      */
     public JdbcQueryStatement(DataConversionService conversionService) {
-        // Backwards compatibility should be removed in the next version
-        this.conversionService = conversionService == null ? ConversionService.SHARED : conversionService;
+        this(conversionService, new DataJdbcConfiguration("default"));
+    }
+
+    /**
+     * Constructs a new instance.
+     *
+     * @param conversionService The data conversion service
+     * @param jdbcConfiguration The JDBC configuration
+     * @since 4.6.1
+     */
+    public JdbcQueryStatement(DataConversionService conversionService, DataJdbcConfiguration jdbcConfiguration) {
+        this.conversionService = conversionService;
+        this.jdbcConfiguration = jdbcConfiguration;
     }
 
     /**
      * Find the SQL type from {@link DataType}.
+     *
      * @param dataType The data type
+     * @param dialect The dialect
      * @return The SQL type
      */
     @Internal
-    public static int findSqlType(@NonNull DataType dataType) {
+    public static int findSqlType(@NonNull DataType dataType, @NonNull Dialect dialect) {
         return switch (dataType) {
             case LONG -> Types.BIGINT;
             case STRING, JSON -> Types.VARCHAR;
             case DATE -> Types.DATE;
-            case BOOLEAN -> Types.BOOLEAN;
+            case BOOLEAN -> {
+                if (dialect == Dialect.ORACLE) {
+                    // oracle driver treats Boolean types as bits
+                    // see https://github.com/micronaut-projects/micronaut-data/issues/1259
+                    yield Types.BIT;
+                } else {
+                    yield Types.BOOLEAN;
+                }
+            }
             case INTEGER -> Types.INTEGER;
             case TIMESTAMP -> Types.TIMESTAMP;
             case TIME -> Types.TIME;
@@ -96,7 +120,7 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
                         return this;
                     }
                     default -> {
-                        int sqlType = findSqlType(dataType);
+                        int sqlType = findSqlType(dataType, jdbcConfiguration.getDialect());
                         if (sqlType != -1) {
                             statement.setNull(index, sqlType);
                         } else if (dataType.isArray()) {

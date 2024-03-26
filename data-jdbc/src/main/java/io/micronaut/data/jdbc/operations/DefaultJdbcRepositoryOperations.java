@@ -199,7 +199,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             dataSourceName,
             new ColumnNameResultSetReader(conversionService),
             new ColumnIndexResultSetReader(conversionService),
-            new JdbcQueryStatement(conversionService),
+            new JdbcQueryStatement(conversionService, jdbcConfiguration),
             dateTimeProvider,
             entityRegistry,
             beanContext,
@@ -565,7 +565,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             preparedQuery.bindParameters(new JdbcParameterBinder(connection, callableStatement, preparedQuery));
             if (!preparedQuery.getResultArgument().isVoid()) {
                 DataType resultDataType = preparedQuery.getResultDataType();
-                int sqlType = JdbcQueryStatement.findSqlType(resultDataType);
+                int sqlType = JdbcQueryStatement.findSqlType(resultDataType, jdbcConfiguration.getDialect());
                 int outIndex = preparedQuery.getQueryBindings().size() + 1;
                 callableStatement.registerOutParameter(outIndex, sqlType);
             }
