@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.hibernate.operations;
 
+import io.micronaut.aop.InvocationContext;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
@@ -31,8 +32,10 @@ import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.runtime.BatchOperation;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
+import io.micronaut.data.model.runtime.EntityInstanceOperation;
 import io.micronaut.data.model.runtime.InsertBatchOperation;
 import io.micronaut.data.model.runtime.InsertOperation;
 import io.micronaut.data.model.runtime.PagedQuery;
@@ -321,7 +324,11 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
 
     @Override
     public <T> T persist(@NonNull InsertOperation<T> operation) {
+        StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
         return executeWrite(session -> {
+            if (storedQuery != null) {
+                return executeUpdate(operation, session, storedQuery);
+            }
             T entity = operation.getEntity();
             session.persist(entity);
             flushIfNecessary(session, operation.getAnnotationMetadata());
@@ -335,11 +342,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
         StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
         return executeWrite(session -> {
             if (storedQuery != null) {
-                executeEntityUpdate(session, storedQuery, operation.getEntity());
-                if (flushIfNecessary(session, operation.getAnnotationMetadata())) {
-                    session.remove(operation.getEntity());
-                }
-                return operation.getEntity();
+                return executeUpdate(operation, session, storedQuery);
             }
             T entity = operation.getEntity();
             entity = session.merge(entity);
@@ -348,21 +351,21 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
         });
     }
 
+    private <T> T executeUpdate(EntityInstanceOperation<T> operation, Session session, StoredQuery<T, ?> storedQuery) {
+        executeUpdate(session, storedQuery, operation.getInvocationContext(), operation.getEntity());
+        if (flushIfNecessary(session, operation.getAnnotationMetadata())) {
+            session.remove(operation.getEntity());
+        }
+        return operation.getEntity();
+    }
+
     @NonNull
     @Override
     public <T> Iterable<T> updateAll(@NonNull UpdateBatchOperation<T> operation) {
         StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
         return executeWrite(session -> {
             if (storedQuery != null) {
-                for (T entity : operation) {
-                    executeEntityUpdate(session, storedQuery, entity);
-                }
-                if (flushIfNecessary(session, operation.getAnnotationMetadata())) {
-                    for (T entity : operation) {
-                        session.remove(entity);
-                    }
-                }
-                return operation;
+                return executeUpdate(operation, session, storedQuery);
             }
             List<T> results = new ArrayList<>();
             for (T entity : operation) {
@@ -374,12 +377,25 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
         });
     }
 
+    private <T> BatchOperation<T> executeUpdate(BatchOperation<T> operation, Session session, StoredQuery<T, ?> storedQuery) {
+        for (T entity : operation) {
+            executeUpdate(session, storedQuery, operation.getInvocationContext(), entity);
+        }
+        if (flushIfNecessary(session, operation.getAnnotationMetadata())) {
+            for (T entity : operation) {
+                session.remove(entity);
+            }
+        }
+        return operation;
+    }
+
     @NonNull
     @Override
     public <T> Iterable<T> persistAll(@NonNull InsertBatchOperation<T> operation) {
+        StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
         return executeWrite(session -> {
-            if (operation == null) {
-                return Collections.emptyList();
+            if (storedQuery != null) {
+                return executeUpdate(operation, session, storedQuery);
             }
             for (T entity : operation) {
                 session.persist(entity);
@@ -488,7 +504,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
         StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
         return executeWrite(session -> {
             if (storedQuery != null) {
-                int numAffected = executeEntityUpdate(session, storedQuery, operation.getEntity());
+                int numAffected = executeUpdate(session, storedQuery, operation.getInvocationContext(), operation.getEntity());
                 if (flushIfNecessary(session, operation.getAnnotationMetadata())) {
                     session.remove(operation.getEntity());
                 }
@@ -506,7 +522,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
             if (storedQuery != null) {
                 int i = 0;
                 for (T entity : operation) {
-                    i += executeEntityUpdate(session, storedQuery, entity);
+                    i += executeUpdate(session, storedQuery, operation.getInvocationContext(), entity);
                 }
                 if (flushIfNecessary(session, operation.getAnnotationMetadata())) {
                     for (T entity : operation) {
@@ -525,11 +541,9 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
         return Optional.ofNullable(result);
     }
 
-    private int executeEntityUpdate(Session session, StoredQuery<?, ?> storedQuery, Object entity) {
+    private <T> int executeUpdate(Session session, StoredQuery<T, ?> storedQuery, InvocationContext<?, ?> invocationContext, T entity) {
         MutationQuery query = session.createMutationQuery(storedQuery.getQuery());
-        for (QueryParameterBinding queryParameterBinding : storedQuery.getQueryBindings()) {
-            query.setParameter(queryParameterBinding.getRequiredName(), getParameterValue(queryParameterBinding.getRequiredPropertyPath(), entity));
-        }
+        bindParameters(query, storedQuery, invocationContext, true, entity);
         return query.executeUpdate();
     }
 

@@ -18,6 +18,7 @@ package io.micronaut.data.tck.repositories;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
@@ -140,11 +141,24 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
     int saveCustomSingle(Person people);
 
+    @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
+    @ParameterExpression(name = "name", expression = "#{person.name + 'XYZ'}")
+    @ParameterExpression(name = "age", expression = "#{person.age}")
+    int saveCustomSingleExpression(Person person);
+
+    @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
+    @ParameterExpression(name = "name", expression = "#{name + 'XYZ'}")
+    int saveCustomSingleExpression2(String name, String age);
+
     @Query("DELETE FROM person WHERE name = :name")
     int deleteCustom(List<Person> people);
 
     @Query("DELETE FROM person WHERE name = :name")
     int deleteCustomSingle(Person person);
+
+    @Query("DELETE FROM person WHERE name = :name")
+    @ParameterExpression(name = "name", expression = "#{person.name}")
+    int deleteCustomSingleExpression(Person person);
 
     @Query("DELETE FROM person WHERE name = :xyz")
     int deleteCustomSingleNoEntity(String xyz);

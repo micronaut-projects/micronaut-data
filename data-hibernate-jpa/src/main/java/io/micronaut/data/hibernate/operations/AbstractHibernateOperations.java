@@ -15,14 +15,12 @@
  */
 package io.micronaut.data.hibernate.operations;
 
+import io.micronaut.aop.InvocationContext;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.beans.BeanIntrospection;
-import io.micronaut.core.beans.BeanProperty;
-import io.micronaut.core.beans.exceptions.IntrospectionException;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
@@ -83,7 +81,7 @@ import java.util.stream.Collectors;
  * @param <S> The session type
  * @param <Q> The query type
  * @param <P> The selection query type
- * @author Denis Stepaov
+ * @author Denis Stepanov
  * @since 3.5.0
  */
 @Internal
@@ -417,7 +415,35 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
      */
     protected <T, R> void bindParameters(Q q, @NonNull PreparedQuery<T, R> preparedQuery, boolean bindNamed) {
         BindableParametersPreparedQuery<T, R> bindableParametersPreparedQuery = getBindableParametersPreparedQuery(preparedQuery);
-        bindableParametersPreparedQuery.bindParameters(new BindableParametersStoredQuery.Binder() {
+        BindableParametersStoredQuery.Binder binder = createBinder(q, preparedQuery, preparedQuery.getArguments(),  bindNamed);
+        bindableParametersPreparedQuery.bindParameters(binder);
+    }
+
+    /**
+     * Bind parameters into query.
+     *
+     * @param q                 The query
+     * @param storedQuery       The stored query
+     * @param invocationContext The invocationContext
+     * @param bindNamed         If parameter should be bind by the name
+     * @param entity            The entity
+     * @param <T>               The entity type
+     * @param <R>               The result type
+     */
+    protected <T, R> void bindParameters(Q q, @NonNull StoredQuery<T, R> storedQuery,
+                                         InvocationContext<?, ?> invocationContext,
+                                         boolean bindNamed,
+                                         T entity) {
+        BindableParametersStoredQuery<T, R> bindableParametersPreparedQuery = (BindableParametersStoredQuery<T, R>) storedQuery;
+        BindableParametersStoredQuery.Binder binder = createBinder(q, storedQuery, invocationContext.getArguments(), bindNamed);
+        bindableParametersPreparedQuery.bindParameters(binder, invocationContext, entity, null);
+    }
+
+    private <T, R> BindableParametersStoredQuery.Binder createBinder(Q q,
+                                                                     StoredQuery<T, R> storedQuery,
+                                                                     Argument<?>[] arguments,
+                                                                     boolean bindNamed) {
+        return new BindableParametersStoredQuery.Binder() {
 
             int index = 1;
 
@@ -439,9 +465,9 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
             @Override
             public void bindOne(QueryParameterBinding binding, Object value) {
                 String parameterName = Objects.requireNonNull(binding.getName(), "Parameter name cannot be null!");
-                if (preparedQuery.isNative()) {
+                if (storedQuery.isNative()) {
                     int parameterIndex = binding.getParameterIndex();
-                    Argument<?> argument = preparedQuery.getArguments()[parameterIndex];
+                    Argument<?> argument = arguments[parameterIndex];
                     Class<?> argumentType = argument.getType();
                     if (Collection.class.isAssignableFrom(argumentType)) {
                         if (bindNamed) {
@@ -481,7 +507,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
                 bindOne(binding, values);
             }
 
-        });
+        };
     }
 
     private <T, R> void bindPreparedQuery(P q, @NonNull PreparedQuery<T, R> preparedQuery, S currentSession) {
@@ -527,7 +553,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
     private <T> RootGraph<T> createGraph(@NonNull String[] paths, @NonNull S session, @NonNull Class<T> rootEntity) {
         RootGraph<T> rootGraph = (RootGraph<T>) createEntityGraph(session, rootEntity);
         for (String path : paths) {
-            if (path.trim().equals("")) {
+            if (path.trim().isEmpty()) {
                 continue;
             }
             String[] parts = path.split("\\.");
@@ -562,18 +588,6 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
             }
         }
         return rootGraph;
-    }
-
-    protected final Object getParameterValue(String[] propertyPath, Object value) {
-        for (String property : propertyPath) {
-            Object finalValue = value;
-            BeanProperty beanProperty = BeanIntrospection.getIntrospection(value.getClass()).getProperty(property).orElseThrow(() -> new IntrospectionException("Cannot find a property: '" + property + "' on bean: " + finalValue));
-            value = beanProperty.get(value);
-            if (value == null) {
-                return null;
-            }
-        }
-        return value;
     }
 
     protected final FlushModeType getFlushModeType(AnnotationMetadata annotationMetadata) {

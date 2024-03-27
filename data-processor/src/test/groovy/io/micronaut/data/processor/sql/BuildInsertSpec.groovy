@@ -468,4 +468,88 @@ interface BookRepository extends GenericRepository<Book, Long> {
             getResultDataType(saveReturningMethod) == DataType.ENTITY
             getOperationType(saveReturningMethod) == DataMethod.OperationType.INSERT_RETURNING
     }
+
+    void "test build custom SQL insert - expressions"() {
+        given:
+            BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
+package test;
+
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.repository.*;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import java.util.UUID;
+
+@Repository
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false)
+@io.micronaut.context.annotation.Executable
+interface MyInterface extends GenericRepository<Book, UUID> {
+
+    @Query("INSERT INTO Book(title, totalPages) VALUES (:title, :totalPages)")
+    @ParameterExpression(name = "title", expression = "#{book.title}")
+    @ParameterExpression(name = "totalPages", expression = "#{book.totalPages}")
+    void saveCustom(Book book);
+
+}
+""")
+        when:
+            def saveCustom = beanDefinition.findPossibleMethods("saveCustom").findFirst().get()
+        then:
+            getRawQuery(saveCustom) == 'INSERT INTO Book(title, totalPages) VALUES (?, ?)'
+            getDataTypes(saveCustom) == [DataType.STRING, DataType.INTEGER]
+            getParameterPropertyPaths(saveCustom) == ["title", "totalPages"] as String[]
+            getDataInterceptor(saveCustom) == "io.micronaut.data.intercept.SaveEntityInterceptor"
+    }
+
+    void "test custom insert save all - JPA"() {
+        given:
+            def repository = buildRepository('test.PersonRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Person;
+
+@Repository
+interface PersonRepository extends GenericRepository<Person, Long> {
+
+    @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
+    int saveCustom(List<Person> people);
+}
+""")
+        when:
+            def saveReturningMethod = repository.findPossibleMethods("saveCustom").findFirst().get()
+        then:
+            getQuery(saveReturningMethod) == 'INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)'
+            getDataResultType(saveReturningMethod) == "int"
+            getParameterPropertyPaths(saveReturningMethod) == ["name", "age"] as String[]
+            getDataInterceptor(saveReturningMethod) == "io.micronaut.data.intercept.SaveAllInterceptor"
+            getResultDataType(saveReturningMethod) == DataType.INTEGER
+            getOperationType(saveReturningMethod) == DataMethod.OperationType.INSERT
+    }
+
+    void "test custom insert save one - JPA"() {
+        given:
+            def repository = buildRepository('test.PersonRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Person;
+
+@Repository
+interface PersonRepository extends GenericRepository<Person, Long> {
+
+    @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
+    int saveCustom(Person person);
+}
+""")
+        when:
+            def saveReturningMethod = repository.findPossibleMethods("saveCustom").findFirst().get()
+        then:
+            getQuery(saveReturningMethod) == 'INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)'
+            getDataResultType(saveReturningMethod) == "int"
+            getParameterPropertyPaths(saveReturningMethod) == ["name", "age"] as String[]
+            getDataInterceptor(saveReturningMethod) == "io.micronaut.data.intercept.SaveEntityInterceptor"
+            getResultDataType(saveReturningMethod) == DataType.INTEGER
+            getOperationType(saveReturningMethod) == DataMethod.OperationType.INSERT
+    }
 }

@@ -905,6 +905,11 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
                 PersistentPropertyPath outgoingQueryParameterProperty = bindingContext.getOutgoingQueryParameterProperty();
                 return new QueryParameterBinding() {
                     @Override
+                    public String getName() {
+                        return name;
+                    }
+
+                    @Override
                     public String getKey() {
                         return name;
                     }

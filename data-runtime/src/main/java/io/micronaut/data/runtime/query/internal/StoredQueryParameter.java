@@ -43,6 +43,7 @@ public final class StoredQueryParameter implements QueryParameterBinding {
     private final Class<?> parameterConverterClass;
     private final boolean expandable;
     private final List<QueryParameterBinding> all;
+    private final boolean expression;
 
     private boolean previousInitialized;
     private QueryParameterBinding previousPopulatedValueParameter;
@@ -57,6 +58,7 @@ public final class StoredQueryParameter implements QueryParameterBinding {
                          boolean requiresPreviousPopulatedValue,
                          Class<?> parameterConverterClass,
                          boolean expandable,
+                         final boolean expression,
                          List<QueryParameterBinding> all) {
         this.name = name;
         this.dataType = dataType;
@@ -68,6 +70,7 @@ public final class StoredQueryParameter implements QueryParameterBinding {
         this.requiresPreviousPopulatedValue = requiresPreviousPopulatedValue;
         this.parameterConverterClass = parameterConverterClass;
         this.expandable = expandable;
+        this.expression = expression;
         this.all = all;
     }
 
@@ -136,6 +139,11 @@ public final class StoredQueryParameter implements QueryParameterBinding {
     }
 
     @Override
+    public boolean isExpression() {
+        return expression;
+    }
+
+    @Override
     public String toString() {
         return "StoredQueryParameter{" +
                 "name='" + name + '\'' +
@@ -147,6 +155,7 @@ public final class StoredQueryParameter implements QueryParameterBinding {
                 ", requiresPreviousPopulatedValue=" + requiresPreviousPopulatedValue +
                 ", previousPopulatedValueParameter=" + previousPopulatedValueParameter +
                 ", expandable=" + expandable +
+                ", expression=" + expression +
                 '}';
     }
 }
