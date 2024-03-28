@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 original authors
+ * Copyright 2017-2024 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,8 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Query;
-import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.StoredQuery;
 
@@ -144,19 +142,8 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
     }
 
     @Override
-    public boolean useNumericPlaceholders() {
-        return annotationMetadata.classValue(RepositoryConfiguration.class, "queryBuilder")
-                .map(c -> c == SqlQueryBuilder.class).orElse(false);
-    }
-
-    @Override
     public boolean isCount() {
         return isCount;
-    }
-
-    @Override
-    public boolean isSingleResult() {
-        return isSingleResult;
     }
 
     @Override

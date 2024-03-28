@@ -1,6 +1,36 @@
-This section documents breaking changes between Micronaut versions
+This section documents breaking changes between Micronaut Data versions:
 
-== 4.0.0
+== Micronaut Data 5.0.0
+
+=== Deprecations
+
+- Several members of the annotation `io.micronaut.data.intercept.annotation.DataMethod` deprecated previously have been removed.
+`@DataMethod` is an internal annotation and the removed members are no longer used.
+
+- The interface method `io.micronaut.data.model.PersistentProperty.getCapitilizedName()` deprecated previously has been removed.
+It is replaced by `getCapitalizedName()`.
+
+- The method `io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.buildOrderBy(String, PersistentEntity, AnnotationMetadata, Sort)` deprecated previously has been removed.
+Use `buildOrderBy(String, PersistentEntity, AnnotationMetadata, Sort, boolean)` instead.
+
+- The following interface methods of `io.micronaut.data.model.runtime.StoredQuery` deprecated previously have been removed. They are no longer used.
+** `boolean useNumericPlaceholders()`
+** `Optional<Class<?>> getEntityIdentifierType()`
+** `Class<?>[] getArgumentTypes()`
+** `boolean isSingleResult()`
+- As a consequence of the `StoredQuery` method removals, the following types that were overriding these methods have been changed to remove their implementations:
+** Internal class `io.micronaut.data.runtime.query.internal.BasicStoredQuery`
+** Internal class `io.micronaut.data.runtime.query.internal.DefaultStoredQuery`
+** Interface `io.micronaut.data.runtime.query.internal.DelegateStoredQuery`
+** Anonymous inner class of `io.micronaut.data.runtime.query.DefaultStoredQueryResolver`
+
+- The following classes, deprecated previously have been removed. They are no longer used.
+** `io.micronaut.data.processor.visitors.finders.AbstractPatternMethodMatcher`
+** `io.micronaut.data.runtime.mapper.sql.SqlDTOMapper`
+
+- TODO: document `io.micronaut.transaction.support.AbstractDataSourceTransactionManagerCondition.transactionManagerProperty(ConditionContext, String)` deprecation and removal.
+
+== Micronaut Data 4.0.0
 
 === Repositories validation
 

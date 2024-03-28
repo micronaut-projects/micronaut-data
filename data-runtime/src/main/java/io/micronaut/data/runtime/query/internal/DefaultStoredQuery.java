@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 original authors
+ * Copyright 2017-2024 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,11 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.*;
+import io.micronaut.data.annotation.DataAnnotationUtils;
+import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.QueryHint;
+import io.micronaut.data.annotation.RepositoryConfiguration;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.intercept.annotation.DataMethodQueryParameter;
 import io.micronaut.data.model.AssociationUtils;
@@ -219,11 +223,6 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     }
 
     @Override
-    public boolean isSingleResult() {
-        return !isCount() && getJoinFetchPaths().isEmpty();
-    }
-
-    @Override
     public boolean hasResultConsumer() {
         return this.hasResultConsumer;
     }
@@ -258,16 +257,6 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     }
 
     /**
-     * Is this a raw SQL query.
-     *
-     * @return The raw sql query.
-     */
-    @Override
-    public boolean useNumericPlaceholders() {
-        return isNumericPlaceHolder;
-    }
-
-    /**
      * @return Whether the query is a DTO query
      */
     @Override
@@ -292,16 +281,6 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
         }
         return annotationMetadata.enumValue(DATA_METHOD_ANN_NAME, DataMethod.META_MEMBER_RESULT_DATA_TYPE, DataType.class)
                 .orElse(DataType.OBJECT);
-    }
-
-    /**
-     * @return The ID type
-     */
-    @SuppressWarnings("unchecked")
-    @Override
-    public Optional<Class<?>> getEntityIdentifierType() {
-        Optional o = annotationMetadata.classValue(DATA_METHOD_ANN_NAME, DataMethod.META_MEMBER_ID_TYPE);
-        return o;
     }
 
     /**
@@ -333,12 +312,6 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     @Override
     public String getName() {
         return method.getMethodName();
-    }
-
-    @Override
-    @NonNull
-    public Class<?>[] getArgumentTypes() {
-        return method.getArgumentTypes();
     }
 
     @Override

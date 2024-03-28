@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 original authors
+ * Copyright 2017-2024 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import io.micronaut.data.model.runtime.StoredQuery;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -103,23 +102,8 @@ public interface DelegateStoredQuery<E, R> extends StoredQuery<E, R> {
     }
 
     @Override
-    default boolean useNumericPlaceholders() {
-        return getStoredQueryDelegate().useNumericPlaceholders();
-    }
-
-    @Override
     default boolean isDtoProjection() {
         return getStoredQueryDelegate().isDtoProjection();
-    }
-
-    @Override
-    default Optional<Class<?>> getEntityIdentifierType() {
-        return getStoredQueryDelegate().getEntityIdentifierType();
-    }
-
-    @Override
-    default Class<?>[] getArgumentTypes() {
-        return getStoredQueryDelegate().getArgumentTypes();
     }
 
     @Override
@@ -135,11 +119,6 @@ public interface DelegateStoredQuery<E, R> extends StoredQuery<E, R> {
     @Override
     default Set<JoinPath> getJoinFetchPaths() {
         return getStoredQueryDelegate().getJoinFetchPaths();
-    }
-
-    @Override
-    default boolean isSingleResult() {
-        return getStoredQueryDelegate().isSingleResult();
     }
 
     @Override
