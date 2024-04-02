@@ -60,6 +60,7 @@ final class DefaultSort implements Sort {
      * @param order The order object
      * @return The Query instance
      */
+    @Override
     public @NonNull DefaultSort order(@NonNull Order order) {
         ArgumentUtils.requireNonNull("order", order);
         List<Order> newOrderBy = new ArrayList<>(orderBy);

@@ -173,6 +173,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     /**
      * @return The dialect being used by the builder.
      */
+    @Override
     public Dialect getDialect() {
         return dialect;
     }

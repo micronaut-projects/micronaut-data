@@ -48,6 +48,7 @@ public interface BlockingExecutorReactorRepositoryOperations extends RepositoryO
 
     <T> Optional<T> blockOptional(Function<ReactorReactiveRepositoryOperations, Mono<T>> supplier);
 
+    @Override
     @Nullable
     default <T> T findOne(@NonNull Class<T> type, @NonNull Object id) {
         return block(reactive -> reactive.findOne(type, id));

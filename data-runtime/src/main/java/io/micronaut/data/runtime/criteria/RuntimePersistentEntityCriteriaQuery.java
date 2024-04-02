@@ -48,6 +48,7 @@ final class RuntimePersistentEntityCriteriaQuery<T> extends AbstractPersistentEn
         return from(runtimeEntityRegistry.getEntity(entityClass));
     }
 
+    @Override
     public <X> PersistentEntityRoot<X> from(PersistentEntity persistentEntity) {
         if (entityRoot != null) {
             throw new IllegalStateException("The root entity is already specified!");

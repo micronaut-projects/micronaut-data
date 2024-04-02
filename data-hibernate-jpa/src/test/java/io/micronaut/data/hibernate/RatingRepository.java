@@ -13,6 +13,7 @@ import java.util.UUID;
 @Repository
 @Transactional
 public interface RatingRepository extends CrudRepository<Rating, UUID> {
+    @Override
     @NotNull
     @EntityGraph("RatingEntityGraph")
     Optional<Rating> findById(@NotNull UUID id);

@@ -59,6 +59,7 @@ public class FindPageSpecificationInterceptor extends AbstractSpecificationInter
         }
     }
 
+    @Override
     protected final Pageable getPageable(MethodInvocationContext<?, ?> context) {
         final Object parameterValue = context.getParameterValues()[1];
         if (parameterValue instanceof Pageable) {

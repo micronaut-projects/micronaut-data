@@ -729,6 +729,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         throw new UnsupportedOperationException("The findPage method without an explicit query is not supported. Use findPage(PreparedQuery) instead");
     }
 
+    @Override
     @NonNull
     public <T> Iterable<T> persistAll(@NonNull InsertBatchOperation<T> operation) {
         return executeWrite(connection -> {

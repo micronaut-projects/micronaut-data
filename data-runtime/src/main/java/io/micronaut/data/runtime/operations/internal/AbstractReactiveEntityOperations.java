@@ -143,6 +143,7 @@ public abstract class AbstractReactiveEntityOperations<Ctx extends OperationCont
     /**
      * @return The entity
      */
+    @Override
     public Mono<T> getEntity() {
         return data.filter(this::notVetoed).map(d -> d.entity);
     }
