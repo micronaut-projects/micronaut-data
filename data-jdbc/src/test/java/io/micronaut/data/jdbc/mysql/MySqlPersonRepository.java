@@ -19,9 +19,10 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Person;
+import io.micronaut.data.tck.repositories.PersonRepository;
 
 @JdbcRepository(dialect = Dialect.MYSQL)
-public interface MySqlPersonRepository extends io.micronaut.data.tck.repositories.PersonRepository {
+public interface MySqlPersonRepository extends PersonRepository {
 
     @Override
     Person save(String name, int age);

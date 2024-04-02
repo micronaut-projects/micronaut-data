@@ -16,6 +16,7 @@
 package io.micronaut.data.runtime.criteria;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityJoinSupport;
@@ -32,7 +33,7 @@ abstract class AbstractRuntimePersistentEntityJoinSupport<T, J> extends Abstract
 
     @Override
     protected <X, Y> PersistentAssociationPath<X, Y> createJoinAssociation(Association association,
-                                                                           io.micronaut.data.annotation.Join.Type associationJoinType,
+                                                                           Join.Type associationJoinType,
                                                                            String alias) {
         Class<?> type = ((RuntimeAssociation<?>) association).getProperty().getType();
         if (List.class.isAssignableFrom(type)) {

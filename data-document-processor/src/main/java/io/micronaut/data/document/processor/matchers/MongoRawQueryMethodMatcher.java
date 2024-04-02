@@ -48,6 +48,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -293,7 +294,7 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
     }
 
     private String processCustomQuery(MethodMatchContext matchContext, String queryString, List<ParameterElement> parameters, ParameterElement entityParam, SourcePersistentEntity persistentEntity, List<QueryParameterBinding> parameterBindings) {
-        java.util.regex.Matcher matcher = VARIABLE_PATTERN.matcher(queryString);
+        Matcher matcher = VARIABLE_PATTERN.matcher(queryString);
         List<String> queryParts = new ArrayList<>();
         int lastOffset = 0;
         while (matcher.find()) {

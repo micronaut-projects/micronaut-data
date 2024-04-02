@@ -18,6 +18,8 @@ package io.micronaut.data.model.jpa.criteria;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.annotation.Join;
+
 import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.metamodel.CollectionAttribute;
@@ -50,7 +52,7 @@ public interface PersistentEntityFrom<OwnerType, AssociatedEntityType> extends F
      * @return The joined entity
      */
     @NonNull
-    <X, Y> PersistentEntityJoin<X, Y> join(@NonNull String attributeName, @NonNull io.micronaut.data.annotation.Join.Type joinType);
+    <X, Y> PersistentEntityJoin<X, Y> join(@NonNull String attributeName, @NonNull Join.Type joinType);
 
     /**
      * Joins the entity with specific join type.
@@ -63,7 +65,7 @@ public interface PersistentEntityFrom<OwnerType, AssociatedEntityType> extends F
      * @return The joined entity
      */
     @NonNull
-    <X, Y> PersistentEntityJoin<X, Y> join(@NonNull String attributeName, @NonNull io.micronaut.data.annotation.Join.Type joinType, @NonNull String alias);
+    <X, Y> PersistentEntityJoin<X, Y> join(@NonNull String attributeName, @NonNull Join.Type joinType, @NonNull String alias);
 
     @NonNull
     @Override

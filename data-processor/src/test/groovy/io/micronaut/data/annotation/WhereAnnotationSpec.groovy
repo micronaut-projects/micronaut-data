@@ -24,10 +24,10 @@ class WhereAnnotationSpec extends AbstractDataSpec {
 
     void "test @Where on entity"() {
         given:
-        def repository = buildRepository('test.TestRepository', '''
+        def repository = buildRepository('test.TestRepository', '''import io.micronaut.context.annotation.Executable;
 
 @Repository
-@io.micronaut.context.annotation.Executable
+@Executable
 interface TestRepository extends CrudRepository<User, Long> {
     int countByIdGreaterThan(Long id);
     @Join("category")
@@ -135,11 +135,12 @@ interface TestRepository extends GenericRepository<Person, Long> {
     void "test parameterized @Where declaration"() {
         given:
         def repository = buildRepository('test.TestRepository', '''
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.tck.entities.Person;
 
 @Where("age > :age")
 @Repository
-@io.micronaut.context.annotation.Executable
+@Executable
 interface TestRepository extends GenericRepository<Person, Long> {
     int countByNameLike(String name, int age);
 }
@@ -156,11 +157,12 @@ interface TestRepository extends GenericRepository<Person, Long> {
     void "test build @Where definition with no parameters at type level"() {
         given:
         def repository = buildRepository('test.TestRepository', '''
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.tck.entities.Person;
 
 @Where("person_.age > 18")
 @Repository
-@io.micronaut.context.annotation.Executable
+@Executable
 interface TestRepository extends CrudRepository<Person, Long> {
     int countByNameLike(String name);
 }
@@ -184,6 +186,7 @@ interface TestRepository extends CrudRepository<Person, Long> {
     void "test build @Where on entity and reactive repository"() {
         given:
             def repository = buildRepository('test.TestRepository', '''
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.repository.reactive.*;
 
@@ -226,7 +229,7 @@ class UserWithWhere {
 }
 
 @Repository
-@io.micronaut.context.annotation.Executable
+@Executable
 interface TestRepository extends ReactiveStreamsCrudRepository<UserWithWhere, UUID> {
 }
 ''')
@@ -251,11 +254,13 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import java.util.UUID;
 
+import javax.persistence.Id;
+
 @Entity
 @Table(name = "users")
 @Where(value = "@.deleted = false")
 class UserWithWhere {
-    @javax.persistence.Id
+    @Id
     private UUID id;
     private String email;
     private Boolean deleted;
@@ -307,6 +312,7 @@ interface TestRepository extends ReactorCrudRepository<UserWithWhere, UUID> {
 import io.micronaut.data.repository.async.*;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.util.UUID;
 
@@ -314,7 +320,7 @@ import java.util.UUID;
 @Table(name = "users")
 @Where(value = "@.deleted = false")
 class UserWithWhere {
-    @jakarta.persistence.Id
+    @Id
     private UUID id;
     private String email;
     private Boolean deleted;

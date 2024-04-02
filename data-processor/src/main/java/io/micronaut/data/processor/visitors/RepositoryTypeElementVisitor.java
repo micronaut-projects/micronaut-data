@@ -639,7 +639,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
     /**
      * Annotates method element with {@link io.micronaut.data.annotation.QueryResult} if root entity is {@link EntityRepresentation} of JSON type
-     * and method is {@link io.micronaut.data.intercept.annotation.DataMethod.OperationType#QUERY}.
+     * and method is {@link DataMethod.OperationType#QUERY}.
      *
      * @param element    the method element
      * @param methodInfo the method match info

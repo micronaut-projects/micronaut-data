@@ -37,11 +37,11 @@ import java.util.Map;
  * @author Denis Stepanov
  * @since 3.3
  */
-public class MappedPropertyMapper implements TypedAnnotationMapper<io.micronaut.data.annotation.MappedProperty> {
+public class MappedPropertyMapper implements TypedAnnotationMapper<MappedProperty> {
 
     @Override
-    public Class<io.micronaut.data.annotation.MappedProperty> annotationType() {
-        return io.micronaut.data.annotation.MappedProperty.class;
+    public Class<MappedProperty> annotationType() {
+        return MappedProperty.class;
     }
 
     @Override

@@ -22,6 +22,7 @@ import io.micronaut.data.processor.visitors.MethodMatchContext;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -60,7 +61,7 @@ public abstract class AbstractPatternMethodMatcher implements MethodMatcher {
     @Override
     public final MethodMatch match(MethodMatchContext matchContext) {
         String methodName = matchContext.getMethodElement().getName();
-        java.util.regex.Matcher matcher = patternWithBySyntax.matcher(methodName);
+        Matcher matcher = patternWithBySyntax.matcher(methodName);
         if (matcher.find()) {
             return match(matchContext, matcher);
         }
@@ -78,7 +79,7 @@ public abstract class AbstractPatternMethodMatcher implements MethodMatcher {
      * @param matcher      The matcher
      * @return The method match
      */
-    protected abstract MethodMatch match(MethodMatchContext matchContext, java.util.regex.Matcher matcher);
+    protected abstract MethodMatch match(MethodMatchContext matchContext, Matcher matcher);
 
     private static Pattern computeWithoutProjectionSyntax(String[] prefixes) {
         String prefixPattern = String.join("|", prefixes);
