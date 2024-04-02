@@ -47,20 +47,14 @@ final class DefaultR2dbcSchemaHandler implements R2dbcSchemaHandler {
 
     @Override
     public Publisher<Void> useSchema(Connection connection, Dialect dialect, String name) {
-        switch (dialect) {
-            case ORACLE:
-                return executeQuery(connection, "ALTER SESSION SET CURRENT_SCHEMA=" + name);
-            case SQL_SERVER:
-                return executeQuery(connection, "USE " + name + ";");
-            case POSTGRES:
-                return executeQuery(connection, "SET SCHEMA '" + name + "';");
-            case MYSQL:
-                return executeQuery(connection, "USE " + name + ";");
-            case H2:
-                return executeQuery(connection, "SET SCHEMA " + name + ";");
-            default:
-                return Mono.error(new DataAccessException("Unsupported 'useSchema' for dialect:" + dialect));
-        }
+        return switch (dialect) {
+            case ORACLE -> executeQuery(connection, "ALTER SESSION SET CURRENT_SCHEMA=" + name);
+            case SQL_SERVER -> executeQuery(connection, "USE " + name + ";");
+            case POSTGRES -> executeQuery(connection, "SET SCHEMA '" + name + "';");
+            case MYSQL -> executeQuery(connection, "USE " + name + ";");
+            case H2 -> executeQuery(connection, "SET SCHEMA " + name + ";");
+            default -> Mono.error(new DataAccessException("Unsupported 'useSchema' for dialect:" + dialect));
+        };
     }
 
     private static Publisher<Void> executeQuery(Connection connection, String query) {

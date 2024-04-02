@@ -124,13 +124,10 @@ public class R2dbcQueryStatement implements QueryStatement<Statement, Integer> {
             }
             return this;
         } else {
-            switch (dataType) {
-                case FLOAT_ARRAY:
-                case DOUBLE_ARRAY:
-                    return setArray(statement, index, convertRequired(value, BigDecimal[].class));
-                default:
-            }
-            return QueryStatement.super.setDynamic(statement, index, dataType, value);
+            return switch (dataType) {
+                case FLOAT_ARRAY, DOUBLE_ARRAY -> setArray(statement, index, convertRequired(value, BigDecimal[].class));
+                default -> QueryStatement.super.setDynamic(statement, index, dataType, value);
+            };
         }
     }
 
