@@ -61,12 +61,6 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
 
     private static final Pattern VARIABLE_PATTERN = Pattern.compile("([^:]*)((?<![:]):([a-zA-Z]+[a-zA-Z0-9]*))([^:]*)");
 
-    /**
-     * Default constructor.
-     */
-    public MongoRawQueryMethodMatcher() {
-    }
-
     @Override
     public final int getOrder() {
         // should run first and before `RawQueryMethodMatcher`

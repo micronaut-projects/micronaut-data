@@ -63,12 +63,6 @@ public class RawQueryMethodMatcher implements MethodMatcher {
 
     private static final Pattern VARIABLE_PATTERN = Pattern.compile("([^:\\\\]*)((?<![:]):([a-zA-Z0-9]+))([^:]*)");
 
-    /**
-     * Default constructor.
-     */
-    public RawQueryMethodMatcher() {
-    }
-
     @Override
     public final int getOrder() {
         // should run first
