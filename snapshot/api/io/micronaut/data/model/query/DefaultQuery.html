@@ -245,7 +245,7 @@ implements <a href="QueryModel.html" title="interface in io.micronaut.data.model
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getJoinPath(java.lang.String)" class="member-name-link">getJoinPath</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;path)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Obtain the joint for for a given association.</div>
+<div class="block">Obtain the joint for a given association.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getJoinPaths()" class="member-name-link">getJoinPaths</a>()</code></div>
@@ -482,7 +482,7 @@ implements <a href="QueryModel.html" title="interface in io.micronaut.data.model
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#rlike(java.lang.String,java.lang.Object)" class="member-name-link">rlike</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;propertyName,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;parameter)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Creates an rlike Criterion based on the specified property name and value.</div>
+<div class="block">Creates a rlike Criterion based on the specified property name and value.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="DefaultQuery.html" title="class in io.micronaut.data.model.query">DefaultQuery</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#sizeEq(java.lang.String,java.lang.Object)" class="member-name-link">sizeEq</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;propertyName,
@@ -643,7 +643,7 @@ implements <a href="QueryModel.html" title="interface in io.micronaut.data.model
 <section class="detail" id="getJoinPath(java.lang.String)">
 <h3>getJoinPath</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;</span>&nbsp;<span class="element-name">getJoinPath</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;path)</span></div>
-<div class="block">Obtain the joint for for a given association.</div>
+<div class="block">Obtain the joint for a given association.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code><a href="QueryModel.html#getJoinPath(java.lang.String)">getJoinPath</a></code>&nbsp;in interface&nbsp;<code><a href="QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></dd>
@@ -812,7 +812,7 @@ implements <a href="QueryModel.html" title="interface in io.micronaut.data.model
 <dt>Specified by:</dt>
 <dd><code><a href="QueryModel.html#isForUpdate()">isForUpdate</a></code>&nbsp;in interface&nbsp;<code><a href="QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></dd>
 <dt>Returns:</dt>
-<dd>true if the the selected entities should be locked</dd>
+<dd>true if the selected entities should be locked</dd>
 </dl>
 </section>
 </li>
@@ -1506,7 +1506,7 @@ implements <a href="QueryModel.html" title="interface in io.micronaut.data.model
  @NonNull
  @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;parameter)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="Criteria.html#ilike(java.lang.String,java.lang.Object)">Criteria</a></code></span></div>
-<div class="block">Creates an ilike Criterion based on the specified property name and value. Unlike a like condition, ilike is case insensitive.</div>
+<div class="block">Creates an ilike Criterion based on the specified property name and value. Unlike a like condition, ilike is case-insensitive.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code><a href="Criteria.html#ilike(java.lang.String,java.lang.Object)">ilike</a></code>&nbsp;in interface&nbsp;<code><a href="Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
@@ -1529,7 +1529,7 @@ implements <a href="QueryModel.html" title="interface in io.micronaut.data.model
  @NonNull
  @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;parameter)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="Criteria.html#rlike(java.lang.String,java.lang.Object)">Criteria</a></code></span></div>
-<div class="block">Creates an rlike Criterion based on the specified property name and value.</div>
+<div class="block">Creates a rlike Criterion based on the specified property name and value.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code><a href="Criteria.html#rlike(java.lang.String,java.lang.Object)">rlike</a></code>&nbsp;in interface&nbsp;<code><a href="Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>

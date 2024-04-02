@@ -552,7 +552,7 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/connection/jdbc/advice/ContextualConnectionInterceptor.html" title="class in io.micronaut.data.connection.jdbc.advice">ContextualConnectionInterceptor</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
-<div class="block">An interceptor that allows injecting a <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link"><code>Connection</code></a> that acts a proxy to lookup the connection for the current transaction.</div>
+<div class="block">An interceptor that allows injecting a <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html" title="class or interface in java.sql" class="external-link"><code>Connection</code></a> that acts a proxy to look up the connection for the current transaction.</div>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/data/mongodb/advice/ContexualClientSession.html" title="interface in io.micronaut.data.mongodb.advice">ContexualClientSession</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab1">
@@ -621,7 +621,7 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/data/intercept/async/CountAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async">CountAsyncInterceptor</a>&lt;<a href="io/micronaut/data/intercept/async/CountAsyncInterceptor.html" title="type parameter in CountAsyncInterceptor">T</a>&gt;</div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab1">
-<div class="block">An interceptor that executes a a count of all records asynchronously.</div>
+<div class="block">An interceptor that executes a count of all records asynchronously.</div>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/runtime/intercept/criteria/async/CountAsyncSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria.async">CountAsyncSpecificationInterceptor</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
@@ -629,7 +629,7 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/data/intercept/CountInterceptor.html" title="interface in io.micronaut.data.intercept">CountInterceptor</a>&lt;<a href="io/micronaut/data/intercept/CountInterceptor.html" title="type parameter in CountInterceptor">T</a>&gt;</div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab1">
-<div class="block">An interceptor that executes a a count of all records.</div>
+<div class="block">An interceptor that executes a count of all records.</div>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/processor/visitors/finders/CountMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">CountMethodMatcher</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
@@ -781,11 +781,11 @@ loadScripts(document, 'script');</script>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab7"><a href="io/micronaut/data/annotation/DataTransformer.html" title="annotation interface in io.micronaut.data.annotation">DataTransformer</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab7">
 <div class="block">Generic version of allowing transformations to be applied when reading or writing
- data to and from the a database.</div>
+ data to and from the database.</div>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab3"><a href="io/micronaut/data/model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab3">
-<div class="block">Enum of basic data types allowing compile time computation which can then subsequently be used at runtime for fast
+<div class="block">Enum of basic data types allowing to compile time computation which can then subsequently be used at runtime for fast
  switching.</div>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/data/runtime/convert/DataTypeConverter.html" title="interface in io.micronaut.data.runtime.convert">DataTypeConverter</a>&lt;<a href="io/micronaut/data/runtime/convert/DataTypeConverter.html" title="type parameter in DataTypeConverter">S</a>,<wbr><a href="io/micronaut/data/runtime/convert/DataTypeConverter.html" title="type parameter in DataTypeConverter">T</a>&gt;</div>
@@ -1291,7 +1291,7 @@ loadScripts(document, 'script');</script>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/runtime/mapper/DTOMapper.html" title="class in io.micronaut.data.runtime.mapper">DTOMapper</a>&lt;<a href="io/micronaut/data/runtime/mapper/DTOMapper.html" title="type parameter in DTOMapper">T</a>,<wbr><a href="io/micronaut/data/runtime/mapper/DTOMapper.html" title="type parameter in DTOMapper">S</a>,<wbr><a href="io/micronaut/data/runtime/mapper/DTOMapper.html" title="type parameter in DTOMapper">R</a>&gt;</div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">
 <div class="block">A <a href="io/micronaut/data/runtime/mapper/BeanIntrospectionMapper.html" title="interface in io.micronaut.data.runtime.mapper"><code>BeanIntrospectionMapper</code></a> that reads the result using the specified
- <a href="io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model"><code>PersistentEntity</code></a> and <a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper"><code>ResultReader</code></a> and using the <a href="io/micronaut/data/runtime/mapper/BeanIntrospectionMapper.html#map(D,java.lang.Class)"><code>BeanIntrospectionMapper.map(Object, Class)</code></a> allows mapping a result to a introspected Data Transfer Object (DTO).</div>
+ <a href="io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model"><code>PersistentEntity</code></a> and <a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper"><code>ResultReader</code></a> and using the <a href="io/micronaut/data/runtime/mapper/BeanIntrospectionMapper.html#map(D,java.lang.Class)"><code>BeanIntrospectionMapper.map(Object, Class)</code></a> allows mapping a result to an introspected Data Transfer Object (DTO).</div>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/runtime/operations/internal/query/DummyPreparedQuery.html" title="class in io.micronaut.data.runtime.operations.internal.query">DummyPreparedQuery</a>&lt;<a href="io/micronaut/data/runtime/operations/internal/query/DummyPreparedQuery.html" title="type parameter in DummyPreparedQuery">E</a>,<wbr><a href="io/micronaut/data/runtime/operations/internal/query/DummyPreparedQuery.html" title="type parameter in DummyPreparedQuery">R</a>&gt;</div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
@@ -1524,7 +1524,7 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/data/intercept/reactive/FindByIdReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive">FindByIdReactiveInterceptor</a>&lt;<a href="io/micronaut/data/intercept/reactive/FindByIdReactiveInterceptor.html" title="type parameter in FindByIdReactiveInterceptor">T</a>,<wbr><a href="io/micronaut/data/intercept/reactive/FindByIdReactiveInterceptor.html" title="type parameter in FindByIdReactiveInterceptor">R</a>&gt;</div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab1">
-<div class="block">An interceptor that executes an find by id reactively.</div>
+<div class="block">An interceptor that executes a find by id reactively.</div>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html" title="interface in io.micronaut.data.processor.visitors.finders">FindersUtils</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab1">
@@ -1710,7 +1710,7 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab7"><a href="io/micronaut/data/annotation/Id.html" title="annotation interface in io.micronaut.data.annotation">Id</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab7">
-<div class="block">Designates a field or method that is annotated with the Id of an entity.</div>
+<div class="block">Designates a field or method that is annotated with the ID of an entity.</div>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/processor/mappers/jpa/jakarta/IdAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa.jakarta">IdAnnotationMapper</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
@@ -1752,7 +1752,7 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab7"><a href="io/micronaut/data/annotation/Index.html" title="annotation interface in io.micronaut.data.annotation">Index</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab7">
-<div class="block">Designates one of the indexes part of the indexes member within an Table annotation.</div>
+<div class="block">Designates one of the indexes part of the indexes member within a Table annotation.</div>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/processor/mappers/jpa/jakarta/IndexAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa.jakarta">IndexAnnotationMapper</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
@@ -2716,7 +2716,7 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab7"><a href="io/micronaut/data/annotation/Query.html" title="annotation interface in io.micronaut.data.annotation">Query</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab7">
-<div class="block">Defines the query string such as SQL, JPA-QL, Cypher etc that should be executed.</div>
+<div class="block">Defines the query string such as SQL, JPA-QL, Cypher etc.</div>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/data/model/query/builder/QueryBuilder.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab1">
@@ -3285,7 +3285,7 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab7"><a href="io/micronaut/data/annotation/Repository.html" title="annotation interface in io.micronaut.data.annotation">Repository</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab7">
-<div class="block">Designates a type of a data repository.</div>
+<div class="block">Designates a type of data repository.</div>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab7"><a href="io/micronaut/data/annotation/RepositoryConfiguration.html" title="annotation interface in io.micronaut.data.annotation">RepositoryConfiguration</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab7">
@@ -3406,7 +3406,7 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyIlike.html" title="class in io.micronaut.data.processor.visitors.finders">Restrictions.PropertyIlike</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
-<div class="block">Case insensitive like.</div>
+<div class="block">Case-insensitive like.</div>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyIn.html" title="class in io.micronaut.data.processor.visitors.finders">Restrictions.PropertyIn</a>&lt;<a href="io/micronaut/data/processor/visitors/finders/Restrictions.PropertyIn.html" title="type parameter in Restrictions.PropertyIn">T</a>&gt;</div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">
@@ -3789,8 +3789,8 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="class in io.micronaut.data.runtime.mapper.sql">SqlResultEntityTypeMapper</a>&lt;<a href="io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>,<wbr><a href="io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;</div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">
-<div class="block">A <a href="io/micronaut/data/runtime/mapper/TypeMapper.html" title="interface in io.micronaut.data.runtime.mapper"><code>TypeMapper</code></a> that can take a <a href="io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime"><code>RuntimePersistentEntity</code></a> and a <a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper"><code>ResultReader</code></a> and materialize an instance using
- using column naming conventions mapped by the entity.</div>
+<div class="block">A <a href="io/micronaut/data/runtime/mapper/TypeMapper.html" title="interface in io.micronaut.data.runtime.mapper"><code>TypeMapper</code></a> that can take a <a href="io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime"><code>RuntimePersistentEntity</code></a> and a <a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper"><code>ResultReader</code></a>
+ and materialize an instance using column naming conventions mapped by the entity.</div>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.PushingMapper.html" title="interface in io.micronaut.data.runtime.mapper.sql">SqlResultEntityTypeMapper.PushingMapper</a>&lt;<a href="io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.PushingMapper.html" title="type parameter in SqlResultEntityTypeMapper.PushingMapper">RS</a>,<wbr><a href="io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.PushingMapper.html" title="type parameter in SqlResultEntityTypeMapper.PushingMapper">R</a>&gt;</div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab1">
@@ -3867,7 +3867,7 @@ loadScripts(document, 'script');</script>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/transaction/SynchronousTransactionManager.html" title="interface in io.micronaut.transaction">SynchronousTransactionManager</a>&lt;<a href="io/micronaut/transaction/SynchronousTransactionManager.html" title="type parameter in SynchronousTransactionManager">T</a>&gt;</div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab1">
 <div class="block">NOTICE: This is a fork of Spring's <code>PlatformTransactionManager</code> modernizing it
- to use enums, Slf4j and decoupling from Spring.</div>
+ to use enums, SLF4J and decoupling from Spring.</div>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/transaction/sync/SynchronousTransactionOperationsFromReactiveTransactionOperations.html" title="class in io.micronaut.transaction.sync">SynchronousTransactionOperationsFromReactiveTransactionOperations</a>&lt;<a href="io/micronaut/transaction/sync/SynchronousTransactionOperationsFromReactiveTransactionOperations.html" title="type parameter in SynchronousTransactionOperationsFromReactiveTransactionOperations">T</a>&gt;</div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">
@@ -3925,7 +3925,7 @@ loadScripts(document, 'script');</script>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab1">
 <div class="block">NOTICE: This is a fork of Spring's <code>PlatformTransactionManager</code> modernizing it
- to use enums, Slf4j and decoupling from Spring.</div>
+ to use enums, SLF4J and decoupling from Spring.</div>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab3"><a href="io/micronaut/transaction/TransactionDefinition.Isolation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Isolation</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab3">
@@ -3946,7 +3946,7 @@ loadScripts(document, 'script');</script>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/transaction/TransactionManager.html" title="interface in io.micronaut.transaction">TransactionManager</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab1">
 <div class="block">NOTICE: This is a fork of Spring's <code>TransactionManager</code> modernizing it
- to use enums, Slf4j and decoupling from Spring.</div>
+ to use enums, SLF4J and decoupling from Spring.</div>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/transaction/impl/TransactionManagerConfiguration.html" title="class in io.micronaut.transaction.impl">TransactionManagerConfiguration</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
@@ -4075,7 +4075,7 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/data/model/runtime/UpdateBatchOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateBatchOperation</a>&lt;<a href="io/micronaut/data/model/runtime/UpdateBatchOperation.html" title="type parameter in UpdateBatchOperation">E</a>&gt;</div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab1">
-<div class="block">A update batch operation is an operation performed on one or more entities of the same type.</div>
+<div class="block">An update batch operation is an operation performed on one or more entities of the same type.</div>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/processor/visitors/finders/criteria/UpdateCriteriaMethodMatch.html" title="class in io.micronaut.data.processor.visitors.finders.criteria">UpdateCriteriaMethodMatch</a></div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab2">
@@ -4107,7 +4107,7 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/data/intercept/reactive/UpdateReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive">UpdateReactiveInterceptor</a>&lt;<a href="io/micronaut/data/intercept/reactive/UpdateReactiveInterceptor.html" title="type parameter in UpdateReactiveInterceptor">T</a>,<wbr><a href="io/micronaut/data/intercept/reactive/UpdateReactiveInterceptor.html" title="type parameter in UpdateReactiveInterceptor">R</a>&gt;</div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab1">
-<div class="block">An interceptor that saves a updates entity reactively.</div>
+<div class="block">An interceptor that saves an updates entity reactively.</div>
 </div>
 <div class="col-first even-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/data/intercept/UpdateReturningManyInterceptor.html" title="interface in io.micronaut.data.intercept">UpdateReturningManyInterceptor</a>&lt;<a href="io/micronaut/data/intercept/UpdateReturningManyInterceptor.html" title="type parameter in UpdateReturningManyInterceptor">T</a>,<wbr><a href="io/micronaut/data/intercept/UpdateReturningManyInterceptor.html" title="type parameter in UpdateReturningManyInterceptor">R</a>&gt;</div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab1">

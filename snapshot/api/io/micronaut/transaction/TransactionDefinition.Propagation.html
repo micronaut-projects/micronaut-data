@@ -205,7 +205,7 @@ the order they are declared.</div>
  <code>PROPAGATION_SUPPORTS</code> is slightly different from no transaction
  at all, as it defines a transaction scope that synchronization might apply to.
  As a consequence, the same resources (a JDBC <code>Connection</code>, a
- Hibernate <code>Session</code>, etc) will be shared for the entire specified
+ Hibernate <code>Session</code>, etc.) will be shared for the entire specified
  scope. Note that the exact behavior depends on the actual synchronization
  configuration of the transaction manager!
  <p>In general, use <code>PROPAGATION_SUPPORTS</code> with care! In particular, do

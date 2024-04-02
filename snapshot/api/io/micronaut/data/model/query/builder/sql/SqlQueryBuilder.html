@@ -220,7 +220,7 @@ implements <a href="../QueryBuilder.html" title="interface in io.micronaut.data.
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildCreateTableStatements(io.micronaut.data.model.PersistentEntity)" class="member-name-link">buildCreateTableStatements</a><wbr>(@NonNull <a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Builds the create table statement.</div>
+<div class="block">Builds the creation table statement.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildDropTableStatements(io.micronaut.data.model.PersistentEntity)" class="member-name-link">buildDropTableStatements</a><wbr>(@NonNull <a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</code></div>
@@ -666,7 +666,7 @@ implements <a href="../QueryBuilder.html" title="interface in io.micronaut.data.
 <div class="member-signature"><span class="annotations">@NonNull
 </span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>[]</span>&nbsp;<span class="element-name">buildCreateTableStatements</span><wbr><span class="parameters">(@NonNull
  @NonNull <a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</span></div>
-<div class="block">Builds the create table statement. Designed for testing and not production usage. For production a
+<div class="block">Builds the creation table statement. Designed for testing and not production usage. For production a
  SQL migration tool such as Flyway or Liquibase is recommended.</div>
 <dl class="notes">
 <dt>Parameters:</dt>

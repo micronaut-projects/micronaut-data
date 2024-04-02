@@ -356,7 +356,7 @@
 <div class="ulist">
 <ul>
 <li>
-<p><strong>No runtime model</strong> - Both GORM and Spring Data maintain a runtime meta-model that uses reflection to model relationships between entities. This model consumes significant memory and memory requirements grow as your application size grows. The problem is worse when combined with Hibernate which maintains its own meta-model as you end up with duplicate meta-models.</p>
+<p><strong>No runtime model</strong> - Both GORM and Spring Data maintain a runtime metamodel that uses reflection to model relationships between entities. This model consumes significant memory and memory requirements grow as your application size grows. The problem is worse when combined with Hibernate which maintains its own metamodel as you end up with duplicate meta-models.</p>
 </li>
 <li>
 <p><strong>No query translation</strong> - Both GORM and Spring Data use regular expressions and pattern matching in combination with runtime generated proxies to translate a method definition on a Java interface into a query at runtime. No such runtime translation exists in Micronaut Data and this work is carried out by the Micronaut compiler at compilation time.</p>
@@ -457,7 +457,7 @@ interface BookRepository : CrudRepository&lt;Book, Long&gt; { // <b class="conum
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>The <code>@Repository</code> annotation designates <code>BookRepository</code> as a data repository. Since, it is is an interface, the <code>@Repository</code> annotation provides implementations at compilation time.</td>
+<td>The <code>@Repository</code> annotation designates <code>BookRepository</code> as a data repository. Since, it is an interface, the <code>@Repository</code> annotation provides implementations at compilation time.</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
@@ -803,7 +803,7 @@ public TransactionOperations&lt;org.hibernate.Session&gt; hibernateTransactionOp
 <h3 id="_transaction_manager">Transaction manager</h3>
 <div class="paragraph">
 <p>Micronaut 4 comes with a rewritten transaction propagation and management. It replaces the previous implementation forked form Spring Framework.
-The new implementation has a newly added connection management, allowing to share a connection between multiple repositories and services without an open transaction. The are new method supporting extracting the current transaction status <code>TransactionOperations#findTransactionStatus</code>. The <code>TransactionStatus</code> now includes information about the connection and the transaction definition.</p>
+The new implementation has a newly added connection management, allowing to share a connection between multiple repositories and services without an open transaction. The new method supporting extracting the current transaction status <code>TransactionOperations#findTransactionStatus</code>. The <code>TransactionStatus</code> now includes information about the connection and the transaction definition.</p>
 </div>
 </div>
 <div class="sect2">
@@ -1299,7 +1299,7 @@ fun retrieveByTitle(title: String): Book</code></pre>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>Publisher&lt;Book&gt;</code> (or 'Flowable', <code>Single</code>, <code>Maybe</code>, <code>Flux</code>, <code>Mono</code> etc.)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">An Reactive Streams compatible type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A Reactive Streams compatible type</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>Flow&lt;Book&gt;</code> as an alternative to <code>suspend</code> functions</p></td>
@@ -1460,7 +1460,7 @@ fun find(title: String): Book</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Note that in this case if the <code>title</code> parameter does not exist as a property in the entity being queried or the type does not match up a compilation error will occur. Also you can specify more than one parameter to perform a logical <code>AND</code>.</p>
+<p>Note that in this case if the <code>title</code> parameter does not exist as a property in the entity being queried or the type does not match up a compilation error will occur. Also, you can specify more than one parameter to perform a logical <code>AND</code>.</p>
 </div>
 
 <h2 id="criteria"><a class="anchor" href="#criteria"></a>3.3.1 Query Criteria</h2>
@@ -1671,10 +1671,10 @@ Any of these criterion expressions can be negated by adding the word <code>Not</
 
 
 <div class="paragraph">
-<p>Typically when returning multiple records you need some control over paging the data. Micronaut Data includes the ability to specify pagination requirements with the <a href="../api/io/micronaut/data/model/Pageable.html">Pageable</a> type (inspired by GORM&#8217;s <a href="https://gorm.grails.org/latest/api/grails/orm/PagedResultList.html">PagedResultList</a> and Spring Data&#8217;s <a href="https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/domain/Pageable.html">Pageable</a>).</p>
+<p>Typically, when returning multiple records you need some control over paging the data. Micronaut Data includes the ability to specify pagination requirements with the <a href="../api/io/micronaut/data/model/Pageable.html">Pageable</a> type (inspired by GORM&#8217;s <a href="https://gorm.grails.org/latest/api/grails/orm/PagedResultList.html">PagedResultList</a> and Spring Data&#8217;s <a href="https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/domain/Pageable.html">Pageable</a>).</p>
 </div>
 <div class="paragraph">
-<p>In addition methods can return a <a href="../api/io/micronaut/data/model/Page.html">Page</a> object which includes the execution of an additional query to obtain the total number of results for a given query.</p>
+<p>In addition, methods can return a <a href="../api/io/micronaut/data/model/Page.html">Page</a> object which includes the execution of an additional query to obtain the total number of results for a given query.</p>
 </div>
 <div class="paragraph">
 <p>The following are some example signatures:</p>
@@ -1824,7 +1824,7 @@ fun listOrderByTitleDesc(): List&lt;Book&gt;</code></pre>
 
 
 <div class="paragraph">
-<p>Frequently, rather than retrieving all of the data for a particular entity, you may only want a single property or association of an entity or to perform some kind of computation and obtain just that result. This is where query projections come in.</p>
+<p>Frequently, rather than retrieving all the data for a particular entity, you may only want a single property or association of an entity or to perform some kind of computation and obtain just that result. This is where query projections come in.</p>
 </div>
 <div class="paragraph">
 <p>The simplest form of projection is to retrieve a property or association. For example:</p>
@@ -2085,7 +2085,7 @@ fun listBooks(t: String): List&lt;Book&gt;</code></pre>
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-Currently Micronaut Data does not parse the JPA-QL AST and perform any further type checking hence greater care should be taken when using explicit queries. This may change in a future version of Micronaut Data.
+Currently, Micronaut Data does not parse the JPA-QL AST and perform any further type checking hence greater care should be taken when using explicit queries. This may change in a future version of Micronaut Data.
 </td>
 </tr>
 </table>
@@ -2450,7 +2450,7 @@ assertEquals(
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-In the case of JPA each operation will run with its own transaction and session, hence care needs to be taken to fetch the correct data and avoid detached objects. In addition for more complex operations it may be more efficient to write custom code that uses a single session.
+In the case of JPA each operation will run with its own transaction and session, hence care needs to be taken to fetch the correct data and avoid detached objects. In addition, for more complex operations it may be more efficient to write custom code that uses a single session.
 </td>
 </tr>
 </table>
@@ -2472,7 +2472,7 @@ In the case of JPA each operation will run with its own transaction and session,
 <p>In the case of reactive execution and if the backing implementation is blocking, Micronaut Data will use the <a href="https://docs.micronaut.io/latest/guide/index.html#reactiveServer">Configured I/O thread pool</a> to schedule the query execution on a different thread.</p>
 </div>
 <div class="paragraph">
-<p>If the backing implementation natively supports reactive types at the driver level then the I/O thread pool is not used and instead it is assumed the driver will handle the query in a non-blocking manner.</p>
+<p>If the backing implementation natively supports reactive types at the driver level then the I/O thread pool is not used, and instead it is assumed the driver will handle the query in a non-blocking manner.</p>
 </div>
 <div class="paragraph">
 <p>The following is an example of a couple of reactive methods:</p>
@@ -2550,7 +2550,7 @@ assertEquals(
 <p>In the case of JPA each operation will run with its own transaction and session, hence care needs to be taken to fetch the correct data and avoid detached objects.</p>
 </div>
 <div class="paragraph">
-<p>In addition for more complex operations it may be more efficient to write custom code that uses a single session.</p>
+<p>In addition, for more complex operations it may be more efficient to write custom code that uses a single session.</p>
 </div>
 
 <h2 id="dataUpdates"><a class="anchor" href="#dataUpdates"></a>3.4 Accessing data</h2>
@@ -2676,7 +2676,7 @@ fun insertMany(books: Iterable&lt;Book&gt;)</code></pre>
 <i class="fa icon-tip" title="Tip"></i>
 </td>
 <td class="content">
-It is not possible to use the entity as the return type in partial updates because it would require an additional select to retrieve the additional information. A number type (int, long, etc) can be returned to indicate the number of rows updated. The updated row count should be checked in most scenarios to ensure the update actually affected the row.
+It is not possible to use the entity as the return type in partial updates because it would require an additional select to retrieve the additional information. A number type (int, long, etc.) can be returned to indicate the number of rows updated. The updated row count should be checked in most scenarios to ensure the update actually affected the row.
 </td>
 </tr>
 </table>
@@ -2931,10 +2931,10 @@ fun deleteMany(books: Iterable&lt;Book&gt;)</code></pre>
 <p>It is common to want to add a field that represents the time when an entity was first persisted and the time when it was last updated.</p>
 </div>
 <div class="paragraph">
-<p>You can annotate a property that is a date type of an entity with <a href="../api/io/micronaut/data/annotation/DateCreated.html">@DateCreated</a> which will be automatically populated when saving entities and indicates the date a record was created.</p>
+<p>You can annotate a property that is a date type of entity with <a href="../api/io/micronaut/data/annotation/DateCreated.html">@DateCreated</a> which will be automatically populated when saving entities and indicates the date a record was created.</p>
 </div>
 <div class="paragraph">
-<p>You can also annotate a property that is a date type of an entity with <a href="../api/io/micronaut/data/annotation/DateUpdated.html">@DateUpdated</a> which will be automatically populated whenever the entity is updated either via the <code>persist</code> method or when using one of the batch update methods of Micronaut Data.</p>
+<p>You can also annotate a property that is a date type of entity with <a href="../api/io/micronaut/data/annotation/DateUpdated.html">@DateUpdated</a> which will be automatically populated whenever the entity is updated either via the <code>persist</code> method or when using one of the batch update methods of Micronaut Data.</p>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -6569,7 +6569,7 @@ If you want to use JPA annotations in your entities with Micronaut Data JDBC, we
 </table>
 </div>
 <div class="paragraph">
-<p>As above since only the annotations are used the dependency can be included only for compilation and not at runtime so you don&#8217;t drag along the rest of the API, reducing your JAR file size.</p>
+<p>As above since only the annotations are used the dependency can be included only for compilation and not at runtime, so you don&#8217;t drag along the rest of the API, reducing your JAR file size.</p>
 </div>
 <div class="paragraph">
 <p>You can then define an <code>@Entity</code>:</p>
@@ -7026,7 +7026,7 @@ datasources.default.dialect=H2</code></pre>
 <div class="sect2">
 <h3 id="_setting_the_dialect">Setting the Dialect</h3>
 <div class="paragraph">
-<p>As seen in the configuration above you should also configure the dialect. Although queries are precomputed in the repository some cases (like pagination) still require the dialect to specified. The following table summarizes the supported dialects:</p>
+<p>As seen in the configuration above you should also configure the dialect. Although queries are precomputed in the repository some cases (like pagination) still require the dialect to specify. The following table summarizes the supported dialects:</p>
 </div>
 <table class="tableblock frame-all grid-all stretch">
 <caption class="title">Table 1. Supported JDBC / R2DBC Dialects</caption>
@@ -7703,7 +7703,7 @@ class AuthorController(private val repository: AuthorRepository) {
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-Most of the database migration tools use JDBC driver to make DB changes. Therefore it is likely that you will in addition to the R2DBC driver need to include a <a href="https://micronaut-projects.github.io/micronaut-sql/latest/guide/#jdbc">JDBC driver module</a> for the schema migration to work.
+Most of the database migration tools use JDBC driver to make DB changes. Therefore, it is likely that you will in addition to the R2DBC driver need to include a <a href="https://micronaut-projects.github.io/micronaut-sql/latest/guide/#jdbc">JDBC driver module</a> for the schema migration to work.
 </td>
 </tr>
 </table>
@@ -7850,7 +7850,7 @@ datasources {
 <div class="sect2">
 <h3 id="_setting_the_dialect">Setting the Dialect</h3>
 <div class="paragraph">
-<p>As seen in the configuration above you should also configure the dialect. Although queries are precomputed in the repository some cases (like pagination) still require the dialect to specified. The following table summarizes the supported dialects:</p>
+<p>As seen in the configuration above you should also configure the dialect. Although queries are precomputed in the repository some cases (like pagination) still require the dialect to specify. The following table summarizes the supported dialects:</p>
 </div>
 <table class="tableblock frame-all grid-all stretch">
 <caption class="title">Table 2. Supported JDBC / R2DBC Dialects</caption>
@@ -8261,7 +8261,7 @@ See the guide for <a href="https://guides.micronaut.io/latest/micronaut-data-r2d
 <p>As seen in the <a href="#jdbcQuickStart">Quick Start</a> JDBC / R2DBC repositories in Micronaut Data are defined as interfaces that are annotated with the <a href="../api/io/micronaut/data/jdbc/annotation/JdbcRepository.html">@JdbcRepository</a> annotation, <a href="../api/io/micronaut/data/r2dbc/annotation/R2dbcRepository.html">@R2dbcRepository</a> accordingly.</p>
 </div>
 <div class="paragraph">
-<p>In a multiple datasource scenario, the <a href="../api/io/micronaut/data/annotation/Repository.html">@Repository</a> and <a href="../api/io/micronaut/transaction/annotation/Transactional.html">@Transactional</a> annotations can be used to specify the datasource configuration to use. By default Micronaut Data will look for the default datasource.</p>
+<p>In a multiple datasource scenario, the <a href="../api/io/micronaut/data/annotation/Repository.html">@Repository</a> and <a href="../api/io/micronaut/transaction/annotation/Transactional.html">@Transactional</a> annotations can be used to specify the datasource configuration to use. By default, Micronaut Data will look for the default datasource.</p>
 </div>
 <div class="paragraph">
 <p>For example:</p>
@@ -8602,7 +8602,7 @@ abstract class AbstractBookRepository(dataSource: DataSource) : CrudRepository&l
 <p>Since there is no session, features like dirty checking are not supported. This has implications when defining repository methods for inserts and updates.</p>
 </div>
 <div class="paragraph">
-<p>By default when saving an entity with a method like <code>save(MyEntity)</code> a SQL <code>INSERT</code> is always performed since Micronaut Data has no way to know whether the entity is associated to a particular session.</p>
+<p>By default, when saving an entity with a method like <code>save(MyEntity)</code> a SQL <code>INSERT</code> is always performed since Micronaut Data has no way to know whether the entity is associated to a particular session.</p>
 </div>
 <div class="paragraph">
 <p>If you wish to update an entity you should instead either use <code>update(MyEntity)</code> or even better define an appropriate <code>update</code> method to update only the data you want to update, for example:</p>
@@ -9403,7 +9403,7 @@ fun deleteAll(spec: DeleteSpecification&lt;Person&gt;?): Long</code></pre>
 <p>As it is for querying, <code>deleteAll</code> methods also come in two variations.</p>
 </div>
 <div class="paragraph">
-<p>First method is expecting <a href="../api/io/micronaut/data/repository/criteria/PredicateSpecification.html">PredicateSpecification</a> which is a the same interface described in <a href="#criteriaExecuteQuery">Querying</a> section</p>
+<p>First method is expecting <a href="../api/io/micronaut/data/repository/criteria/PredicateSpecification.html">PredicateSpecification</a> which is the same interface described in <a href="#criteriaExecuteQuery">Querying</a> section</p>
 </div>
 <div class="paragraph">
 <p>The second method comes with <a href="../api/io/micronaut/data/repository/DeleteSpecification.html">DeleteSpecification</a> and is intended only for delete criteria because it includes access to <code>jakarta.persistence.criteria.CriteriaDelete</code>.</p>
@@ -9591,7 +9591,7 @@ q.select(customer.get(Customer_.name))
 </div>
 </div>
 <div class="paragraph">
-<p>Note that as of this writing you cannot use Micronaut Data annotations (those found in the io.micronaut.data.annotation package) to generate static JPA metadata, the only supported way is to use Jakarta Persistence annotations (located in the jakarta.persistence package) in combination with Hibernate JPA Static Metamodel Generator which will generate the metamodel even if at runtime you do not actually use Hibernate, but instead use Micronaut Data JDBC.</p>
+<p>Note that as of this writing you cannot use Micronaut Data annotations (those found in the io.micronaut.data.annotation package) to generate static JPA metadata, the only supported way is to use Jakarta Persistence annotations (located in the <code>jakarta.persistence</code> package) in combination with Hibernate JPA Static Metamodel Generator which will generate the metamodel even if at runtime you do not actually use Hibernate, but instead use Micronaut Data JDBC.</p>
 </div>
 <div class="paragraph">
 <p>To configure the metamodel generator simply add the following dependency to the annotation processor classpath:</p>
@@ -9733,7 +9733,7 @@ More information about the static metamodel can be found in the <a href="https:/
 <p>An important aspect of Micronaut Data JDBC / R2DBC is that regardless whether you use JPA annotations or Micronaut Data annotations the entity classes must be compiled with Micronaut Data.</p>
 </div>
 <div class="paragraph">
-<p>This is because Micronaut Data pre-computes the persistence model (the relationships between entities, the class/property name to table/column name mappings) at compilation time, which is one of the reasons Micronaut Data JDBC can startup so fast.</p>
+<p>This is because Micronaut Data pre-computes the persistence model (the relationships between entities, the class/property name to table/column name mappings) at compilation time, which is one of the reasons Micronaut Data JDBC can start up so fast.</p>
 </div>
 <div class="paragraph">
 <p>An example of mapping with Micronaut Data annotations can be seen below:</p>
@@ -9937,7 +9937,7 @@ Micronaut Data supports both <code>javax.persistence</code> and <code>jakarta.pe
 
 
 <div class="paragraph">
-<p>In some cases, the query needs to be expanded to accommodate all of the parameter&#8217;s values. The query with a parameter which is a collection or an array: <code>WHERE value IN (?)</code> would be expanded to: <code>WHERE value IN (?, ?, ?, ?)</code></p>
+<p>In some cases, the query needs to be expanded to accommodate all the parameter&#8217;s values. The query with a parameter which is a collection or an array: <code>WHERE value IN (?)</code> would be expanded to: <code>WHERE value IN (?, ?, ?, ?)</code></p>
 </div>
 <div class="paragraph">
 <p>Micronaut Data will store additional information about the query at the build-time if one of the parameters is expandable, that eliminates the need to parse the query at runtime.</p>
@@ -10288,7 +10288,7 @@ public class CountryRegion {
 <p>If running project in native image, custom naming strategy needs to have <code>io.micronaut.core.annotation.TypeHint(CustomNamingStrategy.class)</code> annotation where custom naming strategy class is <code>CustomNamingStrategy</code>.</p>
 </div>
 <div class="paragraph">
-<p>In addition if you don&#8217;t want to repeat the above annotation definition on every entity it is handy to define a meta-annotation where the above annotation definition is applied to another annotation that you add to your class.</p>
+<p>In addition, if you don&#8217;t want to repeat the above annotation definition on every entity it is handy to define a meta-annotation where the above annotation definition is applied to another annotation that you add to your class.</p>
 </div>
 <div class="sect2">
 <h3 id="_escaping_tablecolumn_name_identifiers">Escaping Table/Column Name Identifiers</h3>
@@ -10344,19 +10344,19 @@ public class CountryRegion {
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>Kind.ONE_TO_MANY</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">One to many association</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">One-To-Many association</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>Kind.ONE_TO_ONE</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">One to one association</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">One-To-One association</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>Kind.MANY_TO_MANY</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Many to many association</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Many-To-Many association</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>Kind.MANY_TO_ONE</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Many to one association</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Many-To-One association</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>Kind.EMBEDDED</code></p></td>
@@ -10518,7 +10518,7 @@ data class Product(
 <p>Then attempt to read the <code>Product</code> entity back without specifying a join an exception will occur since the <code>manufacturer</code> association is not <code>Nullable</code>.</p>
 </div>
 <div class="paragraph">
-<p>There are few ways around this, one way is to declare at the repository level to always fetch <code>manufacturer</code>, another is declare the <code>@Nullable</code> annotation on the <code>manufacturer</code> argument to allow it to be declared <code>null</code> (or in Kotlin add <code>?</code> to the end of the constructor argument name). Which approach you choose is dependent on the design of the application.</p>
+<p>There are few ways around this, one way is to declare at the repository level to always fetch <code>manufacturer</code>, another is declared the <code>@Nullable</code> annotation on the <code>manufacturer</code> argument to allow it to be declared <code>null</code> (or in Kotlin add <code>?</code> to the end of the constructor argument name). Which approach you choose is dependent on the design of the application.</p>
 </div>
 <div class="paragraph">
 <p>The following section provides more coverage on handling joins.</p>
@@ -10810,7 +10810,7 @@ performed against json view mapped entities.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>During schema creation, json view mapped entities are skipped and it is expected for users to create them manually or via migration scripts.</p>
+<p>During schema creation, json view mapped entities are skipped, and it is expected for users to create them manually or via migration scripts.</p>
 </li>
 </ul>
 </div>
@@ -11499,7 +11499,7 @@ It is necessary to use the "logical name" of the field in the <code>@Join</code>
 <div class="paragraph">
 <p>Micronaut Data supports executing simple SQL procedures. Simply annotate a repository method with <a href="../api/io/micronaut/data/annotation/sql/Procedure.html">@Procedure</a>.
 All the method parameters will be used as incoming parameters of the procedure and not-void result will be bind as an out parameter.
-By default the method name will be used as the procedure name, to customize the name it&#8217;s possible to use the <code>value</code> attribute:</p>
+By default, the method name will be used as the procedure name, to customize the name it&#8217;s possible to use the <code>value</code> attribute:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
@@ -12523,7 +12523,7 @@ interface SaleRepository : CrudRepository&lt;Sale, ObjectId&gt; {</code></pre>
 <p>As mentioned in the <a href="#mongoQuickStart">Quick Start</a> section, if you need to customize how entities map to the collection and attribute names of the collection you need use Micronaut Data&#8217;s own annotations in the <code>io.micronaut.data.annotation</code> package.</p>
 </div>
 <div class="paragraph">
-<p>An important aspect of Micronaut Data MongoDB is that the entity classes must be compiled with Micronaut Data. This is because Micronaut Data pre-computes the persistence model (the relationships between entities, the class/property name to collection/attribute name mappings) at compilation time, which is one of the reasons Micronaut Data MongoDB can startup so fast.</p>
+<p>An important aspect of Micronaut Data MongoDB is that the entity classes must be compiled with Micronaut Data. This is because Micronaut Data pre-computes the persistence model (the relationships between entities, the class/property name to collection/attribute name mappings) at compilation time, which is one of the reasons Micronaut Data MongoDB can start up so fast.</p>
 </div>
 <div class="paragraph">
 <p>An example of mapping with Micronaut Data annotations can be seen below:</p>
@@ -13048,19 +13048,19 @@ public class CountryRegion {
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>Kind.ONE_TO_MANY</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">One to many association</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">One-To-Many association</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>Kind.ONE_TO_ONE</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">One to one association</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">One-To-One association</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>Kind.MANY_TO_MANY</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Many to many association</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Many-To-Many association</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>Kind.MANY_TO_ONE</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Many to one association</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Many-To-One association</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>Kind.EMBEDDED</code></p></td>
@@ -13226,7 +13226,7 @@ data class Product(@field:Id @GeneratedValue
 <p>Then attempt to read the <code>Product</code> entity back without specifying a join an exception will occur since the <code>manufacturer</code> association is not <code>Nullable</code>.</p>
 </div>
 <div class="paragraph">
-<p>There are few ways around this, one way is to declare at the repository level to always fetch <code>manufacturer</code>, another is declare the <code>@Nullable</code> annotation on the <code>manufacturer</code> argument to allow it to be declared <code>null</code> (or in Kotlin add <code>?</code> to the end of the constructor argument name). Which approach you choose is dependent on the design of the application.</p>
+<p>There are few ways around this, one way is to declare at the repository level to always fetch <code>manufacturer</code>, another is declared the <code>@Nullable</code> annotation on the <code>manufacturer</code> argument to allow it to be declared <code>null</code> (or in Kotlin add <code>?</code> to the end of the constructor argument name). Which approach you choose is dependent on the design of the application.</p>
 </div>
 <div class="paragraph">
 <p>The following section provides more coverage on handling joins.</p>
@@ -14300,7 +14300,7 @@ fun deleteAll(spec: DeleteSpecification&lt;Person&gt;?): Long</code></pre>
 <p>As it is for querying, <code>deleteAll</code> methods also come in two variations.</p>
 </div>
 <div class="paragraph">
-<p>First method is expecting <a href="../api/io/micronaut/data/repository/criteria/PredicateSpecification.html">PredicateSpecification</a> which is a the same interface described in <a href="#criteriaExecuteQuery">Querying</a> section</p>
+<p>First method is expecting <a href="../api/io/micronaut/data/repository/criteria/PredicateSpecification.html">PredicateSpecification</a> which is the same interface described in <a href="#criteriaExecuteQuery">Querying</a> section</p>
 </div>
 <div class="paragraph">
 <p>The second method comes with <a href="../api/io/micronaut/data/repository/DeleteSpecification.html">DeleteSpecification</a> and is intended only for delete criteria because it includes access to <code>jakarta.persistence.criteria.CriteriaDelete</code>.</p>
@@ -16142,7 +16142,7 @@ fun deleteAll(spec: DeleteSpecification&lt;Person&gt;?): Long</code></pre>
 <p>As it is for querying, <code>deleteAll</code> methods also come in two variations.</p>
 </div>
 <div class="paragraph">
-<p>First method is expecting <a href="../api/io/micronaut/data/repository/criteria/PredicateSpecification.html">PredicateSpecification</a> which is a the same interface described in <a href="#criteriaExecuteQuery">Querying</a> section</p>
+<p>First method is expecting <a href="../api/io/micronaut/data/repository/criteria/PredicateSpecification.html">PredicateSpecification</a> which is the same interface described in <a href="#criteriaExecuteQuery">Querying</a> section</p>
 </div>
 <div class="paragraph">
 <p>The second method comes with <a href="../api/io/micronaut/data/repository/DeleteSpecification.html">DeleteSpecification</a> and is intended only for delete criteria because it includes access to <code>jakarta.persistence.criteria.CriteriaDelete</code>.</p>
@@ -16382,7 +16382,7 @@ Composite identities are not supported.</p>
 <div class="sect2">
 <h3 id="_partition_key">Partition Key</h3>
 <div class="paragraph">
-<p>In Azure Cosmos Db partition keys are the core element to distributing data efficiently into different logical and physical sets so that the queries performed against the database are completed as quickly as possible. Every mapped entity should have partition key defined. Like explained above, it can be defined using <a href="../api/io/micronaut/data/cosmos/annotation/PartitionKey.html">@PartitionKey</a> annotation on appropriate entity field or via configuration as explained in <a href="#azureCosmosConfiguration">configuration</a> section. Efficiently using well defined partition key will improve operations performance and reduce request unit costs.
+<p>In Azure Cosmos Db partition keys are the core element to distributing data efficiently into different logical and physical sets so that the queries performed against the database are completed as quickly as possible. Every mapped entity should have partition key defined. Like explained above, it can be defined using <a href="../api/io/micronaut/data/cosmos/annotation/PartitionKey.html">@PartitionKey</a> annotation on appropriate entity field or via configuration as explained in <a href="#azureCosmosConfiguration">configuration</a> section. Efficiently using well-defined partition key will improve operations performance and reduce request unit costs.
 Micronaut Data Cosmos tries to use a partition key whenever possible. Here are some repository method examples that make use of a partition key in read, update or delete operations</p>
 </div>
 <div class="listingblock multi-language-sample">
@@ -16419,7 +16419,7 @@ Micronaut Data Cosmos tries to use a partition key whenever possible. Here are s
 <div class="sect2">
 <h3 id="_diagnostics">Diagnostics</h3>
 <div class="paragraph">
-<p>Azure Cosmos Db provides operations diagnostics so users can get that information and perhaps integrate  with their logging or metrics system. In Micronaut Data Azure we expose interface <a href="../api/io/micronaut/data/cosmos/operations/CosmosDiagnosticsProcessor.html">CosmosDiagnosticsProcessor</a>. Users need to implement this interface and add it to the context so it can be available to our operations classes. It has only one method</p>
+<p>Azure Cosmos Db provides operations diagnostics so users can get that information and perhaps integrate  with their logging or metrics system. In Micronaut Data Azure we expose interface <a href="../api/io/micronaut/data/cosmos/operations/CosmosDiagnosticsProcessor.html">CosmosDiagnosticsProcessor</a>. Users need to implement this interface and add it to the context, so it can be available to our operations classes. It has only one method</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -16427,7 +16427,7 @@ Micronaut Data Cosmos tries to use a partition key whenever possible. Here are s
 </div>
 </div>
 <div class="paragraph">
-<p>which is being called after each operation against Azure Cosmos Db. Parameter <code>operationName</code> is internal operation name in Micronaut Data Azure and it has got these known values:</p>
+<p>which is being called after each operation against Azure Cosmos Db. Parameter <code>operationName</code> is internal operation name in Micronaut Data Azure, and it has got these known values:</p>
 </div>
 <div class="listingblock">
 <div class="content">
