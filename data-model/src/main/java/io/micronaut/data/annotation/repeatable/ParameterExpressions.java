@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.annotation.repeatable;
 
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.annotation.ParameterExpression;
 
 import java.lang.annotation.Documented;
@@ -28,12 +29,13 @@ import java.lang.annotation.Target;
  * A holder for the repeatable annotation {@link io.micronaut.data.annotation.ParameterExpression}.
  *
  * @author Denis Stepanov
- * @since 4.5.0
+ * @since 4.7.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 @Inherited
 @Documented
+@Experimental
 public @interface ParameterExpressions {
 
     /**

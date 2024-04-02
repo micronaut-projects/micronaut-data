@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.annotation;
 
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.annotation.repeatable.ParameterExpressions;
 
 import java.lang.annotation.Documented;
@@ -29,13 +30,14 @@ import java.lang.annotation.Target;
  * The definition of the query's parameter value that should be represented as an expression.
  *
  * @author Denis Stepanov
- * @since 4.5.0
+ * @since 4.7.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.TYPE, ElementType.ANNOTATION_TYPE})
 @Documented
 @Inherited
 @Repeatable(ParameterExpressions.class)
+@Experimental
 public @interface ParameterExpression {
 
     /**
