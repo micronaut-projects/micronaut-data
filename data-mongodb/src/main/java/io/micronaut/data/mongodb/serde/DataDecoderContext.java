@@ -103,7 +103,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
                 @Override
                 public Deserializer<Object> createSpecific(DecoderContext decoderContext, Argument<? super Object> type) throws SerdeException {
                     Deserializer<?> relationDeser = findDeserializer(type);
-                    return new Deserializer<Object>() {
+                    return new Deserializer<>() {
                         @Override
                         public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) throws IOException {
                             if (decoder.decodeNull()) {
@@ -161,7 +161,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
                     Argument<Object> convertedType = Argument.of(converterPersistedType);
                     AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
                     Deserializer<?> deserializer = findDeserializer(convertedType);
-                    return new Deserializer<Object>() {
+                    return new Deserializer<>() {
                         @Override
                         public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) throws IOException {
                             if (decoder.decodeNull()) {
@@ -190,7 +190,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
             return ((MappedCodec<? extends T>) codec).deserializer;
         }
         if (codec != null && !(codec instanceof IterableCodec) && !(Map.class.isAssignableFrom(codec.getEncoderClass())) && !(Collection.class.isAssignableFrom(codec.getEncoderClass()))) {
-            return new CodecBsonDecoder<T>((Codec<T>) codec);
+            return new CodecBsonDecoder<>((Codec<T>) codec);
         }
         return parent.findDeserializer(type);
     }

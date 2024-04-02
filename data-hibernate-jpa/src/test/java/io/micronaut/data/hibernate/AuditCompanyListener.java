@@ -16,7 +16,7 @@ public class AuditCompanyListener {
 
     @Singleton
     PrePersistEventListener<AuditCompany> beforeEntityPersist() {
-        return new PrePersistEventListener<AuditCompany>() {
+        return new PrePersistEventListener<>() {
 
             @Override
             public boolean prePersist(AuditCompany entity) {
@@ -41,7 +41,7 @@ public class AuditCompanyListener {
 
     @Singleton
     PreUpdateEventListener<AuditCompany> beforeEntityUpdate() {
-        return new PreUpdateEventListener<AuditCompany>() {
+        return new PreUpdateEventListener<>() {
             @Override
             public boolean preUpdate(AuditCompany auditContact) {
                 auditContact.setUpdateUser(updateUser);

@@ -58,7 +58,7 @@ public final class MongoCollectionsCreator extends AbstractMongoCollectionsCreat
             MongoClient mongoClient = getMongoFactory(MongoClient.class, beanLocator, mongoConfiguration);
             MongoDatabaseNameProvider mongoDatabaseNameProvider = getMongoFactory(MongoDatabaseNameProvider.class, beanLocator, mongoConfiguration);
             Map<String, Set<String>> databaseCollections = new HashMap<>();
-            return new DatabaseOperations<MongoDatabase>() {
+            return new DatabaseOperations<>() {
 
                 @Override
                 public String getDatabaseName(MongoDatabase database) {

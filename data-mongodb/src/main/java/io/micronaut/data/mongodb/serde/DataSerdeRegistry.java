@@ -164,7 +164,7 @@ final class DataSerdeRegistry implements SerdeRegistry {
                     BeanProperty<Object, Object> property = entity.getIdentity().getProperty();
                     Argument<?> idType = entity.getIdentity().getArgument();
                     Serializer<Object> idSerializer = encoderContext.findCustomSerializer(IdSerializer.class).createSpecific(encoderContext, idType);
-                    return new Serializer<Object>() {
+                    return new Serializer<>() {
                         @Override
                         public void serialize(Encoder encoder, EncoderContext context, Argument<?> type, Object value) throws IOException {
                             Object id = property.get(value);

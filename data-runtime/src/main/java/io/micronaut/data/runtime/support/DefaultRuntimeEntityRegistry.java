@@ -116,7 +116,7 @@ final class DefaultRuntimeEntityRegistry implements RuntimeEntityRegistry, Appli
     @NonNull
     @Override
     public <T> RuntimePersistentEntity<T> newEntity(@NonNull Class<T> type) {
-        return new RuntimePersistentEntity<T>(type) {
+        return new RuntimePersistentEntity<>(type) {
             final boolean hasPrePersistEventListeners = eventRegistry.supports((RuntimePersistentEntity) this, PrePersist.class);
             final boolean hasPreRemoveEventListeners = eventRegistry.supports((RuntimePersistentEntity) this, PreRemove.class);
             final boolean hasPreUpdateEventListeners = eventRegistry.supports((RuntimePersistentEntity) this, PreUpdate.class);

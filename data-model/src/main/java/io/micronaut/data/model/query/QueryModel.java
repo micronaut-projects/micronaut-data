@@ -1276,7 +1276,7 @@ public interface QueryModel extends Criteria {
      * base class for a junction (AND or OR or NOT).
      */
     abstract class Junction implements Criterion {
-        private List<Criterion> criteria = new ArrayList<Criterion>();
+        private List<Criterion> criteria = new ArrayList<>();
 
         /**
          * Default constructor.
