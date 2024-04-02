@@ -41,7 +41,7 @@ public interface R2dbcSchemaHandler {
     Publisher<Void> createSchema(Connection connection, Dialect dialect, String name);
 
     /**
-     * Uses the given schema..
+     * Uses the given schema.
      *
      * @param connection The R2DBC connection
      * @param dialect    The dialect

@@ -30,7 +30,7 @@ import io.micronaut.inject.ExecutableMethod;
 import java.util.Optional;
 
 /**
- * An interceptor that allows injecting a {@link ClientSession} that acts a proxy to lookup the connection for the current connection.
+ * An interceptor that allows injecting a {@link ClientSession} that acts a proxy to look up the connection for the current connection.
  *
  * @author Denis Stepanov
  * @since 3.3

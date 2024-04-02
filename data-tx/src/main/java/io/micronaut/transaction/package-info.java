@@ -15,6 +15,6 @@
  */
 /**
  * NOTICE: This is a fork of Spring's {@code PlatformTransactionManager} modernizing it
- * to use enums, Slf4j and decoupling from Spring.
+ * to use enums, SLF4J and decoupling from Spring.
  */
 package io.micronaut.transaction;

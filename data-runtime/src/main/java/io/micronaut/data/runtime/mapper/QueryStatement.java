@@ -350,7 +350,7 @@ public interface QueryStatement<PS, IDX> {
     }
 
     /**
-     * Write a int value for the given name.
+     * Write an int value for the given name.
      * @param statement The statement
      * @param name The name (such as the column name)
      * @param integer The integer

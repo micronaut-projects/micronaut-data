@@ -24,7 +24,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
  * Generic version of allowing transformations to be applied when reading or writing
- * data to and from the a database. Inspired by Hibernate's <code>ColumnTransformer</code> concept.
+ * data to and from the database. Inspired by Hibernate's <code>ColumnTransformer</code> concept.
  *
  * @author graemerocher
  * @since 1.0

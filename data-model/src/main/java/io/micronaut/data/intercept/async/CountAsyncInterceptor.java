@@ -20,7 +20,7 @@ import io.micronaut.data.intercept.DataInterceptor;
 import java.util.concurrent.CompletionStage;
 
 /**
- * An interceptor that executes a a count of all records asynchronously.
+ * An interceptor that executes a count of all records asynchronously.
  *
  * @param <T> The declaring type
  * @author graemerocher

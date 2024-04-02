@@ -57,7 +57,7 @@ public interface SavepointManager {
 
     /**
      * Roll back to the given savepoint.
-     * <p>The savepoint will <i>not</i> be automatically released afterwards.
+     * <p>The savepoint will <i>not</i> be automatically released afterward.
      * You may explicitly call {@link #releaseSavepoint(Object)} or rely on
      * automatic release on transaction completion.
      * @param savepoint the savepoint to roll back to

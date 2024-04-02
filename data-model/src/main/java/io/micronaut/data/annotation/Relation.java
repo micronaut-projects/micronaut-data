@@ -71,24 +71,23 @@ public @interface Relation {
      */
     enum Kind {
         /**
-         * One to many association.
+         * One-To-Many association.
          */
         ONE_TO_MANY(false),
         /**
-         * One to one association.
+         * One-to-one association.
          */
         ONE_TO_ONE(true),
         /**
-         * Many to many association.
+         * Many-To-Many association.
          */
         MANY_TO_MANY(false),
         /**
          * Embedded association.
          */
         EMBEDDED(true),
-
         /**
-         * Many to one association.
+         * Many-To-One association.
          */
         MANY_TO_ONE(true);
 

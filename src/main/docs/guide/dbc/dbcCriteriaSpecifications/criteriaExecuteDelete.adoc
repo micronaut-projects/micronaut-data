@@ -4,7 +4,7 @@ snippet::example.PersonRepository[project-base="doc-examples/jdbc-example",sourc
 
 As it is for querying, `deleteAll` methods also come in two variations.
 
-First method is expecting api:data.repository.criteria.PredicateSpecification[] which is a the same interface described in <<criteriaExecuteQuery, Querying>> section
+First method is expecting api:data.repository.criteria.PredicateSpecification[] which is the same interface described in <<criteriaExecuteQuery, Querying>> section
 
 The second method comes with api:data.repository.DeleteSpecification[] and is intended only for delete criteria because it includes access to `jakarta.persistence.criteria.CriteriaDelete`.
 
