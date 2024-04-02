@@ -2954,6 +2954,53 @@ If you update the entity with an external SQL statement or custom logic you will
 </tr>
 </table>
 </div>
+<div class="sect2">
+<h3 id="_jpa_hibernate_and_entity_timestamps">JPA Hibernate and Entity Timestamps</h3>
+<div class="paragraph">
+<p>The <a href="../api/io/micronaut/data/annotation/DateCreated.html">@DateCreated</a> and <a href="../api/io/micronaut/data/annotation/DateUpdated.html">@DateUpdated</a> annotations require a <code>ValidatorFactory</code> bean to be present in the application context when used with JPA Hibernate.
+This can be provided by ensuring one of</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut:io.micronaut.validation:micronaut-validation")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.micronaut&lt;/groupId&gt;
+    &lt;artifactId&gt;io.micronaut.validation&lt;/artifactId&gt;
+    &lt;version&gt;micronaut-validation&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div></p>
+</div>
+<div class="paragraph">
+<p>or</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut:io.micronaut.beanvalidation:micronaut-hibernate-validator")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.micronaut&lt;/groupId&gt;
+    &lt;artifactId&gt;io.micronaut.beanvalidation&lt;/artifactId&gt;
+    &lt;version&gt;micronaut-hibernate-validator&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div></p>
+</div>
+<div class="paragraph">
+<p>is added to your project.</p>
+</div>
+</div>
 
 <h2 id="entityEvents"><a class="anchor" href="#entityEvents"></a>3.4.5 Entity Events</h2>
 
