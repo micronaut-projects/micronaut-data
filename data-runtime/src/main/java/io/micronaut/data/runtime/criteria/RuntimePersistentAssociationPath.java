@@ -43,7 +43,7 @@ class RuntimePersistentAssociationPath<Owner, E> extends AbstractRuntimePersiste
     private final Path<?> parentPath;
     private final RuntimeAssociation<Owner> association;
     private final List<Association> associations;
-    private io.micronaut.data.annotation.Join.Type associationJoinType;
+    private Join.Type associationJoinType;
     @Nullable
     private String alias;
 

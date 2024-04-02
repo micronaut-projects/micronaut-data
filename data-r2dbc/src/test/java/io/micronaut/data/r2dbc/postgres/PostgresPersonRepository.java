@@ -19,13 +19,16 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.tck.entities.Person;
+import io.micronaut.data.tck.repositories.PersonRepository;
 
 @R2dbcRepository(dialect = Dialect.POSTGRES)
-public interface PostgresPersonRepository extends io.micronaut.data.tck.repositories.PersonRepository {
+public interface PostgresPersonRepository extends PersonRepository {
 
+    @Override
     Person save(String name, int age);
 
+    @Override
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
     int saveCustom(String name, int age);
-    
+
 }

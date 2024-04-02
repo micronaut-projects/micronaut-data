@@ -20,15 +20,19 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.tck.entities.TotalDto;
+import io.micronaut.data.tck.repositories.PersonRepository;
 
 @R2dbcRepository(dialect = Dialect.H2)
-public interface H2PersonRepository extends io.micronaut.data.tck.repositories.PersonRepository {
+public interface H2PersonRepository extends PersonRepository {
 
+    @Override
     Person save(String name, int age);
 
+    @Override
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
     int saveCustom(String name, int age);
 
+    @Override
     @Query("select count(*) as total from person")
     TotalDto getTotal();
 }

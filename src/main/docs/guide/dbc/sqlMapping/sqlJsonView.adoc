@@ -14,4 +14,4 @@ performed against json view mapped entities.
 
 Limitations
 
-* During schema creation, json view mapped entities are skipped and it is expected for users to create them manually or via migration scripts.
+* During schema creation, json view mapped entities are skipped, and it is expected for users to create them manually or via migration scripts.

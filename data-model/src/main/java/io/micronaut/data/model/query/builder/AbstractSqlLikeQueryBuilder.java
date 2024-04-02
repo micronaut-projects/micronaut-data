@@ -2187,7 +2187,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     }
 
     /**
-     * If and when {@link io.micronaut.data.annotation.EntityRepresentation} annotation with JSON type is used for the repository method but dialect does not support
+     * If and when {@link EntityRepresentation} annotation with JSON type is used for the repository method but dialect does not support
      * JSON entity representations this will throw {@link IllegalArgumentException}.
      *
      * @param entity the persistent entity
@@ -2199,12 +2199,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     }
 
     /**
-     * Checks whether {@link io.micronaut.data.annotation.EntityRepresentation} annotation with JSON type is used for the repository method.
+     * Checks whether {@link EntityRepresentation} annotation with JSON type is used for the repository method.
      * If current dialect does not support handling JSON entity representations, {@link IllegalArgumentException} is thrown.
      *
      * @param annotationMetadata the annotation metadata
      * @param entity the persistent entity
-     * @return true if {@link io.micronaut.data.annotation.EntityRepresentation} annotation with JSON type is used for the repository method
+     * @return true if {@link EntityRepresentation} annotation with JSON type is used for the repository method
      */
     protected boolean isJsonEntity(AnnotationMetadata annotationMetadata, PersistentEntity entity) {
         boolean jsonEntity = DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(annotationMetadata);
@@ -2243,6 +2243,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         QueryPropertyPath getRequiredProperty(String name, Class<?> criterionClazz);
 
+        @Override
         default void pushParameter(@NonNull BindingParameter bindingParameter, @NonNull BindingParameter.BindingContext bindingContext) {
             getQueryState().pushParameter(bindingParameter, bindingContext);
         }
@@ -2512,8 +2513,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         /**
          * Default constructor.
          *
-         * @param name The name of the place holder
-         * @param key  The key to set the value of the place holder
+         * @param name The name of the placeholder
+         * @param key  The key to set the value of the placeholder
          */
         public Placeholder(String name, String key) {
             this.name = name;
@@ -2526,14 +2527,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         /**
-         * @return The place holder name
+         * @return The placeholder name
          */
         public String getName() {
             return name;
         }
 
         /**
-         * This the precomputed key to set the place holder. In SQL this would be the index.
+         * This the precomputed key to set the placeholder. In SQL this would be the index.
          *
          * @return The key used to set the placeholder.
          */

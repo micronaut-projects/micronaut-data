@@ -17,6 +17,7 @@ package io.micronaut.data.processor.mappers.jpa.jx;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.data.annotation.Id;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
 
@@ -41,7 +42,7 @@ public class IdAnnotationMapper implements NamedAnnotationMapper {
     @Override
     public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
         return Collections.singletonList(
-                AnnotationValue.builder(io.micronaut.data.annotation.Id.class)
+                AnnotationValue.builder(Id.class)
                         .build()
         );
     }

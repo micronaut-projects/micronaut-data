@@ -68,6 +68,7 @@ interface BookRepository extends CrudRepository<Book, Long> { // <2>
     // end::explicit[]
 
     // tag::save[]
+    @Override
     Book save(Book entity);
     // end::save[]
 
@@ -87,6 +88,7 @@ interface BookRepository extends CrudRepository<Book, Long> { // <2>
     // end::save2[]
 
     // tag::update[]
+    @Override
     Book update(Book newBook);
     // end::update[]
 
@@ -112,6 +114,7 @@ interface BookRepository extends CrudRepository<Book, Long> { // <2>
     // end::updateCustomQuery[]
 
     // tag::deleteall[]
+    @Override
     void deleteAll();
     // end::deleteall[]
 

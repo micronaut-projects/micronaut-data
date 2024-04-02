@@ -48,13 +48,14 @@ final class RuntimePersistentEntityCriteriaQuery<T> extends AbstractPersistentEn
         return from(runtimeEntityRegistry.getEntity(entityClass));
     }
 
+    @Override
     public <X> PersistentEntityRoot<X> from(PersistentEntity persistentEntity) {
         if (entityRoot != null) {
             throw new IllegalStateException("The root entity is already specified!");
         }
         RuntimePersistentEntity<X> runtimePersistentEntity = (RuntimePersistentEntity<X>) persistentEntity;
         staticMetamodelInitializer.initializeMetadata(runtimePersistentEntity);
-        RuntimePersistentEntityRoot<X> newEntityRoot = new RuntimePersistentEntityRoot<X>(runtimePersistentEntity);
+        RuntimePersistentEntityRoot<X> newEntityRoot = new RuntimePersistentEntityRoot<>(runtimePersistentEntity);
         entityRoot = newEntityRoot;
         return newEntityRoot;
     }

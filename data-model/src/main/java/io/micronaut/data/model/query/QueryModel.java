@@ -377,7 +377,7 @@ public interface QueryModel extends Criteria {
 
     /**
      * Whether to lock the selected entities.
-     * @return true if the the selected entities should be locked
+     * @return true if the selected entities should be locked
      */
     boolean isForUpdate();
 
@@ -1276,7 +1276,7 @@ public interface QueryModel extends Criteria {
      * base class for a junction (AND or OR or NOT).
      */
     abstract class Junction implements Criterion {
-        private List<Criterion> criteria = new ArrayList<Criterion>();
+        private List<Criterion> criteria = new ArrayList<>();
 
         /**
          * Default constructor.
@@ -1293,7 +1293,7 @@ public interface QueryModel extends Criteria {
         }
 
         /**
-         * Adds an additional criterion.
+         * Adds another criterion.
          * @param c The criterion
          * @return This junction
          */
@@ -1323,22 +1323,12 @@ public interface QueryModel extends Criteria {
      * A Criterion used to combine to criterion in a logical AND.
      */
     class Conjunction extends Junction {
-        /**
-         * Default constructor.
-         */
-        public Conjunction() {
-        }
     }
 
     /**
      * A Criterion used to combine to criterion in a logical OR.
      */
     class Disjunction extends Junction {
-        /**
-         * Default constructor.
-         */
-        public Disjunction() {
-        }
     }
 
     /**

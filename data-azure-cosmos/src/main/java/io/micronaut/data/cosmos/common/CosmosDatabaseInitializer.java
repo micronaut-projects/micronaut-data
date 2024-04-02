@@ -44,6 +44,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import jakarta.annotation.PostConstruct;
+
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -152,7 +154,7 @@ final class CosmosDatabaseInitializer {
         return introspections.stream()
             // filter out inner / internal / abstract(MappedSuperClass) classes
             .filter(i -> !i.getBeanType().getName().contains("$"))
-            .filter(i -> !java.lang.reflect.Modifier.isAbstract(i.getBeanType().getModifiers()))
+            .filter(i -> !Modifier.isAbstract(i.getBeanType().getModifiers()))
             .map(e -> runtimeEntityRegistry.getEntity(e.getBeanType())).toArray(RuntimePersistentEntity<?>[]::new);
     }
 

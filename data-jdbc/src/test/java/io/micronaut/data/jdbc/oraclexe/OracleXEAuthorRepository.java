@@ -23,6 +23,7 @@ import io.micronaut.data.tck.repositories.AuthorRepository;
 
 @JdbcRepository(dialect = Dialect.ORACLE)
 public interface OracleXEAuthorRepository extends AuthorRepository {
+    @Override
     @Join(value = "books", type = Join.Type.LEFT_FETCH)
     Author queryByName(String name);
 }

@@ -47,6 +47,7 @@ public interface PersistentEntity extends PersistentElement {
      *
      * @return The entity name
      */
+    @Override
     @NonNull String getName();
 
     /**
@@ -428,6 +429,6 @@ public interface PersistentEntity extends PersistentElement {
      */
     static @NonNull <T> RuntimePersistentEntity<T> of(@NonNull BeanIntrospection<T> introspection) {
         ArgumentUtils.requireNonNull("introspection", introspection);
-        return new RuntimePersistentEntity<T>(introspection);
+        return new RuntimePersistentEntity<>(introspection);
     }
 }

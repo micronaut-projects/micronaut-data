@@ -95,9 +95,8 @@ public class DefaultQuery implements QueryModel {
         return projections.getProjectionList();
     }
 
-
     /**
-     * Obtain the joint for for a given association.
+     * Obtain the joint for a given association.
      * @param path The path to the association
      * @return The join type
      */
@@ -285,6 +284,7 @@ public class DefaultQuery implements QueryModel {
      * @param values The values
      * @return This query instance
      */
+    @Override
     public @NonNull
     DefaultQuery allEq(@NonNull Map<String, Object> values) {
         QueryModel.Junction conjunction = conjunction();

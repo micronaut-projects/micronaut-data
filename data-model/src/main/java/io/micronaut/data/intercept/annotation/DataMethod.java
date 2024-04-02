@@ -231,7 +231,7 @@ public @interface DataMethod {
          */
         COUNT,
         /**
-         * A exists operation.
+         * An exists operation.
          */
         EXISTS,
         /**

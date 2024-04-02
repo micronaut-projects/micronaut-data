@@ -85,7 +85,7 @@ public final class CosmosEntity {
     }
 
     /**
-     * Creates {@link CosmosEntity} from {@link RuntimePersistentEntity} and {@link io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration.CosmosContainerSettings}.
+     * Creates {@link CosmosEntity} from {@link RuntimePersistentEntity} and {@link CosmosDatabaseConfiguration.CosmosContainerSettings}.
      *
      * @param runtimePersistentEntity the runtime persistent entity
      * @param cosmosContainerSettings the Cosmos container settings
@@ -163,7 +163,7 @@ public final class CosmosEntity {
         // Find partition key path
         for (PersistentProperty property : properties) {
             AnnotationValue<PartitionKey> partitionKeyAnnotationValue =
-                property.getAnnotation(io.micronaut.data.cosmos.annotation.PartitionKey.class);
+                property.getAnnotation(PartitionKey.class);
             if (partitionKeyAnnotationValue != null) {
                 if (StringUtils.isNotEmpty(partitionKeyPath)) {
                     throw new IllegalStateException("Multiple @PartitionKey annotations declared on " + runtimePersistentEntity.getPersistedName()

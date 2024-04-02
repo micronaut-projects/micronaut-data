@@ -463,8 +463,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 }
             }
 
-            Spliterator<R> spliterator = new Spliterators.AbstractSpliterator<R>(Long.MAX_VALUE,
-                Spliterator.ORDERED | Spliterator.IMMUTABLE) {
+            Spliterator<R> spliterator = new Spliterators.AbstractSpliterator<>(Long.MAX_VALUE,
+                    Spliterator.ORDERED | Spliterator.IMMUTABLE) {
                 @Override
                 public boolean tryAdvance(Consumer<? super R> action) {
                     if (finished.get()) {
@@ -729,6 +729,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         throw new UnsupportedOperationException("The findPage method without an explicit query is not supported. Use findPage(PreparedQuery) instead");
     }
 
+    @Override
     @NonNull
     public <T> Iterable<T> persistAll(@NonNull InsertBatchOperation<T> operation) {
         return executeWrite(connection -> {
@@ -899,7 +900,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         ArgumentUtils.requireNonNull("rootEntity", rootEntity);
         TypeMapper<ResultSet, T> mapper = new SqlResultEntityTypeMapper<>(prefix, getEntity(rootEntity), columnNameResultSetReader,
             jsonMapper != null ? () -> jsonMapper : null, conversionService);
-        Iterable<T> iterable = () -> new Iterator<T>() {
+        Iterable<T> iterable = () -> new Iterator<>() {
             boolean fetched = false;
             boolean end = false;
 
@@ -937,7 +938,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
     @NonNull
     private ResultConsumer.Context<ResultSet> newMappingContext(ResultSet rs) {
-        return new ResultConsumer.Context<ResultSet>() {
+        return new ResultConsumer.Context<>() {
             @Override
             public ResultSet getResultSet() {
                 return rs;
@@ -953,11 +954,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             public <E> E readEntity(String prefix, Class<E> type) throws DataAccessException {
                 RuntimePersistentEntity<E> entity = getEntity(type);
                 SqlResultEntityTypeMapper<ResultSet, E> mapper = new SqlResultEntityTypeMapper<>(
-                    prefix,
-                    entity,
-                    columnNameResultSetReader,
-                    jsonMapper != null ? () -> jsonMapper : null,
-                    conversionService);
+                        prefix,
+                        entity,
+                        columnNameResultSetReader,
+                        jsonMapper != null ? () -> jsonMapper : null,
+                        conversionService);
                 return mapper.map(rs, type);
             }
 
@@ -966,10 +967,10 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             public <E, D> D readDTO(@NonNull String prefix, @NonNull Class<E> rootEntity, @NonNull Class<D> dtoType) throws DataAccessException {
                 RuntimePersistentEntity<E> entity = getEntity(rootEntity);
                 TypeMapper<ResultSet, D> introspectedDataMapper = new DTOMapper<>(
-                    entity,
-                    columnNameResultSetReader,
-                    jsonMapper != null ? () -> jsonMapper : null,
-                    conversionService);
+                        entity,
+                        columnNameResultSetReader,
+                        jsonMapper != null ? () -> jsonMapper : null,
+                        conversionService);
                 return introspectedDataMapper.map(rs, dtoType);
             }
         };

@@ -49,6 +49,7 @@ public interface BlockingReactorRepositoryOperations extends RepositoryOperation
         return ReactorPropagation.addPropagatedContext(Context.empty(), PropagatedContext.getOrEmpty());
     }
 
+    @Override
     @Nullable
     default <T> T findOne(@NonNull Class<T> type, @NonNull Object id) {
         return reactive().findOne(type, id)

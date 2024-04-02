@@ -18,7 +18,7 @@ package io.micronaut.data.model.runtime;
 import java.util.List;
 
 /**
- * A update batch operation is an operation performed on one or more entities of the same type.
+ * An update batch operation is an operation performed on one or more entities of the same type.
  *
  * @param <E> The entity type
  * @author Denis Stepanov

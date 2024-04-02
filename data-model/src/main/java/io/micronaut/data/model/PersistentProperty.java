@@ -39,6 +39,7 @@ public interface PersistentProperty extends PersistentElement {
      * The name of the property.
      * @return The property name
      */
+    @Override
     @NonNull String getName();
 
     /**
@@ -111,7 +112,7 @@ public interface PersistentProperty extends PersistentElement {
     }
 
     /**
-     * @return True if the property is autopopulated
+     * @return True if the property is auto-populated
      */
     default boolean isAutoPopulated() {
         return !isGenerated() && getAnnotationMetadata().hasStereotype(AutoPopulated.class);

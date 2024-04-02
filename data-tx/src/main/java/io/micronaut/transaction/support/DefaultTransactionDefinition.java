@@ -165,8 +165,8 @@ public class DefaultTransactionDefinition implements TransactionDefinition {
     /**
      * Set the timeout to apply, as number of seconds.
      * Default is TIMEOUT_DEFAULT (-1).
-     * <p>Exclusively designed for use with {@link io.micronaut.transaction.TransactionDefinition.Propagation#REQUIRED} or
-     * {@link io.micronaut.transaction.TransactionDefinition.Propagation#REQUIRES_NEW} since it only applies to newly started
+     * <p>Exclusively designed for use with {@link TransactionDefinition.Propagation#REQUIRED} or
+     * {@link TransactionDefinition.Propagation#REQUIRES_NEW} since it only applies to newly started
      * transactions.
      * <p>Note that a transaction manager that does not support timeouts will throw
      * an exception when given any other timeout than {@link #TIMEOUT_DEFAULT}.
@@ -192,7 +192,7 @@ public class DefaultTransactionDefinition implements TransactionDefinition {
      * Set whether to optimize as read-only transaction.
      * Default is "false".
      * <p>The read-only flag applies to any transaction context, whether backed
-     * by an actual resource transaction ({@link io.micronaut.transaction.TransactionDefinition.Propagation#REQUIRED}/
+     * by an actual resource transaction ({@link TransactionDefinition.Propagation#REQUIRED}/
      * {@link Propagation#REQUIRES_NEW}) or operating non-transactionally at
      * the resource level ({@link Propagation#SUPPORTS}). In the latter case,
      * the flag will only apply to managed resources within the application,

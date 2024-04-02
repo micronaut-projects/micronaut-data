@@ -74,6 +74,7 @@ public abstract class BookRepository extends io.micronaut.data.tck.repositories.
     @Query("UPDATE Book SET author = :author WHERE id = :id")
     public abstract long updateAuthorCustomQuery(Long id, Author author);
 
+    @Override
     public abstract long updateAuthor(@Id Long id, Author author);
 
     @Query("SELECT b FROM Book b WHERE b.author = :author")

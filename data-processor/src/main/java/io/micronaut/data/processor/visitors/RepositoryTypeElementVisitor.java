@@ -167,7 +167,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
         this.currentClass = element;
 
-        entityResolver = new Function<ClassElement, SourcePersistentEntity>() {
+        entityResolver = new Function<>() {
 
             final MappedEntityVisitor mappedEntityVisitor = new MappedEntityVisitor();
             final MappedEntityVisitor embeddedMappedEntityVisitor = new MappedEntityVisitor(false);
@@ -334,7 +334,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         QueryResult queryResult = methodInfo.getQueryResult();
         if (queryResult != null) {
             if (methodInfo.isRawQuery()) {
-                // no need to annotation since already annotated, just replace the
+                // no need to annotation since already annotated, just replace
                 // the computed parameter names
                 parameterBinding = queryResult.getParameterBindings();
 
@@ -639,7 +639,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
     /**
      * Annotates method element with {@link io.micronaut.data.annotation.QueryResult} if root entity is {@link EntityRepresentation} of JSON type
-     * and method is {@link io.micronaut.data.intercept.annotation.DataMethod.OperationType#QUERY}.
+     * and method is {@link DataMethod.OperationType#QUERY}.
      *
      * @param element    the method element
      * @param methodInfo the method match info

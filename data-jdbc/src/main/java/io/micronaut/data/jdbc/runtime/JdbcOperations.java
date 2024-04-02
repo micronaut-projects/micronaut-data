@@ -76,7 +76,7 @@ public interface JdbcOperations {
      * @param rootEntity The entity type
      * @param <T>        The generic type
      * @return The stream
-     * @throws io.micronaut.data.exceptions.DataAccessException If an error occurs reading the result
+     * @throws DataAccessException If an error occurs reading the result
      */
     @NonNull
     <T> Stream<T> entityStream(
@@ -91,7 +91,7 @@ public interface JdbcOperations {
      * @param rootEntity The entity type
      * @param <T>        The generic type
      * @return The stream
-     * @throws io.micronaut.data.exceptions.DataAccessException If an error occurs reading the result
+     * @throws DataAccessException If an error occurs reading the result
      */
     @NonNull
     <T> Stream<T> entityStream(@NonNull ResultSet resultSet, @NonNull Class<T> rootEntity);

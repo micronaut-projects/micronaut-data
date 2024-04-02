@@ -897,7 +897,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      */
     @NonNull
     public <T> ParameterExpression<T> parameter(@NonNull Class<T> paramClass, @Nullable String name, @Nullable Object value) {
-        return new ParameterExpressionImpl<T>(paramClass, name) {
+        return new ParameterExpressionImpl<>(paramClass, name) {
 
             @Override
             public QueryParameterBinding bind(BindingContext bindingContext) {

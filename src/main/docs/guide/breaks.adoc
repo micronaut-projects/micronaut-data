@@ -61,7 +61,7 @@ public TransactionOperations<org.hibernate.Session> hibernateTransactionOperatio
 === Transaction manager
 
 Micronaut 4 comes with a rewritten transaction propagation and management. It replaces the previous implementation forked form Spring Framework.
-The new implementation has a newly added connection management, allowing to share a connection between multiple repositories and services without an open transaction. The are new method supporting extracting the current transaction status `TransactionOperations#findTransactionStatus`. The `TransactionStatus` now includes information about the connection and the transaction definition.
+The new implementation has a newly added connection management, allowing to share a connection between multiple repositories and services without an open transaction. The new method supporting extracting the current transaction status `TransactionOperations#findTransactionStatus`. The `TransactionStatus` now includes information about the connection and the transaction definition.
 
 === Async and Reactive repositories
 

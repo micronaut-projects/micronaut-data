@@ -131,6 +131,7 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
         return asyncOperations.executeUpdate(preparedQueryForCriteria(methodKey, context, Type.UPDATE_ALL, methodJoinPaths));
     }
 
+    @Override
     protected final Argument<?> getReturnType(MethodInvocationContext<?, ?> context) {
         return findReturnType(context, Argument.OBJECT_ARGUMENT);
     }

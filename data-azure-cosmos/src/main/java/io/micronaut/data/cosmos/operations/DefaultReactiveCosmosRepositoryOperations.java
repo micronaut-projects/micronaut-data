@@ -688,38 +688,22 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
      * @return java class for the data type
      */
     private Class<?> getDataTypeClass(DataType dataType) {
-        switch (dataType) {
-            case STRING:
-            case JSON:
-                return String.class;
-            case UUID:
-                return UUID.class;
-            case LONG:
-                return Long.class;
-            case INTEGER:
-                return Integer.class;
-            case BOOLEAN:
-                return Boolean.class;
-            case BYTE:
-                return Byte.class;
-            case TIMESTAMP:
-            case DATE:
-                return Date.class;
-            case CHARACTER:
-                return Character.class;
-            case FLOAT:
-                return Float.class;
-            case SHORT:
-                return Short.class;
-            case DOUBLE:
-                return Double.class;
-            case BIGDECIMAL:
-                return BigDecimal.class;
-            case TIME:
-                return Time.class;
-            default:
-                return Object.class;
-        }
+        return switch (dataType) {
+            case STRING, JSON -> String.class;
+            case UUID -> UUID.class;
+            case LONG -> Long.class;
+            case INTEGER -> Integer.class;
+            case BOOLEAN -> Boolean.class;
+            case BYTE -> Byte.class;
+            case TIMESTAMP, DATE -> Date.class;
+            case CHARACTER -> Character.class;
+            case FLOAT -> Float.class;
+            case SHORT -> Short.class;
+            case DOUBLE -> Double.class;
+            case BIGDECIMAL -> BigDecimal.class;
+            case TIME -> Time.class;
+            default -> Object.class;
+        };
     }
 
     // Create, update, delete
@@ -882,7 +866,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     }
 
     private <T> CosmosReactiveEntityOperation<T> createCosmosInsertOneOperation(CosmosReactiveOperationContext<T> ctx, T entity) {
-        return new CosmosReactiveEntityOperation<T>(entityEventRegistry, conversionService, ctx, ctx.getPersistentEntity(), entity, true) {
+        return new CosmosReactiveEntityOperation<>(entityEventRegistry, conversionService, ctx, ctx.getPersistentEntity(), entity, true) {
 
             @Override
             protected void execute() throws RuntimeException {
@@ -895,7 +879,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                     PartitionKey partitionKey = getPartitionKey(persistentEntity, item);
                     return Mono.from(container.createItem(item, partitionKey, new CosmosItemRequestOptions())).map(response -> {
                         CosmosUtils.processDiagnostics(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.CREATE_ITEM, response.getDiagnostics(), response.getActivityId(),
-                            response.getRequestCharge());
+                                response.getRequestCharge());
                         setETagVersionIfApplicable(response, persistentEntity, d.entity);
                         return d;
                     }).onErrorMap(e -> CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.CREATE_ITEM, "Failed to insert item", e));
@@ -940,7 +924,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     }
 
     private <T> CosmosReactiveEntityOperation<T> createCosmosReactiveReplaceItemOperation(CosmosReactiveOperationContext<T> ctx, T entity) {
-        return new CosmosReactiveEntityOperation<T>(entityEventRegistry, conversionService, ctx, ctx.getPersistentEntity(), entity, false) {
+        return new CosmosReactiveEntityOperation<>(entityEventRegistry, conversionService, ctx, ctx.getPersistentEntity(), entity, false) {
 
             @Override
             protected void execute() throws RuntimeException {
@@ -954,7 +938,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                     Mono<CosmosItemResponse<ObjectNode>> replaceItemResponse = container.replaceItem(item, id, partitionKey, requestOptions);
                     return Mono.from(replaceItemResponse).map(response -> {
                         CosmosUtils.processDiagnostics(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.REPLACE_ITEM, response.getDiagnostics(), response.getActivityId(),
-                            response.getRequestCharge());
+                                response.getRequestCharge());
                         if (response.getStatusCode() != HttpResponseStatus.OK.code()) {
                             if (LOG.isWarnEnabled()) {
                                 LOG.warn("Failed to update entity with id {} in container {}", id, container.getId());
@@ -973,7 +957,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     }
 
     private <T> CosmosReactiveEntityOperation<T> createCosmosReactiveDeleteOneOperation(CosmosReactiveOperationContext<T> ctx, T entity) {
-        return new CosmosReactiveEntityOperation<T>(entityEventRegistry, conversionService, ctx, ctx.getPersistentEntity(), entity, false) {
+        return new CosmosReactiveEntityOperation<>(entityEventRegistry, conversionService, ctx, ctx.getPersistentEntity(), entity, false) {
 
             @Override
             protected void execute() throws RuntimeException {
@@ -987,7 +971,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                     Mono<CosmosItemResponse<Object>> deleteItemResponse = container.deleteItem(id, partitionKey, options);
                     return Mono.from(deleteItemResponse).map(response -> {
                         CosmosUtils.processDiagnostics(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.DELETE_ITEM, response.getDiagnostics(), response.getActivityId(),
-                            response.getRequestCharge());
+                                response.getRequestCharge());
                         if (response.getStatusCode() == HttpResponseStatus.NO_CONTENT.code()) {
                             d.rowsUpdated = 1;
                         } else {

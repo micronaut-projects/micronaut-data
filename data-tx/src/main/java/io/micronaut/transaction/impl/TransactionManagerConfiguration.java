@@ -234,7 +234,7 @@ public class TransactionManagerConfiguration {
 
     /**
      * Specify whether to enforce the read-only nature of a transaction
-     * (as indicated by {@link TransactionDefinition#isReadOnly()}
+     * (as indicated by {@link TransactionDefinition#isReadOnly()})
      * through an explicit statement on the transactional connection:
      * "SET TRANSACTION READ ONLY" as understood by Oracle, MySQL and Postgres.
      * <p>This mode of read-only handling goes beyond the {@link Connection#setReadOnly}

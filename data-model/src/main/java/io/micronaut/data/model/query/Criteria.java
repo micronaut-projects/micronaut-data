@@ -213,7 +213,7 @@ public interface Criteria  {
     @NonNull Criteria contains(@NonNull String propertyName, @NonNull Object parameter);
 
     /**
-     * Creates an ilike Criterion based on the specified property name and value. Unlike a like condition, ilike is case insensitive.
+     * Creates an ilike Criterion based on the specified property name and value. Unlike a like condition, ilike is case-insensitive.
      *
      * @param propertyName The property name
      * @param parameter The parameter that provides the value
@@ -223,7 +223,7 @@ public interface Criteria  {
     @NonNull Criteria ilike(@NonNull String propertyName, @NonNull Object parameter);
 
     /**
-     * Creates an rlike Criterion based on the specified property name and value.
+     * Creates a rlike Criterion based on the specified property name and value.
      *
      * @param propertyName The property name
      * @param parameter The parameter that provides the value
@@ -353,7 +353,7 @@ public interface Criteria  {
      * @param otherPropertyName The other property
      * @return This criteria
      */
-    @NonNull Criteria eqProperty(@NonNull java.lang.String propertyName, @NonNull java.lang.String otherPropertyName);
+    @NonNull Criteria eqProperty(@NonNull String propertyName, @NonNull String otherPropertyName);
 
     /**
      * Constrains a property to be not equal to a specified other property.
@@ -362,7 +362,7 @@ public interface Criteria  {
      * @param otherPropertyName The other property
      * @return This criteria
      */
-    @NonNull Criteria neProperty(@NonNull java.lang.String propertyName, @NonNull java.lang.String otherPropertyName);
+    @NonNull Criteria neProperty(@NonNull String propertyName, @NonNull String otherPropertyName);
 
     /**
      * Constrains a property to be greater than a specified other property.
@@ -371,7 +371,7 @@ public interface Criteria  {
      * @param otherPropertyName The other property
      * @return This criteria
      */
-    @NonNull Criteria gtProperty(@NonNull java.lang.String propertyName, @NonNull java.lang.String otherPropertyName);
+    @NonNull Criteria gtProperty(@NonNull String propertyName, @NonNull String otherPropertyName);
 
     /**
      * Constrains a property to be greater than or equal to a specified other property.
@@ -380,7 +380,7 @@ public interface Criteria  {
      * @param otherPropertyName The other property
      * @return This criteria
      */
-    @NonNull Criteria geProperty(@NonNull java.lang.String propertyName, @NonNull java.lang.String otherPropertyName);
+    @NonNull Criteria geProperty(@NonNull String propertyName, @NonNull String otherPropertyName);
 
     /**
      * Constrains a property to be less than a specified other property.
@@ -389,7 +389,7 @@ public interface Criteria  {
      * @param otherPropertyName The other property
      * @return This criteria
      */
-    @NonNull Criteria ltProperty(@NonNull java.lang.String propertyName, @NonNull java.lang.String otherPropertyName);
+    @NonNull Criteria ltProperty(@NonNull String propertyName, @NonNull String otherPropertyName);
 
     /**
      * Constrains a property to be less than or equal to a specified other property.
@@ -398,7 +398,7 @@ public interface Criteria  {
      * @param otherPropertyName The other property
      * @return This criteria
      */
-    @NonNull Criteria leProperty(java.lang.String propertyName, @NonNull java.lang.String otherPropertyName);
+    @NonNull Criteria leProperty(String propertyName, @NonNull String otherPropertyName);
 
     /**
      * Apply an "equals" constraint to each property in the key set of a {@code Map}.

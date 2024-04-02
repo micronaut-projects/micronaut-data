@@ -56,6 +56,7 @@ public abstract class AbstractAsyncInterceptor<T, R> extends AbstractQueryInterc
         }
     }
 
+    @Override
     protected final Argument<?> getReturnType(MethodInvocationContext<?, ?> context) {
         return findReturnType(context, Argument.OBJECT_ARGUMENT);
     }

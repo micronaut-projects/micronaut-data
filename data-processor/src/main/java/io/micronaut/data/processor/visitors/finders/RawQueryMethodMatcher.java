@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -61,12 +62,6 @@ public class RawQueryMethodMatcher implements MethodMatcher {
     private static final String INSERT = "insert";
 
     private static final Pattern VARIABLE_PATTERN = Pattern.compile("([^:\\\\]*)((?<![:]):([a-zA-Z0-9]+))([^:]*)");
-
-    /**
-     * Default constructor.
-     */
-    public RawQueryMethodMatcher() {
-    }
 
     @Override
     public final int getOrder() {
@@ -244,7 +239,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                                        boolean namedParameters,
                                        ParameterElement entityParam,
                                        SourcePersistentEntity persistentEntity) {
-        java.util.regex.Matcher matcher = VARIABLE_PATTERN.matcher(queryString.replace("\\:", ""));
+        Matcher matcher = VARIABLE_PATTERN.matcher(queryString.replace("\\:", ""));
 
         List<QueryParameterBinding> parameterBindings = new ArrayList<>(parameters.size());
         List<String> queryParts = new ArrayList<>();

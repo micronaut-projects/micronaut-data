@@ -86,6 +86,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      *
      * @return The query result type
      */
+    @Override
     @NonNull
     Argument<R> getResultArgument();
 
@@ -195,7 +196,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
          */
         COUNT,
         /**
-         * A exists operation.
+         * An exists operation.
          */
         EXISTS,
         /**

@@ -18,7 +18,7 @@ package io.micronaut.data.intercept.reactive;
 import io.micronaut.data.intercept.DataInterceptor;
 
 /**
- * An interceptor that executes an find by id reactively.
+ * An interceptor that executes a find by id reactively.
  *
  * @param <T> The declaring type
  * @param <R> The result type

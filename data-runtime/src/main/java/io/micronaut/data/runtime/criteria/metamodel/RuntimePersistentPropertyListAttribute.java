@@ -15,13 +15,15 @@
  */
 package io.micronaut.data.runtime.criteria.metamodel;
 
+import java.util.List;
+
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import jakarta.persistence.metamodel.ListAttribute;
 
 @Internal
-final class RuntimePersistentPropertyListAttribute<T, E> extends RuntimePersistentPropertyPluralAttribute<T, java.util.List<E>, E>
+final class RuntimePersistentPropertyListAttribute<T, E> extends RuntimePersistentPropertyPluralAttribute<T, List<E>, E>
     implements ListAttribute<T, E> {
 
     public RuntimePersistentPropertyListAttribute(RuntimePersistentEntity<T> persistentEntity, RuntimePersistentProperty<T> persistentProperty) {

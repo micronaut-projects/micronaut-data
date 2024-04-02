@@ -78,7 +78,7 @@ public interface ResultConsumer<T, RS> extends BiConsumer<T, ResultConsumer.Cont
 
         /**
          * Read a long value for the given name.
-         * 
+         *
          * @param name The name (such as the column name)
          * @return The long value
          */
@@ -88,7 +88,7 @@ public interface ResultConsumer<T, RS> extends BiConsumer<T, ResultConsumer.Cont
 
         /**
          * Read a char value for the given name.
-         * 
+         *
          * @param name The name (such as the column name)
          * @return The char value
          */
@@ -98,7 +98,7 @@ public interface ResultConsumer<T, RS> extends BiConsumer<T, ResultConsumer.Cont
 
         /**
          * Read a date value for the given name.
-         * 
+         *
          * @param name The name (such as the column name)
          * @return The char value
          */
@@ -108,7 +108,7 @@ public interface ResultConsumer<T, RS> extends BiConsumer<T, ResultConsumer.Cont
 
         /**
          * Read a timestamp value for the given index.
-         * 
+         *
          * @param name The name (such as the column name)
          * @return The char value
          */
@@ -126,8 +126,8 @@ public interface ResultConsumer<T, RS> extends BiConsumer<T, ResultConsumer.Cont
         }
 
         /**
-         * Read a int value for the given name.
-         * 
+         * Read an int value for the given name.
+         *
          * @param name The name (such as the column name)
          * @return The int value
          */
@@ -137,7 +137,7 @@ public interface ResultConsumer<T, RS> extends BiConsumer<T, ResultConsumer.Cont
 
         /**
          * Read a boolean value for the given name.
-         * 
+         *
          * @param name The name (such as the column name)
          * @return The boolean value
          */
@@ -147,7 +147,7 @@ public interface ResultConsumer<T, RS> extends BiConsumer<T, ResultConsumer.Cont
 
         /**
          * Read a float value for the given name.
-         * 
+         *
          * @param name The name (such as the column name)
          * @return The float value
          */
@@ -157,7 +157,7 @@ public interface ResultConsumer<T, RS> extends BiConsumer<T, ResultConsumer.Cont
 
         /**
          * Read a byte value for the given name.
-         * 
+         *
          * @param name The name (such as the column name)
          * @return The byte value
          */
@@ -167,7 +167,7 @@ public interface ResultConsumer<T, RS> extends BiConsumer<T, ResultConsumer.Cont
 
         /**
          * Read a short value for the given name.
-         * 
+         *
          * @param name The name (such as the column name)
          * @return The short value
          */
@@ -177,7 +177,7 @@ public interface ResultConsumer<T, RS> extends BiConsumer<T, ResultConsumer.Cont
 
         /**
          * Read a double value for the given name.
-         * 
+         *
          * @param name The name (such as the column name)
          * @return The double value
          */
@@ -187,7 +187,7 @@ public interface ResultConsumer<T, RS> extends BiConsumer<T, ResultConsumer.Cont
 
         /**
          * Read a BigDecimal value for the given name.
-         * 
+         *
          * @param name The name (such as the column name)
          * @return The BigDecimal value
          */
@@ -197,7 +197,7 @@ public interface ResultConsumer<T, RS> extends BiConsumer<T, ResultConsumer.Cont
 
         /**
          * Read a byte[] value for the given name.
-         * 
+         *
          * @param name The name (such as the column name)
          * @return The byte[] value
          */

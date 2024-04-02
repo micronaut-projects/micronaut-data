@@ -44,7 +44,7 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * The Micronaut Data's Serde's {@link io.micronaut.serde.Serializer.EncoderContext}.
+ * The Micronaut Data's Serde's {@link Serializer.EncoderContext}.
  *
  * @author Denis Stepanov
  * @since 3.3
@@ -138,7 +138,7 @@ final class DataEncoderContext implements Serializer.EncoderContext {
                     Argument<Object> convertedType = Argument.of(converterPersistedType);
                     Serializer<? super Object> serializer = findSerializer(convertedType);
                     AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
-                    return new Serializer<Object>() {
+                    return new Serializer<>() {
 
                         @Override
                         public void serialize(Encoder encoder, EncoderContext context, Argument<?> type, Object value) throws IOException {

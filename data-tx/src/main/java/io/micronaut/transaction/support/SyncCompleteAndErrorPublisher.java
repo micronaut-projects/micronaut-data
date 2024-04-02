@@ -67,7 +67,7 @@ final class SyncCompleteAndErrorPublisher<T> implements CorePublisher<T> {
     }
 
     private void doSubscribe(Subscriber<? super T> actualSubscriber, @Nullable CoreSubscriber<? super T> coreSubscriber) {
-        actualPublisher.subscribe(new CoreSubscriber<T>() {
+        actualPublisher.subscribe(new CoreSubscriber<>() {
 
             Subscription actualSubscription;
 
@@ -118,7 +118,7 @@ final class SyncCompleteAndErrorPublisher<T> implements CorePublisher<T> {
 
             @Override
             public void onError(Throwable throwable) {
-                onThrowable.apply(throwable).subscribe(new Subscriber<Void>() {
+                onThrowable.apply(throwable).subscribe(new Subscriber<>() {
                     @Override
                     public void onSubscribe(Subscription s) {
                         s.request(1);

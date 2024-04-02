@@ -90,7 +90,7 @@ public class TypeUtils {
     }
 
     /**
-     * Is the element an iterable of an dto.
+     * Is the element an iterable of a DTO.
      *
      * @param type The type
      * @return True if is
@@ -110,7 +110,7 @@ public class TypeUtils {
     }
 
     /**
-     * Does the given type have an {@link MappedEntity} or {@link io.micronaut.core.annotation.Introspected}.
+     * Does the given type have an {@link MappedEntity} or {@link Introspected}.
      * @param type The type
      * @return True if it does
      */
@@ -131,7 +131,7 @@ public class TypeUtils {
     }
 
     /**
-     * Does the given type have an {@link io.micronaut.core.annotation.Introspected}.
+     * Does the given type have an {@link Introspected}.
      * @param type The type
      * @return True if it does
      */

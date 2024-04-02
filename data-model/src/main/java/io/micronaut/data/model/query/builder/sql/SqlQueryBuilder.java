@@ -173,6 +173,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     /**
      * @return The dialect being used by the builder.
      */
+    @Override
     public Dialect getDialect() {
         return dialect;
     }
@@ -322,7 +323,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     /**
-     * Builds the create table statement. Designed for testing and not production usage. For production a
+     * Builds the creation table statement. Designed for testing and not production usage. For production a
      * SQL migration tool such as Flyway or Liquibase is recommended.
      *
      * @param entity The entity
@@ -694,7 +695,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     }
                     break;
                 case ORACLE:
-                    // for Oracle we use sequences so just add NOT NULL
+                    // for Oracle, we use sequences so just add NOT NULL
                     // then alter the table for sequences
                     if (type == UUID) {
                         column += " NOT NULL DEFAULT SYS_GUID()";
@@ -822,7 +823,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     queryBuffer.append(COMMA);
 
                     boolean includeIdentity = association.isForeignKey();
-                    // in the case of a foreign key association the ID is not in the table
+                    // in the case of a foreign key association the ID is not in the table,
                     // so we need to retrieve it
                     traversePersistentProperties(associatedEntity, includeIdentity, true, (propertyAssociations, prop) -> {
                         String columnName;
@@ -920,23 +921,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             throw new IllegalArgumentException("Unsupported join type [" + jt + "] by dialect [" + this.dialect + "]");
         }
 
-        String joinType;
-        switch (jt) {
-            case LEFT:
-            case LEFT_FETCH:
-                joinType = " LEFT JOIN ";
-                break;
-            case RIGHT:
-            case RIGHT_FETCH:
-                joinType = " RIGHT JOIN ";
-                break;
-            case OUTER:
-            case OUTER_FETCH:
-                joinType = " FULL OUTER JOIN ";
-                break;
-            default:
-                joinType = " INNER JOIN ";
-        }
+        String joinType = switch (jt) {
+            case LEFT, LEFT_FETCH -> " LEFT JOIN ";
+            case RIGHT, RIGHT_FETCH -> " RIGHT JOIN ";
+            case OUTER, OUTER_FETCH -> " FULL OUTER JOIN ";
+            default -> " INNER JOIN ";
+        };
         return joinType;
     }
 
@@ -1175,16 +1165,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     private String getSequenceStatement(String unescapedTableName, PersistentProperty property) {
         final String sequenceName = resolveSequenceName(property, unescapedTableName);
-        switch (dialect) {
-            case ORACLE:
-                return quote(sequenceName) + ".nextval";
-            case POSTGRES:
-                return "nextval('" + sequenceName + "')";
-            case SQL_SERVER:
-                return "NEXT VALUE FOR " + quote(sequenceName);
-            default:
-                throw new IllegalStateException("Cannot generate a sequence for dialect: " + dialect);
-        }
+        return switch (dialect) {
+            case ORACLE -> quote(sequenceName) + ".nextval";
+            case POSTGRES -> "nextval('" + sequenceName + "')";
+            case SQL_SERVER -> "NEXT VALUE FOR " + quote(sequenceName);
+            default -> throw new IllegalStateException("Cannot generate a sequence for dialect: " + dialect);
+        };
     }
 
     private String resolveSequenceName(PersistentProperty identity, String unescapedTableName) {
@@ -1304,16 +1290,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             return values.add(transformer);
         }
         if (dt == DataType.JSON) {
-            switch (dialect) {
-                case POSTGRES:
-                    return values.add("to_json(" + formatParameter(values.size() + 1).getName() + "::json)");
-                case H2:
-                    return values.add(formatParameter(values.size() + 1).getName() + " FORMAT JSON");
-                case MYSQL:
-                    return values.add("CONVERT(" + formatParameter(values.size() + 1).getName() + " USING UTF8MB4)");
-                default:
-                    return values.add(formatParameter(values.size() + 1).getName());
-            }
+            return switch (dialect) {
+                case POSTGRES -> values.add("to_json(" + formatParameter(values.size() + 1).getName() + "::json)");
+                case H2 -> values.add(formatParameter(values.size() + 1).getName() + " FORMAT JSON");
+                case MYSQL -> values.add("CONVERT(" + formatParameter(values.size() + 1).getName() + " USING UTF8MB4)");
+                default -> values.add(formatParameter(values.size() + 1).getName());
+            };
         }
         return values.add(formatParameter(values.size() + 1).getName());
     }
@@ -1711,18 +1693,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      */
     @Override
     protected String quote(String persistedName) {
-        switch (dialect) {
-            case MYSQL:
-            case H2:
-                return '`' + persistedName + '`';
-            case SQL_SERVER:
-                return '[' + persistedName + ']';
-            case ORACLE:
+        return switch (dialect) {
+            case MYSQL, H2 -> '`' + persistedName + '`';
+            case SQL_SERVER -> '[' + persistedName + ']';
+            case ORACLE ->
                 // Oracle requires quoted identifiers to be in upper case
-                return '"' + persistedName.toUpperCase(Locale.ENGLISH) + '"';
-            default:
-                return '"' + persistedName + '"';
-        }
+                    '"' + persistedName.toUpperCase(Locale.ENGLISH) + '"';
+            default -> '"' + persistedName + '"';
+        };
     }
 
     @Override
