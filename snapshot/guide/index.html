@@ -2593,7 +2593,8 @@ assertEquals(
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">Book save(Book entity);</code></pre>
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Override
+Book save(Book entity);</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -2696,7 +2697,8 @@ It is not possible to use the entity as the return type in partial updates becau
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">Book update(Book newBook);</code></pre>
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Override
+Book update(Book newBook);</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -2826,7 +2828,8 @@ fun updateMany(books: Iterable&lt;Book&gt;)</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">void deleteAll();</code></pre>
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Override
+void deleteAll();</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -5239,7 +5242,8 @@ interface ProductRepository : CrudRepository&lt;Product, Long&gt;, JpaSpecificat
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@EntityGraph(attributePaths = {"manufacturer", "title"}) // <b class="conum">(1)</b>
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Override
+@EntityGraph(attributePaths = {"manufacturer", "title"}) // <b class="conum">(1)</b>
 List&lt;Product&gt; findAll();</code></pre>
 </div>
 </div>
@@ -5990,8 +5994,10 @@ interface BookRepository extends ReactorCrudRepository&lt;Book, Long&gt; { // <b
         }).then();
     }
 
+    @Override
     Mono&lt;Book&gt; save(Book entity);
 
+    @Override
     Mono&lt;Book&gt; update(Book newBook);
 
     Mono&lt;Void&gt; update(@Id Long id, int pages);
@@ -13780,20 +13786,28 @@ interface PersonRepository : CrudRepository&lt;Person, ObjectId&gt;, JpaSpecific
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">Optional&lt;Person&gt; findOne(PredicateSpecification&lt;Person&gt; spec);
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Override
+Optional&lt;Person&gt; findOne(PredicateSpecification&lt;Person&gt; spec);
 
+@Override
 Optional&lt;Person&gt; findOne(QuerySpecification&lt;Person&gt; spec);
 
+@Override
 List&lt;Person&gt; findAll(PredicateSpecification&lt;Person&gt; spec);
 
+@Override
 List&lt;Person&gt; findAll(QuerySpecification&lt;Person&gt; spec);
 
+@Override
 List&lt;Person&gt; findAll(PredicateSpecification&lt;Person&gt; spec, Sort sort);
 
+@Override
 List&lt;Person&gt; findAll(QuerySpecification&lt;Person&gt; spec, Sort sort);
 
+@Override
 Page&lt;Person&gt; findAll(PredicateSpecification&lt;Person&gt; spec, Pageable pageable);
 
+@Override
 Page&lt;Person&gt; findAll(QuerySpecification&lt;Person&gt; spec, Pageable pageable);</code></pre>
 </div>
 </div>
@@ -13919,8 +13933,10 @@ public interface QuerySpecification&lt;T&gt; {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">long count(PredicateSpecification&lt;Person&gt; spec);
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Override
+long count(PredicateSpecification&lt;Person&gt; spec);
 
+@Override
 long count(QuerySpecification&lt;Person&gt; spec);</code></pre>
 </div>
 </div>
@@ -14062,7 +14078,8 @@ It&#8217;s recommended to use criteria only for dynamic queries where the query 
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">long updateAll(UpdateSpecification&lt;Person&gt; spec);</code></pre>
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Override
+long updateAll(UpdateSpecification&lt;Person&gt; spec);</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -14277,8 +14294,10 @@ public interface UpdateSpecification&lt;T&gt; {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">long deleteAll(PredicateSpecification&lt;Person&gt; spec);
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Override
+long deleteAll(PredicateSpecification&lt;Person&gt; spec);
 
+@Override
 long deleteAll(DeleteSpecification&lt;Person&gt; spec);</code></pre>
 </div>
 </div>
@@ -15531,20 +15550,28 @@ interface PersonRepository : CrudRepository&lt;Person, ObjectId&gt;, JpaSpecific
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">Optional&lt;Person&gt; findOne(PredicateSpecification&lt;Person&gt; spec);
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Override
+Optional&lt;Person&gt; findOne(PredicateSpecification&lt;Person&gt; spec);
 
+@Override
 Optional&lt;Person&gt; findOne(QuerySpecification&lt;Person&gt; spec);
 
+@Override
 List&lt;Person&gt; findAll(PredicateSpecification&lt;Person&gt; spec);
 
+@Override
 List&lt;Person&gt; findAll(QuerySpecification&lt;Person&gt; spec);
 
+@Override
 List&lt;Person&gt; findAll(PredicateSpecification&lt;Person&gt; spec, Sort sort);
 
+@Override
 List&lt;Person&gt; findAll(QuerySpecification&lt;Person&gt; spec, Sort sort);
 
+@Override
 Page&lt;Person&gt; findAll(PredicateSpecification&lt;Person&gt; spec, Pageable pageable);
 
+@Override
 Page&lt;Person&gt; findAll(QuerySpecification&lt;Person&gt; spec, Pageable pageable);</code></pre>
 </div>
 </div>
@@ -15670,8 +15697,10 @@ public interface QuerySpecification&lt;T&gt; {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">long count(PredicateSpecification&lt;Person&gt; spec);
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Override
+long count(PredicateSpecification&lt;Person&gt; spec);
 
+@Override
 long count(QuerySpecification&lt;Person&gt; spec);</code></pre>
 </div>
 </div>
@@ -15918,7 +15947,8 @@ It&#8217;s recommended to use criteria only for dynamic queries where the query 
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">long updateAll(UpdateSpecification&lt;Person&gt; spec);</code></pre>
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Override
+long updateAll(UpdateSpecification&lt;Person&gt; spec);</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -16119,8 +16149,10 @@ public interface UpdateSpecification&lt;T&gt; {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">long deleteAll(PredicateSpecification&lt;Person&gt; spec);
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Override
+long deleteAll(PredicateSpecification&lt;Person&gt; spec);
 
+@Override
 long deleteAll(DeleteSpecification&lt;Person&gt; spec);</code></pre>
 </div>
 </div>
