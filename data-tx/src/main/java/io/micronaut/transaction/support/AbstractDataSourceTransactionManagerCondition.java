@@ -55,4 +55,17 @@ public abstract class AbstractDataSourceTransactionManagerCondition implements C
             .map(name -> name.equals(getTransactionManagerName()))
             .orElse(true);
     }
+
+    @Deprecated
+    @NonNull
+    private Optional<String> transactionManagerProperty(@NonNull ConditionContext context,
+                                                        @NonNull String dataSourceName) {
+        String propertyName = "datasources." + dataSourceName + ".transactionManager";
+        Optional<String> property = context.getProperty(propertyName, String.class);
+        if (property.isPresent()) {
+            return property;
+        }
+        String lowerKebapCasePropertyName = "datasources." + dataSourceName + ".transaction-manager";
+        return context.getProperty(lowerKebapCasePropertyName, String.class);
+    }
 }
