@@ -125,16 +125,13 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="doInTransaction(io.micronaut.transaction.reactive.ReactiveTransactionStatus)">
 <h3>doInTransaction</h3>
-<div class="member-signature"><span class="return-type">org.reactivestreams.Publisher&lt;<a href="ReactiveTransactionOperations.TransactionalCallback.html" title="type parameter in ReactiveTransactionOperations.TransactionalCallback">T</a>&gt;</span>&nbsp;<span class="element-name">doInTransaction</span><wbr><span class="parameters">(<a href="ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;<a href="ReactiveTransactionOperations.TransactionalCallback.html" title="type parameter in ReactiveTransactionOperations.TransactionalCallback">C</a>&gt;&nbsp;status)</span>
-                                          throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a></span></div>
+<div class="member-signature"><span class="return-type">org.reactivestreams.Publisher&lt;<a href="ReactiveTransactionOperations.TransactionalCallback.html" title="type parameter in ReactiveTransactionOperations.TransactionalCallback">T</a>&gt;</span>&nbsp;<span class="element-name">doInTransaction</span><wbr><span class="parameters">(<a href="ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;<a href="ReactiveTransactionOperations.TransactionalCallback.html" title="type parameter in ReactiveTransactionOperations.TransactionalCallback">C</a>&gt;&nbsp;status)</span></div>
 <div class="block">Invokes the given code passing the <a href="ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive"><code>ReactiveTransactionStatus</code></a>.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>status</code> - The status</dd>
 <dt>Returns:</dt>
 <dd>A publisher that emits the return type</dd>
-<dt>Throws:</dt>
-<dd><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a></code> - If an error occurs, though generally these should be emitted through the returned <code>Publisher</code></dd>
 </dl>
 </section>
 </li>
