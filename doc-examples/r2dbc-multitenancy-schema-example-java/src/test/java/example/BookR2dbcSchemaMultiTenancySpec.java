@@ -53,7 +53,7 @@ class BookR2dbcSchemaMultiTenancySpec {
     }
 
     @Test
-    void testRest() throws SQLException {
+    void testRest() {
         // When: A book created in FOO tenant
         BookDto book = fooBookClient.save("The Stand", 1000);
         assertNotNull(book.getId());
