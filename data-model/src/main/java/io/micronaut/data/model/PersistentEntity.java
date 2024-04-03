@@ -234,19 +234,19 @@ public interface PersistentEntity extends PersistentElement {
                     if (identity != null) {
                         if (identity.getName().equals(name)) {
                             sp = identity;
-                        } else if (identity instanceof Association) {
-                            PersistentEntity idEntity = ((Association) identity).getAssociatedEntity();
+                        } else if (identity instanceof Association association) {
+                            PersistentEntity idEntity = association.getAssociatedEntity();
                             sp = idEntity.getPropertyByName(name);
                         }
                     }
                 }
                 if (sp != null) {
-                    if (sp instanceof Association) {
+                    if (sp instanceof Association association) {
                         b.append(name);
                         if (i.hasNext()) {
                             b.append('.');
                         }
-                        currentEntity = ((Association) sp).getAssociatedEntity();
+                        currentEntity = association.getAssociatedEntity();
                         name = null;
                     } else if (!i.hasNext()) {
                         b.append(name);
@@ -254,7 +254,7 @@ public interface PersistentEntity extends PersistentElement {
                 }
             }
 
-            return b.length() == 0 || b.charAt(b.length() - 1) == '.' ? Optional.empty() : Optional.of(b.toString());
+            return b.isEmpty() || b.charAt(b.length() - 1) == '.' ? Optional.empty() : Optional.of(b.toString());
 
         }
         return Optional.empty();
@@ -290,8 +290,8 @@ public interface PersistentEntity extends PersistentElement {
                 if (identity != null) {
                     if (identity.getName().equals(path)) {
                         pp = identity;
-                    } else if (identity instanceof Embedded) {
-                        PersistentEntity idEntity = ((Embedded) identity).getAssociatedEntity();
+                    } else if (identity instanceof Embedded embedded) {
+                        PersistentEntity idEntity = embedded.getAssociatedEntity();
                         pp = idEntity.getPropertyByName(path);
                     }
                 }
@@ -311,8 +311,8 @@ public interface PersistentEntity extends PersistentElement {
                         return Optional.empty();
                     }
                 }
-                if (prop instanceof Association) {
-                    startingEntity = ((Association) prop).getAssociatedEntity();
+                if (prop instanceof Association association) {
+                    startingEntity = association.getAssociatedEntity();
                 }
             }
             return Optional.ofNullable(prop);
@@ -352,8 +352,8 @@ public interface PersistentEntity extends PersistentElement {
                 if (identity != null) {
                     if (identity.getName().equals(propertyName)) {
                         pp = identity;
-                    } else if (identity instanceof Embedded) {
-                        PersistentEntity idEntity = ((Embedded) identity).getAssociatedEntity();
+                    } else if (identity instanceof Embedded embedded) {
+                        PersistentEntity idEntity = embedded.getAssociatedEntity();
                         pp = idEntity.getPropertyByName(propertyName);
                         if (pp != null) {
                             return PersistentPropertyPath.of(Collections.singletonList((Embedded) identity), pp, identity.getName() + "." + pp.getName());

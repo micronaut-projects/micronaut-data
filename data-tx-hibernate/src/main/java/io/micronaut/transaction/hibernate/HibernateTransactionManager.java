@@ -276,15 +276,15 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
      * @see org.hibernate.ConnectionReleaseMode#ON_CLOSE
      */
     private boolean isSameConnectionForEntireSession(Session session) {
-        if (!(session instanceof SessionImplementor)) {
+        if (!(session instanceof SessionImplementor sessionImplementor)) {
             // The best we can do is to assume we're safe.
             return true;
         }
         PhysicalConnectionHandlingMode releaseMode =
-            ((SessionImplementor) session).getJdbcCoordinator()
+            sessionImplementor.getJdbcCoordinator()
                 .getLogicalConnection()
                 .getConnectionHandlingMode();
-        return PhysicalConnectionHandlingMode.DELAYED_ACQUISITION_AND_HOLD.equals(releaseMode);
+        return PhysicalConnectionHandlingMode.DELAYED_ACQUISITION_AND_HOLD == releaseMode;
     }
 
     /**
@@ -296,11 +296,11 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
      * @see #isSameConnectionForEntireSession(Session)
      */
     private boolean isPhysicallyConnected(Session session) {
-        if (!(session instanceof SessionImplementor)) {
+        if (!(session instanceof SessionImplementor sessionImplementor)) {
             // The best we can do is to check whether we're logically connected.
             return session.isConnected();
         }
-        return ((SessionImplementor) session).getJdbcCoordinator().getLogicalConnection().isPhysicallyConnected();
+        return sessionImplementor.getJdbcCoordinator().getLogicalConnection().isPhysicallyConnected();
     }
 
     private Connection getConnection(Session session) {

@@ -164,6 +164,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
      * @param connectionOperations        The connection operations
      */
     @Internal
+    @SuppressWarnings("ParameterNumber")
     DefaultR2dbcRepositoryOperations(
         @Parameter String dataSourceName,
         ConnectionFactory connectionFactory,

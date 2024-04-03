@@ -48,8 +48,8 @@ public class FindAllSpecificationInterceptor extends AbstractSpecificationInterc
      */
     protected FindAllSpecificationInterceptor(@NonNull RepositoryOperations operations) {
         super(operations);
-        if (operations instanceof JpaRepositoryOperations) {
-            this.jpaOperations = (JpaRepositoryOperations) operations;
+        if (operations instanceof JpaRepositoryOperations jpaRepositoryOperations) {
+            this.jpaOperations = jpaRepositoryOperations;
         } else {
             throw new IllegalStateException("Repository operations must be na instance of JpaRepositoryOperations");
         }
@@ -84,8 +84,7 @@ public class FindAllSpecificationInterceptor extends AbstractSpecificationInterc
      */
     protected void addSort(Object sortObject,
                            CriteriaQuery<Object> query, Root<Object> root, CriteriaBuilder criteriaBuilder) {
-        if (sortObject instanceof Sort) {
-            Sort sort = (Sort) sortObject;
+        if (sortObject instanceof Sort sort) {
             if (sort.isSorted()) {
                 query.orderBy(getOrders(sort, root, criteriaBuilder));
             }

@@ -78,8 +78,7 @@ public class ReactiveFindAllSpecificationInterceptor extends AbstractSpecificati
      */
     private void addSort(Object sortObject,
                            CriteriaQuery<Object> query, Root<Object> root, CriteriaBuilder criteriaBuilder) {
-        if (sortObject instanceof Sort) {
-            Sort sort = (Sort) sortObject;
+        if (sortObject instanceof Sort sort) {
             if (sort.isSorted()) {
                 query.orderBy(getOrders(sort, root, criteriaBuilder));
             }

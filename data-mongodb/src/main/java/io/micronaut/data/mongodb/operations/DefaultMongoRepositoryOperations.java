@@ -649,8 +649,8 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                 switch (runtimeAssociation.getKind()) {
                     case MANY_TO_MANY:
                     case ONE_TO_MANY:
-                        if (o instanceof Iterable) {
-                            for (Object value : ((Iterable) o)) {
+                        if (o instanceof Iterable<?> iterable) {
+                            for (Object value : iterable) {
                                 triggerPostLoad(value, associatedEntity, annotationMetadata);
                             }
                         }

@@ -64,8 +64,8 @@ public class QueryModelPredicateVisitor implements PredicateVisitor {
     }
 
     private void visit(IExpression<Boolean> expression) {
-        if (expression instanceof PredicateVisitable) {
-            ((PredicateVisitable) expression).accept(this);
+        if (expression instanceof PredicateVisitable predicateVisitable) {
+            predicateVisitable.accept(this);
         } else if (expression instanceof PersistentPropertyPath<?> propertyPath) {
             // TODO
             add(Restrictions.isTrue(getPropertyPath(propertyPath)));
@@ -135,18 +135,18 @@ public class QueryModelPredicateVisitor implements PredicateVisitor {
     }
 
     private void visitPropertyPathPredicate(PersistentPropertyPath<?> propertyPath, Expression<?> expression, PredicateBinaryOp op) {
-        if (expression instanceof PersistentPropertyPath) {
+        if (expression instanceof PersistentPropertyPath<?> persistentPropertyPath) {
             add(getPropertyToPropertyRestriction(op,
                     propertyPath,
-                    (PersistentPropertyPath<?>) expression));
+                    persistentPropertyPath));
         } else if (expression instanceof ParameterExpression) {
             add(getPropertyToValueRestriction(op,
                     propertyPath,
                     expression));
-        } else if (expression instanceof LiteralExpression) {
+        } else if (expression instanceof LiteralExpression<?> literalExpression) {
             add(getPropertyToValueRestriction(op,
                     propertyPath,
-                    ((LiteralExpression<?>) expression).getValue()));
+                    literalExpression.getValue()));
         } else {
             throw new IllegalStateException("Unsupported expression: " + expression);
         }
@@ -156,8 +156,8 @@ public class QueryModelPredicateVisitor implements PredicateVisitor {
     public void visit(ExpressionBinaryPredicate expressionBinaryPredicate) {
         Expression<?> left = expressionBinaryPredicate.getLeft();
         PredicateBinaryOp op = expressionBinaryPredicate.getOp();
-        if (left instanceof PersistentPropertyPath) {
-            visitPropertyPathPredicate((PersistentPropertyPath<?>) left,
+        if (left instanceof PersistentPropertyPath<?> persistentPropertyPath) {
+            visitPropertyPathPredicate(persistentPropertyPath,
                     expressionBinaryPredicate.getRight(),
                     op);
         } else if (left instanceof IdExpression) {
@@ -334,8 +334,8 @@ public class QueryModelPredicateVisitor implements PredicateVisitor {
     }
 
     private Object asValue(Object value) {
-        if (value instanceof LiteralExpression) {
-            return ((LiteralExpression<?>) value).getValue();
+        if (value instanceof LiteralExpression<?> literalExpression) {
+            return literalExpression.getValue();
         }
         return value;
     }

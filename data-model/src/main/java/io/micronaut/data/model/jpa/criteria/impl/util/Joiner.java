@@ -151,16 +151,16 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
     }
 
     private void visitPredicateExpression(Expression<?> expression) {
-        if (expression instanceof PredicateVisitable) {
-            ((PredicateVisitable) expression).accept(this);
-        } else if (expression instanceof PersistentPropertyPath) {
-            joinIfNeeded((PersistentPropertyPath<?>) expression, true);
+        if (expression instanceof PredicateVisitable predicateVisitable) {
+            predicateVisitable.accept(this);
+        } else if (expression instanceof PersistentPropertyPath<?> persistentPropertyPath) {
+            joinIfNeeded(persistentPropertyPath, true);
         }
     }
 
     private void visitSelectionExpression(Expression<?> expression) {
-        if (expression instanceof PersistentPropertyPath) {
-            joinIfNeeded((PersistentPropertyPath<?>) expression, false);
+        if (expression instanceof PersistentPropertyPath<?> persistentPropertyPath) {
+            joinIfNeeded(persistentPropertyPath, false);
         }
     }
 
@@ -182,8 +182,8 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
     @Override
     public void visit(CompoundSelection<?> compoundSelection) {
         for (Selection<?> selection : compoundSelection.getCompoundSelectionItems()) {
-            if (selection instanceof SelectionVisitable) {
-                ((SelectionVisitable) selection).accept(this);
+            if (selection instanceof SelectionVisitable selectionVisitable) {
+                selectionVisitable.accept(this);
             } else {
                 throw new IllegalStateException("Unknown selection object: " + selection);
             }

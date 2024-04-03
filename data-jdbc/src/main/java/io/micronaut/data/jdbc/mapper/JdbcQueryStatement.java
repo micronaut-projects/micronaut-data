@@ -146,12 +146,12 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     @Override
     public QueryStatement<PreparedStatement, Integer> setValue(PreparedStatement statement, Integer index, Object value) throws DataAccessException {
         try {
-            if (value instanceof Clob) {
-                statement.setClob(index, (Clob) value);
-            } else if (value instanceof Blob) {
-                statement.setBlob(index, (Blob) value);
-            } else if (value instanceof Array) {
-                statement.setArray(index, (Array) value);
+            if (value instanceof Clob clob) {
+                statement.setClob(index, clob);
+            } else if (value instanceof Blob blob) {
+                statement.setBlob(index, blob);
+            } else if (value instanceof Array array) {
+                statement.setArray(index, array);
             } else if (value != null) {
                 if (value.getClass().isEnum()) {
                     statement.setObject(index, value, Types.OTHER);
@@ -310,8 +310,8 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
         try {
             if (array == null) {
                 statement.setNull(name, Types.ARRAY);
-            } else if (array instanceof Array) {
-                statement.setArray(name, (Array) array);
+            } else if (array instanceof Array array1) {
+                statement.setArray(name, array1);
             } else {
                 statement.setObject(name, array);
             }
