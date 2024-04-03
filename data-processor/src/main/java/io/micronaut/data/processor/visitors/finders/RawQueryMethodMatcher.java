@@ -38,14 +38,13 @@ import io.micronaut.data.processor.visitors.MatchFailedException;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.Utils;
 import io.micronaut.expressions.context.DefaultExpressionCompilationContextFactory;
-import io.micronaut.expressions.context.ExpressionCompilationContext;
-import io.micronaut.expressions.parser.CompoundEvaluatedEvaluatedExpressionParser;
+import io.micronaut.expressions.context.ExpressionEvaluationContext;
+import io.micronaut.expressions.parser.CompoundEvaluatedExpressionParser;
+import io.micronaut.expressions.parser.compilation.ExpressionCompilationContext;
 import io.micronaut.expressions.parser.compilation.ExpressionVisitorContext;
 import io.micronaut.inject.ast.ClassElement;
-import io.micronaut.inject.ast.ElementQuery;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
-import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.processing.ProcessingException;
 
 import java.util.ArrayList;
@@ -401,11 +400,11 @@ public class RawQueryMethodMatcher implements MethodMatcher {
         }
         EvaluatedExpressionReference ref = (EvaluatedExpressionReference) expressionValue;
         DefaultExpressionCompilationContextFactory factory = new DefaultExpressionCompilationContextFactory(matchContext.getVisitorContext());
-        ExpressionCompilationContext compilationContext = factory.buildContextForMethod(ref, matchContext.getMethodElement());
+        ExpressionEvaluationContext compilationContext = factory.buildContextForMethod(ref, matchContext.getMethodElement());
         String expression = (String) ref.annotationValue();
-        return new CompoundEvaluatedEvaluatedExpressionParser(expression)
+        return new CompoundEvaluatedExpressionParser(expression)
             .parse()
-            .resolveClassElement(new ExpressionVisitorContext(compilationContext, matchContext.getVisitorContext(), null));
+            .resolveClassElement(new ExpressionVisitorContext(compilationContext, matchContext.getVisitorContext()));
     }
 
 }
