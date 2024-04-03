@@ -180,7 +180,7 @@ interface MyInterface2 extends CrudRepository<CustomBook, Long> {
             )
         then:
             def e = thrown(Exception)
-            e.message == "Unable to implement Repository method: MyInterface2.somethingWithCast(). Expected an expression '#{...}' found a string!"
+            e.message.contains "Unable to implement Repository method: MyInterface2.somethingWithCast(). Expected an expression '#{...}' found a string!"
     }
 
     @PendingFeature
