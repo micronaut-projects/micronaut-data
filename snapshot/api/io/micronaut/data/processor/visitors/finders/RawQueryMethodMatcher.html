@@ -132,12 +132,27 @@ implements <a href="MethodMatcher.html" title="interface in io.micronaut.data.pr
 <section class="method-summary" id="method-summary">
 <h2>Method Summary</h2>
 <div id="method-summary-table">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab1" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab1', 3)" class="table-tab">Static Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
 <div id="method-summary-table.tabpanel" role="tabpanel">
 <div class="summary-table three-column-summary" aria-labelledby="method-summary-table-tab0">
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="../../../model/query/builder/QueryParameterBinding.html" title="interface in io.micronaut.data.model.query.builder">QueryParameterBinding</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#addBinding(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.List,java.util.List,io.micronaut.inject.ast.ParameterElement,io.micronaut.data.processor.model.SourcePersistentEntity,java.lang.String,io.micronaut.data.model.query.BindingParameter.BindingContext)" class="member-name-link">addBinding</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.inject.ast.ParameterElement&gt;&nbsp;parameters,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.core.annotation.AnnotationValue&lt;<a href="../../../annotation/ParameterExpression.html" title="annotation interface in io.micronaut.data.annotation">ParameterExpression</a>&gt;&gt;&nbsp;parameterExpressions,
+ io.micronaut.inject.ast.ParameterElement&nbsp;entityParam,
+ <a href="../../model/SourcePersistentEntity.html" title="class in io.micronaut.data.processor.model">SourcePersistentEntity</a>&nbsp;persistentEntity,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+ <a href="../../../model/query/BindingParameter.BindingContext.html" title="interface in io.micronaut.data.model.query">BindingParameter.BindingContext</a>&nbsp;bindingContext)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static io.micronaut.inject.ast.ClassElement</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#extractExpressionType(io.micronaut.data.processor.visitors.MatchContext,io.micronaut.core.annotation.AnnotationValue)" class="member-name-link">extractExpressionType</a><wbr>(<a href="../MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a>&nbsp;matchContext,
+ io.micronaut.core.annotation.AnnotationValue&lt;<a href="../../../annotation/ParameterExpression.html" title="annotation interface in io.micronaut.data.annotation">ParameterExpression</a>&gt;&nbsp;parameterExpression)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">Extract the expression type.</div>
+</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final int</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getOrder()" class="member-name-link">getOrder</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
@@ -194,6 +209,33 @@ implements <a href="MethodMatcher.html" title="interface in io.micronaut.data.pr
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code><a href="MethodMatcher.html#match(io.micronaut.data.processor.visitors.MethodMatchContext)">match</a></code>&nbsp;in interface&nbsp;<code><a href="MethodMatcher.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher</a></code></dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="addBinding(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.List,java.util.List,io.micronaut.inject.ast.ParameterElement,io.micronaut.data.processor.model.SourcePersistentEntity,java.lang.String,io.micronaut.data.model.query.BindingParameter.BindingContext)">
+<h3>addBinding</h3>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="../../../model/query/builder/QueryParameterBinding.html" title="interface in io.micronaut.data.model.query.builder">QueryParameterBinding</a></span>&nbsp;<span class="element-name">addBinding</span><wbr><span class="parameters">(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.inject.ast.ParameterElement&gt;&nbsp;parameters,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;io.micronaut.core.annotation.AnnotationValue&lt;<a href="../../../annotation/ParameterExpression.html" title="annotation interface in io.micronaut.data.annotation">ParameterExpression</a>&gt;&gt;&nbsp;parameterExpressions,
+ io.micronaut.inject.ast.ParameterElement&nbsp;entityParam,
+ <a href="../../model/SourcePersistentEntity.html" title="class in io.micronaut.data.processor.model">SourcePersistentEntity</a>&nbsp;persistentEntity,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+ <a href="../../../model/query/BindingParameter.BindingContext.html" title="interface in io.micronaut.data.model.query">BindingParameter.BindingContext</a>&nbsp;bindingContext)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="extractExpressionType(io.micronaut.data.processor.visitors.MatchContext,io.micronaut.core.annotation.AnnotationValue)">
+<h3>extractExpressionType</h3>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">io.micronaut.inject.ast.ClassElement</span>&nbsp;<span class="element-name">extractExpressionType</span><wbr><span class="parameters">(<a href="../MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a>&nbsp;matchContext,
+ io.micronaut.core.annotation.AnnotationValue&lt;<a href="../../../annotation/ParameterExpression.html" title="annotation interface in io.micronaut.data.annotation">ParameterExpression</a>&gt;&nbsp;parameterExpression)</span></div>
+<div class="block">Extract the expression type.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>matchContext</code> - The match context</dd>
+<dd><code>parameterExpression</code> - The parameter expression</dd>
+<dt>Returns:</dt>
+<dd>the type</dd>
 </dl>
 </section>
 </li>

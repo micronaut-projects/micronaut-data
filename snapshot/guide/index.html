@@ -403,6 +403,7 @@
 
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.annotation.Repository;
@@ -2640,7 +2641,9 @@ Book save(Book entity);</code></pre>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Query("INSERT INTO Book(title, pages) VALUES (:title, :pages)")
-void insert(String title, int pages);
+@ParameterExpression(name = "title", expression = "#{book.title + 'ABC'}")
+@ParameterExpression(name = "pages", expression = "#{book.pages}")
+void insertCustomExp(Book book);
 
 @Query("INSERT INTO Book(title, pages) VALUES (:title, :pages)")
 void insertOne(Book book);
@@ -4841,6 +4844,7 @@ data class Book(@Id
 
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.annotation.Repository;

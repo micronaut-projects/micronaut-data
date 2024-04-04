@@ -490,6 +490,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Add a required parameter.</div>
 </dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/RawQueryMethodMatcher.html#addBinding(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.List,java.util.List,io.micronaut.inject.ast.ParameterElement,io.micronaut.data.processor.model.SourcePersistentEntity,java.lang.String,io.micronaut.data.model.query.BindingParameter.BindingContext)" class="member-name-link">addBinding(MethodMatchContext, List&lt;ParameterElement&gt;, List&lt;AnnotationValue&lt;ParameterExpression&gt;&gt;, ParameterElement, SourcePersistentEntity, String, BindingParameter.BindingContext)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/RawQueryMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">RawQueryMethodMatcher</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#addCriterionHandler(java.lang.Class,io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.CriterionHandler)" class="member-name-link">addCriterionHandler(Class&lt;T&gt;, AbstractSqlLikeQueryBuilder.CriterionHandler&lt;T&gt;)</a> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
 <dd>
 <div class="block">Adds criterion handler.</div>
@@ -1310,6 +1312,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/runtime/operations/internal/query/DefaultBindableParametersPreparedQuery.html#bindParameters(io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery.Binder,io.micronaut.aop.InvocationContext,E,java.util.Map)" class="member-name-link">bindParameters(BindableParametersStoredQuery.Binder, InvocationContext&lt;?, ?&gt;, E, Map&lt;QueryParameterBinding, Object&gt;)</a> - Method in class io.micronaut.data.runtime.operations.internal.query.<a href="io/micronaut/data/runtime/operations/internal/query/DefaultBindableParametersPreparedQuery.html" title="class in io.micronaut.data.runtime.operations.internal.query">DefaultBindableParametersPreparedQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/hibernate/operations/AbstractHibernateOperations.html#bindParameters(Q,io.micronaut.data.model.runtime.PreparedQuery,boolean)" class="member-name-link">bindParameters(Q, PreparedQuery&lt;T, R&gt;, boolean)</a> - Method in class io.micronaut.data.hibernate.operations.<a href="io/micronaut/data/hibernate/operations/AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a></dt>
+<dd>
+<div class="block">Bind parameters into query.</div>
+</dd>
+<dt><a href="io/micronaut/data/hibernate/operations/AbstractHibernateOperations.html#bindParameters(Q,io.micronaut.data.model.runtime.StoredQuery,io.micronaut.aop.InvocationContext,boolean,T)" class="member-name-link">bindParameters(Q, StoredQuery&lt;T, R&gt;, InvocationContext&lt;?, ?&gt;, boolean, T)</a> - Method in class io.micronaut.data.hibernate.operations.<a href="io/micronaut/data/hibernate/operations/AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a></dt>
 <dd>
 <div class="block">Bind parameters into query.</div>
 </dd>
@@ -5103,6 +5109,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Marks parameter as expandable, which means that the query will be altered during runtime to accommodate additional values.</div>
 </dd>
+<dt><a href="io/micronaut/data/annotation/ParameterExpression.html#expression()" class="member-name-link">expression()</a> - Element in annotation interface io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/ParameterExpression.html" title="annotation interface in io.micronaut.data.annotation">ParameterExpression</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/predicate/ExpressionBinaryPredicate.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">ExpressionBinaryPredicate</a> - Class in <a href="io/micronaut/data/model/jpa/criteria/impl/predicate/package-summary.html">io.micronaut.data.model.jpa.criteria.impl.predicate</a></dt>
 <dd>
 <div class="block">The expression binary operation predicate implementation.</div>
@@ -5112,6 +5120,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/transaction/support/AbstractPropagatedStatusTransactionOperations.html#extendCurrentPropagatedContext(io.micronaut.transaction.TransactionStatus)" class="member-name-link">extendCurrentPropagatedContext(TransactionStatus&lt;C&gt;)</a> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractPropagatedStatusTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractPropagatedStatusTransactionOperations</a></dt>
 <dd>
 <div class="block">Extends the propagated context with the transaction status.</div>
+</dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/RawQueryMethodMatcher.html#extractExpressionType(io.micronaut.data.processor.visitors.MatchContext,io.micronaut.core.annotation.AnnotationValue)" class="member-name-link">extractExpressionType(MatchContext, AnnotationValue&lt;ParameterExpression&gt;)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/RawQueryMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">RawQueryMethodMatcher</a></dt>
+<dd>
+<div class="block">Extract the expression type.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html#extractPredicateParameters(jakarta.persistence.criteria.Expression)" class="member-name-link">extractPredicateParameters(Expression&lt;?&gt;)</a> - Static method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html" title="class in io.micronaut.data.model.jpa.criteria.impl">CriteriaUtils</a></dt>
 <dd>&nbsp;</dd>
@@ -7415,6 +7427,8 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.Placeholder.html#getName()" class="member-name-link">getName()</a> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.Placeholder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.Placeholder</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/query/builder/QueryParameterBinding.html#getName()" class="member-name-link">getName()</a> - Method in interface io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/QueryParameterBinding.html" title="interface in io.micronaut.data.model.query.builder">QueryParameterBinding</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/QueryModel.ArrayContains.html#getName()" class="member-name-link">getName()</a> - Method in class io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/QueryModel.ArrayContains.html" title="class in io.micronaut.data.model.query">QueryModel.ArrayContains</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/QueryModel.In.html#getName()" class="member-name-link">getName()</a> - Method in class io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/QueryModel.In.html" title="class in io.micronaut.data.model.query">QueryModel.In</a></dt>
@@ -7906,6 +7920,14 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/query/internal/StoredQueryParameter.html#getParameterConverterClass()" class="member-name-link">getParameterConverterClass()</a> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/StoredQueryParameter.html" title="class in io.micronaut.data.runtime.query.internal">StoredQueryParameter</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/runtime/StoredQuery.html#getParameterExpressions()" class="member-name-link">getParameterExpressions()</a> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a></dt>
+<dd>
+<div class="block">Parameter expressions.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html#getParameterExpressions()" class="member-name-link">getParameterExpressions()</a> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DefaultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">DefaultStoredQuery</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#getParameterExpressions()" class="member-name-link">getParameterExpressions()</a> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/QueryParameterBinding.html#getParameterIndex()" class="member-name-link">getParameterIndex()</a> - Method in interface io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/QueryParameterBinding.html" title="interface in io.micronaut.data.model.query.builder">QueryParameterBinding</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/runtime/DelegatingQueryParameterBinding.html#getParameterIndex()" class="member-name-link">getParameterIndex()</a> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/DelegatingQueryParameterBinding.html" title="class in io.micronaut.data.model.runtime">DelegatingQueryParameterBinding</a></dt>
@@ -7951,8 +7973,6 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/processor/model/criteria/impl/SourceParameterExpressionImpl.html#getParameterType()" class="member-name-link">getParameterType()</a> - Method in class io.micronaut.data.processor.model.criteria.impl.<a href="io/micronaut/data/processor/model/criteria/impl/SourceParameterExpressionImpl.html" title="class in io.micronaut.data.processor.model.criteria.impl">SourceParameterExpressionImpl</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/QueryResult.html#getParameterTypes()" class="member-name-link">getParameterTypes()</a> - Method in interface io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/hibernate/operations/AbstractHibernateOperations.html#getParameterValue(java.lang.String%5B%5D,java.lang.Object)" class="member-name-link">getParameterValue(String[], Object)</a> - Method in class io.micronaut.data.hibernate.operations.<a href="io/micronaut/data/hibernate/operations/AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getParameterValueMap(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getParameterValueMap(MethodInvocationContext&lt;?, ?&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="class in io.micronaut.data.runtime.intercept">AbstractQueryInterceptor</a></dt>
 <dd>
@@ -10468,6 +10488,14 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#isExpandEmbedded()" class="member-name-link">isExpandEmbedded()</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/query/builder/QueryParameterBinding.html#isExpression()" class="member-name-link">isExpression()</a> - Method in interface io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/QueryParameterBinding.html" title="interface in io.micronaut.data.model.query.builder">QueryParameterBinding</a></dt>
+<dd>
+<div class="block">The constant runtime value.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/runtime/QueryParameterBinding.html#isExpression()" class="member-name-link">isExpression()</a> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/QueryParameterBinding.html" title="interface in io.micronaut.data.model.runtime">QueryParameterBinding</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/query/internal/StoredQueryParameter.html#isExpression()" class="member-name-link">isExpression()</a> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/StoredQueryParameter.html" title="class in io.micronaut.data.runtime.query.internal">StoredQueryParameter</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/impl/TransactionManagerConfiguration.html#isFailEarlyOnGlobalRollbackOnly()" class="member-name-link">isFailEarlyOnGlobalRollbackOnly()</a> - Method in class io.micronaut.transaction.impl.<a href="io/micronaut/transaction/impl/TransactionManagerConfiguration.html" title="class in io.micronaut.transaction.impl">TransactionManagerConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/MatchContext.html#isFailing()" class="member-name-link">isFailing()</a> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a></dt>
@@ -12174,6 +12202,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">The member that holds expandable query parts.</div>
 </dd>
+<dt><a href="io/micronaut/data/intercept/annotation/DataMethodQueryParameter.html#META_MEMBER_EXPRESSION" class="member-name-link">META_MEMBER_EXPRESSION</a> - Static variable in annotation interface io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethodQueryParameter.html" title="annotation interface in io.micronaut.data.intercept.annotation">DataMethodQueryParameter</a></dt>
+<dd>
+<div class="block">The member name that holds expression flag.</div>
+</dd>
 <dt><a href="io/micronaut/data/intercept/annotation/DataMethod.html#META_MEMBER_ID" class="member-name-link">META_MEMBER_ID</a> - Static variable in annotation interface io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethod.html" title="annotation interface in io.micronaut.data.intercept.annotation">DataMethod</a></dt>
 <dd>
 <div class="block">The parameter that references the ID.</div>
@@ -12672,6 +12704,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">(Optional) The name of the index; defaults to a provider-generated name.</div>
 </dd>
+<dt><a href="io/micronaut/data/annotation/ParameterExpression.html#name()" class="member-name-link">name()</a> - Element in annotation interface io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/ParameterExpression.html" title="annotation interface in io.micronaut.data.annotation">ParameterExpression</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/annotation/QueryHint.html#name()" class="member-name-link">name()</a> - Element in annotation interface io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/QueryHint.html" title="annotation interface in io.micronaut.data.annotation">QueryHint</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/annotation/sql/JoinColumn.html#name()" class="member-name-link">name()</a> - Element in annotation interface io.micronaut.data.annotation.sql.<a href="io/micronaut/data/annotation/sql/JoinColumn.html" title="annotation interface in io.micronaut.data.annotation.sql">JoinColumn</a></dt>
@@ -13492,12 +13526,20 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/data/intercept/annotation/DataMethodQueryParameter.html#parameterBindingPath()" class="member-name-link">parameterBindingPath()</a> - Element in annotation interface io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethodQueryParameter.html" title="annotation interface in io.micronaut.data.intercept.annotation">DataMethodQueryParameter</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/annotation/ParameterExpression.html" class="type-name-link" title="annotation interface in io.micronaut.data.annotation">ParameterExpression</a> - Annotation Interface in <a href="io/micronaut/data/annotation/package-summary.html">io.micronaut.data.annotation</a></dt>
+<dd>
+<div class="block">The definition of the query's parameter value that should be represented as an expression.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/ParameterExpressionImpl.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl">ParameterExpressionImpl</a>&lt;<a href="io/micronaut/data/model/jpa/criteria/impl/ParameterExpressionImpl.html" title="type parameter in ParameterExpressionImpl">T</a>&gt; - Class in <a href="io/micronaut/data/model/jpa/criteria/impl/package-summary.html">io.micronaut.data.model.jpa.criteria.impl</a></dt>
 <dd>
 <div class="block">The abstract implementation of <code>ParameterExpression</code>.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/ParameterExpressionImpl.html#%3Cinit%3E(java.lang.Class,java.lang.String)" class="member-name-link">ParameterExpressionImpl(Class&lt;T&gt;, String)</a> - Constructor for class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/ParameterExpressionImpl.html" title="class in io.micronaut.data.model.jpa.criteria.impl">ParameterExpressionImpl</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/annotation/repeatable/ParameterExpressions.html" class="type-name-link" title="annotation interface in io.micronaut.data.annotation.repeatable">ParameterExpressions</a> - Annotation Interface in <a href="io/micronaut/data/annotation/repeatable/package-summary.html">io.micronaut.data.annotation.repeatable</a></dt>
+<dd>
+<div class="block">A holder for the repeatable annotation <a href="io/micronaut/data/annotation/ParameterExpression.html" title="annotation interface in io.micronaut.data.annotation"><code>ParameterExpression</code></a>.</div>
+</dd>
 <dt><a href="io/micronaut/data/intercept/annotation/DataMethodQueryParameter.html#parameterIndex()" class="member-name-link">parameterIndex()</a> - Element in annotation interface io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethodQueryParameter.html" title="annotation interface in io.micronaut.data.intercept.annotation">DataMethodQueryParameter</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/MatchContext.html#parameters" class="member-name-link">parameters</a> - Variable in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a></dt>
@@ -17299,6 +17341,8 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/data/processor/model/criteria/impl/SourceParameterExpressionImpl.html#%3Cinit%3E(java.util.Map,io.micronaut.inject.ast.ParameterElement%5B%5D,io.micronaut.inject.ast.ParameterElement,boolean)" class="member-name-link">SourceParameterExpressionImpl(Map&lt;String, DataType&gt;, ParameterElement[], ParameterElement, boolean)</a> - Constructor for class io.micronaut.data.processor.model.criteria.impl.<a href="io/micronaut/data/processor/model/criteria/impl/SourceParameterExpressionImpl.html" title="class in io.micronaut.data.processor.model.criteria.impl">SourceParameterExpressionImpl</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/model/criteria/impl/SourceParameterExpressionImpl.html#%3Cinit%3E(java.util.Map,java.lang.String,io.micronaut.inject.ast.ClassElement)" class="member-name-link">SourceParameterExpressionImpl(Map&lt;String, DataType&gt;, String, ClassElement)</a> - Constructor for class io.micronaut.data.processor.model.criteria.impl.<a href="io/micronaut/data/processor/model/criteria/impl/SourceParameterExpressionImpl.html" title="class in io.micronaut.data.processor.model.criteria.impl">SourceParameterExpressionImpl</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/model/SourcePersistentEntity.html" class="type-name-link" title="class in io.micronaut.data.processor.model">SourcePersistentEntity</a> - Class in <a href="io/micronaut/data/processor/model/package-summary.html">io.micronaut.data.processor.model</a></dt>
 <dd>
 <div class="block">An implementation of <a href="io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model"><code>PersistentEntity</code></a> that operates on the sources.</div>
@@ -18946,6 +18990,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/annotation/Relation.html#value()" class="member-name-link">value()</a> - Element in annotation interface io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/Relation.html" title="annotation interface in io.micronaut.data.annotation">Relation</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/annotation/repeatable/JoinSpecifications.html#value()" class="member-name-link">value()</a> - Element in annotation interface io.micronaut.data.annotation.repeatable.<a href="io/micronaut/data/annotation/repeatable/JoinSpecifications.html" title="annotation interface in io.micronaut.data.annotation.repeatable">JoinSpecifications</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/annotation/repeatable/ParameterExpressions.html#value()" class="member-name-link">value()</a> - Element in annotation interface io.micronaut.data.annotation.repeatable.<a href="io/micronaut/data/annotation/repeatable/ParameterExpressions.html" title="annotation interface in io.micronaut.data.annotation.repeatable">ParameterExpressions</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/annotation/repeatable/QueryHints.html#value()" class="member-name-link">value()</a> - Element in annotation interface io.micronaut.data.annotation.repeatable.<a href="io/micronaut/data/annotation/repeatable/QueryHints.html" title="annotation interface in io.micronaut.data.annotation.repeatable">QueryHints</a></dt>
 <dd>&nbsp;</dd>
