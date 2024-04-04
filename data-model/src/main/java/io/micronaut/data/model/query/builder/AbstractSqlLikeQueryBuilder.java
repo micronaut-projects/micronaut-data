@@ -1538,6 +1538,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 if (value instanceof BindingParameter) {
                     int key = 1;
                     queryState.pushParameter(new QueryParameterBinding() {
+
+                        @Override
+                        public String getName() {
+                            return String.valueOf(key);
+                        }
+
                         @Override
                         public String getKey() {
                             return String.valueOf(key);

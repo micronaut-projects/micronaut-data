@@ -18,6 +18,7 @@ package io.micronaut.data.hibernate;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.Where;
@@ -99,11 +100,16 @@ public abstract class BookRepository extends io.micronaut.data.tck.repositories.
     @Query("SELECT b FROM Book b WHERE b.author = :author")
     public abstract List<Book> findByAuthor(Author author);
 
-    @Query("INSERT INTO Book(title, pages, author) VALUES (:title, :pages, :author)")
+    @Query("INSERT INTO Book(title, totalPages) VALUES (:title, :totalPages)")
     public abstract void saveCustom(Collection<Book> books);
 
-    @Query("INSERT INTO Book(title, pages, author) VALUES (:title, :pages, :author)")
+    @Query("INSERT INTO Book(title, totalPages) VALUES (:title, :totalPages)")
     public abstract void saveCustomSingle(Book book);
+
+    @Query("INSERT INTO Book(title, totalPages) VALUES (:title, :totalPages)")
+    @ParameterExpression(name = "title", expression = "#{book.title + 'XYZ'}")
+    @ParameterExpression(name = "totalPages", expression = "#{book.totalPages}")
+    public abstract void saveCustomSingleExpressions(Book book);
 
     @Query("DELETE FROM Book WHERE title = :title")
     public abstract int deleteCustom(Collection<Book> books);

@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import jakarta.inject.Inject;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -29,6 +30,11 @@ class BookRepositorySpec {
 	// tag::metadata[]
 	@Inject
 	BeanContext beanContext;
+
+    @AfterEach
+    public void cleanup() {
+        bookRepository.deleteAll();
+    }
 
 	@Test
 	void testAnnotationMetadata() {
@@ -134,4 +140,21 @@ class BookRepositorySpec {
 
 		assertEquals("The Shining", book.getTitle());
 	}
+
+    @Test
+    void testExpressions() {
+        assertEquals(0, bookRepository.count());
+
+        Book book = new Book("The Stand", 1000);
+        bookRepository.insertCustomExp(book);
+
+        // Micronaut Data JDBC supports updating ID for custom query entity updates
+
+        book = bookRepository.findById(book.getId()).orElse(null);
+        assertNotNull(book);
+        assertEquals("The StandABC", book.getTitle()); // Modified by expression
+
+        assertEquals(1, bookRepository.count());
+        assertTrue(bookRepository.findAll().iterator().hasNext());
+    }
 }

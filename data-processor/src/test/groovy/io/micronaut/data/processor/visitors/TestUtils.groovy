@@ -71,6 +71,10 @@ class TestUtils {
         return getParameterPropertyPaths(metadata.getAnnotation(DataMethod))
     }
 
+    static Boolean[] getParameterExpressions(AnnotationMetadataProvider metadata) {
+        return getParameterExpressions(metadata.getAnnotation(DataMethod))
+    }
+
     static String[] getQueryParameterNames(AnnotationMetadataProvider metadata) {
         return getQueryParameterNames(metadata.getAnnotation(DataMethod))
     }
@@ -164,6 +168,13 @@ class TestUtils {
                 .toArray(String[]::new)
     }
 
+    static Boolean[] getParameterExpressions(AnnotationValue<DataMethod> annotationValue) {
+        return annotationValue.getAnnotations(DataMethod.META_MEMBER_PARAMETERS, DataMethodQueryParameter)
+                .stream()
+                .map(p -> isExpression(p))
+                .toArray(Boolean[]::new)
+    }
+
     private static String getPropertyPath(AnnotationValue<DataMethodQueryParameter> p) {
         def propertyPath
         def prop = p.stringValue(DataMethodQueryParameter.META_MEMBER_PROPERTY)
@@ -173,6 +184,10 @@ class TestUtils {
             propertyPath = String.join(".", p.stringValues(DataMethodQueryParameter.META_MEMBER_PROPERTY_PATH))
         }
         return propertyPath
+    }
+
+    private static boolean isExpression(AnnotationValue<DataMethodQueryParameter> p) {
+        return p.booleanValue(DataMethodQueryParameter.META_MEMBER_EXPRESSION)
     }
 
     static String[] getParameterBindingIndexes(AnnotationValue<DataMethod> annotationValue) {

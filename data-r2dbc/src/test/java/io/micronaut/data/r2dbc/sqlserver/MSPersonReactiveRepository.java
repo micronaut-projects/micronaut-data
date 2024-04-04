@@ -35,4 +35,7 @@ public interface MSPersonReactiveRepository extends PersonReactiveRepository {
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, 1)")
     Mono<Long> saveCustomSingle(Person people);
 
+    @Override
+    @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, 1)")
+    Mono<Long> saveCustomSingleExpression(Person person);
 }
