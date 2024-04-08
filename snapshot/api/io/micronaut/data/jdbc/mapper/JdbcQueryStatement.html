@@ -107,6 +107,11 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <div class="col-last odd-row-color">
 <div class="block">Constructs a new instance.</div>
 </div>
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.data.runtime.convert.DataConversionService,io.micronaut.data.jdbc.config.DataJdbcConfiguration)" class="member-name-link">JdbcQueryStatement</a><wbr>(<a href="../../runtime/convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;conversionService,
+ <a href="../config/DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a>&nbsp;jdbcConfiguration)</code></div>
+<div class="col-last even-row-color">
+<div class="block">Constructs a new instance.</div>
+</div>
 </div>
 </section>
 </li>
@@ -122,7 +127,8 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static int</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#findSqlType(io.micronaut.data.model.DataType)" class="member-name-link">findSqlType</a><wbr>(@NonNull <a href="../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;dataType)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#findSqlType(io.micronaut.data.model.DataType,io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">findSqlType</a><wbr>(@NonNull <a href="../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;dataType,
+ @NonNull <a href="../../model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Find the SQL type from <a href="../../model/DataType.html" title="enum class in io.micronaut.data.model"><code>DataType</code></a>.</div>
 </div>
@@ -290,6 +296,21 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 </dl>
 </section>
 </li>
+<li>
+<section class="detail" id="&lt;init&gt;(io.micronaut.data.runtime.convert.DataConversionService,io.micronaut.data.jdbc.config.DataJdbcConfiguration)">
+<h3>JdbcQueryStatement</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">JdbcQueryStatement</span><wbr><span class="parameters">(<a href="../../runtime/convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;conversionService,
+ <a href="../config/DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a>&nbsp;jdbcConfiguration)</span></div>
+<div class="block">Constructs a new instance.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>conversionService</code> - The data conversion service</dd>
+<dd><code>jdbcConfiguration</code> - The JDBC configuration</dd>
+<dt>Since:</dt>
+<dd>4.6.1</dd>
+</dl>
+</section>
+</li>
 </ul>
 </section>
 </li>
@@ -299,15 +320,18 @@ implements <a href="../../runtime/mapper/QueryStatement.html" title="interface i
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="findSqlType(io.micronaut.data.model.DataType)">
+<section class="detail" id="findSqlType(io.micronaut.data.model.DataType,io.micronaut.data.model.query.builder.sql.Dialect)">
 <h3>findSqlType</h3>
 <div class="member-signature"><span class="annotations">@Internal
 </span><span class="modifiers">public static</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">findSqlType</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;dataType)</span></div>
+ @NonNull <a href="../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;dataType,
+ @NonNull
+ @NonNull <a href="../../model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</span></div>
 <div class="block">Find the SQL type from <a href="../../model/DataType.html" title="enum class in io.micronaut.data.model"><code>DataType</code></a>.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>dataType</code> - The data type</dd>
+<dd><code>dialect</code> - The dialect</dd>
 <dt>Returns:</dt>
 <dd>The SQL type</dd>
 </dl>
