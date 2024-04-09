@@ -311,6 +311,10 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
         return List.of(identity);
     }
 
+    /**
+     * An alternative to {@link #getIdentityProperties()} but that returns {@link RuntimePersistentProperty}.
+     * @return The identity properties
+     */
     public List<RuntimePersistentProperty<T>> getRuntimeIdentityProperties() {
         return List.of(identity);
     }
