@@ -97,7 +97,7 @@ public interface PersistentEntity extends PersistentElement {
         if (getIdentity() != null) {
             return List.of(getIdentity());
         } else {
-            return List.of();
+            return List.of(getCompositeIdentity());
         }
     }
 
