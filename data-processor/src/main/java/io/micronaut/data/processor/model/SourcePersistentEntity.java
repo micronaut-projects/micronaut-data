@@ -155,6 +155,11 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
         return ids.length == 1 ? ids[0] : null;
     }
 
+    @Override
+    public List<PersistentProperty> getIdentityProperties() {
+        return List.of(ids);
+    }
+
     @Nullable
     @Override
     public SourcePersistentProperty getVersion() {
