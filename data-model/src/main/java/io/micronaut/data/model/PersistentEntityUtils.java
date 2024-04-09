@@ -71,8 +71,8 @@ public final class PersistentEntityUtils {
      * @param consumer         The function to invoke on every property
      */
     public static void traversePersistentProperties(PersistentEntity persistentEntity, BiConsumer<List<Association>, PersistentProperty> consumer) {
-        if (persistentEntity.getIdentity() != null) {
-            traversePersistentProperties(Collections.emptyList(), persistentEntity.getIdentity(), consumer);
+        for (PersistentProperty identityProperty : persistentEntity.getIdentityProperties()) {
+            traversePersistentProperties(Collections.emptyList(), identityProperty, consumer);
         }
         if (persistentEntity.getVersion() != null) {
             traversePersistentProperties(Collections.emptyList(), persistentEntity.getVersion(), consumer);
@@ -91,8 +91,10 @@ public final class PersistentEntityUtils {
      * @param consumer         The function to invoke on every property
      */
     public static void traversePersistentProperties(PersistentEntity persistentEntity, boolean includeIdentity, boolean includeVersion, BiConsumer<List<Association>, PersistentProperty> consumer) {
-        if (includeIdentity && persistentEntity.getIdentity() != null) {
-            traversePersistentProperties(Collections.emptyList(), persistentEntity.getIdentity(), consumer);
+        if (includeIdentity) {
+            for (PersistentProperty identityProperty : persistentEntity.getIdentityProperties()) {
+                traversePersistentProperties(Collections.emptyList(), identityProperty, consumer);
+            }
         }
         if (includeVersion && persistentEntity.getVersion() != null) {
             traversePersistentProperties(Collections.emptyList(), persistentEntity.getVersion(), consumer);
