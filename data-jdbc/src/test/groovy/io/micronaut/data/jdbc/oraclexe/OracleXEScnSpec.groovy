@@ -5,7 +5,6 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
-import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.Version
 import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.jdbc.annotation.JdbcRepository
@@ -33,9 +32,9 @@ class OracleXEScnSpec extends Specification implements OracleTestPropertyProvide
         then:
         found.present
         def foundArticle = found.get()
-        foundArticle.version
+        foundArticle.oraRowscn
         when:
-        foundArticle.version = foundArticle.version + 1
+        foundArticle.oraRowscn = foundArticle.oraRowscn + 1
         articleRepository.update(foundArticle)
         then:
         def ex = thrown(OptimisticLockException)
@@ -55,8 +54,7 @@ class Article {
     Double price
 
     @Version(systemField = true)
-    @MappedProperty("ORA_ROWSCN")
-    Long version
+    Long oraRowscn
 }
 @JdbcRepository(dialect = Dialect.ORACLE)
 interface ArticleRepository extends CrudRepository<Article, Long> {
