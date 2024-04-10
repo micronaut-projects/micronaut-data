@@ -93,6 +93,7 @@ class Test {
 import java.util.UUID;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.annotation.Version;
 
 @JdbcRepository(dialect=Dialect.${dialect.name()})
 @io.micronaut.context.annotation.Executable
@@ -108,6 +109,8 @@ class Test {
     @GeneratedValue(GeneratedValue.Type.IDENTITY)
     private Long id;
     private String name;
+    @Version(systemField = true)
+    private Long version;
 
     public Test(String name) {
         this.name = name;
@@ -123,6 +126,14 @@ class Test {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 }
 

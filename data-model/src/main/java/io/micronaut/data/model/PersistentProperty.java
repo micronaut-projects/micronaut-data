@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.model;
 
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Nullable;
@@ -24,6 +25,7 @@ import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.JsonRepresentation;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.TypeDef;
+import io.micronaut.data.annotation.Version;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 
 
@@ -118,7 +120,19 @@ public interface PersistentProperty extends PersistentElement {
      * @return True if is generated
      */
     default boolean isGenerated() {
-        return getAnnotationMetadata().hasAnnotation(GeneratedValue.class);
+        AnnotationMetadata annotationMetadata = getAnnotationMetadata();
+        boolean generated = annotationMetadata.hasAnnotation(GeneratedValue.class);
+        if (generated) {
+            return true;
+        }
+        if (annotationMetadata.hasAnnotation(Version.class)) {
+            AnnotationValue<Version> versionAnnotationValue = annotationMetadata.getAnnotation(Version.class);
+            generated = versionAnnotationValue.booleanValue(Version.SYSTEM_FIELD).orElse(false);
+            if (generated) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
