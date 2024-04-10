@@ -39,5 +39,5 @@ public @interface Version {
      * The annotation name.
      */
     String NAME = Version.class.getName();
-    
+
 }
