@@ -50,7 +50,6 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     private final Supplier<AttributeConverter<Object, Object>> converter;
     private String persistedName;
     private String alias;
-    private final boolean generated;
 
     /**
      * Default constructor.
@@ -84,7 +83,6 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
                 .map(converter -> SupplierUtil.memoized(() -> owner.resolveConverter(converter)))
                 .orElse(null);
         this.alias = property.getAnnotationMetadata().stringValue(MappedProperty.class, MappedProperty.ALIAS).orElse(null);
-        this.generated = PersistentProperty.super.isGenerated();
     }
 
     @Override
@@ -213,10 +211,5 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
         }
         RuntimePersistentProperty other = (RuntimePersistentProperty) obj;
         return Objects.equals(other.getOwner(), getOwner()) && Objects.equals(other.getName(), getName());
-    }
-
-    @Override
-    public boolean isGenerated() {
-        return generated;
     }
 }

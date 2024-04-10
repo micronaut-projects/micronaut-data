@@ -513,7 +513,8 @@ class Article {
 
     private Double price;
 
-    @Version(systemField = true)
+    @Version
+    @GeneratedValue
     private Long version;
 
     public Long getId() {

@@ -53,7 +53,8 @@ class Item {
 
     Double price
 
-    @Version(systemField = true)
+    @Version
+    @GeneratedValue
     Long oraRowscn
 }
 @JdbcRepository(dialect = Dialect.ORACLE)
