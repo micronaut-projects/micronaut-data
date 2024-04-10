@@ -14,28 +14,28 @@ import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
-class OracleXEScnSpec extends Specification implements OracleTestPropertyProvider {
+class OracleXEOraRowScnSpec extends Specification implements OracleTestPropertyProvider {
 
     @AutoCleanup
     @Shared
     ApplicationContext context = ApplicationContext.run(properties)
 
     @Memoized
-    ArticleRepository getArticleRepository() {
-        return context.getBean(ArticleRepository)
+    ItemRepository getItemRepository() {
+        return context.getBean(ItemRepository)
     }
 
     void "test optimistic lock with ORA_ROWSCN"() {
         when:
-        def article = articleRepository.save(new Article(name: "Sneakers", price: 119.99))
-        def found = articleRepository.findById(article.id)
+        def item = itemRepository.save(new Item(name: "Sneakers", price: 119.99))
+        def found = itemRepository.findById(item.id)
         then:
         found.present
-        def foundArticle = found.get()
-        foundArticle.oraRowscn
+        def foundItem = found.get()
+        foundItem.oraRowscn
         when:
-        foundArticle.oraRowscn = foundArticle.oraRowscn + 1
-        articleRepository.update(foundArticle)
+        foundItem.oraRowscn = foundItem.oraRowscn + 1
+        itemRepository.update(foundItem)
         then:
         def ex = thrown(OptimisticLockException)
         ex.message == "Execute update returned unexpected row count. Expected: 1 got: 0"
@@ -44,7 +44,7 @@ class OracleXEScnSpec extends Specification implements OracleTestPropertyProvide
 }
 
 @MappedEntity
-class Article {
+class Item {
     @Id
     @GeneratedValue
     Long id
@@ -57,5 +57,5 @@ class Article {
     Long oraRowscn
 }
 @JdbcRepository(dialect = Dialect.ORACLE)
-interface ArticleRepository extends CrudRepository<Article, Long> {
+interface ItemRepository extends CrudRepository<Item, Long> {
 }
