@@ -85,51 +85,28 @@ import static io.micronaut.data.tck.repositories.PersonRepository.Specifications
 abstract class AbstractRepositorySpec extends Specification {
 
     abstract PersonRepository getPersonRepository()
-
     abstract BookRepository getBookRepository()
-
     abstract AuthorRepository getAuthorRepository()
-
     abstract GenreRepository getGenreRepository()
-
     abstract CompanyRepository getCompanyRepository()
-
     abstract BookDtoRepository getBookDtoRepository()
-
     abstract CountryRepository getCountryRepository()
-
     abstract CityRepository getCityRepository()
-
     abstract RegionRepository getRegionRepository()
-
     abstract CountryRegionCityRepository getCountryRegionCityRepository()
-
     abstract NoseRepository getNoseRepository()
-
     abstract FaceRepository getFaceRepository()
-
     abstract UserRepository getUserRepository()
-
     abstract UserRoleRepository getUserRoleRepository()
-
     abstract RoleRepository getRoleRepository()
-
     abstract MealRepository getMealRepository()
-
     abstract FoodRepository getFoodRepository()
-
     abstract StudentRepository getStudentRepository()
-
     abstract CarRepository getCarRepository()
-
     abstract BasicTypesRepository getBasicTypeRepository()
-
     abstract TimezoneBasicTypesRepository getTimezoneBasicTypeRepository()
-
     abstract PageRepository getPageRepository()
-
     abstract EntityWithIdClassRepository getEntityWithIdClassRepository()
-
     abstract EntityWithIdClass2Repository getEntityWithIdClass2Repository()
 
     abstract Map<String, String> getProperties()
@@ -223,10 +200,10 @@ abstract class AbstractRepositorySpec extends Specification {
         then: "The ID is assigned"
         book.myId != null
 
-        when: "A book is found"
+        when:"A book is found"
         def retrievedBook = basicTypeRepository.findById(book.myId).orElse(null)
 
-        then: "The book is correct"
+        then:"The book is correct"
         retrievedBook.uuid == book.uuid
         retrievedBook.bigDecimal == book.bigDecimal
         retrievedBook.byteArray == book.byteArray
@@ -261,7 +238,7 @@ abstract class AbstractRepositorySpec extends Specification {
         when:
         def retrievedBookProj = basicTypeRepository.queryById(book.myId)
 
-        then: "The book is correct"
+        then:"The book is correct"
         retrievedBookProj.uuid == book.uuid
         retrievedBookProj.bigDecimal == book.bigDecimal
         retrievedBookProj.byteArray == book.byteArray
@@ -294,7 +271,7 @@ abstract class AbstractRepositorySpec extends Specification {
         when:
         retrievedBookProj = basicTypeRepository.findAllById(book.myId).iterator().next()
 
-        then: "The book is correct"
+        then:"The book is correct"
         retrievedBookProj.uuid == book.uuid
         retrievedBookProj.bigDecimal == book.bigDecimal
         retrievedBookProj.byteArray == book.byteArray
@@ -348,10 +325,10 @@ abstract class AbstractRepositorySpec extends Specification {
         then: "The ID is assigned"
         book.myId != null
 
-        when: "A book is found"
+        when:"A book is found"
         def retrievedBook = timezoneBasicTypeRepository.findById(book.myId).orElse(null)
 
-        then: "The book is correct"
+        then:"The book is correct"
         retrievedBook.instant == book.instant
         retrievedBook.instantWithTimezone == book.instantWithTimezone
         retrievedBook.timestamp == book.timestamp
@@ -366,7 +343,7 @@ abstract class AbstractRepositorySpec extends Specification {
         when:
         def retrievedBookProj = timezoneBasicTypeRepository.queryById(book.myId)
 
-        then: "The book is correct"
+        then:"The book is correct"
         retrievedBookProj.instant == book.instant
         retrievedBookProj.instantWithTimezone == book.instantWithTimezone
         retrievedBookProj.timestamp == book.timestamp
@@ -384,7 +361,7 @@ abstract class AbstractRepositorySpec extends Specification {
         when:
         retrievedBookProj = timezoneBasicTypeRepository.findAllById(book.myId).iterator().next()
 
-        then: "The book is correct"
+        then:"The book is correct"
         retrievedBookProj.instant == book.instant
         retrievedBookProj.instantWithTimezone == book.instantWithTimezone
         retrievedBookProj.timestamp == book.timestamp
@@ -481,24 +458,24 @@ abstract class AbstractRepositorySpec extends Specification {
         a5.name == 'A5'
         carRepository.getById(a5.id).parts.size() == 0
 
-        when: "an update happens"
+        when:"an update happens"
         carRepository.update(a5.id, "A6")
         a5 = carRepository.findById(a5.id).orElse(null)
 
-        then: "the updated worked"
+        then:"the updated worked"
         a5.name == 'A6'
 
-        when: "an update to null happens"
+        when:"an update to null happens"
         carRepository.update(a5.id, null)
         a5 = carRepository.findById(a5.id).orElse(null)
 
-        then: "the updated to null worked"
+        then:"the updated to null worked"
         a5.name == null
 
-        when: "A deleted"
+        when:"A deleted"
         carRepository.deleteById(a5.id)
 
-        then: "It was deleted"
+        then:"It was deleted"
         !carRepository.findById(a5.id).isPresent()
         carRepository.deleteAll()
     }
@@ -507,15 +484,15 @@ abstract class AbstractRepositorySpec extends Specification {
         given:
         savePersons(["Cemo", "Deniz", "Utku"])
 
-        when: "using a mix of parameters with collection types with IN queries"
+        when:"using a mix of parameters with collection types with IN queries"
         def persons = personRepository.queryNames(
                 ["Ali"],
                 "James",
                 ["Onur"],
-                ["Cemo", "Deniz", "Olcay"],
+                ["Cemo","Deniz","Olcay"],
                 "Utku")
 
-        then: "The result is correct"
+        then:"The result is correct"
         persons != null
         persons.size() == 3
 
@@ -558,11 +535,11 @@ abstract class AbstractRepositorySpec extends Specification {
         given:
         savePersons(["Jeff", "James"])
 
-        when: "one is saved"
+        when:"one is saved"
         def person = new Person(name: "Fred")
         personRepository.save(person)
 
-        then: "the instance is persisted"
+        then:"the instance is persisted"
         person.id != null
         personRepository.findById(person.id).isPresent()
         personRepository.get(person.id).name == 'Fred'
@@ -581,7 +558,7 @@ abstract class AbstractRepositorySpec extends Specification {
         def book3 = bookRepository.save(new Book(title: "Roman Presences", totalPages: 300, students: Set.of(student1, student2)))
 
         personRepository.deleteAll()
-        when: "People with same name diff age are saved"
+        when:"People with same name diff age are saved"
         personRepository.save(new Person(name: "Fred", age: 50))
         personRepository.save(new Person(name: "Fred", age: 18))
         def names = personRepository.findDistinctName()
@@ -594,7 +571,7 @@ abstract class AbstractRepositorySpec extends Specification {
         def userRoleCount = userRoleRepository.count()
         def userRoleDistinctCount = userRoleRepository.countDistinct()
 
-        then: "Distinct works as expected"
+        then:"Distinct works as expected"
         personRepository.findDistinct().size() == 2
         personRepository.findAll(distinct()).size() == 2
         names.size() == 1
@@ -605,7 +582,7 @@ abstract class AbstractRepositorySpec extends Specification {
 
         when:
         def bookTitles = List.of(book1.title, book2.title, book3.title)
-        def students = studentRepository.findAll(StudentRepository.byBookTitles(bookTitles))
+        def students = studentRepository.findAll (StudentRepository.byBookTitles(bookTitles))
         // without distinct logic applied in StudentRepository.byBookTitles this would return more count than
         // student.size() because of left join
         def studentCount = studentRepository.count(StudentRepository.byBookTitles(bookTitles))
@@ -626,12 +603,12 @@ abstract class AbstractRepositorySpec extends Specification {
         given:
         savePersons(["Jeff", "James"])
 
-        when: "many are saved"
+        when:"many are saved"
         def p1 = personRepository.save("Frank", 0)
         def p2 = personRepository.save("Bob", 0)
-        def people = [p1, p2]
+        def people = [p1,p2]
 
-        then: "all are saved"
+        then:"all are saved"
         people.every { it.id != null }
         people.every { personRepository.findById(it.id).isPresent() }
         personRepository.findAll().size() == 4
@@ -646,11 +623,11 @@ abstract class AbstractRepositorySpec extends Specification {
         given:
         savePersons(["Jeff", "James"])
 
-        when: "many are saved"
+        when:"many are saved"
         def r1 = personRepository.saveCustom("Frank", 0)
-        def r2 = personRepository.saveCustom("Bob", 0)
+        def r2 =  personRepository.saveCustom("Bob", 0)
 
-        then: "all are saved"
+        then:"all are saved"
         r1 == 1
         r2 == 1
         personRepository.findAll().size() == 4
@@ -674,7 +651,7 @@ abstract class AbstractRepositorySpec extends Specification {
 
     void "save entity using repository method with different mapped entity argument"() {
         given:
-        Author author = authorRepository.save(new Author().with(true, { it.name = "Kartarka Jolanda" }))
+        Author author = authorRepository.save(new Author().with(true, {it.name = "Kartarka Jolanda"}))
         when:
         Book book = bookRepository.save("Hodne Budes Nekde", 42, author)
         then:
@@ -797,21 +774,21 @@ abstract class AbstractRepositorySpec extends Specification {
         def people = personRepository.findAll()
 
         then:
-        people.count { it.name == "Dennis" } == 0
-        people.count { it.name == "Denis" } == 2
+        people.count { it.name == "Dennis"} == 0
+        people.count { it.name == "Denis"} == 2
     }
 
     void "test custom update only names"() {
         when:
         savePersons(["Dennis", "Jeff", "James", "Dennis"])
         def people = personRepository.findAll()
-        people.forEach { it.age = 100 }
+        people.forEach {it.age = 100 }
         personRepository.updateAll(people)
         people = personRepository.findAll()
 
         then:
         people.size() == 4
-        people.every { it.age > 0 }
+        people.every{it.age > 0 }
 
         when:
         people.forEach() {
@@ -824,8 +801,8 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
         updated == 4
         people.size() == 4
-        people.every { it.name.endsWith(" updated") }
-        people.every { it.age > 0 }
+        people.every {it.name.endsWith(" updated") }
+        people.every {it.age > 0 }
     }
 
     void "test custom delete"() {
@@ -834,14 +811,14 @@ abstract class AbstractRepositorySpec extends Specification {
 
         when:
         def people = personRepository.findAll()
-        people.findAll { it.name == "Dennis" }.forEach { it.name = "DoNotDelete" }
+        people.findAll {it.name == "Dennis"}.forEach{ it.name = "DoNotDelete"}
         def deleted = personRepository.deleteCustom(people)
         people = personRepository.findAll()
 
         then:
         deleted == 2
         people.size() == 2
-        people.count { it.name == "Dennis" }
+        people.count {it.name == "Dennis"}
     }
 
     void "test custom delete single"() {
@@ -850,7 +827,7 @@ abstract class AbstractRepositorySpec extends Specification {
 
         when:
         def people = personRepository.findAll()
-        def jeff = people.find { it.name == "Jeff" }
+        def jeff = people.find {it.name == "Jeff"}
         def deleted = personRepository.deleteCustomSingle(jeff)
         people = personRepository.findAll()
 
@@ -859,7 +836,7 @@ abstract class AbstractRepositorySpec extends Specification {
         people.size() == 3
 
         when:
-        def james = people.find { it.name == "James" }
+        def james = people.find {it.name == "James"}
         james.name = "DoNotDelete"
         deleted = personRepository.deleteCustomSingle(james)
         people = personRepository.findAll()
@@ -875,7 +852,7 @@ abstract class AbstractRepositorySpec extends Specification {
 
         when:
         def people = personRepository.findAll()
-        def jeff = people.find { it.name == "Jeff" }
+        def jeff = people.find {it.name == "Jeff"}
         def deleted = personRepository.deleteCustomSingleExpression(jeff)
         people = personRepository.findAll()
 
@@ -884,7 +861,7 @@ abstract class AbstractRepositorySpec extends Specification {
         people.size() == 3
 
         when:
-        def james = people.find { it.name == "James" }
+        def james = people.find {it.name == "James"}
         james.name = "DoNotDelete"
         deleted = personRepository.deleteCustomSingleExpression(james)
         people = personRepository.findAll()
@@ -900,7 +877,7 @@ abstract class AbstractRepositorySpec extends Specification {
 
         when:
         def people = personRepository.findAll()
-        def jeff = people.find { it.name == "Jeff" }
+        def jeff = people.find {it.name == "Jeff"}
         def deleted = personRepository.deleteCustomSingleNoEntity(jeff.getName())
         people = personRepository.findAll()
 
@@ -913,18 +890,18 @@ abstract class AbstractRepositorySpec extends Specification {
         given:
         savePersons(["Jeff", "James"])
 
-        when: "an entity is retrieved"
+        when:"an entity is retrieved"
         def person = personRepository.findByName("Jeff")
 
-        then: "the person is not null"
+        then:"the person is not null"
         person != null
         person.name == 'Jeff'
         personRepository.findById(person.id).isPresent()
 
-        when: "the person is deleted"
+        when:"the person is deleted"
         personRepository.deleteById(person.id)
 
-        then: "They are really deleted"
+        then:"They are really deleted"
         !personRepository.findById(person.id).isPresent()
         old(personRepository.count()) - 1 == personRepository.count()
     }
@@ -944,16 +921,16 @@ abstract class AbstractRepositorySpec extends Specification {
         given:
         savePersons(["Jeff", "James"])
 
-        when: "A search for some people"
+        when:"A search for some people"
         def people = personRepository.findByNameLike("J%")
 
         then:
         people.size() == 2
 
-        when: "the people are deleted"
+        when:"the people are deleted"
         personRepository.deleteAll(people)
 
-        then: "Only the correct people are deleted"
+        then:"Only the correct people are deleted"
         old(personRepository.count()) - 2 == personRepository.count()
         people.every { !personRepository.findById(it.id).isPresent() }
     }
@@ -962,16 +939,16 @@ abstract class AbstractRepositorySpec extends Specification {
         given:
         savePersons(["Bob"])
 
-        when: "A specific person is found and deleted"
+        when:"A specific person is found and deleted"
         def bob = personRepository.findByName("Bob")
 
-        then: "The person is present"
+        then:"The person is present"
         bob != null
 
-        when: "The person is deleted"
+        when:"The person is deleted"
         personRepository.delete(bob)
 
-        then: "They are deleted"
+        then:"They are deleted"
         !personRepository.findById(bob.id).isPresent()
         old(personRepository.count()) - 1 == personRepository.count()
     }
@@ -980,27 +957,27 @@ abstract class AbstractRepositorySpec extends Specification {
         given:
         savePersons(["Jeff", "James"])
 
-        when: "A person is retrieved"
+        when:"A person is retrieved"
         def fred = personRepository.findByName("Jeff")
 
-        then: "The person is present"
+        then:"The person is present"
         fred != null
 
-        when: "The person is updated"
+        when:"The person is updated"
         personRepository.updatePerson(fred.id, "Jack")
 
-        then: "the person is updated"
+        then:"the person is updated"
         personRepository.findByName("Jeff") == null
         personRepository.findByName("Jack") != null
 
-        when: "an update is issued that returns a number"
+        when:"an update is issued that returns a number"
         def updated = personRepository.updateByName("Jack", 20)
 
-        then: "The result is correct"
+        then:"The result is correct"
         updated == 1
         personRepository.findByName("Jack").age == 20
 
-        when: "A whole entity is updated"
+        when:"A whole entity is updated"
         def jack = personRepository.findByName("Jack")
         jack.setName("Jeffrey")
         jack.setAge(30)
@@ -1030,24 +1007,24 @@ abstract class AbstractRepositorySpec extends Specification {
         given:
         int personsWithG = personRepository.findByNameLike("G%").size()
 
-        when: "A new person is saved"
+        when:"A new person is saved"
         personRepository.save("Greg", 30)
         personRepository.save("Groot", 300)
 
-        then: "The count is "
+        then:"The count is "
         old(personRepository.count()) + 2 == personRepository.count()
 
-        when: "batch delete occurs"
+        when:"batch delete occurs"
         def deleted = personRepository.deleteByNameLike("G%")
 
-        then: "The count is back to 1 and it entries were deleted"
+        then:"The count is back to 1 and it entries were deleted"
         deleted == personsWithG + 2
         old(personRepository.count()) - (personsWithG + 2) == personRepository.count()
 
-        when: "everything is deleted"
+        when:"everything is deleted"
         personRepository.deleteAll()
 
-        then: "data is gone"
+        then:"data is gone"
         personRepository.count() == 0
     }
 
@@ -1091,7 +1068,7 @@ abstract class AbstractRepositorySpec extends Specification {
         given:
         setupBooks()
 
-        when: "Sorting by an assocation"
+        when:"Sorting by an assocation"
         def page = bookRepository.findAll(Pageable.from(Sort.of(
                 Sort.Order.desc("author.name")
         )))
@@ -1182,9 +1159,9 @@ abstract class AbstractRepositorySpec extends Specification {
         personRepository.findMinAgeByNameLike("J%") == 35
         personRepository.getSumAgeByNameLike("J%") == 75
         personRepository.getAvgAgeByNameLike("J%") == 37
-        personRepository.readAgeByNameLike("J%").sort() == [35, 40]
-        personRepository.findByNameLikeOrderByAge("J%")*.age == [35, 40]
-        personRepository.findByNameLikeOrderByAgeDesc("J%")*.age == [40, 35]
+        personRepository.readAgeByNameLike("J%").sort() == [35,40]
+        personRepository.findByNameLikeOrderByAge("J%")*.age == [35,40]
+        personRepository.findByNameLikeOrderByAgeDesc("J%")*.age == [40,35]
     }
 
     void "test find by age InRange"() {
@@ -1210,25 +1187,25 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
         results.size() == 3
         results.every { it instanceof BookDto }
-        results.every { it.title.startsWith("The") }
+        results.every { it.title.startsWith("The")}
         bookDtoRepository.findOneByTitle("The Stand").title == "The Stand"
 
-        when: "paged result check"
+        when:"paged result check"
         def result = bookDtoRepository.searchByTitleLike("The%", Pageable.from(0))
         def all = bookDtoRepository.queryAll(Pageable.from(0))
 
-        then: "the result is correct"
+        then:"the result is correct"
         result.totalSize == 3
         result.size == 10
         result.content.every { it instanceof BookDto }
-        result.content.every { it.title.startsWith("The") }
+        result.content.every { it.title.startsWith("The")}
         all.content.every { it instanceof BookDto }
-        all.content.collect { it.title }.every { it }
+        all.content.collect { it.title }.every {  it }
 
         if (!transactionManager.isPresent()) {
             return
         }
-        when: "Stream is used"
+        when:"Stream is used"
         def dto = transactionManager.get().executeRead(new TransactionCallback<Connection, BookDto>() {
             @Override
             BookDto call(TransactionStatus<Connection> status) throws Exception {
@@ -1236,12 +1213,12 @@ abstract class AbstractRepositorySpec extends Specification {
             }
         })
 
-        then: "The result is correct"
+        then:"The result is correct"
         dto instanceof BookDto
         dto.title == "The Stand"
     }
 
-    void "test null argument handling"() {
+    void "test null argument handling" () {
         given:
         savePersons(["Jeff", "James"])
         setupBooks()
@@ -1321,15 +1298,15 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
         author != null
         author.books.size() == 2
-        author.books.find { it.title == "The Stand" }
-        author.books.find { it.title == "Pet Cemetery" }
+        author.books.find { it.title == "The Stand"}
+        author.books.find { it.title == "Pet Cemetery"}
 
         when:
         def allAuthors = CollectionUtils.iterableToList(authorRepository.findAll())
 
         then:
         allAuthors.size() == 3
-        allAuthors.collect { it.books }.every { it.isEmpty() }
+        allAuthors.collect {it.books }.every { it.isEmpty() }
     }
 
     @Unroll
@@ -1473,14 +1450,14 @@ abstract class AbstractRepositorySpec extends Specification {
                 mad
         ))
 
-        then: "The counts are correct"
+        then:"The counts are correct"
         cityRepository.countByCountryRegionCountryName("Spain") == 2
         cityRepository.countByCountryRegionCountryName("France") == 1
 
-        when: "A single level join is executed"
+        when:"A single level join is executed"
         def results = cityRepository.findByCountryRegionCountryName("Spain")
 
-        then: "The results include the joined table"
+        then:"The results include the joined table"
         results.size() == 2
         results[0].name
         results[0].id
@@ -1488,11 +1465,11 @@ abstract class AbstractRepositorySpec extends Specification {
         results[0].countryRegion.name
         results[0].countryRegion.country == null
 
-        when: "A multiple level join is executed"
+        when:"A multiple level join is executed"
         results = cityRepository.getByCountryRegionCountryName("Spain")
         results.sort { it.name }
 
-        then: "The results include the joined table"
+        then:"The results include the joined table"
         results.size() == 2
         results[0].name == 'Bilbao'
         results[0].id
@@ -1507,10 +1484,10 @@ abstract class AbstractRepositorySpec extends Specification {
         results[1].countryRegion.country.uuid == spain.uuid
         results[1].countryRegion.country.name == "Spain"
 
-        when: "A join that uses a join table is executed"
+        when:"A join that uses a join table is executed"
         def region = regionRepository.findByCitiesName("Bilbao")
 
-        then: "The result is correct"
+        then:"The result is correct"
         region.name == 'Pais Vasco'
 
         cleanup:
@@ -1583,7 +1560,7 @@ abstract class AbstractRepositorySpec extends Specification {
         def lastUpdated = company2.lastUpdated
         lastUpdated.toEpochMilli() > company2.dateCreated.time
 
-        when: "batch updating with the entity"
+        when:"batch updating with the entity"
         company2.name = "Changed Again"
         sleep(500)
         companyRepository.update(company2)
@@ -1591,12 +1568,12 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
         company2.lastUpdated > lastUpdated
 
-        when: "Sorting by date created"
+        when:"Sorting by date created"
         def results = companyRepository.findAll(Sort.of(
                 Sort.Order.desc("name")
         ))
 
-        then: "no error occurs"
+        then:"no error occurs"
         results.size() == 2
         results.first().name == 'Google'
 
@@ -1622,7 +1599,7 @@ abstract class AbstractRepositorySpec extends Specification {
     }
 
     void "test one-to-many mappedBy"() {
-        when: "a one-to-many is saved"
+        when:"a one-to-many is saved"
         def author = new Author()
         author.name = "author"
 
@@ -1672,10 +1649,10 @@ abstract class AbstractRepositorySpec extends Specification {
         book3.postRemove == 0
         book3.postLoad == 0
 
-        when: "retrieving an author"
+        when:"retrieving an author"
         author = authorRepository.findById(author.id).orElse(null)
 
-        then: "the associations are correct"
+        then:"the associations are correct"
         author.getBooks().size() == 3
         author.getBooks()[0].postLoad == 1
         author.getBooks()[1].postLoad == 1
@@ -1687,20 +1664,20 @@ abstract class AbstractRepositorySpec extends Specification {
         author.getBooks()[0].preRemove == 0
         author.getBooks()[0].postRemove == 0
 
-        def result1 = author.getBooks().find { book -> book.title == "Book1" }
+        def result1 = author.getBooks().find {book -> book.title == "Book1" }
         result1.pages.size() == 1
-        result1.pages.find { page -> page.num = 1 }
+        result1.pages.find {page -> page.num = 1}
 
-        def result2 = author.getBooks().find { book -> book.title == "Book2" }
+        def result2 = author.getBooks().find {book -> book.title == "Book2" }
         result2.pages.size() == 2
-        result2.pages.find { page -> page.num = 21 }
-        result2.pages.find { page -> page.num = 22 }
+        result2.pages.find {page -> page.num = 21}
+        result2.pages.find {page -> page.num = 22}
 
-        def result3 = author.getBooks().find { book -> book.title == "Book3" }
+        def result3 = author.getBooks().find {book -> book.title == "Book3" }
         result3.pages.size() == 3
-        result3.pages.find { page -> page.num = 31 }
-        result3.pages.find { page -> page.num = 32 }
-        result3.pages.find { page -> page.num = 33 }
+        result3.pages.find {page -> page.num = 31}
+        result3.pages.find {page -> page.num = 32}
+        result3.pages.find {page -> page.num = 33}
 
         when:
         def newBook = new Book()
@@ -1733,7 +1710,7 @@ abstract class AbstractRepositorySpec extends Specification {
     }
 
     void "test one-to-one mappedBy"() {
-        when: "when a one-to-one mapped by is saved"
+        when:"when a one-to-one mapped by is saved"
         def face = faceRepository.save(new Face("Bob"))
         def nose = noseRepository.save(new Nose(face: face))
 
@@ -1741,32 +1718,32 @@ abstract class AbstractRepositorySpec extends Specification {
         def anotherFace = faceRepository.save(new Face("Fred"))
         noseRepository.save(new Nose(face: anotherFace))
 
-        then: "They are saved correctly"
+        then:"They are saved correctly"
         face.id
         nose.id
         nose.face.id
 
-        when: "retrieving a face"
+        when:"retrieving a face"
         face = faceRepository.findById(face.id).orElse(null)
 
-        then: "The association is not fetched"
+        then:"The association is not fetched"
         face
         face.id
         face.nose == null
 
-        when: "Querying with a join"
+        when:"Querying with a join"
         face = faceRepository.queryById(face.id)
 
-        then: "The association is fetched"
+        then:"The association is fetched"
         face
         face.id
         face.name == "Bob"
         face.nose.id
 
-        when: "querying the inverse side"
+        when:"querying the inverse side"
         nose = noseRepository.findById(nose.id).orElse(null)
 
-        then: "The association is not initialized"
+        then:"The association is not initialized"
         nose
         nose.id
         nose.face == null
@@ -1802,8 +1779,8 @@ abstract class AbstractRepositorySpec extends Specification {
 
         then:
         roles.size() == 2
-        roles.stream().anyMatch { r -> r.name == "ROLE_ADMIN" }
-        roles.stream().anyMatch { r -> r.name == "ROLE_USER" }
+        roles.stream().anyMatch {r -> r.name == "ROLE_ADMIN" }
+        roles.stream().anyMatch {r -> r.name == "ROLE_USER" }
 
         when:
         userRoleRepository.delete(user, role)
@@ -2004,7 +1981,7 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
         books4.size() == 0
         when:
-        def books5 = bookRepository.listNativeBooksWithTitleInArray(new String[]{"The Stand", "Along Came a Spider", "FFF"})
+        def books5 = bookRepository.listNativeBooksWithTitleInArray(new String[] {"The Stand", "Along Came a Spider", "FFF"})
         then:
         books5.size() == 2
         when:
@@ -2038,11 +2015,11 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
         books7.size() == 0
         when:
-        def books8 = bookRepository.listNativeBooksNullableArrayAsStringArray(new String[]{"Xyz", "Ffff", "zzz"})
+        def books8 = bookRepository.listNativeBooksNullableArrayAsStringArray(new String[] {"Xyz", "Ffff", "zzz"})
         then:
         books8.size() == 0
         when:
-        def books9 = bookRepository.listNativeBooksNullableArrayAsStringArray(new String[]{})
+        def books9 = bookRepository.listNativeBooksNullableArrayAsStringArray(new String[] {})
         then:
         books9.size() == 0
         when:
@@ -2050,7 +2027,7 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
         books11.size() == 0
         then:
-        def books12 = bookRepository.listNativeBooksNullableArrayAsStringArray(new String[]{"The Stand"})
+        def books12 = bookRepository.listNativeBooksNullableArrayAsStringArray(new String[] {"The Stand"})
         then:
         books12.size() == 1
         cleanup:
@@ -2223,7 +2200,7 @@ abstract class AbstractRepositorySpec extends Specification {
         book.author.id == book.author.id
     }
 
-    void "test criteria"() {
+    void "test criteria" () {
         when:
         savePersons(["Jeff", "James"])
         then:
@@ -2355,14 +2332,14 @@ abstract class AbstractRepositorySpec extends Specification {
         def jamesPerson = personRepository.findByName("James")
         then:
         jamesPerson.income == 1000
-        when: "Income set to null using criteria"
+        when:"Income set to null using criteria"
         personRepository.updateAll(setIncome(null).where(nameEquals("James")))
         jamesPerson = personRepository.findByName("James")
-        then: "Field is updated to null"
+        then:"Field is updated to null"
         jamesPerson.income == null
-        when: "Update name to null using criteria"
+        when:"Update name to null using criteria"
         personRepository.updateAll(setName(null).where(nameEquals("James")))
-        then: "Exception is thrown because name is not nullable"
+        then:"Exception is thrown because name is not nullable"
         def ex = thrown(IllegalStateException)
         ex.message == 'Field [name] does not allow null value.'
         when:
@@ -2665,7 +2642,7 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
         allByNickName.totalPages == 1
         allByNickName.totalSize == 1
-        when: "Non matching nickname or name should not return results"
+        when:"Non matching nickname or name should not return results"
         allByNickName = authorRepository.findAllByNickName("A2", "Author1", Pageable.from(0, 10))
         allByName = authorRepository.findAllByName("Author1", "A2", Pageable.from(0, 10))
         then:
@@ -2866,7 +2843,7 @@ abstract class AbstractRepositorySpec extends Specification {
         basicTypeRepository.deleteById(entity.myId)
         TimeZone.setDefault(defaultTimeZone)
     }
-
+    
     private GregorianCalendar getYearMonthDay(Date dateCreated) {
         def cal = dateCreated.toCalendar()
         def localDate = LocalDate.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH))
