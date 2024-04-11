@@ -53,7 +53,8 @@ dependencies {
     testImplementation mnSql.mariadb.java.client
 
     // mysql
-    testImplementation mnR2dbc.r2dbc.io.asyncer.mysql
+    //testImplementation mnR2dbc.r2dbc.io.asyncer.mysql
+    testImplementation "io.asyncer:r2dbc-mysql:1.1.3"
     testImplementation mnSql.mysql.connector.java
 
     // h2
