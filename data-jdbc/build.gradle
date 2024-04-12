@@ -36,6 +36,7 @@ dependencies {
     testImplementation libs.groovy.sql
     testImplementation mnValidation.micronaut.validation
     testImplementation mnValidation.micronaut.validation.processor
+    testImplementation mn.micronaut.http.client
 
     testImplementation(mnTestResources.testcontainers.mysql)
     testImplementation(mnTestResources.testcontainers.mariadb)

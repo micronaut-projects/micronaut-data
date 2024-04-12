@@ -1,0 +1,8 @@
+micronaut:
+  data:
+    multi-tenancy:
+      mode: DISCRIMINATOR
+  multitenancy:
+    tenantresolver:
+      httpheader:
+        enabled: true

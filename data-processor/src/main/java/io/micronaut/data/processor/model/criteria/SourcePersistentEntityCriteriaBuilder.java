@@ -17,6 +17,7 @@ package io.micronaut.data.processor.model.criteria;
 
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.inject.ast.ParameterElement;
 import jakarta.persistence.criteria.ParameterExpression;
@@ -33,11 +34,23 @@ public interface SourcePersistentEntityCriteriaBuilder extends PersistentEntityC
     /**
      * Create parameter expression from {@link ParameterElement}.
      *
+     * @param property   The property
+     * @param expression The expression
+     * @param <T>        The expression type
+     * @return new parameter
+     */
+    @NonNull
+    <T> ParameterExpression<T> expression(@NonNull PersistentProperty property, @NonNull String expression);
+
+    /**
+     * Create parameter expression from {@link ParameterElement}.
+     *
      * @param parameterElement The parameter element
      * @param <T>              The expression type
      * @return new parameter
      */
-    @NonNull <T> ParameterExpression<T> parameter(@NonNull ParameterElement parameterElement);
+    @NonNull
+    <T> ParameterExpression<T> parameter(@NonNull ParameterElement parameterElement);
 
     /**
      * Create parameter expression from {@link ParameterElement} that is representing an entity instance.
@@ -46,5 +59,6 @@ public interface SourcePersistentEntityCriteriaBuilder extends PersistentEntityC
      * @param <T>             The expression type
      * @return new parameter
      */
-    @NonNull <T> ParameterExpression<T> entityPropertyParameter(@NonNull ParameterElement entityParameter);
+    @NonNull
+    <T> ParameterExpression<T> entityPropertyParameter(@NonNull ParameterElement entityParameter);
 }

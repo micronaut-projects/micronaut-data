@@ -137,7 +137,6 @@ public class MatchContext implements AnnotationMetadataProvider {
     /**
      * @return The parameters
      */
-    @NonNull
     public ParameterElement[] getParameters() {
         return parameters;
     }

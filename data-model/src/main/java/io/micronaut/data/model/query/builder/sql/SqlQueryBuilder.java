@@ -565,7 +565,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 .map(idxes -> idxes.getAnnotations(VALUE_MEMBER, Index.class));
 
         Stream.of(indexes)
-                .flatMap(o -> o.map(Stream::of).orElseGet(Stream::empty))
+                .flatMap(Optional::stream)
                 .flatMap(Collection::stream)
                 .forEach(index -> indexStatements.add(addIndex(entity, new IndexConfiguration(index, tableName, entity.getPersistedName()))));
 
@@ -764,8 +764,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         if (joinTable != null) {
             return joinTable.getAnnotations(associationOwner ? "joinColumns" : "inverseJoinColumns")
                     .stream()
-                    .map(ann -> ann.stringValue(columnType).orElse(null))
-                    .filter(Objects::nonNull)
+                    .flatMap(ann -> ann.stringValue(columnType).stream())
                     .toList();
         }
         return Collections.emptyList();
@@ -920,14 +919,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         if (!this.dialect.supportsJoinType(jt)) {
             throw new IllegalArgumentException("Unsupported join type [" + jt + "] by dialect [" + this.dialect + "]");
         }
-
-        String joinType = switch (jt) {
+        return switch (jt) {
             case LEFT, LEFT_FETCH -> " LEFT JOIN ";
             case RIGHT, RIGHT_FETCH -> " RIGHT JOIN ";
             case OUTER, OUTER_FETCH -> " FULL OUTER JOIN ";
             default -> " INNER JOIN ";
         };
-        return joinType;
     }
 
     @NonNull
@@ -1579,15 +1576,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 onLeftColumns.addAll(
                         joinColumnsHolder.getAnnotations(VALUE_MEMBER)
                                 .stream()
-                                .map(ann -> ann.stringValue(isOwner ? "name" : "referencedColumnName").orElse(null))
-                                .filter(Objects::nonNull)
+                                .flatMap(ann -> ann.stringValue(isOwner ? "name" : "referencedColumnName").stream())
                                 .toList()
                 );
                 onRightColumns.addAll(
                         joinColumnsHolder.getAnnotations(VALUE_MEMBER)
                                 .stream()
-                                .map(ann -> ann.stringValue(isOwner ? "referencedColumnName" : "name").orElse(null))
-                                .filter(Objects::nonNull)
+                                .flatMap(ann -> ann.stringValue(isOwner ? "referencedColumnName" : "name").stream())
                                 .toList()
                 );
             }
@@ -1631,31 +1626,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             }
         }
         return Optional.empty();
-    }
-
-    private void join(StringBuilder sb,
-                      QueryModel queryModel,
-                      String joinType,
-                      String tableName,
-                      String tableAlias,
-                      String onTableName,
-                      String onTableColumn,
-                      String tableColumnName) {
-        sb
-                .append(joinType)
-                .append(tableName)
-                .append(SPACE)
-                .append(tableAlias);
-        appendForUpdate(QueryPosition.AFTER_TABLE_NAME, queryModel, sb);
-        sb
-                .append(" ON ")
-                .append(onTableName)
-                .append(DOT)
-                .append(onTableColumn)
-                .append('=')
-                .append(tableAlias)
-                .append(DOT)
-                .append(tableColumnName);
     }
 
     private void join(StringBuilder builder,

@@ -16,6 +16,7 @@
 package io.micronaut.data.runtime.operations.internal.query;
 
 import io.micronaut.aop.InvocationContext;
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
@@ -172,6 +173,11 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
                     }
                 }
             }
+        } else if (value instanceof EvaluatedAnnotationValue<?> evaluatedAnnotationValue) {
+            value = evaluatedAnnotationValue.withArguments(
+                invocationContext.getTarget(),
+                invocationContext.getParameterValues()
+            ).get(AnnotationMetadata.VALUE_MEMBER, Object.class).orElse(null);
         }
 
         if (persistentProperty != null) {

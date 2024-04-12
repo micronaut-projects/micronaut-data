@@ -565,4 +565,28 @@ interface PersonRepository extends GenericRepository<Person, Long> {
             getResultDataType(saveReturningMethod) == DataType.INTEGER
             getOperationType(saveReturningMethod) == DataMethod.OperationType.INSERT
     }
+
+    void "POSTGRES save with tenant id"() {
+        given:
+            def repository = buildRepository('test.AccountRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Account;
+
+@JdbcRepository(dialect= Dialect.POSTGRES)
+interface AccountRepository extends CrudRepository<Account, Long> {
+}
+""")
+        when:
+            def saveMethod = repository.findPossibleMethods("save").findFirst().get()
+        then:
+            getQuery(saveMethod) == 'INSERT INTO "account" ("name","tenancy") VALUES (?,?)'
+            getDataResultType(saveMethod) == "io.micronaut.data.tck.entities.Account"
+            getParameterPropertyPaths(saveMethod) == ["name", "tenancy"] as String[]
+            getDataInterceptor(saveMethod) == "io.micronaut.data.intercept.SaveEntityInterceptor"
+            getResultDataType(saveMethod) == DataType.ENTITY
+            getOperationType(saveMethod) == DataMethod.OperationType.INSERT
+    }
 }
