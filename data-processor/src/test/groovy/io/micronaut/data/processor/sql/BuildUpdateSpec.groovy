@@ -492,6 +492,68 @@ interface BookRepository extends GenericRepository<Book, Long> {
             getResultDataType(updateReturningCustomMethod) == DataType.ENTITY
     }
 
+    void "test build update with system Version field"() {
+        given:
+        def repository = buildRepository('test.TestRepository', """
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Version;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Person;
+
+@MappedEntity
+class Article {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    private Double price;
+
+    @Version
+    @GeneratedValue
+    private Long version;
+
+    public Long getId() {
+        return id;
+    }
+    public void setId(Long id) {
+        this.id = id;
+    }
+    public String getName() {
+        return name;
+    }
+    public void setName(String name) {
+        this.name = name;
+    }
+    public Double getPrice() {
+        return price;
+    }
+    public void setPrice(Double price) {
+        this.price = price;
+    }
+    public Long getVersion() {
+        return version;
+    }
+    public void setVersion(Long version) {
+        this.version = version;
+    }
+}
+@JdbcRepository(dialect = Dialect.ORACLE)
+interface TestRepository extends CrudRepository<Article, Long> {
+}
+""")
+        def method = repository.findPossibleMethods("update").findFirst().get()
+        def updateQuery = getQuery(method)
+
+        expect:
+        // Field version is not being updated as it's marked as system field ie system generated value
+        updateQuery == 'UPDATE "ARTICLE" SET "NAME"=?,"PRICE"=? WHERE ("ID" = ? AND "VERSION" = ?)'
+    }
+
 //    void "ORACLE test build update returning "() {
 //        given:
 //            def repository = buildRepository('test.BookRepository', """

@@ -62,7 +62,7 @@ public class VersionGeneratingEntityEventListener implements EntityEventListener
 
     @Override
     public boolean supports(RuntimePersistentEntity<Object> entity, Class<? extends Annotation> eventType) {
-        return entity.getVersion() != null && SUPPORTED_EVENTS.contains(eventType);
+        return entity.getVersion() != null && !entity.getVersion().isGenerated() && SUPPORTED_EVENTS.contains(eventType);
     }
 
     @Override
