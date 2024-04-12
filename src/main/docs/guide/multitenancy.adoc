@@ -9,6 +9,7 @@ Micronaut Data supports multi-tenancy to allow the use of multiple databases or 
 The DATASOURCE mode is used in combination with the micronaut-multitenancy library in order to resolve the tenant name.
 In the below example, the tenant resolver is set to use a http header. See https://micronaut-projects.github.io/micronaut-multitenancy/latest/guide/[Micronaut Multitenancy] for more information.
 
+.Example of the configuration with two data sources to be chosen based on the tenancy
 [configuration]
 ----
 include::doc-examples/jdbc-multitenancy-datasource-example-java/src/main/resources/application.yml[]
@@ -24,9 +25,43 @@ include::doc-examples/jdbc-multitenancy-schema-example-java/src/test/java/exampl
 === Schema Mode
 The SCHEMA mode uses a single datasource and set the active schema based on the tenant resolved.
 
+.Example of the configuration with one datasource that will be used to switch schema based on the tenancy
 [configuration]
 ----
 include::doc-examples/jdbc-multitenancy-schema-example-java/src/main/resources/application.yml[]
 ----
 
 NOTE: You can use property `schema-generate-names` to specify multiple schemas to be created and initialized for testing.
+
+=== Discriminator Mode
+The DISCRIMINATOR mode uses a single entity's property to store the tenant id.
+
+.Example of the configuration with one data source
+[configuration]
+----
+include::doc-examples/jdbc-multitenancy-discriminator-example-java/src/main/resources/application.yml[]
+----
+
+The entity with multitenancy enabled requires a tenant property to be annotated with api:data.annotation.TenantId[]:
+
+[source,java]
+----
+include::doc-examples/jdbc-multitenancy-discriminator-example-java/src/main/java/example/Book.java[tags="book"]
+----
+
+There are specific annotations to alter the behaviour of repositories with api:data.annotation.TenantId[] property and its methods:
+
+[cols=2*]
+|===
+|*Annotation*
+|*Description*
+
+|api:data.annotation.WithoutTenantId[]
+|The method's query will not have implicit predicate to include the tenant id
+
+|api:data.annotation.WithTenantId[]
+|Modify the tenant id of the query
+
+|===
+
+NOTE: The tenancy annotations are only supported for the discriminator multitenancy

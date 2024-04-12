@@ -42,7 +42,6 @@ import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.reactive.ReactorCriteriaRepositoryOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
-import io.micronaut.data.runtime.operations.internal.query.BindableParametersPreparedQuery;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
 import jakarta.persistence.EntityGraph;
 import jakarta.persistence.FlushModeType;

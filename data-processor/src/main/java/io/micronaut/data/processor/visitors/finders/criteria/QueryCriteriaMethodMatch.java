@@ -46,11 +46,14 @@ import io.micronaut.data.processor.visitors.finders.QueryMatchId;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
 import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
 import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.inject.ast.ParameterElement;
 import jakarta.persistence.criteria.Order;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Selection;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -92,7 +95,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                 applyProjections(matchContext, match.part(), root, query, cb);
                 projectionApplied = true;
             } else if (match.id() == QueryMatchId.PREDICATE) {
-                applyPredicates(match.part(), matchContext.getParameters(), root, query, cb);
+                applyPredicates(matchContext, match.part(), matchContext.getParameters(), root, query, cb);
                 predicatedApplied = true;
             } else if (match.id() == QueryMatchId.ORDER) {
                 applyOrderBy(match.part(), root, query, cb);
@@ -115,7 +118,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             }
         }
         if (!predicatedApplied) {
-            applyPredicates(matchContext.getParametersNotInRole(), root, query, cb);
+            applyPredicates(matchContext, matchContext.getParametersNotInRole(), root, query, cb);
         }
         if (!projectionApplied) {
             applyProjections(matchContext, "", root, query, cb);
@@ -124,8 +127,33 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         applyJoinSpecs(root, joinSpecsAtMatchContext(matchContext, true));
     }
 
+    private <T> void applyPredicates(MethodMatchContext matchContext,
+                                     String querySequence,
+                                     ParameterElement[] parameters,
+                                     PersistentEntityRoot<T> root,
+                                     PersistentEntityCriteriaQuery<T> query,
+                                     SourcePersistentEntityCriteriaBuilder cb) {
+        Predicate predicate = extractPredicates(querySequence, Arrays.asList(parameters).iterator(), root, cb);
+        predicate = interceptPredicate(matchContext, List.of(), root, cb, predicate);
+        if (predicate != null) {
+            query.where(predicate);
+        }
+    }
+
+    private <T> void applyPredicates(MethodMatchContext matchContext,
+                                     List<ParameterElement> parameters,
+                                     PersistentEntityRoot<T> root,
+                                     PersistentEntityCriteriaQuery<T> query,
+                                     SourcePersistentEntityCriteriaBuilder cb) {
+        Predicate predicate = extractPredicates(parameters, root, cb);
+        predicate = interceptPredicate(matchContext, List.of(), root, cb, predicate);
+        if (predicate != null) {
+            query.where(predicate);
+        }
+    }
+
     /**
-     * Apply the distinct valu.
+     * Apply the distinct value.
      *
      * @param query The query
      * @param <T>   The query type

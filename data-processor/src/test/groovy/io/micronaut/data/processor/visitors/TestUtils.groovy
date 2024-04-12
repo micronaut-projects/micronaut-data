@@ -19,6 +19,7 @@ import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.core.annotation.AnnotationMetadataProvider
 import io.micronaut.core.annotation.AnnotationValue
+import io.micronaut.core.convert.ConversionContext
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.annotation.DataMethod
@@ -93,6 +94,10 @@ class TestUtils {
 
     static String[] getParameterBindingPaths(AnnotationMetadataProvider metadata) {
         return getParameterBindingPaths(metadata.getAnnotation(DataMethod))
+    }
+
+    static Object[] getParameterValues(AnnotationMetadataProvider metadata) {
+        return getParameterValues(metadata.getAnnotation(DataMethod))
     }
 
     static DataType[] getDataTypes(AnnotationMetadataProvider metadata) {
@@ -173,6 +178,15 @@ class TestUtils {
                 .stream()
                 .map(p -> isExpression(p))
                 .toArray(Boolean[]::new)
+    }
+
+    static Object[] getParameterValues(AnnotationValue<DataMethod> annotationValue) {
+        return annotationValue.getAnnotations(DataMethod.META_MEMBER_PARAMETERS, DataMethodQueryParameter)
+                .stream()
+                .map(p -> {
+                    p.get(AnnotationMetadata.VALUE_MEMBER, Object).orElse(null)
+                })
+                .toArray(Object[]::new)
     }
 
     private static String getPropertyPath(AnnotationValue<DataMethodQueryParameter> p) {

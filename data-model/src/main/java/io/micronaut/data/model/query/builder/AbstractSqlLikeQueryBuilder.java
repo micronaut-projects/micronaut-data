@@ -377,7 +377,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     }
                 }
                 return (Runnable) () -> query.append(p);
-            }).collect(Collectors.toList()));
+            }).toList());
         };
     }
 

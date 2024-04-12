@@ -60,6 +60,7 @@ import jakarta.persistence.criteria.CriteriaBuilder
 import jakarta.persistence.criteria.CriteriaUpdate
 import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Root
+import reactor.core.publisher.Mono
 import spock.lang.AutoCleanup
 import spock.lang.IgnoreIf
 import spock.lang.Shared
@@ -2670,6 +2671,7 @@ abstract class AbstractRepositorySpec extends Specification {
 
      void "entity with id class"() {
         given:
+        entityWithIdClassRepository.deleteAll()
         EntityWithIdClass e = new EntityWithIdClass()
         e.id1 = 11
         e.id2 = 22
@@ -2739,6 +2741,7 @@ abstract class AbstractRepositorySpec extends Specification {
 
      void "entity with id class 2"() {
         given:
+        entityWithIdClass2Repository.deleteAll()
         EntityWithIdClass2 e = new EntityWithIdClass2(11, 22, "Xyz")
         EntityWithIdClass2 f = new EntityWithIdClass2(33, e.id2(), "Xyz")
         EntityWithIdClass2 g = new EntityWithIdClass2(e.id1(), 44, "Xyz")

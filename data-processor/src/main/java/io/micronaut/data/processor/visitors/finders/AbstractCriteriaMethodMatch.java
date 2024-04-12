@@ -16,11 +16,13 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.context.annotation.Parameter;
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.expressions.EvaluatedExpressionReference;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
@@ -31,8 +33,11 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.RepositoryConfiguration;
+import io.micronaut.data.annotation.TenantId;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Where;
+import io.micronaut.data.annotation.WithTenantId;
+import io.micronaut.data.annotation.WithoutTenantId;
 import io.micronaut.data.annotation.repeatable.QueryHints;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.Association;
@@ -41,9 +46,6 @@ import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
-import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
-import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
-import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
@@ -152,9 +154,9 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         if (supportedByImplicitQueries() && matchContext.supportsImplicitQueries() && hasNoWhereAndJoinDeclaration(matchContext)) {
             FindersUtils.InterceptorMatch entry = resolveReturnTypeAndInterceptor(matchContext);
             methodMatchInfo = new MethodMatchInfo(
-                    getOperationType(),
-                    entry.returnType(),
-                    entry.interceptor()
+                getOperationType(),
+                entry.returnType(),
+                entry.interceptor()
             );
         } else {
             methodMatchInfo = build(matchContext);
@@ -188,16 +190,16 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         ParameterElement entitiesParameter = getEntitiesParameter();
 
         return FindersUtils.resolveInterceptorTypeByOperationType(
-                entityParameter != null,
-                entitiesParameter != null,
-                getOperationType(),
-                matchContext);
+            entityParameter != null,
+            entitiesParameter != null,
+            getOperationType(),
+            matchContext);
     }
 
     @Nullable
-    private Predicate extractPredicates(List<ParameterElement> queryParams,
-                                        PersistentEntityRoot<?> root,
-                                        SourcePersistentEntityCriteriaBuilder cb) {
+    protected final Predicate extractPredicates(List<ParameterElement> queryParams,
+                                                PersistentEntityRoot<?> root,
+                                                SourcePersistentEntityCriteriaBuilder cb) {
         if (CollectionUtils.isNotEmpty(queryParams)) {
             PersistentEntity rootEntity = root.getPersistentEntity();
             List<Predicate> predicates = new ArrayList<>(queryParams.size());
@@ -241,142 +243,67 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     }
 
     /**
-     * Apply predicates.
+     * Intercept the predicate being applied.
      *
-     * @param querySequence The query sequence
-     * @param parameters    The parameters
-     * @param root          The root
-     * @param query         The query
-     * @param cb            The criteria builder
-     * @param <T>           The entity type
+     * @param matchContext          The matchContext
+     * @param notConsumedParameters The parameters
+     * @param root                  The root
+     * @param cb                    The criteria builder
+     * @param existingPredicate     The existing predicate
+     * @param <T>                   The entity type
+     * @return A new predicate
      */
-    protected <T> void applyPredicates(String querySequence,
-                                       ParameterElement[] parameters,
-                                       PersistentEntityRoot<T> root,
-                                       PersistentEntityCriteriaQuery<T> query,
-                                       SourcePersistentEntityCriteriaBuilder cb) {
-        Predicate predicate = extractPredicates(querySequence, Arrays.asList(parameters).iterator(), root, cb);
-        if (predicate != null) {
-            query.where(predicate);
+    @Nullable
+    protected <T> Predicate interceptPredicate(MethodMatchContext matchContext,
+                                               List<ParameterElement> notConsumedParameters,
+                                               PersistentEntityRoot<T> root,
+                                               SourcePersistentEntityCriteriaBuilder cb,
+                                               @Nullable Predicate existingPredicate) {
+        if (matchContext.getMethodElement().hasAnnotation(WithoutTenantId.class)) {
+            return existingPredicate;
         }
-    }
-
-    /**
-     * Apply predicates.
-     *
-     * @param querySequence The query sequence
-     * @param parameters    The parameters
-     * @param root          The root
-     * @param query         The query
-     * @param cb            The criteria builder
-     * @param <T>           The entity type
-     */
-    protected <T> void applyPredicates(String querySequence,
-                                       ParameterElement[] parameters,
-                                       PersistentEntityRoot<T> root,
-                                       PersistentEntityCriteriaDelete<T> query,
-                                       SourcePersistentEntityCriteriaBuilder cb) {
-        Predicate predicate = extractPredicates(querySequence, Arrays.asList(parameters).iterator(), root, cb);
-        if (predicate != null) {
-            query.where(predicate);
+        PersistentProperty tenantIdProperty = root.getPersistentEntity().getPersistentProperties()
+            .stream()
+            .filter(p -> p.getAnnotationMetadata().hasAnnotation(TenantId.class))
+            .findFirst()
+            .orElse(null);
+        if (tenantIdProperty != null) {
+            AnnotationValue<WithTenantId> withTenantId = matchContext.getMethodElement().getAnnotation(WithTenantId.class);
+            Predicate tenantIdEqual;
+            if (withTenantId != null) {
+                Object value = withTenantId.getValues().get(AnnotationMetadata.VALUE_MEMBER);
+                if (value instanceof String constant) {
+                    tenantIdEqual = cb.equal(
+                        root.get(tenantIdProperty),
+                        cb.literal(constant)
+                    );
+                } else if (value instanceof EvaluatedExpressionReference ref) {
+                    tenantIdEqual = cb.equal(
+                        root.get(tenantIdProperty),
+                        cb.expression(tenantIdProperty, (String) ref.annotationValue())
+                    );
+                } else {
+                    throw new IllegalStateException("Unrecognized tenantId annotation: " + withTenantId);
+                }
+            } else {
+                tenantIdEqual = cb.equal(
+                    root.get(tenantIdProperty),
+                    cb.expression(tenantIdProperty, "#{ctx[T(io.micronaut.data.runtime.multitenancy.TenantResolver)].resolveTenantIdentifier()}")
+                );
+            }
+            if (existingPredicate != null) {
+                return cb.and(existingPredicate, tenantIdEqual);
+            } else {
+                return tenantIdEqual;
+            }
         }
+        return existingPredicate;
     }
 
-    /**
-     * Apply predicates.
-     *
-     * @param querySequence The query sequence
-     * @param parameters    The parameters
-     * @param root          The root
-     * @param query         The query
-     * @param cb            The criteria builder
-     * @param <T>           The entity type
-     */
-    protected <T> void applyPredicates(String querySequence,
-                                       ParameterElement[] parameters,
-                                       PersistentEntityRoot<T> root,
-                                       PersistentEntityCriteriaUpdate<T> query,
-                                       SourcePersistentEntityCriteriaBuilder cb) {
-        Predicate predicate = extractPredicates(querySequence, Arrays.asList(parameters).iterator(), root, cb);
-        if (predicate != null) {
-            query.where(predicate);
-        }
-    }
-
-    /**
-     * Apply predicates based on parameters.
-     *
-     * @param parameters The parameters
-     * @param root       The root
-     * @param query      The query
-     * @param cb         The criteria builder
-     * @param <T>        The entity type
-     */
-    protected <T> void applyPredicates(List<ParameterElement> parameters,
-                                       PersistentEntityRoot<T> root,
-                                       PersistentEntityCriteriaQuery<T> query,
-                                       SourcePersistentEntityCriteriaBuilder cb) {
-        Predicate predicate = extractPredicates(parameters, root, cb);
-        if (predicate != null) {
-            query.where(predicate);
-        }
-    }
-
-    /**
-     * Apply a basic predicate.
-     *
-     * @param root       The root
-     * @param query      The query
-     * @param cb         The criteria builder
-     * @param <T>        The entity type
-     */
-    protected <T> void applyPredicates(PersistentEntityRoot<T> root,
-                                       PersistentEntityCriteriaUpdate<T> query,
-                                       SourcePersistentEntityCriteriaBuilder cb) {
-    }
-
-    /**
-     * Apply predicates based on parameters.
-     *
-     * @param parameters The parameters
-     * @param root       The root
-     * @param query      The query
-     * @param cb         The criteria builder
-     * @param <T>        The entity type
-     */
-    protected <T> void applyPredicates(List<ParameterElement> parameters,
-                                       PersistentEntityRoot<T> root,
-                                       PersistentEntityCriteriaUpdate<T> query,
-                                       SourcePersistentEntityCriteriaBuilder cb) {
-        Predicate predicate = extractPredicates(parameters, root, cb);
-        if (predicate != null) {
-            query.where(predicate);
-        }
-    }
-
-    /**
-     * Apply predicates based on parameters.
-     *
-     * @param parameters The parameters
-     * @param root       The root
-     * @param query      The query
-     * @param cb         The criteria builder
-     * @param <T>        The entity type
-     */
-    protected <T> void applyPredicates(List<ParameterElement> parameters,
-                                       PersistentEntityRoot<T> root,
-                                       PersistentEntityCriteriaDelete<T> query,
-                                       SourcePersistentEntityCriteriaBuilder cb) {
-        Predicate predicate = extractPredicates(parameters, root, cb);
-        if (predicate != null) {
-            query.where(predicate);
-        }
-    }
-
-    private <T> Predicate extractPredicates(String querySequence,
-                                            Iterator<ParameterElement> parametersIt,
-                                            PersistentEntityRoot<T> root,
-                                            SourcePersistentEntityCriteriaBuilder cb) {
+    protected final <T> Predicate extractPredicates(String querySequence,
+                                                    Iterator<ParameterElement> parametersIt,
+                                                    PersistentEntityRoot<T> root,
+                                                    SourcePersistentEntityCriteriaBuilder cb) {
         Predicate predicate = null;
 
         // if it contains operator and split
@@ -502,14 +429,14 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         Expression prop = getProperty(root, propertyName);
 
         Predicate predicate = restriction.find(root,
+            cb,
+            prop,
+            provideParams(parameters,
+                restriction.getRequiredParameters(),
+                restriction.getName(),
                 cb,
-                prop,
-                provideParams(parameters,
-                        restriction.getRequiredParameters(),
-                        restriction.getName(),
-                        cb,
-                        prop
-                ).toArray(new ParameterExpression[0]));
+                prop
+            ).toArray(new ParameterExpression[0]));
 
         if (negation) {
             predicate = predicate.not();
@@ -526,13 +453,13 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             property = root.id();
         }
         return restriction.find(root,
+            cb,
+            provideParams(parameters,
+                restriction.getRequiredParameters(),
+                restriction.getName(),
                 cb,
-                provideParams(parameters,
-                        restriction.getRequiredParameters(),
-                        restriction.getName(),
-                        cb,
-                        property
-                ).toArray(new ParameterExpression[0])
+                property
+            ).toArray(new ParameterExpression[0])
         );
     }
 

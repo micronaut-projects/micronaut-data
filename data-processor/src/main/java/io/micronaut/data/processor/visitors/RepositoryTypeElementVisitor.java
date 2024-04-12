@@ -23,7 +23,9 @@ import io.micronaut.core.annotation.AnnotationValueBuilder;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.expressions.EvaluatedExpressionReference;
 import io.micronaut.core.io.service.SoftServiceLoader;
+import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.order.OrderUtil;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.CollectionUtils;
@@ -62,6 +64,7 @@ import io.micronaut.data.processor.visitors.finders.MethodMatcher;
 import io.micronaut.data.processor.visitors.finders.RawQueryMethodMatcher;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
 import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.inject.annotation.EvaluatedExpressionReferenceCounter;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.Element;
 import io.micronaut.inject.ast.MethodElement;
@@ -514,6 +517,25 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 builder.member(DataMethodQueryParameter.META_MEMBER_EXPRESSION, true);
                 if (!supportsImplicitQueries) {
                     builder.member(DataMethodQueryParameter.META_MEMBER_NAME, p.getName());
+                }
+                Object value = p.getValue();
+                if (value != null) {
+                    if (value instanceof String expression) {
+                        // TODO: Support adding an expression annotation value in Core
+                        String originatingClassName = DataMethodQueryParameter.class.getName();
+                        String packageName = NameUtils.getPackageName(originatingClassName);
+                        String simpleClassName = NameUtils.getSimpleName(originatingClassName);
+                        String exprClassName = "%s.$%s%s".formatted(packageName, simpleClassName, EvaluatedExpressionReferenceCounter.EXPR_SUFFIX);
+
+                        Integer expressionIndex = EvaluatedExpressionReferenceCounter.nextIndex(exprClassName);
+
+                        builder.members(Map.of(
+                            AnnotationMetadata.VALUE_MEMBER,
+                            new EvaluatedExpressionReference(expression, originatingClassName, AnnotationMetadata.VALUE_MEMBER, exprClassName + expressionIndex)
+                        ));
+                    } else {
+                        throw new IllegalStateException("The expression value should be a String!");
+                    }
                 }
             }
             if (supportsImplicitQueries) {

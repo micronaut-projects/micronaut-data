@@ -647,14 +647,22 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     .getParameterInRole(R2dbcRepository.PARAMETER_TX_STATUS_ROLE, ReactiveTransactionStatus.class).orElse(null);
             if (tx != null) {
                 try {
-                    return Flux.from(callback.apply(tx.getConnection()));
+                    return Flux.deferContextual(contextView -> {
+                        try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate()) {
+                            return callback.apply(tx.getConnection());
+                        }
+                    });
                 } catch (Exception e) {
                     return Flux.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
                 }
             }
             return connectionOperations.withConnectionFlux(
                 isWrite ? ConnectionDefinition.DEFAULT : ConnectionDefinition.READ_ONLY,
-                status -> callback.apply(status.getConnection())
+                status -> Flux.deferContextual(contextView -> {
+                    try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate()) {
+                        return callback.apply(status.getConnection());
+                    }
+                })
             );
         }
 
@@ -666,14 +674,22 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     .getParameterInRole(R2dbcRepository.PARAMETER_TX_STATUS_ROLE, ReactiveTransactionStatus.class).orElse(null);
             if (tx != null) {
                 try {
-                    return Mono.fromDirect(callback.apply(tx.getConnection()));
+                    return Mono.deferContextual(contextView -> {
+                        try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate()) {
+                            return callback.apply(tx.getConnection());
+                        }
+                    });
                 } catch (Exception e) {
                     return Mono.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
                 }
             }
             return connectionOperations.withConnectionMono(
                 isWrite ? ConnectionDefinition.DEFAULT : ConnectionDefinition.READ_ONLY,
-                status -> callback.apply(status.getConnection())
+                status -> Mono.deferContextual(contextView -> {
+                    try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate()) {
+                        return callback.apply(status.getConnection());
+                    }
+                })
             );
         }
 
@@ -894,12 +910,16 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         }
 
         private void setParameters(Statement stmt, SqlStoredQuery<T, ?> storedQuery) {
-            data = data.map(d -> {
+            data = data.flatMap(d -> {
                 if (d.vetoed) {
-                    return d;
+                    return Mono.just(d);
                 }
-                storedQuery.bindParameters(new R2dbcParameterBinder(ctx, stmt, storedQuery), ctx.invocationContext, d.entity, d.previousValues);
-                return d;
+                return Mono.deferContextual(contextView -> {
+                    try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate()) {
+                        storedQuery.bindParameters(new R2dbcParameterBinder(ctx, stmt, storedQuery), ctx.invocationContext, d.entity, d.previousValues);
+                    }
+                    return Mono.just(d);
+                });
             });
         }
 

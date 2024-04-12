@@ -1,0 +1,38 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
+plugins {
+    id "io.micronaut.build.internal.data-native-example"
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "junit5"
+    testResources {
+        additionalModules.add(KnownModules.R2DBC_MARIADB)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
+}
+
+dependencies {
+    annotationProcessor projects.micronautDataDocumentProcessor
+
+    implementation mnMultitenancy.micronaut.multitenancy
+    implementation mnReactor.micronaut.reactor
+    implementation mn.micronaut.http.client
+    implementation projects.micronautDataR2dbc
+    implementation mnSerde.micronaut.serde.jackson
+
+    implementation(libs.managed.jakarta.persistence.api)
+    implementation(libs.managed.jakarta.transaction.api)
+
+    runtimeOnly mnR2dbc.r2dbc.mariadb
+    runtimeOnly mnLogging.logback.classic
+
+    testResourcesService mnSql.mariadb.java.client
+}
