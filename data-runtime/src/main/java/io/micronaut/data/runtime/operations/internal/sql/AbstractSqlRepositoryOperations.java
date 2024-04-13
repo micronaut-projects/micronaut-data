@@ -566,28 +566,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     }
 
     /**
-     * Reads an object from the result set and given column.
-     *
-     * @param sqlPreparedQuery the SQL prepared query
-     * @param rs the result set
-     * @param columnName the column name where we are reading from
-     * @param jsonDataType the JSON representation type
-     * @param persistentEntity the persistent entity
-     * @param resultType the result type
-     * @param resultSetType the result set type
-     * @param loadListener the load listener if needed after entity loaded
-     * @return an object read from the result set column
-     * @param <R> the result type
-     * @param <T> the entity type
-     */
-    protected final <R, T> R mapQueryColumnResult(SqlPreparedQuery<?, ?> sqlPreparedQuery, RS rs, String columnName, JsonDataType jsonDataType,
-                                          RuntimePersistentEntity<T> persistentEntity, Class<R> resultType, Class<RS> resultSetType,
-                                          BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
-        SqlTypeMapper<RS, R> mapper = createQueryResultMapper(sqlPreparedQuery, columnName, jsonDataType, resultSetType, persistentEntity, loadListener);
-        return mapper.map(rs, resultType);
-    }
-
-    /**
      * Handles SQL exception, used in context of update but could be used elsewhere.
      * It can throw custom exception based on the {@link SQLException}.
      *

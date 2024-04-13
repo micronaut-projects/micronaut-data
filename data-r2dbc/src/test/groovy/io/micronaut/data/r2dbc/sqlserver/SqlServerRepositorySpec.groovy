@@ -148,6 +148,18 @@ class SqlServerRepositorySpec extends AbstractRepositorySpec implements SqlServe
 
     @Memoized
     @Override
+    EntityWithIdClassRepository getEntityWithIdClassRepository() {
+        return context.getBean(MSEntityWithIdClassRepository)
+    }
+
+    @Memoized
+    @Override
+    EntityWithIdClass2Repository getEntityWithIdClass2Repository() {
+        return context.getBean(MSEntityWithIdClass2Repository)
+    }
+
+    @Memoized
+    @Override
     TimezoneBasicTypesRepository getTimezoneBasicTypeRepository() {
         return null
     }
