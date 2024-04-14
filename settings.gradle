@@ -136,3 +136,5 @@ include 'benchmarks:benchmark-micronaut-data-mongodb'
 include 'benchmarks:benchmark-spring-data'
 include 'benchmarks:benchmark-spring-data-jdbc'
 include 'benchmarks:benchmark-spring-data-mongodb'
+
+include 'doc-examples:hibernate-bug-java'
