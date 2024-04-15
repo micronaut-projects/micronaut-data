@@ -464,7 +464,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     if (!hasJoins) {
                         return executeAndMapEachRow(statement, entityTypeMapper::readEntity);
                     }
-                    SqlResultEntityTypeMapper.PushingMapper<Row, R> rowsMapper = entityTypeMapper.readOneWithJoins();
+                    SqlResultEntityTypeMapper.PushingMapper<Row, R> rowsMapper = entityTypeMapper.readOneMapper();
                     return executeAndMapEachRow(statement, row -> {
                         rowsMapper.processRow(row);
                         return "";
@@ -484,7 +484,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
                 SqlTypeMapper<Row, R> mapper = createMapper(preparedQuery, Row.class);
                 if (mapper instanceof SqlResultEntityTypeMapper<Row, R> entityTypeMapper) {
-                    SqlResultEntityTypeMapper.PushingMapper<Row, List<R>> rowsMapper = entityTypeMapper.readAllWithJoins();
+                    SqlResultEntityTypeMapper.PushingMapper<Row, List<R>> rowsMapper = entityTypeMapper.readManyMapper();
                     return executeAndMapEachRow(statement, row -> {
                         rowsMapper.processRow(row);
                         return "";

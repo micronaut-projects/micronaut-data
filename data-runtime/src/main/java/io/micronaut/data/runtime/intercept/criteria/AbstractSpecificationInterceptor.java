@@ -326,7 +326,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         QueryModel queryModel = queryModelCriteriaQuery.getQueryModel();
         Collection<JoinPath> queryJoinPaths = queryModel.getJoinPaths();
         QueryResult queryResult = sqlQueryBuilder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel);
-        Set<JoinPath> joinPaths = mergeJoinPaths(methodJoinPaths, queryJoinPaths).stream().filter(jp -> jp.getJoinType().isFetch()).collect(Collectors.toSet());
+        Set<JoinPath> joinPaths = mergeJoinPaths(methodJoinPaths, queryJoinPaths);
         Class<E> rootEntity = getRequiredRootEntity(context);
         if (type == Type.FIND_ONE) {
             return QueryResultStoredQuery.single(OperationType.QUERY, context.getName(), context.getAnnotationMetadata(),
@@ -441,8 +441,8 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         }
     }
 
-    private Set<JoinPath> mergeJoinPaths(Set<JoinPath> joinPaths, Collection<JoinPath> additionalJoinPaths) {
-        Set<JoinPath> resultPaths = new HashSet<>(5);
+    private Set<JoinPath> mergeJoinPaths(Collection<JoinPath> joinPaths, Collection<JoinPath> additionalJoinPaths) {
+        Set<JoinPath> resultPaths = CollectionUtils.newHashSet(joinPaths.size() + additionalJoinPaths.size());
         if (CollectionUtils.isNotEmpty(joinPaths)) {
             resultPaths.addAll(joinPaths);
         }

@@ -333,7 +333,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 if (mapper instanceof SqlResultEntityTypeMapper<ResultSet, R> entityTypeMapper) {
                     final boolean hasJoins = !preparedQuery.getJoinFetchPaths().isEmpty();
 
-                    SqlResultEntityTypeMapper.PushingMapper<ResultSet, R> oneMapper = entityTypeMapper.readOneWithJoins();
+                    SqlResultEntityTypeMapper.PushingMapper<ResultSet, R> oneMapper = entityTypeMapper.readOneMapper();
                     if (rs.next()) {
                         oneMapper.processRow(rs);
                     }
@@ -377,7 +377,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         SqlTypeMapper<ResultSet, R> mapper = createMapper(sqlStoredQuery, ResultSet.class);
         List<R> result;
         if (mapper instanceof SqlResultEntityTypeMapper<ResultSet, R> entityTypeMapper) {
-            SqlResultEntityTypeMapper.PushingMapper<ResultSet, List<R>> manyMapper = entityTypeMapper.readAllWithJoins();
+            SqlResultEntityTypeMapper.PushingMapper<ResultSet, List<R>> manyMapper = entityTypeMapper.readManyMapper();
             while (rs.next()) {
                 manyMapper.processRow(rs);
             }
@@ -452,7 +452,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 // Cannot stream ResultSet for "many" joined query
                 if (!onlySingleEndedJoins) {
                     try {
-                        SqlResultEntityTypeMapper.PushingMapper<ResultSet, List<R>> manyMapper = entityTypeMapper.readAllWithJoins();
+                        SqlResultEntityTypeMapper.PushingMapper<ResultSet, List<R>> manyMapper = entityTypeMapper.readManyMapper();
                         while (rs.next()) {
                             manyMapper.processRow(rs);
                         }
