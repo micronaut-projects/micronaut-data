@@ -251,8 +251,9 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         for (Order order: orders) {
             cursorProperties.add(getPersistentEntity().getPropertyByName(order.getProperty()));
         }
-        if (cursor == null)
+        if (cursor == null) {
             return "";
+        }
         if (orders.size() != cursor.size()) {
             throw new IllegalArgumentException("The cursor must match the sorting size");
         }
@@ -310,6 +311,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
      *
      * @param results The scanning results
      * @param pageable The pageable sent by user
+     * @param totalSize The total count
      * @return The updated pageable
      */
     public Pageable updatePageable(List<Object> results, Pageable pageable, long totalSize) {
