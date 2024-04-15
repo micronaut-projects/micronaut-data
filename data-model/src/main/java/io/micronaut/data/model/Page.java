@@ -64,6 +64,32 @@ public interface Page<T> extends Slice<T> {
     }
 
     /**
+     * Determines whether there is a next page.
+     *
+     * @since 4.8.0
+     * @return Whether there exist a next page.
+     */
+    default boolean hasNext() {
+        if (getPageable() instanceof CursoredPageable cursoredPageable) {
+            return cursoredPageable.hasNext();
+        }
+        return getOffset() + getSize() < getTotalSize();
+    }
+
+    /**
+     * Determines whether there is a previous page.
+     *
+     * @since 4.8.0
+     * @return Whether there exist a previous page.
+     */
+    default boolean hasPrevious() {
+        if (getPageable() instanceof CursoredPageable cursoredPageable) {
+            return cursoredPageable.hasPrevious();
+        }
+        return getOffset() > 0;
+    }
+
+    /**
      * Maps the content with the given function.
      *
      * @param function The function to apply to each element in the content.

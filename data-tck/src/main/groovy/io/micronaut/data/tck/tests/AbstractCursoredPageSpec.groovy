@@ -75,8 +75,7 @@ abstract class AbstractCursoredPageSpec extends Specification {
         page.content[1].name == name2
         page.totalSize == 780
         page.totalPages == 78
-        page.nextPageable().startCursor != null
-        page.previousPageable().endCursor != null
+        page.hasNext()
 
         when: "The next page is selected"
         page = personRepository.findAll(page.nextPageable())
@@ -87,6 +86,8 @@ abstract class AbstractCursoredPageSpec extends Specification {
         page.content[0].name == name10
         page.content[9].name == name19
         page.content.size() == 10
+        page.hasNext()
+        page.hasPrevious()
 
         when: "The previous page is selected"
         pageable = page.previousPageable()
@@ -97,6 +98,8 @@ abstract class AbstractCursoredPageSpec extends Specification {
         page.pageNumber == 0
         page.content[0].name == name1
         page.content.size() == 10
+        page.hasNext()
+        page.hasPrevious()
 
         where:
         sorting                                                      | name1     | name2     | name10    | name19
@@ -117,6 +120,7 @@ abstract class AbstractCursoredPageSpec extends Specification {
         page.content.size() == 10
         page.content[0].name == elem1
         page.content[1].name == elem2
+        page.hasNext()
 
         when: "The next page is selected after deletion"
         personRepository.delete(page.content[1])
@@ -129,6 +133,8 @@ abstract class AbstractCursoredPageSpec extends Specification {
         page.content[0].name == elem10
         page.content[9].name == elem19
         page.content.size() == 10
+        page.hasNext()
+        page.hasPrevious()
 
         when: "The previous page is selected"
         pageable = page.previousPageable()
@@ -139,6 +145,8 @@ abstract class AbstractCursoredPageSpec extends Specification {
         page.pageNumber == 0
         page.content[0].name == elem1
         page.content.size() == 8
+        !page.hasPrevious()
+        page.hasNext()
 
         where:
         sorting                          | elem1     | elem2     | elem10    | elem19
@@ -157,6 +165,7 @@ abstract class AbstractCursoredPageSpec extends Specification {
         page.content.size() == 10
         page.content[0].name == elem1
         page.content[1].name == elem2
+        page.hasNext()
 
         when: "The next page is selected after deletion"
         personRepository.saveAll([
@@ -171,6 +180,8 @@ abstract class AbstractCursoredPageSpec extends Specification {
         page.content[0].name == elem10
         page.content[9].name == elem19
         page.content.size() == 10
+        page.hasNext()
+        page.hasPrevious()
 
         when: "The previous page is selected"
         pageable = page.previousPageable()
@@ -181,6 +192,7 @@ abstract class AbstractCursoredPageSpec extends Specification {
         page.pageNumber == 0
         page.content[0].name == elem3
         page.content.size() == 10
+        page.hasPrevious()
 
         when: "The second previous page is selected"
         page = personRepository.findAll(page.previousPageable())
@@ -191,6 +203,7 @@ abstract class AbstractCursoredPageSpec extends Specification {
         page.content[0].name == elem1
         page.content[1].name == elem2
         page.content.size() == 2
+        !page.hasPrevious()
 
         where:
         sorting                          | elem1     | elem2     | elem3     | elem10    | elem19

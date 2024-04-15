@@ -75,6 +75,20 @@ public interface CursoredPageable extends Pageable {
     }
 
     /**
+     * @return Whether there is a next page
+     */
+    default boolean hasNext() {
+        return false;
+    }
+
+    /**
+     * @return Whether there is a previous page.
+     */
+    default boolean hasPrevious() {
+        return false;
+    }
+
+    /**
      * Creates a new {@link CursoredPageable} with the given sort.
      *
      * @param sort The sort

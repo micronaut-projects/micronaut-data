@@ -129,6 +129,16 @@ final class DefaultCursoredPageable implements CursoredPageable {
     }
 
     @Override
+    public boolean hasNext() {
+        return endCursor != null;
+    }
+
+    @Override
+    public boolean hasPrevious() {
+        return startCursor != null;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;

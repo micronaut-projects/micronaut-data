@@ -81,6 +81,8 @@ abstract class AbstractPageSpec extends Specification {
         page.totalPages == 130
         page.nextPageable().offset == 10
         page.nextPageable().size == 10
+        page.hasNext()
+        !page.hasPrevious()
 
         when: "The next page is selected"
         pageable = page.nextPageable()
@@ -91,6 +93,8 @@ abstract class AbstractPageSpec extends Specification {
         page.pageNumber == 1
         page.content[0].name.startsWith("K")
         page.content.size() == 10
+        page.hasNext()
+        page.hasPrevious()
 
         when: "The previous page is selected"
         pageable = page.previousPageable()
@@ -101,6 +105,8 @@ abstract class AbstractPageSpec extends Specification {
         page.pageNumber == 0
         page.content[0].name.startsWith("A")
         page.content.size() == 10
+        page.hasNext()
+        !page.hasPrevious()
     }
 
     void "test pageable sort"() {
