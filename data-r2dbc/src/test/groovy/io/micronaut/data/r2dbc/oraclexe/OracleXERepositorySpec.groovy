@@ -18,6 +18,7 @@ package io.micronaut.data.r2dbc.oraclexe
 import groovy.transform.Memoized
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
+import spock.lang.IgnoreIf
 
 class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleXETestPropertyProvider {
 
@@ -156,18 +157,6 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleXET
     @Override
     PageRepository getPageRepository() {
         return context.getBean(OracleXEPageRepository)
-    }
-
-    @Memoized
-    @Override
-    EntityWithIdClassRepository getEntityWithIdClassRepository() {
-        return context.getBean(OracleXEEntityWithIdClassRepository)
-    }
-
-    @Memoized
-    @Override
-    EntityWithIdClass2Repository getEntityWithIdClass2Repository() {
-        return context.getBean(OracleXEEntityWithIdClass2Repository)
     }
 
     @Override

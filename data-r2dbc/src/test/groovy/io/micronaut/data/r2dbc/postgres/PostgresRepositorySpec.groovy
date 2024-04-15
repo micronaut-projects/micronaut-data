@@ -153,18 +153,6 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
         return context.getBean(PostgresPageRepository)
     }
 
-    @Memoized
-    @Override
-    EntityWithIdClassRepository getEntityWithIdClassRepository() {
-        return context.getBean(PostgresEntityWithIdClassRepository)
-    }
-
-    @Memoized
-    @Override
-    EntityWithIdClass2Repository getEntityWithIdClass2Repository() {
-        return context.getBean(PostgresEntityWithIdClass2Repository)
-    }
-
     @Override
     boolean isSupportsArrays() {
         return true
