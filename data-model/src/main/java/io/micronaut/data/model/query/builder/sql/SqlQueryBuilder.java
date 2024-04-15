@@ -479,7 +479,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         }
 
         PersistentProperty version = entity.getVersion();
-        if (version != null && !version.isGenerated()) {
+        if (version != null) {
             String column = getMappedName(namingStrategy, Collections.emptyList(), version);
             if (escape) {
                 column = quote(column);
@@ -1050,7 +1050,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 });
             }
             PersistentProperty version = entity.getVersion();
-            if (version != null && !version.isGenerated()) {
+            if (version != null) {
                 addWriteExpression(values, version);
 
                 String key = String.valueOf(values.size());
