@@ -31,6 +31,7 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.JoinPath;
@@ -48,6 +49,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -66,7 +68,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
 
     private final RuntimePersistentEntity<R> entity;
     private final ResultReader<RS, String> resultReader;
-    private final Map<String, JoinPath> joinPaths;
+    private final Map<String, JoinPath> fetchJoinPaths;
+    private final boolean hasJoins;
     private final String startingPrefix;
     private final SqlJsonColumnReader<RS> jsonColumnReader;
     private final DataConversionService conversionService;
@@ -152,12 +155,17 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         this.resultReader = resultReader;
         this.eventListener = eventListener;
         if (CollectionUtils.isNotEmpty(joinPaths)) {
-            this.joinPaths = new HashMap<>(joinPaths.size());
+            this.hasJoins = true;
+            this.fetchJoinPaths = CollectionUtils.newLinkedHashMap(joinPaths.size());
             for (JoinPath joinPath : joinPaths) {
-                this.joinPaths.put(joinPath.getPath(), joinPath);
+                if (!joinPath.getJoinType().isFetch()) {
+                    continue;
+                }
+                this.fetchJoinPaths.put(joinPath.getPath(), joinPath);
             }
         } else {
-            this.joinPaths = Collections.emptyMap();
+            this.fetchJoinPaths = Collections.emptyMap();
+            this.hasJoins = false;
         }
         this.startingPrefix = startingPrefix;
     }
@@ -250,7 +258,34 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      *
      * @return The pushing mapper
      */
-    public PushingMapper<RS, R> readOneWithJoins() {
+    public PushingMapper<RS, R> readOneMapper() {
+        if (hasJoins) {
+            return new PushingMapper<>() {
+
+                final MappingContext<R> ctx = MappingContext.of(entity, startingPrefix);
+                R entityInstance;
+
+                @Override
+                public void processRow(RS row) {
+                    if (entityInstance == null) {
+                        entityInstance = readEntity(row, ctx, null, null);
+                    } else {
+                        readChildren(row, entityInstance, null, ctx);
+                    }
+                }
+
+                @Override
+                public R getResult() {
+                    if (entityInstance == null) {
+                        return null;
+                    }
+                    if (!fetchJoinPaths.isEmpty()) {
+                        return  (R) setChildrenAndTriggerPostLoad(entityInstance, ctx, null);
+                    }
+                    return triggerPostLoad(entity, entityInstance);
+                }
+            };
+        }
         return new PushingMapper<>() {
 
             final MappingContext<R> ctx = MappingContext.of(entity, startingPrefix);
@@ -259,10 +294,9 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             @Override
             public void processRow(RS row) {
                 if (entityInstance == null) {
-                    Object id = readEntityId(row, ctx);
-                    entityInstance = readEntity(row, ctx, null, id);
+                    entityInstance = readEntity(row, ctx, null, null);
                 } else {
-                    readChildren(row, entityInstance, null, ctx);
+                    throw new NonUniqueResultException();
                 }
             }
 
@@ -271,12 +305,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                 if (entityInstance == null) {
                     return null;
                 }
-                if (!joinPaths.isEmpty()) {
-                    entityInstance = (R) setChildrenAndTriggerPostLoad(entityInstance, ctx, null);
-                } else {
-                    return triggerPostLoad(entity, entityInstance);
-                }
-                return entityInstance;
+                return triggerPostLoad(entity, entityInstance);
             }
         };
     }
@@ -286,43 +315,72 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      *
      * @return The pushing mapper
      */
-    public PushingMapper<RS, List<R>> readAllWithJoins() {
+    public PushingMapper<RS, List<R>> readManyMapper() {
+        if (hasJoins) {
+            return new PushingMapper<>() {
+
+                final Map<Object, MappingContext<R>> idEntities = CollectionUtils.newLinkedHashMap(20);
+                final List<MappingContext<R>> allProcessed = new ArrayList<>(20);
+
+                @Override
+                public void processRow(RS row) {
+                    MappingContext<R> ctx = MappingContext.of(entity, startingPrefix);
+                    Object id = readEntityId(row, ctx);
+                    if (id == null) {
+                        throw new IllegalStateException("Entity needs to have an ID when JOINs are used!");
+                    } else {
+                        MappingContext<R> prevCtx = idEntities.get(id);
+                        if (prevCtx != null) {
+                            readChildren(row, prevCtx.entity, null, prevCtx);
+                        } else {
+                            ctx.entity = readEntity(row, ctx, null, id);
+                            idEntities.put(id, ctx);
+                            allProcessed.add(ctx);
+                        }
+                    }
+                }
+
+                @Override
+                public List<R> getResult() {
+                    List<R> values = new ArrayList<>(allProcessed.size());
+                    boolean hasFetchJoins = !fetchJoinPaths.isEmpty();
+                    for (MappingContext<R> ctx : allProcessed) {
+                        if (hasFetchJoins) {
+                            values.add(
+                                (R) setChildrenAndTriggerPostLoad(ctx.entity, ctx, null)
+                            );
+                        } else {
+                            values.add(
+                                triggerPostLoad(ctx.persistentEntity, ctx.entity)
+                            );
+                        }
+                    }
+                    return values;
+                }
+            };
+        }
         return new PushingMapper<>() {
 
-            final Map<Object, MappingContext<R>> idEntities = new LinkedHashMap<>();
-            final List<MappingContext<R>> allProcessed = new ArrayList<>(20);
-            final boolean hasJoins = !joinPaths.isEmpty();
+            final List<R> allProcessed = new ArrayList<>(20);
+            final MappingContext<R> ctx = MappingContext.of(entity, startingPrefix);
 
             @Override
             public void processRow(RS row) {
-                MappingContext<R> ctx = MappingContext.of(entity, startingPrefix);
-                Object id = readEntityId(row, ctx);
-                if (id == null) {
-                    if (hasJoins) {
-                        throw new IllegalStateException("Entity needs to have an ID when JOINs are used!");
-                    }
-                    ctx.entity = readEntity(row, ctx, null, id);
-                    allProcessed.add(ctx);
-                } else {
-                    MappingContext<R> prevCtx = idEntities.get(id);
-                    if (prevCtx != null) {
-                        readChildren(row, prevCtx.entity, null, prevCtx);
-                    } else {
-                        ctx.entity = readEntity(row, ctx, null, id);
-                        idEntities.put(id, ctx);
-                        allProcessed.add(ctx);
-                    }
-                }
+                allProcessed.add(
+                    readEntity(row, ctx, null, null)
+                );
             }
 
             @Override
             public List<R> getResult() {
-                List<R> values = new ArrayList<>(allProcessed.size());
-                for (MappingContext<R> ctx : allProcessed) {
-                    R entityInstance = (R) setChildrenAndTriggerPostLoad(ctx.entity, ctx, null);
-                    values.add(entityInstance);
+                for (ListIterator<R> iterator = allProcessed.listIterator(); iterator.hasNext(); ) {
+                    R entity = iterator.next();
+                    R newEntity = triggerPostLoad(ctx.persistentEntity, entity);
+                    if (entity != newEntity) {
+                        iterator.set(newEntity);
+                    }
                 }
-                return values;
+                return allProcessed;
             }
         };
     }
@@ -389,7 +447,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                     }
                 }
             }
-            triggerPostLoad(ctx.persistentEntity, instance);
+            return triggerPostLoad(ctx.persistentEntity, instance);
         }
         return instance;
     }
@@ -436,7 +494,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                 if (isInverse && kind.isSingleEnded()) {
                                     args[i] = parent;
                                 } else {
-                                    MappingContext<K> joinCtx = ctx.join(joinPaths, entityAssociation);
+                                    MappingContext<K> joinCtx = ctx.join(fetchJoinPaths, entityAssociation);
                                     Object resolvedId = null;
                                     if (!entityAssociation.isForeignKey()) {
                                         resolvedId = readEntityId(rs, ctx.path(entityAssociation));
@@ -532,7 +590,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                         if (isInverse) {
                             entity = setProperty(property, entity, parent);
                         } else {
-                            MappingContext<K> joinCtx = ctx.join(joinPaths, entityAssociation);
+                            MappingContext<K> joinCtx = ctx.join(fetchJoinPaths, entityAssociation);
                             Object associatedId = null;
                             if (!entityAssociation.isForeignKey()) {
                                 associatedId = readEntityId(rs, ctx.path(entityAssociation));
