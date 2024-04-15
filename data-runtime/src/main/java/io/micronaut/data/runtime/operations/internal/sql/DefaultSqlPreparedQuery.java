@@ -41,6 +41,7 @@ import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -172,7 +173,13 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
                 // Create a sort for the cursored pagination. The sort must produce a unique
                 // sorting on the rows. Therefore, we make sure id is present in it.
                 List<Order> orders = new ArrayList<>(sort.getOrderBy());
-                for (PersistentProperty idProperty: persistentEntity.getIdentityProperties()) {
+                List<RuntimePersistentProperty<E>> idProperties;
+                if (persistentEntity.getIdentity() != null) {
+                    idProperties = List.of(persistentEntity.getIdentity());
+                } else {
+                    idProperties = Arrays.stream(persistentEntity.getCompositeIdentity()).toList();
+                }
+                for (PersistentProperty idProperty: idProperties) {
                     String name = idProperty.getName();
                     if (orders.stream().noneMatch(o -> o.getProperty().equals(name))) {
                         orders.add(Order.asc(name));

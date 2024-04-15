@@ -29,7 +29,7 @@ import java.util.List;
  * Models pageable data that uses a cursor.
  *
  * @author Andriy Dmytruk
- * @since 4.6.1
+ * @since 4.8.0
  */
 @Serdeable
 @Introspected
