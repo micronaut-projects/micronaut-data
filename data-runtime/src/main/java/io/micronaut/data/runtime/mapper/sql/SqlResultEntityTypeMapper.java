@@ -467,17 +467,22 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                 }
                             }
                         } else {
-                            Object v = provideConstructorArgumentValue(rs, ctx, prop, identity, id);
-                            if (v == null) {
-                                if (!prop.isOptional() && !nullableEmbedded) {
-                                    AnnotationMetadata entityAnnotationMetadata = ctx.persistentEntity.getAnnotationMetadata();
-                                    if (entityAnnotationMetadata.hasAnnotation(Embeddable.class) || entityAnnotationMetadata.hasAnnotation(EmbeddedId.class)) {
-                                        return null;
+                            Object v;
+                            if (resolveId != null && prop.equals(identity)) {
+                                v = resolveId;
+                            } else {
+                                v = readProperty(rs, ctx, prop);
+                                if (v == null) {
+                                    if (!prop.isOptional() && !nullableEmbedded) {
+                                        AnnotationMetadata entityAnnotationMetadata = ctx.persistentEntity.getAnnotationMetadata();
+                                        if (entityAnnotationMetadata.hasAnnotation(Embeddable.class) || entityAnnotationMetadata.hasAnnotation(EmbeddedId.class)) {
+                                            return null;
+                                        }
+                                        throw new DataAccessException("Null value read for non-null constructor argument [" + prop.getName() + "] of type: " + persistentEntity.getName());
+                                    } else {
+                                        args[i] = null;
+                                        continue;
                                     }
-                                    throw new DataAccessException("Null value read for non-null constructor argument [" + prop.getName() + "] of type: " + persistentEntity.getName());
-                                } else {
-                                    args[i] = null;
-                                    continue;
                                 }
                             }
                             args[i] = convert(prop, v);
@@ -493,17 +498,9 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                 }
             }
 
-            if (id != null) {
-                if (identity != null) {
-                    BeanProperty<K, Object> idProperty = identity.getProperty();
-                    entity = convertAndSetWithValue(entity, identity, idProperty, id);
-                } else if (!persistentEntity.getIdentityProperties().isEmpty()) {
-                    Map<String, Object> ids = (Map<String, Object>) id;
-                    for (RuntimePersistentProperty<K> identityProperty : persistentEntity.getRuntimeIdentityProperties()) {
-                        Object anId = ids.get(identityProperty.getName());
-                        entity = convertAndSetWithValue(entity, identityProperty, identityProperty.getProperty(), anId);
-                    }
-                }
+            if (id != null && identity != null) {
+                BeanProperty<K, Object> idProperty = identity.getProperty();
+                entity = convertAndSetWithValue(entity, identity, idProperty, id);
             }
             RuntimePersistentProperty<K> version = persistentEntity.getVersion();
             if (version != null) {
@@ -579,27 +576,6 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         }
     }
 
-    private <K> Object provideConstructorArgumentValue(@NonNull RS rs,
-                                                       @NonNull MappingContext<K> ctx,
-                                                       @NonNull RuntimePersistentProperty<K> property,
-                                                       @Nullable RuntimePersistentProperty<K> identity,
-                                                       @Nullable Object idValue) {
-        if (idValue != null) {
-            if (identity != null) {
-                if (property.equals(identity)) {
-                    return idValue;
-                }
-            } else {
-                for (PersistentProperty identityProperty : ctx.persistentEntity.getIdentityProperties()) {
-                    if (property.equals(identityProperty)) {
-                        return ((Map<String, Object>) idValue).get(identityProperty.getName());
-                    }
-                }
-            }
-        }
-        return readProperty(rs, ctx, property);
-    }
-
     private boolean isAllNulls(Object[] args) {
         for (Object arg : args) {
             if (arg != null) {
@@ -645,28 +621,13 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
     @Nullable
     private <K> Object readEntityId(RS rs, MappingContext<K> ctx) {
         RuntimePersistentProperty<K> identity = ctx.persistentEntity.getIdentity();
-        if (identity != null) {
-            if (identity instanceof Embedded embedded) {
-                return readEntity(rs, ctx.embedded(embedded), null, null);
-            }
-            return readProperty(rs, ctx, identity);
+        if (identity == null) {
+            return null;
         }
-        List<RuntimePersistentProperty<K>> identityProperties = ctx.persistentEntity.getRuntimeIdentityProperties();
-        if (!identityProperties.isEmpty()) {
-            Map<String, Object> ids = new HashMap<>();
-            for (RuntimePersistentProperty<K> identityProperty : identityProperties) {
-                Object id = readProperty(rs, ctx, identityProperty);
-                if (id != null) {
-                    ids.put(identityProperty.getName(), id);
-                }
-            }
-            if (ids.isEmpty()) {
-                return null;
-            } else {
-                return ids;
-            }
+        if (identity instanceof Embedded embedded) {
+            return readEntity(rs, ctx.embedded(embedded), null, null);
         }
-        return null;
+        return readProperty(rs, ctx, identity);
     }
 
     private <K> K convertAndSetWithValue(K entity, RuntimePersistentProperty<?> rpp, BeanProperty<K, Object> property, Object v) {

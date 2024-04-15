@@ -61,7 +61,6 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
     private List<RuntimePersistentProperty<T>> persistentPropertiesValues;
 
     private EnumSet<Relation.Cascade> cascadedTypes;
-    private BeanIntrospection<?> idClassIntrospection;
 
     /**
      * Default constructor.
@@ -279,6 +278,7 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
         return introspection;
     }
 
+    @NonNull
     @Override
     public String getName() {
         return introspection.getBeanType().getName();
@@ -306,19 +306,6 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
         return identity.length == 1 ? identity[0] : null;
     }
 
-    @Override
-    public List<PersistentProperty> getIdentityProperties() {
-        return List.of(identity);
-    }
-
-    /**
-     * An alternative to {@link #getIdentityProperties()} but that returns {@link RuntimePersistentProperty}.
-     * @return The identity properties
-     */
-    public List<RuntimePersistentProperty<T>> getRuntimeIdentityProperties() {
-        return List.of(identity);
-    }
-
     @Nullable
     @Override
     public RuntimePersistentProperty<T> getVersion() {
@@ -329,7 +316,7 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
     @Override
     public Collection<RuntimePersistentProperty<T>> getPersistentProperties() {
         if (persistentPropertiesValues == null) {
-            persistentPropertiesValues = Arrays.stream(persistentProperties).filter(Objects::nonNull).toList();
+            persistentPropertiesValues = Collections.unmodifiableList(Arrays.stream(persistentProperties).filter(Objects::nonNull).collect(Collectors.toList()));
         }
         return persistentPropertiesValues;
     }

@@ -144,18 +144,6 @@ class MariaDbRepositorySpec extends AbstractRepositorySpec implements MariaDbTes
 
     @Memoized
     @Override
-    EntityWithIdClassRepository getEntityWithIdClassRepository() {
-        return context.getBean(MySqlEntityWithIdClassRepository)
-    }
-
-    @Memoized
-    @Override
-    EntityWithIdClass2Repository getEntityWithIdClass2Repository() {
-        return context.getBean(MySqlEntityWithIdClass2Repository)
-    }
-
-    @Memoized
-    @Override
     TimezoneBasicTypesRepository getTimezoneBasicTypeRepository() {
         return null
     }

@@ -38,9 +38,6 @@ import io.micronaut.data.tck.entities.Company
 import io.micronaut.data.tck.entities.Country
 import io.micronaut.data.tck.entities.CountryRegion
 import io.micronaut.data.tck.entities.CountryRegionCity
-import io.micronaut.data.tck.entities.EntityIdClass
-import io.micronaut.data.tck.entities.EntityWithIdClass
-import io.micronaut.data.tck.entities.EntityWithIdClass2
 import io.micronaut.data.tck.entities.Face
 import io.micronaut.data.tck.entities.Food
 import io.micronaut.data.tck.entities.Genre
@@ -51,7 +48,9 @@ import io.micronaut.data.tck.entities.Person
 import io.micronaut.data.tck.entities.Student
 import io.micronaut.data.tck.entities.TimezoneBasicTypes
 import io.micronaut.data.tck.jdbc.entities.Role
+import io.micronaut.data.tck.jdbc.entities.User
 import io.micronaut.data.tck.jdbc.entities.UserRole
+import io.micronaut.data.tck.jdbc.entities.UserRoleId
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.transaction.SynchronousTransactionManager
 import io.micronaut.transaction.TransactionCallback
@@ -106,8 +105,6 @@ abstract class AbstractRepositorySpec extends Specification {
     abstract BasicTypesRepository getBasicTypeRepository()
     abstract TimezoneBasicTypesRepository getTimezoneBasicTypeRepository()
     abstract PageRepository getPageRepository()
-    abstract EntityWithIdClassRepository getEntityWithIdClassRepository()
-    abstract EntityWithIdClass2Repository getEntityWithIdClass2Repository()
 
     abstract Map<String, String> getProperties()
 
@@ -2666,134 +2663,6 @@ abstract class AbstractRepositorySpec extends Specification {
         cnt == 2
         cleanup:
         cleanupData()
-    }
-
-     void "entity with id class"() {
-        given:
-        EntityWithIdClass e = new EntityWithIdClass()
-        e.id1 = 11
-        e.id2 = 22
-        e.name = "Xyz"
-        EntityWithIdClass f = new EntityWithIdClass()
-        f.id1 = 33
-        f.id2 = e.id2
-        f.name = "Xyz"
-        EntityWithIdClass g = new EntityWithIdClass()
-        g.id1 = e.id1
-        g.id2 = 44
-        g.name = "Xyz"
-        EntityIdClass k = new EntityIdClass()
-        k.id1 = 11
-        k.id2 = 22
-
-        when:
-        entityWithIdClassRepository.save(e)
-        e = entityWithIdClassRepository.findById(k).get()
-
-        then:
-        e.id1 == 11
-        e.id2 == 22
-        e.name == "Xyz"
-
-        when:
-        entityWithIdClassRepository.save(f)
-        List<EntityWithIdClass> ef = entityWithIdClassRepository.findById2(e.id2)
-
-        then:
-        ef.size() == 2
-
-        when:
-        entityWithIdClassRepository.save(g)
-        List<EntityWithIdClass> eg = entityWithIdClassRepository.findById1(e.id1)
-
-        then:
-        eg.size() == 2
-
-        when:
-        e.name = "abc"
-        entityWithIdClassRepository.update(e)
-        e = entityWithIdClassRepository.findById(k).get()
-
-        then:
-        e.id1 == 11
-        e.id2 == 22
-        e.name == "abc"
-
-        when:
-        def cnt = entityWithIdClassRepository.count()
-        def cntDistinct = entityWithIdClassRepository.countDistinct()
-        def cntDistinctName = entityWithIdClassRepository.countDistinctName()
-
-        then:
-        cnt == 3
-        cntDistinct <= cnt
-        cntDistinctName <= cntDistinctName
-
-        when:
-        entityWithIdClassRepository.delete(e)
-        def result = entityWithIdClassRepository.findById(k)
-
-        then:
-        !result.isPresent()
-    }
-
-     void "entity with id class 2"() {
-        given:
-        EntityWithIdClass2 e = new EntityWithIdClass2(11, 22, "Xyz")
-        EntityWithIdClass2 f = new EntityWithIdClass2(33, e.id2(), "Xyz")
-        EntityWithIdClass2 g = new EntityWithIdClass2(e.id1(), 44, "Xyz")
-        EntityIdClass k = new EntityIdClass()
-        k.id1 = 11
-        k.id2 = 22
-
-        when:
-        entityWithIdClass2Repository.save(e)
-        e = entityWithIdClass2Repository.findById(k).get()
-
-        then:
-        e.id1() == 11
-        e.id2() == 22
-        e.name() == "Xyz"
-
-        when:
-        entityWithIdClass2Repository.save(f)
-        List<EntityWithIdClass2> ef = entityWithIdClass2Repository.findById2(e.id2())
-
-        then:
-        ef.size() == 2
-
-        when:
-        entityWithIdClass2Repository.save(g)
-        List<EntityWithIdClass2> eg = entityWithIdClass2Repository.findById1(e.id1())
-
-        then:
-        eg.size() == 2
-
-        when:
-        entityWithIdClass2Repository.update(new EntityWithIdClass2(e.id1(), e.id2(), "abc"))
-        e = entityWithIdClass2Repository.findById(k).get()
-
-        then:
-        e.id1() == 11
-        e.id2() == 22
-        e.name() == "abc"
-
-        when:
-        def cnt = entityWithIdClass2Repository.count()
-        def cntDistinct = entityWithIdClass2Repository.countDistinct()
-        def cntDistinctName = entityWithIdClass2Repository.countDistinctName()
-
-        then:
-        cnt == 3
-        cntDistinct <= cnt
-        cntDistinctName <= cntDistinctName
-
-        when:
-        entityWithIdClass2Repository.delete(e)
-        def result = entityWithIdClass2Repository.findById(k)
-
-        then:
-        !result.isPresent()
     }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {

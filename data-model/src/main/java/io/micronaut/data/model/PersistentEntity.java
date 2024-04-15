@@ -39,6 +39,7 @@ import static io.micronaut.data.model.AssociationUtils.CAMEL_CASE_SPLIT_PATTERN;
  * @author Graeme Rocher
  * @since 1.0
  */
+@SuppressWarnings("rawtypes")
 public interface PersistentEntity extends PersistentElement {
 
     /**
@@ -86,24 +87,6 @@ public interface PersistentEntity extends PersistentElement {
      * @return The identity or null if there isn't one
      */
     @Nullable PersistentProperty getIdentity();
-
-    /**
-     * Returns all identity properties.
-     *
-     * @return The identity properties
-     */
-    @NonNull
-    default List<PersistentProperty> getIdentityProperties() {
-        if (getIdentity() != null) {
-            return List.of(getIdentity());
-        } else {
-            PersistentProperty[] compositeIdentity = getCompositeIdentity();
-            if (compositeIdentity != null) {
-                return List.of(compositeIdentity);
-            }
-        }
-        return List.of();
-    }
 
     /**
      * Returns the version property.

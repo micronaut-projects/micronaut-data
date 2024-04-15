@@ -16,8 +16,6 @@
 package io.micronaut.data.jdbc.h2
 
 import groovy.transform.Memoized
-import io.micronaut.data.tck.entities.EntityIdClass
-import io.micronaut.data.tck.entities.EntityWithIdClass
 import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.data.tck.repositories.BasicTypesRepository
 import io.micronaut.data.tck.repositories.BookDtoRepository
@@ -27,8 +25,6 @@ import io.micronaut.data.tck.repositories.CityRepository
 import io.micronaut.data.tck.repositories.CompanyRepository
 import io.micronaut.data.tck.repositories.CountryRegionCityRepository
 import io.micronaut.data.tck.repositories.CountryRepository
-import io.micronaut.data.tck.repositories.EntityWithIdClass2Repository
-import io.micronaut.data.tck.repositories.EntityWithIdClassRepository
 import io.micronaut.data.tck.repositories.FaceRepository
 import io.micronaut.data.tck.repositories.FoodRepository
 import io.micronaut.data.tck.repositories.GenreRepository
@@ -106,22 +102,6 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
 
     @Shared
     H2PageRepository pageRepo = context.getBean(H2PageRepository)
-
-    @Shared
-    H2EntityWithIdClassRepository entityWithIdClassRepo = context.getBean(H2EntityWithIdClassRepository)
-
-    @Shared
-    H2EntityWithIdClass2Repository entityWithIdClass2Repo = context.getBean(H2EntityWithIdClass2Repository)
-
-    @Override
-    EntityWithIdClassRepository getEntityWithIdClassRepository() {
-        return entityWithIdClassRepo
-    }
-
-    @Override
-    EntityWithIdClass2Repository getEntityWithIdClass2Repository() {
-        return entityWithIdClass2Repo
-    }
 
     @Override
     NoseRepository getNoseRepository() {
