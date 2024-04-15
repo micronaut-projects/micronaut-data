@@ -39,6 +39,7 @@ import io.micronaut.data.annotation.sql.JoinColumns;
 import io.micronaut.data.annotation.sql.SqlMembers;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
+import io.micronaut.data.model.CursoredPageable;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.JsonDataType;
@@ -1213,7 +1214,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         int size = pageable.getSize();
         if (size > 0) {
             StringBuilder builder = new StringBuilder(" ");
-            long from = pageable.getOffset();
+            long from = pageable instanceof CursoredPageable ? 0 : pageable.getOffset();
             switch (dialect) {
                 case H2:
                 case MYSQL:

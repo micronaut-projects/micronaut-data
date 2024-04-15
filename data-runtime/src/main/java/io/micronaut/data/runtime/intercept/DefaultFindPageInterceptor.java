@@ -21,10 +21,14 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.FindPageInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
+import io.micronaut.data.model.CursoredPageable;
 import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
+import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -56,7 +60,13 @@ public class DefaultFindPageInterceptor<T, R> extends AbstractQueryInterceptor<T
             List<R> resultList = (List<R>) CollectionUtils.iterableToList(iterable);
             Number n = operations.findOne(countQuery);
             Long result = n != null ? n.longValue() : 0;
-            Page<R> page = Page.of(resultList, getPageable(context), result);
+
+            Pageable pageable = getPageable(context);
+            if (preparedQuery instanceof DefaultSqlPreparedQuery sqlPreparedQuery) {
+                pageable = sqlPreparedQuery.updatePageable(resultList, pageable, result);
+            }
+
+            Page<R> page = Page.of(resultList, pageable, result);
             if (returnType.isInstance(page)) {
                 return (R) page;
             } else {

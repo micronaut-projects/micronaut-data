@@ -235,6 +235,14 @@ public interface Sort {
         }
 
         @Override
+        public String toString() {
+            return "SORT{" + property
+                + (direction == Direction.ASC ? ", ASC" : ", DESC")
+                + (ignoreCase ? ", ignoreCase" : "")
+                + ")";
+        }
+
+        @Override
         public boolean equals(Object o) {
             if (this == o) {
                 return true;

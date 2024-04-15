@@ -1,0 +1,256 @@
+/*
+ * Copyright 2017-2020 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.data.tck.tests
+
+import io.micronaut.data.model.CursoredPageable
+import io.micronaut.data.model.Page
+import io.micronaut.data.model.Sort
+import io.micronaut.data.tck.entities.Book
+import io.micronaut.data.tck.entities.Person
+import io.micronaut.data.tck.repositories.BookRepository
+import io.micronaut.data.tck.repositories.PersonRepository
+import spock.lang.Specification
+
+abstract class AbstractCursoredPageSpec extends Specification {
+
+    abstract PersonRepository getPersonRepository()
+
+    abstract BookRepository getBookRepository()
+
+    abstract void init()
+
+    def setup() {
+        init()
+
+        // Create a repository that will look something like this:
+        // id | name     | age
+        // 1  | AAAAA00  | 1
+        // 2  | AAAAA01  | 2
+        // ...
+        // 10 | AAAAA09  | 10
+        // 11 | BBBBB00  | 1
+        // ..
+        // 260 | ZZZZZ09 | 10
+        // 261 | AAAAA00 | 11
+        // 262 | AAAAA01 | 12
+        // ...
+        List<Person> people = []
+        3.times {
+            ('A'..'Z').each { letter ->
+                10.times { num ->
+                    people << new Person(name: letter * 5 + String.format("%02d", num), age: it * 10 + num + 1)
+                }
+            }
+        }
+
+        personRepository.saveAll(people)
+    }
+
+    def cleanup() {
+        personRepository.deleteAll()
+    }
+
+    void "test cursored pageable list for sorting #sorting"() {
+        when: "10 people are paged"
+        def pageable = CursoredPageable.from(10, sorting)
+        Page<Person> page = personRepository.findAll(pageable)
+
+        then: "The data is correct"
+        page.content.size() == 10
+        page.content.every() { it instanceof Person }
+        page.content[0].name == name1
+        page.content[1].name == name2
+        page.totalSize == 780
+        page.totalPages == 78
+        page.nextPageable().startCursor != null
+        page.previousPageable().endCursor != null
+
+        when: "The next page is selected"
+        page = personRepository.findAll(page.nextPageable())
+
+        then: "it is correct"
+        page.offset == 10
+        page.pageNumber == 1
+        page.content[0].name == name10
+        page.content[9].name == name19
+        page.content.size() == 10
+
+        when: "The previous page is selected"
+        pageable = page.previousPageable()
+        page = personRepository.findAll(pageable)
+
+        then: "it is correct"
+        page.offset == 0
+        page.pageNumber == 0
+        page.content[0].name == name1
+        page.content.size() == 10
+
+        where:
+        sorting                                                      | name1     | name2     | name10    | name19
+        null                                                         | "AAAAA00" | "AAAAA01" | "BBBBB00" | "BBBBB09"
+        Sort.of(Sort.Order.desc("id"))                               | "ZZZZZ09" | "ZZZZZ08" | "YYYYY09" | "YYYYY00"
+        Sort.of(Sort.Order.asc("name"))                              | "AAAAA00" | "AAAAA00" | "AAAAA03" | "AAAAA06"
+        Sort.of(Sort.Order.desc("name"))                             | "ZZZZZ09" | "ZZZZZ09" | "ZZZZZ06" | "ZZZZZ03"
+        Sort.of(Sort.Order.asc("age"), Sort.Order.asc("name"))       | "AAAAA00" | "BBBBB00" | "KKKKK00" | "TTTTT00"
+        Sort.of(Sort.Order.desc("age"), Sort.Order.asc("name"))      | "AAAAA09" | "BBBBB09" | "KKKKK09" | "TTTTT09"
+    }
+
+    void "test pageable list with row removal"() {
+        when: "10 people are paged"
+        CursoredPageable.from(10)
+        def pageable = CursoredPageable.from(10, sorting)
+        Page<Person> page = personRepository.findAll(pageable)
+
+        then: "The data is correct"
+        page.content.size() == 10
+        page.content[0].name == elem1
+        page.content[1].name == elem2
+
+        when: "The next page is selected after deletion"
+        personRepository.delete(page.content[1])
+        personRepository.delete(page.content[9])
+        page = personRepository.findAll(page.nextPageable())
+
+        then: "it is correct"
+        page.offset == 10
+        page.pageNumber == 1
+        page.content[0].name == elem10
+        page.content[9].name == elem19
+        page.content.size() == 10
+
+        when: "The previous page is selected"
+        pageable = page.previousPageable()
+        page = personRepository.findAll(pageable)
+
+        then: "it is correct"
+        page.offset == 0
+        page.pageNumber == 0
+        page.content[0].name == elem1
+        page.content.size() == 8
+
+        where:
+        sorting                          | elem1     | elem2     | elem10    | elem19
+        null                             | "AAAAA00" | "AAAAA01" | "BBBBB00" | "BBBBB09"
+        Sort.of(Sort.Order.desc("id"))   | "ZZZZZ09" | "ZZZZZ08" | "YYYYY09" | "YYYYY00"
+        Sort.of(Sort.Order.asc("name"))  | "AAAAA00" | "AAAAA00" | "AAAAA03" | "AAAAA06"
+        Sort.of(Sort.Order.desc("name")) | "ZZZZZ09" | "ZZZZZ09" | "ZZZZZ06" | "ZZZZZ03"
+    }
+
+    void "test pageable list with row addition"() {
+        when: "10 people are paged"
+        def pageable = CursoredPageable.from(10, sorting)
+        Page<Person> page = personRepository.findAll(pageable)
+
+        then: "The data is correct"
+        page.content.size() == 10
+        page.content[0].name == elem1
+        page.content[1].name == elem2
+
+        when: "The next page is selected after deletion"
+        personRepository.saveAll([
+                new Person(name: "AAAAA00"), new Person(name: "AAAAA01"),
+                new Person(name: "ZZZZZ08"), new Person(name: "ZZZZZ07")
+        ])
+        page = personRepository.findAll(page.nextPageable())
+
+        then: "it is correct"
+        page.offset == 10
+        page.pageNumber == 1
+        page.content[0].name == elem10
+        page.content[9].name == elem19
+        page.content.size() == 10
+
+        when: "The previous page is selected"
+        pageable = page.previousPageable()
+        page = personRepository.findAll(pageable)
+
+        then: "it is correct"
+        page.offset == 0
+        page.pageNumber == 0
+        page.content[0].name == elem3
+        page.content.size() == 10
+
+        when: "The second previous page is selected"
+        page = personRepository.findAll(page.previousPageable())
+
+        then:
+        page.offset == 0
+        page.pageNumber == 0
+        page.content[0].name == elem1
+        page.content[1].name == elem2
+        page.content.size() == 2
+
+        where:
+        sorting                          | elem1     | elem2     | elem3     | elem10    | elem19
+        Sort.of(Sort.Order.asc("name"))  | "AAAAA00" | "AAAAA00" | "AAAAA00" | "AAAAA03" | "AAAAA06"
+        Sort.of(Sort.Order.desc("name")) | "ZZZZZ09" | "ZZZZZ09" | "ZZZZZ09" | "ZZZZZ06" | "ZZZZZ03"
+    }
+
+    void "test pageable findBy"() {
+        when: "People are searched for"
+        def pageable = CursoredPageable.from(10, null)
+        Page<Person> page = personRepository.findByNameLike("A%", pageable)
+        Page<Person> page2 = personRepository.findPeople("A%", pageable)
+
+        then: "The page is correct"
+        page.offset == 0
+        page.pageNumber == 0
+        page.totalSize == 30
+        page2.totalSize == page.totalSize
+        var firstContent = page.content
+        page.content.name.every{ it.startsWith("A") }
+
+        when: "The next page is retrieved"
+        page = personRepository.findByNameLike("A%", page.nextPageable())
+
+        then: "it is correct"
+        page.offset == 10
+        page.pageNumber == 1
+        page.content.id != firstContent.id
+        page.content.name.every{ it.startsWith("A") }
+
+        when: "The previous page is selected"
+        pageable = page.previousPageable()
+        page = personRepository.findByNameLike("A%", pageable)
+
+        then: "it is correct"
+        page.offset == 0
+        page.pageNumber == 0
+        page.content.size() == 10
+        page.content.id == firstContent.id
+        page.content.name.every{ it.startsWith("A") }
+    }
+
+    void "test find with left join"() {
+        given:
+        def books = bookRepository.saveAll([
+                new Book(title: "Book 1", totalPages: 100),
+                new Book(title: "Book 2", totalPages: 100)
+        ])
+
+        when:
+        def page = bookRepository.findByTotalPagesGreaterThan(
+                50, CursoredPageable.from(books.size(), null)
+        )
+
+        then:
+        page.getContent().size() == books.size()
+        page.getTotalSize() == books.size()
+
+        cleanup:
+        bookRepository.deleteAll()
+    }
+}
