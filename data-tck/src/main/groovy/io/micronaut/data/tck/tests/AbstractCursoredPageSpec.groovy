@@ -110,7 +110,6 @@ abstract class AbstractCursoredPageSpec extends Specification {
 
     void "test pageable list with row removal"() {
         when: "10 people are paged"
-        CursoredPageable.from(10)
         def pageable = CursoredPageable.from(10, sorting)
         Page<Person> page = personRepository.findAll(pageable)
 

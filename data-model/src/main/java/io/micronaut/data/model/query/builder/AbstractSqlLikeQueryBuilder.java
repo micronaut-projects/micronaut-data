@@ -1999,6 +1999,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * For example, property name might be encoded as {@code `person_.name`} using
      * its path and table's alias.
      *
+     * @param propertyName The name of the property
      * @param query The query
      * @param entity The root entity
      * @param annotationMetadata The annotation metadata
