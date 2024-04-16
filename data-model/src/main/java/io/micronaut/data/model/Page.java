@@ -88,7 +88,9 @@ public interface Page<T> extends Slice<T> {
         if (getPageable() instanceof CursoredPageable cursoredPageable) {
             return cursoredPageable.hasNext();
         }
-        return getOffset() + getSize() < getTotalSize();
+        return hasTotalSize()
+            ? getOffset() + getSize() < getTotalSize()
+            : getContent().size() == getSize();
     }
 
     /**
