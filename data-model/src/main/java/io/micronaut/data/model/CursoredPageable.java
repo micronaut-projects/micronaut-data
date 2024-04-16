@@ -40,7 +40,7 @@ public interface CursoredPageable extends Pageable {
      * Constant for no pagination.
      */
     CursoredPageable UNPAGED = new DefaultCursoredPageable(
-        0, null, null, false, -1, null
+        0, null, null, false, -1, Sort.UNSORTED
     );
 
     /**
@@ -114,6 +114,9 @@ public interface CursoredPageable extends Pageable {
         @JsonProperty("size") int size,
         @JsonProperty("sort") @Nullable Sort sort
     ) {
+        if (sort == null) {
+            sort = UNSORTED;
+        }
         return new DefaultCursoredPageable(0, null, null, false, size, sort);
     }
 
@@ -137,6 +140,9 @@ public interface CursoredPageable extends Pageable {
         @JsonProperty("size") int size,
         @JsonProperty("sort") @Nullable Sort sort
     ) {
+        if (sort == null) {
+            sort = UNSORTED;
+        }
         return new DefaultCursoredPageable(page, startCursor, endCursor, isBackward, size, sort);
     }
 

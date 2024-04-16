@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.postgres
+package io.micronaut.data.jdbc.mysql
 
 import groovy.transform.Memoized
 import io.micronaut.context.ApplicationContext
@@ -21,27 +21,27 @@ import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.tests.AbstractCursoredPageSpec
 import spock.lang.AutoCleanup
-import spock.lang.Ignore
 import spock.lang.Shared
 
-@Ignore("Causes error: 'FATAL: sorry, too many clients already'")
-class PostgresCursoredPaginationSpec extends AbstractCursoredPageSpec implements PostgresTestPropertyProvider {
+class MysqlCursoredPaginationSpec extends AbstractCursoredPageSpec implements MySQLTestPropertyProvider {
+
     @Shared @AutoCleanup ApplicationContext context
 
     @Memoized
     @Override
     PersonRepository getPersonRepository() {
-        return context.getBean(PostgresPersonRepository)
+        return context.getBean(MySqlPersonRepository)
     }
 
     @Memoized
     @Override
     BookRepository getBookRepository() {
-        return context.getBean(PostgresBookRepository)
+        return context.getBean(MySqlBookRepository)
     }
 
     @Override
     void init() {
-        context = ApplicationContext.run(getProperties())
+        context = ApplicationContext.run(properties)
     }
+
 }

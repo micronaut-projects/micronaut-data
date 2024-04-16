@@ -27,17 +27,19 @@ import java.util.Objects;
  * The default cursored pageable implementation.
  *
  * @author Andriy Dmytruk
- * @since 4.6.1
+ * @since 4.8.0
  */
 @Introspected
-final class DefaultCursoredPageable implements CursoredPageable {
-
-    private final int max;
-    private final int number;
-    private final List<Object> startCursor;
-    private final List<Object> endCursor;
-    private final boolean isBackward;
-    private final Sort sort;
+record DefaultCursoredPageable(
+    int size,
+    @Nullable
+    List<Object> startCursor,
+    @Nullable
+    List<Object> endCursor,
+    boolean isBackward,
+    int page,
+    Sort sort
+) implements CursoredPageable {
 
     /**
      * Default constructor.
@@ -52,29 +54,23 @@ final class DefaultCursoredPageable implements CursoredPageable {
      * @param sort The sorting
      */
     @Creator
-    DefaultCursoredPageable(int page, @Nullable List<Object> startCursor, @Nullable List<Object> endCursor, boolean isBackward, int size, @Nullable Sort sort) {
+    DefaultCursoredPageable {
         if (page < 0) {
             throw new IllegalArgumentException("Page index cannot be negative");
         }
         if (size == 0) {
             throw new IllegalArgumentException("Size cannot be 0");
         }
-        this.max = size;
-        this.number = page;
-        this.startCursor = startCursor;
-        this.endCursor = endCursor;
-        this.isBackward = isBackward;
-        this.sort = sort == null ? Sort.unsorted() : sort;
     }
 
     @Override
     public int getSize() {
-        return max;
+        return size;
     }
 
     @Override
     public int getNumber() {
-        return number;
+        return page;
     }
 
     @NonNull
@@ -102,7 +98,7 @@ final class DefaultCursoredPageable implements CursoredPageable {
     public CursoredPageable next() {
         if (endCursor != null) {
             return new DefaultCursoredPageable(
-                    number + 1,
+                    page + 1,
                     endCursor,
                     null,
                     false,
@@ -117,7 +113,7 @@ final class DefaultCursoredPageable implements CursoredPageable {
     public CursoredPageable previous() {
         if (startCursor != null) {
             return new DefaultCursoredPageable(
-                    Math.max(number - 1, 0),
+                    Math.max(page - 1, 0),
                     null,
                     startCursor,
                     true,
@@ -146,21 +142,22 @@ final class DefaultCursoredPageable implements CursoredPageable {
         if (!(o instanceof DefaultCursoredPageable that)) {
             return false;
         }
-        return max == that.max &&
-                Objects.equals(startCursor, that.startCursor) &&
-                Objects.equals(sort, that.sort);
+        return size == that.size
+            && Objects.equals(startCursor, that.startCursor)
+            && Objects.equals(endCursor, that.endCursor)
+            && Objects.equals(sort, that.sort);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(max, startCursor, sort);
+        return Objects.hash(size, startCursor, endCursor, sort);
     }
 
     @Override
     public String toString() {
         return "DefaultCursoredPageable{" +
-                "max=" + max +
-                ", number=" + number +
+                "size=" + size +
+                ", number=" + page +
                 ", startCursor=" + startCursor +
                 ", endCursor=" + endCursor +
                 ", sort=" + sort +

@@ -226,7 +226,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         if (!sort.isSorted()) {
             return sort;
         }
-        List<Order> orders = new ArrayList<>();
+        List<Order> orders = new ArrayList<>(sort.getOrderBy().size());
         for (Order order : sort.getOrderBy()) {
             orders.add(new Order(
                 order.getProperty(),
@@ -247,7 +247,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
     @NonNull
     private String buildCursorPagination(@Nullable List<Object> cursor, @NonNull Sort sort) {
         List<Sort.Order> orders = sort.getOrderBy();
-        cursorProperties = new ArrayList<>();
+        cursorProperties = new ArrayList<>(orders.size());
         for (Order order: orders) {
             cursorProperties.add(getPersistentEntity().getPropertyByName(order.getProperty()));
         }
@@ -261,9 +261,9 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
             throw new IllegalArgumentException("At least one sorting property must be supplied");
         }
 
-        List<QueryParameterBinding> cursorBindings = new ArrayList<>();
-        cursorQueryBindings = new ArrayList<>();
-        for (int i = 0; i < cursor.size(); ++i) {
+        List<QueryParameterBinding> cursorBindings = new ArrayList<>(orders.size());
+        cursorQueryBindings = new ArrayList<>(orders.size() * (orders.size() + 1) / 2);
+        for (int i = 0; i < orders.size(); ++i) {
             cursorBindings.add(new CursoredQueryParameterBinder(
                 "cursor_" + i, cursorProperties.get(i).getDataType(), cursor.get(i)
             ));
@@ -275,7 +275,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
             query = query.substring(0, i) + "(" + query.substring(i) + ")";
             builder.append(" AND (");
         } else {
-            builder.append("WHERE ");
+            builder.append("WHERE (");
         }
         for (int i = 0; i < orders.size(); ++i) {
             builder.append("(");
@@ -298,10 +298,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
                 builder.append(" OR ");
             }
         }
-
-        if (query.contains("WHERE")) {
-            builder.append(")");
-        }
+        builder.append(")");
         return builder.toString();
     }
 
@@ -420,18 +417,11 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         return 1;
     }
 
-    protected static class CursoredQueryParameterBinder implements QueryParameterBinding {
-
-        private final String name;
-        private DataType dataType;
-        private final Object value;
-
-        public CursoredQueryParameterBinder(String name, DataType dataType, Object value) {
-            this.name = name;
-            this.dataType = dataType;
-            this.value = value;
-        }
-
+    private record CursoredQueryParameterBinder(
+        String name,
+        DataType dataType,
+        Object value
+    ) implements QueryParameterBinding {
         @Override
         public String getName() {
             return name;
