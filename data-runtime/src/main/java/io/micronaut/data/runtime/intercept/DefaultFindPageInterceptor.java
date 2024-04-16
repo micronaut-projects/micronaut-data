@@ -52,19 +52,22 @@ public class DefaultFindPageInterceptor<T, R> extends AbstractQueryInterceptor<T
         Class<R> returnType = context.getReturnType().getType();
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context);
-            PreparedQuery<?, Number> countQuery = prepareCountQuery(methodKey, context);
 
             Iterable<?> iterable = operations.findAll(preparedQuery);
-            List<R> resultList = (List<R>) CollectionUtils.iterableToList(iterable);
-            Number n = operations.findOne(countQuery);
-            Long result = n != null ? n.longValue() : 0;
-
+            List<R> results = (List<R>) CollectionUtils.iterableToList(iterable);
             Pageable pageable = getPageable(context);
             if (preparedQuery instanceof DefaultSqlPreparedQuery sqlPreparedQuery) {
-                pageable = sqlPreparedQuery.updatePageable(resultList, pageable, result);
+                pageable = sqlPreparedQuery.updatePageable(results, pageable);
             }
 
-            Page<R> page = Page.of(resultList, pageable, result);
+            Long totalCount = null;
+            if (pageable.requestTotal()) {
+                PreparedQuery<?, Number> countQuery = prepareCountQuery(methodKey, context);
+                Number n = operations.findOne(countQuery);
+                totalCount = n != null ? n.longValue() : null;
+            }
+
+            Page<R> page = Page.of(results, pageable, totalCount);
             if (returnType.isInstance(page)) {
                 return (R) page;
             } else {

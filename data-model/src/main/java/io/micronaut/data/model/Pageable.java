@@ -43,27 +43,7 @@ public interface Pageable extends Sort {
     /**
      * Constant for no pagination.
      */
-    Pageable UNPAGED = new Pageable() {
-        @Override
-        public int getNumber() {
-            return 0;
-        }
-
-        @Override
-        public Mode getMode() {
-            return Mode.OFFSET;
-        }
-
-        @Override
-        public Optional<Cursor> cursor() {
-            return Optional.empty();
-        }
-
-        @Override
-        public int getSize() {
-            return -1;
-        }
-    };
+    Pageable UNPAGED = new DefaultPageable(0, -1, Sort.UNSORTED, true);
 
     /**
      * @return The page number.
@@ -88,6 +68,16 @@ public interface Pageable extends Sort {
      * @return The cursor
      */
     Optional<Cursor> cursor();
+
+    /**
+     * Whether the returned page should contain information about total items that
+     * can be produced by this query. If the value is false, {@link Page#getTotalSize()} and
+     * {@link Page#getTotalPages()} methods will fail. By default, pageable will have this value
+     * set to true.
+     *
+     * @return Whether total size information is required.
+     */
+    boolean requestTotal();
 
     /**
      * Offset in the requested collection. Defaults to zero.
@@ -189,12 +179,26 @@ public interface Pageable extends Sort {
     }
 
     /**
+     * Specify that the {@link Page} response should have information about total size.
+     * @see #requestTotal() requestTotal() for more details.
+     * @return A pageable instance that will request the total size.
+     */
+    Pageable withTotal();
+
+    /**
+     * Specify that the {@link Page} response should not have information about total size.
+     * @see #requestTotal() requestTotal() for more details.
+     * @return A pageable instance that won't request the total size.
+     */
+    Pageable withoutTotal();
+
+    /**
      * Creates a new {@link Pageable} at the given offset with a default size of 10.
      * @param page The page
      * @return The pageable
      */
     static @NonNull Pageable from(int page) {
-        return new DefaultPageable(page, 10, null);
+        return new DefaultPageable(page, 10, null, true);
     }
 
     /**
@@ -204,7 +208,7 @@ public interface Pageable extends Sort {
      * @return The pageable
      */
     static @NonNull Pageable from(int page, int size) {
-        return new DefaultPageable(page, size, null);
+        return new DefaultPageable(page, size, null, true);
     }
 
     /**
@@ -219,7 +223,7 @@ public interface Pageable extends Sort {
             @JsonProperty("number") int page,
             @JsonProperty("size") int size,
             @JsonProperty("sort") @Nullable Sort sort) {
-        return new DefaultPageable(page, size, sort);
+        return new DefaultPageable(page, size, sort, true);
     }
 
     /**
@@ -231,7 +235,7 @@ public interface Pageable extends Sort {
         if (sort == null) {
             return UNPAGED;
         } else {
-            return new DefaultPageable(0, -1, sort);
+            return new DefaultPageable(0, -1, sort, true);
         }
     }
 
@@ -255,7 +259,7 @@ public interface Pageable extends Sort {
         if (sort == null) {
             sort = UNSORTED;
         }
-        return new DefaultCursoredPageable(size, cursor, null, false, page, sort);
+        return new DefaultCursoredPageable(size, cursor, null, false, page, sort, true);
     }
 
     /**
@@ -271,7 +275,7 @@ public interface Pageable extends Sort {
         if (sort == null) {
             sort = UNSORTED;
         }
-        return new DefaultCursoredPageable(size, null, cursor, true, page, sort);
+        return new DefaultCursoredPageable(size, null, cursor, true, page, sort, true);
     }
 
     /**

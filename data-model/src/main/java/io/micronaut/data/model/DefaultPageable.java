@@ -32,6 +32,7 @@ import java.util.Optional;
 @Introspected
 final class DefaultPageable implements Pageable {
 
+    private final boolean requestTotal;
     private final int max;
     private final int number;
     private final Sort sort;
@@ -44,7 +45,7 @@ final class DefaultPageable implements Pageable {
      * @param sort The sort
      */
     @Creator
-    DefaultPageable(int page, int size, @Nullable Sort sort) {
+    DefaultPageable(int page, int size, @Nullable Sort sort, Boolean requestTotal) {
         if (page < 0) {
             throw new IllegalArgumentException("Page index cannot be negative");
         }
@@ -54,6 +55,7 @@ final class DefaultPageable implements Pageable {
         this.max = size;
         this.number = page;
         this.sort = sort == null ? Sort.unsorted() : sort;
+        this.requestTotal = requestTotal == null ? true : requestTotal;
     }
 
     @Override
@@ -76,10 +78,31 @@ final class DefaultPageable implements Pageable {
         return Optional.empty();
     }
 
+    @Override
+    public boolean requestTotal() {
+        return requestTotal;
+    }
+
     @NonNull
     @Override
     public Sort getSort() {
         return sort;
+    }
+
+    @Override
+    public Pageable withTotal() {
+        if (this.requestTotal) {
+            return this;
+        }
+        return new DefaultPageable(number, max, sort, true);
+    }
+
+    @Override
+    public Pageable withoutTotal() {
+        if (!this.requestTotal) {
+            return this;
+        }
+        return new DefaultPageable(number, max, sort, false);
     }
 
     @Override

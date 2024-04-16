@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.micronaut.context.annotation.DefaultImplementation;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.serde.annotation.Serdeable;
@@ -48,14 +49,28 @@ import java.util.stream.Collectors;
 @DefaultImplementation(DefaultPage.class)
 public interface Page<T> extends Slice<T> {
 
-    Page<?> EMPTY = new DefaultPage<>(Collections.emptyList(), Pageable.unpaged(), 0);
+    Page<?> EMPTY = new DefaultPage<>(Collections.emptyList(), Pageable.unpaged(), null);
 
     /**
+     * @return Whether this {@link Page} contains the total count of the records
+     * @since 4.8.0
+     */
+    boolean hasTotalSize();
+
+    /**
+     * Get the total count of all the records that can be given by this query.
+     * The method may produce a {@link IllegalStateException} if the {@link Pageable} request
+     * did not ask for total size.
+     *
      * @return The total size of the all records.
      */
     long getTotalSize();
 
     /**
+     * Get the total count of pages that can be given by this query.
+     * The method may produce a {@link IllegalStateException} if the {@link Pageable} request
+     * did not ask for total size.
+     *
      * @return The total number of pages
      */
     default int getTotalPages() {
@@ -115,7 +130,7 @@ public interface Page<T> extends Slice<T> {
     static @NonNull <T> Page<T> of(
             @JsonProperty("content") @NonNull List<T> content,
             @JsonProperty("pageable") @NonNull Pageable pageable,
-            @JsonProperty("totalSize") long totalSize) {
+            @JsonProperty("totalSize") @Nullable Long totalSize) {
         return new DefaultPage<>(content, pageable, totalSize);
     }
 

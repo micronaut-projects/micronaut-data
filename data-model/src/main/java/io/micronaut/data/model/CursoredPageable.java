@@ -41,7 +41,7 @@ public interface CursoredPageable extends Pageable {
      * Constant for no pagination.
      */
     CursoredPageable UNPAGED = new DefaultCursoredPageable(
-        -1, null, null, false, 0, Sort.UNSORTED
+        -1, null, null, false, 0, Sort.UNSORTED, true
     );
 
     /**
@@ -110,7 +110,7 @@ public interface CursoredPageable extends Pageable {
             return UNPAGED;
         }
         return new DefaultCursoredPageable(
-            -1, null, null, false, 0, sort
+            -1, null, null, false, 0, sort, true
         );
     }
 
@@ -128,7 +128,7 @@ public interface CursoredPageable extends Pageable {
         if (sort == null) {
             sort = UNSORTED;
         }
-        return new DefaultCursoredPageable(size, null, null, false, 0, sort);
+        return new DefaultCursoredPageable(size, null, null, false, 0, sort, true);
     }
 
     /**
@@ -154,7 +154,7 @@ public interface CursoredPageable extends Pageable {
         if (sort == null) {
             sort = UNSORTED;
         }
-        return new DefaultCursoredPageable(size, startCursor, endCursor, isBackward, page, sort);
+        return new DefaultCursoredPageable(size, startCursor, endCursor, isBackward, page, sort, true);
     }
 
     /**

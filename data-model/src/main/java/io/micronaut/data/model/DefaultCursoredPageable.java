@@ -37,7 +37,8 @@ record DefaultCursoredPageable(
     Cursor endCursor,
     boolean isBackward,
     int page,
-    Sort sort
+    Sort sort,
+    boolean requestTotal
 ) implements CursoredPageable {
 
     /**
@@ -97,12 +98,13 @@ record DefaultCursoredPageable(
     public CursoredPageable next() {
         if (endCursor != null) {
             return new DefaultCursoredPageable(
-                    getSize(),
+                    size,
                     endCursor,
                     null,
                     false,
                     page + 1,
-                    getSort()
+                    sort,
+                    requestTotal
             );
         }
         return CursoredPageable.super.next();
@@ -112,15 +114,32 @@ record DefaultCursoredPageable(
     public CursoredPageable previous() {
         if (startCursor != null) {
             return new DefaultCursoredPageable(
-                    getSize(),
+                    size,
                     null,
                     startCursor,
                     true,
                     Math.max(page - 1, 0),
-                    getSort()
+                    sort,
+                    requestTotal
             );
         }
         return CursoredPageable.super.previous();
+    }
+
+    @Override
+    public Pageable withTotal() {
+        if (requestTotal) {
+            return this;
+        }
+        return new DefaultCursoredPageable(size, startCursor, endCursor, isBackward, page, sort, true);
+    }
+
+    @Override
+    public Pageable withoutTotal() {
+        if (!requestTotal) {
+            return this;
+        }
+        return new DefaultCursoredPageable(size, startCursor, endCursor, isBackward, page, sort, true);
     }
 
     @Override

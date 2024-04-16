@@ -309,10 +309,9 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
      *
      * @param results The scanning results
      * @param pageable The pageable sent by user
-     * @param totalSize The total count
      * @return The updated pageable
      */
-    public Pageable updatePageable(List<Object> results, Pageable pageable, long totalSize) {
+    public Pageable updatePageable(List<Object> results, Pageable pageable) {
         if (pageable instanceof CursoredPageable cursored) {
             if (cursored.isBackward()) {
                 Collections.reverse(results);
