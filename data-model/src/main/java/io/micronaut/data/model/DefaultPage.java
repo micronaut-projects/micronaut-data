@@ -56,7 +56,6 @@ class DefaultPage<T> extends DefaultSlice<T> implements Page<T> {
         this.totalSize = totalSize;
     }
 
-
     @Override
     public boolean hasTotalSize() {
         return totalSize != null;

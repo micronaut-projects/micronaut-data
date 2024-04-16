@@ -167,7 +167,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
         Long count;
         if (criteriaRepositoryOperations != null) {
-            count =  criteriaRepositoryOperations.findOne(buildCountQuery(context));
+            count = criteriaRepositoryOperations.findOne(buildCountQuery(context));
         } else {
             count = operations.findOne(preparedQueryForCriteria(methodKey, context, Type.COUNT, methodJoinPaths));
         }

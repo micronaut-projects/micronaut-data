@@ -25,6 +25,16 @@ import java.util.Objects;
 /**
  * The default cursored pageable implementation.
  *
+ * @param page The page.
+ * @param startCursor The cursor that is pointing to the start of the data.
+ *                    This cursor will be used for forward pagination.
+ * @param endCursor The cursor that is pointing to the end of the data.
+ *                  This cursor will be used for backward pagination
+ * @param isBackward Whether user requested for backward pagination.
+ * @param size The size of a page
+ * @param sort The sorting
+ * @param requestTotal Whether to request the total count
+ *
  * @author Andriy Dmytruk
  * @since 4.8.0
  */
@@ -43,15 +53,6 @@ record DefaultCursoredPageable(
 
     /**
      * Default constructor.
-     *
-     * @param page The page.
-     * @param startCursor The cursor that is pointing to the start of the data.
-     *                    This cursor will be used for forward pagination.
-     * @param endCursor The cursor that is pointing to the end of the data.
-     *                  This cursor will be used for backward pagination
-     * @param isBackward Whether user requested for backward pagination.
-     * @param size The size of a page
-     * @param sort The sorting
      */
     @Creator
     DefaultCursoredPageable {

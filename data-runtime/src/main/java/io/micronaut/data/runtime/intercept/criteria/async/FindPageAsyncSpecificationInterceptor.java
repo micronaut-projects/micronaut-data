@@ -25,7 +25,6 @@ import io.micronaut.data.operations.RepositoryOperations;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 
 /**
  * Runtime implementation of {@code CompletableFuture<Page> find(Specification, Pageable)}.
