@@ -22,6 +22,7 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.CursoredPageable;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Pageable.Cursor;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.Sort.Order;
@@ -245,7 +246,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
      * @return The additional query part
      */
     @NonNull
-    private String buildCursorPagination(@Nullable List<Object> cursor, @NonNull Sort sort) {
+    private String buildCursorPagination(@Nullable Pageable.Cursor cursor, @NonNull Sort sort) {
         List<Sort.Order> orders = sort.getOrderBy();
         cursorProperties = new ArrayList<>(orders.size());
         for (Order order: orders) {
@@ -317,21 +318,21 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
                 Collections.reverse(results);
             }
 
-            List<Object> startCursor = null;
-            List<Object> endCursor = null;
+            Cursor startCursor = null;
+            Cursor endCursor = null;
             if (!results.isEmpty()) {
                 if (!cursored.isBackward() || results.size() == cursored.getSize()) {
                     E firstValue = (E) results.get(0);
-                    startCursor = new ArrayList<>(cursorProperties.size());
+                    startCursor = Cursor.of(new ArrayList<>(cursorProperties.size()));
                     for (RuntimePersistentProperty<E> property : cursorProperties) {
-                        startCursor.add(property.getProperty().get(firstValue));
+                        startCursor.elements().add(property.getProperty().get(firstValue));
                     }
                 }
                 if (cursored.isBackward() || results.size() == cursored.getSize()) {
                     E lastValue = (E) results.get(results.size() - 1);
-                    endCursor = new ArrayList<>(cursorProperties.size());
+                    endCursor = Cursor.of(new ArrayList<>(cursorProperties.size()));
                     for (RuntimePersistentProperty<E> property : cursorProperties) {
-                        endCursor.add(property.getProperty().get(lastValue));
+                        endCursor.elements().add(property.getProperty().get(lastValue));
                     }
                 }
             } else {

@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.Introspected;
 
 import io.micronaut.core.annotation.NonNull;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * The default pageable implementation.
@@ -63,6 +64,16 @@ final class DefaultPageable implements Pageable {
     @Override
     public int getNumber() {
         return number;
+    }
+
+    @Override
+    public Mode getMode() {
+        return Mode.OFFSET;
+    }
+
+    @Override
+    public Optional<Cursor> cursor() {
+        return Optional.empty();
     }
 
     @NonNull

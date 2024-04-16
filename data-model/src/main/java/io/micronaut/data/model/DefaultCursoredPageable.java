@@ -20,7 +20,6 @@ import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -33,9 +32,9 @@ import java.util.Objects;
 record DefaultCursoredPageable(
     int size,
     @Nullable
-    List<Object> startCursor,
+    Cursor startCursor,
     @Nullable
-    List<Object> endCursor,
+    Cursor endCursor,
     boolean isBackward,
     int page,
     Sort sort
@@ -80,12 +79,12 @@ record DefaultCursoredPageable(
     }
 
     @Override
-    public List<Object> getStartCursor() {
+    public Cursor getStartCursor() {
         return startCursor;
     }
 
     @Override
-    public List<Object> getEndCursor() {
+    public Cursor getEndCursor() {
         return endCursor;
     }
 
@@ -98,11 +97,11 @@ record DefaultCursoredPageable(
     public CursoredPageable next() {
         if (endCursor != null) {
             return new DefaultCursoredPageable(
-                    page + 1,
+                    getSize(),
                     endCursor,
                     null,
                     false,
-                    getSize(),
+                    page + 1,
                     getSort()
             );
         }
@@ -113,11 +112,11 @@ record DefaultCursoredPageable(
     public CursoredPageable previous() {
         if (startCursor != null) {
             return new DefaultCursoredPageable(
-                    Math.max(page - 1, 0),
+                    getSize(),
                     null,
                     startCursor,
                     true,
-                    getSize(),
+                    Math.max(page - 1, 0),
                     getSort()
             );
         }
