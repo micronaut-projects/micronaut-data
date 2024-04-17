@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 original authors
+ * Copyright 2017-2024 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,16 @@
  */
 package io.micronaut.data.intercept.annotation;
 
-import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.model.DataType;
 
 import java.io.Serializable;
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.lang.annotation.Inherited;
 
 /**
  * Internal annotation used to configure execution handling for io.micronaut.data.runtime.intercept.DataIntroductionAdvice.
@@ -85,41 +84,6 @@ public @interface DataMethod {
     String META_MEMBER_INTERCEPTOR = "interceptor";
 
     /**
-     * The member name that holds parameter binding.
-     * @deprecated No longer used
-     */
-    @Deprecated(forRemoval = true)
-    String META_MEMBER_PARAMETER_BINDING = "parameterBinding";
-
-    /**
-     * The member name that holds parameter binding paths.
-     * @deprecated No longer used
-     */
-    @Deprecated(forRemoval = true)
-    String META_MEMBER_PARAMETER_BINDING_PATHS = META_MEMBER_PARAMETER_BINDING + "Paths";
-
-    /**
-     * The member name that holds parameter auto-populated property paths.
-     * @deprecated No longer used
-     */
-    @Deprecated(forRemoval = true)
-    String META_MEMBER_PARAMETER_AUTO_POPULATED_PROPERTY_PATHS = META_MEMBER_PARAMETER_BINDING + "AutoPopulatedPaths";
-
-    /**
-     * The member name that holds parameter auto-populated property paths.
-     * @deprecated No longer used
-     */
-    @Deprecated(forRemoval = true)
-    String META_MEMBER_PARAMETER_AUTO_POPULATED_PREVIOUS_PROPERTY_PATHS = META_MEMBER_PARAMETER_BINDING + "AutoPopulatedPreviousPaths";
-
-    /**
-     * The member name that holds parameter auto-populated property paths.
-     * @deprecated No longer used
-     */
-    @Deprecated(forRemoval = true)
-    String META_MEMBER_PARAMETER_AUTO_POPULATED_PREVIOUS_PROPERTY_INDEXES = META_MEMBER_PARAMETER_BINDING + "AutoPopulatedPrevious";
-
-    /**
      * The ID type.
      */
     String META_MEMBER_ID_TYPE = "idType";
@@ -170,20 +134,6 @@ public @interface DataMethod {
     String META_MEMBER_RAW_COUNT_QUERY = "rawCountQuery";
 
     /**
-     * Meta member for storing the parameter type defs.
-     * @deprecated No longer used
-     */
-    @Deprecated(forRemoval = true)
-    String META_MEMBER_PARAMETER_TYPE_DEFS = "parameterTypeDefs";
-
-    /**
-     * Meta member for storing the parameter converters.
-     * @deprecated No longer used
-     */
-    @Deprecated(forRemoval = true)
-    String META_MEMBER_PARAMETER_CONVERTERS = "parameterConverters";
-
-    /**
      * Meta member for storing the parameters.
      */
     String META_MEMBER_PARAMETERS = "parameters";
@@ -223,17 +173,6 @@ public @interface DataMethod {
      * @return The ID type
      */
     Class<?> idType() default Serializable.class;
-
-    /**
-     * The parameter binding defines which method arguments bind to which
-     * query parameters. The {@link Property#name()} is used to define the query parameter name and the
-     * {@link Property#value()} is used to define method argument name to bind.
-     *
-     * @return The parameter binding.
-     * @deprecated No longer used
-     */
-    @Deprecated(forRemoval = true)
-    Property[] parameterBinding() default {};
 
     /**
      * The argument that defines the pageable object.

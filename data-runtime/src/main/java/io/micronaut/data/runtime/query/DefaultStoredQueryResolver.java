@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 original authors
+ * Copyright 2017-2024 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,8 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.Query;
-import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.operations.HintsCapableRepository;
@@ -33,7 +31,7 @@ import io.micronaut.inject.ExecutableMethod;
 
 import java.util.List;
 
-import static io.micronaut.data.model.runtime.StoredQuery.*;
+import static io.micronaut.data.model.runtime.StoredQuery.OperationType;
 
 /**
  * Default stored query resolver.
@@ -145,19 +143,8 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
             }
 
             @Override
-            public boolean useNumericPlaceholders() {
-                return annotationMetadata.classValue(RepositoryConfiguration.class, "queryBuilder")
-                        .map(c -> c == SqlQueryBuilder.class).orElse(false);
-            }
-
-            @Override
             public boolean isCount() {
                 return false;
-            }
-
-            @Override
-            public boolean isSingleResult() {
-                return isSingleResult;
             }
 
             @Override
@@ -244,19 +231,7 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
             }
 
             @Override
-            public boolean useNumericPlaceholders() {
-                return annotationMetadata
-                        .classValue(RepositoryConfiguration.class, "queryBuilder")
-                        .map(c -> c == SqlQueryBuilder.class).orElse(false);
-            }
-
-            @Override
             public boolean isCount() {
-                return true;
-            }
-
-            @Override
-            public boolean isSingleResult() {
                 return true;
             }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 original authors
+ * Copyright 2017-2024 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package io.micronaut.data.model;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.annotation.AutoPopulated;
@@ -41,16 +41,6 @@ public interface PersistentProperty extends PersistentElement {
      */
     @Override
     @NonNull String getName();
-
-    /**
-     * The name with the first letter in upper case as per Java bean conventions.
-     * @return The capitilized name
-     * @deprecated The method with a type replaced with {@link #getCapitalizedName()}.
-     */
-    @Deprecated(forRemoval = true)
-    default @NonNull String getCapitilizedName() {
-        return NameUtils.capitalize(getName());
-    }
 
     /**
      * The name with the first letter in upper case as per Java bean conventions.

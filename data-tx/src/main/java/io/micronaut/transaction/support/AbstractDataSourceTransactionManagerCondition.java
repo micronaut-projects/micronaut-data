@@ -50,6 +50,7 @@ public abstract class AbstractDataSourceTransactionManagerCondition implements C
                 dataSourceName = "default";
             }
         }
+        // and do what now? transactionManagerProperty(ConditionContext, String) deprecated and removed
         return transactionManagerProperty(context, dataSourceName)
             .map(name -> name.equals(getTransactionManagerName()))
             .orElse(true);

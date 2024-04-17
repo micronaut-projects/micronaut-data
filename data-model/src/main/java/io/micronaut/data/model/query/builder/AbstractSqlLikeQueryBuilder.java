@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 original authors
+ * Copyright 2017-2024 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1925,23 +1925,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     @Override
     public QueryResult buildOrderBy(@NonNull PersistentEntity entity, @NonNull Sort sort) {
         return buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false);
-    }
-
-    /**
-     * Encode the given query into the encoded query instance.
-     *
-     * @param query  The query
-     * @param entity The root entity
-     * @param annotationMetadata The annotation metadata
-     * @param sort   The sort
-     * @return The encoded query
-     *
-     * @deprecated use {@link #buildOrderBy(String, PersistentEntity, AnnotationMetadata, Sort, boolean)}
-     */
-    @NonNull
-    @Deprecated(forRemoval = true, since = "4.2.0")
-    public QueryResult buildOrderBy(String query, @NonNull PersistentEntity entity, @NonNull AnnotationMetadata annotationMetadata, @NonNull Sort sort) {
-        return buildOrderBy(query, entity, annotationMetadata, sort, false);
     }
 
     /**
