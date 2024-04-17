@@ -174,13 +174,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
                 // Create a sort for the cursored pagination. The sort must produce a unique
                 // sorting on the rows. Therefore, we make sure id is present in it.
                 List<Order> orders = new ArrayList<>(sort.getOrderBy());
-                List<RuntimePersistentProperty<E>> idProperties;
-                if (persistentEntity.getIdentity() != null) {
-                    idProperties = List.of(persistentEntity.getIdentity());
-                } else {
-                    idProperties = Arrays.stream(persistentEntity.getCompositeIdentity()).toList();
-                }
-                for (PersistentProperty idProperty: idProperties) {
+                for (PersistentProperty idProperty: persistentEntity.getIdentityProperties()) {
                     String name = idProperty.getName();
                     if (orders.stream().noneMatch(o -> o.getProperty().equals(name))) {
                         orders.add(Order.asc(name));
@@ -190,9 +184,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
                 if (cursored.isBackward()) {
                     sort = reverseSort(sort);
                 }
-                added.append(buildCursorPagination(
-                    cursored.isBackward() ? cursored.getEndCursor() : cursored.getStartCursor(), sort
-                ));
+                added.append(buildCursorPagination(cursored.cursor().orElse(null), sort));
             }
             if (sort.isSorted()) {
                 added.append(queryBuilder.buildOrderBy("", persistentEntity, sqlStoredQuery.getAnnotationMetadata(), sort, isNative()).getQuery());
@@ -227,15 +219,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         if (!sort.isSorted()) {
             return sort;
         }
-        List<Order> orders = new ArrayList<>(sort.getOrderBy().size());
-        for (Order order : sort.getOrderBy()) {
-            orders.add(new Order(
-                order.getProperty(),
-                order.getDirection() == Direction.ASC ? Direction.DESC : Direction.ASC,
-                order.isIgnoreCase()
-            ));
-        }
-        return Sort.of(orders);
+        return Sort.of(sort.getOrderBy().stream().map(Order::reverse).toList());
     }
 
     /**
@@ -336,14 +320,14 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
                 }
             } else {
                 if (cursored.isBackward()) {
-                    endCursor = cursored.getEndCursor();
+                    endCursor = cursored.cursor().orElse(null);
                 } else {
-                    startCursor = cursored.getStartCursor();
+                    startCursor = cursored.cursor().orElse(null);
                 }
             }
             return CursoredPageable.from(
-                cursored.getNumber(), startCursor, endCursor, cursored.isBackward(), cursored.getSize(),
-                cursored.getSort()
+                cursored.getNumber(), startCursor, endCursor, cursored.getMode(), cursored.getSize(),
+                cursored.getSort(), cursored.requestTotal()
             );
         }
         return pageable;

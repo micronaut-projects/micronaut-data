@@ -24,6 +24,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.annotation.TypeHint;
+import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.serde.annotation.Serdeable;
 
 import java.util.Collections;
@@ -36,7 +37,7 @@ import java.util.stream.Collectors;
  * pagination operations.
  *
  * <p>A Page is a result set associated with a particular {@link Pageable} that includes a calculation of the total
- * size of number of records.</p>
+ * size of page of records.</p>
  *
  * @param <T> The generic type
  * @author graemerocher
@@ -71,7 +72,7 @@ public interface Page<T> extends Slice<T> {
      * The method may produce a {@link IllegalStateException} if the {@link Pageable} request
      * did not ask for total size.
      *
-     * @return The total number of pages
+     * @return The total page of pages
      */
     default int getTotalPages() {
         int size = getSize();
@@ -85,12 +86,12 @@ public interface Page<T> extends Slice<T> {
      * @return Whether there exist a next page.
      */
     default boolean hasNext() {
-        if (getPageable() instanceof CursoredPageable cursoredPageable) {
-            return cursoredPageable.hasNext();
+        if (getPageable().getMode() == Mode.OFFSET) {
+            return hasTotalSize()
+                ? getOffset() + getSize() < getTotalSize()
+                : getContent().size() == getSize();
         }
-        return hasTotalSize()
-            ? getOffset() + getSize() < getTotalSize()
-            : getContent().size() == getSize();
+        return getPageable().hasNext();
     }
 
     /**

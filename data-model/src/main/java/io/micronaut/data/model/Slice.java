@@ -57,7 +57,7 @@ public interface Slice<T> extends Iterable<T> {
     @NonNull Pageable getPageable();
 
     /**
-     * @return The page number
+     * @return The page page
      */
     default int getPageNumber() {
         return getPageable().getNumber();
@@ -107,7 +107,7 @@ public interface Slice<T> extends Iterable<T> {
     }
 
     /**
-     * @return The number of elements
+     * @return The page of elements
      */
     default int getNumberOfElements() {
         return getContent().size();

@@ -18,16 +18,14 @@ package io.micronaut.data.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.serde.annotation.Serdeable;
 
-import java.util.List;
-import java.util.Optional;
-
 /**
- * Models pageable data that uses a cursor.
+ * Models pageable data that uses a currentCursor.
  *
  * @author Andriy Dmytruk
  * @since 4.8.0
@@ -41,27 +39,13 @@ public interface CursoredPageable extends Pageable {
      * Constant for no pagination.
      */
     CursoredPageable UNPAGED = new DefaultCursoredPageable(
-        -1, null, null, false, 0, Sort.UNSORTED, true
+        -1, null, null, Mode.CURSOR_NEXT, 0, Sort.UNSORTED, true
     );
-
-    /**
-     * @return The cursor values corresponding to the beginning of queried data.
-     * This cursor is used for forward pagination.
-     */
-    @Nullable
-    Cursor getStartCursor();
-
-    /**
-     * @return The cursor values corresponding to the end of queried data.
-     * This cursor is used for backward pagination.
-     */
-    @Nullable
-    Cursor getEndCursor();
 
     /**
      * Whether the pageable is traversing backwards.
      *
-     * @return Whether cursor is going in reverse direction.
+     * @return Whether currentCursor is going in reverse direction.
      */
     boolean isBackward();
 
@@ -71,32 +55,13 @@ public interface CursoredPageable extends Pageable {
     }
 
     @Override
-    default Optional<Cursor> cursor() {
-        return isBackward() ? Optional.ofNullable(getEndCursor()) : Optional.ofNullable(getStartCursor());
-    }
-
-    @Override
     default @NonNull CursoredPageable next() {
-        throw new IllegalStateException("To get the next CursoredPageable, you must retrieve this one from a page");
+        throw new IllegalStateException("Cannot retrieve next page, as a currentCursor for that is not present");
     }
 
     @Override
     default @NonNull CursoredPageable previous() {
-        throw new IllegalStateException("To get the next CursoredPageable, you must retrieve this one from a page");
-    }
-
-    /**
-     * @return Whether there is a next page
-     */
-    default boolean hasNext() {
-        return false;
-    }
-
-    /**
-     * @return Whether there is a previous page.
-     */
-    default boolean hasPrevious() {
-        return false;
+        throw new IllegalStateException("Cannot retrieve previous page, as a currentCursor for that is not present");
     }
 
     /**
@@ -110,7 +75,7 @@ public interface CursoredPageable extends Pageable {
             return UNPAGED;
         }
         return new DefaultCursoredPageable(
-            -1, null, null, false, 0, sort, true
+            -1, null, null, Mode.CURSOR_NEXT, 0, sort, true
         );
     }
 
@@ -128,33 +93,36 @@ public interface CursoredPageable extends Pageable {
         if (sort == null) {
             sort = UNSORTED;
         }
-        return new DefaultCursoredPageable(size, null, null, false, 0, sort, true);
+        return new DefaultCursoredPageable(size, null, null, Mode.CURSOR_NEXT, 0, sort, true);
     }
 
     /**
-     * Creates a new {@link CursoredPageable} with the given cursor.
+     * Creates a new {@link CursoredPageable} with the given currentCursor.
      *
      * @param page The page
-     * @param startCursor The cursor pointing to the beginning of the traversed data.
-     * @param endCursor The cursor pointing to the end the traversed data.
-     * @param isBackward Whether the cursor is for backward traversing
+     * @param cursor The current currentCursor that will be used for querying data.
+     * @param nextCursor The currentCursor that could be used for querying the next page of data.
+     * @param mode The pagination mode. Must be either forward or backward currentCursor pagination.
      * @param size The page size
      * @param sort The sort
+     * @param requestTotal Whether to request total count
      * @return The pageable
      */
+    @Internal
     @JsonCreator
     static @NonNull CursoredPageable from(
-        @JsonProperty("number") int page,
-        @JsonProperty("startCursor") @Nullable Cursor startCursor,
-        @JsonProperty("endCursor") @Nullable Cursor endCursor,
-        @JsonProperty(value = "isBackward", defaultValue = "false") boolean isBackward,
-        @JsonProperty("size") int size,
-        @JsonProperty("sort") @Nullable Sort sort
+        @JsonProperty("page") int page,
+        @Nullable Cursor cursor,
+        @Nullable Cursor nextCursor,
+        Pageable.Mode mode,
+        int size,
+        @Nullable Sort sort,
+        boolean requestTotal
     ) {
         if (sort == null) {
             sort = UNSORTED;
         }
-        return new DefaultCursoredPageable(size, startCursor, endCursor, isBackward, page, sort, true);
+        return new DefaultCursoredPageable(size, cursor, nextCursor, mode, page, sort, requestTotal);
     }
 
     /**
@@ -164,22 +132,4 @@ public interface CursoredPageable extends Pageable {
         return UNPAGED;
     }
 
-    /**
-     * Default implementation of the {@link Cursor}.
-     *
-     * @param elements The cursor elements
-     */
-    record DefaultCursor(
-        List<Object> elements
-    ) implements Cursor {
-        @Override
-        public Object get(int index) {
-            return elements.get(index);
-        }
-
-        @Override
-        public int size() {
-            return elements.size();
-        }
-    }
 }

@@ -122,9 +122,38 @@ class PageSpec extends Specification {
         def json = serdeMapper.writeValueAsString(pageable)
 
         then:
-        json == '{"size":3,"number":0,"sort":{}}'
+        json == '{"size":3,"number":0,"mode":"OFFSET","sort":{}}'
         def deserializedPageable = serdeMapper.readValue(json, Pageable)
         deserializedPageable == pageable
+    }
+
+    void "test serialization and deserialization of a cursored pageable - serde"() {
+        def pageable = Pageable.afterCursor(
+                Pageable.Cursor.of("value1", 2),
+                0, 3, Sort.UNSORTED
+        )
+
+        when:
+        def json = serdeMapper.writeValueAsString(pageable)
+
+        then:
+        json == '{"size":3,"cursor":{"elements":["value1",2]},"mode":"CURSOR_NEXT","number":0,"sort":{},"requestTotal":true}'
+        def deserializedPageable = serdeMapper.readValue(json, Pageable)
+        deserializedPageable == pageable
+        def deserializedPageable2 = serdeMapper.readValue(json, CursoredPageable)
+        deserializedPageable2 == pageable
+    }
+
+    void "test sort serialization"() {
+        def sort = Sort.of(Sort.Order.asc("property"))
+
+        when:
+        def json = serdeMapper.writeValueAsString(sort)
+
+        then:
+        json == '{"orderBy":[{"ignoreCase":false,"direction":"ASC","property":"property","ascending":true}]}'
+        def deserializedSort = serdeMapper.readValue(json, Sort)
+        deserializedSort == sort
     }
 
     @EqualsAndHashCode

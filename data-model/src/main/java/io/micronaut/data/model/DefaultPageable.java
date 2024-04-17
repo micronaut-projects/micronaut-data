@@ -45,7 +45,7 @@ final class DefaultPageable implements Pageable {
      * @param sort The sort
      */
     @Creator
-    DefaultPageable(int page, int size, @Nullable Sort sort, Boolean requestTotal) {
+    DefaultPageable(int page, int size, @Nullable Sort sort, @Nullable Boolean requestTotal) {
         if (page < 0) {
             throw new IllegalArgumentException("Page index cannot be negative");
         }
@@ -55,7 +55,7 @@ final class DefaultPageable implements Pageable {
         this.max = size;
         this.number = page;
         this.sort = sort == null ? Sort.unsorted() : sort;
-        this.requestTotal = requestTotal == null ? true : requestTotal;
+        this.requestTotal = requestTotal == null || requestTotal;
     }
 
     @Override
@@ -66,11 +66,6 @@ final class DefaultPageable implements Pageable {
     @Override
     public int getNumber() {
         return number;
-    }
-
-    @Override
-    public Mode getMode() {
-        return Mode.OFFSET;
     }
 
     @Override
@@ -127,7 +122,7 @@ final class DefaultPageable implements Pageable {
     public String toString() {
         return "DefaultPageable{" +
                 "max=" + max +
-                ", number=" + number +
+                ", page=" + number +
                 ", sort=" + sort +
                 '}';
     }

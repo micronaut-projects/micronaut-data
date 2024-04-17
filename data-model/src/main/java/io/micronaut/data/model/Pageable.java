@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
@@ -46,7 +47,7 @@ public interface Pageable extends Sort {
     Pageable UNPAGED = new DefaultPageable(0, -1, Sort.UNSORTED, true);
 
     /**
-     * @return The page number.
+     * @return The page page.
      */
     int getNumber();
 
@@ -57,17 +58,25 @@ public interface Pageable extends Sort {
     int getSize();
 
     /**
-     * The pagination mode that is either offset pagination, cursor forward or cursor backward
+     * The pagination mode that is either offset pagination, currentCursor forward or currentCursor backward
      * pagination.
+     *
+     * @since 4.8.0
      * @return The pagination mode
      */
-    Mode getMode();
+    default Mode getMode() {
+        return Mode.OFFSET;
+    }
 
     /**
-     * Get the cursor in case cursored pagination is used.
-     * @return The cursor
+     * Get the currentCursor in case cursored pagination is used.
+     *
+     * @since 4.8.0
+     * @return The currentCursor
      */
-    Optional<Cursor> cursor();
+    default Optional<Cursor> cursor() {
+        return Optional.empty();
+    }
 
     /**
      * Whether the returned page should contain information about total items that
@@ -75,9 +84,34 @@ public interface Pageable extends Sort {
      * {@link Page#getTotalPages()} methods will fail. By default, pageable will have this value
      * set to true.
      *
+     * @since 4.8.0
      * @return Whether total size information is required.
      */
-    boolean requestTotal();
+    default boolean requestTotal() {
+        return true;
+    }
+
+    /**
+     * Return whether there is a next page as best this pageable could determine.
+     * Use {@link Page} for more reliable results.
+     *
+     * @since 4.8.0
+     * @return Whether there is a next page
+     */
+    default boolean hasNext() {
+        return false;
+    }
+
+    /**
+     * Return whether there is a previous page as best this pageable could determine.
+     * Use {@link Page} for more reliable results.
+     *
+     * @since 4.8.0
+     * @return Whether there is a previous page.
+     */
+    default boolean hasPrevious() {
+        return false;
+    }
 
     /**
      * Offset in the requested collection. Defaults to zero.
@@ -137,7 +171,7 @@ public interface Pageable extends Sort {
     }
 
     /**
-     * @return Is unpaged
+     * @return Whether it is unpaged
      */
     @JsonIgnore
     default boolean isUnpaged() {
@@ -180,17 +214,31 @@ public interface Pageable extends Sort {
 
     /**
      * Specify that the {@link Page} response should have information about total size.
+     *
      * @see #requestTotal() requestTotal() for more details.
+     * @since 4.8.0
      * @return A pageable instance that will request the total size.
      */
-    Pageable withTotal();
+    default Pageable withTotal() {
+        if (this.requestTotal()) {
+            return this;
+        }
+        throw new UnsupportedOperationException("Changing requestTotal is not supported");
+    }
 
     /**
      * Specify that the {@link Page} response should not have information about total size.
+     *
      * @see #requestTotal() requestTotal() for more details.
+     * @since 4.8.0
      * @return A pageable instance that won't request the total size.
      */
-    Pageable withoutTotal();
+    default Pageable withoutTotal() {
+        if (!this.requestTotal()) {
+            return this;
+        }
+        throw new UnsupportedOperationException("Changing requestTotal is not supported");
+    }
 
     /**
      * Creates a new {@link Pageable} at the given offset with a default size of 10.
@@ -212,18 +260,52 @@ public interface Pageable extends Sort {
     }
 
     /**
-     * Creates a new {@link Pageable} at the given offset.
+     * Creates a new {@link Pageable} with the given offset.
+     *
      * @param page The page
      * @param size the size
      * @param sort the sort
      * @return The pageable
      */
+    static @NonNull Pageable from(
+        int page,
+        int size,
+        @Nullable Sort sort
+    ) {
+        return new DefaultPageable(page, size, sort, true);
+    }
+
+    /**
+     * Creates a new {@link Pageable} with the given parameters.
+     * The method is used for deserialization and most likely should not be used as an API.
+     *
+     * @param page The page
+     * @param size The size
+     * @param mode The pagination mode
+     * @param cursor The currentCursor
+     * @param sort The sort
+     * @param requestTotal Whether to query total count
+     * @return The pageable
+     */
+    @Internal
     @JsonCreator
     static @NonNull Pageable from(
-            @JsonProperty("number") int page,
+            @JsonProperty("page") int page,
             @JsonProperty("size") int size,
-            @JsonProperty("sort") @Nullable Sort sort) {
-        return new DefaultPageable(page, size, sort, true);
+            @JsonProperty("mode") @Nullable Mode mode,
+            @JsonProperty("cursor") @Nullable Cursor cursor,
+            @JsonProperty("nextCursor") @Nullable Cursor nextCursor,
+            @JsonProperty("sort") @Nullable Sort sort,
+            @JsonProperty(value = "requestTotal", defaultValue = "true") boolean requestTotal
+    ) {
+        if (mode == null || mode == Mode.OFFSET) {
+            return new DefaultPageable(page, size, sort, requestTotal);
+        } else {
+            return new DefaultCursoredPageable(
+                size, cursor, nextCursor, mode, page,
+                sort == null ? UNSORTED : sort, requestTotal
+            );
+        }
     }
 
     /**
@@ -247,10 +329,11 @@ public interface Pageable extends Sort {
     }
 
     /**
-     * Create a new {@link Pageable} for forward pagination given the cursor after which to query.
+     * Create a new {@link Pageable} for forward pagination given the currentCursor after which to query.
      *
-     * @param cursor The cursor
-     * @param page The page number
+     * @since 4.8.0
+     * @param cursor The currentCursor
+     * @param page The page page
      * @param size The page size
      * @param sort The sorting
      * @return The pageable
@@ -259,14 +342,15 @@ public interface Pageable extends Sort {
         if (sort == null) {
             sort = UNSORTED;
         }
-        return new DefaultCursoredPageable(size, cursor, null, false, page, sort, true);
+        return new DefaultCursoredPageable(size, cursor, null, Mode.CURSOR_NEXT, page, sort, true);
     }
 
     /**
-     * Create a new {@link Pageable} for backward pagination given the cursor after which to query.
+     * Create a new {@link Pageable} for backward pagination given the currentCursor after which to query.
      *
-     * @param cursor The cursor
-     * @param page The page number
+     * @since 4.8.0
+     * @param cursor The currentCursor
+     * @param page The page page
      * @param size The page size
      * @param sort The sorting
      * @return The pageable
@@ -275,24 +359,26 @@ public interface Pageable extends Sort {
         if (sort == null) {
             sort = UNSORTED;
         }
-        return new DefaultCursoredPageable(size, null, cursor, true, page, sort, true);
+        return new DefaultCursoredPageable(size, cursor, null, Mode.CURSOR_PREVIOUS, page, sort, true);
     }
 
     /**
-     * The type of pagination: offset-based or cursor-based, which includes
+     * The type of pagination: offset-based or currentCursor-based, which includes
      * a direction.
+     *
+     * @since 4.8.0
      */
     enum Mode {
         /**
-         * Indicates forward cursor-based pagination, which follows the
-         * direction of the sort criteria, using a cursor that is
+         * Indicates forward currentCursor-based pagination, which follows the
+         * direction of the sort criteria, using a currentCursor that is
          * formed from the key of the last entity on the current page.
          */
         CURSOR_NEXT,
 
         /**
-         * Indicates a request for a page with cursor-based pagination
-         * in the previous page direction to the sort criteria, using a cursor
+         * Indicates a request for a page with currentCursor-based pagination
+         * in the previous page direction to the sort criteria, using a currentCursor
          * that is formed from the key of first entity on the current page.
          * The order of results on each page follows the sort criteria
          * and is not reversed.
@@ -302,8 +388,8 @@ public interface Pageable extends Sort {
         /**
          * Indicates a request for a page using offset pagination.
          * The starting position for pages is computed as an offset from
-         * the first result based on the page number and maximum page size.
-         * Offset pagination is used when a cursor is not supplied.
+         * the first result based on the page page and maximum page size.
+         * Offset pagination is used when a currentCursor is not supplied.
          */
         OFFSET
     }
@@ -312,40 +398,44 @@ public interface Pageable extends Sort {
      * An interface for defining pagination cursors.
      * It is generally a list of elements which can be used to create a query for the next
      * or previous page.
+     *
+     * @since 4.8.0
      */
+    @Serdeable
     interface Cursor {
         /**
-         * Returns the cursor element at the specified position.
-         * @param index The index of the cursor value
-         * @return The cursor value
+         * Returns the currentCursor element at the specified position.
+         * @param index The index of the currentCursor value
+         * @return The currentCursor value
          */
         Object get(int index);
 
         /**
-         * Returns all the cursor values in a list.
-         * @return The cursor values
+         * Returns all the currentCursor values in a list.
+         * @return The currentCursor values
          */
         List<Object> elements();
 
         /**
-         * @return The number of elements in the cursor.
+         * @return The page of elements in the currentCursor.
          */
         int size();
 
         /**
-         * Create a cursor from elements.
-         * @param elements The cursor elements
-         * @return The cursor
+         * Create a currentCursor from elements.
+         * @param elements The currentCursor elements
+         * @return The currentCursor
          */
         static Cursor of(Object... elements) {
             return new DefaultCursoredPageable.DefaultCursor(Arrays.asList(elements));
         }
 
         /**
-         * Create a cursor from elements.
-         * @param elements The cursor elements
-         * @return The cursor
+         * Create a currentCursor from elements.
+         * @param elements The currentCursor elements
+         * @return The currentCursor
          */
+        @JsonCreator
         static Cursor of(List<Object> elements) {
             return new DefaultCursoredPageable.DefaultCursor(elements);
         }

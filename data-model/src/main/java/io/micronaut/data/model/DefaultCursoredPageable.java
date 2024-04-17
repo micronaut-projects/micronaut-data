@@ -15,22 +15,26 @@
  */
 package io.micronaut.data.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.core.annotation.Creator;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.serde.annotation.Serdeable;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * The default cursored pageable implementation.
  *
  * @param page The page.
- * @param startCursor The cursor that is pointing to the start of the data.
- *                    This cursor will be used for forward pagination.
- * @param endCursor The cursor that is pointing to the end of the data.
- *                  This cursor will be used for backward pagination
- * @param isBackward Whether user requested for backward pagination.
+ * @param currentCursor The current currentCursor. This is the currentCursor that will be used for pagination
+ *               in case this pageable is used in a query.
+ * @param nextCursor A currentCursor for the next page of data. It is stored in pageable to correctly
+ *                   support {@link #next()} for forward or {@link #previous()} for backward
+ *                   pagination.
+ * @param mode The pagination mode. Could be one of {@link Mode#CURSOR_NEXT} or {@link Mode#CURSOR_PREVIOUS}.
  * @param size The size of a page
  * @param sort The sorting
  * @param requestTotal Whether to request the total count
@@ -38,15 +42,16 @@ import java.util.Objects;
  * @author Andriy Dmytruk
  * @since 4.8.0
  */
-@Introspected
+@Serdeable
 record DefaultCursoredPageable(
     int size,
     @Nullable
-    Cursor startCursor,
+    @JsonProperty("cursor")
+    Cursor currentCursor,
     @Nullable
-    Cursor endCursor,
-    boolean isBackward,
-    int page,
+    Cursor nextCursor,
+    Mode mode,
+    @JsonProperty("number") int page,
     Sort sort,
     boolean requestTotal
 ) implements CursoredPageable {
@@ -62,11 +67,19 @@ record DefaultCursoredPageable(
         if (size == 0) {
             throw new IllegalArgumentException("Size cannot be 0");
         }
+        if (mode != Mode.CURSOR_NEXT && mode != Mode.CURSOR_PREVIOUS) {
+            throw new IllegalArgumentException("The pagination mode must be either currentCursor forward or currentCursor backward");
+        }
     }
 
     @Override
     public int getSize() {
         return size;
+    }
+
+    @Override
+    public Optional<Cursor> cursor() {
+        return Optional.ofNullable(currentCursor);
     }
 
     @Override
@@ -81,28 +94,19 @@ record DefaultCursoredPageable(
     }
 
     @Override
-    public Cursor getStartCursor() {
-        return startCursor;
-    }
-
-    @Override
-    public Cursor getEndCursor() {
-        return endCursor;
-    }
-
-    @Override
     public boolean isBackward() {
-        return isBackward;
+        return mode == Mode.CURSOR_PREVIOUS;
     }
 
     @Override
     public CursoredPageable next() {
-        if (endCursor != null) {
+        Cursor requiredCursor = mode == Mode.CURSOR_PREVIOUS ? currentCursor : nextCursor;
+        if (requiredCursor != null) {
             return new DefaultCursoredPageable(
                     size,
-                    endCursor,
+                    requiredCursor,
                     null,
-                    false,
+                    Mode.CURSOR_NEXT,
                     page + 1,
                     sort,
                     requestTotal
@@ -113,12 +117,13 @@ record DefaultCursoredPageable(
 
     @Override
     public CursoredPageable previous() {
-        if (startCursor != null) {
+        Cursor requiredCursor = mode == Mode.CURSOR_NEXT ? nextCursor : currentCursor;
+        if (requiredCursor != null) {
             return new DefaultCursoredPageable(
                     size,
                     null,
-                    startCursor,
-                    true,
+                    requiredCursor,
+                    Mode.CURSOR_PREVIOUS,
                     Math.max(page - 1, 0),
                     sort,
                     requestTotal
@@ -132,7 +137,7 @@ record DefaultCursoredPageable(
         if (requestTotal) {
             return this;
         }
-        return new DefaultCursoredPageable(size, startCursor, endCursor, isBackward, page, sort, true);
+        return new DefaultCursoredPageable(size, currentCursor, nextCursor, mode, page, sort, true);
     }
 
     @Override
@@ -140,17 +145,17 @@ record DefaultCursoredPageable(
         if (!requestTotal) {
             return this;
         }
-        return new DefaultCursoredPageable(size, startCursor, endCursor, isBackward, page, sort, true);
+        return new DefaultCursoredPageable(size, currentCursor, nextCursor, mode, page, sort, true);
     }
 
     @Override
     public boolean hasNext() {
-        return endCursor != null;
+        return mode == Mode.CURSOR_PREVIOUS ? currentCursor != null : nextCursor != null;
     }
 
     @Override
     public boolean hasPrevious() {
-        return startCursor != null;
+        return mode == Mode.CURSOR_PREVIOUS ? nextCursor != null : currentCursor != null;
     }
 
     @Override
@@ -162,24 +167,46 @@ record DefaultCursoredPageable(
             return false;
         }
         return size == that.size
-            && Objects.equals(startCursor, that.startCursor)
-            && Objects.equals(endCursor, that.endCursor)
+            && Objects.equals(currentCursor, that.currentCursor)
+            && Objects.equals(nextCursor, that.nextCursor)
+            && Objects.equals(mode, that.mode)
             && Objects.equals(sort, that.sort);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(size, startCursor, endCursor, sort);
+        return Objects.hash(size, currentCursor, nextCursor, mode, sort);
     }
 
     @Override
     public String toString() {
         return "DefaultCursoredPageable{" +
                 "size=" + size +
-                ", number=" + page +
-                ", startCursor=" + startCursor +
-                ", endCursor=" + endCursor +
+                ", page=" + page +
+                ", currentCursor=" + currentCursor +
+                ", nextCursor=" + nextCursor +
+                ", mode=" + mode +
                 ", sort=" + sort +
                 '}';
+    }
+
+    /**
+     * Default implementation of the {@link Cursor}.
+     *
+     * @param elements The currentCursor elements
+     */
+    @Serdeable
+    record DefaultCursor(
+        List<Object> elements
+    ) implements Cursor {
+        @Override
+        public Object get(int index) {
+            return elements.get(index);
+        }
+
+        @Override
+        public int size() {
+            return elements.size();
+        }
     }
 }
