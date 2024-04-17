@@ -26,7 +26,6 @@ import io.micronaut.data.model.Pageable.Cursor;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.Sort.Order;
-import io.micronaut.data.model.Sort.Order.Direction;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
@@ -42,7 +41,6 @@ import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;

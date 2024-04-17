@@ -282,7 +282,8 @@ public interface Pageable extends Sort {
      * @param page The page
      * @param size The size
      * @param mode The pagination mode
-     * @param cursor The currentCursor
+     * @param cursor The current cursor
+     * @param nextCursor The next cursor
      * @param sort The sort
      * @param requestTotal Whether to query total count
      * @return The pageable

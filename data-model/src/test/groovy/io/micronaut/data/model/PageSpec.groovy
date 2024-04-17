@@ -122,7 +122,7 @@ class PageSpec extends Specification {
         def json = serdeMapper.writeValueAsString(pageable)
 
         then:
-        json == '{"size":3,"number":0,"mode":"OFFSET","sort":{}}'
+        json == '{"size":3,"number":0,"sort":{},"mode":"OFFSET"}'
         def deserializedPageable = serdeMapper.readValue(json, Pageable)
         deserializedPageable == pageable
     }
