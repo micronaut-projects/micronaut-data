@@ -117,12 +117,12 @@ record DefaultCursoredPageable(
 
     @Override
     public CursoredPageable previous() {
-        Cursor requiredCursor = mode == Mode.CURSOR_NEXT ? nextCursor : currentCursor;
+        Cursor requiredCursor = mode == Mode.CURSOR_PREVIOUS ? nextCursor : currentCursor;
         if (requiredCursor != null) {
             return new DefaultCursoredPageable(
                     size,
-                    null,
                     requiredCursor,
+                    null,
                     Mode.CURSOR_PREVIOUS,
                     Math.max(page - 1, 0),
                     sort,

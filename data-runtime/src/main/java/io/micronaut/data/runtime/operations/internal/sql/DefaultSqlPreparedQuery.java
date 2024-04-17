@@ -297,36 +297,28 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
      */
     public Pageable updatePageable(List<Object> results, Pageable pageable) {
         if (pageable instanceof CursoredPageable cursored) {
+            Cursor cursor = cursored.cursor().orElse(null);
+            Cursor nextCursor = null;
+            if (!results.isEmpty()) {
+                E firstValue = (E) results.get(0);
+                cursor = Cursor.of(new ArrayList<>(cursorProperties.size()));
+                for (RuntimePersistentProperty<E> property : cursorProperties) {
+                    cursor.elements().add(property.getProperty().get(firstValue));
+                }
+                if (results.size() == cursored.getSize()) {
+                    E lastValue = (E) results.get(results.size() - 1);
+                    nextCursor = Cursor.of(new ArrayList<>(cursorProperties.size()));
+                    for (RuntimePersistentProperty<E> property : cursorProperties) {
+                        nextCursor.elements().add(property.getProperty().get(lastValue));
+                    }
+                }
+            }
+
             if (cursored.isBackward()) {
                 Collections.reverse(results);
             }
-
-            Cursor startCursor = null;
-            Cursor endCursor = null;
-            if (!results.isEmpty()) {
-                if (!cursored.isBackward() || results.size() == cursored.getSize()) {
-                    E firstValue = (E) results.get(0);
-                    startCursor = Cursor.of(new ArrayList<>(cursorProperties.size()));
-                    for (RuntimePersistentProperty<E> property : cursorProperties) {
-                        startCursor.elements().add(property.getProperty().get(firstValue));
-                    }
-                }
-                if (cursored.isBackward() || results.size() == cursored.getSize()) {
-                    E lastValue = (E) results.get(results.size() - 1);
-                    endCursor = Cursor.of(new ArrayList<>(cursorProperties.size()));
-                    for (RuntimePersistentProperty<E> property : cursorProperties) {
-                        endCursor.elements().add(property.getProperty().get(lastValue));
-                    }
-                }
-            } else {
-                if (cursored.isBackward()) {
-                    endCursor = cursored.cursor().orElse(null);
-                } else {
-                    startCursor = cursored.cursor().orElse(null);
-                }
-            }
             return CursoredPageable.from(
-                cursored.getNumber(), startCursor, endCursor, cursored.getMode(), cursored.getSize(),
+                cursored.getNumber(), cursor, nextCursor, cursored.getMode(), cursored.getSize(),
                 cursored.getSort(), cursored.requestTotal()
             );
         }

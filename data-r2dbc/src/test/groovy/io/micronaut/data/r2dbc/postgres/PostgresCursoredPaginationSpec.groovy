@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.oraclexe
+package io.micronaut.data.r2dbc.postgres
 
 import groovy.transform.Memoized
 import io.micronaut.context.ApplicationContext
@@ -21,27 +21,27 @@ import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.tests.AbstractCursoredPageSpec
 import spock.lang.AutoCleanup
+import spock.lang.Ignore
 import spock.lang.Shared
 
-class OracleXEPaginationSpec extends AbstractCursoredPageSpec implements OracleTestPropertyProvider {
-
+@Ignore("Causes error: 'FATAL: sorry, too many clients already'")
+class PostgresCursoredPaginationSpec extends AbstractCursoredPageSpec implements PostgresTestPropertyProvider {
     @Shared @AutoCleanup ApplicationContext context
 
-    @Override
     @Memoized
+    @Override
     PersonRepository getPersonRepository() {
-        return context.getBean(OracleXEPersonRepository)
+        return context.getBean(PostgresPersonRepository)
     }
 
-    @Override
     @Memoized
+    @Override
     BookRepository getBookRepository() {
-        return context.getBean(OracleXEBookRepository)
+        return context.getBean(PostgresBookRepository)
     }
 
     @Override
     void init() {
-        context = ApplicationContext.run(properties)
+        context = ApplicationContext.run(getProperties())
     }
-
 }

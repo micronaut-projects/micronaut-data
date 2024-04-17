@@ -101,10 +101,10 @@ public interface Page<T> extends Slice<T> {
      * @return Whether there exist a previous page.
      */
     default boolean hasPrevious() {
-        if (getPageable() instanceof CursoredPageable cursoredPageable) {
-            return cursoredPageable.hasPrevious();
+        if (getPageable().getMode() == Mode.OFFSET) {
+            return getOffset() > 0;
         }
-        return getOffset() > 0;
+        return getPageable().hasPrevious();
     }
 
     /**
