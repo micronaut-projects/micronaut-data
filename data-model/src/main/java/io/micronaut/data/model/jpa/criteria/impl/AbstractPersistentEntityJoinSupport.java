@@ -75,11 +75,11 @@ public abstract class AbstractPersistentEntityJoinSupport<J, E> implements Persi
 
     private <X, Y> PersistentAssociationPath<X, Y> getJoin(String attributeName, io.micronaut.data.annotation.Join.Type type, String alias) {
         PersistentProperty persistentProperty = getPersistentEntity().getPropertyByName(attributeName);
-        if (!(persistentProperty instanceof Association)) {
+        if (!(persistentProperty instanceof Association association)) {
             throw new IllegalStateException("Expected an association for attribute name: " + attributeName);
         }
 
-        PersistentAssociationPath path = joins.computeIfAbsent(attributeName, a -> createJoinAssociation((Association) persistentProperty, type, alias));
+        PersistentAssociationPath path = joins.computeIfAbsent(attributeName, a -> createJoinAssociation(association, type, alias));
 
         if (type != null && type != io.micronaut.data.annotation.Join.Type.DEFAULT) {
             path.setAssociationJoinType(type);
@@ -92,26 +92,26 @@ public abstract class AbstractPersistentEntityJoinSupport<J, E> implements Persi
 
     private <X, Y> PersistentCollectionAssociationPath<X, Y> getCollectionJoin(String attributeName, io.micronaut.data.annotation.Join.Type type, String alias) {
         PersistentAssociationPath<Object, Object> join = getJoin(attributeName, type, alias);
-        if (!(join instanceof PersistentCollectionAssociationPath)) {
+        if (!(join instanceof PersistentCollectionAssociationPath persistentCollectionAssociationPath)) {
             throw new IllegalStateException("Join is not a Collection!");
         }
-        return (PersistentCollectionAssociationPath<X, Y>) join;
+        return persistentCollectionAssociationPath;
     }
 
     private <X, Y> PersistentSetAssociationPath<X, Y> getSetJoin(String attributeName, io.micronaut.data.annotation.Join.Type type, String alias) {
         PersistentAssociationPath<Object, Object> join = getJoin(attributeName, type, alias);
-        if (!(join instanceof PersistentSetAssociationPath)) {
+        if (!(join instanceof PersistentSetAssociationPath persistentSetAssociationPath)) {
             throw new IllegalStateException("Join is not a Set!");
         }
-        return (PersistentSetAssociationPath<X, Y>) join;
+        return persistentSetAssociationPath;
     }
 
     private <X, Y> PersistentListAssociationPath<X, Y> getListJoin(String attributeName, io.micronaut.data.annotation.Join.Type type, String alias) {
         PersistentAssociationPath<Object, Object> join = getJoin(attributeName, type, alias);
-        if (!(join instanceof PersistentListAssociationPath)) {
+        if (!(join instanceof PersistentListAssociationPath persistentListAssociationPath)) {
             throw new IllegalStateException("Join is not a List!");
         }
-        return (PersistentListAssociationPath<X, Y>) join;
+        return persistentListAssociationPath;
     }
 
     @Override

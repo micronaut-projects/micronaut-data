@@ -68,8 +68,8 @@ public final class FindMethodMatcher extends AbstractMethodMatcher {
                                      PersistentEntityCriteriaQuery<T> query,
                                      SourcePersistentEntityCriteriaBuilder cb) {
                 super.apply(matchContext, root, query, cb);
-                if (query instanceof AbstractPersistentEntityCriteriaQuery) {
-                    hasIdMatch = ((AbstractPersistentEntityCriteriaQuery<T>) query).hasOnlyIdRestriction();
+                if (query instanceof AbstractPersistentEntityCriteriaQuery<T> criteriaQuery) {
+                    hasIdMatch = criteriaQuery.hasOnlyIdRestriction();
                 }
             }
 

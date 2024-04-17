@@ -95,15 +95,13 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
         }
         QueryModel qm = QueryModel.from(entityRoot.getPersistentEntity());
         Joiner joiner = new Joiner();
-        if (predicate instanceof PredicateVisitable) {
-            PredicateVisitable predicate = (PredicateVisitable) this.predicate;
-            predicate.accept(createPredicateVisitor(qm));
-            predicate.accept(joiner);
+        if (predicate instanceof PredicateVisitable predicateVisitable) {
+            predicateVisitable.accept(createPredicateVisitor(qm));
+            predicateVisitable.accept(joiner);
         }
-        if (selection instanceof SelectionVisitable) {
-            SelectionVisitable selection = (SelectionVisitable) this.selection;
-            selection.accept(new QueryModelSelectionVisitor(qm, distinct));
-            selection.accept(joiner);
+        if (selection instanceof SelectionVisitable selectionVisitable) {
+            selectionVisitable.accept(new QueryModelSelectionVisitor(qm, distinct));
+            selectionVisitable.accept(joiner);
             SelectionVisitable entityRoot = (SelectionVisitable) this.entityRoot;
             entityRoot.accept(joiner);
         } else {

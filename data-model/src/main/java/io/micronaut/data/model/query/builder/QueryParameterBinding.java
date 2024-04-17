@@ -31,6 +31,11 @@ import io.micronaut.data.model.JsonDataType;
 public interface QueryParameterBinding {
 
     /**
+     * @return The parameter name.
+     */
+    String getName();
+
+    /**
      * @return The key represents the placeholder value in the query (usually it's ?).
      */
     String getKey();
@@ -107,5 +112,16 @@ public interface QueryParameterBinding {
     @Nullable
     default Object getValue() {
         return null;
+    }
+
+    /**
+     * The constant runtime value.
+     *
+     * @return The value or null
+     * @since 4.5.0
+     */
+    @Nullable
+    default boolean isExpression() {
+        return false;
     }
 }

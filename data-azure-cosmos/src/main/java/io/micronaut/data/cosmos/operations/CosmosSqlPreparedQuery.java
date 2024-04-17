@@ -73,8 +73,8 @@ final class CosmosSqlPreparedQuery<E, R> extends DefaultSqlPreparedQuery<E, R> {
     }
 
     private <T, K> CosmosSqlStoredQuery<T, K> getCosmosSqlStoredQuery(StoredQuery<T, K> storedQuery) {
-        if (storedQuery instanceof CosmosSqlStoredQuery) {
-            return (CosmosSqlStoredQuery<T, K>) storedQuery;
+        if (storedQuery instanceof CosmosSqlStoredQuery<T, K> cosmosSqlStoredQuery) {
+            return cosmosSqlStoredQuery;
         }
         throw new IllegalStateException("Expected for stored query query to be of type: CosmosSqlStoredQuery got: " + sqlStoredQuery.getClass().getName());
     }

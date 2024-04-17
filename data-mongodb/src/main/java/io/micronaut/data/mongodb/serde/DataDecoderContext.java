@@ -120,7 +120,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
                 }
 
                 @Override
-                public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) throws IOException {
+                public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) {
                     throw new IllegalStateException("Create specific call is required!");
                 }
             };
@@ -143,7 +143,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
                 }
 
                 @Override
-                public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) throws IOException {
+                public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) {
                     throw new IllegalStateException("Create specific call is required!");
                 }
             };
@@ -174,7 +174,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
                 }
 
                 @Override
-                public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) throws IOException {
+                public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) {
                     throw new IllegalStateException("Create specific call is required!");
                 }
             };
@@ -186,10 +186,13 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
     @Override
     public <T> Deserializer<? extends T> findDeserializer(Argument<? extends T> type) throws SerdeException {
         Codec<? extends T> codec = codecRegistry.get(type.getType(), codecRegistry);
-        if (codec instanceof MappedCodec) {
-            return ((MappedCodec<? extends T>) codec).deserializer;
+        if (codec instanceof MappedCodec<? extends T> mappedCodec) {
+            return mappedCodec.deserializer;
         }
-        if (codec != null && !(codec instanceof IterableCodec) && !(Map.class.isAssignableFrom(codec.getEncoderClass())) && !(Collection.class.isAssignableFrom(codec.getEncoderClass()))) {
+        if (codec != null
+            && !(codec instanceof IterableCodec)
+            && !(Map.class.isAssignableFrom(codec.getEncoderClass()))
+            && !(Collection.class.isAssignableFrom(codec.getEncoderClass()))) {
             return new CodecBsonDecoder<>((Codec<T>) codec);
         }
         return parent.findDeserializer(type);

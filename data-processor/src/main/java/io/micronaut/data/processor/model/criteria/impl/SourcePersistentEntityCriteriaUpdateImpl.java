@@ -67,8 +67,8 @@ final class SourcePersistentEntityCriteriaUpdateImpl<T> extends AbstractPersiste
 
     @Override
     protected void setValue(String attributeName, Object value) {
-        if (value instanceof SourceParameterExpressionImpl) {
-            ((SourceParameterExpressionImpl) value).setUpdate(true);
+        if (value instanceof SourceParameterExpressionImpl sourceParameterExpression) {
+            sourceParameterExpression.setUpdate(true);
         }
         super.setValue(attributeName, value);
     }

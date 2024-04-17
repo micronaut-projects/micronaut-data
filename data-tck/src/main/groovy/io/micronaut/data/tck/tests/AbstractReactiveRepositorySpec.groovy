@@ -189,6 +189,20 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
         people.get(0).name == "Abc"
     }
 
+    void "test custom single insert expression"() {
+        given:
+        personRepository.deleteAll().block()
+        def saved = personRepository.saveCustomSingleExpression(new Person(name: "Abc", age: 12)).block()
+
+        when:
+        def people = personRepository.findAll().collectList().block()
+
+        then:
+        saved == 1
+        people.size() == 1
+        people.get(0).name == "AbcXYZ"
+    }
+
     void "test custom update"() {
         given:
         personRepository.deleteAll().block()
@@ -477,6 +491,32 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
         def james = people.find {it.name == "James"}
         james.name = "DoNotDelete"
         deleted = personRepository.deleteCustomSingle(james).block()
+        people = personRepository.findAll().collectList().block()
+
+        then:
+        deleted == 0
+        people.size() == 3
+    }
+
+    void "test custom delete single expression"() {
+        given:
+        personRepository.deleteAll().block()
+        savePersons(["Dennis", "Jeff", "James", "Dennis"])
+
+        when:
+        def people = personRepository.findAll().collectList().block()
+        def jeff = people.find {it.name == "Jeff"}
+        def deleted = personRepository.deleteCustomSingleExpression(jeff).block()
+        people = personRepository.findAll().collectList().block()
+
+        then:
+        deleted == 1
+        people.size() == 3
+
+        when:
+        def james = people.find {it.name == "James"}
+        james.name = "DoNotDelete"
+        deleted = personRepository.deleteCustomSingleExpression(james).block()
         people = personRepository.findAll().collectList().block()
 
         then:

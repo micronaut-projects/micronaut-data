@@ -73,6 +73,11 @@ interface BookRepository extends CrudRepository<Book, Long> { // <2>
     Book persist(String title, int pages);
     // end::save2[]
 
+    @Query("INSERT INTO Book(title, pages) VALUES (:title, :pages)")
+    @ParameterExpression(name = "title", expression = "#{book.title + 'ABC'}")
+    @ParameterExpression(name = "pages", expression = "#{book.pages}")
+    void insertCustomExp(Book book);
+
     // tag::update[]
     void update(@Id Long id, int pages);
 

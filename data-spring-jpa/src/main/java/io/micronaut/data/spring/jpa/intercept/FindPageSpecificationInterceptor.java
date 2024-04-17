@@ -54,8 +54,8 @@ public final class FindPageSpecificationInterceptor extends AbstractQueryInterce
      */
     FindPageSpecificationInterceptor(@NonNull RepositoryOperations operations) {
         super(operations);
-        if (operations instanceof JpaRepositoryOperations) {
-            this.jpaOperations = (JpaRepositoryOperations) operations;
+        if (operations instanceof JpaRepositoryOperations jpaRepositoryOperations) {
+            this.jpaOperations = jpaRepositoryOperations;
         } else {
             throw new IllegalStateException("Repository operations must be na instance of JpaRepositoryOperations");
         }
@@ -69,8 +69,7 @@ public final class FindPageSpecificationInterceptor extends AbstractQueryInterce
         }
         final Object parameterValue = parameterValues[0];
         final Object pageableObject = parameterValues[1];
-        if (parameterValue instanceof Specification) {
-            Specification specification = (Specification) parameterValue;
+        if (parameterValue instanceof Specification specification) {
             final EntityManager entityManager = jpaOperations.getCurrentEntityManager();
             final CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
             final CriteriaQuery<Object> query = criteriaBuilder.createQuery(getRequiredRootEntity(context));
@@ -81,8 +80,7 @@ public final class FindPageSpecificationInterceptor extends AbstractQueryInterce
             }
             query.select(root);
 
-            if (pageableObject instanceof Pageable) {
-                Pageable pageable = (Pageable) pageableObject;
+            if (pageableObject instanceof Pageable pageable) {
                 final Sort sort = pageable.getSort();
                 if (sort.isSorted()) {
                     final List<Order> orders = QueryUtils.toOrders(sort, root, criteriaBuilder);

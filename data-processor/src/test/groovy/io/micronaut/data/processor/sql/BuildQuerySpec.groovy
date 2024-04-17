@@ -33,6 +33,7 @@ import io.micronaut.data.tck.entities.Restaurant
 import io.micronaut.data.tck.jdbc.entities.EmployeeGroup
 import io.micronaut.inject.ExecutableMethod
 import spock.lang.Issue
+import spock.lang.PendingFeature
 import spock.lang.Unroll
 
 import static io.micronaut.data.processor.visitors.TestUtils.anyParameterExpandable
@@ -41,6 +42,7 @@ import static io.micronaut.data.processor.visitors.TestUtils.getDataTypes
 import static io.micronaut.data.processor.visitors.TestUtils.getJoins
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterBindingIndexes
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterBindingPaths
+import static io.micronaut.data.processor.visitors.TestUtils.getParameterExpressions
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterPropertyPaths
 import static io.micronaut.data.processor.visitors.TestUtils.getQuery
 import static io.micronaut.data.processor.visitors.TestUtils.getRawQuery
@@ -88,7 +90,6 @@ interface MyInterface2 extends CrudRepository<CustomBook, Long> {
             query == 'SELECT custom_book_."id",custom_book_."title" FROM "CustomBooK" custom_book_ WHERE (custom_book_."id" = ?)'
     }
 
-
     void "test POSTGRES custom query"() {
         given:
             def repository = buildRepository('test.MyInterface2', """
@@ -116,6 +117,107 @@ interface MyInterface2 extends CrudRepository<CustomBook, Long> {
             query == 'SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[:nickNames]'
             rawQuery == 'SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[?]'
             getResultDataType(method) == DataType.ENTITY
+    }
+
+    void "test POSTGRES custom query - expression"() {
+        given:
+            def repository = buildRepository('test.MyInterface2', """
+import io.micronaut.data.annotation.ParameterExpression;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.CustomBook;
+
+@JdbcRepository(dialect= Dialect.POSTGRES)
+@io.micronaut.context.annotation.Executable
+interface MyInterface2 extends CrudRepository<CustomBook, Long> {
+
+    @Query("SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[:nickNames]")
+    @ParameterExpression(name = "nickNames", expression = "#{this.getNicknames()}")
+    Optional<CustomBook> somethingWithCast();
+
+    default String[] getNicknames() {
+        return new String[]{"Abc"};
+    }
+
+}
+"""
+            )
+
+            def method = repository.getRequiredMethod("somethingWithCast")
+        when:
+            String query = getQuery(method)
+            String rawQuery = getRawQuery(method)
+
+        then:
+            query == 'SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[:nickNames]'
+            rawQuery == 'SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[?]'
+            getResultDataType(method) == DataType.ENTITY
+            getParameterExpressions(method) == [true] as Boolean[]
+    }
+
+    void "test invalid expression"() {
+        when:
+            buildRepository('test.MyInterface2', """
+import io.micronaut.data.annotation.ParameterExpression;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.CustomBook;
+
+@JdbcRepository(dialect= Dialect.POSTGRES)
+@io.micronaut.context.annotation.Executable
+interface MyInterface2 extends CrudRepository<CustomBook, Long> {
+
+    @Query("SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[:nickNames]")
+    @ParameterExpression(name = "nickNames", expression = "this.getNicknames()")
+    Optional<CustomBook> somethingWithCast();
+
+    default String[] getNicknames() {
+        return new String[]{"Abc"};
+    }
+
+}
+"""
+            )
+        then:
+            def e = thrown(Exception)
+            e.message.contains "Unable to implement Repository method: MyInterface2.somethingWithCast(). Expected an expression '#{...}' found a string!"
+    }
+
+    @PendingFeature
+    void "test POSTGRES custom query - expression class"() {
+        given:
+            def repository = buildRepository('test.MyInterface2', """
+import io.micronaut.data.annotation.ParameterExpression;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.CustomBook;
+
+@ParameterExpression(name = "nickNames", expression = "#{this.getNicknames()}")
+@JdbcRepository(dialect= Dialect.POSTGRES)
+@io.micronaut.context.annotation.Executable
+interface MyInterface2 extends CrudRepository<CustomBook, Long> {
+
+    @Query("SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[:nickNames]")
+    Optional<CustomBook> somethingWithCast();
+
+    default String[] getNicknames() {
+        return new String[]{"Abc"};
+    }
+
+}
+"""
+            )
+
+            def method = repository.getRequiredMethod("somethingWithCast")
+        when:
+            String query = getQuery(method)
+            String rawQuery = getRawQuery(method)
+
+        then:
+            query == 'SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[:nickNames]'
+            rawQuery == 'SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[?]'
+            getResultDataType(method) == DataType.ENTITY
+            getParameterExpressions(method) == [true] as Boolean[]
     }
 
     void "test join on repository type that inherits from CrudRepository"() {
@@ -758,6 +860,72 @@ interface AuthorRepository extends GenericRepository<Author, Long> {
         getResultDataType(findAllMethod) == DataType.ENTITY
         getResultDataType(findByNameMethod) == DataType.ENTITY
         getResultDataType(findByNickNameMethod) == DataType.ENTITY
+    }
+
+    void "test count query with joins - expressions"() {
+        given:
+            def repository = buildRepository('test.AuthorRepository', """
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.ParameterExpression;
+import io.micronaut.data.annotation.Where;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Author;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface AuthorRepository extends GenericRepository<Author, Long> {
+
+    // With books join, making sure count query doesn't use join
+    @Where("@.nick_name = :nickName")
+    @Join(value = "books", type = Join.Type.FETCH)
+    @ParameterExpression(name = "nickName", expression = "#{this.myNickName()}")
+    Page<Author> findByName(String name, Pageable pageable);
+
+    @Where("@.name = :name")
+    @ParameterExpression(name = "name", expression = "#{this.myName()}")
+    Page<Author> findByNickName(String nickName, Pageable pageable);
+
+    @Join(value = "books", type = Join.Type.FETCH)
+    Page<Author> findAll(Pageable pageable);
+
+    default String myNickName() {
+        return "xyz123";
+    }
+
+    default String myName() {
+        return "abc123";
+    }
+
+}
+
+""")
+
+            def findAllMethod = repository.getRequiredMethod("findAll", Pageable)
+            def findAllQuery = getQuery(findAllMethod)
+            def findAllCountQuery = getCountQuery(findAllMethod)
+            def findByNameMethod = repository.getRequiredMethod("findByName", String, Pageable)
+            def findByNameQuery = getQuery(findByNameMethod)
+            def findByNameExpressions = getParameterExpressions(findByNameMethod);
+            def findByNameCountQuery = getCountQuery(findByNameMethod)
+            def findByNickNameMethod = repository.getRequiredMethod("findByNickName", String, Pageable)
+            def findByNickNameQuery = getQuery(findByNickNameMethod)
+            def findByNickNameCountQuery = getCountQuery(findByNickNameMethod)
+            def findByNickNameExpressions = getParameterExpressions(findByNickNameMethod);
+
+        expect:
+            findAllQuery == 'SELECT author_.`id`,author_.`name`,author_.`nick_name`,author_books_.`id` AS books_id,author_books_.`author_id` AS books_author_id,author_books_.`genre_id` AS books_genre_id,author_books_.`title` AS books_title,author_books_.`total_pages` AS books_total_pages,author_books_.`publisher_id` AS books_publisher_id,author_books_.`last_updated` AS books_last_updated FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id`'
+            findAllCountQuery == 'SELECT COUNT(*) FROM `author` author_'
+            findByNameQuery == 'SELECT author_.`id`,author_.`name`,author_.`nick_name`,author_books_.`id` AS books_id,author_books_.`author_id` AS books_author_id,author_books_.`genre_id` AS books_genre_id,author_books_.`title` AS books_title,author_books_.`total_pages` AS books_total_pages,author_books_.`publisher_id` AS books_publisher_id,author_books_.`last_updated` AS books_last_updated FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id` WHERE (author_.`name` = ? AND (author_.nick_name =?))'
+            findByNameCountQuery == 'SELECT COUNT(*) FROM `author` author_ WHERE (author_.`name` = ? AND (author_.nick_name =?))'
+            findByNickNameQuery == 'SELECT author_.`id`,author_.`name`,author_.`nick_name` FROM `author` author_ WHERE (author_.`nick_name` = ? AND (author_.name =?))'
+            findByNickNameCountQuery == 'SELECT COUNT(*) FROM `author` author_ WHERE (author_.`nick_name` = ? AND (author_.name =?))'
+            getResultDataType(findAllMethod) == DataType.ENTITY
+            getResultDataType(findByNameMethod) == DataType.ENTITY
+            getResultDataType(findByNickNameMethod) == DataType.ENTITY
+            findByNameExpressions == [false, true] as Boolean[]
+            findByNickNameExpressions == [false, true] as Boolean[]
     }
 
     void "test distinct query"() {

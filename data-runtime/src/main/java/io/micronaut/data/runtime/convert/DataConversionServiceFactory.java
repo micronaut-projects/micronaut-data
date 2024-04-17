@@ -702,65 +702,65 @@ final class DataConversionServiceFactory {
     }
 
     private Integer asInteger(Object value, DataConversionService dataConversionService) {
-        if (value instanceof Integer) {
-            return (Integer) value;
+        if (value instanceof Integer intValue) {
+            return intValue;
         }
-        if (value instanceof Number) {
-            return ((Number) value).intValue();
+        if (value instanceof Number number) {
+            return number.intValue();
         }
         return dataConversionService.convertRequired(value, Integer.class);
     }
 
     private Long asLong(Object value, DataConversionService dataConversionService) {
-        if (value instanceof Long) {
-            return (Long) value;
+        if (value instanceof Long longValue) {
+            return longValue;
         }
-        if (value instanceof Number) {
-            return ((Number) value).longValue();
+        if (value instanceof Number number) {
+            return number.longValue();
         }
         return dataConversionService.convertRequired(value, Long.class);
     }
 
     private Double asDouble(Object value, DataConversionService dataConversionService) {
-        if (value instanceof Double) {
-            return (Double) value;
+        if (value instanceof Double doubleValue) {
+            return doubleValue;
         }
-        if (value instanceof Number) {
-            return ((Number) value).doubleValue();
+        if (value instanceof Number number) {
+            return number.doubleValue();
         }
         return dataConversionService.convertRequired(value, Double.class);
     }
 
     private Boolean asBoolean(Object value, DataConversionService dataConversionService) {
-        if (value instanceof Boolean) {
-            return (Boolean) value;
+        if (value instanceof Boolean boolValue) {
+            return boolValue;
         }
         return dataConversionService.convertRequired(value, Boolean.class);
     }
 
     private Float asFloat(Object value, DataConversionService dataConversionService) {
-        if (value instanceof Float) {
-            return (Float) value;
+        if (value instanceof Float floatValue) {
+            return floatValue;
         }
-        if (value instanceof Number) {
-            return ((Number) value).floatValue();
+        if (value instanceof Number number) {
+            return number.floatValue();
         }
         return dataConversionService.convertRequired(value, Float.class);
     }
 
     private Short asShort(Object value, DataConversionService dataConversionService) {
-        if (value instanceof Short) {
-            return (Short) value;
+        if (value instanceof Short shortValue) {
+            return shortValue;
         }
-        if (value instanceof Number) {
-            return ((Number) value).shortValue();
+        if (value instanceof Number number) {
+            return number.shortValue();
         }
         return dataConversionService.convertRequired(value, Short.class);
     }
 
     private Character asCharacter(Object value, DataConversionService dataConversionService) {
-        if (value instanceof Character) {
-            return (Character) value;
+        if (value instanceof Character charValue) {
+            return charValue;
         }
         return dataConversionService.convertRequired(value, Character.class);
     }

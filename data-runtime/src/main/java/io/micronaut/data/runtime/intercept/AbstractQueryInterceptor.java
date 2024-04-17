@@ -113,14 +113,14 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         ArgumentUtils.requireNonNull("operations", operations);
         this.conversionService = operations.getConversionService();
         this.operations = operations;
-        this.storedQueryResolver = operations instanceof StoredQueryResolver ? (StoredQueryResolver) operations : new DefaultStoredQueryResolver() {
+        this.storedQueryResolver = operations instanceof StoredQueryResolver sQueryResolver ? sQueryResolver : new DefaultStoredQueryResolver() {
             @Override
             protected HintsCapableRepository getHintsCapableRepository() {
                 return operations;
             }
         };
-        if (operations instanceof MethodContextAwareStoredQueryDecorator) {
-            storedQueryDecorator = (MethodContextAwareStoredQueryDecorator) operations;
+        if (operations instanceof MethodContextAwareStoredQueryDecorator methodDecorator) {
+            storedQueryDecorator = methodDecorator;
         } else if (operations instanceof StoredQueryDecorator decorator) {
             storedQueryDecorator = new MethodContextAwareStoredQueryDecorator() {
                 @Override
@@ -136,19 +136,19 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                 }
             };
         }
-        this.preparedQueryResolver = operations instanceof PreparedQueryResolver ? (PreparedQueryResolver) operations : new DefaultPreparedQueryResolver() {
+        this.preparedQueryResolver = operations instanceof PreparedQueryResolver resolver ? resolver : new DefaultPreparedQueryResolver() {
             @Override
             protected ConversionService getConversionService() {
                 return operations.getConversionService();
             }
         };
-        this.preparedQueryDecorator = operations instanceof PreparedQueryDecorator ? (PreparedQueryDecorator) operations : new PreparedQueryDecorator() {
+        this.preparedQueryDecorator = operations instanceof PreparedQueryDecorator decorator ? decorator : new PreparedQueryDecorator() {
             @Override
             public <E, K> PreparedQuery<E, K> decorate(PreparedQuery<E, K> preparedQuery) {
                 return preparedQuery;
             }
         };
-        this.pagedQueryResolver = operations instanceof PagedQueryResolver ? (PagedQueryResolver) operations : new DefaultPagedQueryResolver();
+        this.pagedQueryResolver = operations instanceof PagedQueryResolver resolver ? resolver : new DefaultPagedQueryResolver();
     }
 
     /**
@@ -758,8 +758,8 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @return the size
      */
     protected int count(Iterable<?> iterable) {
-        if (iterable instanceof Collection) {
-            return ((Collection<?>) iterable).size();
+        if (iterable instanceof Collection<?> collection) {
+            return collection.size();
         }
         Iterator<?> iterator = iterable.iterator();
         int i = 0;

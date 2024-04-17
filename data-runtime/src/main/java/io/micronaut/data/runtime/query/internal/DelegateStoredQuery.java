@@ -16,6 +16,7 @@
 package io.micronaut.data.runtime.query.internal;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.JoinPath;
@@ -144,5 +145,10 @@ public interface DelegateStoredQuery<E, R> extends StoredQuery<E, R> {
     @Override
     default boolean isJsonEntity() {
         return getStoredQueryDelegate().isJsonEntity();
+    }
+
+    @Override
+    default Map<String, AnnotationValue<?>> getParameterExpressions() {
+        return getStoredQueryDelegate().getParameterExpressions();
     }
 }

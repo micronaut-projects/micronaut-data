@@ -147,4 +147,12 @@ public interface QueryParameterBinding {
     default Object getValue() {
         return null;
     }
+
+    /**
+     * @return Is expression value
+     * @see 4.5.0
+     */
+    default boolean isExpression() {
+        return false;
+    }
 }

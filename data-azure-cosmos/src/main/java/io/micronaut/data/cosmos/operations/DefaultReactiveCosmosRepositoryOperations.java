@@ -179,8 +179,8 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             defaultCosmosSqlQueryBuilder = new CosmosSqlQueryBuilder(context.getAnnotationMetadata());
         }
         String update = null;
-        if (storedQuery instanceof QueryResultStoredQuery) {
-            update = ((QueryResultStoredQuery<E, R>) storedQuery).getQueryResult().getUpdate();
+        if (storedQuery instanceof QueryResultStoredQuery<E, R> queryResultStoredQuery) {
+            update = queryResultStoredQuery.getQueryResult().getUpdate();
         }
         RuntimePersistentEntity<E> runtimePersistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
         return new CosmosSqlStoredQuery<>(storedQuery, runtimePersistentEntity, defaultCosmosSqlQueryBuilder, update);
@@ -561,15 +561,15 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     }
 
     private <E, R> SqlPreparedQuery<E, R> getSqlPreparedQuery(PreparedQuery<E, R> preparedQuery) {
-        if (preparedQuery instanceof SqlPreparedQuery) {
-            return (SqlPreparedQuery<E, R>) preparedQuery;
+        if (preparedQuery instanceof SqlPreparedQuery<E, R> sqlPreparedQuery) {
+            return sqlPreparedQuery;
         }
         throw new IllegalStateException("Expected for prepared query to be of type: SqlPreparedQuery got: " + preparedQuery.getClass().getName());
     }
 
     private <E, R> CosmosSqlPreparedQuery<E, R> getCosmosSqlPreparedQuery(PreparedQuery<E, R> preparedQuery) {
-        if (preparedQuery instanceof CosmosSqlPreparedQuery) {
-            return (CosmosSqlPreparedQuery<E, R>) preparedQuery;
+        if (preparedQuery instanceof CosmosSqlPreparedQuery<E, R> cosmosSqlPreparedQuery) {
+            return cosmosSqlPreparedQuery;
         }
         throw new IllegalStateException("Expected for prepared query to be of type: CosmosSqlPreparedQuery got: " + preparedQuery.getClass().getName());
     }
@@ -896,8 +896,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     }
 
     private Throwable handleCosmosOperationException(String message, Throwable e, String operationName, RuntimePersistentEntity<?> persistentEntity) {
-        if (e instanceof CosmosException) {
-            CosmosException cosmosException = (CosmosException) e;
+        if (e instanceof CosmosException cosmosException) {
             if (cosmosException.getStatusCode() == HttpResponseStatus.PRECONDITION_FAILED.code()) {
                 CosmosEntity cosmosEntity = CosmosEntity.get(persistentEntity);
                 if (cosmosEntity.getVersionField() != null) {
