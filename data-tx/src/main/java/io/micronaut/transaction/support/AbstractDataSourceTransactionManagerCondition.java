@@ -56,6 +56,13 @@ public abstract class AbstractDataSourceTransactionManagerCondition implements C
             .orElse(true);
     }
 
+    /**
+     *
+     * @param context Condition Context
+     * @param dataSourceName DataSource Name
+     * @return Transaction Manager Property
+     * @deprecated datasources.*.transactionManager support be removed in the next major version.
+     */
     @Deprecated
     @NonNull
     private Optional<String> transactionManagerProperty(@NonNull ConditionContext context,

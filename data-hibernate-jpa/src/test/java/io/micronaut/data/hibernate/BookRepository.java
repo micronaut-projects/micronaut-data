@@ -17,7 +17,6 @@ package io.micronaut.data.hibernate;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;

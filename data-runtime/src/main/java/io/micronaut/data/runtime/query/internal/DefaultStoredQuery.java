@@ -23,6 +23,7 @@ import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.DataAnnotationUtils;
+import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.annotation.RepositoryConfiguration;
