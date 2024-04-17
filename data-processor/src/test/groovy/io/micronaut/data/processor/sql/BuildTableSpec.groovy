@@ -45,6 +45,8 @@ class BuildTableSpec extends AbstractDataSpec {
     void "test build create table for JSON type for dialect #dialect"() {
         given:
         def entity = buildJpaEntity('test.Test', '''
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Version;
 import java.util.Map;
 
 @Entity
@@ -56,6 +58,10 @@ class Test {
 
     @io.micronaut.data.annotation.TypeDef(type=io.micronaut.data.model.DataType.JSON)
     private Map json;
+
+    @Version
+    @GeneratedValue
+    private Long version;
 
     public Long getId() {
         return id;
@@ -71,6 +77,14 @@ class Test {
 
     public void setJson(Map json) {
         this.json = json;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 }
 ''')

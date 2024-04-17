@@ -16,6 +16,8 @@
 package io.micronaut.data.jdbc.sqlserver
 
 import groovy.transform.Memoized
+import io.micronaut.data.jdbc.postgres.PostgresEntityWithIdClass2Repository
+import io.micronaut.data.jdbc.postgres.PostgresEntityWithIdClassRepository
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 
@@ -151,5 +153,17 @@ class SqlServerRepositorySpec extends AbstractRepositorySpec implements MSSQLTes
     @Override
     PageRepository getPageRepository() {
         return context.getBean(MSPageRepository)
+    }
+
+    @Memoized
+    @Override
+    EntityWithIdClassRepository getEntityWithIdClassRepository() {
+        return context.getBean(MSEntityWithIdClassRepository)
+    }
+
+    @Memoized
+    @Override
+    EntityWithIdClass2Repository getEntityWithIdClass2Repository() {
+        return context.getBean(MSEntityWithIdClass2Repository)
     }
 }
