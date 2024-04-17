@@ -152,6 +152,18 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
         return context.getBean(H2PageRepository)
     }
 
+    @Memoized
+    @Override
+    EntityWithIdClassRepository getEntityWithIdClassRepository() {
+        return context.getBean(H2EntityWithIdClassRepository)
+    }
+
+    @Memoized
+    @Override
+    EntityWithIdClass2Repository getEntityWithIdClass2Repository() {
+        return context.getBean(H2EntityWithIdClass2Repository)
+    }
+
     @Override
     protected boolean skipQueryByDataArray() {
         return true
