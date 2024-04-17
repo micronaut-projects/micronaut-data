@@ -158,18 +158,6 @@ class MySqlRepositorySpec extends AbstractRepositorySpec implements MySqlTestPro
         return context.getBean(MySqlPageRepository)
     }
 
-    @Memoized
-    @Override
-    EntityWithIdClassRepository getEntityWithIdClassRepository() {
-        return context.getBean(MySqlEntityWithIdClassRepository)
-    }
-
-    @Memoized
-    @Override
-    EntityWithIdClass2Repository getEntityWithIdClass2Repository() {
-        return context.getBean(MySqlEntityWithIdClass2Repository)
-    }
-
     @Override
     protected boolean skipCustomSchemaAndCatalogTest() {
         // INSERT command denied to user 'test'@'172.17.0.1' for table 'cars'

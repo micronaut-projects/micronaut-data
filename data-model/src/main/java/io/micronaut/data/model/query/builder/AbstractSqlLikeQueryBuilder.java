@@ -774,13 +774,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         }
                         queryString.setLength(queryString.length() - 1);
                     } else if (entity.hasIdentity()) {
-                        List<PersistentProperty> identityProperties = entity.getIdentityProperties();
-                        if (identityProperties.isEmpty()) {
+                        PersistentProperty identity = entity.getIdentity();
+                        if (identity == null) {
                             throw new IllegalArgumentException(CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID);
                         }
-                        for (PersistentProperty identity : identityProperties) {
-                            appendPropertyProjection(annotationMetadata, queryState.getEntity(), queryString, asQueryPropertyPath(queryState.getRootAlias(), identity), null);
-                        }
+                        appendPropertyProjection(annotationMetadata, queryState.getEntity(), queryString, asQueryPropertyPath(queryState.getRootAlias(), identity), null);
                     } else {
                         throw new IllegalArgumentException(CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID);
                     }

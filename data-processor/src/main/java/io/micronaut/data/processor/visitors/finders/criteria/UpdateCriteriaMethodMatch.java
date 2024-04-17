@@ -112,7 +112,7 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                 .filter(p -> p != null && p.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATEABLE, Boolean.class)).orElse(false))
                 .forEach(p -> query.set(p.getName(), cb.parameter((ParameterElement) null)));
 
-        if (entity.getVersion() != null && !entity.getVersion().isGenerated() && criteriaUpdate.hasVersionRestriction()) {
+        if (entity.getVersion() != null && criteriaUpdate.hasVersionRestriction()) {
             query.set(entity.getVersion().getName(), cb.parameter((ParameterElement) null));
         }
 

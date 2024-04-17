@@ -155,18 +155,6 @@ class MySqlRepositorySpec extends AbstractRepositorySpec implements MySQLTestPro
         return context.getBean(MySqlPageRepository)
     }
 
-    @Memoized
-    @Override
-    EntityWithIdClassRepository getEntityWithIdClassRepository() {
-        return context.getBean(MySqlEntityWithIdClassRepository)
-    }
-
-    @Memoized
-    @Override
-    EntityWithIdClass2Repository getEntityWithIdClass2Repository() {
-        return context.getBean(MySqlEntityWithIdClass2Repository)
-    }
-
     def "for update is in the correct location"() {
         given:
             setupBooks()
