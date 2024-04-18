@@ -75,6 +75,8 @@ abstract class AbstractCursoredPageSpec extends Specification {
         page.content[1].name == name2
         page.totalSize == 780
         page.totalPages == 78
+        page.getCursor(0).isPresent()
+        page.getCursor(9).isPresent()
         page.hasNext()
 
         when: "The next page is selected"
@@ -145,6 +147,8 @@ abstract class AbstractCursoredPageSpec extends Specification {
         page.pageNumber == 0
         page.content[0].name == elem1
         page.content.size() == 8
+        page.getCursor(7).isPresent()
+        page.getCursor(8).isEmpty()
         !page.hasPrevious()
         page.hasNext()
 
@@ -202,6 +206,8 @@ abstract class AbstractCursoredPageSpec extends Specification {
         page.pageNumber == 0
         page.content[0].name == elem1
         page.content[1].name == elem2
+        page.getCursor(1).isPresent()
+        page.getCursor(2).isEmpty()
         page.content.size() == 2
         !page.hasPrevious()
 

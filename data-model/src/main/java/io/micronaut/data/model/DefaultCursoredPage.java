@@ -78,7 +78,7 @@ class DefaultCursoredPage<T> extends DefaultPage<T> {
 
     @Override
     public Optional<Cursor> getCursor(int i) {
-        return Optional.of(cursors.get(i));
+        return i >= cursors.size() ? Optional.empty() : Optional.of(cursors.get(i));
     }
 
     @Override
