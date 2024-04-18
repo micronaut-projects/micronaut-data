@@ -23,6 +23,7 @@ import io.micronaut.data.model.CursoredPageable;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Pageable.Cursor;
+import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.Sort.Order;
@@ -293,34 +294,22 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
      * @param pageable The pageable sent by user
      * @return The updated pageable
      */
-    public Pageable updatePageable(List<Object> results, Pageable pageable) {
-        if (pageable instanceof CursoredPageable cursored) {
-            Cursor cursor = cursored.cursor().orElse(null);
-            Cursor nextCursor = null;
-            if (!results.isEmpty()) {
-                E firstValue = (E) results.get(0);
-                cursor = Cursor.of(new ArrayList<>(cursorProperties.size()));
-                for (RuntimePersistentProperty<E> property : cursorProperties) {
-                    cursor.elements().add(property.getProperty().get(firstValue));
-                }
-                if (results.size() == cursored.getSize()) {
-                    E lastValue = (E) results.get(results.size() - 1);
-                    nextCursor = Cursor.of(new ArrayList<>(cursorProperties.size()));
-                    for (RuntimePersistentProperty<E> property : cursorProperties) {
-                        nextCursor.elements().add(property.getProperty().get(lastValue));
-                    }
-                }
-            }
-
-            if (cursored.isBackward()) {
-                Collections.reverse(results);
-            }
-            return CursoredPageable.from(
-                cursored.getNumber(), cursor, nextCursor, cursored.getMode(), cursored.getSize(),
-                cursored.getSort(), cursored.requestTotal()
-            );
+    public List<Cursor> createCursors(List<Object> results, Pageable pageable) {
+        if (pageable.getMode() != Mode.CURSOR_NEXT && pageable.getMode() != Mode.CURSOR_PREVIOUS) {
+            return null;
         }
-        return pageable;
+        if (pageable.getMode() == Mode.CURSOR_PREVIOUS) {
+            Collections.reverse(results);
+        }
+        List<Cursor> cursors = new ArrayList<>(results.size());
+        for (Object result: results) {
+            List<Object> cursorElements = new ArrayList<>(cursorProperties.size());
+            for (RuntimePersistentProperty<E> property : cursorProperties) {
+                cursorElements.add(property.getProperty().get((E) result));
+            }
+            cursors.add(Cursor.of(cursorElements));
+        }
+        return cursors;
     }
 
     @Override

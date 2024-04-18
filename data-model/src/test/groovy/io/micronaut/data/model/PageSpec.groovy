@@ -125,6 +125,13 @@ class PageSpec extends Specification {
         json == '{"size":3,"number":0,"sort":{},"mode":"OFFSET"}'
         def deserializedPageable = serdeMapper.readValue(json, Pageable)
         deserializedPageable == pageable
+
+        when:
+        def json2 = '{"size":3,"number":0,"sort":{}}'
+        def deserializedPageable2 = serdeMapper.readValue(json2, Pageable)
+
+        then:
+        deserializedPageable2 == pageable
     }
 
     void "test serialization and deserialization of a cursored pageable - serde"() {

@@ -24,11 +24,12 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.annotation.TypeHint;
-import io.micronaut.data.model.Pageable.Mode;
+import io.micronaut.data.model.Pageable.Cursor;
 import io.micronaut.serde.annotation.Serdeable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -80,31 +81,25 @@ public interface Page<T> extends Slice<T> {
     }
 
     /**
-     * Determines whether there is a next page.
+     * Get cursor at the given position.
+     * Cursors are only available if {@code getPageable().getMode()} is one of
+     * {@link Pageable.Mode#CURSOR_NEXT} or {@link Pageable.Mode#CURSOR_PREVIOUS}.
+     * In that case there is a cursor for each of the data entities in the same order.
+     * To start pagination after or before a cursor create a pageable from it using the
+     * same sorting as before.
      *
-     * @since 4.8.0
-     * @return Whether there exist a next page.
+     * @param i The index of cursor to retrieve.
+     * @return The cursor at the provided index.
      */
-    default boolean hasNext() {
-        if (getPageable().getMode() == Mode.OFFSET) {
-            return hasTotalSize()
-                ? getOffset() + getSize() < getTotalSize()
-                : getContent().size() == getSize();
-        }
-        return getPageable().hasNext();
+    default Optional<Cursor> getCursor(int i) {
+        return Optional.empty();
     }
 
-    /**
-     * Determines whether there is a previous page.
-     *
-     * @since 4.8.0
-     * @return Whether there exist a previous page.
-     */
-    default boolean hasPrevious() {
-        if (getPageable().getMode() == Mode.OFFSET) {
-            return getOffset() > 0;
-        }
-        return getPageable().hasPrevious();
+    @Override
+    default boolean hasNext() {
+        return hasTotalSize()
+            ? getOffset() + getSize() < getTotalSize()
+            : getContent().size() == getSize();
     }
 
     /**
@@ -121,20 +116,45 @@ public interface Page<T> extends Slice<T> {
     }
 
     /**
-     * Creates a slice from the given content and pageable.
+     * Creates a page from the given content, pageable and totalSize.
+     *
      * @param content The content
      * @param pageable The pageable
      * @param totalSize The total size
      * @param <T> The generic type
      * @return The slice
      */
-    @JsonCreator
     @ReflectiveAccess
     static @NonNull <T> Page<T> of(
             @JsonProperty("content") @NonNull List<T> content,
             @JsonProperty("pageable") @NonNull Pageable pageable,
-            @JsonProperty("totalSize") @Nullable Long totalSize) {
+            @JsonProperty("totalSize") @Nullable Long totalSize
+    ) {
         return new DefaultPage<>(content, pageable, totalSize);
+    }
+
+    /**
+     * Creates a page from the given content, pageable, cursors and totalSize.
+     *
+     * @param content The content
+     * @param pageable The pageable
+     * @param cursors The cursors for cursored pagination
+     * @param totalSize The total size
+     * @param <T> The generic type
+     * @return The slice
+     */
+    @JsonCreator
+    @ReflectiveAccess
+    static @NonNull <T> Page<T> ofCursors(
+        @JsonProperty("content") @NonNull List<T> content,
+        @JsonProperty("pageable") @NonNull Pageable pageable,
+        @JsonProperty("cursors") @Nullable List<Cursor> cursors,
+        @JsonProperty("totalSize") @Nullable Long totalSize
+    ) {
+        if (cursors == null) {
+            return new DefaultPage<>(content, pageable, totalSize);
+        }
+        return new DefaultCursoredPage<>(content, pageable, cursors, totalSize);
     }
 
     /**

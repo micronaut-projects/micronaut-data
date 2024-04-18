@@ -39,7 +39,7 @@ public interface CursoredPageable extends Pageable {
      * Constant for no pagination.
      */
     CursoredPageable UNPAGED = new DefaultCursoredPageable(
-        -1, null, null, Mode.CURSOR_NEXT, 0, Sort.UNSORTED, true
+        -1, null, Mode.CURSOR_NEXT, 0, Sort.UNSORTED, true
     );
 
     /**
@@ -54,16 +54,6 @@ public interface CursoredPageable extends Pageable {
         return isBackward() ? Mode.CURSOR_PREVIOUS : Mode.CURSOR_NEXT;
     }
 
-    @Override
-    default @NonNull CursoredPageable next() {
-        throw new IllegalStateException("Cannot retrieve next page, as a currentCursor for that is not present");
-    }
-
-    @Override
-    default @NonNull CursoredPageable previous() {
-        throw new IllegalStateException("Cannot retrieve previous page, as a currentCursor for that is not present");
-    }
-
     /**
      * Creates a new {@link CursoredPageable} with the given sort.
      *
@@ -75,7 +65,7 @@ public interface CursoredPageable extends Pageable {
             return UNPAGED;
         }
         return new DefaultCursoredPageable(
-            -1, null, null, Mode.CURSOR_NEXT, 0, sort, true
+            -1, null, Mode.CURSOR_NEXT, 0, sort, true
         );
     }
 
@@ -93,7 +83,7 @@ public interface CursoredPageable extends Pageable {
         if (sort == null) {
             sort = UNSORTED;
         }
-        return new DefaultCursoredPageable(size, null, null, Mode.CURSOR_NEXT, 0, sort, true);
+        return new DefaultCursoredPageable(size, null, Mode.CURSOR_NEXT, 0, sort, true);
     }
 
     /**
@@ -101,7 +91,6 @@ public interface CursoredPageable extends Pageable {
      *
      * @param page The page
      * @param cursor The current currentCursor that will be used for querying data.
-     * @param nextCursor The currentCursor that could be used for querying the next page of data.
      * @param mode The pagination mode. Must be either forward or backward currentCursor pagination.
      * @param size The page size
      * @param sort The sort
@@ -111,9 +100,8 @@ public interface CursoredPageable extends Pageable {
     @Internal
     @JsonCreator
     static @NonNull CursoredPageable from(
-        @JsonProperty("page") int page,
+        @JsonProperty("number") int page,
         @Nullable Cursor cursor,
-        @Nullable Cursor nextCursor,
         Pageable.Mode mode,
         int size,
         @Nullable Sort sort,
@@ -122,7 +110,7 @@ public interface CursoredPageable extends Pageable {
         if (sort == null) {
             sort = UNSORTED;
         }
-        return new DefaultCursoredPageable(size, cursor, nextCursor, mode, page, sort, requestTotal);
+        return new DefaultCursoredPageable(size, cursor, mode, page, sort, requestTotal);
     }
 
     /**

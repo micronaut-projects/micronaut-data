@@ -57,13 +57,38 @@ public interface Slice<T> extends Iterable<T> {
     @NonNull Pageable getPageable();
 
     /**
-     * @return The page page
+     * @return The page number
      */
     default int getPageNumber() {
         return getPageable().getNumber();
     }
 
     /**
+     * Determine whether there is a next page.
+     *
+     * @since 4.8.0
+     * @return Whether there exist a next page.
+     */
+    default boolean hasNext() {
+        return getContent().size() == getSize();
+    }
+
+    /**
+     * Determine whether there is a previous page.
+     *
+     * @since 4.8.0
+     * @return Whether there exist a previous page.
+     */
+    default boolean hasPrevious() {
+        return getOffset() > 0;
+    }
+
+    /**
+     * Create a pageable for querying the next page of data.
+     * <p>A pageable may be created even if the end of data was reached to accommodate for
+     * cases when new data might be added to the repository. Use {@link #hasNext()} to
+     * verify if you have reached the end.</p>
+     *
      * @return The next pageable
      */
     default @NonNull Pageable nextPageable() {
@@ -71,7 +96,12 @@ public interface Slice<T> extends Iterable<T> {
     }
 
     /**
-     * @return The previous pageable.
+     * Create a pageable for querying the previous page of data.
+     * <p>A pageable may be created even if the end of data was reached to accommodate for
+     * cases when new data might be added to the repository. Use {@link #hasPrevious()} to
+     * verify if you have reached the end.</p>
+     *
+     * @return The previous pageable
      */
     default @NonNull Pageable previousPageable() {
         return getPageable().previous();

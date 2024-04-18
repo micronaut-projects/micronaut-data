@@ -92,28 +92,6 @@ public interface Pageable extends Sort {
     }
 
     /**
-     * Return whether there is a next page as best this pageable could determine.
-     * Use {@link Page} for more reliable results.
-     *
-     * @since 4.8.0
-     * @return Whether there is a next page
-     */
-    default boolean hasNext() {
-        return false;
-    }
-
-    /**
-     * Return whether there is a previous page as best this pageable could determine.
-     * Use {@link Page} for more reliable results.
-     *
-     * @since 4.8.0
-     * @return Whether there is a previous page.
-     */
-    default boolean hasPrevious() {
-        return false;
-    }
-
-    /**
      * Offset in the requested collection. Defaults to zero.
      * @return offset in the requested collection
      */
@@ -283,7 +261,6 @@ public interface Pageable extends Sort {
      * @param size The size
      * @param mode The pagination mode
      * @param cursor The current cursor
-     * @param nextCursor The next cursor
      * @param sort The sort
      * @param requestTotal Whether to query total count
      * @return The pageable
@@ -295,7 +272,6 @@ public interface Pageable extends Sort {
             @JsonProperty("size") int size,
             @JsonProperty("mode") @Nullable Mode mode,
             @JsonProperty("cursor") @Nullable Cursor cursor,
-            @JsonProperty("nextCursor") @Nullable Cursor nextCursor,
             @JsonProperty("sort") @Nullable Sort sort,
             @JsonProperty(value = "requestTotal", defaultValue = "true") boolean requestTotal
     ) {
@@ -303,8 +279,7 @@ public interface Pageable extends Sort {
             return new DefaultPageable(page, size, sort, requestTotal);
         } else {
             return new DefaultCursoredPageable(
-                size, cursor, nextCursor, mode, page,
-                sort == null ? UNSORTED : sort, requestTotal
+                size, cursor, mode, page, sort == null ? UNSORTED : sort, requestTotal
             );
         }
     }
@@ -343,7 +318,7 @@ public interface Pageable extends Sort {
         if (sort == null) {
             sort = UNSORTED;
         }
-        return new DefaultCursoredPageable(size, cursor, null, Mode.CURSOR_NEXT, page, sort, true);
+        return new DefaultCursoredPageable(size, cursor, Mode.CURSOR_NEXT, page, sort, true);
     }
 
     /**
@@ -360,7 +335,7 @@ public interface Pageable extends Sort {
         if (sort == null) {
             sort = UNSORTED;
         }
-        return new DefaultCursoredPageable(size, cursor, null, Mode.CURSOR_PREVIOUS, page, sort, true);
+        return new DefaultCursoredPageable(size, cursor, Mode.CURSOR_PREVIOUS, page, sort, true);
     }
 
     /**

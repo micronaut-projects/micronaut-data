@@ -27,7 +27,6 @@ import io.micronaut.data.model.Slice;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
-import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
 
 import java.util.List;
 
@@ -57,9 +56,6 @@ public class DefaultFindSliceInterceptor<T, R> extends AbstractQueryInterceptor<
             Pageable pageable = preparedQuery.getPageable();
             Iterable<R> iterable = (Iterable<R>) operations.findAll(preparedQuery);
             List<R> results = CollectionUtils.iterableToList(iterable);
-            if (preparedQuery instanceof DefaultSqlPreparedQuery sqlPreparedQuery) {
-                pageable = sqlPreparedQuery.updatePageable(results, pageable);
-            }
             Slice<R> slice = Slice.of(results, pageable);
             return convertOrFail(context, slice);
         } else {

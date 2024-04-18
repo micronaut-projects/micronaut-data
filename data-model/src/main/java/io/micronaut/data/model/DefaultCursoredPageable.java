@@ -31,9 +31,6 @@ import java.util.Optional;
  * @param page The page.
  * @param currentCursor The current currentCursor. This is the currentCursor that will be used for pagination
  *               in case this pageable is used in a query.
- * @param nextCursor A currentCursor for the next page of data. It is stored in pageable to correctly
- *                   support {@link #next()} for forward or {@link #previous()} for backward
- *                   pagination.
  * @param mode The pagination mode. Could be one of {@link Mode#CURSOR_NEXT} or {@link Mode#CURSOR_PREVIOUS}.
  * @param size The size of a page
  * @param sort The sorting
@@ -48,8 +45,6 @@ record DefaultCursoredPageable(
     @Nullable
     @JsonProperty("cursor")
     Cursor currentCursor,
-    @Nullable
-    Cursor nextCursor,
     Mode mode,
     @JsonProperty("number") int page,
     Sort sort,
@@ -100,36 +95,13 @@ record DefaultCursoredPageable(
 
     @Override
     public CursoredPageable next() {
-        Cursor requiredCursor = mode == Mode.CURSOR_PREVIOUS ? currentCursor : nextCursor;
-        if (requiredCursor != null) {
-            return new DefaultCursoredPageable(
-                    size,
-                    requiredCursor,
-                    null,
-                    Mode.CURSOR_NEXT,
-                    page + 1,
-                    sort,
-                    requestTotal
-            );
-        }
-        return CursoredPageable.super.next();
+        throw new UnsupportedOperationException("To get next pageable results must be retrieved. Use page.nextPageable() to retrieve the next pageable.");
     }
 
     @Override
     public CursoredPageable previous() {
-        Cursor requiredCursor = mode == Mode.CURSOR_PREVIOUS ? nextCursor : currentCursor;
-        if (requiredCursor != null) {
-            return new DefaultCursoredPageable(
-                    size,
-                    requiredCursor,
-                    null,
-                    Mode.CURSOR_PREVIOUS,
-                    Math.max(page - 1, 0),
-                    sort,
-                    requestTotal
-            );
-        }
-        return CursoredPageable.super.previous();
+        throw new UnsupportedOperationException("To get next pageable results must be retrieved. Use page.nextPageable() to retrieve the next pageable.");
+
     }
 
     @Override
@@ -137,7 +109,7 @@ record DefaultCursoredPageable(
         if (requestTotal) {
             return this;
         }
-        return new DefaultCursoredPageable(size, currentCursor, nextCursor, mode, page, sort, true);
+        return new DefaultCursoredPageable(size, currentCursor, mode, page, sort, true);
     }
 
     @Override
@@ -145,17 +117,7 @@ record DefaultCursoredPageable(
         if (!requestTotal) {
             return this;
         }
-        return new DefaultCursoredPageable(size, currentCursor, nextCursor, mode, page, sort, true);
-    }
-
-    @Override
-    public boolean hasNext() {
-        return mode == Mode.CURSOR_PREVIOUS ? currentCursor != null : nextCursor != null;
-    }
-
-    @Override
-    public boolean hasPrevious() {
-        return mode == Mode.CURSOR_PREVIOUS ? nextCursor != null : currentCursor != null;
+        return new DefaultCursoredPageable(size, currentCursor, mode, page, sort, true);
     }
 
     @Override
@@ -168,14 +130,13 @@ record DefaultCursoredPageable(
         }
         return size == that.size
             && Objects.equals(currentCursor, that.currentCursor)
-            && Objects.equals(nextCursor, that.nextCursor)
             && Objects.equals(mode, that.mode)
             && Objects.equals(sort, that.sort);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(size, currentCursor, nextCursor, mode, sort);
+        return Objects.hash(size, currentCursor, mode, sort);
     }
 
     @Override
@@ -184,7 +145,6 @@ record DefaultCursoredPageable(
                 "size=" + size +
                 ", page=" + page +
                 ", currentCursor=" + currentCursor +
-                ", nextCursor=" + nextCursor +
                 ", mode=" + mode +
                 ", sort=" + sort +
                 '}';

@@ -23,6 +23,8 @@ import io.micronaut.data.intercept.FindPageInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Pageable.Cursor;
+import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
@@ -56,10 +58,6 @@ public class DefaultFindPageInterceptor<T, R> extends AbstractQueryInterceptor<T
             Iterable<?> iterable = operations.findAll(preparedQuery);
             List<R> results = (List<R>) CollectionUtils.iterableToList(iterable);
             Pageable pageable = getPageable(context);
-            if (preparedQuery instanceof DefaultSqlPreparedQuery sqlPreparedQuery) {
-                pageable = sqlPreparedQuery.updatePageable(results, pageable);
-            }
-
             Long totalCount = null;
             if (pageable.requestTotal()) {
                 PreparedQuery<?, Number> countQuery = prepareCountQuery(methodKey, context);
@@ -67,7 +65,15 @@ public class DefaultFindPageInterceptor<T, R> extends AbstractQueryInterceptor<T
                 totalCount = n != null ? n.longValue() : null;
             }
 
-            Page<R> page = Page.of(results, pageable, totalCount);
+            Page<R> page;
+            if (pageable.getMode() == Mode.OFFSET) {
+                page = Page.of(results, pageable, totalCount);
+            } else if (preparedQuery instanceof DefaultSqlPreparedQuery<?, ?> sqlPreparedQuery) {
+                List<Cursor> cursors = sqlPreparedQuery.createCursors((List<Object>) results, pageable);
+                page = Page.ofCursors(results, pageable, cursors, totalCount);
+            } else {
+                throw new UnsupportedOperationException("Only offest pageable mode is supported by this query implementation");
+            }
             if (returnType.isInstance(page)) {
                 return (R) page;
             } else {
