@@ -29,6 +29,7 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
 import io.micronaut.data.model.runtime.PagedQuery;
@@ -335,6 +336,9 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
         String queryStr = preparedQuery.getQuery();
         Pageable pageable = preparedQuery.getPageable();
         if (pageable != Pageable.UNPAGED) {
+            if (pageable.getMode() != Mode.OFFSET) {
+                throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported by hibernate operations");
+            }
             Sort sort = pageable.getSort();
             if (sort.isSorted()) {
                 queryStr += QUERY_BUILDER.buildOrderBy(queryStr, getEntity(preparedQuery.getRootEntity()), AnnotationMetadata.EMPTY_METADATA, sort,
@@ -598,6 +602,9 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
         if (pageable == Pageable.UNPAGED) {
             // no pagination
             return;
+        }
+        if (pageable.getMode() != Mode.OFFSET) {
+            throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported by hibernate operations");
         }
 
         int max = pageable.getSize();
