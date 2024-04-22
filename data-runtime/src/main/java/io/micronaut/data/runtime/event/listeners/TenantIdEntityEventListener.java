@@ -19,6 +19,7 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.TenantId;
 import io.micronaut.data.annotation.event.PrePersist;
 import io.micronaut.data.event.EntityEventContext;
@@ -67,18 +68,20 @@ public class TenantIdEntityEventListener extends AutoPopulatedEntityEventListene
     protected Predicate<RuntimePersistentProperty<Object>> getPropertyPredicate() {
         return (prop) -> {
             final AnnotationMetadata annotationMetadata = prop.getAnnotationMetadata();
-            return annotationMetadata.hasAnnotation(TenantId.class);
+            return annotationMetadata.hasStereotype(TenantId.class);
         };
     }
 
     @Override
     public boolean prePersist(@NonNull EntityEventContext<Object> context) {
         for (RuntimePersistentProperty<Object> property : getApplicableProperties(context.getPersistentEntity())) {
-            if (property.getAnnotationMetadata().hasAnnotation(TenantId.class)) {
-                context.setProperty(
-                    property.getProperty(),
-                    conversionService.convertRequired(tenantResolver.resolveTenantIdentifier(), property.getArgument())
-                );
+            if (property.getAnnotationMetadata().hasStereotype(TenantId.class)) {
+                Argument<Object> argument = property.getArgument();
+                Object newValue = tenantResolver.resolveTenantIdentifier();
+                if (!argument.isInstance(newValue)) {
+                    newValue = conversionService.convert(newValue, argument.getType());
+                }
+                context.setProperty(property.getProperty(), newValue);
                 break;
             }
         }

@@ -264,7 +264,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         }
         PersistentProperty tenantIdProperty = root.getPersistentEntity().getPersistentProperties()
             .stream()
-            .filter(p -> p.getAnnotationMetadata().hasAnnotation(TenantId.class))
+            .filter(p -> p.getAnnotationMetadata().hasStereotype(TenantId.class))
             .findFirst()
             .orElse(null);
         if (tenantIdProperty != null) {
