@@ -73,12 +73,15 @@ public class TenantIdEntityEventListener extends AutoPopulatedEntityEventListene
 
     @Override
     public boolean prePersist(@NonNull EntityEventContext<Object> context) {
-        context.getPersistentEntity().getPersistentProperties().stream()
-            .filter(p -> p.getAnnotationMetadata().hasAnnotation(TenantId.class))
-            .findFirst().ifPresent(tenantIdProperty -> context.setProperty(
-                tenantIdProperty.getProperty(),
-                conversionService.convertRequired(tenantResolver.resolveTenantIdentifier(), tenantIdProperty.getArgument())
-            ));
+        for (RuntimePersistentProperty<Object> property : getApplicableProperties(context.getPersistentEntity())) {
+            if (property.getAnnotationMetadata().hasAnnotation(TenantId.class)) {
+                context.setProperty(
+                    property.getProperty(),
+                    conversionService.convertRequired(tenantResolver.resolveTenantIdentifier(), property.getArgument())
+                );
+                break;
+            }
+        }
         return true;
     }
 
