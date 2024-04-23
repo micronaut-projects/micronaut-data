@@ -261,6 +261,8 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         } else {
             builder.append("WHERE (");
         }
+        String positionalParameter = getQueryBuilder().positionalParameterFormat();
+        int paramIndex = storedQuery.getQueryBindings().size() + 1;
         for (int i = 0; i < orders.size(); ++i) {
             builder.append("(");
             for (int j = 0; j <= i; ++j) {
@@ -272,7 +274,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
                     builder.append(i == j ? " < " : " = ");
                 }
                 cursorQueryBindings.add(cursorBindings.get(j));
-                builder.append("?");
+                builder.append(String.format(positionalParameter, paramIndex++));
                 if (i != j) {
                     builder.append(" AND ");
                 }
@@ -293,7 +295,9 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
      * @param results The scanning results
      * @param pageable The pageable sent by user
      * @return The updated pageable
+     * @since 4.8.0
      */
+    @Internal
     public List<Cursor> createCursors(List<Object> results, Pageable pageable) {
         if (pageable.getMode() != Mode.CURSOR_NEXT && pageable.getMode() != Mode.CURSOR_PREVIOUS) {
             return null;

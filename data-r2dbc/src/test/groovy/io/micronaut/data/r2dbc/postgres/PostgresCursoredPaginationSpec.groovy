@@ -24,7 +24,7 @@ import spock.lang.AutoCleanup
 import spock.lang.Ignore
 import spock.lang.Shared
 
-@Ignore("Causes error: 'FATAL: sorry, too many clients already'")
+//@Ignore("Causes error: 'FATAL: sorry, too many clients already'")
 class PostgresCursoredPaginationSpec extends AbstractCursoredPageSpec implements PostgresTestPropertyProvider {
     @Shared @AutoCleanup ApplicationContext context
 
