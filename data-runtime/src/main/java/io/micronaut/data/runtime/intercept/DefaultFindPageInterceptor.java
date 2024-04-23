@@ -21,6 +21,7 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.FindPageInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
+import io.micronaut.data.model.CursoredPage;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Pageable.Cursor;
@@ -70,9 +71,9 @@ public class DefaultFindPageInterceptor<T, R> extends AbstractQueryInterceptor<T
                 page = Page.of(results, pageable, totalCount);
             } else if (preparedQuery instanceof DefaultSqlPreparedQuery<?, ?> sqlPreparedQuery) {
                 List<Cursor> cursors = sqlPreparedQuery.createCursors((List<Object>) results, pageable);
-                page = Page.ofCursors(results, pageable, cursors, totalCount);
+                page = CursoredPage.of(results, pageable, cursors, totalCount);
             } else {
-                throw new UnsupportedOperationException("Only offest pageable mode is supported by this query implementation");
+                throw new UnsupportedOperationException("Only offset pageable mode is supported by this query implementation");
             }
             if (returnType.isInstance(page)) {
                 return (R) page;

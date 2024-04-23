@@ -17,6 +17,7 @@ package io.micronaut.data.tck.tests
 
 import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.Page
+import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.Person
@@ -115,8 +116,8 @@ abstract class AbstractCursoredPageSpec extends Specification {
 
     void "test pageable list with row removal"() {
         when: "10 people are paged"
-        def pageable = CursoredPageable.from(10, sorting)
-        Page<Person> page = personRepository.findAll(pageable)
+        def pageable = Pageable.from(0, 10, sorting) // The first pageable can be non-cursored
+        Page<Person> page = personRepository.retrieve(pageable) // The retrieve method explicitly returns CursoredPage
 
         then: "The data is correct"
         page.content.size() == 10
@@ -127,7 +128,7 @@ abstract class AbstractCursoredPageSpec extends Specification {
         when: "The next page is selected after deletion"
         personRepository.delete(page.content[1])
         personRepository.delete(page.content[9])
-        page = personRepository.findAll(page.nextPageable())
+        page = personRepository.retrieve(page.nextPageable())
 
         then: "it is correct"
         page.offset == 10
@@ -140,7 +141,7 @@ abstract class AbstractCursoredPageSpec extends Specification {
 
         when: "The previous page is selected"
         pageable = page.previousPageable()
-        page = personRepository.findAll(pageable)
+        page = personRepository.retrieve(pageable)
 
         then: "it is correct"
         page.offset == 0
@@ -163,7 +164,7 @@ abstract class AbstractCursoredPageSpec extends Specification {
     void "test pageable list with row addition"() {
         when: "10 people are paged"
         def pageable = CursoredPageable.from(10, sorting)
-        Page<Person> page = personRepository.findAll(pageable)
+        Page<Person> page = personRepository.retrieve(pageable)
 
         then: "The data is correct"
         page.content.size() == 10
@@ -176,7 +177,7 @@ abstract class AbstractCursoredPageSpec extends Specification {
                 new Person(name: "AAAAA00"), new Person(name: "AAAAA01"),
                 new Person(name: "ZZZZZ08"), new Person(name: "ZZZZZ07")
         ])
-        page = personRepository.findAll(page.nextPageable())
+        page = personRepository.retrieve(page.nextPageable())
 
         then: "it is correct"
         page.offset == 10
@@ -189,7 +190,7 @@ abstract class AbstractCursoredPageSpec extends Specification {
 
         when: "The previous page is selected"
         pageable = page.previousPageable()
-        page = personRepository.findAll(pageable)
+        page = personRepository.retrieve(pageable)
 
         then: "it is correct"
         page.offset == 0
@@ -199,7 +200,7 @@ abstract class AbstractCursoredPageSpec extends Specification {
         page.hasPrevious()
 
         when: "The second previous page is selected"
-        page = personRepository.findAll(page.previousPageable())
+        page = personRepository.retrieve(page.previousPageable())
 
         then:
         page.offset == 0

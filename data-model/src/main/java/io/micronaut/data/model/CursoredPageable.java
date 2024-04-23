@@ -25,7 +25,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.serde.annotation.Serdeable;
 
 /**
- * Models pageable data that uses a currentCursor.
+ * Models a pageable request that uses a cursor.
  *
  * @author Andriy Dmytruk
  * @since 4.8.0
@@ -34,13 +34,6 @@ import io.micronaut.serde.annotation.Serdeable;
 @Introspected
 @JsonIgnoreProperties(ignoreUnknown = true)
 public interface CursoredPageable extends Pageable {
-
-    /**
-     * Constant for no pagination.
-     */
-    CursoredPageable UNPAGED = new DefaultCursoredPageable(
-        -1, null, Mode.CURSOR_NEXT, 0, Sort.UNSORTED, true
-    );
 
     /**
      * Whether the pageable is traversing backwards.
@@ -62,7 +55,7 @@ public interface CursoredPageable extends Pageable {
      */
     static @NonNull CursoredPageable from(Sort sort) {
         if (sort == null) {
-            return UNPAGED;
+            sort = Sort.UNSORTED;
         }
         return new DefaultCursoredPageable(
             -1, null, Mode.CURSOR_NEXT, 0, sort, true
@@ -111,13 +104,6 @@ public interface CursoredPageable extends Pageable {
             sort = UNSORTED;
         }
         return new DefaultCursoredPageable(size, cursor, mode, page, sort, requestTotal);
-    }
-
-    /**
-     * @return A new instance without paging data.
-     */
-    static @NonNull CursoredPageable unpaged() {
-        return UNPAGED;
     }
 
 }

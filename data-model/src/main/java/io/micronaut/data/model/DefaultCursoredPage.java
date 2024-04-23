@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.core.annotation.Creator;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.data.model.Pageable.Cursor;
-import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.serde.annotation.Serdeable;
 
 import java.util.List;
@@ -35,7 +34,7 @@ import java.util.Optional;
  * @param <T> The generic type
  */
 @Serdeable
-class DefaultCursoredPage<T> extends DefaultPage<T> {
+class DefaultCursoredPage<T> extends DefaultPage<T> implements CursoredPage<T> {
 
     private final List<Cursor> cursors;
 
@@ -78,41 +77,12 @@ class DefaultCursoredPage<T> extends DefaultPage<T> {
 
     @Override
     public Optional<Cursor> getCursor(int i) {
-        return i >= cursors.size() ? Optional.empty() : Optional.of(cursors.get(i));
+        return i >= cursors.size() || i < 0 ? Optional.empty() : Optional.of(cursors.get(i));
     }
 
     @Override
-    public boolean hasNext() {
-        Pageable pageable = getPageable();
-        if (pageable.getMode() == Mode.CURSOR_NEXT) {
-            return cursors.size() == pageable.getSize();
-        } else {
-            return true;
-        }
-    }
-
-    @Override
-    public boolean hasPrevious() {
-        Pageable pageable = getPageable();
-        if (pageable.getMode() == Mode.CURSOR_PREVIOUS) {
-            return cursors.size() == pageable.getSize();
-        } else {
-            return true;
-        }
-    }
-
-    @Override
-    public Pageable nextPageable() {
-        Pageable pageable = getPageable();
-        Cursor cursor = cursors.isEmpty() ? pageable.cursor().orElse(null) : cursors.get(cursors.size() - 1);
-        return Pageable.afterCursor(cursor, pageable.getNumber() + 1, pageable.getSize(), pageable.getSort());
-    }
-
-    @Override
-    public Pageable previousPageable() {
-        Pageable pageable = getPageable();
-        Cursor cursor = cursors.isEmpty() ? pageable.cursor().orElse(null) : cursors.get(0);
-        return Pageable.beforeCursor(cursor, Math.max(0, pageable.getNumber() - 1), pageable.getSize(), pageable.getSort());
+    public List<Cursor> getCursors() {
+        return cursors;
     }
 
     @Override

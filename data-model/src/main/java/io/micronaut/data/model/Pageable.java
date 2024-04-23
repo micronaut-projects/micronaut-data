@@ -314,7 +314,7 @@ public interface Pageable extends Sort {
      * @param sort The sorting
      * @return The pageable
      */
-    static @NonNull Pageable afterCursor(@NonNull Cursor cursor, int page, int size, @Nullable Sort sort) {
+    static @NonNull CursoredPageable afterCursor(@NonNull Cursor cursor, int page, int size, @Nullable Sort sort) {
         if (sort == null) {
             sort = UNSORTED;
         }
@@ -331,7 +331,7 @@ public interface Pageable extends Sort {
      * @param sort The sorting
      * @return The pageable
      */
-    static @NonNull Pageable beforeCursor(@NonNull Cursor cursor, int page, int size, @Nullable Sort sort) {
+    static @NonNull CursoredPageable beforeCursor(@NonNull Cursor cursor, int page, int size, @Nullable Sort sort) {
         if (sort == null) {
             sort = UNSORTED;
         }

@@ -38,6 +38,7 @@ import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.sql.Procedure;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.intercept.annotation.DataMethodQueryParameter;
+import io.micronaut.data.model.CursoredPage;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.Page;
@@ -121,6 +122,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     public RepositoryTypeElementVisitor() {
         typeRoles.put(Pageable.class.getName(), TypeRole.PAGEABLE);
         typeRoles.put(Sort.class.getName(), TypeRole.SORT);
+        typeRoles.put(CursoredPage.class.getName(), TypeRole.CURSORED_PAGE);
         typeRoles.put(Page.class.getName(), TypeRole.PAGE);
         typeRoles.put(Slice.class.getName(), TypeRole.SLICE);
     }
@@ -347,7 +349,10 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                         .orElse(null)));
 
                 ClassElement genericReturnType = methodMatchContext.getReturnType();
-                if (methodMatchContext.isTypeInRole(genericReturnType, TypeRole.PAGE) || element.isPresent(Query.class, "countQuery")) {
+                if (methodMatchContext.isTypeInRole(genericReturnType, TypeRole.PAGE)
+                        || methodMatchContext.isTypeInRole(genericReturnType, TypeRole.CURSORED_PAGE)
+                        || element.isPresent(Query.class, "countQuery")
+                ) {
                     QueryResult countQueryResult = methodInfo.getCountQueryResult();
                     if (countQueryResult == null) {
                         throw new MatchFailedException("Query returns a Page and does not specify a 'countQuery' member.", element);
