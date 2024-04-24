@@ -31,7 +31,7 @@ import io.micronaut.data.operations.RepositoryOperations;
  * @author Andriy Dmytruk
  * @since 4.8.0
  */
-public class DefaultFindCursoredPageInterceptor<T, R> extends DefaultFindPageInterceptor<T, R> implements FindCursoredPageInterceptor<T, R> {
+public class DefaultFindCursoredPageInterceptor<T, R> extends DefaultAbstractFindPageInterceptor<T, R> implements FindCursoredPageInterceptor<T, R> {
 
     /**
      * Default constructor.
