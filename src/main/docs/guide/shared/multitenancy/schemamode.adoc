@@ -1,0 +1,10 @@
+The SCHEMA mode uses a single datasource and set the active schema based on the tenant resolved.
+
+.Example of the configuration with one datasource that will be used to switch schema based on the tenancy
+[configuration]
+----
+include::doc-examples/jdbc-multitenancy-schema-example-java/src/main/resources/application.yml[]
+----
+
+NOTE: You can use property `schema-generate-names` to specify multiple schemas to be created and initialized for testing.
+
