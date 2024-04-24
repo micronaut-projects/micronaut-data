@@ -34,8 +34,11 @@ shared:
     programmaticTransactions: Programmatic Transactions
     transactionalEvents: Transactional Events
   kotlinCriteria: Kotlin Criteria API extensions
-  multitenancy: Multi-tenancy
-
+  multitenancy:
+    title: Multi-tenancy
+    discriminatormode: Discriminator Mode
+    datasourcemode: DataSource Mode
+    schemamode: Schema Mode
 hibernate:
   title: Micronaut Data JPA Hibernate
   hibernateJpaAnnotations: JPA Annotations
