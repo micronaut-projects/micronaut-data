@@ -77,7 +77,7 @@ class PageDelegate<T> implements Page<T> {
     public <U> Page<U> map(Function<? super T, ? extends U> converter) {
         return new PageDelegate<>(
                 io.micronaut.data.model.Page.of(
-                        getContent().stream().map(converter).toList(),
+                        getContent().stream().map(converter).collect(Collectors.toList()),
                         delegate.getPageable(),
                         delegate.getTotalSize()
                 )

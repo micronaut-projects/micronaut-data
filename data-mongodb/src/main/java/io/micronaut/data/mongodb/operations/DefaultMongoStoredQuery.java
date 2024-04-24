@@ -144,7 +144,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 aggregateData = null;
                 findData = new FindData(BsonDocument.parse(query));
             } else if (query.startsWith("[")) {
-                aggregateData = new AggregateData(BsonArray.parse(query).stream().map(BsonValue::asDocument).toList());
+                aggregateData = new AggregateData(BsonArray.parse(query).stream().map(BsonValue::asDocument).collect(Collectors.toList()));
                 findData = null;
             } else {
                 aggregateData = null;
