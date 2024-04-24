@@ -85,10 +85,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static io.micronaut.data.model.runtime.StoredQuery.*;
+import static io.micronaut.data.model.runtime.StoredQuery.OperationType;
 
 /**
  * Abstract SQL repository implementation not specifically bound to JDBC.

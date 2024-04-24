@@ -57,7 +57,6 @@ import org.slf4j.Logger;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 /**
  * Shared implementation of Mongo sync and reactive repositories.

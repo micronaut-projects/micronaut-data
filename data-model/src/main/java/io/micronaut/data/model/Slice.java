@@ -27,7 +27,6 @@ import io.micronaut.serde.annotation.Serdeable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * Inspired by the Spring Data's {@code Slice} and GORM's {@code PagedResultList}, this models a type that supports

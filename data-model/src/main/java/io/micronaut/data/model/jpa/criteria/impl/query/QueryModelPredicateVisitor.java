@@ -45,7 +45,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.StringJoiner;
-import java.util.stream.Collectors;
 
 /**
  * The predicate visitor to convert criteria predicates to {@link QueryModel}.
