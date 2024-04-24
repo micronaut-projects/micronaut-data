@@ -118,7 +118,7 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
                     return Sort.Order.asc(name);
                 }
                 return Sort.Order.desc(name);
-            }).collect(Collectors.toList());
+            }).toList();
             qm.sort(Sort.of(sortOrders));
         }
         for (Map.Entry<String, Joiner.Joined> e : joiner.getJoins().entrySet()) {
@@ -214,7 +214,7 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
         Objects.requireNonNull(restrictions);
         if (restrictions.length > 0) {
             predicate = restrictions.length == 1 ? restrictions[0] : new ConjunctionPredicate(
-                    Arrays.stream(restrictions).sequential().map(x -> (IExpression<Boolean>) x).collect(Collectors.toList())
+                    Arrays.stream(restrictions).sequential().map(x -> (IExpression<Boolean>) x).toList()
             );
         } else {
             predicate = null;

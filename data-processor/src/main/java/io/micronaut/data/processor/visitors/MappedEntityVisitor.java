@@ -107,7 +107,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
 
         final List<AnnotationValue<Index>> indexes = properties.stream()
                 .flatMap(prop -> prop.findAnnotation(Index.class).stream())
-                .collect(Collectors.toList());
+                .toList();
 
         if (!indexes.isEmpty()) {
            element.annotate(Indexes.class, builder -> builder.values(indexes.toArray(new AnnotationValue[]{})));

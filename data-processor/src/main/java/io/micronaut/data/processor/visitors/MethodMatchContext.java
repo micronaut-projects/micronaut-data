@@ -110,7 +110,7 @@ public class MethodMatchContext extends MatchContext {
     public @NonNull List<ParameterElement> getParametersNotInRole() {
         return Arrays.stream(getParameters()).filter(p ->
             !this.parametersInRole.containsValue(p)
-        ).collect(Collectors.toList());
+        ).toList();
     }
 
     /**

@@ -323,12 +323,12 @@ public class QueryModelPredicateVisitor implements PredicateVisitor {
             state.negated = false;
             add(Restrictions.notIn(
                     getPropertyPath(inValues),
-                    values.stream().map(this::asValue).collect(Collectors.toList())
+                    values.stream().map(this::asValue).toList()
             ));
         } else {
             add(Restrictions.in(
                     getPropertyPath(inValues),
-                    values.stream().map(this::asValue).collect(Collectors.toList())
+                    values.stream().map(this::asValue).toList()
             ));
         }
     }

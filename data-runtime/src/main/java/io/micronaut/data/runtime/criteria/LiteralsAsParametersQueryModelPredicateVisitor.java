@@ -126,8 +126,8 @@ final class LiteralsAsParametersQueryModelPredicateVisitor extends QueryModelPre
                 throw new IllegalStateException("Expected to have all literal values");
             }
             return new LiteralExpression<Object>(v);
-        }).collect(Collectors.toList());
-        List<Object> literalValues = literals.stream().map(LiteralExpression::getValue).collect(Collectors.toList());
+        }).toList();
+        List<Object> literalValues = literals.stream().map(LiteralExpression::getValue).toList();
         Class<Object> javaType = (Class<Object>) literals.iterator().next().getJavaType();
         return Collections.singleton(criteriaBuilder.parameter(javaType, null, literalValues));
     }

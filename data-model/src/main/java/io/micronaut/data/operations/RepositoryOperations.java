@@ -166,7 +166,7 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
     default <T> Iterable<T> updateAll(@NonNull UpdateBatchOperation<T> operation) {
         return operation.split().stream()
                 .map(this::update)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -179,7 +179,7 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
     default <T> Iterable<T> persistAll(@NonNull InsertBatchOperation<T> operation) {
         return operation.split().stream()
                 .map(this::persist)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**

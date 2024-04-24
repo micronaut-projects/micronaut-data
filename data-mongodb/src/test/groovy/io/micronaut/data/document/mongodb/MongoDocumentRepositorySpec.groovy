@@ -437,7 +437,7 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
             assert person != null
             def optPerson = personRepository.findById(person.id)
             def personsByIdIn = personRepository.findByIdIn(Arrays.asList(person.id))
-            def personsByIdNotInIds = personRepository.findByIdNotIn(Arrays.asList(person.id)).stream().map(p -> p.id).collect(Collectors.toList())
+            def personsByIdNotInIds = personRepository.findByIdNotIn(Arrays.asList(person.id)).stream().map(p -> p.id).toList()
         then:
             optPerson.present
             optPerson.get().id == person.id

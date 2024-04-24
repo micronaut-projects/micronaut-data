@@ -139,7 +139,7 @@ public interface PersistentEntity extends PersistentElement {
                 .stream()
                 .filter(bp -> bp instanceof Association)
                 .map(bp -> (Association) bp)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -152,7 +152,7 @@ public interface PersistentEntity extends PersistentElement {
         return getPersistentProperties().stream()
                 .filter(p -> p instanceof Embedded)
                 .map(p -> (Embedded) p)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -236,7 +236,7 @@ public interface PersistentEntity extends PersistentElement {
     default Optional<String> getPath(String camelCasePath) {
         List<String> path = Arrays.stream(CAMEL_CASE_SPLIT_PATTERN.split(camelCasePath))
                                   .map(NameUtils::decapitalize)
-                                  .collect(Collectors.toList());
+                                  .toList();
 
         if (CollectionUtils.isNotEmpty(path)) {
             Iterator<String> i = path.iterator();

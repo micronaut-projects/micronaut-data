@@ -144,7 +144,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 aggregateData = null;
                 findData = new FindData(BsonDocument.parse(query));
             } else if (query.startsWith("[")) {
-                aggregateData = new AggregateData(BsonArray.parse(query).stream().map(BsonValue::asDocument).collect(Collectors.toList()));
+                aggregateData = new AggregateData(BsonArray.parse(query).stream().map(BsonValue::asDocument).toList());
                 findData = null;
             } else {
                 aggregateData = null;
@@ -502,7 +502,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                     return new BsonObjectId(new ObjectId(string));
                 }
                 return MongoUtils.toBsonValue(conversionService, val, codecRegistry.get());
-            }).collect(Collectors.toList()));
+            }).toList());
         }
         return MongoUtils.toBsonValue(conversionService, value, codecRegistry.get());
     }

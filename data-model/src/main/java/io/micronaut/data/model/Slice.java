@@ -127,7 +127,7 @@ public interface Slice<T> extends Iterable<T> {
      * @return A new slice with the mapped content
      */
     default @NonNull <T2> Slice<T2> map(Function<T, T2> function) {
-        List<T2> content = getContent().stream().map(function).collect(Collectors.toList());
+        List<T2> content = getContent().stream().map(function).toList();
         return new DefaultSlice<>(content, getPageable());
     }
 

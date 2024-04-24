@@ -63,7 +63,7 @@ public final class CriteriaUtils {
     }
 
     public static List<IExpression<Boolean>> requireBoolExpressions(Iterable<? extends Expression<?>> restrictions) {
-        return CollectionUtils.iterableToList(restrictions).stream().map(CriteriaUtils::requireBoolExpression).collect(Collectors.toList());
+        return CollectionUtils.iterableToList(restrictions).stream().map(CriteriaUtils::requireBoolExpression).toList();
     }
 
     public static IExpression<Boolean> requireBoolExpression(Expression<?> exp) {

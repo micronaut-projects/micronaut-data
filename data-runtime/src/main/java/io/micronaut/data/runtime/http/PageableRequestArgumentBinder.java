@@ -92,7 +92,7 @@ public class PageableRequestArgumentBinder implements TypedRequestArgumentBinder
 
             List<Sort.Order> orders = sortParams.stream()
                     .map(sortMapper)
-                    .collect(Collectors.toList());
+                    .toList();
             sort = Sort.of(orders);
         }
 

@@ -103,7 +103,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         PROPERTY_RESTRICTIONS = Restrictions.PROPERTY_RESTRICTIONS_MAP.keySet()
             .stream()
             .sorted(Comparator.comparingInt(String::length).thenComparing(String.CASE_INSENSITIVE_ORDER).reversed())
-            .collect(Collectors.toList());
+            .toList();
         List<String> restrictionElements = new ArrayList<>(Restrictions.RESTRICTIONS_MAP.keySet());
         restrictionElements.sort(Comparator.comparingInt(String::length).thenComparing(String.CASE_INSENSITIVE_ORDER).reversed());
         String rExpressionPattern = String.join("|", restrictionElements);

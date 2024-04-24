@@ -365,7 +365,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                                     p.getAnnotationMetadata().booleanValue(AutoPopulated.class, "updateable").orElse(true)
                     )
                     .map(PersistentProperty::getName)
-                    .collect(Collectors.toList());
+                    .toList();
             final QueryResult queryResult = queryBuilder.buildUpdate(annotationMetadata, queryModel, updateProperties);
             return new DefaultSqlStoredQuery<>(QueryResultStoredQuery.single(OperationType.UPDATE, "Custom update", AnnotationMetadata.EMPTY_METADATA, queryResult, rootEntity), persistentEntity, queryBuilder);
         });
@@ -385,7 +385,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         String sqlInsert = resolveAssociationInsert(repositoryType, persistentEntity, association);
         final SqlQueryBuilder queryBuilder = findQueryBuilder(repositoryType);
         List<QueryParameterBinding> parameters = new ArrayList<>();
-        for (Map.Entry<PersistentProperty, Object> property : idPropertiesWithValues(persistentEntity.getIdentity(), entity).collect(Collectors.toList())) {
+        for (Map.Entry<PersistentProperty, Object> property : idPropertiesWithValues(persistentEntity.getIdentity(), entity).toList()) {
             parameters.add(new QueryParameterBinding() {
 
                 @Override

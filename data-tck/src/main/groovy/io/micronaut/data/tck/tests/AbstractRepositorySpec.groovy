@@ -1116,7 +1116,7 @@ abstract class AbstractRepositorySpec extends Specification {
         List<Author> authors = transactionManager.get().executeRead(new TransactionCallback<Connection, List<Author>>() {
             @Override
             List<Author> call(TransactionStatus<Connection> status) throws Exception {
-                authorRepository.queryByNameContains("e").collect(Collectors.toList())
+                authorRepository.queryByNameContains("e").toList()
             }
         })
 
@@ -1127,7 +1127,7 @@ abstract class AbstractRepositorySpec extends Specification {
         List<Author> emptyAuthors = transactionManager.get().executeRead(new TransactionCallback<Connection, List<Author>>() {
             @Override
             List<Author> call(TransactionStatus<Connection> status) throws Exception {
-                authorRepository.queryByNameContains("x").collect(Collectors.toList())
+                authorRepository.queryByNameContains("x").toList()
             }
         })
 
@@ -1395,7 +1395,7 @@ abstract class AbstractRepositorySpec extends Specification {
             def authors = transactionManager.get().executeRead(new TransactionCallback<Connection, List<Author>>() {
                 @Override
                 List<Author> call(TransactionStatus<Connection> status) throws Exception {
-                    authorRepository.queryByIdIsNotNull().collect(Collectors.toList())
+                    authorRepository.queryByIdIsNotNull().toList()
                 }
             })
 

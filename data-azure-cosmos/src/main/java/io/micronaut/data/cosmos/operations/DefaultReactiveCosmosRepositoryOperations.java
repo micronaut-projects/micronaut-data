@@ -294,7 +294,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             return result.byPage().flatMap(response -> {
                 CosmosUtils.processDiagnostics(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS, response.getCosmosDiagnostics(),
                     response.getActivityId(), response.getRequestCharge());
-                return Flux.fromIterable(response.getResults().stream().map(item -> cosmosSerde.deserialize(item, argument)).collect(Collectors.toList()));
+                return Flux.fromIterable(response.getResults().stream().map(item -> cosmosSerde.deserialize(item, argument)).toList());
             }).onErrorMap(e ->  CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS,
                 FAILED_TO_QUERY_ITEMS, e));
         }
@@ -312,7 +312,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                     return conversionService.convertRequired(item, resultType);
                 }
                 return null;
-            }).collect(Collectors.toList()));
+            }).toList());
         }).onErrorMap(e ->  CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS,
             FAILED_TO_QUERY_ITEMS, e));
     }

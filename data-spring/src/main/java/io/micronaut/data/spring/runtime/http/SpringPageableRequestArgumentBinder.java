@@ -94,7 +94,7 @@ public class SpringPageableRequestArgumentBinder implements TypedRequestArgument
 
             List<Sort.Order> orders = sortParams.stream()
                     .map(sortMapper)
-                    .collect(Collectors.toList());
+                    .toList();
             sort = Sort.by(orders);
         } else {
             sort = Sort.unsorted();

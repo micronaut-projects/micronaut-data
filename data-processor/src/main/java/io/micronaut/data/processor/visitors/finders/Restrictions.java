@@ -49,7 +49,7 @@ public final class Restrictions {
                 } catch (Throwable e) {
                     return null;
                 }
-            }).collect(Collectors.toList());
+            }).toList();
 
     private static final List<Restriction> RESTRICTIONS_LIST = Arrays.stream(Restrictions.class.getClasses())
             .filter(clazz -> Restriction.class.isAssignableFrom(clazz) && !Modifier.isAbstract(clazz.getModifiers()))
@@ -59,7 +59,7 @@ public final class Restrictions {
                 } catch (Throwable e) {
                     return null;
                 }
-            }).collect(Collectors.toList());
+            }).toList();
 
     public static final Map<String, PropertyRestriction> PROPERTY_RESTRICTIONS_MAP = PROPERTY_RESTRICTIONS_LIST.stream()
             .collect(Collectors.toMap(PropertyRestriction::getName, p -> p, (a, b) -> a, TreeMap::new));

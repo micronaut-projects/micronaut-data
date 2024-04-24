@@ -50,7 +50,7 @@ public final class Projections {
                 } catch (Throwable e) {
                     return null;
                 }
-            }).collect(Collectors.toList());
+            }).toList();
 
     @Nullable
     public static Selection<?> find(@NonNull PersistentEntityRoot<?> entityRoot,

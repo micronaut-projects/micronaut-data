@@ -189,7 +189,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
         if (preparedQuery.isAggregate()) {
             MongoAggregation aggregation = preparedQuery.getAggregation();
             if (QUERY_LOG.isDebugEnabled()) {
-                QUERY_LOG.debug("Executing Mongo 'aggregate' with pipeline: {}", aggregation.getPipeline().stream().map(e -> e.toBsonDocument().toJson()).collect(Collectors.toList()));
+                QUERY_LOG.debug("Executing Mongo 'aggregate' with pipeline: {}", aggregation.getPipeline().stream().map(e -> e.toBsonDocument().toJson()).toList());
             }
             R result = aggregate(clientSession, preparedQuery, BsonDocument.class)
                     .map(bsonDocument -> convertResult(database.getCodecRegistry(), resultType, bsonDocument, false))
@@ -907,7 +907,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
 
             @Override
             protected void execute() throws RuntimeException {
-                List<Bson> filters = entities.stream().filter(d -> !d.vetoed).map(d -> this.filters.get(d)).collect(Collectors.toList());
+                List<Bson> filters = entities.stream().filter(d -> !d.vetoed).map(d -> this.filters.get(d)).toList();
                 if (!filters.isEmpty()) {
                     Bson filter = Filters.or(filters);
                     if (QUERY_LOG.isDebugEnabled()) {
@@ -957,7 +957,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
 
             @Override
             protected void execute() throws RuntimeException {
-                List<T> toInsert = entities.stream().filter(d -> !d.vetoed).map(d -> d.entity).collect(Collectors.toList());
+                List<T> toInsert = entities.stream().filter(d -> !d.vetoed).map(d -> d.entity).toList();
                 if (toInsert.isEmpty()) {
                     return;
                 }
