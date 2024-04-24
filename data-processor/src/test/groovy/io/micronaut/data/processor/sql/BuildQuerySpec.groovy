@@ -1376,4 +1376,25 @@ interface AccountRepository extends GenericRepository<Account, Long> {
             getQuery(findAll__withTenantBar) == 'SELECT account_.`id`,account_.`name`,account_.`tenancy` FROM `account` account_ WHERE (account_.`tenancy` = \'bar\')'
             getQuery(findAll__withTenantFoo) == 'SELECT account_.`id`,account_.`name`,account_.`tenancy` FROM `account` account_ WHERE (account_.`tenancy` = \'foo\')'
     }
+    void "test escape query"() {
+        given:
+            def repository = buildRepository('test.UserRepository', """
+
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.User;
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface UserRepository extends GenericRepository<User, Long> {
+
+@Query("update \\"user\\" set locked=true where id=:id")
+void lock(Long id);
+
+}
+""")
+            def lockMethod = repository.getRequiredMethod("lock", Long)
+        expect:
+            getQuery(lockMethod) == 'update "user" set locked=true where id=:id'
+            getRawQuery(lockMethod) == 'update "user" set locked=true where id=?'
+    }
 }
