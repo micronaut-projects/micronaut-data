@@ -111,6 +111,7 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -163,7 +164,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
     private final ColumnNameCallableResultReader columnNameCallableResultReader;
     private final ColumnIndexCallableResultReader columnIndexCallableResultReader;
-    private final Map<Dialect, SqlExceptionMapper> sqlExceptionMappers = new HashMap<>(Dialect.values().length);
+    private final Map<Dialect, List<SqlExceptionMapper>> sqlExceptionMappers = new EnumMap<>(Dialect.class);
 
     /**
      * Default constructor.
@@ -231,11 +232,12 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         if (CollectionUtils.isNotEmpty(sqlExceptionMapperList)) {
             for (SqlExceptionMapper sqlExceptionMapper : sqlExceptionMapperList) {
                 Dialect dialect = sqlExceptionMapper.getDialect();
-                if (sqlExceptionMappers.containsKey(dialect)) {
-                    LOG.warn("More than one SqlExceptionMapper defined for dialect {}. The last one found {} will be used.", sqlExceptionMapper.getDialect(),
-                        sqlExceptionMapper.getClass());
+                List<SqlExceptionMapper> dialectSqlExceptionMapperList = sqlExceptionMappers.get(dialect);
+                if (dialectSqlExceptionMapperList == null) {
+                    dialectSqlExceptionMapperList = new ArrayList<>();
                 }
-                sqlExceptionMappers.put(dialect, sqlExceptionMapper);
+                dialectSqlExceptionMapperList.add(sqlExceptionMapper);
+                sqlExceptionMappers.put(dialect, dialectSqlExceptionMapperList);
             }
         }
     }
@@ -958,9 +960,14 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
      */
     @Nullable
     private DataAccessException mapSqlException(SQLException sqlException, Dialect dialect) {
-        SqlExceptionMapper sqlExceptionMapper = sqlExceptionMappers.get(dialect);
-        if (sqlExceptionMapper != null) {
-            return sqlExceptionMapper.mapSqlException(sqlException);
+        List<SqlExceptionMapper> dialectSqlExceptionMapperList = sqlExceptionMappers.get(dialect);
+        if (CollectionUtils.isNotEmpty(dialectSqlExceptionMapperList)) {
+            for (SqlExceptionMapper dialectSqlExceptionMapper : dialectSqlExceptionMapperList) {
+                DataAccessException dataAccessException = dialectSqlExceptionMapper.mapSqlException(sqlException);
+                if (dataAccessException != null) {
+                    return dataAccessException;
+                }
+            }
         }
         return null;
     }

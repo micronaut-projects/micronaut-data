@@ -16,9 +16,9 @@
 package io.micronaut.data.r2dbc.operations;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.order.Ordered;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.r2dbc.spi.R2dbcException;
@@ -26,11 +26,11 @@ import io.r2dbc.spi.R2dbcException;
 /**
  * The {@link io.r2dbc.spi.R2dbcException} mapper interface. Can be used to map given R2dbc exceptions to some custom exceptions
  * (for example {@link DataAccessException} and its descendents like {@link io.micronaut.data.exceptions.OptimisticLockException}).
- * Only one {@link R2dbcExceptionMapper} should be present for one dialect.
+ *
+ * @since 4.8.0
  */
-@Internal
 @Experimental
-interface R2dbcExceptionMapper {
+interface R2dbcExceptionMapper extends Ordered {
 
     /**
      * @return the {@link Dialect} that this mapper supports

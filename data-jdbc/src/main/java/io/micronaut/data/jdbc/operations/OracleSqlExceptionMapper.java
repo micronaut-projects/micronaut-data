@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.jdbc.operations;
 
-import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -29,9 +29,11 @@ import java.sql.SQLException;
  * The {@link SqlExceptionMapper} for {@link Dialect#ORACLE}.
  * Handles {@link SQLException} for Oracle update commands. Can add more logic if needed, but this
  * now handles only optimistic locking exception for given error code.
+ *
+ * @since 4.8.0
  */
 @Singleton
-@Internal
+@Experimental
 final class OracleSqlExceptionMapper implements SqlExceptionMapper {
 
     private static final int JSON_VIEW_ETAG_NOT_MATCHING_ERROR = 42699;
