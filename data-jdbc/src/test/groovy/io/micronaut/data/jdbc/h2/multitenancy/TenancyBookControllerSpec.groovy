@@ -39,11 +39,15 @@ class TenancyBookControllerSpec extends Specification {
 
         given:
             BlockingHttpClient client = httpClient.toBlocking()
+            save(bookRepository, client, "Quarkus in Action", "quarkus")
             save(bookRepository, client, "Building Microservices with Micronaut", "micronaut")
             save(bookRepository, client, "Introducing Micronaut", "micronaut")
             save(bookRepository, client, "Grails 3 - Step by Step", "grails")
             save(bookRepository, client, "Falando de Grail", "grails")
             save(bookRepository, client, "Grails Goodness Notebook", "grails")
+
+        expect:
+        bookRepository.count() == 6
 
         when:
             List<TenancyBook> books = fetchBooks(client, "micronaut")
@@ -57,10 +61,29 @@ class TenancyBookControllerSpec extends Specification {
             books
             books.size() == 3
 
-        cleanup:
-            bookRepository.deleteAll()
+        when:
+            deleteBooks(client, "micronaut")
+        then:
+            bookRepository.count() == 4
+
+        when:
+            deleteBooks(client, "grails")
+
+        then:
+            bookRepository.count() == 1
+
+        when:
+            bookRepository.removeAll()
+        then:
+            bookRepository.count() == 0
     }
 
+    void deleteBooks(BlockingHttpClient client, String framework) {
+        HttpRequest<?> request = HttpRequest.DELETE("/books").header("tenantId", framework)
+        HttpResponse<?> response = client.exchange(request)
+        assertEquals(HttpStatus.NO_CONTENT, response.getStatus())
+
+    }
     List<TenancyBook> fetchBooks(BlockingHttpClient client, String framework) {
         HttpRequest<?> request = HttpRequest.GET("/books").header("tenantId", framework)
         Argument<List<TenancyBook>> responseArgument = Argument.listOf(TenancyBook.class)

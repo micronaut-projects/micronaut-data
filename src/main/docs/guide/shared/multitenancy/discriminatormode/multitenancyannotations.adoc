@@ -1,0 +1,35 @@
+There are specific annotations to alter the behaviour of repositories with api:data.annotation.TenantId[] property and its methods:
+
+[cols=2*]
+|===
+|*Annotation*
+|*Description*
+
+|api:data.annotation.WithoutTenantId[`@WithTenantId`]
+|The method's query will not have implicit predicate to include the tenant id
+
+|api:data.annotation.WithTenantId[`@WithTenantId`]
+|Modify the tenant id of the query
+
+|===
+
+NOTE: The tenancy annotations are only supported for the discriminator multitenancy
+
+For example, given the following Entity:
+
+[source,java]
+----
+include::data-jdbc/src/test/groovy/io/micronaut/data/jdbc/h2/multitenancy/TenancyBook.java[]
+----
+
+The following repository's `removeAll` method is annotated with the `@WithoutTenantId` annotation.
+
+[source,java]
+----
+include::data-jdbc/src/test/groovy/io/micronaut/data/jdbc/h2/multitenancy/TenancyBookRepository.java[tags=clazz]
+----
+
+
+The method `deleteAll`, inherited from `CrudRepository`,  executes a query such as: `DELETE FROM tenancy_book WHERE framework = `.
+
+However, the method `removeAll` will execute a query such as: `DELETE FROM tenancy_book`
