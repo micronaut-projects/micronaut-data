@@ -5,19 +5,3 @@ When using discriminator column multitenancy, the entity with multitenancy enabl
 include::doc-examples/jdbc-multitenancy-discriminator-example-java/src/main/java/example/Book.java[tags="book"]
 ----
 
-There are specific annotations to alter the behaviour of repositories with api:data.annotation.TenantId[] property and its methods:
-
-[cols=2*]
-|===
-|*Annotation*
-|*Description*
-
-|api:data.annotation.WithoutTenantId[]
-|The method's query will not have implicit predicate to include the tenant id
-
-|api:data.annotation.WithTenantId[]
-|Modify the tenant id of the query
-
-|===
-
-NOTE: The tenancy annotations are only supported for the discriminator multitenancy
