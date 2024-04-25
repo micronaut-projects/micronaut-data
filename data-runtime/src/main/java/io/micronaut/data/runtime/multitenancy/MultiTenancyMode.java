@@ -29,9 +29,5 @@ public enum MultiTenancyMode {
     /**
      * The same database, but different schemas are used to store each tenants data.
      */
-    SCHEMA,
-    /**
-     * The same database is used with a discriminator used to partition and isolate data.
-     */
-    DISCRIMINATOR
+    SCHEMA
 }

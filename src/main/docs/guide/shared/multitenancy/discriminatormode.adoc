@@ -1,12 +1,4 @@
-The DISCRIMINATOR mode uses a single entity's property to store the tenant id.
-
-.Example of the configuration with one data source
-[configuration]
-----
-include::doc-examples/jdbc-multitenancy-discriminator-example-java/src/main/resources/application.yml[]
-----
-
-The entity with multitenancy enabled requires a tenant property to be annotated with api:data.annotation.TenantId[]:
+When using discriminator column multitenancy, the entity with multitenancy enabled requires a property to be annotated with api:data.annotation.TenantId[]:
 
 [source,java]
 ----
