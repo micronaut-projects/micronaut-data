@@ -49,7 +49,6 @@ abstract class AbstractDiscriminatorMultitenancySpec extends Specification {
         setup:
             EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, getExtraProperties() + getProperties() + [
                     'spec.name'                                               : 'discriminator-multitenancy',
-                    'micronaut.data.multi-tenancy.mode'                       : 'DISCRIMINATOR',
                     'micronaut.multitenancy.tenantresolver.httpheader.enabled': 'true',
                     'datasource.default.schema-generate'                      : 'create-drop'
             ], Environment.TEST)
