@@ -39,6 +39,7 @@ shared:
     discriminatormode:
       title: Discriminator Mode
       multitenancyannotations: Multi-tenancy annotations
+    multitenancymodes: Multitenancy modes
     datasourcemode: DataSource Mode
     schemamode: Schema Mode
 hibernate:

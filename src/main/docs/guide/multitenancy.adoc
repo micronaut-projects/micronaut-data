@@ -1,16 +1,1 @@
-Micronaut Data supports multi-tenancy to allow the use of multiple databases or schemas by a single micronaut application.
-
-.Supported Multitenancy Modes
-
-|===
-|Multitenancy Mode | Description
-
-|DATASOURCE
-|A separate database with a separate connection pool is used to store each tenants data. Internally different repository operations  / transaction manager instance will be used for each tenant.
-
-|SCHEMA
-|The same database, but different schemas are used to store each tenants data. Only supported by JDBC/R2DBC/MongoDB (collections)
-
-|DISCRIMINATOR
-|A single database/schema stores all tenants' data, but a discriminator column separates the data.
-|===
+You can use Micronaut Data to partition your data based on the current tenant. It leverages https://micronaut-projects.github.io/micronaut-multitenancy/snapshot/guide/[Micronaut Multi-tenancy] for tenant resolution.
