@@ -8,7 +8,7 @@ import io.micronaut.data.annotation.TenantId;
 import io.micronaut.serde.annotation.Serdeable;
 
 @Serdeable
-@MappedEntity
+@MappedEntity("book")
 public record TenancyBook(@Nullable @Id @GeneratedValue Long id,
                           String title,
                           @TenantId String framework) {
