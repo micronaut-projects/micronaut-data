@@ -23,6 +23,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.AssociationUtils;
@@ -556,13 +557,12 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
 
     private List<Order> getOrders(Sort sort, Root<?> root, CriteriaBuilder cb) {
         List<Order> orders = new ArrayList<>();
-        Path<?> path = null;
         for (Sort.Order order : sort.getOrderBy()) {
-            String[] propertyArray = order.getProperty().split("\\.");
-            for (String property : propertyArray) {
-                path = path == null ? root.get(property) : path.get(property);
+            Path<?> path = root;
+            for (String property : StringUtils.splitOmitEmptyStrings(order.getProperty(), '.')) {
+                path = path.get(property);
             }
-            Expression<?> expression = order.isIgnoreCase() && path != null ? cb.lower(path.type().as(String.class)) : path;
+            Expression<?> expression = order.isIgnoreCase() ? cb.lower(path.type().as(String.class)) : path;
             orders.add(order.isAscending() ? cb.asc(expression) : cb.desc(expression));
         }
         return orders;

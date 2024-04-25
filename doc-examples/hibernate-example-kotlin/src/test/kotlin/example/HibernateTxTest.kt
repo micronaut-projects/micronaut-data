@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.assertThrows
+import java.time.LocalDate
 import java.util.*
 
 @MicronautTest(transactional = false, rollback = false)
@@ -292,7 +293,7 @@ class HibernateTxTest {
     }
 
     @Test
-    fun `coroutineCriteria failing`() {
+    fun `coroutineCriteria5`() {
         runBlocking {
             val parent1 = Parent("abc", mutableListOf()).apply { children.add(Child("cde", parent = this)) }
             val parent2 = Parent("cde", mutableListOf()).apply { children.add(Child("abc", parent = this)) }
@@ -324,4 +325,47 @@ class HibernateTxTest {
         }
     }
 
+    @Test
+    fun coroutineCriteria6() = runBlocking {
+        Parent("abc", mutableListOf()).apply {
+            children.add(Child("c1", LocalDate.of(2020, 12 ,8),this))
+            children.add(Child("c2", LocalDate.of(2020, 9 ,7),this))
+            repositorySuspended.save(this)
+        }
+        Parent("cde", mutableListOf()).apply {
+            children.add(Child("c3", LocalDate.of(2020, 10 ,8),this))
+            children.add(Child("c4", LocalDate.of(2020, 11 ,7),this))
+            repositorySuspended.save(this)
+        }
+
+        val query = query<Child> {
+            val parent: Join<Child, Parent?> = if (query.resultType.kotlin != Long::class) {
+                root.fetch<Child, Parent?>("parent") as SqmSingularJoin<Child, Parent?>
+            }  else {
+                root.joinOne(Child::parent)
+            }
+
+            where {
+                parent[Parent::name] inList listOf("abc", "cde")
+            }
+        }
+
+        val resultAsc = childRepository.findAll(
+            query,
+            Sort.of(
+                Sort.Order("parent.name", Sort.Order.Direction.ASC, false),
+                Sort.Order("dateOfBirth", Sort.Order.Direction.ASC, false)
+            )
+        ).toList()
+        assertEquals(listOf("c2", "c1", "c3", "c4"), resultAsc.map { it.name })
+
+        val resultDesc = childRepository.findAll(
+            query,
+            Sort.of(
+                Sort.Order("parent.name", Sort.Order.Direction.DESC, false),
+                Sort.Order("dateOfBirth", Sort.Order.Direction.DESC, false)
+            )
+        ).toList()
+        assertEquals(listOf("c4", "c3", "c1", "c2"), resultDesc.map { it.name })
+    }
 }
