@@ -29,3 +29,9 @@ There are specific annotations to alter the behaviour of repositories with api:d
 |===
 
 NOTE: The tenancy annotations are only supported for the discriminator multitenancy
+
+
+[source,java]
+----
+include::doc-examples/jdbc-multitenancy-discriminator-example-java/src/main/java/example/Book.java[tags="book"]
+----
