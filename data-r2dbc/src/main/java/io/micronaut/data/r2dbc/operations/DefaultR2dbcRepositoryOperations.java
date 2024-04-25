@@ -421,7 +421,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
      */
     @Nullable
     private DataAccessException mapR2dbcException(R2dbcException r2dbcException, Dialect dialect) {
-        List<R2dbcExceptionMapper> dialectR2dbcExceptionMapperList = r2dbcExceptionMappers.get(dialect);
+        List<R2dbcExceptionMapper> dialectR2dbcExceptionMapperList = r2dbcExceptionMappers.getOrDefault(dialect, List.of());
         if (CollectionUtils.isNotEmpty(dialectR2dbcExceptionMapperList)) {
             for (R2dbcExceptionMapper dialectR2dbcExceptionMapper : dialectR2dbcExceptionMapperList) {
                 DataAccessException dataAccessException = dialectR2dbcExceptionMapper.mapR2dbcException(r2dbcException);

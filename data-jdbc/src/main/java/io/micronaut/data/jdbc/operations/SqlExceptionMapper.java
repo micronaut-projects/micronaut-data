@@ -27,9 +27,11 @@ import java.sql.SQLException;
 /**
  * The {@link SQLException} mapper interface. Can be used to map given SQL exceptions to some custom exceptions
  * (for example {@link DataAccessException} and its descendents like {@link io.micronaut.data.exceptions.OptimisticLockException}).
+ *
+ * @since 4.8.0
  */
 @Experimental
-interface SqlExceptionMapper extends Ordered {
+public interface SqlExceptionMapper extends Ordered {
 
     /**
      * @return the {@link Dialect} that this mapper supports

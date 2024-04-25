@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.r2dbc.operations;
 
-import io.micronaut.core.annotation.Experimental;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -30,7 +30,7 @@ import jakarta.inject.Singleton;
  * now handles only optimistic locking exception for given error code.
  */
 @Singleton
-@Experimental
+@Internal
 final class OracleR2dbcExceptionMapper implements R2dbcExceptionMapper {
 
     private static final int JSON_VIEW_ETAG_NOT_MATCHING_ERROR = 42699;

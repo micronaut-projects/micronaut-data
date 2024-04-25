@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.jdbc.operations;
 
-import io.micronaut.core.annotation.Experimental;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -33,7 +33,7 @@ import java.sql.SQLException;
  * @since 4.8.0
  */
 @Singleton
-@Experimental
+@Internal
 final class OracleSqlExceptionMapper implements SqlExceptionMapper {
 
     private static final int JSON_VIEW_ETAG_NOT_MATCHING_ERROR = 42699;

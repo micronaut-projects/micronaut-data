@@ -956,13 +956,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
      */
     @Nullable
     private DataAccessException mapSqlException(SQLException sqlException, Dialect dialect) {
-        List<SqlExceptionMapper> dialectSqlExceptionMapperList = sqlExceptionMappers.get(dialect);
-        if (CollectionUtils.isNotEmpty(dialectSqlExceptionMapperList)) {
-            for (SqlExceptionMapper dialectSqlExceptionMapper : dialectSqlExceptionMapperList) {
-                DataAccessException dataAccessException = dialectSqlExceptionMapper.mapSqlException(sqlException);
-                if (dataAccessException != null) {
-                    return dataAccessException;
-                }
+        List<SqlExceptionMapper> dialectSqlExceptionMapperList = sqlExceptionMappers.getOrDefault(dialect, List.of());
+        for (SqlExceptionMapper dialectSqlExceptionMapper : dialectSqlExceptionMapperList) {
+            DataAccessException dataAccessException = dialectSqlExceptionMapper.mapSqlException(sqlException);
+            if (dataAccessException != null) {
+                return dataAccessException;
             }
         }
         return null;

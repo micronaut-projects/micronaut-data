@@ -30,7 +30,7 @@ import io.r2dbc.spi.R2dbcException;
  * @since 4.8.0
  */
 @Experimental
-interface R2dbcExceptionMapper extends Ordered {
+public interface R2dbcExceptionMapper extends Ordered {
 
     /**
      * @return the {@link Dialect} that this mapper supports
