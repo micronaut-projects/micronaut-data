@@ -28,6 +28,7 @@ import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.annotation.Connectable;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
@@ -88,7 +89,6 @@ import io.micronaut.data.runtime.operations.internal.OperationContext;
 import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
 import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery;
 import io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOperations;
-import io.micronaut.data.runtime.operations.internal.sql.SqlExceptionMapper;
 import io.micronaut.data.runtime.operations.internal.sql.SqlJsonColumnMapperProvider;
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
@@ -97,6 +97,8 @@ import io.micronaut.json.JsonMapper;
 import io.micronaut.transaction.TransactionOperations;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.sql.CallableStatement;
@@ -109,6 +111,7 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -144,6 +147,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     ReactiveCapableRepository,
     AutoCloseable,
     SyncCascadeOperations.SyncCascadeOperationsHelper<DefaultJdbcRepositoryOperations.JdbcOperationContext> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultJdbcRepositoryOperations.class);
     private final ConnectionOperations<Connection> connectionOperations;
     private final TransactionOperations<Connection> transactionOperations;
     private final DataSource dataSource;
@@ -158,6 +163,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
     private final ColumnNameCallableResultReader columnNameCallableResultReader;
     private final ColumnIndexCallableResultReader columnIndexCallableResultReader;
+    private final Map<Dialect, SqlExceptionMapper> sqlExceptionMappers = new HashMap<>(Dialect.values().length);
 
     /**
      * Default constructor.
@@ -208,8 +214,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             conversionService,
             attributeConverterRegistry,
             jsonMapper,
-            sqlJsonColumnMapperProvider,
-            sqlExceptionMapperList);
+            sqlJsonColumnMapperProvider);
         this.schemaTenantResolver = schemaTenantResolver;
         this.schemaHandler = schemaHandler;
         this.connectionOperations = connectionOperations;
@@ -223,6 +228,16 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         this.jdbcConfiguration = jdbcConfiguration;
         this.columnNameCallableResultReader = new ColumnNameCallableResultReader(conversionService);
         this.columnIndexCallableResultReader = new ColumnIndexCallableResultReader(conversionService);
+        if (CollectionUtils.isNotEmpty(sqlExceptionMapperList)) {
+            for (SqlExceptionMapper sqlExceptionMapper : sqlExceptionMapperList) {
+                Dialect dialect = sqlExceptionMapper.getDialect();
+                if (sqlExceptionMappers.containsKey(dialect)) {
+                    LOG.warn("More than one SqlExceptionMapper defined for dialect {}. The last one found {} will be used.", sqlExceptionMapper.getDialect(),
+                        sqlExceptionMapper.getClass());
+                }
+                sqlExceptionMappers.put(dialect, sqlExceptionMapper);
+            }
+        }
     }
 
     @NonNull
@@ -929,6 +944,25 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             }
         };
         return StreamSupport.stream(iterable.spliterator(), false);
+    }
+
+    /**
+     * Maps SQL exception, used in context of update but could be used elsewhere.
+     * It will return custom {@DataAccessException} based on the {@link SQLException} or null
+     * if it cannot be mapped to the custom {@link DataAccessException}.
+     *
+     * @param sqlException the SQL exception
+     * @param dialect the SQL dialect
+     * @return custom {@link DataAccessException} exception based on {@link SQLException} that was thrown or null
+     * if exception is not mappable to {@link DataAccessException} in given dialect {@link SqlExceptionMapper}
+     */
+    @Nullable
+    private DataAccessException mapSqlException(SQLException sqlException, Dialect dialect) {
+        SqlExceptionMapper sqlExceptionMapper = sqlExceptionMappers.get(dialect);
+        if (sqlExceptionMapper != null) {
+            return sqlExceptionMapper.mapSqlException(sqlException);
+        }
+        return null;
     }
 
     @NonNull

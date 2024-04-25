@@ -30,6 +30,7 @@ import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.core.type.Argument;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -77,7 +78,6 @@ import io.micronaut.data.runtime.operations.internal.OperationContext;
 import io.micronaut.data.runtime.operations.internal.ReactiveCascadeOperations;
 import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery;
 import io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOperations;
-import io.micronaut.data.runtime.operations.internal.sql.SqlExceptionMapper;
 import io.micronaut.data.runtime.operations.internal.sql.SqlJsonColumnMapperProvider;
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
@@ -89,6 +89,7 @@ import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.Parameters;
+import io.r2dbc.spi.R2dbcException;
 import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.Readable;
 import io.r2dbc.spi.Result;
@@ -104,11 +105,12 @@ import reactor.util.context.Context;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-import java.sql.SQLException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -131,7 +133,9 @@ import java.util.stream.Stream;
 final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperations<Row, Statement, RuntimeException>
     implements BlockingExecutorReactorRepositoryOperations, R2dbcRepositoryOperations, R2dbcOperations,
     ReactiveCascadeOperations.ReactiveCascadeOperationsHelper<DefaultR2dbcRepositoryOperations.R2dbcOperationContext> {
+
     private static final Logger LOG = LoggerFactory.getLogger(DefaultR2dbcRepositoryOperations.class);
+
     private final ConnectionFactory connectionFactory;
     private final ReactorReactiveRepositoryOperations reactiveOperations;
     private final String dataSourceName;
@@ -144,6 +148,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     private final SchemaTenantResolver schemaTenantResolver;
     private final R2dbcSchemaHandler schemaHandler;
     private final DataR2dbcConfiguration configuration;
+    private final Map<Dialect, R2dbcExceptionMapper> r2dbcExceptionMappers = new HashMap<>(Dialect.values().length);
 
     /**
      * Default constructor.
@@ -161,7 +166,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
      * @param configuration               The configuration
      * @param jsonMapper                  The JSON mapper
      * @param sqlJsonColumnMapperProvider The SQL JSON column mapper provider
-     * @param sqlExceptionMapperList The SQL exception mapper list
+     * @param r2dbcExceptionMapperList    The R2dbc exception mapper list
      * @param transactionOperations       The transaction operations
      * @param connectionOperations        The connection operations
      */
@@ -181,7 +186,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         @Parameter DataR2dbcConfiguration configuration,
         @Nullable JsonMapper jsonMapper,
         SqlJsonColumnMapperProvider<Row> sqlJsonColumnMapperProvider,
-        List<SqlExceptionMapper> sqlExceptionMapperList,
+        List<R2dbcExceptionMapper> r2dbcExceptionMapperList,
         @Parameter R2dbcReactorTransactionOperations transactionOperations,
         @Parameter ReactorConnectionOperations<Connection> connectionOperations) {
         super(
@@ -195,8 +200,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             conversionService,
             attributeConverterRegistry,
             jsonMapper,
-            sqlJsonColumnMapperProvider,
-            sqlExceptionMapperList);
+            sqlJsonColumnMapperProvider);
         this.connectionFactory = connectionFactory;
         this.ioExecutorService = executorService;
         this.schemaTenantResolver = schemaTenantResolver;
@@ -210,6 +214,16 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         String name = dataSourceName;
         if (name == null) {
             name = "default";
+        }
+        if (CollectionUtils.isNotEmpty(r2dbcExceptionMapperList)) {
+            for (R2dbcExceptionMapper r2dbcExceptionMapper : r2dbcExceptionMapperList) {
+                Dialect dialect = r2dbcExceptionMapper.getDialect();
+                if (r2dbcExceptionMappers.containsKey(dialect)) {
+                    LOG.warn("More than one R2dbcExceptionMapper defined for dialect {}. The last one found {} will be used.", r2dbcExceptionMapper.getDialect(),
+                        r2dbcExceptionMapper.getClass());
+                }
+                r2dbcExceptionMappers.put(dialect, r2dbcExceptionMapper);
+            }
         }
     }
 
@@ -393,6 +407,25 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         return isSupportsBatchInsert(persistentEntity, context.dialect);
     }
 
+    /**
+     * Maps R2dbc exception, used in context of update but could be used elsewhere.
+     * It will return custom {@DataAccessException} based on the {@link R2dbcException} or null
+     * if it cannot be mapped to the custom {@link DataAccessException}.
+     *
+     * @param r2dbcException the R2dbc exception
+     * @param dialect the SQL dialect
+     * @return custom {@link DataAccessException} exception based on {@link R2dbcException} that was thrown or null
+     * if exception is not mappable to {@link DataAccessException} in given dialect {@link R2dbcExceptionMapper}
+     */
+    @Nullable
+    private DataAccessException mapR2dbcException(R2dbcException r2dbcException, Dialect dialect) {
+        R2dbcExceptionMapper r2dbcExceptionMapper = r2dbcExceptionMappers.get(dialect);
+        if (r2dbcExceptionMapper != null) {
+            return r2dbcExceptionMapper.mapR2dbcException(r2dbcException);
+        }
+        return null;
+    }
+
     private static <T> Flux<T> executeAndMapEachRow(Statement statement, Function<Row, T> mapper) {
         return Flux.from(statement.execute())
             .flatMap(result -> Flux.from(result.map((row, rowMetadata) -> mapper.apply(row))));
@@ -430,8 +463,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
     private <T> Function<? super Throwable, ? extends Publisher<? extends T>> errorHandler(Dialect dialect) {
         return throwable -> {
-            if (throwable.getCause() instanceof SQLException sqlException) {
-                DataAccessException dataAccessException = mapSqlException(sqlException, dialect);
+            if (throwable instanceof R2dbcException r2dbcException) {
+                DataAccessException dataAccessException = mapR2dbcException(r2dbcException, dialect);
                 if (dataAccessException != null) {
                     return Mono.error(dataAccessException);
                 }

@@ -21,10 +21,8 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.reflect.ReflectionUtils;
-import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Repository;
@@ -73,10 +71,8 @@ import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.json.JsonMapper;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -111,8 +107,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
 
     protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
 
-    private static final Logger LOG = LoggerFactory.getLogger(AbstractSqlRepositoryOperations.class);
-
     protected final String dataSourceName;
     @SuppressWarnings("WeakerAccess")
     protected final ResultReader<RS, String> columnNameResultSetReader;
@@ -123,7 +117,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     protected final JsonMapper jsonMapper;
     protected final SqlJsonColumnMapperProvider<RS> sqlJsonColumnMapperProvider;
     protected final Map<Class, SqlQueryBuilder> queryBuilders = new HashMap<>(10);
-    protected final Map<Dialect, SqlExceptionMapper> sqlExceptionMappers = new HashMap<>(Dialect.values().length);
     protected final Map<Class, String> repositoriesWithHardcodedDataSource = new HashMap<>(10);
     private final Map<QueryKey, SqlStoredQuery> entityInserts = new ConcurrentHashMap<>(10);
     private final Map<QueryKey, SqlStoredQuery> entityUpdates = new ConcurrentHashMap<>(10);
@@ -143,7 +136,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @param attributeConverterRegistry   The attribute converter registry
      * @param jsonMapper                   The JSON mapper
      * @param sqlJsonColumnMapperProvider  The SQL JSON column mapper provider
-     * @param sqlExceptionMapperList The SQL exception mapper list
      */
     protected AbstractSqlRepositoryOperations(
             String dataSourceName,
@@ -156,8 +148,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             DataConversionService conversionService,
             AttributeConverterRegistry attributeConverterRegistry,
             JsonMapper jsonMapper,
-            SqlJsonColumnMapperProvider<RS> sqlJsonColumnMapperProvider,
-            List<SqlExceptionMapper> sqlExceptionMapperList) {
+            SqlJsonColumnMapperProvider<RS> sqlJsonColumnMapperProvider) {
         super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
         this.dataSourceName = dataSourceName;
         this.columnNameResultSetReader = columnNameResultSetReader;
@@ -165,16 +156,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         this.preparedStatementWriter = preparedStatementWriter;
         this.jsonMapper = jsonMapper;
         this.sqlJsonColumnMapperProvider = sqlJsonColumnMapperProvider;
-        if (CollectionUtils.isNotEmpty(sqlExceptionMapperList)) {
-            for (SqlExceptionMapper sqlExceptionMapper : sqlExceptionMapperList) {
-                Dialect dialect = sqlExceptionMapper.getDialect();
-                if (sqlExceptionMappers.containsKey(dialect)) {
-                    LOG.warn("More than one SqlExceptionMapper defined for dialect {}. The last one found {} will be used.", sqlExceptionMapper.getDialect(),
-                        sqlExceptionMapper.getClass());
-                }
-                sqlExceptionMappers.put(dialect, sqlExceptionMapper);
-            }
-        }
         Collection<BeanDefinition<Object>> beanDefinitions = beanContext
                 .getBeanDefinitions(Object.class, Qualifiers.byStereotype(Repository.class));
         for (BeanDefinition<Object> beanDefinition : beanDefinitions) {
@@ -581,25 +562,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             throw new IllegalStateException("Unexpected query result type: " + queryResultInfo.getType());
         }
         return createJsonQueryResultMapper(sqlStoredQuery, columnName, jsonDataType, resultSetType, persistentEntity, loadListener);
-    }
-
-    /**
-     * Maps SQL exception, used in context of update but could be used elsewhere.
-     * It will return custom {@DataAccessException} based on the {@link SQLException} or null
-     * if it cannot be mapped to the custom {@link DataAccessException}.
-     *
-     * @param sqlException the SQL exception
-     * @param dialect the SQL dialect
-     * @return custom {@link DataAccessException} exception based on {@link SQLException} that was thrown or null
-     * if exception is not mappable to {@link DataAccessException} in given dialect {@link SqlExceptionMapper}
-     */
-    @Nullable
-    protected DataAccessException mapSqlException(SQLException sqlException, Dialect dialect) {
-        SqlExceptionMapper sqlExceptionMapper = sqlExceptionMappers.get(dialect);
-        if (sqlExceptionMapper != null) {
-            return sqlExceptionMapper.mapSqlException(sqlException);
-        }
-        return null;
     }
 
     /**

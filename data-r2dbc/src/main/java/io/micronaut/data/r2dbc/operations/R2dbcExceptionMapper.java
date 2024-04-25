@@ -13,23 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.runtime.operations.internal.sql;
+package io.micronaut.data.r2dbc.operations;
 
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-
-import java.sql.SQLException;
+import io.r2dbc.spi.R2dbcException;
 
 /**
- * The {@link SQLException} mapper interface. Can be used to map given SQL exceptions to some custom exceptions
- * (for example {@link io.micronaut.data.exceptions.DataAccessException} and its descendents like {@link io.micronaut.data.exceptions.OptimisticLockException}).
- * Only one {@link SqlExceptionMapper} should be present for one dialect.
+ * The {@link io.r2dbc.spi.R2dbcException} mapper interface. Can be used to map given R2dbc exceptions to some custom exceptions
+ * (for example {@link DataAccessException} and its descendents like {@link io.micronaut.data.exceptions.OptimisticLockException}).
+ * Only one {@link R2dbcExceptionMapper} should be present for one dialect.
  */
 @Internal
-public interface SqlExceptionMapper {
+@Experimental
+interface R2dbcExceptionMapper {
 
     /**
      * @return the {@link Dialect} that this mapper supports
@@ -38,13 +39,13 @@ public interface SqlExceptionMapper {
     Dialect getDialect();
 
     /**
-     * Maps {@link SQLException} to custom {@link DataAccessException}.
-     * In case when mapper is not able to map {@link SQLException} to custom {@link DataAccessException} then result will be null
+     * Maps {@link io.r2dbc.spi.R2dbcException} to custom {@link DataAccessException}.
+     * In case when mapper is not able to map {@link io.r2dbc.spi.R2dbcException} to custom {@link DataAccessException} then result will be null
      * indicating that mapper cannot map the exception.
      *
-     * @param sqlException The SQL exception
-     * @return mapped {@link DataAccessException} from {@link SQLException} or if mapper cannot map {@link SQLException} then returns null
+     * @param r2dbcException The R2dbc exception
+     * @return mapped {@link DataAccessException} from {@link R2dbcException} or if mapper cannot map {@link R2dbcException} then returns null
      */
     @Nullable
-    DataAccessException mapSqlException(@NonNull SQLException sqlException);
+    DataAccessException mapR2dbcException(@NonNull R2dbcException r2dbcException);
 }
