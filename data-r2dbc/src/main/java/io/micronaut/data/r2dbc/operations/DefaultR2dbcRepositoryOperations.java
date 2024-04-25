@@ -448,10 +448,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             .flatMap(result -> Flux.from(result.map((row, metadata) -> Mono.justOrEmpty(mapper.apply(row)))).flatMap(t -> t));
     }
 
-    private <T> Mono<T> executeAndMapEachRowSingle(Statement statement, Dialect dialect, Function<Row, T> mapper) {
-        return executeAndMapEachRow(statement, mapper).onErrorResume(errorHandler(dialect)).as(DefaultR2dbcRepositoryOperations::toSingleResult);
-    }
-
     private <T> Flux<T> executeAndMapEachReadable(Statement statement, Dialect dialect, Function<Readable, T> mapper) {
         return executeAndMapEachReadable(statement, mapper).onErrorResume(errorHandler(dialect));
     }
@@ -947,6 +943,10 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 storedQuery.bindParameters(new R2dbcParameterBinder(ctx, stmt, storedQuery), ctx.invocationContext, d.entity, d.previousValues);
                 return d;
             });
+        }
+
+        private <T> Mono<T> executeAndMapEachRowSingle(Statement statement, Dialect dialect, Function<Row, T> mapper) {
+            return executeAndMapEachRow(statement, mapper).onErrorResume(errorHandler(dialect)).as(DefaultR2dbcRepositoryOperations::toSingleResult);
         }
 
         @Override
