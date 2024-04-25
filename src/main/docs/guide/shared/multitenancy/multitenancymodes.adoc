@@ -1,0 +1,16 @@
+In addition to discriminator column multitenancy, Micronaut Data supports multi-tenancy to allow the use of multiple databases or schemas by a single micronaut application.
+
+You can set the multitenancy mode by setting the property `micronaut.data.multi-tenancy.mode`.
+
+.Supported Multitenancy Modes
+
+|===
+|Multitenancy Mode | Description
+
+|DATASOURCE
+|A separate database with a separate connection pool is used to store each tenants data. Internally different repository operations  / transaction manager instance will be used for each tenant.
+
+|SCHEMA
+|The same database, but different schemas are used to store each tenants data. Only supported by JDBC/R2DBC/MongoDB (collections)
+
+|===

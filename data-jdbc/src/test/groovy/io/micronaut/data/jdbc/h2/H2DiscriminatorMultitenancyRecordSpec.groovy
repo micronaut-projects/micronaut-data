@@ -47,7 +47,6 @@ class H2DiscriminatorMultitenancyRecordSpec extends Specification implements H2T
         setup:
             EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer, getExtraProperties() + getProperties() + [
                     'spec.name'                                               : 'discriminator-multitenancy-record',
-                    'micronaut.data.multi-tenancy.mode'                       : 'DISCRIMINATOR',
                     'micronaut.multitenancy.tenantresolver.httpheader.enabled': 'true',
                     'datasource.default.schema-generate'                      : 'create-drop'
             ], Environment.TEST)
