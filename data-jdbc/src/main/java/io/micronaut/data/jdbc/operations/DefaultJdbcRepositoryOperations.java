@@ -97,8 +97,6 @@ import io.micronaut.json.JsonMapper;
 import io.micronaut.transaction.TransactionOperations;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.sql.CallableStatement;
@@ -112,7 +110,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -149,7 +146,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     AutoCloseable,
     SyncCascadeOperations.SyncCascadeOperationsHelper<DefaultJdbcRepositoryOperations.JdbcOperationContext> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultJdbcRepositoryOperations.class);
     private final ConnectionOperations<Connection> connectionOperations;
     private final TransactionOperations<Connection> transactionOperations;
     private final DataSource dataSource;
