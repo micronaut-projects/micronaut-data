@@ -8403,7 +8403,7 @@ public abstract class AbstractBookRepository implements CrudRepository&lt;Book, 
         return jdbcOperations.prepareStatement(sql, statement -&gt; {
             statement.setString(1, title);
             ResultSet resultSet = statement.executeQuery();
-            return jdbcOperations.entityStream(resultSet, Book.class).collect(Collectors.toList());
+            return jdbcOperations.entityStream(resultSet, Book.class).toList();
         });
     }
 }</code></pre>
@@ -8438,7 +8438,7 @@ abstract class AbstractBookRepository implements CrudRepository&lt;Book, Long&gt
             statement.setString(1, title)
             ResultSet resultSet = statement.executeQuery()
             return jdbcOperations.entityStream(resultSet, Book.class)
-                    .collect(Collectors.toList())
+                    .toList()
         })
     }
 }</code></pre>
