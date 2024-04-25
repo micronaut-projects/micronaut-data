@@ -195,6 +195,11 @@ class OracleJdbcJsonViewSpec extends Specification {
         studentViewRepository.update(newJoshStudentView)
         then:
         thrown(OptimisticLockException)
+
+        when:"Optimistic lock exception with invalid ETAG in batch update"
+        studentViewRepository.updateAll(List.of(newJoshStudentView))
+        then:
+        thrown(OptimisticLockException)
     }
 
     def "insert new"() {

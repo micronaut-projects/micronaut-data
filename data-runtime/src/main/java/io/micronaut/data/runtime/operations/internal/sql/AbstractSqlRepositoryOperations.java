@@ -28,7 +28,6 @@ import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
@@ -74,7 +73,6 @@ import io.micronaut.json.JsonMapper;
 import org.slf4j.Logger;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -108,6 +106,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         HintsCapableRepository {
 
     protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
+
     protected final String dataSourceName;
     @SuppressWarnings("WeakerAccess")
     protected final ResultReader<RS, String> columnNameResultSetReader;
@@ -566,22 +565,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     }
 
     /**
-     * Handles SQL exception, used in context of update but could be used elsewhere.
-     * It can throw custom exception based on the {@link SQLException}.
-     *
-     * @param sqlException the SQL exception
-     * @param dialect the SQL dialect
-     * @return custom exception based on {@link SQLException} that was thrown or that same
-     * exception if nothing specific was about it
-     */
-    protected static Throwable handleSqlException(SQLException sqlException, Dialect dialect) {
-        if (dialect == Dialect.ORACLE) {
-            return OracleSqlExceptionHandler.handleSqlException(sqlException);
-        }
-        return sqlException;
-    }
-
-    /**
      * Return an indicator telling whether prepared query result produces JSON result.
      *
      * @param preparedQuery the prepared query
@@ -757,31 +740,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 throw new IllegalStateException("Not supported!");
             }
         };
-    }
-
-    /**
-     * Handles {@link SQLException} for Oracle update commands. Can add more logic if needed, but this
-     * now handles only optimistic locking exception for given error code.
-     */
-    private static final class OracleSqlExceptionHandler {
-        private static final int JSON_VIEW_ETAG_NOT_MATCHING_ERROR = 42699;
-
-        /**
-         * Handles SQL exception for Oracle dialect, used in context of update but could be used elsewhere.
-         * It can throw custom exception based on the {@link SQLException}.
-         * Basically throws {@link OptimisticLockException} if error thrown is matching expected error code
-         * that is used to represent ETAG not matching when updating Json View.
-         *
-         * @param sqlException the SQL exception
-         * @return custom exception based on {@link SQLException} that was thrown or that same
-         * exception if nothing specific was about it
-         */
-        static Throwable handleSqlException(SQLException sqlException) {
-            if (sqlException.getErrorCode() == JSON_VIEW_ETAG_NOT_MATCHING_ERROR) {
-                return new OptimisticLockException("ETAG did not match when updating record: " + sqlException.getMessage(), sqlException);
-            }
-            return sqlException;
-        }
     }
 
     /**

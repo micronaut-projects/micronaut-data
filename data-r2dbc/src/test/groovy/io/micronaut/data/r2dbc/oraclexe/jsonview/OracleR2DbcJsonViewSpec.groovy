@@ -81,6 +81,11 @@ class OracleR2DbcJsonViewSpec extends Specification {
         def e = thrown(OptimisticLockException)
         e.message.startsWith("ETAG did not match when updating record")
 
+        when:"Optimistic lock exception with invalid ETAG in batch update"
+        contactViewRepository.updateAll(List.of(contactView))
+        then:
+        thrown(OptimisticLockException)
+
         when:"Save multiple at once"
         ContactView contactView1 = new ContactView()
         contactView1.name = "ContactNew1"
