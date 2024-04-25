@@ -77,6 +77,7 @@ import io.micronaut.data.runtime.operations.internal.OperationContext;
 import io.micronaut.data.runtime.operations.internal.ReactiveCascadeOperations;
 import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery;
 import io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOperations;
+import io.micronaut.data.runtime.operations.internal.sql.SqlExceptionMapper;
 import io.micronaut.data.runtime.operations.internal.sql.SqlJsonColumnMapperProvider;
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
@@ -160,6 +161,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
      * @param configuration               The configuration
      * @param jsonMapper                  The JSON mapper
      * @param sqlJsonColumnMapperProvider The SQL JSON column mapper provider
+     * @param sqlExceptionMapperList The SQL exception mapper list
      * @param transactionOperations       The transaction operations
      * @param connectionOperations        The connection operations
      */
@@ -179,6 +181,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         @Parameter DataR2dbcConfiguration configuration,
         @Nullable JsonMapper jsonMapper,
         SqlJsonColumnMapperProvider<Row> sqlJsonColumnMapperProvider,
+        List<SqlExceptionMapper> sqlExceptionMapperList,
         @Parameter R2dbcReactorTransactionOperations transactionOperations,
         @Parameter ReactorConnectionOperations<Connection> connectionOperations) {
         super(
@@ -192,7 +195,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             conversionService,
             attributeConverterRegistry,
             jsonMapper,
-            sqlJsonColumnMapperProvider);
+            sqlJsonColumnMapperProvider,
+            sqlExceptionMapperList);
         this.connectionFactory = connectionFactory;
         this.ioExecutorService = executorService;
         this.schemaTenantResolver = schemaTenantResolver;
@@ -404,15 +408,15 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             .flatMap(result -> Flux.from(result.map((row, metadata) -> Mono.justOrEmpty(mapper.apply(row)))).flatMap(t -> t));
     }
 
-    private static <T> Mono<T> executeAndMapEachRowSingle(Statement statement, Dialect dialect, Function<Row, T> mapper) {
+    private <T> Mono<T> executeAndMapEachRowSingle(Statement statement, Dialect dialect, Function<Row, T> mapper) {
         return executeAndMapEachRow(statement, mapper).onErrorResume(errorHandler(dialect)).as(DefaultR2dbcRepositoryOperations::toSingleResult);
     }
 
-    private static <T> Flux<T> executeAndMapEachReadable(Statement statement, Dialect dialect, Function<Readable, T> mapper) {
+    private <T> Flux<T> executeAndMapEachReadable(Statement statement, Dialect dialect, Function<Readable, T> mapper) {
         return executeAndMapEachReadable(statement, mapper).onErrorResume(errorHandler(dialect));
     }
 
-    private static Mono<Number> executeAndGetRowsUpdatedSingle(Statement statement, Dialect dialect) {
+    private Mono<Number> executeAndGetRowsUpdatedSingle(Statement statement, Dialect dialect) {
         return executeAndGetRowsUpdated(statement)
             .onErrorResume(errorHandler(dialect))
             .as(DefaultR2dbcRepositoryOperations::toSingleResult);
@@ -424,11 +428,13 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             .map((Number n) -> n.longValue());
     }
 
-    private static <T> Function<? super Throwable, ? extends Publisher<? extends T>> errorHandler(Dialect dialect) {
+    private <T> Function<? super Throwable, ? extends Publisher<? extends T>> errorHandler(Dialect dialect) {
         return throwable -> {
             if (throwable.getCause() instanceof SQLException sqlException) {
-                Throwable newThrowable = handleSqlException(sqlException, dialect);
-                return Mono.error(newThrowable);
+                DataAccessException dataAccessException = mapSqlException(sqlException, dialect);
+                if (dataAccessException != null) {
+                    return Mono.error(dataAccessException);
+                }
             }
             return Mono.error(throwable);
         };
@@ -1054,6 +1060,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             return Mono.just(Tuples.of(list, 0L));
                         }
                         return executeAndGetRowsUpdated(statement)
+                            .onErrorResume(errorHandler(ctx.dialect))
                             .map(Number::longValue)
                             .reduce(0L, Long::sum)
                             .map(rowsUpdated -> {

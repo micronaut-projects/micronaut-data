@@ -2735,6 +2735,9 @@ abstract class AbstractRepositorySpec extends Specification {
 
         then:
         !result.isPresent()
+
+         cleanup:
+         entityWithIdClassRepository.deleteAll()
     }
 
      void "entity with id class 2"() {
@@ -2794,6 +2797,9 @@ abstract class AbstractRepositorySpec extends Specification {
 
         then:
         !result.isPresent()
+
+         cleanup:
+         entityWithIdClass2Repository.deleteAll()
     }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {

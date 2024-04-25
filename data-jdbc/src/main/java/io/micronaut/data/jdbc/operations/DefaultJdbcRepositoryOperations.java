@@ -88,6 +88,7 @@ import io.micronaut.data.runtime.operations.internal.OperationContext;
 import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
 import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery;
 import io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOperations;
+import io.micronaut.data.runtime.operations.internal.sql.SqlExceptionMapper;
 import io.micronaut.data.runtime.operations.internal.sql.SqlJsonColumnMapperProvider;
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
@@ -164,6 +165,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
      * @param dataSourceName              The data source name
      * @param jdbcConfiguration           The jdbcConfiguration
      * @param dataSource                  The datasource
+     * @param connectionOperations        The connection operations
      * @param transactionOperations       The JDBC operations for the data source
      * @param executorService             The executor service
      * @param beanContext                 The bean context
@@ -175,26 +177,26 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
      * @param schemaHandler               The schema handler
      * @param jsonMapper                  The JSON mapper
      * @param sqlJsonColumnMapperProvider The SQL JSON column mapper provider
-     * @param connectionOperations
+     * @param sqlExceptionMapperList The SQL exception mapper list
      */
     @Internal
     @SuppressWarnings("ParameterNumber")
     DefaultJdbcRepositoryOperations(@Parameter String dataSourceName,
-                                              @Parameter DataJdbcConfiguration jdbcConfiguration,
-                                              DataSource dataSource,
-                                              @Parameter ConnectionOperations<Connection> connectionOperations,
-                                              @Parameter TransactionOperations<Connection> transactionOperations,
-                                              @Named("io") @Nullable ExecutorService executorService,
-                                              BeanContext beanContext,
-                                              @NonNull DateTimeProvider dateTimeProvider,
-                                              RuntimeEntityRegistry entityRegistry,
-                                              DataConversionService conversionService,
-                                              AttributeConverterRegistry attributeConverterRegistry,
-                                              @Nullable
-                                              SchemaTenantResolver schemaTenantResolver,
-                                              JdbcSchemaHandler schemaHandler,
-                                              @Nullable JsonMapper jsonMapper,
-                                              SqlJsonColumnMapperProvider<ResultSet> sqlJsonColumnMapperProvider) {
+                                    @Parameter DataJdbcConfiguration jdbcConfiguration,
+                                    DataSource dataSource,
+                                    @Parameter ConnectionOperations<Connection> connectionOperations,
+                                    @Parameter TransactionOperations<Connection> transactionOperations,
+                                    @Named("io") @Nullable ExecutorService executorService,
+                                    BeanContext beanContext,
+                                    @NonNull DateTimeProvider dateTimeProvider,
+                                    RuntimeEntityRegistry entityRegistry,
+                                    DataConversionService conversionService,
+                                    AttributeConverterRegistry attributeConverterRegistry,
+                                    @Nullable SchemaTenantResolver schemaTenantResolver,
+                                    JdbcSchemaHandler schemaHandler,
+                                    @Nullable JsonMapper jsonMapper,
+                                    SqlJsonColumnMapperProvider<ResultSet> sqlJsonColumnMapperProvider,
+                                    List<SqlExceptionMapper> sqlExceptionMapperList) {
         super(
             dataSourceName,
             new ColumnNameResultSetReader(conversionService),
@@ -206,7 +208,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             conversionService,
             attributeConverterRegistry,
             jsonMapper,
-            sqlJsonColumnMapperProvider);
+            sqlJsonColumnMapperProvider,
+            sqlExceptionMapperList);
         this.schemaTenantResolver = schemaTenantResolver;
         this.schemaHandler = schemaHandler;
         this.connectionOperations = connectionOperations;
@@ -531,11 +534,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 }
                 return Optional.of(result);
             } catch (SQLException e) {
-                Throwable throwable = handleSqlException(e, preparedQuery.getDialect());
-                if (throwable instanceof DataAccessException dataAccessException) {
-                    throw dataAccessException;
-                }
-                throw new DataAccessException("Error executing SQL UPDATE: " + e.getMessage(), e);
+                throw sqlExceptionToDataAccessException(e, preparedQuery.getDialect(), sqlException -> new DataAccessException("Error executing SQL UPDATE: " + sqlException.getMessage(), sqlException));
             }
         });
     }
@@ -551,11 +550,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     return findAll(connection, preparedQuery, false);
                 }
             } catch (SQLException e) {
-                Throwable throwable = handleSqlException(e, preparedQuery.getDialect());
-                if (throwable instanceof DataAccessException dataAccessException) {
-                    throw dataAccessException;
-                }
-                throw new DataAccessException("Error executing SQL UPDATE: " + e.getMessage(), e);
+                throw sqlExceptionToDataAccessException(e, preparedQuery.getDialect(), sqlException -> new DataAccessException("Error executing SQL UPDATE: " + sqlException.getMessage(), sqlException));
             }
         });
     }
@@ -996,6 +991,23 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return columnIndexResultSetReader.readDynamic(generatedKeysResultSet, 1, identity.getDataType());
     }
 
+    /**
+     * Handles {@link SQLException} first trying to map it to {@link DataAccessException} using {@link SqlExceptionMapper}.
+     * If mapped exception is not {@link DataAccessException} then returns {@link DataAccessException} using provided fallbackMapper.
+     *
+     * @param sqlException      The SQL exception that was thrown
+     * @param dialect           The dialect
+     * @param fallbackMapper    The fallback mapper that returns {@link DataAccessException} if {@link SQLException} was not mapped to {@link DataAccessException}
+     * @return DataAccessException
+     */
+    private DataAccessException sqlExceptionToDataAccessException(SQLException sqlException, Dialect dialect, Function<SQLException, DataAccessException> fallbackMapper) {
+        DataAccessException dataAccessException = mapSqlException(sqlException, dialect);
+        if (dataAccessException != null) {
+            return dataAccessException;
+        }
+        return fallbackMapper.apply(sqlException);
+    }
+
     @Override
     public boolean isSupportsBatchInsert(JdbcOperationContext jdbcOperationContext, RuntimePersistentEntity<?> persistentEntity) {
         return isSupportsBatchInsert(persistentEntity, jdbcOperationContext.dialect);
@@ -1138,8 +1150,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     checkOptimisticLocking(1, rowsUpdated);
                 }
             } catch (SQLException e) {
-                Throwable throwable = handleSqlException(e, ctx.dialect);
-                if (throwable instanceof DataAccessException dataAccessException) {
+                DataAccessException dataAccessException = mapSqlException(e, ctx.dialect);
+                if (dataAccessException != null) {
                     throw dataAccessException;
                 }
                 throw e;
@@ -1245,7 +1257,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
 
         @Override
-        protected void execute() throws SQLException {
+        protected void execute() {
             if (QUERY_LOG.isDebugEnabled()) {
                 QUERY_LOG.debug("Executing SQL query: {}", storedQuery.getQuery());
             }
@@ -1282,6 +1294,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     int expected = (int) entities.stream().filter(d -> !d.vetoed).count();
                     checkOptimisticLocking(expected, rowsUpdated);
                 }
+            } catch (SQLException e) {
+                throw sqlExceptionToDataAccessException(e, ctx.dialect, sqlException -> new DataAccessException("Error executing batch SQL UPDATE: " + sqlException.getMessage(), sqlException));
             }
         }
 
