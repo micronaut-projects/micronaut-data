@@ -35,7 +35,7 @@ public class BookController {
 
     @Get
     List<BookDto> findAll() {
-        List<BookDto> collect = bookRepository.findAll().stream().map(BookDto::new).collect(Collectors.toList());
+        List<BookDto> collect = bookRepository.findAll().stream().map(BookDto::new).toList();
         System.out.println(ServerRequestContext.currentRequest().get().getHeaders().get("tenantId") + " " + collect);
         return collect;
     }

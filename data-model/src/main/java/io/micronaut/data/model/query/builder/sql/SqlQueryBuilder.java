@@ -766,7 +766,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     .stream()
                     .map(ann -> ann.stringValue(columnType).orElse(null))
                     .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
+                    .toList();
         }
         return Collections.emptyList();
     }
@@ -780,7 +780,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         return isForeignKeyWithJoinTable(a);
                     }
                     return false;
-                }).map(p -> (Association) p).collect(Collectors.toList());
+                }).map(p -> (Association) p).toList();
     }
 
     @Override
@@ -803,7 +803,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                                                  Map<JoinPath, String> joinAliasOverride) {
         if (CollectionUtils.isNotEmpty(allPaths)) {
 
-            Collection<JoinPath> joinPaths = allPaths.stream().filter(jp -> jp.getJoinType().isFetch()).collect(Collectors.toList());
+            Collection<JoinPath> joinPaths = allPaths.stream().filter(jp -> jp.getJoinType().isFetch()).toList();
 
             if (CollectionUtils.isNotEmpty(joinPaths)) {
                 for (JoinPath joinPath : joinPaths) {
@@ -1466,10 +1466,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             List<String> associationJoinColumns = resolveJoinTableAssociatedColumns(annotationMetadata, !isAssociationOwner, associatedEntity, namingStrategy);
             List<String> associationJoinTableColumns = resolveJoinTableJoinColumns(annotationMetadata, !isAssociationOwner, associatedEntity, namingStrategy);
             if (escape) {
-                ownerJoinColumns = ownerJoinColumns.stream().map(this::quote).collect(Collectors.toList());
-                ownerJoinTableColumns = ownerJoinTableColumns.stream().map(this::quote).collect(Collectors.toList());
-                associationJoinColumns = associationJoinColumns.stream().map(this::quote).collect(Collectors.toList());
-                associationJoinTableColumns = associationJoinTableColumns.stream().map(this::quote).collect(Collectors.toList());
+                ownerJoinColumns = ownerJoinColumns.stream().map(this::quote).toList();
+                ownerJoinTableColumns = ownerJoinTableColumns.stream().map(this::quote).toList();
+                associationJoinColumns = associationJoinColumns.stream().map(this::quote).toList();
+                associationJoinTableColumns = associationJoinTableColumns.stream().map(this::quote).toList();
             }
 
             String joinTableSchema = annotationMetadata
@@ -1613,8 +1613,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 getTableName(associatedEntity),
                 rightTableAlias,
                 leftTableAlias,
-                escape ? onLeftColumns.stream().map(this::quote).collect(Collectors.toList()) : onLeftColumns,
-                escape ? onRightColumns.stream().map(this::quote).collect(Collectors.toList()) : onRightColumns
+                escape ? onLeftColumns.stream().map(this::quote).toList() : onLeftColumns,
+                escape ? onRightColumns.stream().map(this::quote).toList() : onRightColumns
         );
     }
 

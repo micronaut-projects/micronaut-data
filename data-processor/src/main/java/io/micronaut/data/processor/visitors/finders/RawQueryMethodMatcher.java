@@ -384,7 +384,6 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             type);
     }
 
-
     /**
      * Extract the expression type.
      * @param matchContext The match context

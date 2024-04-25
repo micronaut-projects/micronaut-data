@@ -57,7 +57,6 @@ import org.slf4j.Logger;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 /**
  * Shared implementation of Mongo sync and reactive repositories.
@@ -252,7 +251,7 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
         StringBuilder sb = new StringBuilder("Executing Mongo 'aggregate'");
         if (options != null) {
             sb.append(" with");
-            sb.append(" pipeline: ").append(aggregation.getPipeline().stream().map(e -> e.toBsonDocument().toJson()).collect(Collectors.toList()));
+            sb.append(" pipeline: ").append(aggregation.getPipeline().stream().map(e -> e.toBsonDocument().toJson()).toList());
             Collation collation = options.getCollation();
             if (collation != null) {
                 sb.append(" collation: ").append(collation);

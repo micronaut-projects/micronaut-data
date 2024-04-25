@@ -28,7 +28,6 @@ import io.micronaut.serde.annotation.Serdeable;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * Inspired by the Spring Data's {@code Page} and GORM's {@code PagedResultList}, this models a type that supports
@@ -72,7 +71,7 @@ public interface Page<T> extends Slice<T> {
      */
     @Override
     default @NonNull <T2> Page<T2> map(Function<T, T2> function) {
-        List<T2> content = getContent().stream().map(function).collect(Collectors.toList());
+        List<T2> content = getContent().stream().map(function).toList();
         return new DefaultPage<>(content, getPageable(), getTotalSize());
     }
 

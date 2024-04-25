@@ -119,7 +119,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -319,7 +318,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     }
 
     private <T> Flux<T> concatMono(Stream<Mono<T>> stream) {
-        return Flux.concat(stream.collect(Collectors.toList()));
+        return Flux.concat(stream.toList());
     }
 
     @NonNull
@@ -1064,7 +1063,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             if (hasGeneratedId) {
                 entities = entities
                     .flatMap(list -> {
-                        List<Data> notVetoedEntities = list.stream().filter(this::notVetoed).collect(Collectors.toList());
+                        List<Data> notVetoedEntities = list.stream().filter(this::notVetoed).toList();
                         if (notVetoedEntities.isEmpty()) {
                             return Mono.just(notVetoedEntities);
                         }

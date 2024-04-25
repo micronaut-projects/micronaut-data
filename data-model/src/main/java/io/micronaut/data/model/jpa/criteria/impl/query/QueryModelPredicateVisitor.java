@@ -45,7 +45,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.StringJoiner;
-import java.util.stream.Collectors;
 
 /**
  * The predicate visitor to convert criteria predicates to {@link QueryModel}.
@@ -323,12 +322,12 @@ public class QueryModelPredicateVisitor implements PredicateVisitor {
             state.negated = false;
             add(Restrictions.notIn(
                     getPropertyPath(inValues),
-                    values.stream().map(this::asValue).collect(Collectors.toList())
+                    values.stream().map(this::asValue).toList()
             ));
         } else {
             add(Restrictions.in(
                     getPropertyPath(inValues),
-                    values.stream().map(this::asValue).collect(Collectors.toList())
+                    values.stream().map(this::asValue).toList()
             ));
         }
     }

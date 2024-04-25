@@ -27,7 +27,6 @@ import io.micronaut.serde.annotation.Serdeable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * Inspired by the Spring Data's {@code Slice} and GORM's {@code PagedResultList}, this models a type that supports
@@ -127,7 +126,7 @@ public interface Slice<T> extends Iterable<T> {
      * @return A new slice with the mapped content
      */
     default @NonNull <T2> Slice<T2> map(Function<T, T2> function) {
-        List<T2> content = getContent().stream().map(function).collect(Collectors.toList());
+        List<T2> content = getContent().stream().map(function).toList();
         return new DefaultSlice<>(content, getPageable());
     }
 

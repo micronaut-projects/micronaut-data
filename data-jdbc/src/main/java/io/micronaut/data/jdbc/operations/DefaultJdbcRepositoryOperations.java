@@ -125,7 +125,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -689,7 +688,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         op.update();
                         return op.getEntity();
                     })
-                    .collect(Collectors.toList());
+                    .toList();
             }
             JdbcEntitiesOperations<T> op = new JdbcEntitiesOperations<>(ctx, persistentEntity, operation, storedQuery);
             op.update();
@@ -751,7 +750,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         op.persist();
                         return op.getEntity();
                     })
-                    .collect(Collectors.toList());
+                    .toList();
             } else {
                 JdbcEntitiesOperations<T> op = new JdbcEntitiesOperations<>(ctx, persistentEntity, operation, storedQuery, true);
                 op.persist();

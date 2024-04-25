@@ -73,7 +73,6 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Abstract criteria matcher.
@@ -103,7 +102,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         PROPERTY_RESTRICTIONS = Restrictions.PROPERTY_RESTRICTIONS_MAP.keySet()
             .stream()
             .sorted(Comparator.comparingInt(String::length).thenComparing(String.CASE_INSENSITIVE_ORDER).reversed())
-            .collect(Collectors.toList());
+            .toList();
         List<String> restrictionElements = new ArrayList<>(Restrictions.RESTRICTIONS_MAP.keySet());
         restrictionElements.sort(Comparator.comparingInt(String::length).thenComparing(String.CASE_INSENSITIVE_ORDER).reversed());
         String rExpressionPattern = String.join("|", restrictionElements);
