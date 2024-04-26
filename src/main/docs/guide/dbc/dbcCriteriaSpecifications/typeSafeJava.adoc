@@ -19,9 +19,8 @@ Note that as of this writing you cannot use Micronaut Data annotations (those fo
 
 To configure the metamodel generator simply add the following dependency to the annotation processor classpath:
 
-dependency:hibernate-jpamodelgen-jakarta[groupId="org.hibernate", scope="annotationProcessor"]
+dependency:hibernate-jpamodelgen[groupId="org.hibernate.orm", scope="annotationProcessor"]
 
-NOTE: The Hibernate 6 version of `hibernate-jpamodelgen-jakarta` is required because prior versions of Hibernate are still using the `javax.persistence` package
 
 And we need to include the generated classes on the Java classpath to have them accessible:
 
