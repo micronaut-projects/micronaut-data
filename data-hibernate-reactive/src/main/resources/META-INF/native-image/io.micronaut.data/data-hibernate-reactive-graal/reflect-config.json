@@ -1,0 +1,15 @@
+[
+    {
+        "name": "org.hibernate.reactive.persister.collection.impl.ReactiveBasicCollectionPersister",
+        "methods": [
+            {
+                "name": "<init>",
+                "parameterTypes": [
+                    "org.hibernate.mapping.Collection",
+                    "org.hibernate.cache.spi.access.CollectionDataAccess",
+                    "org.hibernate.metamodel.spi.RuntimeModelCreationContext"
+                ]
+            }
+        ]
+    }
+]
