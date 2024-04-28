@@ -31,9 +31,11 @@ class BookJdbcDiscriminatorMultiTenancySpec {
     }
 
     @Test
-    void testRest() throws SQLException {
+    void testRest(BookRepository bookRepository) throws SQLException {
         // When: A book created in FOO tenant
-        BookDto book = fooBookClient.save("The Stand", 1000);
+        Book b = new Book("The Stand", 1000);
+        b.setTenant("foo");
+        BookDto book = new BookDto(bookRepository.save(b));
         assertNotNull(book.getId());
         // Then: The book exists in FOO tenant
         book = fooBookClient.findOne(book.getId()).orElse(null);
