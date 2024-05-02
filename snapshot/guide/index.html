@@ -9660,7 +9660,7 @@ q.select(customer.get(Customer_.name))
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">annotationProcessor(<span class="hljs-string">"org.hibernate:hibernate-jpamodelgen-jakarta")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">annotationProcessor(<span class="hljs-string">"org.hibernate.orm:hibernate-jpamodelgen")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -9668,24 +9668,12 @@ q.select(customer.get(Customer_.name))
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;annotationProcessorPaths&gt;
     &lt;path&gt;
-        &lt;groupId&gt;org.hibernate&lt;/groupId&gt;
-        &lt;artifactId&gt;hibernate-jpamodelgen-jakarta&lt;/artifactId&gt;
+        &lt;groupId&gt;org.hibernate.orm&lt;/groupId&gt;
+        &lt;artifactId&gt;hibernate-jpamodelgen&lt;/artifactId&gt;
     &lt;/path&gt;
 &lt;/annotationProcessorPaths&gt;</code></pre>
 </div>
 </div></p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-The Hibernate 6 version of <code>hibernate-jpamodelgen-jakarta</code> is required because prior versions of Hibernate are still using the <code>javax.persistence</code> package
-</td>
-</tr>
-</table>
 </div>
 <div class="paragraph">
 <p>And we need to include the generated classes on the Java classpath to have them accessible:</p>
