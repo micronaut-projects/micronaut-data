@@ -26,6 +26,7 @@ import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.model.Pageable;
@@ -634,13 +635,12 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
 
     private <T> void bindCriteriaSort(CriteriaQuery<T> criteriaQuery, Root<?> root, CriteriaBuilder builder, @NonNull Sort sort) {
         List<Order> orders = new ArrayList<>();
-        Path<?> path = null;
         for (Sort.Order order : sort.getOrderBy()) {
-            String[] propertyArray = order.getProperty().split("\\.");
-            for (String property : propertyArray) {
-                path = path == null ? root.get(property) : path.get(property);
+            Path<?> path = root;
+            for (String property : StringUtils.splitOmitEmptyStrings(order.getProperty(), '.')) {
+                path = path.get(property);
             }
-            Expression<?> expression = order.isIgnoreCase() && path != null ? builder.lower(path.type().as(String.class)) : path;
+            Expression<?> expression = order.isIgnoreCase() ? builder.lower(path.type().as(String.class)) : path;
             orders.add(order.isAscending() ? builder.asc(expression) : builder.desc(expression));
         }
         criteriaQuery.orderBy(orders);
