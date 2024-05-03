@@ -1,5 +1,6 @@
 plugins {
-    id "io.micronaut.build.internal.data-native-example"
+    id "groovy"
+    id "io.micronaut.build.internal.data-example"
 }
 
 application {
@@ -9,12 +10,11 @@ application {
 micronaut {
     version libs.versions.micronaut.platform.get()
     runtime "netty"
-    testRuntime "junit5"
+    testRuntime "spock"
 }
 
 dependencies {
-    annotationProcessor projects.micronautDataProcessor
-    annotationProcessor mnValidation.micronaut.validation
+    compileOnly projects.micronautDataProcessor
 
     implementation projects.micronautDataJdbc
     implementation mnSerde.micronaut.serde.support

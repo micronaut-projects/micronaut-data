@@ -87,8 +87,7 @@ dbc:
     mappedPropertyAlias: Using @MappedProperty alias
     sqlJsonType: JSON Column Support
     sqlJsonView: JSON View
-    javaRecords: Support for Java 16 Records
-    kotlinData: Support for Kotlin immutable data classes
+    javaRecordsKotlinDataClasses: Support for Java Records and Kotlin data classes
   dbcDataTypes: Data Types
   dbcAttributeConverter: Using Attribute Converter
   dbcJoinQueries: Join Queries

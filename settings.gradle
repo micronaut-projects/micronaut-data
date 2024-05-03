@@ -91,6 +91,8 @@ include 'doc-examples:jdbc-example-java'
 include 'doc-examples:jdbc-example-groovy'
 include 'doc-examples:jdbc-example-kotlin'
 include 'doc-examples:jdbc-example-records-java'
+include 'doc-examples:jdbc-example-records-groovy'
+include 'doc-examples:jdbc-example-records-kotlin'
 
 include 'doc-examples:jdbc-multitenancy-datasource-example-java'
 include 'doc-examples:jdbc-multitenancy-schema-example-java'
