@@ -109,6 +109,12 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
     @Shared
     IntervalRepository intervalRepo = context.getBean(H2IntervalRepository)
 
+    @Shared
+    H2HeadlessBookRepository headlessBookRepository = context.getBean(H2HeadlessBookRepository)
+
+    @Shared
+    H2HeadlessAuthorRepository headlessAuthorRepository = context.getBean(H2HeadlessAuthorRepository)
+
     @Override
     EntityWithIdClassRepository getEntityWithIdClassRepository() {
         return entityWithIdClassRepo
@@ -408,4 +414,33 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
             page.content[0].title == "The Stand"
             page.content[0].students.collect { it.name }.sort() == ["Denis", "Josh"]
     }
+
+    void "test headless repos"() {
+        given:
+        saveSampleBooks()
+
+        when: "Test object mapping"
+        def author = headlessAuthorRepository.getByName("Stephen King")
+
+        then: "The result is correct"
+        author != null
+
+        when: "Find books"
+        def books = headlessBookRepository.findByPattern("The%")
+
+        then: "The result is correct"
+        books.size() == 3
+
+        // TODO Could not resolve root entity.
+        //  Either implement the Repository interface or define the entity as part of the signature
+        // when: "Count books"
+        // def count = headlessBookRepository.countBooks()
+
+        // then: "The result is correct"
+        // count == 6
+
+        then:
+        cleanupData()
+    }
+
 }
