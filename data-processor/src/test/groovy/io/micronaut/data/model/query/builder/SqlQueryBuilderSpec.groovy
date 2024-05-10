@@ -211,7 +211,7 @@ interface MyRepository {
 
         expect:
         builder.dialect == Dialect.H2
-        builder.buildQuery(queryModel).query == 'SELECT sale_.`id`,sale_.`name`,sale_.`data`,sale_.`quantities`,sale_.`extra_data`,sale_.`data_list` FROM `sale` sale_ WHERE (sale_.`name` = ?)'
+        builder.buildQuery(annotationMetadata, queryModel).query == 'SELECT sale_.`id`,sale_.`name`,sale_.`data`,sale_.`quantities`,sale_.`extra_data`,sale_.`data_list` FROM `sale` sale_ WHERE (sale_.`name` = ?)'
         builder.buildDelete(queryModel).query == 'DELETE  FROM `sale`  WHERE (`name` = ?)'
         builder.buildUpdate(queryModel, Arrays.asList("name")).query == 'UPDATE `sale` SET `name`=? WHERE (`name` = ?)'
         builder.buildInsert(annotationMetadata, entity).query == 'INSERT INTO `sale` (`name`,`data`,`quantities`,`extra_data`,`data_list`) VALUES (?,? FORMAT JSON,? FORMAT JSON,? FORMAT JSON,? FORMAT JSON)'
