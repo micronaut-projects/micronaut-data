@@ -633,7 +633,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             }
             return entity;
         } else {
-            throw new MatchFailedException("Could not resolved root entity. Either implement the Repository interface or define the entity as part of the signature", element);
+            throw new MatchFailedException("Could not resolve root entity. Either implement the Repository interface or define the entity as part of the signature", element);
         }
     }
 
