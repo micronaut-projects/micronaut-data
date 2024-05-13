@@ -38,4 +38,11 @@ public class LoggingSqlExecutionObserver implements SqlExecutionObserver {
             QUERY_LOG.trace("Binding parameter at position {} to value {} with data type: {}", index, value, dataType);
         }
     }
+
+    @Override
+    public void updatedRecords(Number result) {
+        if (QUERY_LOG.isTraceEnabled()) {
+            QUERY_LOG.trace("Update operation updated {} records", result);
+        }
+    }
 }

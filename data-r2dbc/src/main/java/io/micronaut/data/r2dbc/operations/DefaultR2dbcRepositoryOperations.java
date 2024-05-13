@@ -77,10 +77,7 @@ import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntityOpera
 import io.micronaut.data.runtime.operations.internal.OperationContext;
 import io.micronaut.data.runtime.operations.internal.ReactiveCascadeOperations;
 import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery;
-import io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOperations;
-import io.micronaut.data.runtime.operations.internal.sql.SqlJsonColumnMapperProvider;
-import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
-import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
+import io.micronaut.data.runtime.operations.internal.sql.*;
 import io.micronaut.data.runtime.support.AbstractConversionContext;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
@@ -188,7 +185,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         SqlJsonColumnMapperProvider<Row> sqlJsonColumnMapperProvider,
         List<R2dbcExceptionMapper> r2dbcExceptionMapperList,
         @Parameter R2dbcReactorTransactionOperations transactionOperations,
-        @Parameter ReactorConnectionOperations<Connection> connectionOperations) {
+        @Parameter ReactorConnectionOperations<Connection> connectionOperations,
+        List<SqlExecutionObserver> observers) {
         super(
             dataSourceName,
             new ColumnNameR2dbcResultReader(conversionService),
@@ -200,7 +198,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             conversionService,
             attributeConverterRegistry,
             jsonMapper,
-            sqlJsonColumnMapperProvider);
+            sqlJsonColumnMapperProvider,
+            observers);
         this.connectionFactory = connectionFactory;
         this.ioExecutorService = executorService;
         this.schemaTenantResolver = schemaTenantResolver;
@@ -545,8 +544,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 preparedQuery.bindParameters(new R2dbcParameterBinder(connection, statement, preparedQuery));
                 return executeAndGetRowsUpdatedSingle(statement, dialect)
                     .flatMap((Number rowsUpdated) -> {
-                        if (QUERY_LOG.isTraceEnabled()) {
-                            QUERY_LOG.trace("Update operation updated {} records", rowsUpdated);
+                        for (SqlExecutionObserver observer : observers) {
+                            observer.updatedRecords(rowsUpdated);
                         }
                         if (preparedQuery.isOptimisticLock()) {
                             checkOptimisticLocking(1, rowsUpdated);
@@ -970,8 +969,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
         @Override
         protected void execute() throws RuntimeException {
-            if (QUERY_LOG.isDebugEnabled()) {
-                QUERY_LOG.debug("Executing SQL query: {}", storedQuery.getQuery());
+            for (SqlExecutionObserver observer : observers) {
+                observer.query(storedQuery.getQuery());
             }
             Statement statement = prepare(ctx.connection);
             setParameters(statement, storedQuery);
@@ -1065,8 +1064,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
         @Override
         protected void execute() throws RuntimeException {
-            if (QUERY_LOG.isDebugEnabled()) {
-                QUERY_LOG.debug("Executing SQL query: {}", storedQuery.getQuery());
+            for (SqlExecutionObserver observer : observers) {
+                observer.query(storedQuery.getQuery());
             }
             Statement statement;
             if (hasGeneratedId) {

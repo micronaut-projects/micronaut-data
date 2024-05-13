@@ -22,4 +22,6 @@ public interface SqlExecutionObserver {
     void query(String query);
 
     void parameter(int index, Object value, DataType datatype);
+
+    void updatedRecords(Number result);
 }

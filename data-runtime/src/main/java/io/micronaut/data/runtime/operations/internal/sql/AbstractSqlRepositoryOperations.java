@@ -113,7 +113,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     private final Map<QueryKey, SqlStoredQuery> entityInserts = new ConcurrentHashMap<>(10);
     private final Map<QueryKey, SqlStoredQuery> entityUpdates = new ConcurrentHashMap<>(10);
     private final Map<Association, String> associationInserts = new ConcurrentHashMap<>(10);
-    private final List<SqlExecutionObserver> listeners;
+    protected final List<SqlExecutionObserver> observers;
 
     /**
      * Default constructor.
@@ -142,7 +142,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         AttributeConverterRegistry attributeConverterRegistry,
         JsonMapper jsonMapper,
         SqlJsonColumnMapperProvider<RS> sqlJsonColumnMapperProvider,
-            List<SqlExecutionObserver> listeners) {
+            List<SqlExecutionObserver> observers) {
         super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
         this.dataSourceName = dataSourceName;
         this.columnNameResultSetReader = columnNameResultSetReader;
@@ -150,7 +150,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         this.preparedStatementWriter = preparedStatementWriter;
         this.jsonMapper = jsonMapper;
         this.sqlJsonColumnMapperProvider = sqlJsonColumnMapperProvider;
-        this.listeners = listeners;
+        this.observers = observers;
         Collection<BeanDefinition<Object>> beanDefinitions = beanContext
             .getBeanDefinitions(Object.class, Qualifiers.byStereotype(Repository.class));
         for (BeanDefinition<Object> beanDefinition : beanDefinitions) {
@@ -200,7 +200,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         }
 
         String query = sqlPreparedQuery.getQuery();
-        listeners.forEach(listener -> listener.query(query));
+        observers.forEach(listener -> listener.query(query));
         final PS ps;
         try {
             ps = statementFunction.create(query);
@@ -248,7 +248,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
 
         dataType = dialect.getDataType(dataType);
 
-        for (SqlExecutionObserver listener : listeners) {
+        for (SqlExecutionObserver listener : observers) {
             listener.parameter(index, value, dataType);
         }
 
