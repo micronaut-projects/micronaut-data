@@ -98,4 +98,18 @@ interface MySqlContactViewRepository extends CrudRepository<ContactView, Long> {
         def exception = thrown(RuntimeException)
         exception.message.contains('not supported by the dialect MYSQL')
     }
+
+    void "test JsonView entity with invalid MappedProperty for id field"() {
+        when:
+        buildEntity('test.Person', '''
+import io.micronaut.data.annotation.JsonView;
+import io.micronaut.data.annotation.MappedProperty;
+
+@JsonView
+record Person(@Id @GeneratedValue @MappedProperty("id") Long id, String name, int age) {}
+''')
+        then:
+        def ex = thrown(RuntimeException)
+        ex.message.contains("@JsonView identity @MappedProperty value cannot be set to value different than '_id'")
+    }
 }
