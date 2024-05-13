@@ -61,6 +61,11 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
      */
     public static final int POSITION = 100;
 
+    private static final String JSON_VIEW_ANNOTATION = "io.micronaut.data.annotation.JsonView";
+    private static final String JSON_PROPERTY_ANNOTATION = "com.fasterxml.jackson.annotation.JsonProperty";
+    private static final String JSON_VIEW_ID = "_id";
+    private static final String VALUE = "value";
+
     private final Map<String, SourcePersistentEntity> entityMap = new HashMap<>(50);
     private final Function<ClassElement, SourcePersistentEntity> entityResolver = new Function<>() {
         @Override
@@ -118,6 +123,9 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         SourcePersistentProperty identity = entity.getIdentity();
         if (identity != null) {
             computeMappingDefaults(identity, dataTypes, dataConverters, context);
+            if (entity.hasAnnotation(JSON_VIEW_ANNOTATION)) {
+                handleJsonViewIdentity(identity);
+            }
         }
         SourcePersistentProperty[] compositeIdentities = entity.getCompositeIdentity();
         if (compositeIdentities != null) {
@@ -285,6 +293,27 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         String joinColumnName = joinColumnAnnotationValue.stringValue("name").orElse(null);
         if (joinColumnName != null) {
             propertyElement.annotate(MappedProperty.class, builder -> builder.member(AnnotationMetadata.VALUE_MEMBER, joinColumnName));
+        }
+    }
+
+    /**
+     * An identity field for Oracle duality Json View has to be '_id' so we are verifying and configuring it here.
+     *
+     * @param identity the identity field
+     */
+    private void handleJsonViewIdentity(SourcePersistentProperty identity) {
+        PropertyElement identityPropertyElement = identity.getPropertyElement();
+        String mappedPropertyIdName = identity.stringValue(MappedProperty.class).orElse(null);
+        if (mappedPropertyIdName == null) {
+            identityPropertyElement.annotate(MappedProperty.class, builder -> builder.member(VALUE, JSON_VIEW_ID));
+        } else if (!mappedPropertyIdName.equals(JSON_VIEW_ID)) {
+            throw new ProcessingException(identity, "@JsonView identity @MappedProperty value cannot be set to value different than '" + JSON_VIEW_ID + "'");
+        }
+        String jsonPropertyIdName = identity.stringValue(JSON_PROPERTY_ANNOTATION).orElse(null);
+        if (jsonPropertyIdName == null) {
+            identityPropertyElement.annotate(JSON_PROPERTY_ANNOTATION, builder -> builder.member(VALUE, JSON_VIEW_ID));
+        } else if (!jsonPropertyIdName.equals(JSON_VIEW_ID)) {
+            throw new ProcessingException(identity, "@JsonView identity @JsonProperty value cannot be set to value different than '" + JSON_VIEW_ID + "'");
         }
     }
 }
