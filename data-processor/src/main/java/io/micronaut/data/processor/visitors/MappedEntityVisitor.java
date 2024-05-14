@@ -63,8 +63,10 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
 
     private static final String JSON_VIEW_ANNOTATION = "io.micronaut.data.annotation.JsonView";
     private static final String JSON_PROPERTY_ANNOTATION = "com.fasterxml.jackson.annotation.JsonProperty";
+    private static final String SERDE_CONFIG_ANNOTATION = "io.micronaut.serde.config.annotation.SerdeConfig";
     private static final String JSON_VIEW_ID = "_id";
     private static final String VALUE = "value";
+    private static final String PROPERTY = "property";
 
     private final Map<String, SourcePersistentEntity> entityMap = new HashMap<>(50);
     private final Function<ClassElement, SourcePersistentEntity> entityResolver = new Function<>() {
@@ -310,10 +312,14 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
             throw new ProcessingException(identity, "@JsonView identity @MappedProperty value cannot be set to value different than '" + JSON_VIEW_ID + "'");
         }
         String jsonPropertyIdName = identity.stringValue(JSON_PROPERTY_ANNOTATION).orElse(null);
-        if (jsonPropertyIdName == null) {
-            identityPropertyElement.annotate(JSON_PROPERTY_ANNOTATION, builder -> builder.member(VALUE, JSON_VIEW_ID));
-        } else if (!jsonPropertyIdName.equals(JSON_VIEW_ID)) {
+        if (jsonPropertyIdName != null && !jsonPropertyIdName.equals(JSON_VIEW_ID)) {
             throw new ProcessingException(identity, "@JsonView identity @JsonProperty value cannot be set to value different than '" + JSON_VIEW_ID + "'");
+        }
+        String serdeConfigPropertyIdName = identity.stringValue(SERDE_CONFIG_ANNOTATION, PROPERTY).orElse(null);
+        if (serdeConfigPropertyIdName == null) {
+            identityPropertyElement.annotate(SERDE_CONFIG_ANNOTATION, builder -> builder.member(PROPERTY, JSON_VIEW_ID));
+        } else if (!serdeConfigPropertyIdName.equals(JSON_VIEW_ID)) {
+            throw new ProcessingException(identity, "@JsonView identity @SerdeConfig property cannot be set to value different than '" + JSON_VIEW_ID + "'");
         }
     }
 }
