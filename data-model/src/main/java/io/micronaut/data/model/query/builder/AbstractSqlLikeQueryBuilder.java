@@ -1471,9 +1471,16 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 String jsonEntityColumn = getJsonEntityColumn(annotationMetadata);
                 if (jsonEntityColumn != null) {
                     sb.append(jsonEntityColumn).append(DOT);
+                    PersistentProperty property = propertyPath.getProperty();
+                    if (property == entity.getIdentity()) {
+                        sb.append("\"" + property.getPersistedName() + "\"");
+                    } else {
+                        sb.append(propertyPath.getPath());
+                    }
                 }
+            } else {
+                sb.append(propertyPath.getPath());
             }
-            sb.append(propertyPath.getPath());
         }
     }
 

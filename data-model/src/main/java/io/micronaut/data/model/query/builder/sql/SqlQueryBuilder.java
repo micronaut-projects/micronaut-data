@@ -959,7 +959,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             builder = INSERT_INTO + getTableName(entity) + " VALUES (" + formatParameter(key) + ")";
             for (PersistentProperty identity : entity.getIdentityProperties()) {
                 if (identity.isGenerated()) {
-                    String identityName = identity.getName();
+                    String identityName = identity.getPersistedName();
                     builder = "BEGIN " + builder + " RETURNING JSON_VALUE(" + columnName + ",'$." + identityName + "') INTO " + formatParameter(key + 1) + "; END;";
                 }
                 parameterBindings.add(new QueryParameterBinding() {

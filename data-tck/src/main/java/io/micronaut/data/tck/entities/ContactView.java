@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 public class ContactView {
     @Id
     @GeneratedValue(GeneratedValue.Type.IDENTITY)
+    @JsonProperty("_id")
     private Long id;
     private String name;
     private int age;

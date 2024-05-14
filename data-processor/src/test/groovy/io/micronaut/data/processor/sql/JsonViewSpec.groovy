@@ -63,22 +63,22 @@ interface ContactViewRepository extends CrudRepository<ContactView, Long> {
         def findAllOrderByAddressZipCodeDescQuery = getQuery(repository.getRequiredMethod("findAllOrderByAddressZipCodeDesc"))
 
         expect:
-        findStartDateTimeByIdQuery == 'SELECT cv.DATA.startDateTime.timestamp() FROM "CONTACT_VIEW" cv WHERE (cv.DATA.id = ?)'
-        findByIdQuery == 'SELECT cv.* FROM "CONTACT_VIEW" cv WHERE (cv.DATA.id = ?)'
-        saveQuery == 'BEGIN INSERT INTO "CONTACT_VIEW" VALUES (?) RETURNING JSON_VALUE(DATA,\'$.id\') INTO ?; END;'
-        updateQuery == 'UPDATE "CONTACT_VIEW" cv SET cv.DATA=? WHERE (cv.DATA.id = ?)'
-        updateAgeAndNameQuery == 'UPDATE "CONTACT_VIEW" cv SET cv.DATA= json_transform(DATA, SET \'$.age\' = ?, SET \'$.name\' = ?) WHERE (cv.DATA.id = ?)'
+        findStartDateTimeByIdQuery == 'SELECT cv.DATA.startDateTime.timestamp() FROM "CONTACT_VIEW" cv WHERE (cv.DATA."_id" = ?)'
+        findByIdQuery == 'SELECT cv.* FROM "CONTACT_VIEW" cv WHERE (cv.DATA."_id" = ?)'
+        saveQuery == 'BEGIN INSERT INTO "CONTACT_VIEW" VALUES (?) RETURNING JSON_VALUE(DATA,\'$._id\') INTO ?; END;'
+        updateQuery == 'UPDATE "CONTACT_VIEW" cv SET cv.DATA=? WHERE (cv.DATA."_id" = ?)'
+        updateAgeAndNameQuery == 'UPDATE "CONTACT_VIEW" cv SET cv.DATA= json_transform(DATA, SET \'$.age\' = ?, SET \'$.name\' = ?) WHERE (cv.DATA."_id" = ?)'
         updateByAddressStreetQuery == 'UPDATE "CONTACT_VIEW" cv SET cv.DATA= json_transform(DATA, SET \'$.name\' = ?) WHERE (cv.DATA.address.street = ?)'
-        deleteByIdQuery == 'DELETE  FROM "CONTACT_VIEW"  cv WHERE (cv.DATA.id = ?)'
-        deleteQuery == 'DELETE  FROM "CONTACT_VIEW"  cv WHERE (cv.DATA.id = ?)'
+        deleteByIdQuery == 'DELETE  FROM "CONTACT_VIEW"  cv WHERE (cv.DATA."_id" = ?)'
+        deleteQuery == 'DELETE  FROM "CONTACT_VIEW"  cv WHERE (cv.DATA."_id" = ?)'
         deleteAllQuery == 'DELETE  FROM "CONTACT_VIEW"  cv'
-        deleteAllIterableQuery == 'DELETE  FROM "CONTACT_VIEW"  cv WHERE (cv.DATA.id IN (?))'
-        findNameByIdQuery == 'SELECT cv.DATA.name.string() FROM "CONTACT_VIEW" cv WHERE (cv.DATA.id = ?)'
+        deleteAllIterableQuery == 'DELETE  FROM "CONTACT_VIEW"  cv WHERE (cv.DATA."_id" IN (?))'
+        findNameByIdQuery == 'SELECT cv.DATA.name.string() FROM "CONTACT_VIEW" cv WHERE (cv.DATA."_id" = ?)'
         findMaxAgeQuery == 'SELECT MAX(cv.DATA.age.number()) FROM "CONTACT_VIEW" cv'
         findActiveByNameQuery == 'SELECT cv.DATA.active.number() FROM "CONTACT_VIEW" cv WHERE (cv.DATA.name = ?)'
         findAllOrderByStartDateTimeQuery == 'SELECT cv.* FROM "CONTACT_VIEW" cv ORDER BY cv.DATA.startDateTime ASC'
         findByAddressStreetQuery == 'SELECT cv.* FROM "CONTACT_VIEW" cv WHERE (cv.DATA.address.street = ?)'
-        findAddressStreetByIdQuery == 'SELECT cv.DATA.address.street.string() FROM "CONTACT_VIEW" cv WHERE (cv.DATA.id = ?)'
+        findAddressStreetByIdQuery == 'SELECT cv.DATA.address.street.string() FROM "CONTACT_VIEW" cv WHERE (cv.DATA."_id" = ?)'
         findAllOrderByAddressZipCodeDescQuery == 'SELECT cv.* FROM "CONTACT_VIEW" cv ORDER BY cv.DATA.address.zipCode DESC'
     }
 
@@ -97,5 +97,19 @@ interface MySqlContactViewRepository extends CrudRepository<ContactView, Long> {
         then:
         def exception = thrown(RuntimeException)
         exception.message.contains('not supported by the dialect MYSQL')
+    }
+
+    void "test JsonView entity with invalid MappedProperty for id field"() {
+        when:
+        buildEntity('test.Person', '''
+import io.micronaut.data.annotation.JsonView;
+import io.micronaut.data.annotation.MappedProperty;
+
+@JsonView
+record Person(@Id @GeneratedValue @MappedProperty("id") Long id, String name, int age) {}
+''')
+        then:
+        def ex = thrown(RuntimeException)
+        ex.message.contains("@JsonView identity @MappedProperty value cannot be set to value different than '_id'")
     }
 }
