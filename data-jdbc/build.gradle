@@ -79,7 +79,7 @@ micronaut {
         additionalModules.add(KnownModules.JDBC_POSTGRESQL)
         additionalModules.add(KnownModules.JDBC_MYSQL)
         additionalModules.add(KnownModules.JDBC_MARIADB)
-        additionalModules.add(KnownModules.JDBC_ORACLE_XE)
+        additionalModules.add(KnownModules.JDBC_ORACLE_FREE)
         additionalModules.add(KnownModules.JDBC_MSSQL)
         clientTimeout = 300
         version = libs.versions.micronaut.testresources.get()

@@ -9,7 +9,6 @@ test-resources:
       startup-timeout: 300s
     oracle:
       startup-timeout: 600s
-      image-name: gvenzl/oracle-free
       db-name: test
     postgres:
       startup-timeout: 300s
