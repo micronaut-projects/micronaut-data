@@ -17,6 +17,7 @@ package io.micronaut.data.processor.model.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractCriteriaBuilder;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
@@ -65,6 +66,11 @@ public final class MethodMatchSourcePersistentEntityCriteriaBuilderImpl extends 
     @Override
     public <T> SourcePersistentEntityCriteriaUpdate<T> createCriteriaUpdate(Class<T> targetEntity) {
         return new SourcePersistentEntityCriteriaUpdateImpl<>(methodMatchContext::getEntity, targetEntity);
+    }
+
+    @Override
+    public ParameterExpression<Object> expression(PersistentProperty property, String expression) {
+        return new SourceParameterStringExpressionImpl(property, expression);
     }
 
     @Override

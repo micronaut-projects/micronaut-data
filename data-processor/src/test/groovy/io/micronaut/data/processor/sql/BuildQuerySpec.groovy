@@ -21,7 +21,6 @@ import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.PersistentEntity
-
 import io.micronaut.data.model.entities.Invoice
 import io.micronaut.data.model.query.QueryModel
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -31,7 +30,6 @@ import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Restaurant
 import io.micronaut.data.tck.jdbc.entities.EmployeeGroup
-import io.micronaut.inject.ExecutableMethod
 import spock.lang.Issue
 import spock.lang.PendingFeature
 import spock.lang.Unroll
@@ -1359,5 +1357,45 @@ void lock(Long id);
         expect:
             getQuery(lockMethod) == 'update "user" set locked=true where id=:id'
             getRawQuery(lockMethod) == 'update "user" set locked=true where id=?'
+    }
+
+    void "test query with a tenant id"() {
+        given:
+        def repository = buildRepository('test.AccountRepository', """
+
+import io.micronaut.data.annotation.WithTenantId;
+import io.micronaut.data.annotation.WithoutTenantId;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Account;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface AccountRepository extends GenericRepository<Account, Long> {
+
+    @WithoutTenantId
+    List<Account> findAll\$withAllTenants();
+
+    @WithTenantId("bar")
+    List<Account> findAll\$withTenantBar();
+
+    @WithTenantId("foo")
+    List<Account> findAll\$withTenantFoo();
+
+    List<Account> findAll();
+
+    Account findOneByName(String name);
+}
+""")
+            def findOneByNameMethod = repository.getRequiredMethod("findOneByName", String)
+            def findAll__withAllTenantsMethod = repository.findPossibleMethods("findAll\$withAllTenants").findFirst().get()
+            def findAll__withTenantBar = repository.findPossibleMethods("findAll\$withTenantBar").findFirst().get()
+            def findAll__withTenantFoo = repository.findPossibleMethods("findAll\$withTenantFoo").findFirst().get()
+        expect:
+            getQuery(repository.getRequiredMethod("findAll")) == 'SELECT account_.`id`,account_.`name`,account_.`tenancy` FROM `account` account_ WHERE (account_.`tenancy` = ?)'
+            getQuery(findOneByNameMethod) == 'SELECT account_.`id`,account_.`name`,account_.`tenancy` FROM `account` account_ WHERE (account_.`name` = ? AND account_.`tenancy` = ?)'
+            getParameterPropertyPaths(findOneByNameMethod) == ["name", "tenancy"] as String[]
+            getQuery(findAll__withAllTenantsMethod) == 'SELECT account_.`id`,account_.`name`,account_.`tenancy` FROM `account` account_'
+            getQuery(findAll__withTenantBar) == 'SELECT account_.`id`,account_.`name`,account_.`tenancy` FROM `account` account_ WHERE (account_.`tenancy` = \'bar\')'
+            getQuery(findAll__withTenantFoo) == 'SELECT account_.`id`,account_.`name`,account_.`tenancy` FROM `account` account_ WHERE (account_.`tenancy` = \'foo\')'
     }
 }
