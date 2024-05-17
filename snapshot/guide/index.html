@@ -155,6 +155,12 @@
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-multitenancy"><a href="#multitenancy"><strong>3.7</strong><span>Multi-tenancy</span></a></div>
         
+        <div class="toc-item" style="margin-left:20px" id="toc-item-discriminatormode"><a href="#discriminatormode"><strong>3.7.1</strong><span>Discriminator Mode</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-datasourcemode"><a href="#datasourcemode"><strong>3.7.2</strong><span>DataSource Mode</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-schemamode"><a href="#schemamode"><strong>3.7.3</strong><span>Schema Mode</span></a></div>
+        
         <div class="toc-item" style="margin-left:0px" id="toc-item-hibernate"><a href="#hibernate"><strong>4</strong><span>Micronaut Data JPA Hibernate</span></a></div>
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateJpaAnnotations"><a href="#hibernateJpaAnnotations"><strong>4.1</strong><span>JPA Annotations</span></a></div>
@@ -4064,24 +4070,261 @@ personRepository.updateAll(updateQuery)</code></pre>
 <div class="paragraph">
 <p>Micronaut Data supports multi-tenancy to allow the use of multiple databases or schemas by a single micronaut application.</p>
 </div>
-<div class="ulist">
-<div class="title">Supported Multitenancy Modes</div>
-<ul>
-<li>
-<p>DATASOURCE - A separate database with a separate connection pool is used to store each tenants data. Internally different repository operations  / transaction manager instance will be used for each tenant.</p>
-</li>
-<li>
-<p>SCHEMA - The same database, but different schemas are used to store each tenants data. Only supported by JDBC/R2DBC/MongoDB (collections)</p>
-</li>
-</ul>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 1. Supported Multitenancy Modes</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Multitenancy Mode</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DATASOURCE</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A separate database with a separate connection pool is used to store each tenants data. Internally different repository operations  / transaction manager instance will be used for each tenant.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SCHEMA</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The same database, but different schemas are used to store each tenants data. Only supported by JDBC/R2DBC/MongoDB (collections)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DISCRIMINATOR</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A single database/schema stores all tenants' data, but a discriminator column separates the data.</p></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="discriminatormode"><a class="anchor" href="#discriminatormode"></a>3.7.1 Discriminator Mode</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/4.8.x/src/main/docs/guide/shared/multitenancy/discriminatormode.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
 </div>
-<div class="sect2">
-<h3 id="_datasource_mode">Datasource Mode</h3>
+
+
+<div class="paragraph">
+<p>The DISCRIMINATOR mode uses a single entity&#8217;s property to store the tenant id.</p>
+</div>
+<div class="openblock">
+<div class="title">Example of the configuration with one data source</div>
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.data.multi-tenancy.mode=DISCRIMINATOR
+micronaut.multitenancy.tenantresolver.httpheader.enabled=true
+datasources.default.url=jdbc:h2:mem:db
+datasources.default.driverClassName=org.h2.Driver
+datasources.default.username=sa
+datasources.default.password=
+datasources.default.dialect=H2
+datasources.default.schema-generate=CREATE_DROP</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
+  data:
+    multi-tenancy:
+      mode: DISCRIMINATOR
+  multitenancy:
+    tenantresolver:
+      httpheader:
+        enabled: true
+
+datasources:
+  default:
+    url: jdbc:h2:mem:db
+    driverClassName: org.h2.Driver
+    username: sa
+    password: ''
+    dialect: H2
+    schema-generate: CREATE_DROP</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[micronaut]
+  [micronaut.data]
+    [micronaut.data.multi-tenancy]
+      mode="DISCRIMINATOR"
+  [micronaut.multitenancy]
+    [micronaut.multitenancy.tenantresolver]
+      [micronaut.multitenancy.tenantresolver.httpheader]
+        enabled=true
+[datasources]
+  [datasources.default]
+    url="jdbc:h2:mem:db"
+    driverClassName="org.h2.Driver"
+    username="sa"
+    password=""
+    dialect="H2"
+    schema-generate="CREATE_DROP"</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut {
+  data {
+    multiTenancy {
+      mode = "DISCRIMINATOR"
+    }
+  }
+  multitenancy {
+    tenantresolver {
+      httpheader {
+        enabled = true
+      }
+    }
+  }
+}
+datasources {
+  'default' {
+    url = "jdbc:h2:mem:db"
+    driverClassName = "org.h2.Driver"
+    username = "sa"
+    password = ""
+    dialect = "H2"
+    schemaGenerate = "CREATE_DROP"
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  micronaut {
+    data {
+      multi-tenancy {
+        mode = "DISCRIMINATOR"
+      }
+    }
+    multitenancy {
+      tenantresolver {
+        httpheader {
+          enabled = true
+        }
+      }
+    }
+  }
+  datasources {
+    default {
+      url = "jdbc:h2:mem:db"
+      driverClassName = "org.h2.Driver"
+      username = "sa"
+      password = ""
+      dialect = "H2"
+      schema-generate = "CREATE_DROP"
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut": {
+    "data": {
+      "multi-tenancy": {
+        "mode": "DISCRIMINATOR"
+      }
+    },
+    "multitenancy": {
+      "tenantresolver": {
+        "httpheader": {
+          "enabled": true
+        }
+      }
+    }
+  },
+  "datasources": {
+    "default": {
+      "url": "jdbc:h2:mem:db",
+      "driverClassName": "org.h2.Driver",
+      "username": "sa",
+      "password": "",
+      "dialect": "H2",
+      "schema-generate": "CREATE_DROP"
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>The entity with multitenancy enabled requires a tenant property to be annotated with <a href="../api/io/micronaut/data/annotation/TenantId.html">TenantId</a>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MappedEntity
+public class Book {
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String title;
+    private int pages;
+    @TenantId
+    private String tenant;
+// ...
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>There are specific annotations to alter the behaviour of repositories with <a href="../api/io/micronaut/data/annotation/TenantId.html">TenantId</a> property and its methods:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Annotation</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/WithoutTenantId.html">WithoutTenantId</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The method&#8217;s query will not have implicit predicate to include the tenant id</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/WithTenantId.html">WithTenantId</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Modify the tenant id of the query</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The tenancy annotations are only supported for the discriminator multitenancy
+</td>
+</tr>
+</table>
+</div>
+
+<h2 id="datasourcemode"><a class="anchor" href="#datasourcemode"></a>3.7.2 DataSource Mode</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/4.8.x/src/main/docs/guide/shared/multitenancy/datasourcemode.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
 <div class="paragraph">
 <p>The DATASOURCE mode is used in combination with the micronaut-multitenancy library in order to resolve the tenant name.
 In the below example, the tenant resolver is set to use a http header. See <a href="https://micronaut-projects.github.io/micronaut-multitenancy/latest/guide/">Micronaut Multitenancy</a> for more information.</p>
 </div>
 <div class="openblock">
+<div class="title">Example of the configuration with two data sources to be chosen based on the tenancy</div>
 <div class="content">
 <div class="listingblock multi-language-sample">
 <div class="content">
@@ -4286,13 +4529,21 @@ interface BarBookClient extends BookClient {
 }</code></pre>
 </div>
 </div>
+
+<h2 id="schemamode"><a class="anchor" href="#schemamode"></a>3.7.3 Schema Mode</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/4.8.x/src/main/docs/guide/shared/multitenancy/schemamode.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
 </div>
-<div class="sect2">
-<h3 id="_schema_mode">Schema Mode</h3>
+
+
 <div class="paragraph">
 <p>The SCHEMA mode uses a single datasource and set the active schema based on the tenant resolved.</p>
 </div>
 <div class="openblock">
+<div class="title">Example of the configuration with one datasource that will be used to switch schema based on the tenancy</div>
 <div class="content">
 <div class="listingblock multi-language-sample">
 <div class="content">
@@ -4460,7 +4711,6 @@ You can use property <code>schema-generate-names</code> to specify multiple sche
 </td>
 </tr>
 </table>
-</div>
 </div>
 
 <h1 id="hibernate"><a class="anchor" href="#hibernate"></a>4 Micronaut Data JPA Hibernate</h1>
