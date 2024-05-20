@@ -166,25 +166,10 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
         Optional<BeanIntrospection<R>> introspection = BeanIntrospector.SHARED.findIntrospection(resultType);
         if (introspection.isPresent()) {
             try {
-                return (new BeanIntrospectionMapper<BsonDocument, R>() {
-                    @Override
-                    public Object read(BsonDocument document, String alias) {
-                        BsonValue bsonValue = document.get(alias);
-                        if (bsonValue == null) {
-                            return null;
-                        }
-                        return MongoUtils.toValue(bsonValue);
-                    }
-
-                    @Override
-                    public ConversionService getConversionService() {
-                        return conversionService;
-                    }
-
-                }).map(result, resultType);
+                return mapIntrospectedObject(result, resultType);
             } catch (Exception e) {
                 LOG.warn("Failed to map @Introspection annotated result. " +
-                    "Now attempting to fallback and read object from the document. Error: " + e.getMessage());
+                    "Now attempting to fallback and read object from the document. Error: {}", e.getMessage());
             }
         }
         BsonValue value;
@@ -200,15 +185,34 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
                 value = result.values().iterator().next();
             }
         } else if (isDtoProjection) {
-            Object dtoResult = MongoUtils.toValue(result.asDocument(), resultType, codecRegistry);
+            R dtoResult = MongoUtils.toValue(result.asDocument(), resultType, codecRegistry);
             if (resultType.isInstance(dtoResult)) {
-                return (R) dtoResult;
+                return dtoResult;
             }
             return conversionService.convertRequired(dtoResult, resultType);
         } else {
             throw new IllegalStateException("Unrecognized result: " + result);
         }
         return conversionService.convertRequired(MongoUtils.toValue(value), resultType);
+    }
+
+    private <R> R mapIntrospectedObject(BsonDocument result, Class<R> resultType) {
+        return (new BeanIntrospectionMapper<BsonDocument, R>() {
+            @Override
+            public Object read(BsonDocument document, String alias) {
+                BsonValue bsonValue = document.get(alias);
+                if (bsonValue == null) {
+                    return null;
+                }
+                return MongoUtils.toValue(bsonValue);
+            }
+
+            @Override
+            public ConversionService getConversionService() {
+                return conversionService;
+            }
+
+        }).map(result, resultType);
     }
 
     protected BsonDocument association(CodecRegistry codecRegistry,
@@ -251,7 +255,9 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
                 sb.append(" collation: ").append(collation);
             }
         }
-        QUERY_LOG.debug(sb.toString());
+        if (QUERY_LOG.isDebugEnabled()) {
+            QUERY_LOG.debug(sb.toString());
+        }
     }
 
     protected void logAggregate(MongoAggregation aggregation) {
@@ -265,7 +271,9 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
                 sb.append(" collation: ").append(collation);
             }
         }
-        QUERY_LOG.debug(sb.toString());
+        if (QUERY_LOG.isDebugEnabled()) {
+            QUERY_LOG.debug(sb.toString());
+        }
     }
 
 }
