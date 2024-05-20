@@ -54,6 +54,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -151,6 +152,49 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
         }
         return new DefaultMongoStoredQuery<>(storedQuery, codecRegistry, attributeConverterRegistry,
             runtimeEntityRegistry, conversionService, persistentEntity);
+    }
+
+    /**
+     * Gets value from the {@link BsonDocument} when query is projection against object that has @{@link io.micronaut.core.annotation.Introspected}
+     * annotation. If it's not projection against {@link io.micronaut.core.annotation.Introspected} annotated object then returns original BsonDocument.
+     *
+     * @param result the BsonDocument
+     * @param preparedQuery the Mongo prepared query
+     * @return BsonDocument for the projection, if there is projection in the query against type annotated with @{@link io.micronaut.core.annotation.Introspected}
+     * @param <T> The entity type
+     * @param <R> The result type
+     */
+    protected <T, R> BsonDocument getAggregateProjectionResult(BsonDocument result, Class<R> resultType, MongoPreparedQuery<T, R> preparedQuery) {
+        Optional<BeanIntrospection<R>> introspection = BeanIntrospector.SHARED.findIntrospection(resultType);
+        // Projection against simple types will be in the document root, no need to handle these cases
+        if (introspection.isEmpty()) {
+            return result;
+        }
+        Class<T> type = preparedQuery.getRootEntity();
+        RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(type);
+        String key = null;
+        MongoAggregation mongoAggregation = preparedQuery.getAggregation();
+        List<Bson> pipelines = mongoAggregation.getPipeline();
+        for (Bson pipeline : pipelines) {
+            BsonDocument pipelineDocument = pipeline.toBsonDocument();
+            BsonValue bsonValue = pipelineDocument.get("$project");
+            if (bsonValue != null && bsonValue.isDocument()) {
+                BsonDocument bsonDocument = bsonValue.asDocument();
+                for (String bsonDocumentKey : bsonDocument.keySet()) {
+                    if (entity.getPropertyPath(bsonDocumentKey) != null) {
+                        key = bsonDocumentKey;
+                        break;
+                    }
+                }
+            }
+        }
+        if (key != null) {
+            BsonValue value = result.get(key);
+            if (value.isDocument()) {
+                result = value.asDocument();
+            }
+        }
+        return result;
     }
 
     protected <R> R convertResult(CodecRegistry codecRegistry,

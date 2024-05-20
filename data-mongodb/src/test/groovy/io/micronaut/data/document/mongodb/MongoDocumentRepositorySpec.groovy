@@ -8,7 +8,10 @@ import com.mongodb.client.model.Sorts
 import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.model.Updates
 import groovy.transform.Memoized
+import io.micronaut.data.document.mongodb.entities.ComplexEntity
+import io.micronaut.data.document.mongodb.entities.ComplexValue
 import io.micronaut.data.document.mongodb.entities.ElementRow
+import io.micronaut.data.document.mongodb.repositories.ComplexRepository
 import io.micronaut.data.document.mongodb.repositories.ElementRowRepository
 import io.micronaut.data.document.mongodb.repositories.MongoAuthorRepository
 import io.micronaut.data.document.mongodb.repositories.MongoDocumentRepository
@@ -35,7 +38,9 @@ import io.micronaut.data.document.tck.repositories.StudentRepository
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.mongodb.operations.options.MongoAggregationOptions
 import io.micronaut.data.mongodb.operations.options.MongoFindOptions
+import jakarta.inject.Inject
 import org.bson.BsonDocument
+import spock.lang.Shared
 
 import java.util.stream.Collectors
 
@@ -601,6 +606,41 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
         elementRowRepository.deleteAll()
     }
 
+    void 'test complex value projection'() {
+        when:
+        def complexEntity = new ComplexEntity()
+        complexEntity.simpleValue = "test1"
+        def complexValue = new ComplexValue()
+        complexValue.valueA = "a"
+        complexValue.valueB = "1"
+        complexEntity.complexValue = complexValue
+        complexRepository.save(complexEntity)
+        def opt = complexRepository.findById(complexEntity.id)
+        then:
+        opt.present
+        opt.get().complexValue.valueA == complexValue.valueA
+        opt.get().complexValue.valueB == complexValue.valueB
+        when:
+        def allComplexValues = complexRepository.findAllComplexValue()
+        then:
+        allComplexValues.size() == 1
+        allComplexValues[0].valueA == complexValue.valueA
+        allComplexValues[0].valueB == complexValue.valueB
+        when:
+        def optCv = complexRepository.findComplexValueById(complexEntity.id)
+        then:
+        optCv.present
+        optCv.get().valueA == complexValue.valueA
+        optCv.get().valueB == complexValue.valueB
+        when:
+        def optSimpleValue = complexRepository.findSimpleValueById(complexEntity.id)
+        then:
+        optSimpleValue.present
+        optSimpleValue.get() == complexEntity.simpleValue
+        cleanup:
+        complexRepository.deleteAll()
+    }
+
     @Memoized
     MongoExecutorPersonRepository getMongoExecutorPersonRepository() {
         return context.getBean(MongoExecutorPersonRepository)
@@ -657,5 +697,10 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
     @Memoized
     ElementRowRepository getElementRowRepository() {
         return context.getBean(ElementRowRepository)
+    }
+
+    @Memoized
+    ComplexRepository getComplexRepository() {
+        return context.getBean(ComplexRepository)
     }
 }
