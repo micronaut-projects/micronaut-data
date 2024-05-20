@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 @MongoRepository
-public interface ComplexRepository extends CrudRepository<ComplexEntity, String> {
+public interface ComplexEntityRepository extends CrudRepository<ComplexEntity, String> {
 
     Optional<ComplexValue> findComplexValueById(String id);
 
