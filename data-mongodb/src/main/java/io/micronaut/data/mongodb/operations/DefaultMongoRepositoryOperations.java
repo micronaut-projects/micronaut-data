@@ -301,7 +301,6 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
         Class<R> resultType = preparedQuery.getResultType();
         if (!resultType.isAssignableFrom(type)) {
             BsonDocument result = aggregate(clientSession, preparedQuery, BsonDocument.class).first();
-            result = getAggregateProjectionResult(result, resultType, preparedQuery);
             return convertResult(database.getCodecRegistry(), resultType, result, preparedQuery.isDtoProjection());
         }
         return aggregate(clientSession, preparedQuery).map(r -> {
@@ -324,8 +323,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
         if (!resultType.isAssignableFrom(type)) {
             MongoDatabase database = getDatabase(preparedQuery);
             aggregate = aggregate(clientSession, preparedQuery, BsonDocument.class)
-                    .map(result -> convertResult(database.getCodecRegistry(), resultType,
-                        getAggregateProjectionResult(result, resultType, preparedQuery), preparedQuery.isDtoProjection()));
+                    .map(result -> convertResult(database.getCodecRegistry(), resultType, result, preparedQuery.isDtoProjection()));
         } else {
             aggregate = aggregate(clientSession, preparedQuery, resultType);
         }

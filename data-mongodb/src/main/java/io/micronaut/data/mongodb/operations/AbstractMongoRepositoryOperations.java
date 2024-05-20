@@ -53,8 +53,8 @@ import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -73,6 +73,8 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
 
     protected static final BsonDocument EMPTY = new BsonDocument();
     protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
+
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractMongoRepositoryOperations.class);
 
     protected final MongoCollectionNameProvider collectionNameProvider;
     protected final MongoDatabaseNameProvider databaseNameProvider;
@@ -154,49 +156,6 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
             runtimeEntityRegistry, conversionService, persistentEntity);
     }
 
-    /**
-     * Gets value from the {@link BsonDocument} when query is projection against object that has @{@link io.micronaut.core.annotation.Introspected}
-     * annotation. If it's not projection against {@link io.micronaut.core.annotation.Introspected} annotated object then returns original BsonDocument.
-     *
-     * @param result the BsonDocument
-     * @param preparedQuery the Mongo prepared query
-     * @return BsonDocument for the projection, if there is projection in the query against type annotated with @{@link io.micronaut.core.annotation.Introspected}
-     * @param <T> The entity type
-     * @param <R> The result type
-     */
-    protected <T, R> BsonDocument getAggregateProjectionResult(BsonDocument result, Class<R> resultType, MongoPreparedQuery<T, R> preparedQuery) {
-        Optional<BeanIntrospection<R>> introspection = BeanIntrospector.SHARED.findIntrospection(resultType);
-        // Projection against simple types will be in the document root, no need to handle these cases
-        if (introspection.isEmpty()) {
-            return result;
-        }
-        Class<T> type = preparedQuery.getRootEntity();
-        RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(type);
-        String key = null;
-        MongoAggregation mongoAggregation = preparedQuery.getAggregation();
-        List<Bson> pipelines = mongoAggregation.getPipeline();
-        for (Bson pipeline : pipelines) {
-            BsonDocument pipelineDocument = pipeline.toBsonDocument();
-            BsonValue bsonValue = pipelineDocument.get("$project");
-            if (bsonValue != null && bsonValue.isDocument()) {
-                BsonDocument bsonDocument = bsonValue.asDocument();
-                for (String bsonDocumentKey : bsonDocument.keySet()) {
-                    if (entity.getPropertyPath(bsonDocumentKey) != null) {
-                        key = bsonDocumentKey;
-                        break;
-                    }
-                }
-            }
-        }
-        if (key != null) {
-            BsonValue value = result.get(key);
-            if (value.isDocument()) {
-                result = value.asDocument();
-            }
-        }
-        return result;
-    }
-
     protected <R> R convertResult(CodecRegistry codecRegistry,
                                   Class<R> resultType,
                                   BsonDocument result,
@@ -206,22 +165,27 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
         }
         Optional<BeanIntrospection<R>> introspection = BeanIntrospector.SHARED.findIntrospection(resultType);
         if (introspection.isPresent()) {
-            return (new BeanIntrospectionMapper<BsonDocument, R>() {
-                @Override
-                public Object read(BsonDocument document, String alias) {
-                    BsonValue bsonValue = document.get(alias);
-                    if (bsonValue == null) {
-                        return null;
+            try {
+                return (new BeanIntrospectionMapper<BsonDocument, R>() {
+                    @Override
+                    public Object read(BsonDocument document, String alias) {
+                        BsonValue bsonValue = document.get(alias);
+                        if (bsonValue == null) {
+                            return null;
+                        }
+                        return MongoUtils.toValue(bsonValue);
                     }
-                    return MongoUtils.toValue(bsonValue);
-                }
 
-                @Override
-                public ConversionService getConversionService() {
-                    return conversionService;
-                }
+                    @Override
+                    public ConversionService getConversionService() {
+                        return conversionService;
+                    }
 
-            }).map(result, resultType);
+                }).map(result, resultType);
+            } catch (Exception e) {
+                LOG.warn("Failed to read aggregate @Introspection result. " +
+                    "Attempting to read projection from the document.", e);
+            }
         }
         BsonValue value;
         if (result == null) {
