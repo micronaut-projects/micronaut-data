@@ -183,8 +183,8 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
 
                 }).map(result, resultType);
             } catch (Exception e) {
-                LOG.warn("Failed to read aggregate @Introspection result. " +
-                    "Attempting to read projection from the document.", e);
+                LOG.warn("Failed to map @Introspection annotated result. " +
+                    "Now attempting to fallback and read object from the document. Error: " + e.getMessage());
             }
         }
         BsonValue value;
