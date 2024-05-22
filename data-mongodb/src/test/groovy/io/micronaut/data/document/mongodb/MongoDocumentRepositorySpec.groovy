@@ -8,7 +8,10 @@ import com.mongodb.client.model.Sorts
 import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.model.Updates
 import groovy.transform.Memoized
+import io.micronaut.data.document.mongodb.entities.ComplexEntity
+import io.micronaut.data.document.mongodb.entities.ComplexValue
 import io.micronaut.data.document.mongodb.entities.ElementRow
+import io.micronaut.data.document.mongodb.repositories.ComplexEntityRepository
 import io.micronaut.data.document.mongodb.repositories.ElementRowRepository
 import io.micronaut.data.document.mongodb.repositories.MongoAuthorRepository
 import io.micronaut.data.document.mongodb.repositories.MongoDocumentRepository
@@ -36,8 +39,6 @@ import io.micronaut.data.model.Pageable
 import io.micronaut.data.mongodb.operations.options.MongoAggregationOptions
 import io.micronaut.data.mongodb.operations.options.MongoFindOptions
 import org.bson.BsonDocument
-
-import java.util.stream.Collectors
 
 import static io.micronaut.data.document.tck.repositories.DocumentRepository.Specifications.tagsArrayContains
 
@@ -601,6 +602,35 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
         elementRowRepository.deleteAll()
     }
 
+    void 'test complex value projection'() {
+        when:
+        def complexValue = new ComplexValue("a", "1")
+        def complexEntity = new ComplexEntity("test1", complexValue)
+        def savedComplexEntity = complexEntityRepository.save(complexEntity)
+        def opt = complexEntityRepository.findById(savedComplexEntity.id)
+        then:
+        opt.present
+        opt.get() == savedComplexEntity
+        opt.get().complexValue == complexValue
+        when:
+        def allComplexValues = complexEntityRepository.findAllComplexValue()
+        then:
+        allComplexValues.size() == 1
+        allComplexValues[0] == complexValue
+        when:
+        def optCv = complexEntityRepository.findComplexValueById(savedComplexEntity.id)
+        then:
+        optCv.present
+        optCv.get() == complexValue
+        when:
+        def optSimpleValue = complexEntityRepository.findSimpleValueById(savedComplexEntity.id)
+        then:
+        optSimpleValue.present
+        optSimpleValue.get() == savedComplexEntity.simpleValue
+        cleanup:
+        complexEntityRepository.deleteAll()
+    }
+
     @Memoized
     MongoExecutorPersonRepository getMongoExecutorPersonRepository() {
         return context.getBean(MongoExecutorPersonRepository)
@@ -657,5 +687,10 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
     @Memoized
     ElementRowRepository getElementRowRepository() {
         return context.getBean(ElementRowRepository)
+    }
+
+    @Memoized
+    ComplexEntityRepository getComplexEntityRepository() {
+        return context.getBean(ComplexEntityRepository)
     }
 }
