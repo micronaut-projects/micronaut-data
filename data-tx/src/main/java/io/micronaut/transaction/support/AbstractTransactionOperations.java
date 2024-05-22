@@ -331,7 +331,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         R result;
         try {
             result = callback.apply(transaction);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             if (definition.rollbackOn(e)) {
                 rollbackInternal(transaction);
             } else {
