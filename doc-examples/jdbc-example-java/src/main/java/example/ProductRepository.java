@@ -10,6 +10,7 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 // tag::join[]
@@ -47,6 +48,9 @@ public interface ProductRepository extends CrudRepository<Product, Long> {
     @Join(value = "manufacturer", alias = "m_")
     List<Product> searchProducts(String name);
     // end::native[]
+
+    @Join("manufacturer")
+    Optional<Product> findByName(String name);
 
     class Specifications {
         // tag::typesafe[]
