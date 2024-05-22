@@ -220,7 +220,9 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             genericReturnType = genericReturnType.getFirstTypeArgument().orElse(matchContext.getRootEntity().getType());
         }
         QueryResult countQueryResult = null;
-        if (matchContext.isTypeInRole(genericReturnType, TypeRole.PAGE)) {
+        if (matchContext.isTypeInRole(genericReturnType, TypeRole.PAGE)
+            || matchContext.isTypeInRole(genericReturnType, TypeRole.CURSORED_PAGE)
+        ) {
 //                SourcePersistentEntityCriteriaQuery<Object> count = cb.createQuery();
 //                count.select(cb.count(query.getRoots().iterator().next()));
 //                CommonAbstractCriteria countQueryCriteria = defineQuery(matchContext, matchContext.getRootEntity(), cb);

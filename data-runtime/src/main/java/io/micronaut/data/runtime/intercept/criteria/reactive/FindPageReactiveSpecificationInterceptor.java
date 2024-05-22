@@ -55,12 +55,15 @@ public class FindPageReactiveSpecificationInterceptor extends AbstractReactiveSp
         Pageable pageable = getPageable(context);
         if (pageable.isUnpaged()) {
             Flux<?> results = Flux.from(findAllReactive(methodKey, context, Type.FIND_PAGE));
-            result = results.collectList().map(resultList -> Page.of(resultList, pageable, resultList.size()));
+            result = results.collectList().map(resultList -> Page.of(resultList, pageable, (long) resultList.size()));
         } else {
             result = Flux.from(findAllReactive(methodKey, context, Type.FIND_PAGE))
                 .collectList()
-                .flatMap(list -> Mono.from(countReactive(methodKey, context))
-                    .map(count -> Page.of(list, getPageable(context), count.longValue())));
+                .flatMap(
+                    list -> pageable.requestTotal()
+                        ? Mono.from(countReactive(methodKey, context)).map(count -> Page.of(list, getPageable(context), count))
+                        : Mono.just(Page.of(list, getPageable(context), null))
+                );
         }
         return Publishers.convertPublisher(conversionService, result, context.getReturnType().getType());
 

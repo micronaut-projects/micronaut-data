@@ -15,6 +15,7 @@ shared:
     title: Writing Queries
     criteria: Query Criteria
     pagination: Pagination
+    cursored-pagination: Cursored Pagination
     ordering: Ordering
     projections: Query Projections
     dto: DTO Projections

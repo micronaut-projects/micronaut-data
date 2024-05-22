@@ -19,22 +19,24 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.core.annotation.Creator;
 import io.micronaut.core.annotation.ReflectiveAccess;
+import io.micronaut.data.model.Pageable.Cursor;
 import io.micronaut.serde.annotation.Serdeable;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
- * Default implementation of {@link Page}.
+ * Implementation of {@link Page} to return when {@link CursoredPageable} is requested.
  *
- * @author graemerocher
- * @since 1.0.0
+ * @author Andriy Dmytruk
+ * @since 4.8.0
  * @param <T> The generic type
  */
 @Serdeable
-class DefaultPage<T> extends DefaultSlice<T> implements Page<T> {
+class DefaultCursoredPage<T> extends DefaultPage<T> implements CursoredPage<T> {
 
-    private final Long totalSize;
+    private final List<Cursor> cursors;
 
     /**
      * Default constructor.
@@ -45,30 +47,21 @@ class DefaultPage<T> extends DefaultSlice<T> implements Page<T> {
     @JsonCreator
     @Creator
     @ReflectiveAccess
-    DefaultPage(
+    DefaultCursoredPage(
             @JsonProperty("content")
             List<T> content,
             @JsonProperty("pageable")
             Pageable pageable,
+            @JsonProperty("cursors")
+            List<Cursor> cursors,
             @JsonProperty("totalSize")
-            Long totalSize) {
-        super(content, pageable);
-        this.totalSize = totalSize;
-    }
-
-    @Override
-    public boolean hasTotalSize() {
-        return totalSize != null;
-    }
-
-    @Override
-    @ReflectiveAccess
-    public long getTotalSize() {
-        if (totalSize == null) {
-            throw new IllegalStateException("Page does not contain total count. " +
-                "It is likely that the Pageable needs to be modified to request this information.");
+            Long totalSize
+    ) {
+        super(content, pageable, totalSize);
+        if (content.size() != cursors.size()) {
+            throw new IllegalArgumentException("The number of cursors must match the number of content items for a page");
         }
-        return totalSize;
+        this.cursors = cursors;
     }
 
     @Override
@@ -76,23 +69,34 @@ class DefaultPage<T> extends DefaultSlice<T> implements Page<T> {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof DefaultPage<?> that)) {
+        if (!(o instanceof DefaultCursoredPage<?> that)) {
             return false;
         }
-        return totalSize == that.totalSize && super.equals(o);
+        return Objects.equals(cursors, that.cursors) && super.equals(o);
+    }
+
+    @Override
+    public Optional<Cursor> getCursor(int i) {
+        return i >= cursors.size() || i < 0 ? Optional.empty() : Optional.of(cursors.get(i));
+    }
+
+    @Override
+    public List<Cursor> getCursors() {
+        return cursors;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(totalSize, super.hashCode());
+        return Objects.hash(cursors, super.hashCode());
     }
 
     @Override
     public String toString() {
         return "DefaultPage{" +
-                "totalSize=" + totalSize +
+                "totalSize=" + getTotalSize() +
                 ",content=" + getContent() +
                 ",pageable=" + getPageable() +
+                ",cursors=" + cursors +
                 '}';
     }
 }

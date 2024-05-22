@@ -16,10 +16,12 @@
 package io.micronaut.data.tck.repositories;
 
 import io.micronaut.context.annotation.Parameter;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.model.CursoredPage;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Slice;
@@ -172,6 +174,8 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
     List<Person> findDistinct();
 
     List<String> findDistinctName();
+
+    CursoredPage<Person> retrieve(@NonNull Pageable pageable);
 
     class Specifications {
 

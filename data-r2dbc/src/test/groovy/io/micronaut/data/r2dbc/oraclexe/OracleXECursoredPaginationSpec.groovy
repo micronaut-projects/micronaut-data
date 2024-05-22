@@ -13,34 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.sqlserver
+package io.micronaut.data.r2dbc.oraclexe
 
 import groovy.transform.Memoized
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.PersonRepository
-import io.micronaut.data.tck.tests.AbstractPageSpec
+import io.micronaut.data.tck.tests.AbstractCursoredPageSpec
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 
-class SqlServerPaginationSpec extends AbstractPageSpec implements MSSQLTestPropertyProvider {
+class OracleXECursoredPaginationSpec extends AbstractCursoredPageSpec implements OracleXETestPropertyProvider {
 
     @Shared @AutoCleanup ApplicationContext context
 
-    @Memoized
     @Override
+    @Memoized
     PersonRepository getPersonRepository() {
-        return context.getBean(MSSQLPersonRepository)
+        return context.getBean(OracleXEPersonRepository)
     }
 
-    @Memoized
     @Override
+    @Memoized
     BookRepository getBookRepository() {
-        return context.getBean(MSBookRepository)
+        return context.getBean(OracleXEBookRepository)
     }
 
     @Override
     void init() {
         context = ApplicationContext.run(properties)
     }
+
 }

@@ -13,34 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.sqlserver
+package io.micronaut.data.r2dbc.postgres
 
 import groovy.transform.Memoized
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.PersonRepository
-import io.micronaut.data.tck.tests.AbstractPageSpec
+import io.micronaut.data.tck.tests.AbstractCursoredPageSpec
 import spock.lang.AutoCleanup
+import spock.lang.Ignore
 import spock.lang.Shared
 
-class SqlServerPaginationSpec extends AbstractPageSpec implements MSSQLTestPropertyProvider {
-
+//@Ignore("Causes error: 'FATAL: sorry, too many clients already'")
+class PostgresCursoredPaginationSpec extends AbstractCursoredPageSpec implements PostgresTestPropertyProvider {
     @Shared @AutoCleanup ApplicationContext context
 
     @Memoized
     @Override
     PersonRepository getPersonRepository() {
-        return context.getBean(MSSQLPersonRepository)
+        return context.getBean(PostgresPersonRepository)
     }
 
     @Memoized
     @Override
     BookRepository getBookRepository() {
-        return context.getBean(MSBookRepository)
+        return context.getBean(PostgresBookRepository)
     }
 
     @Override
     void init() {
-        context = ApplicationContext.run(properties)
+        context = ApplicationContext.run(getProperties())
     }
 }

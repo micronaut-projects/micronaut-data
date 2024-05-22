@@ -733,7 +733,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
     @Override
     public <R> Page<R> findPage(@NonNull PagedQuery<R> query) {
-        throw new UnsupportedOperationException("The findPage method without an explicit query is not supported. Use findPage(PreparedQuery) instead");
+        throw new UnsupportedOperationException("The findPage method without an explicit query is not supported. Use findAll(PreparedQuery) instead");
     }
 
     @Override

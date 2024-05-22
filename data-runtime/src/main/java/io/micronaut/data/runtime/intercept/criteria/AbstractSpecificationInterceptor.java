@@ -28,6 +28,7 @@ import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.AssociationUtils;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
 import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
@@ -142,6 +143,9 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
             CriteriaQuery<Object> query = buildQuery(context, type, methodJoinPaths);
             Pageable pageable = getPageable(context);
             if (pageable != null) {
+                if (pageable.getMode() != Mode.OFFSET) {
+                    throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported with specifications");
+                }
                 return criteriaRepositoryOperations.findAll(query, (int) pageable.getOffset(), pageable.getSize());
             }
             return criteriaRepositoryOperations.findAll(query);
@@ -168,7 +172,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
         Long count;
         if (criteriaRepositoryOperations != null) {
-            count =  criteriaRepositoryOperations.findOne(buildCountQuery(context));
+            count = criteriaRepositoryOperations.findOne(buildCountQuery(context));
         } else {
             count = operations.findOne(preparedQueryForCriteria(methodKey, context, Type.COUNT, methodJoinPaths));
         }

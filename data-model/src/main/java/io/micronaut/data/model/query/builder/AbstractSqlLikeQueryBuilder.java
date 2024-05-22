@@ -1976,8 +1976,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         StringBuilder buff = new StringBuilder(ORDER_BY_CLAUSE);
         Iterator<Sort.Order> i = orders.iterator();
 
-        String jsonEntityColumn = getJsonEntityColumn(annotationMetadata);
-
         while (i.hasNext()) {
             Sort.Order order = i.next();
             String property = order.getProperty();
@@ -1985,59 +1983,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (ignoreCase) {
                 buff.append("LOWER(");
             }
-            if (nativeQuery) {
-                buff.append(property);
-            } else {
-                PersistentPropertyPath path = entity.getPropertyPath(property);
-                if (path == null) {
-                    throw new IllegalArgumentException("Cannot sort on non-existent property path: " + property);
-                }
-                List<Association> associations = new ArrayList<>(path.getAssociations());
-                int assocCount = associations.size();
-                // If last association is embedded, it does not need to be joined to the alias since it will be in the destination table
-                // JPA/Hibernate is special case and in that case we leave association for specific handling below
-                if (assocCount > 0 && computePropertyPaths() && associations.get(assocCount - 1) instanceof Embedded) {
-                    associations.remove(assocCount - 1);
-                }
-                if (associations.isEmpty()) {
-                    buff.append(getAliasName(entity));
-                } else {
-                    StringJoiner joiner = new StringJoiner(".");
-                    for (Association association : associations) {
-                        joiner.add(association.getName());
-                    }
-                    String joinAlias = getAliasName(new JoinPath(joiner.toString(), associations.toArray(new Association[0]), Join.Type.DEFAULT, null));
-                    if (!computePropertyPaths()) {
-                        if (!query.contains(" " + joinAlias + " ") && !query.endsWith(" " + joinAlias)) {
-                            // Special hack case for JPA, Hibernate can join the relation with cross join automatically when referenced by the property path
-                            // This probably should be removed in the future major version
-                            buff.append(getAliasName(entity)).append(DOT);
-                            StringJoiner pathJoiner = new StringJoiner(".");
-                            for (Association association : associations) {
-                                pathJoiner.add(association.getName());
-                            }
-                            buff.append(pathJoiner);
-                        } else {
-                            buff.append(joinAlias);
-                        }
-                    } else {
-                        buff.append(joinAlias);
-                    }
-                }
-                buff.append(DOT);
-
-                if (jsonEntityColumn != null) {
-                    buff.append(jsonEntityColumn).append(DOT);
-                }
-
-                if (!computePropertyPaths() || jsonEntityColumn != null) {
-                    buff.append(path.getProperty().getName());
-                } else {
-                    buff.append(getColumnName(path.getProperty()));
-                }
-                if (ignoreCase) {
-                    buff.append(")");
-                }
+            buff.append(buildPropertyByName(property, query, entity, annotationMetadata, nativeQuery));
+            if (ignoreCase) {
+                buff.append(")");
             }
             buff.append(SPACE).append(order.getDirection());
             if (i.hasNext()) {
@@ -2051,6 +1999,81 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             Collections.emptyList(),
             Collections.emptyMap()
         );
+    }
+
+    /**
+     * Encode the given property retrieval into a query instance.
+     * For example, property name might be encoded as {@code `person_.name`} using
+     * its path and table's alias.
+     *
+     * @param propertyName The name of the property
+     * @param query The query
+     * @param entity The root entity
+     * @param annotationMetadata The annotation metadata
+     * @param nativeQuery Whether the query is native query, in which case the property name will be supplied by the user and not verified
+     * @return The encoded query
+     */
+    public String buildPropertyByName(
+            @NonNull String propertyName, @NonNull String query,
+            @NonNull PersistentEntity entity, @NonNull AnnotationMetadata annotationMetadata,
+            boolean nativeQuery
+    ) {
+        if (nativeQuery) {
+            return propertyName;
+        }
+
+        PersistentPropertyPath path = entity.getPropertyPath(propertyName);
+        if (path == null) {
+            throw new IllegalArgumentException("Cannot sort on non-existent property path: " + propertyName);
+        }
+        List<Association> associations = new ArrayList<>(path.getAssociations());
+        int assocCount = associations.size();
+        // If last association is embedded, it does not need to be joined to the alias since it will be in the destination table
+        // JPA/Hibernate is special case and in that case we leave association for specific handling below
+        if (assocCount > 0 && computePropertyPaths() && associations.get(assocCount - 1) instanceof Embedded) {
+            associations.remove(assocCount - 1);
+        }
+
+        StringBuilder buff = new StringBuilder();
+        if (associations.isEmpty()) {
+            buff.append(getAliasName(entity));
+        } else {
+            StringJoiner joiner = new StringJoiner(".");
+            for (Association association : associations) {
+                joiner.add(association.getName());
+            }
+            String joinAlias = getAliasName(new JoinPath(joiner.toString(), associations.toArray(new Association[0]), Join.Type.DEFAULT, null));
+            if (!computePropertyPaths()) {
+                if (!query.contains(" " + joinAlias + " ") && !query.endsWith(" " + joinAlias)) {
+                    // Special hack case for JPA, Hibernate can join the relation with cross join automatically when referenced by the property path
+                    // This probably should be removed in the future major version
+                    buff.append(getAliasName(entity)).append(DOT);
+                    StringJoiner pathJoiner = new StringJoiner(".");
+                    for (Association association : associations) {
+                        pathJoiner.add(association.getName());
+                    }
+                    buff.append(pathJoiner);
+                } else {
+                    buff.append(joinAlias);
+                }
+            } else {
+                buff.append(joinAlias);
+            }
+        }
+        buff.append(DOT);
+
+        String jsonEntityColumn = getJsonEntityColumn(annotationMetadata);
+        if (jsonEntityColumn != null) {
+            buff.append(jsonEntityColumn).append(DOT);
+        }
+
+        if (!computePropertyPaths() || jsonEntityColumn != null) {
+            buff.append(path.getProperty().getName());
+        } else {
+            buff.append(getColumnName(path.getProperty()));
+        }
+
+        return buff.toString();
     }
 
     /**

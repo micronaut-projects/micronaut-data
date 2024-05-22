@@ -97,6 +97,11 @@ final class DefaultSort implements Sort {
     }
 
     @Override
+    public String toString() {
+        return "DefaultSort{orderBy=" + orderBy + '}';
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;

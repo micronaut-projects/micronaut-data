@@ -46,6 +46,7 @@ import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
@@ -316,6 +317,9 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                                                  MongoPreparedQuery<T, R> preparedQuery,
                                                  boolean stream) {
         Pageable pageable = preparedQuery.getPageable();
+        if (pageable.getMode() != Mode.OFFSET) {
+            throw new UnsupportedOperationException("Mode " + pageable.getMode() + " is not supported by the MongoDB implementation");
+        }
         int limit = pageable == Pageable.UNPAGED ? -1 : pageable.getSize();
         Class<T> type = preparedQuery.getRootEntity();
         Class<R> resultType = preparedQuery.getResultType();
@@ -334,6 +338,9 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                                                MongoPreparedQuery<T, R> preparedQuery,
                                                boolean stream) {
         Pageable pageable = preparedQuery.getPageable();
+        if (pageable.getMode() != Mode.OFFSET) {
+            throw new UnsupportedOperationException("Mode " + pageable.getMode() + " is not supported by the MongoDB implementation");
+        }
         int limit = pageable == Pageable.UNPAGED ? -1 : pageable.getSize();
         Class<T> type = preparedQuery.getRootEntity();
         Class<R> resultType = preparedQuery.getResultType();

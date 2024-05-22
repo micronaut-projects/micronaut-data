@@ -96,29 +96,33 @@ public class FindPageSpecificationInterceptor extends AbstractSpecificationInter
             return Page.of(
                     resultList,
                     pageable,
-                    resultList.size()
+                    (long) resultList.size()
             );
         } else {
             typedQuery.setFirstResult((int) pageable.getOffset());
             typedQuery.setMaxResults(pageable.getSize());
             final List<Object> results = typedQuery.getResultList();
-            final CriteriaQuery<Long> countQuery = criteriaBuilder.createQuery(Long.class);
-            final Root<?> countRoot = countQuery.from(rootEntity);
-            final Predicate countPredicate = specification != null ? specification.toPredicate(countRoot, countQuery, criteriaBuilder) : null;
-            if (countPredicate != null) {
-                countQuery.where(countPredicate);
+
+            Long totalCount = null;
+            if (pageable.requestTotal()) {
+                final CriteriaQuery<Long> countQuery = criteriaBuilder.createQuery(Long.class);
+                final Root<?> countRoot = countQuery.from(rootEntity);
+                final Predicate countPredicate = specification != null ? specification.toPredicate(countRoot, countQuery, criteriaBuilder) : null;
+                if (countPredicate != null) {
+                    countQuery.where(countPredicate);
+                }
+                if (countQuery.isDistinct()) {
+                    countQuery.select(criteriaBuilder.countDistinct(countRoot));
+                } else {
+                    countQuery.select(criteriaBuilder.count(countRoot));
+                }
+                totalCount = entityManager.createQuery(countQuery).getSingleResult();
             }
-            if (countQuery.isDistinct()) {
-                countQuery.select(criteriaBuilder.countDistinct(countRoot));
-            } else {
-                countQuery.select(criteriaBuilder.count(countRoot));
-            }
-            Long singleResult = entityManager.createQuery(countQuery).getSingleResult();
 
             return Page.of(
                     results,
                     pageable,
-                    singleResult
+                    totalCount
             );
         }
 

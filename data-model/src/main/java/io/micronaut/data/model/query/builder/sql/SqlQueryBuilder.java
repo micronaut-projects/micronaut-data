@@ -43,6 +43,7 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
@@ -1210,7 +1211,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         int size = pageable.getSize();
         if (size > 0) {
             StringBuilder builder = new StringBuilder(" ");
-            long from = pageable.getOffset();
+            long from = pageable.getMode() == Mode.OFFSET ? pageable.getOffset() : 0;
             switch (dialect) {
                 case H2:
                 case MYSQL:

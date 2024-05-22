@@ -13,34 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.sqlserver
+package io.micronaut.data.jdbc.h2
 
-import groovy.transform.Memoized
-import io.micronaut.context.ApplicationContext
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.PersonRepository
-import io.micronaut.data.tck.tests.AbstractPageSpec
-import spock.lang.AutoCleanup
+import io.micronaut.data.tck.tests.AbstractCursoredPageSpec
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import jakarta.inject.Inject
 import spock.lang.Shared
 
-class SqlServerPaginationSpec extends AbstractPageSpec implements MSSQLTestPropertyProvider {
+@MicronautTest
+@H2DBProperties
+class H2CursoredPaginationSpec extends AbstractCursoredPageSpec {
+    @Inject
+    @Shared
+    H2PersonRepository pr
 
-    @Shared @AutoCleanup ApplicationContext context
+    @Inject
+    @Shared
+    H2BookRepository br
 
-    @Memoized
     @Override
     PersonRepository getPersonRepository() {
-        return context.getBean(MSSQLPersonRepository)
+        return pr
     }
 
-    @Memoized
     @Override
     BookRepository getBookRepository() {
-        return context.getBean(MSBookRepository)
+        return br
     }
 
     @Override
     void init() {
-        context = ApplicationContext.run(properties)
+        pr.deleteAll()
     }
 }

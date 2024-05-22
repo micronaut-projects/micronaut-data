@@ -1,0 +1,22 @@
+Micronaut Data includes the ability to specify cursored pagination with the api:data.model.CursoredPageable[] type.
+For cursored page methods return a api:data.model.CursoredPage[] type (inspired by https://jakarta.ee/specifications/data/1.0/apidocs/jakarta.data/jakarta/data/page/cursoredpage[CursoredPage] in Jakarta Data).
+
+WARNING: Cursored pagination is currently only supported with Micronaut Data JDBC and R2DBC.
+
+The following are some example signatures:
+
+snippet::example.BookRepository[project-base="doc-examples/jdbc-example", source="main", tags="cursored-pageable", indent="0"]
+
+<1> The signature defines a api:data.model.CursoredPageable[] parameter and api:data.model.CursoredPage[] return type.
+<2> The signature of method defines a api:data.model.CursoredPage[] return type, therefore method will throw an error if the request is not for the first page or is not cursored.
+<3> The method will return a api:data.model.CursoredPage[] only whenever a api:data.model.CursoredPageable[] is supplied.
+
+Therefore, you can use the repository methods to retrieve data with cursored pagination using the following queries:
+
+snippet::example.BookRepositorySpec[project-base="doc-examples/jdbc-example", tags="cursored-pageable", indent="0"]
+<1> Create a cursored pageable with a desired size and sorting and get a cursored page.
+<2> Get the next cursored pageable by calling `CursoredPage.getNextPageable()`.
+<3> Request first cursored page.
+<4> Supply a `CursoredPageable` to the repository method and a `CursoredPage` will be returned.
+
+NOTE: The cursor of pagination is based on the supplied sorting. If the supplied api:data.model.Sort[] in pageable does not produce a unique sorting, Micronaut Data internally will additionally sort by the identity column and extend the cursor with the column value to make sure pagination works correctly.

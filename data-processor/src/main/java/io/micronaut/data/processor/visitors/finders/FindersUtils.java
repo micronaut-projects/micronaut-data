@@ -32,6 +32,7 @@ import io.micronaut.data.intercept.DeleteReturningOneInterceptor;
 import io.micronaut.data.intercept.ExistsByInterceptor;
 import io.micronaut.data.intercept.FindAllInterceptor;
 import io.micronaut.data.intercept.FindByIdInterceptor;
+import io.micronaut.data.intercept.FindCursoredPageInterceptor;
 import io.micronaut.data.intercept.FindOneInterceptor;
 import io.micronaut.data.intercept.FindOptionalInterceptor;
 import io.micronaut.data.intercept.FindPageInterceptor;
@@ -361,7 +362,9 @@ public interface FindersUtils {
                 return new FindersUtils.InterceptorMatch(findInterceptorDef.returnType(), findInterceptorDef.interceptor(), false);
             }
         }
-        if (isPage(matchContext, returnType)) {
+        if (isCursoredPage(matchContext, returnType)) {
+            return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindCursoredPageInterceptor.class);
+        } else if (isPage(matchContext, returnType)) {
             return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindPageInterceptor.class);
         } else if (isSlice(matchContext, returnType)) {
             return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindSliceInterceptor.class);
@@ -572,6 +575,14 @@ public interface FindersUtils {
         return isContainer(type, Publisher.class)
             || TypeUtils.isReactiveType(type)
             && (type.getTypeArguments().isEmpty() || isContainer(type, type.getName())); // Validate container argument
+    }
+
+    static boolean isCursoredPage(MethodMatchContext methodMatchContext, ClassElement typeArgument) {
+        boolean matches = methodMatchContext.isTypeInRole(typeArgument, TypeRole.CURSORED_PAGE);
+        if (matches && !methodMatchContext.hasParameterInRole(TypeRole.PAGEABLE)) {
+            methodMatchContext.fail("Method must accept an argument that is a Pageable");
+        }
+        return matches;
     }
 
     static boolean isPage(MethodMatchContext methodMatchContext, ClassElement typeArgument) {
