@@ -47,13 +47,12 @@ public final class AsyncUsingSyncTransactionOperations<C> implements AsyncTransa
                                                   Function<AsyncTransactionStatus<C>, CompletionStage<T>> handler) {
         CompletableFuture<T> newResult = new CompletableFuture<>();
         PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
-        try (PropagatedContext.Scope scope = propagatedContext.propagate()) { // Propagate to clean up the scope
+        try (PropagatedContext.Scope ignore = propagatedContext.propagate()) { // Propagate to clean up the scope
             TransactionStatus<C> status = synchronousTransactionManager.getTransaction(definition);
-            PropagatedContext txPropagatedContext = PropagatedContext.get();
             CompletionStage<T> result;
             try {
                 result = handler.apply(new DefaultAsyncTransactionStatus<>(status));
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 CompletableFuture<T> r = new CompletableFuture<>();
                 r.completeExceptionally(e);
                 result = r;
