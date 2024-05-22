@@ -80,6 +80,10 @@ loadScripts(document, 'script');</script>
 <dt>All Superinterfaces:</dt>
 <dd><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;T&gt;</code>, <code><a href="Slice.html" title="interface in io.micronaut.data.model">Slice</a>&lt;T&gt;</code></dd>
 </dl>
+<dl class="notes">
+<dt>All Known Subinterfaces:</dt>
+<dd><code><a href="CursoredPage.html" title="interface in io.micronaut.data.model">CursoredPage</a>&lt;T&gt;</code></dd>
+</dl>
 <hr>
 <div class="type-signature"><span class="annotations">@DefaultImplementation(io.micronaut.data.model.DefaultPage.class)
 </span><span class="modifiers">public interface </span><span class="element-name type-name-label">Page&lt;T&gt;</span><span class="extends-implements">
@@ -88,7 +92,7 @@ extends <a href="Slice.html" title="interface in io.micronaut.data.model">Slice<
  pagination operations.
 
  <p>A Page is a result set associated with a particular <a href="Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> that includes a calculation of the total
- size of number of records.</p></div>
+ size of page of records.</p></div>
 <dl class="notes">
 <dt>Since:</dt>
 <dd>1.0.0</dd>
@@ -131,9 +135,21 @@ extends <a href="Slice.html" title="interface in io.micronaut.data.model">Slice<
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default int</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getTotalPages()" class="member-name-link">getTotalPages</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Get the total count of pages that can be given by this query.</div>
+</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>long</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getTotalSize()" class="member-name-link">getTotalSize</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Get the total count of all the records that can be given by this query.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#hasNext()" class="member-name-link">hasNext</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Determine whether there is a next page.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#hasTotalSize()" class="member-name-link">hasTotalSize</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;T2&gt;&nbsp;@NonNull <a href="Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;T2&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#map(java.util.function.Function)" class="member-name-link">map</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="Page.html" title="type parameter in Page">T</a>,<wbr>T2&gt;&nbsp;function)</code></div>
@@ -141,11 +157,19 @@ extends <a href="Slice.html" title="interface in io.micronaut.data.model">Slice<
 <div class="block">Maps the content with the given function.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static &lt;T&gt;&nbsp;@NonNull <a href="Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#of(java.util.List,io.micronaut.data.model.Pageable,long)" class="member-name-link">of</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;T&gt;&nbsp;content,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#of(java.util.List,io.micronaut.data.model.Pageable,java.lang.Long)" class="member-name-link">of</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;T&gt;&nbsp;content,
  @NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable,
- long&nbsp;totalSize)</code></div>
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;totalSize)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1">
-<div class="block">Creates a slice from the given content and pageable.</div>
+<div class="block">Creates a page from the given content, pageable and totalSize.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static &lt;T&gt;&nbsp;@NonNull <a href="Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#ofCursors(java.util.List,io.micronaut.data.model.Pageable,java.util.List,java.lang.Long)" class="member-name-link">ofCursors</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;T&gt;&nbsp;content,
+ @NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Pageable.Cursor.html" title="interface in io.micronaut.data.model">Pageable.Cursor</a>&gt;&nbsp;cursors,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;totalSize)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1">
+<div class="block">Creates a page from the given content, pageable, cursors and totalSize.</div>
 </div>
 </div>
 </div>
@@ -155,7 +179,7 @@ extends <a href="Slice.html" title="interface in io.micronaut.data.model">Slice<
 <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html#forEach(java.util.function.Consumer)" title="class or interface in java.lang" class="external-link">forEach</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html#spliterator()" title="class or interface in java.lang" class="external-link">spliterator</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.model.Slice">Methods inherited from interface&nbsp;io.micronaut.data.model.<a href="Slice.html" title="interface in io.micronaut.data.model">Slice</a></h3>
-<code><a href="Slice.html#getContent()">getContent</a>, <a href="Slice.html#getNumberOfElements()">getNumberOfElements</a>, <a href="Slice.html#getOffset()">getOffset</a>, <a href="Slice.html#getPageable()">getPageable</a>, <a href="Slice.html#getPageNumber()">getPageNumber</a>, <a href="Slice.html#getSize()">getSize</a>, <a href="Slice.html#getSort()">getSort</a>, <a href="Slice.html#isEmpty()">isEmpty</a>, <a href="Slice.html#iterator()">iterator</a>, <a href="Slice.html#nextPageable()">nextPageable</a>, <a href="Slice.html#previousPageable()">previousPageable</a></code></div>
+<code><a href="Slice.html#getContent()">getContent</a>, <a href="Slice.html#getNumberOfElements()">getNumberOfElements</a>, <a href="Slice.html#getOffset()">getOffset</a>, <a href="Slice.html#getPageable()">getPageable</a>, <a href="Slice.html#getPageNumber()">getPageNumber</a>, <a href="Slice.html#getSize()">getSize</a>, <a href="Slice.html#getSort()">getSort</a>, <a href="Slice.html#hasPrevious()">hasPrevious</a>, <a href="Slice.html#isEmpty()">isEmpty</a>, <a href="Slice.html#iterator()">iterator</a>, <a href="Slice.html#nextPageable()">nextPageable</a>, <a href="Slice.html#previousPageable()">previousPageable</a></code></div>
 </section>
 </li>
 </ul>
@@ -182,9 +206,24 @@ extends <a href="Slice.html" title="interface in io.micronaut.data.model">Slice<
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
+<section class="detail" id="hasTotalSize()">
+<h3>hasTotalSize</h3>
+<div class="member-signature"><span class="return-type">boolean</span>&nbsp;<span class="element-name">hasTotalSize</span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>Whether this <a href="Page.html" title="interface in io.micronaut.data.model"><code>Page</code></a> contains the total count of the records</dd>
+<dt>Since:</dt>
+<dd>4.8.0</dd>
+</dl>
+</section>
+</li>
+<li>
 <section class="detail" id="getTotalSize()">
 <h3>getTotalSize</h3>
 <div class="member-signature"><span class="return-type">long</span>&nbsp;<span class="element-name">getTotalSize</span>()</div>
+<div class="block">Get the total count of all the records that can be given by this query.
+ The method may produce a <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/IllegalStateException.html" title="class or interface in java.lang" class="external-link"><code>IllegalStateException</code></a> if the <a href="Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> request
+ did not ask for total size.</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The total size of the all records.</dd>
@@ -195,9 +234,26 @@ extends <a href="Slice.html" title="interface in io.micronaut.data.model">Slice<
 <section class="detail" id="getTotalPages()">
 <h3>getTotalPages</h3>
 <div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">getTotalPages</span>()</div>
+<div class="block">Get the total count of pages that can be given by this query.
+ The method may produce a <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/IllegalStateException.html" title="class or interface in java.lang" class="external-link"><code>IllegalStateException</code></a> if the <a href="Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> request
+ did not ask for total size.</div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>The total number of pages</dd>
+<dd>The total page of pages</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="hasNext()">
+<h3>hasNext</h3>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">hasNext</span>()</div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="Slice.html#hasNext()">Slice</a></code></span></div>
+<div class="block">Determine whether there is a next page.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="Slice.html#hasNext()">hasNext</a></code>&nbsp;in interface&nbsp;<code><a href="Slice.html" title="interface in io.micronaut.data.model">Slice</a>&lt;<a href="Page.html" title="type parameter in Page">T</a>&gt;</code></dd>
+<dt>Returns:</dt>
+<dd>Whether there exist a next page.</dd>
 </dl>
 </section>
 </li>
@@ -220,21 +276,50 @@ extends <a href="Slice.html" title="interface in io.micronaut.data.model">Slice<
 </section>
 </li>
 <li>
-<section class="detail" id="of(java.util.List,io.micronaut.data.model.Pageable,long)">
+<section class="detail" id="of(java.util.List,io.micronaut.data.model.Pageable,java.lang.Long)">
 <h3>of</h3>
 <div class="member-signature"><span class="annotations">@NonNull
 </span><span class="modifiers">static</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;T&gt;</span>&nbsp;<span class="element-name">of</span><wbr><span class="parameters">(@NonNull
  @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;T&gt;&nbsp;content,
  @NonNull
  @NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable,
- long&nbsp;totalSize)</span></div>
-<div class="block">Creates a slice from the given content and pageable.</div>
+ @Nullable
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;totalSize)</span></div>
+<div class="block">Creates a page from the given content, pageable and totalSize.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
 <dd><code>T</code> - The generic type</dd>
 <dt>Parameters:</dt>
 <dd><code>content</code> - The content</dd>
 <dd><code>pageable</code> - The pageable</dd>
+<dd><code>totalSize</code> - The total size</dd>
+<dt>Returns:</dt>
+<dd>The slice</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="ofCursors(java.util.List,io.micronaut.data.model.Pageable,java.util.List,java.lang.Long)">
+<h3>ofCursors</h3>
+<div class="member-signature"><span class="annotations">@Internal
+@NonNull
+</span><span class="modifiers">static</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;T&gt;</span>&nbsp;<span class="element-name">ofCursors</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;T&gt;&nbsp;content,
+ @NonNull
+ @NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable,
+ @Nullable
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Pageable.Cursor.html" title="interface in io.micronaut.data.model">Pageable.Cursor</a>&gt;&nbsp;cursors,
+ @Nullable
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;totalSize)</span></div>
+<div class="block">Creates a page from the given content, pageable, cursors and totalSize.
+ This method is for JSON deserialization. Please use <a href="CursoredPage.html#of(java.util.List,io.micronaut.data.model.Pageable,java.util.List,java.lang.Long)"><code>CursoredPage.of(java.util.List&lt;T&gt;, io.micronaut.data.model.Pageable, java.util.List&lt;io.micronaut.data.model.Pageable.Cursor&gt;, java.lang.Long)</code></a> instead.</div>
+<dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><code>T</code> - The generic type</dd>
+<dt>Parameters:</dt>
+<dd><code>content</code> - The content</dd>
+<dd><code>pageable</code> - The pageable</dd>
+<dd><code>cursors</code> - The cursors for cursored pagination</dd>
 <dd><code>totalSize</code> - The total size</dd>
 <dt>Returns:</dt>
 <dd>The slice</dd>

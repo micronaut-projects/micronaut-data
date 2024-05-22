@@ -552,6 +552,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Invoked after transaction commit/rollback.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/Pageable.html#afterCursor(io.micronaut.data.model.Pageable.Cursor,int,int,io.micronaut.data.model.Sort)" class="member-name-link">afterCursor(Pageable.Cursor, int, int, Sort)</a> - Static method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></dt>
+<dd>
+<div class="block">Create a new <a href="io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> for forward pagination given the currentCursor after which to query.</div>
+</dd>
 <dt><a href="io/micronaut/transaction/test/DefaultTestTransactionExecutionListener.html#afterSetupTest(io.micronaut.test.context.TestContext)" class="member-name-link">afterSetupTest(TestContext)</a> - Method in class io.micronaut.transaction.test.<a href="io/micronaut/transaction/test/DefaultTestTransactionExecutionListener.html" title="class in io.micronaut.transaction.test">DefaultTestTransactionExecutionListener</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/test/DefaultTestTransactionExecutionListener.html#afterTestExecution(io.micronaut.test.context.TestContext)" class="member-name-link">afterTestExecution(TestContext)</a> - Method in class io.micronaut.transaction.test.<a href="io/micronaut/transaction/test/DefaultTestTransactionExecutionListener.html" title="class in io.micronaut.transaction.test">DefaultTestTransactionExecutionListener</a></dt>
@@ -1189,6 +1193,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Invoked before transaction commit/rollback.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/Pageable.html#beforeCursor(io.micronaut.data.model.Pageable.Cursor,int,int,io.micronaut.data.model.Sort)" class="member-name-link">beforeCursor(Pageable.Cursor, int, int, Sort)</a> - Static method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></dt>
+<dd>
+<div class="block">Create a new <a href="io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> for backward pagination given the currentCursor after which to query.</div>
+</dd>
 <dt><a href="io/micronaut/transaction/test/DefaultTestTransactionExecutionListener.html#beforeSetupTest(io.micronaut.test.context.TestContext)" class="member-name-link">beforeSetupTest(TestContext)</a> - Method in class io.micronaut.transaction.test.<a href="io/micronaut/transaction/test/DefaultTestTransactionExecutionListener.html" title="class in io.micronaut.transaction.test">DefaultTestTransactionExecutionListener</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/test/DefaultTestTransactionExecutionListener.html#beforeTestExecution(io.micronaut.test.context.TestContext)" class="member-name-link">beforeTestExecution(TestContext)</a> - Method in class io.micronaut.transaction.test.<a href="io/micronaut/transaction/test/DefaultTestTransactionExecutionListener.html" title="class in io.micronaut.transaction.test">DefaultTestTransactionExecutionListener</a></dt>
@@ -1282,6 +1290,8 @@ loadScripts(document, 'script');</script>
 <div class="block">Bind query parameters.</div>
 </dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/query/DefaultBindableParametersPreparedQuery.html#bindParameters(io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery.Binder,E,java.util.Map)" class="member-name-link">bindParameters(BindableParametersStoredQuery.Binder, E, Map&lt;QueryParameterBinding, Object&gt;)</a> - Method in class io.micronaut.data.runtime.operations.internal.query.<a href="io/micronaut/data/runtime/operations/internal/query/DefaultBindableParametersPreparedQuery.html" title="class in io.micronaut.data.runtime.operations.internal.query">DefaultBindableParametersPreparedQuery</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/sql/DefaultSqlPreparedQuery.html#bindParameters(io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery.Binder,E,java.util.Map)" class="member-name-link">bindParameters(BindableParametersStoredQuery.Binder, E, Map&lt;QueryParameterBinding, Object&gt;)</a> - Method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/DefaultSqlPreparedQuery.html" title="class in io.micronaut.data.runtime.operations.internal.sql">DefaultSqlPreparedQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/query/DefaultBindableParametersPreparedQuery.html#bindParameters(io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery.Binder,io.micronaut.aop.InvocationContext,E,java.util.Map)" class="member-name-link">bindParameters(BindableParametersStoredQuery.Binder, InvocationContext&lt;?, ?&gt;, E, Map&lt;QueryParameterBinding, Object&gt;)</a> - Method in class io.micronaut.data.runtime.operations.internal.query.<a href="io/micronaut/data/runtime/operations/internal/query/DefaultBindableParametersPreparedQuery.html" title="class in io.micronaut.data.runtime.operations.internal.query">DefaultBindableParametersPreparedQuery</a></dt>
 <dd>&nbsp;</dd>
@@ -1495,6 +1505,10 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/document/model/query/builder/MongoQueryBuilder.html#buildPagination(io.micronaut.data.model.Pageable)" class="member-name-link">buildPagination(Pageable)</a> - Method in class io.micronaut.data.document.model.query.builder.<a href="io/micronaut/data/document/model/query/builder/MongoQueryBuilder.html" title="class in io.micronaut.data.document.model.query.builder">MongoQueryBuilder</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#buildPropertyByName(java.lang.String,java.lang.String,io.micronaut.data.model.PersistentEntity,io.micronaut.core.annotation.AnnotationMetadata,boolean)" class="member-name-link">buildPropertyByName(String, String, PersistentEntity, AnnotationMetadata, boolean)</a> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
+<dd>
+<div class="block">Encode the given property retrieval into a query instance.</div>
+</dd>
 <dt><a href="io/micronaut/data/document/model/query/builder/CosmosSqlQueryBuilder.html#buildQuery(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.QueryModel)" class="member-name-link">buildQuery(AnnotationMetadata, QueryModel)</a> - Method in class io.micronaut.data.document.model.query.builder.<a href="io/micronaut/data/document/model/query/builder/CosmosSqlQueryBuilder.html" title="class in io.micronaut.data.document.model.query.builder">CosmosSqlQueryBuilder</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#buildQuery(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.QueryModel)" class="member-name-link">buildQuery(AnnotationMetadata, QueryModel)</a> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
@@ -2561,6 +2575,10 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/criteria/RuntimeCriteriaBuilder.html#createCriteriaUpdate(java.lang.Class)" class="member-name-link">createCriteriaUpdate(Class&lt;T&gt;)</a> - Method in class io.micronaut.data.runtime.criteria.<a href="io/micronaut/data/runtime/criteria/RuntimeCriteriaBuilder.html" title="class in io.micronaut.data.runtime.criteria">RuntimeCriteriaBuilder</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/sql/DefaultSqlPreparedQuery.html#createCursors(java.util.List,io.micronaut.data.model.Pageable)" class="member-name-link">createCursors(List&lt;Object&gt;, Pageable)</a> - Method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/DefaultSqlPreparedQuery.html" title="class in io.micronaut.data.runtime.operations.internal.sql">DefaultSqlPreparedQuery</a></dt>
+<dd>
+<div class="block">Modify pageable based on the scan results.</div>
+</dd>
 <dt><a href="io/micronaut/data/hibernate/operations/AbstractHibernateOperations.html#createEntityGraph(S,java.lang.Class)" class="member-name-link">createEntityGraph(S, Class&lt;T&gt;)</a> - Method in class io.micronaut.data.hibernate.operations.<a href="io/micronaut/data/hibernate/operations/AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a></dt>
 <dd>
 <div class="block">Creates an entity graph.</div>
@@ -2742,6 +2760,39 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Not supported yet.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/Pageable.html#cursor()" class="member-name-link">cursor()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></dt>
+<dd>
+<div class="block">Get the currentCursor in case cursored pagination is used.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/Pageable.Mode.html#CURSOR_NEXT" class="member-name-link">CURSOR_NEXT</a> - Enum constant in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/Pageable.Mode.html" title="enum class in io.micronaut.data.model">Pageable.Mode</a></dt>
+<dd>
+<div class="block">Indicates forward currentCursor-based pagination, which follows the
+ direction of the sort criteria, using a currentCursor that is
+ formed from the key of the last entity on the current page.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/Pageable.Mode.html#CURSOR_PREVIOUS" class="member-name-link">CURSOR_PREVIOUS</a> - Enum constant in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/Pageable.Mode.html" title="enum class in io.micronaut.data.model">Pageable.Mode</a></dt>
+<dd>
+<div class="block">Indicates a request for a page with currentCursor-based pagination
+ in the previous page direction to the sort criteria, using a currentCursor
+ that is formed from the key of first entity on the current page.</div>
+</dd>
+<dt><a href="io/micronaut/data/annotation/TypeRole.html#CURSORED_PAGE" class="member-name-link">CURSORED_PAGE</a> - Static variable in annotation interface io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/TypeRole.html" title="annotation interface in io.micronaut.data.annotation">TypeRole</a></dt>
+<dd>
+<div class="block">The parameter that is used to represent a <a href="io/micronaut/data/model/CursoredPage.html" title="interface in io.micronaut.data.model"><code>CursoredPage</code></a>.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/CursoredPage.html" class="type-name-link" title="interface in io.micronaut.data.model">CursoredPage</a>&lt;<a href="io/micronaut/data/model/CursoredPage.html" title="type parameter in CursoredPage">T</a>&gt; - Interface in <a href="io/micronaut/data/model/package-summary.html">io.micronaut.data.model</a></dt>
+<dd>
+<div class="block">Inspired by the Jakarta's <code>CursoredPage</code>, this models a type that supports
+ pagination operations with cursors.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/CursoredPageable.html" class="type-name-link" title="interface in io.micronaut.data.model">CursoredPageable</a> - Interface in <a href="io/micronaut/data/model/package-summary.html">io.micronaut.data.model</a></dt>
+<dd>
+<div class="block">Models a pageable request that uses a cursor.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/sql/DefaultSqlPreparedQuery.html#cursorProperties" class="member-name-link">cursorProperties</a> - Variable in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/DefaultSqlPreparedQuery.html" title="class in io.micronaut.data.runtime.operations.internal.sql">DefaultSqlPreparedQuery</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/sql/DefaultSqlPreparedQuery.html#cursorQueryBindings" class="member-name-link">cursorQueryBindings</a> - Variable in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/DefaultSqlPreparedQuery.html" title="class in io.micronaut.data.runtime.operations.internal.sql">DefaultSqlPreparedQuery</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/annotation/MongoFindOptions.html#cursorType()" class="member-name-link">cursorType()</a> - Element in annotation interface io.micronaut.data.mongodb.annotation.<a href="io/micronaut/data/mongodb/annotation/MongoFindOptions.html" title="annotation interface in io.micronaut.data.mongodb.annotation">MongoFindOptions</a></dt>
 <dd>
 <div class="block">The cursorType.</div>
@@ -3017,6 +3068,16 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#DEFAULT_SORT_PARAMETER" class="member-name-link">DEFAULT_SORT_PARAMETER</a> - Static variable in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">DataConfiguration.PageableConfiguration</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/DefaultAbstractFindPageInterceptor.html" class="type-name-link" title="class in io.micronaut.data.runtime.intercept">DefaultAbstractFindPageInterceptor</a>&lt;<a href="io/micronaut/data/runtime/intercept/DefaultAbstractFindPageInterceptor.html" title="type parameter in DefaultAbstractFindPageInterceptor">T</a>,<wbr><a href="io/micronaut/data/runtime/intercept/DefaultAbstractFindPageInterceptor.html" title="type parameter in DefaultAbstractFindPageInterceptor">R</a>&gt; - Class in <a href="io/micronaut/data/runtime/intercept/package-summary.html">io.micronaut.data.runtime.intercept</a></dt>
+<dd>
+<div class="block">An abstract base implementation of query interceptor for page interceptors
+ implementing <a href="io/micronaut/data/intercept/FindPageInterceptor.html" title="interface in io.micronaut.data.intercept"><code>FindPageInterceptor</code></a> or
+ <a href="io/micronaut/data/intercept/FindCursoredPageInterceptor.html" title="interface in io.micronaut.data.intercept"><code>FindCursoredPageInterceptor</code></a>.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/DefaultAbstractFindPageInterceptor.html#%3Cinit%3E(io.micronaut.data.operations.RepositoryOperations)" class="member-name-link">DefaultAbstractFindPageInterceptor(RepositoryOperations)</a> - Constructor for class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultAbstractFindPageInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultAbstractFindPageInterceptor</a></dt>
+<dd>
+<div class="block">Default constructor.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/query/DefaultBindableParametersPreparedQuery.html" class="type-name-link" title="class in io.micronaut.data.runtime.operations.internal.query">DefaultBindableParametersPreparedQuery</a>&lt;<a href="io/micronaut/data/runtime/operations/internal/query/DefaultBindableParametersPreparedQuery.html" title="type parameter in DefaultBindableParametersPreparedQuery">E</a>,<wbr><a href="io/micronaut/data/runtime/operations/internal/query/DefaultBindableParametersPreparedQuery.html" title="type parameter in DefaultBindableParametersPreparedQuery">R</a>&gt; - Class in <a href="io/micronaut/data/runtime/operations/internal/query/package-summary.html">io.micronaut.data.runtime.operations.internal.query</a></dt>
 <dd>
 <div class="block">Implementation of <a href="io/micronaut/data/runtime/operations/internal/query/BindableParametersPreparedQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.query"><code>BindableParametersPreparedQuery</code></a>.</div>
@@ -3224,6 +3285,14 @@ loadScripts(document, 'script');</script>
 <div class="block">Default implementation of <a href="io/micronaut/data/intercept/reactive/FindByIdReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><code>FindByIdReactiveInterceptor</code></a>.</div>
 </dd>
 <dt><a href="io/micronaut/data/runtime/intercept/reactive/DefaultFindByIdReactiveInterceptor.html#%3Cinit%3E(io.micronaut.data.operations.RepositoryOperations)" class="member-name-link">DefaultFindByIdReactiveInterceptor(RepositoryOperations)</a> - Constructor for class io.micronaut.data.runtime.intercept.reactive.<a href="io/micronaut/data/runtime/intercept/reactive/DefaultFindByIdReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultFindByIdReactiveInterceptor</a></dt>
+<dd>
+<div class="block">Default constructor.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/DefaultFindCursoredPageInterceptor.html" class="type-name-link" title="class in io.micronaut.data.runtime.intercept">DefaultFindCursoredPageInterceptor</a>&lt;<a href="io/micronaut/data/runtime/intercept/DefaultFindCursoredPageInterceptor.html" title="type parameter in DefaultFindCursoredPageInterceptor">T</a>,<wbr><a href="io/micronaut/data/runtime/intercept/DefaultFindCursoredPageInterceptor.html" title="type parameter in DefaultFindCursoredPageInterceptor">R</a>&gt; - Class in <a href="io/micronaut/data/runtime/intercept/package-summary.html">io.micronaut.data.runtime.intercept</a></dt>
+<dd>
+<div class="block">Default implementation of <a href="io/micronaut/data/intercept/FindCursoredPageInterceptor.html" title="interface in io.micronaut.data.intercept"><code>FindCursoredPageInterceptor</code></a>.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/DefaultFindCursoredPageInterceptor.html#%3Cinit%3E(io.micronaut.data.operations.RepositoryOperations)" class="member-name-link">DefaultFindCursoredPageInterceptor(RepositoryOperations)</a> - Constructor for class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultFindCursoredPageInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindCursoredPageInterceptor</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
@@ -4325,6 +4394,10 @@ loadScripts(document, 'script');</script>
 </dl>
 <h2 class="title" id="I:E">E</h2>
 <dl class="index">
+<dt><a href="io/micronaut/data/model/Pageable.Cursor.html#elements()" class="member-name-link">elements()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Pageable.Cursor.html" title="interface in io.micronaut.data.model">Pageable.Cursor</a></dt>
+<dd>
+<div class="block">Returns all the currentCursor values in a list.</div>
+</dd>
 <dt><a href="io/micronaut/data/annotation/Embeddable.html" class="type-name-link" title="annotation interface in io.micronaut.data.annotation">Embeddable</a> - Annotation Interface in <a href="io/micronaut/data/annotation/package-summary.html">io.micronaut.data.annotation</a></dt>
 <dd>
 <div class="block">Annotation to be used on POJOs that are embeddable in <a href="io/micronaut/data/annotation/MappedEntity.html" title="annotation interface in io.micronaut.data.annotation"><code>MappedEntity</code></a> types.</div>
@@ -4389,10 +4462,16 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/mappers/jpa/jx/EmbeddedIdAnnotationMapper.html#%3Cinit%3E()" class="member-name-link">EmbeddedIdAnnotationMapper()</a> - Constructor for class io.micronaut.data.processor.mappers.jpa.jx.<a href="io/micronaut/data/processor/mappers/jpa/jx/EmbeddedIdAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa.jx">EmbeddedIdAnnotationMapper</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/CursoredPage.html#empty()" class="member-name-link">empty()</a> - Static method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/CursoredPage.html" title="interface in io.micronaut.data.model">CursoredPage</a></dt>
+<dd>
+<div class="block">Creates an empty page object.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/Page.html#empty()" class="member-name-link">empty()</a> - Static method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model">Page</a></dt>
 <dd>
 <div class="block">Creates an empty page object.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/CursoredPage.html#EMPTY" class="member-name-link">EMPTY</a> - Static variable in interface io.micronaut.data.model.<a href="io/micronaut/data/model/CursoredPage.html" title="interface in io.micronaut.data.model">CursoredPage</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/Page.html#EMPTY" class="member-name-link">EMPTY</a> - Static variable in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model">Page</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html#EMPTY" class="member-name-link">EMPTY</a> - Static variable in class io.micronaut.data.mongodb.operations.<a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations</a></dt>
@@ -5635,6 +5714,10 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/data/connection/support/AbstractReactorConnectionOperations.html#findConnectionStatus(reactor.util.context.ContextView)" class="member-name-link">findConnectionStatus(ContextView)</a> - Method in class io.micronaut.data.connection.support.<a href="io/micronaut/data/connection/support/AbstractReactorConnectionOperations.html" title="class in io.micronaut.data.connection.support">AbstractReactorConnectionOperations</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/intercept/FindCursoredPageInterceptor.html" class="type-name-link" title="interface in io.micronaut.data.intercept">FindCursoredPageInterceptor</a>&lt;<a href="io/micronaut/data/intercept/FindCursoredPageInterceptor.html" title="type parameter in FindCursoredPageInterceptor">T</a>,<wbr><a href="io/micronaut/data/intercept/FindCursoredPageInterceptor.html" title="type parameter in FindCursoredPageInterceptor">R</a>&gt; - Interface in <a href="io/micronaut/data/intercept/package-summary.html">io.micronaut.data.intercept</a></dt>
+<dd>
+<div class="block">An interceptor that handles a return type of <a href="io/micronaut/data/model/CursoredPage.html" title="interface in io.micronaut.data.model"><code>CursoredPage</code></a>.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#findEntitiesParameter(io.micronaut.aop.MethodInvocationContext,java.lang.Class)" class="member-name-link">findEntitiesParameter(MethodInvocationContext&lt;?, ?&gt;, Class&lt;RT&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="class in io.micronaut.data.runtime.intercept">AbstractQueryInterceptor</a></dt>
 <dd>
 <div class="block">Fid an entities parameter value in role.</div>
@@ -6194,9 +6277,21 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Creates a new <a href="io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> at the given offset.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/Pageable.html#from(int,int,io.micronaut.data.model.Pageable.Mode,io.micronaut.data.model.Pageable.Cursor,io.micronaut.data.model.Sort,boolean)" class="member-name-link">from(int, int, Pageable.Mode, Pageable.Cursor, Sort, boolean)</a> - Static method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></dt>
+<dd>
+<div class="block">Creates a new <a href="io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> with the given parameters.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/Pageable.html#from(int,int,io.micronaut.data.model.Sort)" class="member-name-link">from(int, int, Sort)</a> - Static method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></dt>
 <dd>
-<div class="block">Creates a new <a href="io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> at the given offset.</div>
+<div class="block">Creates a new <a href="io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> with the given offset.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/CursoredPageable.html#from(int,io.micronaut.data.model.Pageable.Cursor,io.micronaut.data.model.Pageable.Mode,int,io.micronaut.data.model.Sort,boolean)" class="member-name-link">from(int, Pageable.Cursor, Pageable.Mode, int, Sort, boolean)</a> - Static method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/CursoredPageable.html" title="interface in io.micronaut.data.model">CursoredPageable</a></dt>
+<dd>
+<div class="block">Creates a new <a href="io/micronaut/data/model/CursoredPageable.html" title="interface in io.micronaut.data.model"><code>CursoredPageable</code></a> with the given currentCursor.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/CursoredPageable.html#from(int,io.micronaut.data.model.Sort)" class="member-name-link">from(int, Sort)</a> - Static method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/CursoredPageable.html" title="interface in io.micronaut.data.model">CursoredPageable</a></dt>
+<dd>
+<div class="block">Creates a new <a href="io/micronaut/data/model/CursoredPageable.html" title="interface in io.micronaut.data.model"><code>CursoredPageable</code></a> with the given sort and page size.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaQuery.html#from(io.micronaut.data.model.PersistentEntity)" class="member-name-link">from(PersistentEntity)</a> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a></dt>
 <dd>&nbsp;</dd>
@@ -6234,6 +6329,10 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaDelete.html#from(io.micronaut.data.model.PersistentEntity)" class="member-name-link">from(PersistentEntity)</a> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/CursoredPageable.html#from(io.micronaut.data.model.Sort)" class="member-name-link">from(Sort)</a> - Static method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/CursoredPageable.html" title="interface in io.micronaut.data.model">CursoredPageable</a></dt>
+<dd>
+<div class="block">Creates a new <a href="io/micronaut/data/model/CursoredPageable.html" title="interface in io.micronaut.data.model"><code>CursoredPageable</code></a> with the given sort.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/Pageable.html#from(io.micronaut.data.model.Sort)" class="member-name-link">from(Sort)</a> - Static method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></dt>
 <dd>
 <div class="block">Creates a new <a href="io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> at the given offset.</div>
@@ -6337,6 +6436,10 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/spring/jpa/hibernate/SpringHibernateCurrentSessionContextClassProvider.html#get()" class="member-name-link">get()</a> - Method in class io.micronaut.data.spring.jpa.hibernate.<a href="io/micronaut/data/spring/jpa/hibernate/SpringHibernateCurrentSessionContextClassProvider.html" title="class in io.micronaut.data.spring.jpa.hibernate">SpringHibernateCurrentSessionContextClassProvider</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/Pageable.Cursor.html#get(int)" class="member-name-link">get(int)</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Pageable.Cursor.html" title="interface in io.micronaut.data.model">Pageable.Cursor</a></dt>
+<dd>
+<div class="block">Returns the currentCursor element at the specified position.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityRoot.html#get(io.micronaut.data.model.PersistentProperty)" class="member-name-link">get(PersistentProperty)</a> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a></dt>
 <dd>
 <div class="block">Returns the property expression.</div>
@@ -6826,6 +6929,14 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.CriteriaContext.html#getCurrentTableAlias()" class="member-name-link">getCurrentTableAlias()</a> - Method in interface io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.CriteriaContext.html" title="interface in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.CriteriaContext</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/CursoredPage.html#getCursor(int)" class="member-name-link">getCursor(int)</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/CursoredPage.html" title="interface in io.micronaut.data.model">CursoredPage</a></dt>
+<dd>
+<div class="block">Get cursor at the given position or empty if no such cursor exists.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/CursoredPage.html#getCursors()" class="member-name-link">getCursors()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/CursoredPage.html" title="interface in io.micronaut.data.model">CursoredPage</a></dt>
+<dd>
+<div class="block">Get all the cursors.</div>
+</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/options/MongoFindOptions.html#getCursorType()" class="member-name-link">getCursorType()</a> - Method in class io.micronaut.data.mongodb.operations.options.<a href="io/micronaut/data/mongodb/operations/options/MongoFindOptions.html" title="class in io.micronaut.data.mongodb.operations.options">MongoFindOptions</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html#getDatabase(io.micronaut.data.model.PersistentEntity,java.lang.Class)" class="member-name-link">getDatabase(PersistentEntity, Class&lt;?&gt;)</a> - Method in class io.micronaut.data.mongodb.operations.<a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations</a></dt>
@@ -7387,6 +7498,13 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/options/MongoFindOptions.html#getMin()" class="member-name-link">getMin()</a> - Method in class io.micronaut.data.mongodb.operations.options.<a href="io/micronaut/data/mongodb/operations/options/MongoFindOptions.html" title="class in io.micronaut.data.mongodb.operations.options">MongoFindOptions</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/CursoredPageable.html#getMode()" class="member-name-link">getMode()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/CursoredPageable.html" title="interface in io.micronaut.data.model">CursoredPageable</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/Pageable.html#getMode()" class="member-name-link">getMode()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></dt>
+<dd>
+<div class="block">The pagination mode that is either offset pagination, currentCursor forward or currentCursor backward
+ pagination.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/multitenancy/conf/MultiTenancyConfiguration.html#getMode()" class="member-name-link">getMode()</a> - Method in class io.micronaut.data.runtime.multitenancy.conf.<a href="io/micronaut/data/runtime/multitenancy/conf/MultiTenancyConfiguration.html" title="class in io.micronaut.data.runtime.multitenancy.conf">MultiTenancyConfiguration</a></dt>
 <dd>
 <div class="block">Multi-tenancy mode specified.</div>
@@ -7882,6 +8000,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Resolves the <a href="io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> for the given context.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/intercept/DefaultFindCursoredPageInterceptor.html#getPageable(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getPageable(MethodInvocationContext&lt;?, ?&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultFindCursoredPageInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindCursoredPageInterceptor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getPagedQuery(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">getPagedQuery(MethodInvocationContext)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="class in io.micronaut.data.runtime.intercept">AbstractQueryInterceptor</a></dt>
 <dd>
 <div class="block">Get the paged query for the given context.</div>
@@ -8661,10 +8781,22 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/QueryModel.Between.html#getTo()" class="member-name-link">getTo()</a> - Method in class io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/QueryModel.Between.html" title="class in io.micronaut.data.model.query">QueryModel.Between</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/CursoredPage.html#getTotalPages()" class="member-name-link">getTotalPages()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/CursoredPage.html" title="interface in io.micronaut.data.model">CursoredPage</a></dt>
+<dd>
+<div class="block">Get the total count of pages that can be given by this query.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/Page.html#getTotalPages()" class="member-name-link">getTotalPages()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model">Page</a></dt>
-<dd>&nbsp;</dd>
+<dd>
+<div class="block">Get the total count of pages that can be given by this query.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/CursoredPage.html#getTotalSize()" class="member-name-link">getTotalSize()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/CursoredPage.html" title="interface in io.micronaut.data.model">CursoredPage</a></dt>
+<dd>
+<div class="block">Get the total count of all the records that can be given by this query.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/Page.html#getTotalSize()" class="member-name-link">getTotalSize()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model">Page</a></dt>
-<dd>&nbsp;</dd>
+<dd>
+<div class="block">Get the total count of all the records that can be given by this query.</div>
+</dd>
 <dt><a href="io/micronaut/transaction/impl/DefaultTransactionStatus.html#getTransaction()" class="member-name-link">getTransaction()</a> - Method in class io.micronaut.transaction.impl.<a href="io/micronaut/transaction/impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/TransactionStatus.html#getTransaction()" class="member-name-link">getTransaction()</a> - Method in interface io.micronaut.transaction.<a href="io/micronaut/transaction/TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a></dt>
@@ -9051,6 +9183,14 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Gets an indicator telling whether annotation metadata is annotated with <a href="io/micronaut/data/annotation/EntityRepresentation.html" title="annotation interface in io.micronaut.data.annotation"><code>EntityRepresentation</code></a> with JSON column.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/CursoredPage.html#hasNext()" class="member-name-link">hasNext()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/CursoredPage.html" title="interface in io.micronaut.data.model">CursoredPage</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/Page.html#hasNext()" class="member-name-link">hasNext()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model">Page</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/Slice.html#hasNext()" class="member-name-link">hasNext()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Slice.html" title="interface in io.micronaut.data.model">Slice</a></dt>
+<dd>
+<div class="block">Determine whether there is a next page.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/mapper/sql/JsonQueryResultMapper.html#hasNext(RS)" class="member-name-link">hasNext(RS)</a> - Method in class io.micronaut.data.runtime.mapper.sql.<a href="io/micronaut/data/runtime/mapper/sql/JsonQueryResultMapper.html" title="class in io.micronaut.data.runtime.mapper.sql">JsonQueryResultMapper</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html#hasNext(RS)" class="member-name-link">hasNext(RS)</a> - Method in class io.micronaut.data.runtime.mapper.sql.<a href="io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="class in io.micronaut.data.runtime.mapper.sql">SqlResultEntityTypeMapper</a></dt>
@@ -9113,6 +9253,12 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Does the entity have pre-update event listeners.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/CursoredPage.html#hasPrevious()" class="member-name-link">hasPrevious()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/CursoredPage.html" title="interface in io.micronaut.data.model">CursoredPage</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/Slice.html#hasPrevious()" class="member-name-link">hasPrevious()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Slice.html" title="interface in io.micronaut.data.model">Slice</a></dt>
+<dd>
+<div class="block">Determine whether there is a previous page.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/runtime/StoredQuery.html#hasResultConsumer()" class="member-name-link">hasResultConsumer()</a> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/query/internal/BasicStoredQuery.html#hasResultConsumer()" class="member-name-link">hasResultConsumer()</a> - Method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/BasicStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">BasicStoredQuery</a></dt>
@@ -9122,6 +9268,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#hasResultConsumer()" class="member-name-link">hasResultConsumer()</a> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/runtime/BeanPropertyWithAnnotationMetadata.html#hasSetterOrConstructorArgument()" class="member-name-link">hasSetterOrConstructorArgument()</a> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/BeanPropertyWithAnnotationMetadata.html" title="class in io.micronaut.data.model.runtime">BeanPropertyWithAnnotationMetadata</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/CursoredPage.html#hasTotalSize()" class="member-name-link">hasTotalSize()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/CursoredPage.html" title="interface in io.micronaut.data.model">CursoredPage</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/Page.html#hasTotalSize()" class="member-name-link">hasTotalSize()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model">Page</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html#hasVersionPredicate(jakarta.persistence.criteria.Expression)" class="member-name-link">hasVersionPredicate(Expression&lt;?&gt;)</a> - Static method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html" title="class in io.micronaut.data.model.jpa.criteria.impl">CriteriaUtils</a></dt>
 <dd>&nbsp;</dd>
@@ -9642,9 +9792,9 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Intercepts a data method execution.</div>
 </dd>
-<dt><a href="io/micronaut/data/runtime/intercept/DefaultDeleteReturningOneInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultDeleteReturningOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteReturningOneInterceptor</a></dt>
+<dt><a href="io/micronaut/data/runtime/intercept/DefaultAbstractFindPageInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultAbstractFindPageInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultAbstractFindPageInterceptor</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/runtime/intercept/DefaultFindPageInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultFindPageInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindPageInterceptor</a></dt>
+<dt><a href="io/micronaut/data/runtime/intercept/DefaultDeleteReturningOneInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultDeleteReturningOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultDeleteReturningOneInterceptor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/DefaultFindSliceInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, R&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultFindSliceInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultFindSliceInterceptor</a></dt>
 <dd>&nbsp;</dd>
@@ -10289,6 +10439,10 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/cosmos/config/ThroughputSettings.html#isAutoScale()" class="member-name-link">isAutoScale()</a> - Method in class io.micronaut.data.cosmos.config.<a href="io/micronaut/data/cosmos/config/ThroughputSettings.html" title="class in io.micronaut.data.cosmos.config">ThroughputSettings</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/CursoredPageable.html#isBackward()" class="member-name-link">isBackward()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/CursoredPageable.html" title="interface in io.micronaut.data.model">CursoredPageable</a></dt>
+<dd>
+<div class="block">Whether the pageable is traversing backwards.</div>
+</dd>
 <dt><a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html#isBatchGenerate()" class="member-name-link">isBatchGenerate()</a> - Method in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/r2dbc/config/DataR2dbcConfiguration.html#isBatchGenerate()" class="member-name-link">isBatchGenerate()</a> - Method in class io.micronaut.data.r2dbc.config.<a href="io/micronaut/data/r2dbc/config/DataR2dbcConfiguration.html" title="class in io.micronaut.data.r2dbc.config">DataR2dbcConfiguration</a></dt>
@@ -10385,6 +10539,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#isCount()" class="member-name-link">isCount()</a> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/conf/MongoDataConfiguration.html#isCreateCollections()" class="member-name-link">isCreateCollections()</a> - Method in class io.micronaut.data.mongodb.conf.<a href="io/micronaut/data/mongodb/conf/MongoDataConfiguration.html" title="class in io.micronaut.data.mongodb.conf">MongoDataConfiguration</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html#isCursoredPage(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.inject.ast.ClassElement)" class="member-name-link">isCursoredPage(MethodMatchContext, ClassElement)</a> - Static method in interface io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/FindersUtils.html" title="interface in io.micronaut.data.processor.visitors.finders">FindersUtils</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/runtime/BeanPropertyWithAnnotationMetadata.html#isDeclaredNonNull()" class="member-name-link">isDeclaredNonNull()</a> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/BeanPropertyWithAnnotationMetadata.html" title="class in io.micronaut.data.model.runtime">BeanPropertyWithAnnotationMetadata</a></dt>
 <dd>&nbsp;</dd>
@@ -11892,6 +12048,10 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/mappers/spring/SpringVersionMapper.html#map(io.micronaut.core.annotation.AnnotationValue,io.micronaut.inject.visitor.VisitorContext)" class="member-name-link">map(AnnotationValue&lt;Annotation&gt;, VisitorContext)</a> - Method in class io.micronaut.data.processor.mappers.spring.<a href="io/micronaut/data/processor/mappers/spring/SpringVersionMapper.html" title="class in io.micronaut.data.processor.mappers.spring">SpringVersionMapper</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/CursoredPage.html#map(java.util.function.Function)" class="member-name-link">map(Function&lt;T, T2&gt;)</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/CursoredPage.html" title="interface in io.micronaut.data.model">CursoredPage</a></dt>
+<dd>
+<div class="block">Maps the content with the given function.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/Page.html#map(java.util.function.Function)" class="member-name-link">map(Function&lt;T, T2&gt;)</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model">Page</a></dt>
 <dd>
 <div class="block">Maps the content with the given function.</div>
@@ -12937,8 +13097,12 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Move the index to the next result if possible.</div>
 </dd>
-<dt><a href="io/micronaut/data/model/Slice.html#nextPageable()" class="member-name-link">nextPageable()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Slice.html" title="interface in io.micronaut.data.model">Slice</a></dt>
+<dt><a href="io/micronaut/data/model/CursoredPage.html#nextPageable()" class="member-name-link">nextPageable()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/CursoredPage.html" title="interface in io.micronaut.data.model">CursoredPage</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/Slice.html#nextPageable()" class="member-name-link">nextPageable()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Slice.html" title="interface in io.micronaut.data.model">Slice</a></dt>
+<dd>
+<div class="block">Create a pageable for querying the next page of data.</div>
+</dd>
 <dt><a href="io/micronaut/data/cosmos/common/Constants.html#NO_PARTITION_KEY" class="member-name-link">NO_PARTITION_KEY</a> - Static variable in class io.micronaut.data.cosmos.common.<a href="io/micronaut/data/cosmos/common/Constants.html" title="class in io.micronaut.data.cosmos.common">Constants</a></dt>
 <dd>
 <div class="block">This value will be used as partition key if none is defined on the entity.</div>
@@ -13192,9 +13356,13 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Creates a new encoded query.</div>
 </dd>
-<dt><a href="io/micronaut/data/model/Page.html#of(java.util.List,io.micronaut.data.model.Pageable,long)" class="member-name-link">of(List&lt;T&gt;, Pageable, long)</a> - Static method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model">Page</a></dt>
+<dt><a href="io/micronaut/data/model/Page.html#of(java.util.List,io.micronaut.data.model.Pageable,java.lang.Long)" class="member-name-link">of(List&lt;T&gt;, Pageable, Long)</a> - Static method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model">Page</a></dt>
 <dd>
-<div class="block">Creates a slice from the given content and pageable.</div>
+<div class="block">Creates a page from the given content, pageable and totalSize.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/CursoredPage.html#of(java.util.List,io.micronaut.data.model.Pageable,java.util.List,java.lang.Long)" class="member-name-link">of(List&lt;T&gt;, Pageable, List&lt;Pageable.Cursor&gt;, Long)</a> - Static method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/CursoredPage.html" title="interface in io.micronaut.data.model">CursoredPage</a></dt>
+<dd>
+<div class="block">Creates a cursored page from the given content, pageable, cursors and totalSize.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/Slice.html#of(java.util.List,io.micronaut.data.model.Pageable)" class="member-name-link">of(List&lt;T2&gt;, Pageable)</a> - Static method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Slice.html" title="interface in io.micronaut.data.model">Slice</a></dt>
 <dd>
@@ -13212,6 +13380,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Creates a sort from an array orders.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/Pageable.Cursor.html#of(java.lang.Object...)" class="member-name-link">of(Object...)</a> - Static method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Pageable.Cursor.html" title="interface in io.micronaut.data.model">Pageable.Cursor</a></dt>
+<dd>
+<div class="block">Create a currentCursor from elements.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/query/JoinPath.html#of(java.lang.String,io.micronaut.data.model.Association...)" class="member-name-link">of(String, Association...)</a> - Static method in class io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a></dt>
 <dd>
 <div class="block">Create a join path from the association path.</div>
@@ -13223,6 +13395,14 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/model/PersistentPropertyPath.html#of(java.util.List,io.micronaut.data.model.PersistentProperty,java.lang.String)" class="member-name-link">of(List&lt;Association&gt;, PersistentProperty, String)</a> - Static method in class io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a></dt>
 <dd>
 <div class="block">Creates <a href="io/micronaut/data/model/PersistentPropertyPath.html" title="class in io.micronaut.data.model"><code>PersistentPropertyPath</code></a> or <a href="io/micronaut/data/model/PersistentAssociationPath.html" title="class in io.micronaut.data.model"><code>PersistentAssociationPath</code></a>.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/Pageable.Cursor.html#of(java.util.List)" class="member-name-link">of(List&lt;Object&gt;)</a> - Static method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Pageable.Cursor.html" title="interface in io.micronaut.data.model">Pageable.Cursor</a></dt>
+<dd>
+<div class="block">Create a currentCursor from elements.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/Page.html#ofCursors(java.util.List,io.micronaut.data.model.Pageable,java.util.List,java.lang.Long)" class="member-name-link">ofCursors(List&lt;T&gt;, Pageable, List&lt;Pageable.Cursor&gt;, Long)</a> - Static method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model">Page</a></dt>
+<dd>
+<div class="block">Creates a page from the given content, pageable, cursors and totalSize.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaQuery.html#offset" class="member-name-link">offset</a> - Variable in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaQuery.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaQuery</a></dt>
 <dd>&nbsp;</dd>
@@ -13237,6 +13417,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/model/query/QueryModel.html#offset(long)" class="member-name-link">offset(long)</a> - Method in interface io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></dt>
 <dd>
 <div class="block">Sets the offset.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/Pageable.Mode.html#OFFSET" class="member-name-link">OFFSET</a> - Enum constant in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/Pageable.Mode.html" title="enum class in io.micronaut.data.model">Pageable.Mode</a></dt>
+<dd>
+<div class="block">Indicates a request for a page using offset pagination.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html#on(jakarta.persistence.criteria.Expression)" class="member-name-link">on(Expression&lt;Boolean&gt;)</a> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentAssociationPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentAssociationPath</a></dt>
 <dd>&nbsp;</dd>
@@ -13492,6 +13676,15 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/data/document/mongo/MongoAnnotations.html#PAGEABLE_BEAN" class="member-name-link">PAGEABLE_BEAN</a> - Static variable in interface io.micronaut.data.document.mongo.<a href="io/micronaut/data/document/mongo/MongoAnnotations.html" title="interface in io.micronaut.data.document.mongo">MongoAnnotations</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/Pageable.Cursor.html" class="type-name-link" title="interface in io.micronaut.data.model">Pageable.Cursor</a> - Interface in <a href="io/micronaut/data/model/package-summary.html">io.micronaut.data.model</a></dt>
+<dd>
+<div class="block">An interface for defining pagination cursors.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/Pageable.Mode.html" class="type-name-link" title="enum class in io.micronaut.data.model">Pageable.Mode</a> - Enum Class in <a href="io/micronaut/data/model/package-summary.html">io.micronaut.data.model</a></dt>
+<dd>
+<div class="block">The type of pagination: offset-based or currentCursor-based, which includes
+ a direction.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#%3Cinit%3E()" class="member-name-link">PageableConfiguration()</a> - Constructor for class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">DataConfiguration.PageableConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/repository/PageableRepository.html" class="type-name-link" title="interface in io.micronaut.data.repository">PageableRepository</a>&lt;<a href="io/micronaut/data/repository/PageableRepository.html" title="type parameter in PageableRepository">E</a>,<wbr><a href="io/micronaut/data/repository/PageableRepository.html" title="type parameter in PageableRepository">ID</a>&gt; - Interface in <a href="io/micronaut/data/repository/package-summary.html">io.micronaut.data.repository</a></dt>
@@ -14341,8 +14534,12 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/data/model/Pageable.html#previous()" class="member-name-link">previous()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/model/Slice.html#previousPageable()" class="member-name-link">previousPageable()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Slice.html" title="interface in io.micronaut.data.model">Slice</a></dt>
+<dt><a href="io/micronaut/data/model/CursoredPage.html#previousPageable()" class="member-name-link">previousPageable()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/CursoredPage.html" title="interface in io.micronaut.data.model">CursoredPage</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/Slice.html#previousPageable()" class="member-name-link">previousPageable()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Slice.html" title="interface in io.micronaut.data.model">Slice</a></dt>
+<dd>
+<div class="block">Create a pageable for querying the previous page of data.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.Data.html#previousValues" class="member-name-link">previousValues</a> - Variable in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntitiesOperations.Data.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractReactiveEntitiesOperations.Data</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntityOperations.Data.html#previousValues" class="member-name-link">previousValues</a> - Variable in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractReactiveEntityOperations.Data.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractReactiveEntityOperations.Data</a></dt>
@@ -15907,6 +16104,11 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/Pageable.html#requestTotal()" class="member-name-link">requestTotal()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></dt>
+<dd>
+<div class="block">Whether the returned page should contain information about total items that
+ can be produced by this query.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html#requireBoolExpression(jakarta.persistence.criteria.Expression)" class="member-name-link">requireBoolExpression(Expression&lt;?&gt;)</a> - Static method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html" title="class in io.micronaut.data.model.jpa.criteria.impl">CriteriaUtils</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html#requireBoolExpressions(java.lang.Iterable)" class="member-name-link">requireBoolExpressions(Iterable&lt;? extends Expression&lt;?&gt;&gt;)</a> - Static method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html" title="class in io.micronaut.data.model.jpa.criteria.impl">CriteriaUtils</a></dt>
@@ -16373,6 +16575,10 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/PersistentPropertyOrder.html#reverse()" class="member-name-link">reverse()</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/PersistentPropertyOrder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">PersistentPropertyOrder</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/Sort.Order.html#reverse()" class="member-name-link">reverse()</a> - Method in class io.micronaut.data.model.<a href="io/micronaut/data/model/Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a></dt>
+<dd>
+<div class="block">Create an order that is reversed to current.</div>
+</dd>
 <dt><a href="io/micronaut/data/annotation/Join.Type.html#RIGHT" class="member-name-link">RIGHT</a> - Enum constant in enum class io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/Join.Type.html" title="enum class in io.micronaut.data.annotation">Join.Type</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/annotation/Join.Type.html#RIGHT_FETCH" class="member-name-link">RIGHT_FETCH</a> - Enum constant in enum class io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/Join.Type.html" title="enum class in io.micronaut.data.annotation">Join.Type</a></dt>
@@ -17203,6 +17409,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html#single(io.micronaut.data.model.runtime.StoredQuery.OperationType,java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class)" class="member-name-link">single(StoredQuery.OperationType, String, AnnotationMetadata, QueryResult, Class&lt;T&gt;)</a> - Static method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html#single(io.micronaut.data.model.runtime.StoredQuery.OperationType,java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class,java.util.Collection)" class="member-name-link">single(StoredQuery.OperationType, String, AnnotationMetadata, QueryResult, Class&lt;T&gt;, Class&lt;R&gt;, Collection&lt;JoinPath&gt;)</a> - Static method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/Pageable.Cursor.html#size()" class="member-name-link">size()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Pageable.Cursor.html" title="interface in io.micronaut.data.model">Pageable.Cursor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html#size(jakarta.persistence.criteria.Expression)" class="member-name-link">size(Expression&lt;C&gt;)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractCriteriaBuilder</a></dt>
 <dd>
@@ -18114,6 +18322,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/model/runtime/RuntimePersistentEntity.html#toString()" class="member-name-link">toString()</a> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/runtime/RuntimePersistentProperty.html#toString()" class="member-name-link">toString()</a> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/Sort.Order.html#toString()" class="member-name-link">toString()</a> - Method in class io.micronaut.data.model.<a href="io/micronaut/data/model/Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/model/SourcePersistentEntity.html#toString()" class="member-name-link">toString()</a> - Method in class io.micronaut.data.processor.model.<a href="io/micronaut/data/processor/model/SourcePersistentEntity.html" title="class in io.micronaut.data.processor.model">SourcePersistentEntity</a></dt>
 <dd>&nbsp;</dd>
@@ -19213,6 +19423,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns the enum constant of this class with the specified name.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/Pageable.Mode.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/Pageable.Mode.html" title="enum class in io.micronaut.data.model">Pageable.Mode</a></dt>
+<dd>
+<div class="block">Returns the enum constant of this class with the specified name.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPosition.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPosition.html" title="enum class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryPosition</a></dt>
 <dd>
 <div class="block">Returns the enum constant of this class with the specified name.</div>
@@ -19340,6 +19554,11 @@ the order they are declared.</div>
 the order they are declared.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/JsonDataType.html#values()" class="member-name-link">values()</a> - Static method in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/JsonDataType.html" title="enum class in io.micronaut.data.model">JsonDataType</a></dt>
+<dd>
+<div class="block">Returns an array containing the constants of this enum class, in
+the order they are declared.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/Pageable.Mode.html#values()" class="member-name-link">values()</a> - Static method in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/Pageable.Mode.html" title="enum class in io.micronaut.data.model">Pageable.Mode</a></dt>
 <dd>
 <div class="block">Returns an array containing the constants of this enum class, in
 the order they are declared.</div>
@@ -19768,6 +19987,10 @@ the order they are declared.</div>
 <dd>
 <div class="block">Mark the repository method to exclude implicit tenant id check.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/Pageable.html#withoutTotal()" class="member-name-link">withoutTotal()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></dt>
+<dd>
+<div class="block">Specify that the <a href="io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model"><code>Page</code></a> response should not have information about total size.</div>
+</dd>
 <dt><a href="io/micronaut/data/connection/ConnectionDefinition.html#withPropagation(io.micronaut.data.connection.ConnectionDefinition.Propagation)" class="member-name-link">withPropagation(ConnectionDefinition.Propagation)</a> - Method in interface io.micronaut.data.connection.<a href="io/micronaut/data/connection/ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a></dt>
 <dd>
 <div class="block">Connection definition with specific propagation.</div>
@@ -19785,6 +20008,10 @@ the order they are declared.</div>
 <dt><a href="io/micronaut/data/annotation/WithTenantId.html" class="type-name-link" title="annotation interface in io.micronaut.data.annotation">WithTenantId</a> - Annotation Interface in <a href="io/micronaut/data/annotation/package-summary.html">io.micronaut.data.annotation</a></dt>
 <dd>
 <div class="block">Mark the repository method to include the tenant id supplied by this annotation.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/Pageable.html#withTotal()" class="member-name-link">withTotal()</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></dt>
+<dd>
+<div class="block">Specify that the <a href="io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model"><code>Page</code></a> response should have information about total size.</div>
 </dd>
 <dt><a href="io/micronaut/transaction/reactive/ReactiveTransactionOperations.html#withTransaction(io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)" class="member-name-link">withTransaction(ReactiveTransactionOperations.TransactionalCallback&lt;C, T&gt;)</a> - Method in interface io.micronaut.transaction.reactive.<a href="io/micronaut/transaction/reactive/ReactiveTransactionOperations.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations</a></dt>
 <dd>

@@ -119,19 +119,21 @@
         
         <div class="toc-item" style="margin-left:20px" id="toc-item-pagination"><a href="#pagination"><strong>3.3.2</strong><span>Pagination</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-ordering"><a href="#ordering"><strong>3.3.3</strong><span>Ordering</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-cursored-pagination"><a href="#cursored-pagination"><strong>3.3.3</strong><span>Cursored Pagination</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-projections"><a href="#projections"><strong>3.3.4</strong><span>Query Projections</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-ordering"><a href="#ordering"><strong>3.3.4</strong><span>Ordering</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-dto"><a href="#dto"><strong>3.3.5</strong><span>DTO Projections</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-projections"><a href="#projections"><strong>3.3.5</strong><span>Query Projections</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-explicitQueries"><a href="#explicitQueries"><strong>3.3.6</strong><span>Explicit Queries</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-dto"><a href="#dto"><strong>3.3.6</strong><span>DTO Projections</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-whereAnnotation"><a href="#whereAnnotation"><strong>3.3.7</strong><span>Modifying Queries with @Where</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-explicitQueries"><a href="#explicitQueries"><strong>3.3.7</strong><span>Explicit Queries</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-async"><a href="#async"><strong>3.3.8</strong><span>Asynchronous Queries</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-whereAnnotation"><a href="#whereAnnotation"><strong>3.3.8</strong><span>Modifying Queries with @Where</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-reactive"><a href="#reactive"><strong>3.3.9</strong><span>Reactive Queries</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-async"><a href="#async"><strong>3.3.9</strong><span>Asynchronous Queries</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-reactive"><a href="#reactive"><strong>3.3.10</strong><span>Reactive Queries</span></a></div>
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-dataUpdates"><a href="#dataUpdates"><strong>3.4</strong><span>Accessing data</span></a></div>
         
@@ -1787,7 +1789,147 @@ val page = bookRepository.findByTitleLike("The%", Pageable.from(0, 3))</code></p
 <p>A <a href="../api/io/micronaut/data/model/Slice.html">Slice</a> is the same as a <a href="../api/io/micronaut/data/model/Page.html">Page</a> but results in one less query as it excludes the total number of pages calculation.</p>
 </div>
 
-<h2 id="ordering"><a class="anchor" href="#ordering"></a>3.3.3 Ordering</h2>
+<h2 id="cursored-pagination"><a class="anchor" href="#cursored-pagination"></a>3.3.3 Cursored Pagination</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/4.8.x/src/main/docs/guide/shared/querying/cursored-pagination.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data includes the ability to specify cursored pagination with the <a href="../api/io/micronaut/data/model/CursoredPageable.html">CursoredPageable</a> type.
+For cursored page methods return a <a href="../api/io/micronaut/data/model/CursoredPage.html">CursoredPage</a> type (inspired by <a href="https://jakarta.ee/specifications/data/1.0/apidocs/jakarta.data/jakarta/data/page/cursoredpage">CursoredPage</a> in Jakarta Data).</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+Cursored pagination is currently only supported with Micronaut Data JDBC and R2DBC.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The following are some example signatures:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">CursoredPage&lt;Book&gt; find(CursoredPageable pageable); // <b class="conum">(1)</b>
+
+CursoredPage&lt;Book&gt; findByPagesBetween(int minPageCount, int maxPageCount, Pageable pageable); // <b class="conum">(2)</b>
+
+Page&lt;Book&gt; findByTitleStartingWith(String title, Pageable pageable); // <b class="conum">(3)</b></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">CursoredPage&lt;Book&gt; find(CursoredPageable pageable) // <b class="conum">(1)</b>
+
+CursoredPage&lt;Book&gt; findByPagesBetween(int minPageCount, int maxPageCount, Pageable pageable) // <b class="conum">(2)</b>
+
+Page&lt;Book&gt; findByTitleStartingWith(String title, Pageable pageable) // <b class="conum">(3)</b></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">fun find(pageable: CursoredPageable): CursoredPage&lt;Book&gt; // <b class="conum">(1)</b>
+
+fun findByPagesBetween(minPageCount: Int, maxPageCount: Int, pageable: Pageable): CursoredPage&lt;Book&gt; // <b class="conum">(2)</b>
+
+fun findByTitleStartingWith(title: String, pageable: Pageable): Page&lt;Book&gt;  // <b class="conum">(3)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The signature defines a <a href="../api/io/micronaut/data/model/CursoredPageable.html">CursoredPageable</a> parameter and <a href="../api/io/micronaut/data/model/CursoredPage.html">CursoredPage</a> return type.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The signature of method defines a <a href="../api/io/micronaut/data/model/CursoredPage.html">CursoredPage</a> return type, therefore method will throw an error if the request is not for the first page or is not cursored.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>The method will return a <a href="../api/io/micronaut/data/model/CursoredPage.html">CursoredPage</a> only whenever a <a href="../api/io/micronaut/data/model/CursoredPageable.html">CursoredPageable</a> is supplied.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Therefore, you can use the repository methods to retrieve data with cursored pagination using the following queries:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">CursoredPage&lt;Book&gt; page =  // <b class="conum">(1)</b>
+    bookRepository.find(CursoredPageable.from(5, Sort.of(Order.asc("title"))));
+CursoredPage&lt;Book&gt; page2 = bookRepository.find(page.nextPageable()); // <b class="conum">(2)</b>
+CursoredPage&lt;Book&gt; pageByPagesBetween = // <b class="conum">(3)</b>
+    bookRepository.findByPagesBetween(400, 700, Pageable.from(0, 3));
+Page&lt;Book&gt; pageByTitleStarts = // <b class="conum">(4)</b>
+    bookRepository.findByTitleStartingWith("The", CursoredPageable.from( 3, Sort.unsorted()));</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">CursoredPage&lt;Book&gt; page =  // <b class="conum">(1)</b>
+        bookRepository.find(CursoredPageable.from(5, Sort.of(Sort.Order.asc("title"))))
+CursoredPage&lt;Book&gt; page2 = bookRepository.find(page.nextPageable()) // <b class="conum">(2)</b>
+CursoredPage&lt;Book&gt; pageByPagesBetween = // <b class="conum">(3)</b>
+        bookRepository.findByPagesBetween(400, 700, Pageable.from(0, 3))
+Page&lt;Book&gt; pageByTitleStarts = // <b class="conum">(4)</b>
+        bookRepository.findByTitleStartingWith("The", CursoredPageable.from( 3, Sort.unsorted()))</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">val page =  // <b class="conum">(1)</b>
+    bookRepository.find(CursoredPageable.from(5, Sort.of(Sort.Order.asc("title"))))
+val page2 = bookRepository.find(page.nextPageable()) // <b class="conum">(2)</b>
+val pageByPagesBetween =  // <b class="conum">(3)</b>
+    bookRepository.findByPagesBetween(400, 700, Pageable.from(0, 3))
+val pageByTitleStarts =  // <b class="conum">(4)</b>
+    bookRepository.findByTitleStartingWith("The", CursoredPageable.from(3, Sort.unsorted()))</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Create a cursored pageable with a desired size and sorting and get a cursored page.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Get the next cursored pageable by calling <code>CursoredPage.getNextPageable()</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Request first cursored page.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>Supply a <code>CursoredPageable</code> to the repository method and a <code>CursoredPage</code> will be returned.</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The cursor of pagination is based on the supplied sorting. If the supplied <a href="../api/io/micronaut/data/model/Sort.html">Sort</a> in pageable does not produce a unique sorting, Micronaut Data internally will additionally sort by the identity column and extend the cursor with the column value to make sure pagination works correctly.
+</td>
+</tr>
+</table>
+</div>
+
+<h2 id="ordering"><a class="anchor" href="#ordering"></a>3.3.4 Ordering</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/4.8.x/src/main/docs/guide/shared/querying/ordering.adoc"'>
@@ -1824,7 +1966,7 @@ fun listOrderByTitleDesc(): List&lt;Book&gt;</code></pre>
 <p>The <code>OrderBy*</code> expression refer to the property name to order by and can optionally be appended with either <code>Asc</code> or <code>Desc</code> to control ascending or descending order. Multiple conditions can be used by joining them with <code>And</code> like <code>findByTypeOrderByNameAndDate</code>.</p>
 </div>
 
-<h2 id="projections"><a class="anchor" href="#projections"></a>3.3.4 Query Projections</h2>
+<h2 id="projections"><a class="anchor" href="#projections"></a>3.3.5 Query Projections</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/4.8.x/src/main/docs/guide/shared/querying/projections.adoc"'>
@@ -1947,7 +2089,7 @@ If the projected property type and the return generic type do not match up then 
 <p>The above query will return the first 3 results for the given query expression.</p>
 </div>
 
-<h2 id="dto"><a class="anchor" href="#dto"></a>3.3.5 DTO Projections</h2>
+<h2 id="dto"><a class="anchor" href="#dto"></a>3.3.6 DTO Projections</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/4.8.x/src/main/docs/guide/shared/querying/dto.adoc"'>
@@ -2055,7 +2197,7 @@ You can use <a href="../api/io/micronaut/data/annotation/NamingStrategy.html">@N
 </table>
 </div>
 
-<h2 id="explicitQueries"><a class="anchor" href="#explicitQueries"></a>3.3.6 Explicit Queries</h2>
+<h2 id="explicitQueries"><a class="anchor" href="#explicitQueries"></a>3.3.7 Explicit Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/4.8.x/src/main/docs/guide/shared/querying/explicitQueries.adoc"'>
@@ -2104,7 +2246,7 @@ Currently, Micronaut Data does not parse the JPA-QL AST and perform any further 
 <p>Note that if the method returns a <a href="../api/io/micronaut/data/model/Page.html">Page</a> for pagination then you must additionally specify a query that performs the equivalent count using the <code>countQuery</code> member of the <a href="../api/io/micronaut/data/annotation/Query.html">@Query</a> annotation.</p>
 </div>
 
-<h2 id="whereAnnotation"><a class="anchor" href="#whereAnnotation"></a>3.3.7 Modifying Queries with @Where</h2>
+<h2 id="whereAnnotation"><a class="anchor" href="#whereAnnotation"></a>3.3.8 Modifying Queries with @Where</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/4.8.x/src/main/docs/guide/shared/querying/whereAnnotation.adoc"'>
@@ -2364,7 +2506,7 @@ interface UserRepositoryWithWhere {
 <p>If you want to remove a <a href="../api/io/micronaut/data/annotation/Where.html">@Where</a> criteria from a particular repository method, you can use <a href="../api/io/micronaut/data/annotation/IgnoreWhere.html">@IgnoreWhere</a>.</p>
 </div>
 
-<h2 id="async"><a class="anchor" href="#async"></a>3.3.8 Asynchronous Queries</h2>
+<h2 id="async"><a class="anchor" href="#async"></a>3.3.9 Asynchronous Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/4.8.x/src/main/docs/guide/shared/querying/async.adoc"'>
@@ -2466,7 +2608,7 @@ In the case of JPA each operation will run with its own transaction and session,
 </table>
 </div>
 
-<h2 id="reactive"><a class="anchor" href="#reactive"></a>3.3.9 Reactive Queries</h2>
+<h2 id="reactive"><a class="anchor" href="#reactive"></a>3.3.10 Reactive Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/4.8.x/src/main/docs/guide/shared/querying/reactive.adoc"'>
@@ -7019,9 +7161,7 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.annotation.sql.Procedure
 import io.micronaut.data.jdbc.annotation.JdbcRepository
-import io.micronaut.data.model.Page
-import io.micronaut.data.model.Pageable
-import io.micronaut.data.model.Slice
+import io.micronaut.data.model.*
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
 import jakarta.transaction.Transactional

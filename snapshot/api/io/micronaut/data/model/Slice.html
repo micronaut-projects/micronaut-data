@@ -82,7 +82,7 @@ loadScripts(document, 'script');</script>
 </dl>
 <dl class="notes">
 <dt>All Known Subinterfaces:</dt>
-<dd><code><a href="Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;T&gt;</code></dd>
+<dd><code><a href="CursoredPage.html" title="interface in io.micronaut.data.model">CursoredPage</a>&lt;T&gt;</code>, <code><a href="Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;T&gt;</code></dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="annotations">@DefaultImplementation(io.micronaut.data.model.DefaultSlice.class)
@@ -134,6 +134,16 @@ extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/ja
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getSort()" class="member-name-link">getSort</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#hasNext()" class="member-name-link">hasNext</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Determine whether there is a next page.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#hasPrevious()" class="member-name-link">hasPrevious</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Determine whether there is a previous page.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#isEmpty()" class="member-name-link">isEmpty</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Iterator.html" title="class or interface in java.util" class="external-link">Iterator</a>&lt;<a href="Slice.html" title="type parameter in Slice">T</a>&gt;</code></div>
@@ -146,7 +156,9 @@ extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/ja
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#nextPageable()" class="member-name-link">nextPageable</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Create a pageable for querying the next page of data.</div>
+</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static &lt;T2&gt;&nbsp;@NonNull <a href="Slice.html" title="interface in io.micronaut.data.model">Slice</a>&lt;T2&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#of(java.util.List,io.micronaut.data.model.Pageable)" class="member-name-link">of</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;T2&gt;&nbsp;content,
  @NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</code></div>
@@ -155,7 +167,9 @@ extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/ja
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#previousPageable()" class="member-name-link">previousPageable</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Create a pageable for querying the previous page of data.</div>
+</div>
 </div>
 </div>
 </div>
@@ -206,10 +220,40 @@ extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/ja
 </section>
 </li>
 <li>
+<section class="detail" id="hasNext()">
+<h3>hasNext</h3>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">hasNext</span>()</div>
+<div class="block">Determine whether there is a next page.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>Whether there exist a next page.</dd>
+<dt>Since:</dt>
+<dd>4.8.0</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="hasPrevious()">
+<h3>hasPrevious</h3>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">hasPrevious</span>()</div>
+<div class="block">Determine whether there is a previous page.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>Whether there exist a previous page.</dd>
+<dt>Since:</dt>
+<dd>4.8.0</dd>
+</dl>
+</section>
+</li>
+<li>
 <section class="detail" id="nextPageable()">
 <h3>nextPageable</h3>
 <div class="member-signature"><span class="annotations">@NonNull
 </span><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></span>&nbsp;<span class="element-name">nextPageable</span>()</div>
+<div class="block">Create a pageable for querying the next page of data.
+ <p>A pageable may be created even if the end of data was reached to accommodate for
+ cases when new data might be added to the repository. Use <a href="#hasNext()"><code>hasNext()</code></a> to
+ verify if you have reached the end.</p></div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The next pageable</dd>
@@ -221,9 +265,13 @@ extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/ja
 <h3>previousPageable</h3>
 <div class="member-signature"><span class="annotations">@NonNull
 </span><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></span>&nbsp;<span class="element-name">previousPageable</span>()</div>
+<div class="block">Create a pageable for querying the previous page of data.
+ <p>A pageable may be created even if the end of data was reached to accommodate for
+ cases when new data might be added to the repository. Use <a href="#hasPrevious()"><code>hasPrevious()</code></a> to
+ verify if you have reached the end.</p></div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>The previous pageable.</dd>
+<dd>The previous pageable</dd>
 </dl>
 </section>
 </li>
@@ -274,7 +322,7 @@ extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/ja
 <div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">getNumberOfElements</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>The number of elements</dd>
+<dd>The page of elements</dd>
 </dl>
 </section>
 </li>
