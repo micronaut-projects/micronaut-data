@@ -53,6 +53,7 @@ import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Optional;
@@ -73,6 +74,8 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
 
     protected static final BsonDocument EMPTY = new BsonDocument();
     protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
+
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractMongoRepositoryOperations.class);
 
     protected final MongoCollectionNameProvider collectionNameProvider;
     protected final MongoDatabaseNameProvider databaseNameProvider;
@@ -163,22 +166,12 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
         }
         Optional<BeanIntrospection<R>> introspection = BeanIntrospector.SHARED.findIntrospection(resultType);
         if (introspection.isPresent()) {
-            return (new BeanIntrospectionMapper<BsonDocument, R>() {
-                @Override
-                public Object read(BsonDocument document, String alias) {
-                    BsonValue bsonValue = document.get(alias);
-                    if (bsonValue == null) {
-                        return null;
-                    }
-                    return MongoUtils.toValue(bsonValue);
-                }
-
-                @Override
-                public ConversionService getConversionService() {
-                    return conversionService;
-                }
-
-            }).map(result, resultType);
+            try {
+                return mapIntrospectedObject(result, resultType);
+            } catch (Exception e) {
+                LOG.warn("Failed to map @Introspection annotated result. " +
+                    "Now attempting to fallback and read object from the document. Error: {}", e.getMessage());
+            }
         }
         BsonValue value;
         if (result == null) {
@@ -193,15 +186,34 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
                 value = result.values().iterator().next();
             }
         } else if (isDtoProjection) {
-            Object dtoResult = MongoUtils.toValue(result.asDocument(), resultType, codecRegistry);
+            R dtoResult = MongoUtils.toValue(result.asDocument(), resultType, codecRegistry);
             if (resultType.isInstance(dtoResult)) {
-                return (R) dtoResult;
+                return dtoResult;
             }
             return conversionService.convertRequired(dtoResult, resultType);
         } else {
             throw new IllegalStateException("Unrecognized result: " + result);
         }
         return conversionService.convertRequired(MongoUtils.toValue(value), resultType);
+    }
+
+    private <R> R mapIntrospectedObject(BsonDocument result, Class<R> resultType) {
+        return (new BeanIntrospectionMapper<BsonDocument, R>() {
+            @Override
+            public Object read(BsonDocument document, String alias) {
+                BsonValue bsonValue = document.get(alias);
+                if (bsonValue == null) {
+                    return null;
+                }
+                return MongoUtils.toValue(bsonValue);
+            }
+
+            @Override
+            public ConversionService getConversionService() {
+                return conversionService;
+            }
+
+        }).map(result, resultType);
     }
 
     protected BsonDocument association(CodecRegistry codecRegistry,
@@ -244,7 +256,9 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
                 sb.append(" collation: ").append(collation);
             }
         }
-        QUERY_LOG.debug(sb.toString());
+        if (QUERY_LOG.isDebugEnabled()) {
+            QUERY_LOG.debug(sb.toString());
+        }
     }
 
     protected void logAggregate(MongoAggregation aggregation) {
@@ -258,7 +272,9 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
                 sb.append(" collation: ").append(collation);
             }
         }
-        QUERY_LOG.debug(sb.toString());
+        if (QUERY_LOG.isDebugEnabled()) {
+            QUERY_LOG.debug(sb.toString());
+        }
     }
 
 }
