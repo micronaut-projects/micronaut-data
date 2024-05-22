@@ -8,7 +8,8 @@ import java.sql.Connection
 @Singleton
 class ProductManager(
     private val connection: Connection,
-    private val transactionManager: TransactionOperations<Connection> // <1>
+    private val transactionManager: TransactionOperations<Connection>, // <1>
+    private val productRepository: ProductRepository
 ) {
 
     fun save(name: String, manufacturer: Manufacturer): Product {
@@ -36,6 +37,18 @@ class ProductManager(
                         throw EmptyResultException()
                     }
                 }
+        }
+    }
+
+    fun saveUsingRepo(name: String, manufacturer: Manufacturer): Product {
+        return transactionManager.executeWrite { // <4>
+            productRepository.save(Product(0, name, manufacturer))
+        }
+    }
+
+    fun findUsingRepo(name: String): Product? {
+        return transactionManager.executeRead { status -> // <5>
+            productRepository.findByName(name).orElse(null)
         }
     }
 }

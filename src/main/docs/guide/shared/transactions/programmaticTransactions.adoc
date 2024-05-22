@@ -14,9 +14,11 @@ The following presents an example:
 
 snippet::example.ProductManager[project-base="doc-examples/jdbc-example", source="main", indent="0"]
 
-<1> The constructor is injected with the api:transaction.TransactionOperations[] and a contextual-connection-aware `Connection`
+<1> The constructor is injected with the api:transaction.TransactionOperations[] and a contextual-connection-aware `Connection`. Additional parameter is productRepository to demonstrate that Micronaut Data JDBC repository can also work with programmatic transactions.
 <2> The `save` method uses the `executeWrite` method to execute a write transaction within the context of the passed lambda.
 <3> The `find` method uses the `executeRead` method to execute a read-only transaction within the context of the passed lambda. This example is accessing the connection using the status provided by the transaction manager.
+<4> The `saveUsingRepo` method uses `executeWrite` method to execute a write transaction within the context of the passed lambda and saves data using Micronaut Data JDBC repository. Please note that Micronaut Data JPA Repository can be used the same way.
+<5> The `findUsingRepo` uses the `executeRead` method to execute a read-only transaction within the context of the passed lambda and finds data using Micronaut Data JDBC repository.
 
 Note that it is important that you always use the injected connection as Micronaut Data makes available a transaction-aware implementation that uses the connection associated with the underlying transaction.
 

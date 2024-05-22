@@ -8,7 +8,6 @@ import io.micronaut.data.repository.CrudRepository;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 // tag::join[]
@@ -35,10 +34,13 @@ public interface ProductRepository extends CrudRepository<Product, Long> {
     Single<Long> countDistinctByManufacturerName(String name);
     // end::reactive[]
 
+    @Join("manufacturer")
+    Optional<Product> findByName(String name)
+
     // tag::native[]
-    @Query("""SELECT *, m_.name as m_name, m_.id as m_id 
-              FROM product p 
-              INNER JOIN manufacturer m_ ON p.manufacturer_id = m_.id 
+    @Query("""SELECT *, m_.name as m_name, m_.id as m_id
+              FROM product p
+              INNER JOIN manufacturer m_ ON p.manufacturer_id = m_.id
               WHERE p.name like :name limit 5""")
     @Join(value = "manufacturer", alias = "m_")
     List<Product> searchProducts(String name);
