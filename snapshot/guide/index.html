@@ -3754,11 +3754,14 @@ public class ProductManager {
 
     private final Connection connection;
     private final TransactionOperations&lt;Connection&gt; transactionManager;
+    private final ProductRepository productRepository;
 
     public ProductManager(Connection connection,
-                          TransactionOperations&lt;Connection&gt; transactionManager) { // <b class="conum">(1)</b>
+                          TransactionOperations&lt;Connection&gt; transactionManager, // <b class="conum">(1)</b>
+                          ProductRepository productRepository) {
         this.connection = connection;
         this.transactionManager = transactionManager;
+        this.productRepository = productRepository;
     }
 
     Product save(String name, Manufacturer manufacturer) {
@@ -3786,6 +3789,31 @@ public class ProductManager {
             }
         });
     }
+
+    /**
+     * Creates new product using transaction operations and product repository.
+     *
+     * @param name the product name
+     * @param manufacturer the manufacturer
+     * @return the created product instance
+     */
+    Product saveUsingRepo(String name, Manufacturer manufacturer) {
+        return transactionManager.executeWrite(status -&gt; { // <b class="conum">(4)</b>
+            return productRepository.save(new Product(name, manufacturer));
+        });
+    }
+
+    /**
+     * Finds product by name using transaction manager and product repository.
+     *
+     * @param name the product name
+     * @return found product or null if none product found matching by name
+     */
+    Product findUsingRepo(String name) {
+        return transactionManager.executeRead(status -&gt; { // <b class="conum">(5)</b>
+            return productRepository.findByName(name).orElse(null);
+        });
+    }
 }</code></pre>
 </div>
 </div>
@@ -3805,11 +3833,14 @@ class ProductManager {
 
     private final Connection connection
     private final TransactionOperations&lt;Connection&gt; transactionManager
+    private final ProductRepository productRepository
 
     ProductManager(Connection connection,
-                   TransactionOperations&lt;Connection&gt; transactionManager) { // <b class="conum">(1)</b>
+                   TransactionOperations&lt;Connection&gt; transactionManager, // <b class="conum">(1)</b>
+                   ProductRepository productRepository) {
         this.connection = connection
         this.transactionManager = transactionManager
+        this.productRepository = productRepository
     }
 
     Product save(String name, Manufacturer manufacturer) {
@@ -3839,6 +3870,31 @@ class ProductManager {
             }
         }
     }
+
+    /**
+     * Creates new product using transaction operations and product repository.
+     *
+     * @param name the product name
+     * @param manufacturer the manufacturer
+     * @return the created product instance
+     */
+    Product saveUsingRepo(String name, Manufacturer manufacturer) {
+        return transactionManager.executeWrite(status -&gt; { // <b class="conum">(4)</b>
+            return productRepository.save(new Product(name, manufacturer));
+        })
+    }
+
+    /**
+     * Finds product by name using transaction manager and product repository.
+     *
+     * @param name the product name
+     * @return found product or null if none product found matching by name
+     */
+    Product findUsingRepo(String name) {
+        return transactionManager.executeRead(status -&gt; { // <b class="conum">(5)</b>
+            return productRepository.findByName(name).orElse(null);
+        })
+    }
 }</code></pre>
 </div>
 </div>
@@ -3854,7 +3910,8 @@ import java.sql.Connection
 @Singleton
 class ProductManager(
     private val connection: Connection,
-    private val transactionManager: TransactionOperations&lt;Connection&gt; // <b class="conum">(1)</b>
+    private val transactionManager: TransactionOperations&lt;Connection&gt;, // <b class="conum">(1)</b>
+    private val productRepository: ProductRepository
 ) {
 
     fun save(name: String, manufacturer: Manufacturer): Product {
@@ -3884,6 +3941,18 @@ class ProductManager(
                 }
         }
     }
+
+    fun saveUsingRepo(name: String, manufacturer: Manufacturer): Product {
+        return transactionManager.executeWrite { // <b class="conum">(4)</b>
+            productRepository.save(Product(0, name, manufacturer))
+        }
+    }
+
+    fun findUsingRepo(name: String): Product? {
+        return transactionManager.executeRead { status -&gt; // <b class="conum">(5)</b>
+            productRepository.findByName(name).orElse(null)
+        }
+    }
 }</code></pre>
 </div>
 </div>
@@ -3891,7 +3960,7 @@ class ProductManager(
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>The constructor is injected with the <a href="../api/io/micronaut/transaction/TransactionOperations.html">TransactionOperations</a> and a contextual-connection-aware <code>Connection</code></td>
+<td>The constructor is injected with the <a href="../api/io/micronaut/transaction/TransactionOperations.html">TransactionOperations</a> and a contextual-connection-aware <code>Connection</code>. Additional parameter is productRepository to demonstrate that Micronaut Data JDBC repository can also work with programmatic transactions.</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
@@ -3900,6 +3969,14 @@ class ProductManager(
 <tr>
 <td><i class="conum" data-value="3"></i><b>3</b></td>
 <td>The <code>find</code> method uses the <code>executeRead</code> method to execute a read-only transaction within the context of the passed lambda. This example is accessing the connection using the status provided by the transaction manager.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>The <code>saveUsingRepo</code> method uses <code>executeWrite</code> method to execute a write transaction within the context of the passed lambda and saves data using Micronaut Data JDBC repository. Please note that Micronaut Data JPA Repository can be used the same way.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td>The <code>findUsingRepo</code> uses the <code>executeRead</code> method to execute a read-only transaction within the context of the passed lambda and finds data using Micronaut Data JDBC repository.</td>
 </tr>
 </table>
 </div>
