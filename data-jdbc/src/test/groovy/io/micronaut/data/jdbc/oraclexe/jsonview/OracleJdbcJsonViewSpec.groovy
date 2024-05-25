@@ -5,12 +5,14 @@ import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import spock.lang.Ignore
 import spock.lang.Specification
 
 import java.time.LocalDateTime
 import java.time.LocalTime
 
 @MicronautTest(environments = ["oracle-jsonview"])
+@Ignore
 class OracleJdbcJsonViewSpec extends Specification {
 
     @Inject

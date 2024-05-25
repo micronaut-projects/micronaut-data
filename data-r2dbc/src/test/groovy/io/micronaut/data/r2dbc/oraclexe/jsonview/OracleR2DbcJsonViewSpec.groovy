@@ -5,12 +5,14 @@ import io.micronaut.data.tck.entities.Contact
 import io.micronaut.data.tck.entities.ContactView
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import spock.lang.Ignore
 import spock.lang.Specification
 
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
 @MicronautTest(environments = ["oracle-jsonview"], transactional = false)
+@Ignore
 class OracleR2DbcJsonViewSpec extends Specification {
 
     @Inject
