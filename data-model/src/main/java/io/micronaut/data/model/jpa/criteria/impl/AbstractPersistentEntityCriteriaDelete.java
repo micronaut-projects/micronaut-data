@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.model.jpa.criteria.impl;
 
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Join;
@@ -29,6 +30,7 @@ import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.jpa.criteria.impl.util.Joiner;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.builder.QueryBuilder;
+import io.micronaut.data.model.query.builder.QueryBuilder2;
 import io.micronaut.data.model.query.builder.QueryResult;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
@@ -52,12 +54,13 @@ import java.util.Optional;
  */
 @Internal
 public abstract class AbstractPersistentEntityCriteriaDelete<T> implements PersistentEntityCriteriaDelete<T>,
-        QueryResultPersistentEntityCriteriaQuery {
+    QueryResultPersistentEntityCriteriaQuery {
 
     protected Predicate predicate;
     protected PersistentEntityRoot<T> entityRoot;
     protected Selection<?> returning;
 
+    @NonNull
     @Override
     public QueryModel getQueryModel() {
         if (entityRoot == null) {
@@ -81,6 +84,7 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
 
     /**
      * Creates query model predicate visitor.
+     *
      * @param queryModel The query model
      * @return the visitor
      */
@@ -90,8 +94,16 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
     }
 
     @Override
-    public QueryResult buildQuery(QueryBuilder queryBuilder) {
-        return queryBuilder.buildDelete(getQueryModel());
+    public QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder queryBuilder) {
+        return queryBuilder.buildDelete(annotationMetadata, getQueryModel());
+    }
+
+    @Override
+    public QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder2 queryBuilder) {
+        return queryBuilder.buildDelete(
+            annotationMetadata,
+            new DeleteQueryDefinitionImpl(entityRoot.getPersistentEntity(), predicate, returning)
+        );
     }
 
     @Override
@@ -116,7 +128,7 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
         Objects.requireNonNull(restrictions);
         if (restrictions.length > 0) {
             predicate = restrictions.length == 1 ? restrictions[0] : new ConjunctionPredicate(
-                    Arrays.stream(restrictions).sequential().map(x -> (IExpression<Boolean>) x).toList()
+                Arrays.stream(restrictions).sequential().map(x -> (IExpression<Boolean>) x).toList()
             );
         } else {
             predicate = null;
@@ -173,5 +185,20 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
             this.returning = null;
         }
         return this;
+    }
+
+    private static final class DeleteQueryDefinitionImpl extends AbstractPersistentEntityCriteriaQuery.BaseQueryDefinitionImpl implements QueryBuilder2.DeleteQueryDefinition {
+
+        private final Selection<?> returningSelection;
+
+        DeleteQueryDefinitionImpl(PersistentEntity persistentEntity, Predicate predicate, Selection<?> returningSelection) {
+            super(persistentEntity, predicate);
+            this.returningSelection = returningSelection;
+        }
+
+        @Override
+        public Selection<?> returningSelection() {
+            return returningSelection;
+        }
     }
 }

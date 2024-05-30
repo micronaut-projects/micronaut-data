@@ -25,7 +25,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBinaryPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInValuesPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInPredicate;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.ParameterExpression;
 
@@ -212,7 +212,7 @@ public final class CriteriaUtils {
             if (pp.getExpression() instanceof ParameterExpression<?> parameterExpression) {
                 parameters.add(parameterExpression);
             }
-        } else if (predicate instanceof PersistentPropertyInValuesPredicate<?> pp) {
+        } else if (predicate instanceof PersistentPropertyInPredicate<?> pp) {
             for (Expression<?> expression : pp.getValues()) {
                 if (expression instanceof ParameterExpression<?> parameterExpression) {
                     parameters.add(parameterExpression);

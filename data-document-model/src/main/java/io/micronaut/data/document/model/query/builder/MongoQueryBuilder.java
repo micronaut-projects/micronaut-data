@@ -480,11 +480,6 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 return queryState.getParameterBindings();
             }
 
-            @Override
-            public Map<String, String> getAdditionalRequiredParameters() {
-                return Collections.emptyMap();
-            }
-
         };
     }
 

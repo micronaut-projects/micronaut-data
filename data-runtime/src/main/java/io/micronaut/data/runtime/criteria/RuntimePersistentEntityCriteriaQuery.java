@@ -20,8 +20,6 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
-import io.micronaut.data.model.jpa.criteria.impl.query.QueryModelPredicateVisitor;
-import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.runtime.criteria.metamodel.StaticMetamodelInitializer;
@@ -37,7 +35,7 @@ final class RuntimePersistentEntityCriteriaQuery<T> extends AbstractPersistentEn
                                                 StaticMetamodelInitializer staticMetamodelInitializer,
                                                 Class<T> resultType,
                                                 RuntimeEntityRegistry runtimeEntityRegistry) {
-        super(resultType);
+        super(resultType, criteriaBuilder);
         this.criteriaBuilder = criteriaBuilder;
         this.runtimeEntityRegistry = runtimeEntityRegistry;
         this.staticMetamodelInitializer = staticMetamodelInitializer;
@@ -55,13 +53,9 @@ final class RuntimePersistentEntityCriteriaQuery<T> extends AbstractPersistentEn
         }
         RuntimePersistentEntity<X> runtimePersistentEntity = (RuntimePersistentEntity<X>) persistentEntity;
         staticMetamodelInitializer.initializeMetadata(runtimePersistentEntity);
-        RuntimePersistentEntityRoot<X> newEntityRoot = new RuntimePersistentEntityRoot<>(runtimePersistentEntity);
+        RuntimePersistentEntityRoot<X> newEntityRoot = new RuntimePersistentEntityRoot<>(runtimePersistentEntity, criteriaBuilder);
         entityRoot = newEntityRoot;
         return newEntityRoot;
     }
 
-    @Override
-    protected QueryModelPredicateVisitor createPredicateVisitor(QueryModel queryModel) {
-        return new LiteralsAsParametersQueryModelPredicateVisitor(criteriaBuilder, queryModel);
-    }
 }

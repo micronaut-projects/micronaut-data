@@ -50,7 +50,7 @@ public interface BindingParameter {
         /**
          * Create new context.
          *
-         * @return new bindign context
+         * @return new binding context
          */
         static BindingContext create() {
             return new BindingContextImpl();

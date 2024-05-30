@@ -31,7 +31,6 @@ import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.factory.Projections;
 import jakarta.persistence.criteria.Expression;
-import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Selection;
 
 /**
@@ -51,11 +50,6 @@ public final class QueryModelSelectionVisitor implements SelectionVisitor {
     public QueryModelSelectionVisitor(QueryModel queryModel, boolean distinct) {
         this.queryModel = queryModel;
         this.distinct = distinct;
-    }
-
-    @Override
-    public void visit(Predicate predicate) {
-        throw new IllegalStateException("Predicate is not allowed as a selection!");
     }
 
     @Override

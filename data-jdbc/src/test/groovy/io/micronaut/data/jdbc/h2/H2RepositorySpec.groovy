@@ -16,8 +16,6 @@
 package io.micronaut.data.jdbc.h2
 
 import groovy.transform.Memoized
-import io.micronaut.data.tck.entities.EntityIdClass
-import io.micronaut.data.tck.entities.EntityWithIdClass
 import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.data.tck.repositories.BasicTypesRepository
 import io.micronaut.data.tck.repositories.BookDtoRepository
@@ -46,6 +44,8 @@ import io.micronaut.data.tck.tests.AbstractRepositorySpec
 import spock.lang.Shared
 
 class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyProvider {
+
+
 
     @Shared
     H2PersonRepository pr = context.getBean(H2PersonRepository)

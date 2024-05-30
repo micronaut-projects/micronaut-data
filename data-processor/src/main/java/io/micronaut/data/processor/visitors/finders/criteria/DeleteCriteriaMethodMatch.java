@@ -22,8 +22,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaDelete;
-import io.micronaut.data.model.jpa.criteria.impl.QueryModelPersistentEntityCriteriaQuery;
-import io.micronaut.data.model.query.QueryModel;
+import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -240,8 +239,7 @@ public class DeleteCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         }
 
         QueryBuilder queryBuilder = matchContext.getQueryBuilder();
-        QueryModel queryModel = ((QueryModelPersistentEntityCriteriaQuery) criteriaQuery).getQueryModel();
-        QueryResult queryResult = queryBuilder.buildDelete(annotationMetadataHierarchy, queryModel);
+        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(annotationMetadataHierarchy, queryBuilder);
 
         return new MethodMatchInfo(
             getOperationType(),

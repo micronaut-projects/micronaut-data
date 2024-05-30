@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentPropertyPath;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Path;
 
 import java.util.List;
@@ -37,8 +38,11 @@ final class RuntimePersistentPropertyPathImpl<I, T> extends AbstractPersistentPr
     private final Path<?> parentPath;
     private final RuntimePersistentProperty<I> runtimePersistentProperty;
 
-    public RuntimePersistentPropertyPathImpl(Path<?> parentPath, List<Association> path, RuntimePersistentProperty<I> persistentProperty) {
-        super(persistentProperty, path);
+    public RuntimePersistentPropertyPathImpl(Path<?> parentPath,
+                                             List<Association> path,
+                                             RuntimePersistentProperty<I> persistentProperty,
+                                             CriteriaBuilder criteriaBuilder) {
+        super(persistentProperty, path, criteriaBuilder);
         this.parentPath = parentPath;
         this.runtimePersistentProperty = persistentProperty;
     }

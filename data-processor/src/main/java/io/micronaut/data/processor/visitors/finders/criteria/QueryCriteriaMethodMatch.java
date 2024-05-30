@@ -18,18 +18,14 @@ package io.micronaut.data.processor.visitors.finders.criteria;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
-import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
-import io.micronaut.data.model.jpa.criteria.impl.QueryModelPersistentEntityCriteriaQuery;
-import io.micronaut.data.model.query.JoinPath;
-import io.micronaut.data.model.query.QueryModel;
+import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
@@ -212,53 +208,15 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                 matchContext.getAnnotationMetadata()
         );
         QueryBuilder queryBuilder = matchContext.getQueryBuilder();
-        QueryModel queryModel = ((QueryModelPersistentEntityCriteriaQuery) criteriaQuery).getQueryModel();
-        QueryResult queryResult = queryBuilder.buildQuery(annotationMetadataHierarchy, queryModel);
+        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(annotationMetadataHierarchy, queryBuilder);
 
         ClassElement genericReturnType = matchContext.getReturnType();
         if (TypeUtils.isReactiveOrFuture(genericReturnType)) {
             genericReturnType = genericReturnType.getFirstTypeArgument().orElse(matchContext.getRootEntity().getType());
         }
         QueryResult countQueryResult = null;
-        if (matchContext.isTypeInRole(genericReturnType, TypeRole.PAGE)
-            || matchContext.isTypeInRole(genericReturnType, TypeRole.CURSORED_PAGE)
-        ) {
-//                SourcePersistentEntityCriteriaQuery<Object> count = cb.createQuery();
-//                count.select(cb.count(query.getRoots().iterator().next()));
-//                CommonAbstractCriteria countQueryCriteria = defineQuery(matchContext, matchContext.getRootEntity(), cb);
-
-            QueryModel countQuery = QueryModel.from(queryModel.getPersistentEntity());
-            countQuery.projections().count();
-            QueryModel.Junction junction = queryModel.getCriteria();
-            for (QueryModel.Criterion criterion : junction.getCriteria()) {
-                countQuery.add(criterion);
-            }
-            // Joins are skipped for count query for OneToMany, ManyToMany
-            // however skipping joins from criteria could cause issues (in many to many?)
-            for (JoinPath joinPath : queryModel.getJoinPaths()) {
-                Association association = joinPath.getAssociation();
-                if (association != null && !association.getKind().isSingleEnded()) {
-                    // skip OneToMany and ManyToMany
-                    continue;
-                }
-                Join.Type joinType = joinPath.getJoinType();
-                switch (joinType) {
-                    case INNER:
-                    case FETCH:
-                        joinType = Join.Type.DEFAULT;
-                        break;
-                    case LEFT_FETCH:
-                        joinType = Join.Type.LEFT;
-                        break;
-                    case RIGHT_FETCH:
-                        joinType = Join.Type.RIGHT;
-                        break;
-                    default:
-                        // no-op
-                }
-                countQuery.join(joinPath.getPath(), joinType, null);
-            }
-            countQueryResult = queryBuilder.buildQuery(annotationMetadataHierarchy, countQuery);
+        if (matchContext.isTypeInRole(genericReturnType, TypeRole.PAGE) || matchContext.isTypeInRole(genericReturnType, TypeRole.CURSORED_PAGE)) {
+            countQueryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildCountQuery(annotationMetadataHierarchy, queryBuilder);
         }
 
         return new MethodMatchInfo(

@@ -26,7 +26,6 @@ import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
@@ -35,12 +34,11 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.query.JoinPath;
-import io.micronaut.data.model.query.QueryModel;
-import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.BeanPropertyWithAnnotationMetadata;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -54,6 +52,7 @@ import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.operations.HintsCapableRepository;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.convert.DataConversionService;
+import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.micronaut.data.runtime.mapper.ResultReader;
@@ -99,10 +98,10 @@ import static io.micronaut.data.model.runtime.StoredQuery.OperationType;
  */
 @Internal
 public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Exception>
-        extends AbstractRepositoryOperations implements ApplicationContextProvider,
-        PreparedQueryDecorator,
-        MethodContextAwareStoredQueryDecorator,
-        HintsCapableRepository {
+    extends AbstractRepositoryOperations implements ApplicationContextProvider,
+    PreparedQueryDecorator,
+    MethodContextAwareStoredQueryDecorator,
+    HintsCapableRepository {
 
     protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
 
@@ -115,7 +114,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     protected final QueryStatement<PS, Integer> preparedStatementWriter;
     protected final JsonMapper jsonMapper;
     protected final SqlJsonColumnMapperProvider<RS> sqlJsonColumnMapperProvider;
-    protected final Map<Class, SqlQueryBuilder> queryBuilders = new HashMap<>(10);
+    protected final Map<Class, SqlQueryBuilder2> queryBuilders = new HashMap<>(10);
     protected final Map<Class, String> repositoriesWithHardcodedDataSource = new HashMap<>(10);
     private final Map<QueryKey, SqlStoredQuery> entityInserts = new ConcurrentHashMap<>(10);
     private final Map<QueryKey, SqlStoredQuery> entityUpdates = new ConcurrentHashMap<>(10);
@@ -124,30 +123,30 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     /**
      * Default constructor.
      *
-     * @param dataSourceName               The datasource name
-     * @param columnNameResultSetReader    The column name result reader
-     * @param columnIndexResultSetReader   The column index result reader
-     * @param preparedStatementWriter      The prepared statement writer
-     * @param dateTimeProvider             The date time provider
-     * @param runtimeEntityRegistry        The entity registry
-     * @param beanContext                  The bean context
-     * @param conversionService            The conversion service
-     * @param attributeConverterRegistry   The attribute converter registry
-     * @param jsonMapper                   The JSON mapper
-     * @param sqlJsonColumnMapperProvider  The SQL JSON column mapper provider
+     * @param dataSourceName              The datasource name
+     * @param columnNameResultSetReader   The column name result reader
+     * @param columnIndexResultSetReader  The column index result reader
+     * @param preparedStatementWriter     The prepared statement writer
+     * @param dateTimeProvider            The date time provider
+     * @param runtimeEntityRegistry       The entity registry
+     * @param beanContext                 The bean context
+     * @param conversionService           The conversion service
+     * @param attributeConverterRegistry  The attribute converter registry
+     * @param jsonMapper                  The JSON mapper
+     * @param sqlJsonColumnMapperProvider The SQL JSON column mapper provider
      */
     protected AbstractSqlRepositoryOperations(
-            String dataSourceName,
-            ResultReader<RS, String> columnNameResultSetReader,
-            ResultReader<RS, Integer> columnIndexResultSetReader,
-            QueryStatement<PS, Integer> preparedStatementWriter,
-            DateTimeProvider<Object> dateTimeProvider,
-            RuntimeEntityRegistry runtimeEntityRegistry,
-            BeanContext beanContext,
-            DataConversionService conversionService,
-            AttributeConverterRegistry attributeConverterRegistry,
-            JsonMapper jsonMapper,
-            SqlJsonColumnMapperProvider<RS> sqlJsonColumnMapperProvider) {
+        String dataSourceName,
+        ResultReader<RS, String> columnNameResultSetReader,
+        ResultReader<RS, Integer> columnIndexResultSetReader,
+        QueryStatement<PS, Integer> preparedStatementWriter,
+        DateTimeProvider<Object> dateTimeProvider,
+        RuntimeEntityRegistry runtimeEntityRegistry,
+        BeanContext beanContext,
+        DataConversionService conversionService,
+        AttributeConverterRegistry attributeConverterRegistry,
+        JsonMapper jsonMapper,
+        SqlJsonColumnMapperProvider<RS> sqlJsonColumnMapperProvider) {
         super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
         this.dataSourceName = dataSourceName;
         this.columnNameResultSetReader = columnNameResultSetReader;
@@ -156,12 +155,12 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         this.jsonMapper = jsonMapper;
         this.sqlJsonColumnMapperProvider = sqlJsonColumnMapperProvider;
         Collection<BeanDefinition<Object>> beanDefinitions = beanContext
-                .getBeanDefinitions(Object.class, Qualifiers.byStereotype(Repository.class));
+            .getBeanDefinitions(Object.class, Qualifiers.byStereotype(Repository.class));
         for (BeanDefinition<Object> beanDefinition : beanDefinitions) {
             String targetDs = beanDefinition.stringValue(Repository.class).orElse(null);
             Class<Object> beanType = beanDefinition.getBeanType();
             if (targetDs == null || targetDs.equalsIgnoreCase(dataSourceName)) {
-                SqlQueryBuilder queryBuilder = new SqlQueryBuilder(beanDefinition.getAnnotationMetadata());
+                SqlQueryBuilder2 queryBuilder = new SqlQueryBuilder2(beanDefinition.getAnnotationMetadata());
                 queryBuilders.put(beanType, queryBuilder);
             } else {
                 repositoriesWithHardcodedDataSource.put(beanType, targetDs);
@@ -177,7 +176,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     @Override
     public <E, R> StoredQuery<E, R> decorate(MethodInvocationContext<?, ?> context, StoredQuery<E, R> storedQuery) {
         Class<?> repositoryType = context.getTarget().getClass();
-        SqlQueryBuilder queryBuilder = findQueryBuilder(repositoryType);
+        SqlQueryBuilder2 queryBuilder = findQueryBuilder(repositoryType);
         RuntimePersistentEntity<E> runtimePersistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
         return new DefaultSqlStoredQuery<>(storedQuery, runtimePersistentEntity, queryBuilder);
     }
@@ -301,8 +300,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
 
         //noinspection unchecked
         return entityInserts.computeIfAbsent(new QueryKey(repositoryType, rootEntity), (queryKey) -> {
-            final SqlQueryBuilder queryBuilder = findQueryBuilder(repositoryType);
-            final QueryResult queryResult = queryBuilder.buildInsert(annotationMetadata, persistentEntity);
+            final SqlQueryBuilder2 queryBuilder = findQueryBuilder(repositoryType);
+            final QueryResult queryResult = queryBuilder.buildInsert(annotationMetadata, new SqlQueryBuilder2.InsertQueryDefinitionImpl(persistentEntity));
 
             return new DefaultSqlStoredQuery<>(QueryResultStoredQuery.single(OperationType.INSERT, "Custom insert", AnnotationMetadata.EMPTY_METADATA, queryResult, rootEntity), persistentEntity, queryBuilder);
         });
@@ -321,7 +320,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                                                   RuntimePersistentEntity<T> persistentEntity,
                                                   RuntimeAssociation<T> association) {
         return associationInserts.computeIfAbsent(association, association1 -> {
-            final SqlQueryBuilder queryBuilder = findQueryBuilder(repositoryType);
+            final SqlQueryBuilder2 queryBuilder = findQueryBuilder(repositoryType);
             return queryBuilder.buildJoinTableInsert(persistentEntity, association1);
         });
     }
@@ -345,27 +344,28 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         final QueryKey key = new QueryKey(repositoryType, rootEntity);
         //noinspection unchecked
         return entityUpdates.computeIfAbsent(key, (queryKey) -> {
-            final SqlQueryBuilder queryBuilder = findQueryBuilder(repositoryType);
+            final SqlQueryBuilder2 queryBuilder = findQueryBuilder(repositoryType);
 
-            final String idName;
-            final PersistentProperty identity = persistentEntity.getIdentity();
-            if (identity != null) {
-                idName = identity.getName();
-            } else {
-                idName = TypeRole.ID;
-            }
+            var criteriaBuilder = new RuntimeCriteriaBuilder(runtimeEntityRegistry);
+            var criteriaUpdate = criteriaBuilder.createCriteriaUpdate(rootEntity);
+            var root = criteriaUpdate.getRoot();
 
-            final QueryModel queryModel = QueryModel.from(persistentEntity)
-                    .idEq(new QueryParameter(idName));
-            List<String> updateProperties = persistentEntity.getPersistentProperties()
-                    .stream().filter(p ->
-                            !(p instanceof Association association && association.isForeignKey()) &&
-                                    p.getAnnotationMetadata().booleanValue(AutoPopulated.class, "updateable").orElse(true)
-                    )
-                    .map(PersistentProperty::getName)
-                    .toList();
-            final QueryResult queryResult = queryBuilder.buildUpdate(annotationMetadata, queryModel, updateProperties);
-            return new DefaultSqlStoredQuery<>(QueryResultStoredQuery.single(OperationType.UPDATE, "Custom update", AnnotationMetadata.EMPTY_METADATA, queryResult, rootEntity), persistentEntity, queryBuilder);
+            criteriaUpdate.where(
+                criteriaBuilder.equal(root.id(), criteriaBuilder.parameter(Object.class))
+            );
+
+            persistentEntity.getPersistentProperties()
+                .stream().filter(p ->
+                    !(p instanceof Association association && association.isForeignKey()) &&
+                        p.getAnnotationMetadata().booleanValue(AutoPopulated.class, "updateable").orElse(true)
+                )
+                .forEach(prop -> criteriaUpdate.set(prop.getName(), criteriaBuilder.parameter(prop.getType())));
+
+            final QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaUpdate).buildQuery(annotationMetadata, queryBuilder);
+            return new DefaultSqlStoredQuery<>(
+                QueryResultStoredQuery.single(OperationType.UPDATE, "Custom update", AnnotationMetadata.EMPTY_METADATA, queryResult, rootEntity),
+                persistentEntity,
+                queryBuilder);
         });
     }
 
@@ -381,7 +381,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      */
     protected <T> SqlStoredQuery<T, ?> resolveSqlInsertAssociation(Class<?> repositoryType, RuntimeAssociation<T> association, RuntimePersistentEntity<T> persistentEntity, T entity) {
         String sqlInsert = resolveAssociationInsert(repositoryType, persistentEntity, association);
-        final SqlQueryBuilder queryBuilder = findQueryBuilder(repositoryType);
+        final SqlQueryBuilder2 queryBuilder = findQueryBuilder(repositoryType);
         List<QueryParameterBinding> parameters = new ArrayList<>();
         for (Map.Entry<PersistentProperty, Object> property : idPropertiesWithValues(persistentEntity.getIdentity(), entity).toList()) {
             parameters.add(new QueryParameterBinding() {
@@ -436,8 +436,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         return new DefaultSqlStoredQuery<>(new BasicStoredQuery<>(sqlInsert, new String[0], parameters, persistentEntity.getIntrospection().getBeanType(), Object.class, OperationType.INSERT), associatedEntity, queryBuilder);
     }
 
-    private SqlQueryBuilder findQueryBuilder(Class<?> repositoryType) {
-        SqlQueryBuilder queryBuilder = queryBuilders.get(repositoryType);
+    private SqlQueryBuilder2 findQueryBuilder(Class<?> repositoryType) {
+        SqlQueryBuilder2 queryBuilder = queryBuilders.get(repositoryType);
         if (queryBuilder != null) {
             return queryBuilder;
         }
@@ -544,15 +544,15 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * Creates {@link SqlTypeMapper} for reading results from single column into an entity. For now, we support reading from JSON column,
      * however in support we might add XML support etc.
      *
-     * @param sqlStoredQuery the SQL prepared query
-     * @param columnName the column name where we are reading from
-     * @param jsonDataType the JSON representation type
-     * @param resultSetType resultSetType the result set type (different for R2DBC and JDBC)
+     * @param sqlStoredQuery   the SQL prepared query
+     * @param columnName       the column name where we are reading from
+     * @param jsonDataType     the JSON representation type
+     * @param resultSetType    resultSetType the result set type (different for R2DBC and JDBC)
      * @param persistentEntity the persistent entity
-     * @param loadListener the load listener if needed after entity loaded
+     * @param loadListener     the load listener if needed after entity loaded
+     * @param <T>              the entity type
+     * @param <R>              the result type
      * @return the {@link SqlTypeMapper} able to decode from column value into given type
-     * @param <T> the entity type
-     * @param <R> the result type
      */
     protected final <T, R> SqlTypeMapper<RS, R> createQueryResultMapper(SqlStoredQuery<?, ?> sqlStoredQuery, String columnName, JsonDataType jsonDataType, Class<RS> resultSetType,
                                                                         RuntimePersistentEntity<T> persistentEntity, BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
@@ -566,7 +566,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     /**
      * Return an indicator telling whether prepared query result produces JSON result.
      *
-     * @param preparedQuery the prepared query
+     * @param preparedQuery   the prepared query
      * @param queryResultInfo the query result info, if not null will hold info about result type
      * @return true if result is JSON
      */
@@ -580,7 +580,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     /**
      * Inserting JSON entity representation (like Oracle Json View) can generate new id, and we support retrieval only numeric auto generated ids.
      *
-     * @param storedQuery the stored query
+     * @param storedQuery      the stored query
      * @param persistentEntity the persistent entity
      * @return true if entity being inserted is JSON entity representation with auto generated numeric id
      */
@@ -626,14 +626,14 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     /**
      * Creates {@link JsonQueryResultMapper} for JSON deserialization.
      *
-     * @param sqlStoredQuery the SQL prepared query
-     * @param columnName the column name where query result is stored
-     * @param jsonDataType the json representation type
-     * @param resultSetType the result set type
+     * @param sqlStoredQuery   the SQL prepared query
+     * @param columnName       the column name where query result is stored
+     * @param jsonDataType     the json representation type
+     * @param resultSetType    the result set type
      * @param persistentEntity the persistent entity
-     * @param loadListener the load listener if needed after entity loaded
+     * @param loadListener     the load listener if needed after entity loaded
+     * @param <T>              the entity type
      * @return the {@link JsonQueryResultMapper}
-     * @param <T> the entity type
      */
     private <T, R> JsonQueryResultMapper<T, RS, R> createJsonQueryResultMapper(SqlStoredQuery<?, ?> sqlStoredQuery, String columnName, JsonDataType jsonDataType, Class<RS> resultSetType,
                                                                                RuntimePersistentEntity<T> persistentEntity, BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener) {
@@ -649,10 +649,11 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
 
     /**
      * Creates a result mapper.
+     *
      * @param preparedQuery The prepared query
-     * @param rsType The result set type
-     * @param <E> The entity type
-     * @param <R> The result type
+     * @param rsType        The result set type
+     * @param <E>           The entity type
+     * @param <R>           The result type
      * @return The new mapper
      * @since 4.2.0
      */
@@ -763,7 +764,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             }
             QueryKey queryKey = (QueryKey) o;
             return repositoryType.equals(queryKey.repositoryType) &&
-                    entityType.equals(queryKey.entityType);
+                entityType.equals(queryKey.entityType);
         }
 
         @Override

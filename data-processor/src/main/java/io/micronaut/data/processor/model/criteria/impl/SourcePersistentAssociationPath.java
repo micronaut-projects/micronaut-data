@@ -23,6 +23,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.processor.model.SourceAssociation;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Path;
 
 import java.util.ArrayList;
@@ -51,7 +52,9 @@ final class SourcePersistentAssociationPath<Owner, E> extends AbstractSourcePers
                                     SourceAssociation association,
                                     List<Association> associations,
                                     Join.Type associationJoinType,
-                                    String alias) {
+                                    String alias,
+                                    CriteriaBuilder criteriaBuilder) {
+        super(criteriaBuilder);
         this.parentRoot = parentRoot;
         this.association = association;
         this.associations = associations;

@@ -33,7 +33,6 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInValuesPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyUnaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateBinaryOp;
 import io.micronaut.data.model.query.QueryModel;
@@ -53,7 +52,7 @@ import java.util.StringJoiner;
  * @since 3.2
  */
 @Internal
-public class QueryModelPredicateVisitor implements PredicateVisitor {
+public final class QueryModelPredicateVisitor implements PredicateVisitor {
 
     private final QueryModel queryModel;
     private State state = new State();
@@ -282,25 +281,7 @@ public class QueryModelPredicateVisitor implements PredicateVisitor {
     }
 
     @Override
-    public void visit(PersistentPropertyInPredicate<?> propertyIn) {
-        Collection<?> values = propertyIn.getValues();
-        Object value = values;
-        if (!values.isEmpty()) {
-            Object first = values.iterator().next();
-            if (first instanceof ParameterExpression) {
-                value = asValue(first);
-            }
-        }
-        if (state.negated) {
-            state.negated = false;
-            add(Restrictions.notIn(getPropertyPath(propertyIn), value));
-        } else {
-            add(Restrictions.in(getPropertyPath(propertyIn), value));
-        }
-    }
-
-    @Override
-    public void visit(PersistentPropertyInValuesPredicate<?> inValues) {
+    public void visit(PersistentPropertyInPredicate<?> inValues) {
         Collection<?> values = inValues.getValues();
         if (!values.isEmpty()) {
             Iterator<?> iterator = values.iterator();

@@ -18,6 +18,7 @@ package io.micronaut.data.model.jpa.criteria.impl.predicate;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
+import jakarta.persistence.criteria.Expression;
 
 /**
  * The property between predicate implementation.
@@ -29,20 +30,20 @@ import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
 @Internal
 public final class PersistentPropertyBetweenPredicate<T> extends AbstractPersistentPropertyPredicate<T> {
 
-    private final Object from;
-    private final Object to;
+    private final Expression<?> from;
+    private final Expression<?> to;
 
-    public PersistentPropertyBetweenPredicate(PersistentPropertyPath<T> persistentPropertyPath, Object from, Object to) {
+    public PersistentPropertyBetweenPredicate(PersistentPropertyPath<T> persistentPropertyPath, Expression<?> from, Expression<?> to) {
         super(persistentPropertyPath);
         this.from = from;
         this.to = to;
     }
 
-    public Object getFrom() {
+    public Expression<?> getFrom() {
         return from;
     }
 
-    public Object getTo() {
+    public Expression<?> getTo() {
         return to;
     }
 

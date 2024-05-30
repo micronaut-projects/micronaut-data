@@ -218,11 +218,13 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
         return withClientSession(clientSession -> {
             MongoPreparedQuery<T, Boolean> mongoPreparedQuery = getMongoPreparedQuery(preparedQuery);
             if (mongoPreparedQuery.isAggregate()) {
-                return aggregate(clientSession, mongoPreparedQuery, BsonDocument.class).iterator().hasNext();
+                try (MongoCursor<BsonDocument> iterator = aggregate(clientSession, mongoPreparedQuery, BsonDocument.class).iterator()) {
+                    return iterator.hasNext();
+                }
             } else {
-                return find(clientSession, mongoPreparedQuery)
-                        .limit(1)
-                        .iterator().hasNext();
+                try (MongoCursor<Boolean> iterator = find(clientSession, mongoPreparedQuery).limit(1).iterator()) {
+                    return iterator.hasNext();
+                }
             }
         });
     }

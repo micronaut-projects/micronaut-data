@@ -104,16 +104,62 @@ public final class PersistentEntityUtils {
         }
     }
 
+    /**
+     * Count possible embedded properties.
+     *
+     * @param property The property
+     * @return the count
+     */
+    public static int countPersistentProperties(PersistentProperty property) {
+        return countPersistentProperties(List.of(), property);
+    }
+
+    /**
+     * Count possible embedded properties.
+     *
+     * @param property     The property
+     * @param associations The associations
+     * @return the count
+     */
+    public static int countPersistentProperties(List<Association> associations,
+                                                PersistentProperty property) {
+        int[] count = new int[1];
+        traversePersistentProperties(associations, property, (ignore1, ignore2) -> count[0]++);
+        return count[0];
+    }
+
     public static void traversePersistentProperties(List<Association> associations,
-                                                     PersistentProperty property,
-                                                     BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
+                                                    PersistentProperty property,
+                                                    BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
+        traversePersistentProperties(associations, property, true, consumerProperty);
+    }
+
+    public static void traversePersistentProperties(PersistentPropertyPath propertyPath,
+                                                    BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
+        traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), true, consumerProperty);
+    }
+
+    public static void traversePersistentProperties(PersistentPropertyPath propertyPath,
+                                                    boolean traverseEmbedded,
+                                                    BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
+        traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), traverseEmbedded, consumerProperty);
+    }
+
+    public static void traversePersistentProperties(List<Association> associations,
+                                                    PersistentProperty property,
+                                                    boolean traverseEmbedded,
+                                                    BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
         if (property instanceof Embedded embedded) {
-            PersistentEntity embeddedEntity = embedded.getAssociatedEntity();
-            Collection<? extends PersistentProperty> embeddedProperties = embeddedEntity.getPersistentProperties();
-            List<Association> newAssociations = new ArrayList<>(associations);
-            newAssociations.add((Association) property);
-            for (PersistentProperty embeddedProperty : embeddedProperties) {
-                traversePersistentProperties(newAssociations, embeddedProperty, consumerProperty);
+            if (traverseEmbedded) {
+                PersistentEntity embeddedEntity = embedded.getAssociatedEntity();
+                Collection<? extends PersistentProperty> embeddedProperties = embeddedEntity.getPersistentProperties();
+                List<Association> newAssociations = new ArrayList<>(associations);
+                newAssociations.add((Association) property);
+                for (PersistentProperty embeddedProperty : embeddedProperties) {
+                    traversePersistentProperties(newAssociations, embeddedProperty, consumerProperty);
+                }
+            } else {
+                consumerProperty.accept(associations, property);
             }
         } else if (property instanceof Association association) {
             if (association.isForeignKey()) {

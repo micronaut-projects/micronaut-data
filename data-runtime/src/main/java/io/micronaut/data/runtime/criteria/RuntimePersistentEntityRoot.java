@@ -20,6 +20,7 @@ import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.metamodel.EntityType;
 
 import java.util.Collections;
@@ -40,7 +41,8 @@ final class RuntimePersistentEntityRoot<T> extends AbstractRuntimePersistentEnti
 
     private final RuntimePersistentEntity<T> runtimePersistentEntity;
 
-    public RuntimePersistentEntityRoot(RuntimePersistentEntity<T> runtimePersistentEntity) {
+    public RuntimePersistentEntityRoot(RuntimePersistentEntity<T> runtimePersistentEntity, CriteriaBuilder criteriaBuilder) {
+        super(criteriaBuilder);
         this.runtimePersistentEntity = runtimePersistentEntity;
     }
 

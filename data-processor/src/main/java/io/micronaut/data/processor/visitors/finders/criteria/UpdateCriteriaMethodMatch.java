@@ -24,7 +24,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaUpdate;
-import io.micronaut.data.model.query.QueryModel;
+import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -48,7 +48,6 @@ import jakarta.persistence.criteria.Selection;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -292,9 +291,7 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         );
         QueryBuilder queryBuilder = matchContext.getQueryBuilder();
 
-        Map<String, Object> propertiesToUpdate = query.getUpdateValues();
-        QueryModel queryModel = query.getQueryModel();
-        QueryResult queryResult = queryBuilder.buildUpdate(annotationMetadataHierarchy, queryModel, propertiesToUpdate);
+        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(annotationMetadataHierarchy, queryBuilder);
 
         return new MethodMatchInfo(
             getOperationType(),

@@ -122,17 +122,17 @@ class StaticCriteriaSpec extends AbstractCriteriaSpec {
                     } as Specification
             ]
             expectedWhereQuery << [
-                    '(test_."amount" IN (?))',
-                    '(test_."amount" NOT IN (?))',
-                    '(test_."amount" IN (?))',
-                    '(test_."amount" NOT IN (?))',
+                    '(test_."amount" IN (?,?))',
+                    '(test_."amount" NOT IN (?,?))',
+                    '(test_."amount" IN (?,?))',
+                    '(test_."amount" NOT IN (?,?))',
                     '(test_."amount" IN (?))',
                     '(test_."amount" NOT IN (?))',
                     '((test_."enabled" >= ? AND test_."enabled" <= ?))',
                     '((test_."amount" >= ? AND test_."amount" <= ?))',
                     '(test_."enabled" = TRUE)',
                     '(test_."enabled" = TRUE) ORDER BY test_."amount" DESC,test_."budget" ASC',
-                    '(test_."budget" = ? AND ((test_."enabled" = TRUE OR test_."enabled2" = TRUE) OR test_."amount" = ?))'
+                    '(test_."budget" = ? AND (test_."enabled" = TRUE OR test_."enabled2" = TRUE OR test_."amount" = ?))'
             ]
     }
 

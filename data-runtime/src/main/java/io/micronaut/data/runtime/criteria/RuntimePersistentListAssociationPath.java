@@ -20,6 +20,7 @@ import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentListAssociationPath;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Path;
 
@@ -43,8 +44,9 @@ final class RuntimePersistentListAssociationPath<Owner, E> extends RuntimePersis
                                          RuntimeAssociation<Owner> association,
                                          List<Association> associations,
                                          Join.Type associationJoinType,
-                                         String alias) {
-        super(parentPath, association, associations, associationJoinType, alias);
+                                         String alias,
+                                         CriteriaBuilder criteriaBuilder) {
+        super(parentPath, association, associations, associationJoinType, alias, criteriaBuilder);
     }
 
     @Override

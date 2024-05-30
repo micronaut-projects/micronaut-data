@@ -37,7 +37,9 @@ public interface SelectionVisitor {
      *
      * @param predicate The predicate
      */
-    void visit(Predicate predicate);
+    default void visit(Predicate predicate) {
+        throw new IllegalStateException("Predicate is not allowed as a selection!");
+    }
 
     /**
      * Visit {@link PersistentPropertyPath}.

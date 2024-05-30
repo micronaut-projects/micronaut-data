@@ -50,22 +50,22 @@ public final class MethodMatchSourcePersistentEntityCriteriaBuilderImpl extends 
 
     @Override
     public SourcePersistentEntityCriteriaQuery<Object> createQuery() {
-        return new SourcePersistentEntityCriteriaQueryImpl<>(methodMatchContext::getEntity);
+        return new SourcePersistentEntityCriteriaQueryImpl<>(methodMatchContext::getEntity, this);
     }
 
     @Override
     public <T> PersistentEntityCriteriaQuery<T> createQuery(Class<T> resultClass) {
-        return new SourcePersistentEntityCriteriaQueryImpl<>(methodMatchContext::getEntity);
+        return new SourcePersistentEntityCriteriaQueryImpl<>(methodMatchContext::getEntity, this);
     }
 
     @Override
     public <T> SourcePersistentEntityCriteriaDelete<T> createCriteriaDelete(Class<T> targetEntity) {
-        return new SourcePersistentEntityCriteriaDeleteImpl<>(methodMatchContext::getEntity, targetEntity);
+        return new SourcePersistentEntityCriteriaDeleteImpl<>(methodMatchContext::getEntity, targetEntity, this);
     }
 
     @Override
     public <T> SourcePersistentEntityCriteriaUpdate<T> createCriteriaUpdate(Class<T> targetEntity) {
-        return new SourcePersistentEntityCriteriaUpdateImpl<>(methodMatchContext::getEntity, targetEntity);
+        return new SourcePersistentEntityCriteriaUpdateImpl<>(methodMatchContext::getEntity, targetEntity, this);
     }
 
     @Override
