@@ -684,6 +684,19 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         column += " NOT NULL DEFAULT uuid_generate_v4()";
                     }
                     break;
+                case H2:
+                    if (type == SEQUENCE) {
+                        column += " NOT NULL";
+                    } else if (type == IDENTITY) {
+                        if (isPk) {
+                            column += " GENERATED ALWAYS AS IDENTITY";
+                        } else {
+                            column += " NOT NULL";
+                        }
+                    } else if (type == UUID) {
+                        column += " NOT NULL DEFAULT random_uuid()";
+                    }
+                    break;
                 case SQL_SERVER:
                     if (type == UUID) {
                         column += " NOT NULL DEFAULT newid()";
@@ -1188,6 +1201,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return switch (dialect) {
             case ORACLE -> quote(sequenceName) + ".nextval";
             case POSTGRES -> "nextval('" + sequenceName + "')";
+            case H2 -> "nextval('" + sequenceName + "')";
             case SQL_SERVER -> "NEXT VALUE FOR " + quote(sequenceName);
             default -> throw new IllegalStateException("Cannot generate a sequence for dialect: " + dialect);
         };
