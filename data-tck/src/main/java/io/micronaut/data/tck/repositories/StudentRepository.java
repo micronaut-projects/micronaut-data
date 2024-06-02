@@ -19,6 +19,7 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Version;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification;
@@ -42,6 +43,9 @@ public interface StudentRepository extends CrudRepository<Student, Long>, JpaSpe
 
     @Join(value = "books", type = Join.Type.FETCH)
     Optional<Student> findByName(String name);
+
+    @Join(value = "books", type = Join.Type.LEFT)
+    List<Student> queryByName(String name, Pageable pageable);
 
     static QuerySpecification<Student> byBookTitles(List<String> bookTitles) {
         return (root, query, criteriaBuilder) -> {
