@@ -123,7 +123,7 @@ class H2EnumsMappingSpec extends Specification implements H2TestPropertyProvider
             def sql = builder.buildBatchCreateTableStatement(PersistentEntity.of(EnumEntity))
 
         then:
-            sql == 'CREATE TABLE `enum_entity` (`id` BIGINT AUTO_INCREMENT PRIMARY KEY,`as_default` VARCHAR(255) NOT NULL,`as_string` VARCHAR(255) NOT NULL,`as_int` INT NOT NULL);'
+            sql == 'CREATE TABLE `enum_entity` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`as_default` VARCHAR(255) NOT NULL,`as_string` VARCHAR(255) NOT NULL,`as_int` INT NOT NULL);'
     }
 
     void "test jpa create table with enums"() {
@@ -134,7 +134,7 @@ class H2EnumsMappingSpec extends Specification implements H2TestPropertyProvider
             def sql = builder.buildBatchCreateTableStatement(PersistentEntity.of(JpaEnumEntity))
 
         then:
-            sql == 'CREATE TABLE `jpa_enum_entity` (`id` BIGINT AUTO_INCREMENT PRIMARY KEY,`as_default` INT NOT NULL,`as_string` VARCHAR(255) NOT NULL,`as_int` INT NOT NULL);'
+            sql == 'CREATE TABLE `jpa_enum_entity` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`as_default` INT NOT NULL,`as_string` VARCHAR(255) NOT NULL,`as_int` INT NOT NULL);'
     }
 
 }
