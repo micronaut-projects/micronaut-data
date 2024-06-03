@@ -423,9 +423,9 @@ class Emb {
         def employeeGroupSql = builder.buildCreateTableStatements(employeeGroupEntity)
         then:"No join table is created"
         employeeSql.length == 1
-        employeeSql[0] == 'CREATE TABLE `employee` (`id` BIGINT AUTO_INCREMENT PRIMARY KEY,`name` VARCHAR(255) NOT NULL,`category_id` BIGINT NOT NULL,`employer_id` BIGINT NOT NULL);'
+        employeeSql[0] == 'CREATE TABLE `employee` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`name` VARCHAR(255) NOT NULL,`category_id` BIGINT NOT NULL,`employer_id` BIGINT NOT NULL);'
         employeeGroupSql.length == 1
-        employeeGroupSql[0] == 'CREATE TABLE `employee_group` (`id` BIGINT AUTO_INCREMENT PRIMARY KEY,`name` VARCHAR(255) NOT NULL,`category_id` BIGINT NOT NULL,`employer_id` BIGINT NOT NULL);'
+        employeeGroupSql[0] == 'CREATE TABLE `employee_group` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`name` VARCHAR(255) NOT NULL,`category_id` BIGINT NOT NULL,`employer_id` BIGINT NOT NULL);'
     }
 
     void "test create ManyToMany table with schema"() {
