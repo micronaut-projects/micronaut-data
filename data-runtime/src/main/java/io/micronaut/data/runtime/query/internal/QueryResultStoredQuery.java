@@ -133,6 +133,11 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
         return joinPaths;
     }
 
+    @Override
+    public Set<JoinPath> getJoinPaths() {
+        return joinPaths;
+    }
+
     private static class QueryResultParameterBinding implements QueryParameterBinding {
         private final io.micronaut.data.model.query.builder.QueryParameterBinding p;
         private final List<QueryParameterBinding> all;

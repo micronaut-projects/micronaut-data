@@ -47,9 +47,18 @@ public final class AssociationUtils {
      * @return the join paths, if none defined and not of type FETCH then an empty set
      */
     public static Set<JoinPath> getJoinFetchPaths(AnnotationMetadata annotationMetadata) {
-        return annotationMetadata.getAnnotationValuesByType(Join.class).stream().filter(
-            AssociationUtils::isJoinFetch
-        ).map(av -> {
+        return getJoinPaths(annotationMetadata).stream()
+            .filter(jp -> jp.getJoinType().isFetch() || jp.getJoinType() == Join.Type.DEFAULT)
+            .collect(Collectors.toSet());
+    }
+
+    /**
+     * Gets all the join paths from the annotation metadata.
+     * @param annotationMetadata the annotation metadata
+     * @return the join paths
+     */
+    public static Set<JoinPath> getJoinPaths(AnnotationMetadata annotationMetadata) {
+        return annotationMetadata.getAnnotationValuesByType(Join.class).stream().map(av -> {
             String path = av.stringValue().orElseThrow(() -> new IllegalStateException("Should not include annotations without a value definition"));
             Join.Type joinType = av.get("type", Join.Type.class).orElse(Join.Type.DEFAULT);
             String alias = av.stringValue("alias").orElse(null);
@@ -57,11 +66,4 @@ public final class AssociationUtils {
         }).collect(Collectors.toSet());
     }
 
-    private static boolean isJoinFetch(AnnotationValue<Join> av) {
-        if (!av.stringValue().isPresent()) {
-            return false;
-        }
-        Optional<String> type = av.stringValue("type");
-        return !type.isPresent() || type.get().contains("FETCH");
-    }
 }

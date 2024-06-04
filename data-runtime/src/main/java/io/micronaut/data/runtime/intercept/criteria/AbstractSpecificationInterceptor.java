@@ -164,7 +164,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
 
     protected final Set<JoinPath> getMethodJoinPaths(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
         return methodsJoinPaths.computeIfAbsent(methodKey, repositoryMethodKey ->
-            AssociationUtils.getJoinFetchPaths(context));
+            AssociationUtils.getJoinPaths(context));
     }
 
     @NonNull
