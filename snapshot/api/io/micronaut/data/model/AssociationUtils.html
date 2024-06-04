@@ -105,6 +105,11 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Gets the join paths from the annotation metadata.</div>
 </div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#getJoinPaths(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">getJoinPaths</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">Gets all the join paths from the annotation metadata.</div>
+</div>
 </div>
 </div>
 </div>
@@ -132,6 +137,19 @@ loadScripts(document, 'script');</script>
 <dd><code>annotationMetadata</code> - the annotation metadata</dd>
 <dt>Returns:</dt>
 <dd>the join paths, if none defined and not of type FETCH then an empty set</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="getJoinPaths(io.micronaut.core.annotation.AnnotationMetadata)">
+<h3>getJoinPaths</h3>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;</span>&nbsp;<span class="element-name">getJoinPaths</span><wbr><span class="parameters">(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</span></div>
+<div class="block">Gets all the join paths from the annotation metadata.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>annotationMetadata</code> - the annotation metadata</dd>
+<dt>Returns:</dt>
+<dd>the join paths</dd>
 </dl>
 </section>
 </li>
