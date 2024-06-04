@@ -16,12 +16,10 @@
 package io.micronaut.data.model;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
-import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.query.JoinPath;
 
-import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
