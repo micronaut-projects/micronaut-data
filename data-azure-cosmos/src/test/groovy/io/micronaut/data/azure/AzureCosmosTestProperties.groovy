@@ -3,6 +3,7 @@ package io.micronaut.data.azure
 import io.micronaut.data.cosmos.config.StorageUpdatePolicy
 import io.micronaut.test.support.TestPropertyProvider
 import org.testcontainers.containers.CosmosDBEmulatorContainer
+import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.utility.DockerImageName
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -18,8 +19,8 @@ trait AzureCosmosTestProperties implements TestPropertyProvider {
 
     @Shared
     @AutoCleanup("stop")
-    CosmosDBEmulatorContainer emulator = new CosmosDBEmulatorContainer(DockerImageName.parse("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest"))
-        .withStartupTimeout(STARTUP_TIMEOUT)
+    CosmosDBEmulatorContainer emulator = new CosmosDBEmulatorContainer(DockerImageName.parse("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:mongodb"))
+            .waitingFor(Wait.forHttps("/_explorer/emulator.pem").forStatusCode(200).allowInsecure().withStartupTimeout(STARTUP_TIMEOUT))
 
     @Override
     Map<String, String> getProperties() {
