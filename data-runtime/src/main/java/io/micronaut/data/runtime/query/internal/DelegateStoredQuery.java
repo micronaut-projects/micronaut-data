@@ -139,6 +139,11 @@ public interface DelegateStoredQuery<E, R> extends StoredQuery<E, R> {
     }
 
     @Override
+    default Set<JoinPath> getJoinPaths() {
+        return getStoredQueryDelegate().getJoinPaths();
+    }
+
+    @Override
     default boolean isSingleResult() {
         return getStoredQueryDelegate().isSingleResult();
     }

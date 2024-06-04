@@ -184,8 +184,20 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
 
     /**
      * @return The join paths that require a fetch
+     * @deprecated Use {@link #getJoinPaths()} and filter the paths
      */
-    default @NonNull Set<JoinPath> getJoinFetchPaths() {
+    @Deprecated(forRemoval = true, since = "4.8.1")
+    @NonNull
+    default Set<JoinPath> getJoinFetchPaths() {
+        return Collections.emptySet();
+    }
+
+    /**
+     * @return The all join paths
+     * @since 4.8.1
+     */
+    @NonNull
+    default Set<JoinPath> getJoinPaths() {
         return Collections.emptySet();
     }
 

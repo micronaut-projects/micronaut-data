@@ -2539,6 +2539,12 @@ abstract class AbstractRepositorySpec extends Specification {
         book2.getStudents().add(student)
         bookRepository.save(book1)
         bookRepository.save(book2)
+        def otherStudent = new Student("Ioana")
+        studentRepository.save(otherStudent)
+        when:
+        def students = studentRepository.queryByName(otherStudent.name, Pageable.from(0, 2))
+        then:
+        students.size() == 1
         when:
         def loadedStudent = studentRepository.findByName(student.name).get()
         def loadedBook1 = bookRepository.findById(book1.id).get()
@@ -2554,6 +2560,10 @@ abstract class AbstractRepositorySpec extends Specification {
         loadedBook2
         loadedBook2.title == book2.title
         loadedBook2.id == book2.id
+        when:
+        students = studentRepository.queryByName(student.name, Pageable.from(0, 2))
+        then:
+        students.size() == 1
         cleanup:
         studentRepository.delete(student)
         bookRepository.delete(book1)

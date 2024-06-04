@@ -501,7 +501,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
                 SqlTypeMapper<Row, R> mapper = createMapper(preparedQuery, Row.class);
                 if (mapper instanceof SqlResultEntityTypeMapper<Row, R> entityTypeMapper) {
-                    final boolean hasJoins = !preparedQuery.getJoinFetchPaths().isEmpty();
+                    final boolean hasJoins = !preparedQuery.getJoinPaths().isEmpty();
                     if (!hasJoins) {
                         return executeAndMapEachRow(statement, entityTypeMapper::readEntity);
                     }

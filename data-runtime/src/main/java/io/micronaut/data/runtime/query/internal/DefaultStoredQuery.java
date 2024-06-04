@@ -75,6 +75,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     private final boolean isCount;
     private final boolean hasResultConsumer;
     private Map<String, Object> queryHints;
+    private Set<JoinPath> joinPaths = null;
     private Set<JoinPath> joinFetchPaths = null;
     private final List<QueryParameterBinding> queryParameters;
     private final boolean rawQuery;
@@ -215,10 +216,17 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     @Override
     public Set<JoinPath> getJoinFetchPaths() {
         if (joinFetchPaths == null) {
-            Set<JoinPath> set = AssociationUtils.getJoinFetchPaths(method);
-            this.joinFetchPaths = set.isEmpty() ? Collections.emptySet() : Collections.unmodifiableSet(set);
+            this.joinFetchPaths = Collections.unmodifiableSet(AssociationUtils.getJoinFetchPaths(method));
         }
         return joinFetchPaths;
+    }
+
+    @Override
+    public Set<JoinPath> getJoinPaths() {
+        if (joinPaths == null) {
+            joinPaths = Collections.unmodifiableSet(AssociationUtils.getJoinPaths(method));
+        }
+        return joinPaths;
     }
 
     /**

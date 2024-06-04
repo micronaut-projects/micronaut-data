@@ -679,12 +679,12 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         }
         if (isEntityResult || preparedQuery.isDtoProjection()) {
             Class<R> resultType = preparedQuery.getResultType();
-            final Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
+            final Set<JoinPath> joinPaths = preparedQuery.getJoinPaths();
             if (isEntityResult) {
                 return new SqlResultEntityTypeMapper<>(
                     getEntity(resultType),
                     columnNameResultSetReader,
-                    joinFetchPaths,
+                    joinPaths,
                     sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, rsType),
                     loadListener,
                     conversionService);
@@ -710,7 +710,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 return new SqlResultEntityTypeMapper<>(
                     dtoPersistentEntity,
                     columnNameResultSetReader,
-                    joinFetchPaths,
+                    joinPaths,
                     sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, rsType),
                     null,
                     conversionService);

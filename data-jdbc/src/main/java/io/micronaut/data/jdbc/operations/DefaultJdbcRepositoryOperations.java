@@ -346,7 +346,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 SqlTypeMapper<ResultSet, R> mapper = createMapper(preparedQuery, ResultSet.class);
                 R result;
                 if (mapper instanceof SqlResultEntityTypeMapper<ResultSet, R> entityTypeMapper) {
-                    final boolean hasJoins = !preparedQuery.getJoinFetchPaths().isEmpty();
+                    final boolean hasJoins = !preparedQuery.getJoinPaths().isEmpty();
 
                     SqlResultEntityTypeMapper.PushingMapper<ResultSet, R> oneMapper = entityTypeMapper.readOneMapper();
                     if (rs.next()) {
@@ -462,7 +462,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             SqlResultConsumer<R> sqlMappingConsumer = preparedQuery.hasResultConsumer() ? preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class).orElse(null) : null;
             SqlTypeMapper<ResultSet, R> resultMapper = createMapper(preparedQuery, ResultSet.class);
             if (resultMapper instanceof SqlResultEntityTypeMapper<ResultSet, R> entityTypeMapper) {
-                Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
+                Set<JoinPath> joinFetchPaths = preparedQuery.getJoinPaths();
                 boolean onlySingleEndedJoins = isOnlySingleEndedJoins(persistentEntity, joinFetchPaths);
                 // Cannot stream ResultSet for "many" joined query
                 if (!onlySingleEndedJoins) {
