@@ -574,7 +574,7 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
         Map<String, Object> sets = CollectionUtils.newLinkedHashMap(propertiesToUpdate.size());
         for (Map.Entry<String, Object> e : propertiesToUpdate.entrySet()) {
             PersistentPropertyPath propertyPath = findProperty(queryState, e.getKey());
-            String propertyPersistName = getPropertyPersistName(propertyPath.getProperty());
+            String propertyPersistName = getPropertyPersistName(propertyPath);
             if (e.getValue() instanceof BindingParameter bindingParameter) {
                 int index = queryState.pushParameter(
                     bindingParameter,
@@ -744,8 +744,14 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
      * @param propertyPath the propertyPath
      * @return resulting name for the criteria, if identity field is used in criteria then returns _id else original criteria property name
      */
-    private String getPropertyName(PersistentPropertyPath propertyPath) {
-        return getPropertyPersistName(propertyPath.getProperty());
+    private String getPropertyPersistName(PersistentPropertyPath propertyPath) {
+        PersistentProperty property = propertyPath.getProperty();
+        if (property.getOwner().getIdentity() == property) {
+            return MONGO_ID_FIELD;
+        }
+        return property.getAnnotationMetadata()
+            .stringValue(SerdeConfig.class, SerdeConfig.PROPERTY)
+            .orElseGet(propertyPath::getPath);
     }
 
     private String getPropertyPersistName(PersistentProperty property) {
@@ -994,7 +1000,7 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
         @Override
         public void visitIn(PersistentPropertyPath propertyPath, Collection<?> values, boolean negated) {
             query.put(
-                getPropertyName(propertyPath),
+                getPropertyPersistName(propertyPath),
                 Map.of(negated ? "$nin" : "$in", values.stream().map(val -> valueRepresentation(queryState, propertyPath, val)).toList())
             );
         }
@@ -1086,7 +1092,7 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
 
         @Override
         public void visitInBetween(PersistentPropertyPath property, Expression<?> from, Expression<?> to) {
-            String propertyName = getPropertyName(property);
+            String propertyName = getPropertyPersistName(property);
             query.put("$and", asList(
                 Map.of(propertyName, Map.of("$gte", valueRepresentation(queryState, property, from))),
                 Map.of(propertyName, Map.of("$lte", valueRepresentation(queryState, property, to)))
@@ -1115,7 +1121,7 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
 
         @Override
         public void visitIsEmpty(PersistentPropertyPath property) {
-            String propertyName = getPropertyName(property);
+            String propertyName = getPropertyPersistName(property);
             query.put("$or", asList(
                 Map.of(propertyName, Map.of("$eq", "")),
                 Map.of(propertyName, Map.of("$exists", false))
@@ -1124,7 +1130,7 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
 
         @Override
         public void visitIsNotEmpty(PersistentPropertyPath property) {
-            String propertyName = getPropertyName(property);
+            String propertyName = getPropertyPersistName(property);
             query.put("$and", asList(
                 Map.of(propertyName, Map.of("$ne", "")),
                 Map.of(propertyName, Map.of("$exists", true))
@@ -1144,7 +1150,7 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
             } else {
                 criteriaValue = List.of(valueRepresentation(queryState, leftProperty, value));
             }
-            query.put(getPropertyName(leftProperty), Map.of("$all", criteriaValue));
+            query.put(getPropertyPersistName(leftProperty), Map.of("$all", criteriaValue));
         }
 
         @Override
@@ -1194,7 +1200,7 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
             } else {
                 filterValue = regexCriteria;
             }
-            query.put(getPropertyName(propertyPath), filterValue);
+            query.put(getPropertyPersistName(propertyPath), filterValue);
         }
 
         private Object valueRepresentation(PropertyParameterCreator parameterCreator, PersistentPropertyPath propertyPath, Object value) {
