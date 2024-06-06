@@ -659,7 +659,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
      * @param queryBuilder  The builder
      */
     protected void appendForUpdate(QueryPosition queryPosition, SelectQueryDefinition definition, StringBuilder queryBuilder) {
-        if (definition.isForUpdate() && !supportsForUpdate()) {
+        if (definition.isForUpdate()) {
             throw new IllegalStateException("For update not supported for current query builder: " + getClass().getSimpleName());
         }
     }
@@ -710,10 +710,6 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
                             return JsonDataType.DEFAULT;
                         }
 
-                        @Override
-                        public int getParameterIndex() {
-                            return -1;
-                        }
                     });
                 } else {
                     queryString.append(asLiteral(value));
@@ -945,12 +941,6 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
     @NonNull
     protected StringBuilder appendDeleteClause(StringBuilder queryString) {
         return queryString.append("DELETE ").append(FROM_CLAUSE);
-    }
-
-    @NonNull
-    @Override
-    public QueryResult buildOrderBy(@NonNull PersistentEntity entity, @NonNull Sort sort) {
-        return buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false);
     }
 
     /**

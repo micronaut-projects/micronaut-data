@@ -83,16 +83,6 @@ public interface QueryBuilder2 {
     QueryResult buildDelete(@NonNull AnnotationMetadata annotationMetadata, @NonNull DeleteQueryDefinition definition);
 
     /**
-     * Encode the given query into the encoded query instance.
-     *
-     * @param entity The root entity
-     * @param sort   The sort
-     * @return The encoded query
-     */
-    @NonNull
-    QueryResult buildOrderBy(@NonNull PersistentEntity entity, @NonNull Sort sort);
-
-    /**
      * Encode the pageable.
      *
      * @param pageable The pageable
@@ -100,24 +90,6 @@ public interface QueryBuilder2 {
      */
     @NonNull
     QueryResult buildPagination(@NonNull Pageable pageable);
-
-    /**
-     * Whether projections should be aliased.
-     *
-     * @return True if they should
-     */
-    default boolean shouldAliasProjections() {
-        return true;
-    }
-
-    /**
-     * Whether FOR UPDATE queries are supported.
-     *
-     * @return True if FOR UPDATE queries are supported
-     */
-    default boolean supportsForUpdate() {
-        return false;
-    }
 
     /**
      * The select query definition.

@@ -194,11 +194,6 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 implements Sq
         return super.asLiteral(value);
     }
 
-    @Override
-    public boolean shouldAliasProjections() {
-        return false;
-    }
-
     /**
      * Builds a batch create tables statement. Designed for testing and not production usage. For production a
      * SQL migration tool such as Flyway or Liquibase is recommended.
@@ -1538,11 +1533,6 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 implements Sq
             return SEQUENCE;
         }
         return GeneratedValue.Type.AUTO;
-    }
-
-    @Override
-    public boolean supportsForUpdate() {
-        return true;
     }
 
     @Override

@@ -33,7 +33,6 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
-import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.IdExpression;
@@ -644,11 +643,6 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
             queryDefinition.limit(),
             queryDefinition.offset()
         );
-    }
-
-    @Override
-    public QueryResult buildOrderBy(PersistentEntity entity, Sort sort) {
-        throw new UnsupportedOperationException();
     }
 
     @Override
