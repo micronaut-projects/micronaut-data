@@ -23,7 +23,6 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
-import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.JoinPath;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;

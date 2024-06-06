@@ -175,14 +175,12 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
 
     @Override
     public PersistentEntityCriteriaUpdate<T> where(Expression<Boolean> restriction) {
-        // TODO: bind parameters
         predicate = new ConjunctionPredicate(Collections.singleton((IExpression<Boolean>) restriction));
         return this;
     }
 
     @Override
     public PersistentEntityCriteriaUpdate<T> where(Predicate... restrictions) {
-        // TODO: bind parameters
         Objects.requireNonNull(restrictions);
         if (restrictions.length > 0) {
             predicate = restrictions.length == 1 ? restrictions[0] : new ConjunctionPredicate(

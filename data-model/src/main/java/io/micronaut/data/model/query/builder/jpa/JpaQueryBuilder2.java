@@ -168,13 +168,14 @@ public final class JpaQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
             }
 
             @Override
-            protected void appendCompoundAssociationProjection(Association association, PersistentPropertyPath propertyPath) {
+            protected void appendCompoundAssociationProjection(PersistentAssociationPath propertyPath) {
                 String joinAlias = queryState.getJoinAlias(propertyPath.getPath());
-                query.append(joinAlias).append(AS_CLAUSE).append(columnAlias != null ? columnAlias : association.getName());
+                query.append(joinAlias).append(AS_CLAUSE).append(columnAlias != null ? columnAlias : propertyPath.getProperty().getName());
             }
 
             @Override
-            protected void appendCompoundPropertyProjection(PersistentProperty property, PersistentPropertyPath propertyPath) {
+            protected void appendCompoundPropertyProjection(PersistentPropertyPath propertyPath) {
+                PersistentProperty property = propertyPath.getProperty();
                 if (property instanceof Embedded) {
                     query.append(tableAlias).append(DOT).append(propertyPath.getPath());
                     if (columnAlias != null) {
@@ -182,14 +183,14 @@ public final class JpaQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
                     }
                     return;
                 }
-                super.appendCompoundPropertyProjection(property, propertyPath);
+                super.appendCompoundPropertyProjection(propertyPath);
             }
 
         };
     }
 
     @Override
-    protected final boolean computePropertyPaths() {
+    protected boolean computePropertyPaths() {
         return false;
     }
 

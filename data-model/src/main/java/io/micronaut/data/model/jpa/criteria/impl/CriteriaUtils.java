@@ -113,10 +113,6 @@ public final class CriteriaUtils {
             }
             return exp;
         }
-        if (exp instanceof ParameterExpression) {
-            // TODO: validation
-            return exp;
-        }
         if (exp instanceof LiteralExpression<T> tLiteralExpression) {
             if (tLiteralExpression.getValue() instanceof Comparable) {
                 return exp;
@@ -132,14 +128,6 @@ public final class CriteriaUtils {
             if (!propertyPath.isNumeric()) {
                 throw new IllegalStateException("Expected a numeric expression property! Got: " + exp);
             }
-            return exp;
-        }
-        if (exp instanceof ParameterExpression) {
-            // TODO: validation
-            return exp;
-        }
-        if (exp instanceof LiteralExpression) {
-            // TODO: validation
             return exp;
         }
         return exp;

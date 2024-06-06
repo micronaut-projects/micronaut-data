@@ -442,18 +442,6 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
     }
 
     /**
-     * Gets the mapped name from the property using {@link NamingStrategy}.
-     *
-     * @param namingStrategy the naming strategy being used
-     * @param property       the persistent property
-     * @return the mapped name for the property
-     */
-    @NonNull
-    protected String getMappedName(@NonNull NamingStrategy namingStrategy, @NonNull PersistentProperty property) {
-        return namingStrategy.mappedName(property);
-    }
-
-    /**
      * Gets the mapped name from the association using {@link NamingStrategy}.
      *
      * @param namingStrategy the naming strategy being used
@@ -2197,12 +2185,12 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
                 // Compound property which is part of a DTO
                 if (property instanceof Association association && !(property instanceof Embedded)) {
                     if (queryState.isJoined(propertyPath.getPath())) {
-                        appendCompoundAssociationProjection(association, propertyPath);
+                        appendCompoundAssociationProjection(new PersistentAssociationPath(propertyPath.getAssociations(), association));
                     } else {
                         query.setLength(query.length() - 1);
                     }
                 } else {
-                    appendCompoundPropertyProjection(property, propertyPath);
+                    appendCompoundPropertyProjection(propertyPath);
                 }
             } else {
                 if (distinct) {
@@ -2315,16 +2303,15 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         /**
          * Appends the compound (part of entity or DTO) property projection.
          *
-         * @param property     The property
          * @param propertyPath The property path
          */
         @Internal
-        protected void appendCompoundPropertyProjection(PersistentProperty property, PersistentPropertyPath propertyPath) {
-            PersistentEntity entity = property.getOwner();
+        protected void appendCompoundPropertyProjection(PersistentPropertyPath propertyPath) {
+            PersistentEntity entity = propertyPath.getProperty().getOwner();
             boolean escape = shouldEscape(entity);
             NamingStrategy namingStrategy = getNamingStrategy(entity);
             int[] propertiesCount = new int[1];
-            PersistentEntityUtils.traversePersistentProperties(propertyPath.getAssociations(), property, traverseEmbedded(), (associations, p) -> {
+            PersistentEntityUtils.traversePersistentProperties(propertyPath, traverseEmbedded(), (associations, p) -> {
                 appendProperty(query, associations, p, namingStrategy, queryState.rootAlias, escape);
                 propertiesCount[0]++;
             });
@@ -2342,11 +2329,10 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         /**
          * Appends the compound (part of entity or DTO) association projection.
          *
-         * @param association  The association
          * @param propertyPath The property path
          */
         @Internal
-        protected void appendCompoundAssociationProjection(Association association, PersistentPropertyPath propertyPath) {
+        protected void appendCompoundAssociationProjection(PersistentAssociationPath propertyPath) {
             if (!query.isEmpty() && query.charAt(query.length() - 1) == ',') {
                 // Strip last .
                 query.setLength(query.length() - 1);
@@ -2355,7 +2341,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         }
 
         /**
-         * Append the property projection
+         * Append the property projection.
          *
          * @param propertyPath The property
          */
