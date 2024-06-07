@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
@@ -94,6 +95,7 @@ import static java.util.Arrays.asList;
  * @author Denis Stepanov
  * @since 3.3
  */
+@TypeHint(MongoQueryBuilder2.class)
 @Internal
 public final class MongoQueryBuilder2 implements QueryBuilder2 {
 
