@@ -73,12 +73,8 @@ loadScripts(document, 'script');</script>
 </div>
 <section class="class-description" id="class-description">
 <dl class="notes">
-<dt>All Known Subinterfaces:</dt>
-<dd><code><a href="../../../query/impl/AdvancedPredicateVisitor.html" title="interface in io.micronaut.data.model.query.impl">AdvancedPredicateVisitor</a>&lt;P&gt;</code></dd>
-</dl>
-<dl class="notes">
 <dt>All Known Implementing Classes:</dt>
-<dd><code><a href="../../../query/builder/sql/AbstractSqlLikeQueryBuilder2.SqlPredicateVisitor.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder2.SqlPredicateVisitor</a></code>, <code><a href="util/Joiner.html" title="class in io.micronaut.data.model.jpa.criteria.impl.util">Joiner</a></code>, <code><a href="query/QueryModelPredicateVisitor.html" title="class in io.micronaut.data.model.jpa.criteria.impl.query">QueryModelPredicateVisitor</a></code></dd>
+<dd><code><a href="util/Joiner.html" title="class in io.micronaut.data.model.jpa.criteria.impl.util">Joiner</a></code>, <code><a href="query/QueryModelPredicateVisitor.html" title="class in io.micronaut.data.model.jpa.criteria.impl.query">QueryModelPredicateVisitor</a></code></dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="annotations">@Internal
@@ -140,8 +136,13 @@ loadScripts(document, 'script');</script>
 <div class="block">Visit <a href="predicate/PersistentPropertyInPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate"><code>PersistentPropertyInPredicate</code></a>.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyUnaryPredicate)" class="member-name-link">visit</a><wbr>(<a href="predicate/PersistentPropertyUnaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">PersistentPropertyUnaryPredicate</a>&lt;?&gt;&nbsp;propertyOp)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInValuesPredicate)" class="member-name-link">visit</a><wbr>(<a href="predicate/PersistentPropertyInValuesPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">PersistentPropertyInValuesPredicate</a>&lt;?&gt;&nbsp;inValues)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Visit <a href="predicate/PersistentPropertyInValuesPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate"><code>PersistentPropertyInValuesPredicate</code></a>.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyUnaryPredicate)" class="member-name-link">visit</a><wbr>(<a href="predicate/PersistentPropertyUnaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">PersistentPropertyUnaryPredicate</a>&lt;?&gt;&nbsp;propertyOp)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Visit <a href="predicate/PersistentPropertyUnaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate"><code>PersistentPropertyUnaryPredicate</code></a>.</div>
 </div>
 </div>
@@ -232,6 +233,17 @@ loadScripts(document, 'script');</script>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>propertyToExpressionOp</code> - The propertyToExpressionOp</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="visit(io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInValuesPredicate)">
+<h3>visit</h3>
+<div class="member-signature"><span class="return-type">void</span>&nbsp;<span class="element-name">visit</span><wbr><span class="parameters">(<a href="predicate/PersistentPropertyInValuesPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">PersistentPropertyInValuesPredicate</a>&lt;?&gt;&nbsp;inValues)</span></div>
+<div class="block">Visit <a href="predicate/PersistentPropertyInValuesPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate"><code>PersistentPropertyInValuesPredicate</code></a>.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>inValues</code> - The inValues</dd>
 </dl>
 </section>
 </li>
