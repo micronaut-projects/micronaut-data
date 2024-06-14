@@ -16,6 +16,7 @@
 package io.micronaut.data.tck.tests
 
 import groovy.transform.CompileStatic
+import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.data.model.jpa.criteria.*
 import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery
@@ -216,7 +217,7 @@ abstract class AbstractCriteriaSpec extends Specification {
         properties     | distinct        | expectedSelectQuery
         ["age","name"] | true            | 'DISTINCT test_."age",test_."name"'
         ["age"]        | true            | 'DISTINCT test_."age"'
-        []             | true            | 'DISTINCT test_.*'
+        []             | true            | 'DISTINCT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget"'
         ["age","name"] | false           | 'test_."age",test_."name"'
         ["age"]        | false           | 'test_."age"'
         []             | false           | 'test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget"'
@@ -259,22 +260,22 @@ abstract class AbstractCriteriaSpec extends Specification {
         criteriaBuilder."$predicate"(root.get(property1), root.get(property2))
     }
 
-    private static String getSelectQueryPart(PersistentEntityCriteriaQuery<Object> query) {
+    protected String getSelectQueryPart(PersistentEntityCriteriaQuery<Object> query) {
         def sqlQuery = getSqlQuery(query)
         return sqlQuery.substring("SELECT ".length(), sqlQuery.indexOf(" FROM"))
     }
 
-    private static String getWhereQueryPart(PersistentEntityCriteriaQuery<Object> query) {
+    protected String getWhereQueryPart(PersistentEntityCriteriaQuery<Object> query) {
         def sqlQuery = getSqlQuery(query)
         return sqlQuery.substring(sqlQuery.indexOf("WHERE ") + 6)
     }
 
-    private static String getSqlQuery(def query) {
+    protected String getSqlQuery(def query) {
         return getSqlQuery(query, Dialect.ANSI)
     }
 
-    private static String getSqlQuery(def query, Dialect dialect) {
-        return ((QueryResultPersistentEntityCriteriaQuery) query).buildQuery(new SqlQueryBuilder(dialect)).getQuery()
+    protected String getSqlQuery(def query, Dialect dialect) {
+        return ((QueryResultPersistentEntityCriteriaQuery) query).buildQuery(AnnotationMetadata.EMPTY_METADATA, new SqlQueryBuilder(dialect)).getQuery()
     }
 
     @CompileStatic

@@ -23,6 +23,7 @@ import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitable;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaQuery;
 import io.micronaut.inject.ast.ClassElement;
+import jakarta.persistence.criteria.CriteriaBuilder;
 
 import java.util.function.Function;
 
@@ -39,8 +40,9 @@ final class SourcePersistentEntityCriteriaQueryImpl<T> extends AbstractPersisten
 
     private final Function<ClassElement, SourcePersistentEntity> entityResolver;
 
-    public SourcePersistentEntityCriteriaQueryImpl(Function<ClassElement, SourcePersistentEntity> entityResolver) {
-        super((Class<T>) Object.class);
+    public SourcePersistentEntityCriteriaQueryImpl(Function<ClassElement, SourcePersistentEntity> entityResolver,
+                                                   CriteriaBuilder criteriaBuilder) {
+        super((Class<T>) Object.class, criteriaBuilder);
         this.entityResolver = entityResolver;
     }
 
@@ -59,7 +61,7 @@ final class SourcePersistentEntityCriteriaQueryImpl<T> extends AbstractPersisten
         if (entityRoot != null) {
             throw new IllegalStateException("The root entity is already specified!");
         }
-        SourcePersistentEntityRoot<X> newEntityRoot = new SourcePersistentEntityRoot<>((SourcePersistentEntity) persistentEntity);
+        SourcePersistentEntityRoot<X> newEntityRoot = new SourcePersistentEntityRoot<>((SourcePersistentEntity) persistentEntity, criteriaBuilder);
         entityRoot = newEntityRoot;
         return newEntityRoot;
     }

@@ -33,7 +33,6 @@ import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
 import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.query.JoinPath;
-import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -260,7 +259,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
 
     private <E> StoredQuery<E, ?> buildExists(MethodInvocationContext<T, R> context, QueryBuilder sqlQueryBuilder, Set<JoinPath> annotationJoinPaths) {
         CriteriaQuery<E> criteriaQuery = buildExistsQuery(context, annotationJoinPaths);
-        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(sqlQueryBuilder);
+        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(context, sqlQueryBuilder);
 
         return QueryResultStoredQuery.single(OperationType.EXISTS, context.getName(), context.getAnnotationMetadata(),
             queryResult, getRequiredRootEntity(context));
@@ -272,7 +271,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
 
     private <E> StoredQuery<E, ?> buildUpdateAll(MethodInvocationContext<T, R> context, QueryBuilder sqlQueryBuilder) {
         CriteriaUpdate<E> criteriaUpdate = buildUpdateQuery(context);
-        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaUpdate).buildQuery(sqlQueryBuilder);
+        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaUpdate).buildQuery(context, sqlQueryBuilder);
         return QueryResultStoredQuery.single(OperationType.UPDATE, context.getName(),
             context.getAnnotationMetadata(), queryResult, (Class<E>) criteriaUpdate.getRoot().getJavaType());
     }
@@ -283,7 +282,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
 
     private <E> StoredQuery<E, ?> buildDeleteAll(MethodInvocationContext<T, R> context, QueryBuilder sqlQueryBuilder) {
         CriteriaDelete<E> criteriaDelete = buildDeleteQuery(context);
-        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaDelete).buildQuery(sqlQueryBuilder);
+        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaDelete).buildQuery(context, sqlQueryBuilder);
         return QueryResultStoredQuery.single(OperationType.DELETE, context.getName(),
             context.getAnnotationMetadata(), queryResult, (Class<E>) criteriaDelete.getRoot().getJavaType());
     }
@@ -296,7 +295,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                                              MethodInvocationContext<T, R> context) {
         CriteriaQuery<Long> criteriaQuery = buildCountQuery(context);
         QueryBuilder sqlQueryBuilder = getQueryBuilder(methodKey, context);
-        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(sqlQueryBuilder);
+        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(context, sqlQueryBuilder);
         return QueryResultStoredQuery.count(context.getName(), context.getAnnotationMetadata(), queryResult, getRequiredRootEntity(context));
     }
 
@@ -326,11 +325,8 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
 
         CriteriaQuery<Object> criteriaQuery = buildInternalQuery(context, type, methodJoinPaths);
         QueryBuilder sqlQueryBuilder = getQueryBuilder(methodKey, context);
-        QueryResultPersistentEntityCriteriaQuery queryModelCriteriaQuery = (QueryResultPersistentEntityCriteriaQuery) criteriaQuery;
-        QueryModel queryModel = queryModelCriteriaQuery.getQueryModel();
-        Collection<JoinPath> queryJoinPaths = queryModel.getJoinPaths();
-        QueryResult queryResult = sqlQueryBuilder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel);
-        Set<JoinPath> joinPaths = mergeJoinPaths(methodJoinPaths, queryJoinPaths);
+        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(context, sqlQueryBuilder);
+        Set<JoinPath> joinPaths = mergeJoinPaths(methodJoinPaths, queryResult.getJoinPaths());
         Class<E> rootEntity = getRequiredRootEntity(context);
         if (type == Type.FIND_ONE) {
             return QueryResultStoredQuery.single(OperationType.QUERY, context.getName(), context.getAnnotationMetadata(),

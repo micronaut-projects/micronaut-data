@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 original authors
+ * Copyright 2017-2024 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.model.jpa.criteria.impl.selection;
+package io.micronaut.data.model.query.builder;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
+import io.micronaut.data.model.query.BindingParameter;
 
 /**
- * The abstract numerical persistent property expression.
+ * The variation of {@link BindingParameter} that should be resolved after query is created.
  *
- * @param <N> The property type
  * @author Denis Stepanov
- * @since 3.2
+ * @since 4.9.x
  */
 @Internal
-public abstract class AbstractNumericalPersistentPropertyExpression<N extends Number> extends AbstractPersistentPropertyExpression<N, N> {
+public final class AdditionalBindingParameter implements BindingParameter {
 
-    protected AbstractNumericalPersistentPropertyExpression(PersistentPropertyPath<N> persistentPropertyPath) {
-        super(persistentPropertyPath);
+    private final String name;
+
+    public AdditionalBindingParameter(String name) {
+        this.name = name;
     }
 
     @Override
-    public Class<? extends N> getJavaType() {
-        return persistentPropertyPath.getJavaType();
+    public QueryParameterBinding bind(BindingContext bindingContext) {
+        return new AdditionalParameterBinding(bindingContext, name);
     }
+
 }

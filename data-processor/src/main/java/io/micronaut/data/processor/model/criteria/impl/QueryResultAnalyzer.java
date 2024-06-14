@@ -30,7 +30,6 @@ import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
 import io.micronaut.inject.ast.ClassElement;
-import jakarta.persistence.criteria.Predicate;
 
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requireProperty;
 
@@ -46,10 +45,6 @@ final class QueryResultAnalyzer implements SelectionVisitor {
 
     public String getQueryResultTypeName() {
         return queryResultTypeName;
-    }
-
-    @Override
-    public void visit(Predicate predicate) {
     }
 
     @Override

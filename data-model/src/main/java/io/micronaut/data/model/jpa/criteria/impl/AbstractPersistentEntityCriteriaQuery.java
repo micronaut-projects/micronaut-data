@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Join;
+import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.jpa.criteria.IExpression;
@@ -32,9 +33,11 @@ import io.micronaut.data.model.jpa.criteria.impl.query.QueryModelPredicateVisito
 import io.micronaut.data.model.jpa.criteria.impl.query.QueryModelSelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.jpa.criteria.impl.util.Joiner;
+import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.QueryModel;
-import io.micronaut.data.model.query.builder.QueryBuilder;
+import io.micronaut.data.model.query.builder.QueryBuilder2;
 import io.micronaut.data.model.query.builder.QueryResult;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.ParameterExpression;
@@ -45,12 +48,15 @@ import jakarta.persistence.criteria.Subquery;
 import jakarta.persistence.metamodel.EntityType;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.hasVersionPredicate;
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupportedOperation;
@@ -65,8 +71,9 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requirePro
  */
 @Internal
 public abstract class AbstractPersistentEntityCriteriaQuery<T> implements PersistentEntityCriteriaQuery<T>,
-        QueryResultPersistentEntityCriteriaQuery {
+    QueryResultPersistentEntityCriteriaQuery {
 
+    protected final CriteriaBuilder criteriaBuilder;
     protected final Class<T> resultType;
     protected Predicate predicate;
     protected Selection<?> selection;
@@ -77,13 +84,79 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
     protected boolean forUpdate;
     protected boolean distinct;
 
-    protected AbstractPersistentEntityCriteriaQuery(Class<T> resultType) {
+    protected AbstractPersistentEntityCriteriaQuery(Class<T> resultType, CriteriaBuilder criteriaBuilder) {
         this.resultType = resultType;
+        this.criteriaBuilder = criteriaBuilder;
     }
 
     @Override
-    public QueryResult buildQuery(QueryBuilder queryBuilder) {
-        return queryBuilder.buildQuery(AnnotationMetadata.EMPTY_METADATA, getQueryModel());
+    public QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder2 queryBuilder) {
+        SelectQueryDefinitionImpl definition = new SelectQueryDefinitionImpl(
+            entityRoot.getPersistentEntity(),
+            predicate,
+            selection == null ? entityRoot : selection,
+            forUpdate,
+            distinct,
+            orders == null ? List.of() : orders,
+            max,
+            offset
+        );
+        calculateJoins(definition, false);
+        return queryBuilder.buildSelect(annotationMetadata, definition);
+    }
+
+    @Override
+    public QueryResult buildCountQuery(AnnotationMetadata annotationMetadata, QueryBuilder2 queryBuilder) {
+        SelectQueryDefinitionImpl definition = new SelectQueryDefinitionImpl(
+            entityRoot.getPersistentEntity(),
+            predicate,
+            criteriaBuilder.count(entityRoot),
+            false,
+            distinct,
+            List.of(),
+            -1,
+            -1
+        );
+        calculateJoins(definition, true);
+        return queryBuilder.buildSelect(annotationMetadata, definition);
+    }
+
+    private void calculateJoins(SelectQueryDefinitionImpl definition, boolean remapFetchJoins) {
+        Joiner joiner = new Joiner();
+        if (predicate instanceof PredicateVisitable predicateVisitable) {
+            predicateVisitable.accept(joiner);
+        }
+        if (selection instanceof SelectionVisitable selectionVisitable) {
+            selectionVisitable.accept(joiner);
+            SelectionVisitable entityRoot = (SelectionVisitable) this.entityRoot;
+            entityRoot.accept(joiner);
+        } else {
+            SelectionVisitable entityRoot = (SelectionVisitable) this.entityRoot;
+            entityRoot.accept(joiner);
+        }
+        if (orders != null) {
+            for (Order o : orders) {
+                joiner.joinIfNeeded(requireProperty(o.getExpression()));
+            }
+        }
+        for (Map.Entry<String, Joiner.Joined> e : joiner.getJoins().entrySet()) {
+            Join.Type joinType = Optional.ofNullable(e.getValue().getType()).orElse(Join.Type.DEFAULT);
+            if (remapFetchJoins) {
+                Association association = e.getValue().getAssociation().getAssociation();
+                if (association != null && !association.getKind().isSingleEnded()) {
+                    // skip OneToMany and ManyToMany
+                    continue;
+                }
+                joinType = switch (joinType) {
+                    case INNER, FETCH -> Join.Type.DEFAULT;
+                    case LEFT_FETCH -> Join.Type.LEFT;
+                    case RIGHT_FETCH -> Join.Type.RIGHT;
+                    default -> joinType;
+                };
+            }
+
+            definition.join(e.getKey(), joinType, e.getValue().getAlias());
+        }
     }
 
     @NonNull
@@ -134,6 +207,7 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
 
     /**
      * Creates query model predicate visitor.
+     *
      * @param queryModel The query model
      * @return the visitor
      */
@@ -213,7 +287,7 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
         Objects.requireNonNull(restrictions);
         if (restrictions.length > 0) {
             predicate = restrictions.length == 1 ? restrictions[0] : new ConjunctionPredicate(
-                    Arrays.stream(restrictions).sequential().map(x -> (IExpression<Boolean>) x).toList()
+                Arrays.stream(restrictions).sequential().map(x -> (IExpression<Boolean>) x).toList()
             );
         } else {
             predicate = null;
@@ -338,6 +412,121 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
             return false;
         }
         return hasVersionPredicate(predicate);
+    }
+
+    @Internal
+    private static final class SelectQueryDefinitionImpl extends BaseQueryDefinitionImpl implements QueryBuilder2.SelectQueryDefinition {
+
+        private final Selection<?> selection;
+        private final boolean isForUpdate;
+        private final boolean isDistinct;
+        private final List<Order> order;
+        private final int limit;
+        private final int offset;
+
+        public SelectQueryDefinitionImpl(PersistentEntity persistentEntity,
+                                         Predicate predicate,
+                                         Selection<?> selection,
+                                         boolean isForUpdate,
+                                         boolean isDistinct,
+                                         List<Order> order,
+                                         int limit,
+                                         int offset) {
+            super(persistentEntity, predicate);
+            this.selection = selection;
+            this.isForUpdate = isForUpdate;
+            this.isDistinct = isDistinct;
+            this.order = order;
+            this.limit = limit;
+            this.offset = offset;
+        }
+
+        @Override
+        public Selection<?> selection() {
+            return selection;
+        }
+
+        @Override
+        public List<Order> order() {
+            return order;
+        }
+
+        @Override
+        public int limit() {
+            return limit;
+        }
+
+        @Override
+        public int offset() {
+            return offset;
+        }
+
+        @Override
+        public boolean isForUpdate() {
+            return isForUpdate;
+        }
+
+        @Override
+        public boolean isDistinct() {
+            return isDistinct;
+        }
+    }
+
+    @Internal
+    abstract static class BaseQueryDefinitionImpl implements QueryBuilder2.BaseQueryDefinition {
+
+        private final PersistentEntity persistentEntity;
+        private final Predicate predicate;
+        private final Map<String, JoinPath> joinPaths = new LinkedHashMap<>(5);
+
+        protected BaseQueryDefinitionImpl(PersistentEntity persistentEntity, Predicate predicate) {
+            this.persistentEntity = persistentEntity;
+            this.predicate = predicate;
+        }
+
+        @Override
+        public PersistentEntity persistentEntity() {
+            return persistentEntity;
+        }
+
+        @Override
+        public Predicate predicate() {
+            return predicate;
+        }
+
+        @Override
+        public Collection<JoinPath> getJoinPaths() {
+            return Collections.unmodifiableCollection(joinPaths.values());
+        }
+
+        @Override
+        public Optional<JoinPath> getJoinPath(String path) {
+            if (path != null) {
+                return Optional.ofNullable(joinPaths.get(path));
+            }
+            return Optional.empty();
+        }
+
+        @Override
+        public JoinPath join(@NonNull String path, @NonNull Join.Type joinType, String alias) {
+            io.micronaut.data.model.PersistentPropertyPath propertyPath = persistentEntity().getPropertyPath(path);
+            if (propertyPath == null) {
+                throw new IllegalArgumentException("Invalid association path. Element [" + path + "] is not an association for [" + persistentEntity() + "]");
+            }
+            Association[] associationPath;
+            if (propertyPath.getProperty() instanceof Association) {
+                associationPath = Stream.concat(
+                    propertyPath.getAssociations().stream(),
+                    Stream.of(propertyPath.getProperty())
+                ).toArray(Association[]::new);
+            } else {
+                associationPath = propertyPath.getAssociations().toArray(new Association[0]);
+            }
+            JoinPath jp = new JoinPath(path, associationPath, joinType, alias);
+            joinPaths.put(path, jp);
+            return jp;
+        }
+
     }
 
 }

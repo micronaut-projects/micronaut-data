@@ -52,6 +52,7 @@ import io.micronaut.data.model.Slice;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.JoinPath;
+import io.micronaut.data.model.query.builder.AdditionalParameterBinding;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
@@ -82,6 +83,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -353,8 +355,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
                 ClassElement genericReturnType = methodMatchContext.getReturnType();
                 if (methodMatchContext.isTypeInRole(genericReturnType, TypeRole.PAGE)
-                        || methodMatchContext.isTypeInRole(genericReturnType, TypeRole.CURSORED_PAGE)
-                        || element.isPresent(Query.class, "countQuery")
+                    || methodMatchContext.isTypeInRole(genericReturnType, TypeRole.CURSORED_PAGE)
+                    || element.isPresent(Query.class, "countQuery")
                 ) {
                     QueryResult countQueryResult = methodInfo.getCountQueryResult();
                     if (countQueryResult == null) {
@@ -557,50 +559,83 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                           List<QueryParameterBinding> parameterBinding,
                                           ParameterElement[] parameters,
                                           Map<String, String> params) {
-        if (CollectionUtils.isNotEmpty(params)) {
-            Map<String, DataType> configuredDataTypes = Utils.getConfiguredDataTypes(matchContext.getRepositoryClass());
-            for (Map.Entry<String, String> param : params.entrySet()) {
-                String name = param.getValue();
+        Map<String, DataType> configuredDataTypes = Utils.getConfiguredDataTypes(matchContext.getRepositoryClass());
 
-                BindingParameter.BindingContext bindingContext = BindingParameter.BindingContext.create()
-                    .name(param.getKey());
-
-                List<AnnotationValue<ParameterExpression>> parameterExpressions = matchContext.getMethodElement()
-                    .getAnnotationMetadata()
-                    .getAnnotationValuesByType(ParameterExpression.class);
-
-                Optional<AnnotationValue<ParameterExpression>> parameterExpression = parameterExpressions.stream()
-                    .filter(av -> av.stringValue("name").orElse("").equals(name))
-                    .findFirst();
-
-                if (parameterExpression.isPresent()) {
-                    ClassElement type = RawQueryMethodMatcher.extractExpressionType(matchContext, parameterExpression.orElseThrow());
-                    QueryParameterBinding binding = new SourceParameterExpressionImpl(configuredDataTypes, name, type)
-                        .bind(bindingContext);
-                    parameterBinding.add(binding);
-                    continue;
-                }
-
-                ParameterElement parameter = Arrays.stream(parameters)
-                    .filter(p -> p.stringValue(Parameter.class).orElse(p.getName()).equals(name))
-                    .findFirst().orElse(null);
-
-                if (parameter != null) {
-                    PersistentPropertyPath propertyPath = entity.getPropertyPath(name);
-
-                    bindingContext = bindingContext.incomingMethodParameterProperty(propertyPath)
-                        .outgoingQueryParameterProperty(propertyPath);
-
-                    QueryParameterBinding binding = new SourceParameterExpressionImpl(configuredDataTypes,
-                        matchContext.parameters,
-                        parameter,
-                        false).bind(bindingContext);
-                    parameterBinding.add(binding);
-                } else {
-                    throw new MatchFailedException("A @Where(..) definition requires a parameter called [" + name + "] which is not present in the method signature.");
-                }
+        for (ListIterator<QueryParameterBinding> iterator = parameterBinding.listIterator(); iterator.hasNext(); ) {
+            QueryParameterBinding queryParameterBinding = iterator.next();
+            if (queryParameterBinding instanceof AdditionalParameterBinding additionalParameterBinding) {
+                iterator.set(
+                    createAdditionalBinding(
+                        additionalParameterBinding.bindingContext(),
+                        matchContext,
+                        entity,
+                        parameters,
+                        additionalParameterBinding.getName(),
+                        configuredDataTypes
+                    )
+                );
             }
         }
+
+        if (CollectionUtils.isNotEmpty(params)) {
+            for (Map.Entry<String, String> param : params.entrySet()) {
+                String key = param.getKey();
+                String name = param.getValue();
+
+                parameterBinding.add(
+                    createAdditionalBinding(
+                        BindingParameter.BindingContext.create().name(key),
+                        matchContext,
+                        entity,
+                        parameters,
+                        name,
+                        configuredDataTypes
+                    )
+                );
+
+            }
+        }
+    }
+
+    private QueryParameterBinding createAdditionalBinding(BindingParameter.BindingContext bindingContext,
+                                                          MatchContext matchContext,
+                                                          SourcePersistentEntity entity,
+                                                          ParameterElement[] parameters,
+                                                          String name,
+                                                          Map<String, DataType> configuredDataTypes) {
+
+        List<AnnotationValue<ParameterExpression>> parameterExpressions = matchContext.getMethodElement()
+            .getAnnotationMetadata()
+            .getAnnotationValuesByType(ParameterExpression.class);
+
+        Optional<AnnotationValue<ParameterExpression>> parameterExpression = parameterExpressions.stream()
+            .filter(av -> av.stringValue("name").orElse("").equals(name))
+            .findFirst();
+
+        if (parameterExpression.isPresent()) {
+            ClassElement type = RawQueryMethodMatcher.extractExpressionType(matchContext, parameterExpression.orElseThrow());
+            return new SourceParameterExpressionImpl(configuredDataTypes, name, type)
+                .bind(bindingContext);
+        }
+
+        ParameterElement parameter = Arrays.stream(parameters)
+            .filter(p -> p.stringValue(Parameter.class).orElse(p.getName()).equals(name))
+            .findFirst().orElse(null);
+
+        if (parameter == null) {
+            throw new MatchFailedException("A @Where(..) definition requires a parameter called [" + name + "] which is not present in the method signature.");
+        }
+
+        PersistentPropertyPath propertyPath = entity.getPropertyPath(name);
+
+        bindingContext = bindingContext.incomingMethodParameterProperty(propertyPath)
+            .outgoingQueryParameterProperty(propertyPath);
+
+        return new SourceParameterExpressionImpl(configuredDataTypes,
+            matchContext.parameters,
+            parameter,
+            false)
+            .bind(bindingContext);
     }
 
     private String addRawQueryParameterPlaceholders(QueryBuilder queryEncoder, String query, List<String> queryParts) {

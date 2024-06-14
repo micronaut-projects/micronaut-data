@@ -20,18 +20,12 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInValuesPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyUnaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateUnaryOp;
-import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.StringJoiner;
 
 /**
@@ -49,6 +43,10 @@ public interface PersistentPropertyPath<T> extends Path<T>, IExpression<T> {
 
     @NonNull
     List<Association> getAssociations();
+
+    default io.micronaut.data.model.PersistentPropertyPath getPropertyPath() {
+        return new io.micronaut.data.model.PersistentPropertyPath(getAssociations(), getProperty());
+    }
 
     @NonNull
     default String getPathAsString() {
@@ -85,23 +83,4 @@ public interface PersistentPropertyPath<T> extends Path<T>, IExpression<T> {
         return new PersistentPropertyUnaryPredicate<>(this, PredicateUnaryOp.IS_NON_NULL);
     }
 
-    @Override
-    default Predicate in(Object... values) {
-        return new PersistentPropertyInPredicate<>(this, Arrays.asList(Objects.requireNonNull(values)));
-    }
-
-    @Override
-    default Predicate in(Collection<?> values) {
-        return new PersistentPropertyInPredicate<>(this, Objects.requireNonNull(values));
-    }
-
-    @Override
-    default Predicate in(Expression<?>... values) {
-        return new PersistentPropertyInValuesPredicate<>(this, Arrays.asList(values));
-    }
-
-    @Override
-    default Predicate in(Expression<Collection<?>> values) {
-        return new PersistentPropertyInValuesPredicate<>(this, List.of(Objects.requireNonNull(values)));
-    }
 }

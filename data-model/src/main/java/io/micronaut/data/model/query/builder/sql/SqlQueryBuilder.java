@@ -112,8 +112,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     private final Dialect dialect;
     private final Map<Dialect, DialectConfig> perDialectConfig = new EnumMap<>(Dialect.class);
+    private final AnnotationMetadata annotationMetadata;
     private Pattern positionalParameterPattern;
-
 
     /**
      * Constructor with annotation metadata.
@@ -154,6 +154,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         } else {
             this.dialect = Dialect.ANSI;
         }
+        this.annotationMetadata = annotationMetadata;
     }
 
     /**
@@ -161,6 +162,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      */
     public SqlQueryBuilder() {
         this.dialect = Dialect.ANSI;
+        this.annotationMetadata = null;
     }
 
     /**
@@ -169,6 +171,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     public SqlQueryBuilder(Dialect dialect) {
         ArgumentUtils.requireNonNull("dialect", dialect);
         this.dialect = dialect;
+        this.annotationMetadata = null;
+    }
+
+    /**
+     * @return The annotation metadata
+     */
+    public AnnotationMetadata getAnnotationMetadata() {
+        return annotationMetadata;
     }
 
     /**

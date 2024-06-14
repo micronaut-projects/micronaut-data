@@ -50,7 +50,7 @@ import io.micronaut.data.cosmos.common.CosmosAccessException;
 import io.micronaut.data.cosmos.common.CosmosEntity;
 import io.micronaut.data.cosmos.common.CosmosUtils;
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration;
-import io.micronaut.data.document.model.query.builder.CosmosSqlQueryBuilder;
+import io.micronaut.data.document.model.query.builder.CosmosSqlQueryBuilder2;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
@@ -136,7 +136,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
 
     private final CosmosSerde cosmosSerde;
     private final CosmosAsyncDatabase cosmosAsyncDatabase;
-    private CosmosSqlQueryBuilder defaultCosmosSqlQueryBuilder;
+    private CosmosSqlQueryBuilder2 defaultCosmosSqlQueryBuilder;
     private final CosmosDiagnosticsProcessor cosmosDiagnosticsProcessor;
     private final boolean queryMetricsEnabled;
 
@@ -176,7 +176,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     @Override
     public <E, R> StoredQuery<E, R> decorate(MethodInvocationContext<?, ?> context, StoredQuery<E, R> storedQuery) {
         if (defaultCosmosSqlQueryBuilder == null) {
-            defaultCosmosSqlQueryBuilder = new CosmosSqlQueryBuilder(context.getAnnotationMetadata());
+            defaultCosmosSqlQueryBuilder = new CosmosSqlQueryBuilder2(context.getAnnotationMetadata());
         }
         String update = null;
         if (storedQuery instanceof QueryResultStoredQuery<E, R> queryResultStoredQuery) {

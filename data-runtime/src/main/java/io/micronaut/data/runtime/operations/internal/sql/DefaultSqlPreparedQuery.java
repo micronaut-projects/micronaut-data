@@ -30,6 +30,7 @@ import io.micronaut.data.model.Sort.Order;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.QueryResultInfo;
@@ -100,7 +101,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
     }
 
     @Override
-    public SqlQueryBuilder getQueryBuilder() {
+    public SqlQueryBuilder2 getQueryBuilder() {
         return sqlStoredQuery.getQueryBuilder();
     }
 
@@ -122,7 +123,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
     @Override
     public void prepare(E entity) {
         if (isExpandableQuery()) {
-            SqlQueryBuilder queryBuilder = sqlStoredQuery.getQueryBuilder();
+            SqlQueryBuilder2 queryBuilder = sqlStoredQuery.getQueryBuilder();
             String positionalParameterFormat = queryBuilder.positionalParameterFormat();
             StringBuilder q = new StringBuilder(sqlStoredQuery.getExpandableQueryParts()[0]);
             int queryParamIndex = 1;
@@ -166,7 +167,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
     public void attachPageable(Pageable pageable, boolean isSingleResult) {
         if (pageable != Pageable.UNPAGED) {
             RuntimePersistentEntity<E> persistentEntity = getPersistentEntity();
-            SqlQueryBuilder queryBuilder = sqlStoredQuery.getQueryBuilder();
+            SqlQueryBuilder2 queryBuilder = sqlStoredQuery.getQueryBuilder();
             StringBuilder added = new StringBuilder();
             Sort sort = pageable.getSort();
             if (pageable instanceof CursoredPageable cursored) {

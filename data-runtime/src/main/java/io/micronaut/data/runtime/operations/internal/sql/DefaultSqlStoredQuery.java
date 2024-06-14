@@ -22,7 +22,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.QueryResult;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.QueryResultInfo;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
 public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStoredQuery<E, R> implements SqlStoredQuery<E, R> {
 
     private final boolean expandableQuery;
-    private final SqlQueryBuilder queryBuilder;
+    private final SqlQueryBuilder2 queryBuilder;
     private final QueryResultInfo queryResultInfo;
 
     /**
@@ -56,7 +56,7 @@ public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStored
      * @param runtimePersistentEntity The persistent entity
      * @param queryBuilder            The query builder
      */
-    public DefaultSqlStoredQuery(StoredQuery<E, R> storedQuery, RuntimePersistentEntity<E> runtimePersistentEntity, SqlQueryBuilder queryBuilder) {
+    public DefaultSqlStoredQuery(StoredQuery<E, R> storedQuery, RuntimePersistentEntity<E> runtimePersistentEntity, SqlQueryBuilder2 queryBuilder) {
         super(storedQuery, runtimePersistentEntity);
         this.queryBuilder = queryBuilder;
         Objects.requireNonNull(storedQuery, "Query cannot be null");
@@ -95,7 +95,7 @@ public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStored
     }
 
     @Override
-    public SqlQueryBuilder getQueryBuilder() {
+    public SqlQueryBuilder2 getQueryBuilder() {
         return queryBuilder;
     }
 

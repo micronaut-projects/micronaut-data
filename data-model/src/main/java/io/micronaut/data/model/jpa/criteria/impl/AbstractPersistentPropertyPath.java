@@ -19,16 +19,22 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInPredicate;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Path;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.metamodel.Bindable;
 import jakarta.persistence.metamodel.MapAttribute;
 import jakarta.persistence.metamodel.PluralAttribute;
 import jakarta.persistence.metamodel.SingularAttribute;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupportedOperation;
 
@@ -44,15 +50,38 @@ public abstract class AbstractPersistentPropertyPath<T> implements PersistentPro
 
     private final PersistentProperty persistentProperty;
     private final List<Association> path;
+    private final CriteriaBuilder criteriaBuilder;
 
-    public AbstractPersistentPropertyPath(PersistentProperty persistentProperty, List<Association> path) {
+    public AbstractPersistentPropertyPath(PersistentProperty persistentProperty, List<Association> path, CriteriaBuilder criteriaBuilder) {
         this.persistentProperty = persistentProperty;
         this.path = path;
+        this.criteriaBuilder = criteriaBuilder;
     }
 
     @Override
     public void accept(SelectionVisitor selectionVisitor) {
         selectionVisitor.visit(this);
+    }
+
+    @Override
+    public Predicate in(Object... values) {
+        return in(Arrays.asList(Objects.requireNonNull(values)));
+    }
+
+    @Override
+    public Predicate in(Collection<?> values) {
+        List<Expression<?>> expressions = Objects.requireNonNull(values).stream().map(criteriaBuilder::literal).collect(Collectors.toList());
+        return new PersistentPropertyInPredicate<>(this, expressions, criteriaBuilder);
+    }
+
+    @Override
+    public Predicate in(Expression<?>... values) {
+        return new PersistentPropertyInPredicate<>(this, Arrays.asList(values), criteriaBuilder);
+    }
+
+    @Override
+    public Predicate in(Expression<Collection<?>> values) {
+        return new PersistentPropertyInPredicate<>(this, List.of(Objects.requireNonNull(values)), criteriaBuilder);
     }
 
     @Override

@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.runtime.criteria;
 
+import io.micronaut.core.annotation.NextMajorVersion;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
@@ -22,6 +23,7 @@ import io.micronaut.data.model.jpa.criteria.impl.AbstractCriteriaBuilder;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.runtime.criteria.metamodel.StaticMetamodelInitializer;
 import jakarta.inject.Singleton;
+import jakarta.persistence.criteria.Expression;
 
 /**
  * The runtime implementation of {@link AbstractCriteriaBuilder}.
@@ -57,5 +59,12 @@ public class RuntimeCriteriaBuilder extends AbstractCriteriaBuilder {
     @Override
     public <T> PersistentEntityCriteriaDelete<T> createCriteriaDelete(Class<T> targetEntity) {
         return new RuntimePersistentEntityCriteriaDelete<>(this, targetEntity, runtimeEntityRegistry, staticMetamodelInitializer);
+    }
+
+    @Override
+    @NextMajorVersion("Require non null")
+    public <T> Expression<T> literal(T value) {
+        // Runtime literals need to be bind as parameters not modifying the query to avoid the SQL injection
+        return super.parameter(value == null ? (Class<T>) Object.class : (Class<T>) value.getClass(), null, value);
     }
 }

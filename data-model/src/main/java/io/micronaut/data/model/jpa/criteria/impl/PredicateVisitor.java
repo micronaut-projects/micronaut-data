@@ -23,7 +23,6 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInValuesPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyUnaryPredicate;
 
 /**
@@ -83,13 +82,6 @@ public interface PredicateVisitor {
      * @param propertyToExpressionOp The propertyToExpressionOp
      */
     void visit(PersistentPropertyBinaryPredicate<?> propertyToExpressionOp);
-
-    /**
-     * Visit {@link PersistentPropertyInValuesPredicate}.
-     *
-     * @param inValues The inValues
-     */
-    void visit(PersistentPropertyInValuesPredicate<?> inValues);
 
     /**
      * Visit {@link ExpressionBinaryPredicate}.

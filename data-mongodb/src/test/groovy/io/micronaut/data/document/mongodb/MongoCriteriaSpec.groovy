@@ -17,6 +17,7 @@ package io.micronaut.data.document.mongodb
 
 import groovy.transform.CompileStatic
 import io.micronaut.context.ApplicationContext
+import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.data.document.model.query.builder.MongoQueryBuilder
 import io.micronaut.data.document.mongodb.entities.Test
@@ -162,6 +163,9 @@ class MongoCriteriaSpec extends Specification {
                         root.get("name").in("A", "B", "C")
                     } as Specification,
                     { root, query, cb ->
+                        cb.in(root.get("name")).value("A").value("B").value("C")
+                    } as Specification,
+                    { root, query, cb ->
                         root.get("name").in("A", "B", "C").not()
                     } as Specification,
                     {
@@ -178,8 +182,9 @@ class MongoCriteriaSpec extends Specification {
                     '[{$match:{enabled:{$eq:true}}},{$sort:{amount:-1,budget:1}}]',
                     '{enabled:{$eq:true}}',
                     '{$and:[{enabled:{$eq:true}},{enabled:{$eq:true}}]}',
-                    '''{name:{$in:[{$mn_qp:0}]}}''',
-                    '''{name:{$nin:[{$mn_qp:0}]}}''',
+                    '''{name:{$in:[{$mn_qp:0},{$mn_qp:1},{$mn_qp:2}]}}''',
+                    '''{name:{$in:[{$mn_qp:0},{$mn_qp:1},{$mn_qp:2}]}}''',
+                    '''{name:{$nin:[{$mn_qp:0},{$mn_qp:1},{$mn_qp:2}]}}''',
                     '{colors:{$all:[{$mn_qp:0}]}}'
             ]
     }
@@ -470,19 +475,19 @@ class MongoCriteriaSpec extends Specification {
     }
 
     private static String getQuery(PersistentEntityCriteriaQuery<Object> query) {
-        return ((QueryResultPersistentEntityCriteriaQuery) query).buildQuery(new MongoQueryBuilder()).getQuery()
+        return ((QueryResultPersistentEntityCriteriaQuery) query).buildQuery(AnnotationMetadata.EMPTY_METADATA, new MongoQueryBuilder()).getQuery()
     }
 
     private static String getQuery(PersistentEntityCriteriaDelete<Object> query) {
-        return ((QueryResultPersistentEntityCriteriaQuery) query).buildQuery(new MongoQueryBuilder()).getQuery()
+        return ((QueryResultPersistentEntityCriteriaQuery) query).buildQuery(AnnotationMetadata.EMPTY_METADATA, new MongoQueryBuilder()).getQuery()
     }
 
     private static String getQuery(PersistentEntityCriteriaUpdate<Object> query) {
-        return ((QueryResultPersistentEntityCriteriaQuery) query).buildQuery(new MongoQueryBuilder()).getQuery()
+        return ((QueryResultPersistentEntityCriteriaQuery) query).buildQuery(AnnotationMetadata.EMPTY_METADATA, new MongoQueryBuilder()).getQuery()
     }
 
     private static String getUpdateQuery(PersistentEntityCriteriaUpdate<Object> query) {
-        return ((QueryResultPersistentEntityCriteriaQuery) query).buildQuery(new MongoQueryBuilder()).getUpdate()
+        return ((QueryResultPersistentEntityCriteriaQuery) query).buildQuery(AnnotationMetadata.EMPTY_METADATA, new MongoQueryBuilder()).getUpdate()
     }
 
     @CompileStatic

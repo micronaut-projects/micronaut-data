@@ -20,8 +20,6 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
-import io.micronaut.data.model.jpa.criteria.impl.query.QueryModelPredicateVisitor;
-import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.runtime.criteria.metamodel.StaticMetamodelInitializer;
@@ -55,14 +53,9 @@ final class RuntimePersistentEntityCriteriaDelete<T> extends AbstractPersistentE
             throw new IllegalStateException("The root entity is already specified!");
         }
         staticMetamodelInitializer.initializeMetadata(runtimePersistentEntity);
-        RuntimePersistentEntityRoot<T> newEntityRoot = new RuntimePersistentEntityRoot<>(runtimePersistentEntity);
+        RuntimePersistentEntityRoot<T> newEntityRoot = new RuntimePersistentEntityRoot<>(runtimePersistentEntity, criteriaBuilder);
         entityRoot = newEntityRoot;
         return newEntityRoot;
-    }
-
-    @Override
-    protected QueryModelPredicateVisitor createPredicateVisitor(QueryModel queryModel) {
-        return new LiteralsAsParametersQueryModelPredicateVisitor(criteriaBuilder, queryModel);
     }
 
 }

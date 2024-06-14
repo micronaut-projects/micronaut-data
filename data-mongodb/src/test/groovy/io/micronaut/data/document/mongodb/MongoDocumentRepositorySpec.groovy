@@ -14,6 +14,7 @@ import io.micronaut.data.document.mongodb.entities.ElementRow
 import io.micronaut.data.document.mongodb.repositories.ComplexEntityRepository
 import io.micronaut.data.document.mongodb.repositories.ElementRowRepository
 import io.micronaut.data.document.mongodb.repositories.MongoAuthorRepository
+import io.micronaut.data.document.mongodb.repositories.MongoCriteriaPersonRepository
 import io.micronaut.data.document.mongodb.repositories.MongoDocumentRepository
 import io.micronaut.data.document.mongodb.repositories.MongoExecutorPersonRepository
 import io.micronaut.data.document.mongodb.repositories.MongoBasicTypesRepository
@@ -38,6 +39,11 @@ import io.micronaut.data.document.tck.repositories.StudentRepository
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.mongodb.operations.options.MongoAggregationOptions
 import io.micronaut.data.mongodb.operations.options.MongoFindOptions
+import io.micronaut.data.repository.jpa.criteria.QuerySpecification
+import jakarta.persistence.criteria.CriteriaBuilder
+import jakarta.persistence.criteria.CriteriaQuery
+import jakarta.persistence.criteria.Predicate
+import jakarta.persistence.criteria.Root
 import org.bson.BsonDocument
 
 import static io.micronaut.data.document.tck.repositories.DocumentRepository.Specifications.tagsArrayContains
@@ -631,9 +637,46 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
         complexEntityRepository.deleteAll()
     }
 
+    void "test criteria find IN"() {
+        given:
+            savePersons(["Dennis", "Jeff", "James", "Dennis"])
+        when:
+            def people = mongoCriteriaPersonRepository.findAll()
+        then:
+            people.size() == 4
+        when:
+            def limitedPeople1 = mongoCriteriaPersonRepository.findAll(new QuerySpecification<Person>() {
+                @Override
+                Predicate toPredicate(Root<Person> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+                    return root.get("id").in(people.get(0).getId(), people.get(1).getId(), people.get(2).getId())
+                }
+            })
+        then:
+            limitedPeople1.size() == 3
+            people.collect{ it.id }.containsAll(limitedPeople1.collect{ it.id })
+        when:
+            def limitedPeople2 = mongoCriteriaPersonRepository.findAll(new QuerySpecification<Person>() {
+                @Override
+                Predicate toPredicate(Root<Person> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+                    return criteriaBuilder.in(root.get("id"))
+                            .value(people.get(0).getId())
+                            .value(people.get(1).getId())
+                            .value(people.get(2).getId())
+                }
+            })
+        then:
+            limitedPeople2.size() == 3
+            people.collect{ it.id }.containsAll(limitedPeople2.collect{ it.id })
+    }
+
     @Memoized
     MongoExecutorPersonRepository getMongoExecutorPersonRepository() {
         return context.getBean(MongoExecutorPersonRepository)
+    }
+
+    @Memoized
+    MongoCriteriaPersonRepository getMongoCriteriaPersonRepository() {
+        return context.getBean(MongoCriteriaPersonRepository)
     }
 
     @Memoized

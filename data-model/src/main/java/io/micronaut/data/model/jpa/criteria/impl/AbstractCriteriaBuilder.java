@@ -16,6 +16,7 @@
 package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NextMajorVersion;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Association;
@@ -31,7 +32,7 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.ExpressionBinaryPredi
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBinaryPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInValuesPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyUnaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateBinaryOp;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateUnaryOp;
@@ -102,11 +103,12 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     }
 
     @NotNull
+    @NextMajorVersion("Require non null y")
     private Predicate predicate(Expression<?> x, Object y, PredicateBinaryOp op) {
         if (x instanceof IdExpression) {
-            return new ExpressionBinaryPredicate(x, Objects.requireNonNull(literal(y)), op);
+            return new ExpressionBinaryPredicate(x, literal(y), op);
         }
-        return new PersistentPropertyBinaryPredicate<>(requireProperty(x), Objects.requireNonNull(literal(y)), op);
+        return new PersistentPropertyBinaryPredicate<>(requireProperty(x), literal(y), op);
     }
 
     @NotNull
@@ -120,9 +122,9 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @NotNull
     private Predicate comparable(Expression<?> x, Object y, PredicateBinaryOp op) {
         if (x instanceof IdExpression) {
-            return new ExpressionBinaryPredicate(x, Objects.requireNonNull(literal(y)), op);
+            return new ExpressionBinaryPredicate(x, literal(Objects.requireNonNull(y)), op);
         }
-        return new PersistentPropertyBinaryPredicate<>(requireComparableProperty(x), Objects.requireNonNull(literal(y)), op);
+        return new PersistentPropertyBinaryPredicate<>(requireComparableProperty(x), literal(Objects.requireNonNull(y)), op);
     }
 
     /**
@@ -453,6 +455,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
 
     @Override
     @NonNull
+    @NextMajorVersion("Don't allow null values")
     public Predicate equal(@NonNull Expression<?> x, @Nullable Object y) {
         return predicate(x, y, PredicateBinaryOp.EQUALS);
     }
@@ -526,7 +529,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
     @NonNull
     public <Y extends Comparable<? super Y>> Predicate between(@NonNull Expression<? extends Y> v, @NonNull Y x, @NonNull Y y) {
-        return new PersistentPropertyBetweenPredicate<>(requireComparableProperty(v), Objects.requireNonNull(x), Objects.requireNonNull(y));
+        return new PersistentPropertyBetweenPredicate<>(requireComparableProperty(v), literal(Objects.requireNonNull(x)), literal(Objects.requireNonNull(y)));
     }
 
     @Override
@@ -538,7 +541,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
     @NonNull
     public Predicate gt(@NonNull Expression<? extends Number> x, @NonNull Number y) {
-        return new PersistentPropertyBinaryPredicate<>(requireNumericProperty(x), Objects.requireNonNull(literal(y)), PredicateBinaryOp.GREATER_THAN);
+        return new PersistentPropertyBinaryPredicate<>(requireNumericProperty(x), literal(Objects.requireNonNull(y)), PredicateBinaryOp.GREATER_THAN);
     }
 
     @Override
@@ -550,7 +553,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
     @NonNull
     public Predicate ge(@NonNull Expression<? extends Number> x, @NonNull Number y) {
-        return new PersistentPropertyBinaryPredicate<>(requireNumericProperty(x), Objects.requireNonNull(literal(y)), PredicateBinaryOp.GREATER_THAN_OR_EQUALS);
+        return new PersistentPropertyBinaryPredicate<>(requireNumericProperty(x), literal(Objects.requireNonNull(y)), PredicateBinaryOp.GREATER_THAN_OR_EQUALS);
     }
 
     @Override
@@ -562,7 +565,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
     @NonNull
     public Predicate lt(@NonNull Expression<? extends Number> x, @NonNull Number y) {
-        return new PersistentPropertyBinaryPredicate<>(requireNumericProperty(x), Objects.requireNonNull(literal(y)), PredicateBinaryOp.LESS_THAN);
+        return new PersistentPropertyBinaryPredicate<>(requireNumericProperty(x), literal(Objects.requireNonNull(y)), PredicateBinaryOp.LESS_THAN);
     }
 
     @Override
@@ -574,7 +577,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
     @NonNull
     public Predicate le(@NonNull Expression<? extends Number> x, @NonNull Number y) {
-        return new PersistentPropertyBinaryPredicate<>(requireNumericProperty(x), Objects.requireNonNull(literal(y)), PredicateBinaryOp.LESS_THAN_OR_EQUALS);
+        return new PersistentPropertyBinaryPredicate<>(requireNumericProperty(x), literal(Objects.requireNonNull(y)), PredicateBinaryOp.LESS_THAN_OR_EQUALS);
     }
 
     /**
@@ -1437,7 +1440,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
     @NonNull
     public <T> In<T> in(Expression<? extends T> expression) {
-        return new PersistentPropertyInValuesPredicate<>(requireProperty(expression));
+        return new PersistentPropertyInPredicate<>(requireProperty(expression), this);
     }
 
     /**
