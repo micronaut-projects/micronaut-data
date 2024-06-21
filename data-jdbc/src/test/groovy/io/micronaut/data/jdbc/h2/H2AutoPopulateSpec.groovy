@@ -7,6 +7,8 @@ import io.micronaut.data.annotation.Embeddable
 import io.micronaut.data.annotation.EmbeddedId
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
+import io.micronaut.data.annotation.event.PrePersist
+import io.micronaut.data.annotation.event.PreUpdate
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
@@ -28,7 +30,7 @@ class H2AutoPopulateSpec extends Specification {
 
     void "test save and read entity"() {
         when:"an entity is saved"
-        def exampleId = new ExampleId(UUID.randomUUID(), "data1")
+        def exampleId = new ExampleId(null, "data1")
         def exampleEntity = new ExampleEntity(exampleId, "Test 1")
         exampleRepository.save(exampleEntity)
 
@@ -88,6 +90,30 @@ class ExampleEntity {
 
     void setName(String name) {
         this.name = name
+    }
+
+    @PrePersist
+    void prePersist() {
+        if (id.uuid == null) {
+            id.uuid = UUID.randomUUID()
+        }
+        if (audit == null) {
+            audit = new Audit()
+        }
+        if (audit.recordId == null) {
+            audit.recordId = UUID.randomUUID()
+        }
+        if (audit.dateCreated == null) {
+            audit.dateCreated = Instant.now()
+        }
+        if (audit.dateUpdated == null) {
+            audit.dateUpdated = Instant.now()
+        }
+    }
+
+    @PreUpdate
+    void preUpdate() {
+        audit.dateUpdated = Instant.now()
     }
 }
 
