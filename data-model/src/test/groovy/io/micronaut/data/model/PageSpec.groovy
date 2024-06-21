@@ -163,6 +163,17 @@ class PageSpec extends Specification {
         deserializedSort == sort
     }
 
+    void "test empty page map"() {
+        when:
+        def page = Page.empty()
+        def mapped = page.map { it }
+        then:
+        page.size == -1
+        !page.hasTotalSize()
+        mapped.size == -1
+        !mapped.hasTotalSize()
+    }
+
     @EqualsAndHashCode
     @ToString
     @Serdeable
