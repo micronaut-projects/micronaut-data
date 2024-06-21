@@ -46,7 +46,7 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupport
  * @since 3.2
  */
 @Internal
-public abstract class AbstractPersistentPropertyPath<T> implements PersistentPropertyPath<T>, SelectionVisitable {
+public abstract class AbstractPersistentPropertyPath<T> implements PersistentPropertyPath<T> {
 
     private final PersistentProperty persistentProperty;
     private final List<Association> path;
@@ -56,11 +56,6 @@ public abstract class AbstractPersistentPropertyPath<T> implements PersistentPro
         this.persistentProperty = persistentProperty;
         this.path = path;
         this.criteriaBuilder = criteriaBuilder;
-    }
-
-    @Override
-    public void accept(SelectionVisitor selectionVisitor) {
-        selectionVisitor.visit(this);
     }
 
     @Override
@@ -135,10 +130,15 @@ public abstract class AbstractPersistentPropertyPath<T> implements PersistentPro
     }
 
     @Override
+    public void visitExpression(ExpressionVisitor expressionVisitor) {
+        expressionVisitor.visit(this);
+    }
+
+    @Override
     public String toString() {
         return "PersistentPropertyPath{" +
-                "persistentProperty=" + persistentProperty +
-                ", path=" + path +
-                '}';
+            "persistentProperty=" + persistentProperty +
+            ", path=" + path +
+            '}';
     }
 }

@@ -772,26 +772,6 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 implements Sq
     }
 
     @Override
-    protected SqlPredicateVisitor createPredicateVisitor(AnnotationMetadata annotationMetadata, QueryState queryState) {
-        return new SqlPredicateVisitor(queryState, annotationMetadata) {
-
-            @Override
-            protected void appendConcat(StringBuilder writer, Collection<Runnable> partsWriters) {
-                if (dialect == Dialect.ORACLE) {
-                    for (Iterator<Runnable> iterator = partsWriters.iterator(); iterator.hasNext(); ) {
-                        iterator.next().run();
-                        if (iterator.hasNext()) {
-                            writer.append(" || ");
-                        }
-                    }
-                } else {
-                    super.appendConcat(writer, partsWriters);
-                }
-            }
-        };
-    }
-
-    @Override
     protected SqlSelectionVisitor createSelectionVisitor(AnnotationMetadata annotationMetadata, QueryState queryState, boolean distinct) {
         return new SqlSelectionVisitor(queryState, annotationMetadata, distinct);
     }
@@ -1666,7 +1646,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 implements Sq
             }
             for (JoinPath joinPath : joinPaths) {
                 Association association = joinPath.getAssociation();
-                if (association instanceof Embedded) {
+                if (association.isEmbedded()) {
                     // joins on embedded don't make sense
                     continue;
                 }

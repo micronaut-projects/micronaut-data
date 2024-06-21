@@ -21,6 +21,7 @@ import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder
 import io.micronaut.data.repository.jpa.criteria.DeleteSpecification
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
@@ -57,6 +58,7 @@ import io.micronaut.transaction.SynchronousTransactionManager
 import io.micronaut.transaction.TransactionCallback
 import io.micronaut.transaction.TransactionStatus
 import jakarta.persistence.criteria.CriteriaBuilder
+import jakarta.persistence.criteria.CriteriaQuery
 import jakarta.persistence.criteria.CriteriaUpdate
 import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Root
@@ -2813,6 +2815,62 @@ abstract class AbstractRepositorySpec extends Specification {
 
          cleanup:
          entityWithIdClass2Repository.deleteAll()
+    }
+
+    void "test criteria functions"() {
+        when:
+            personRepository.deleteAll()
+            personRepository.save(new Person(name: "Fred1", age: 50))
+            personRepository.save(new Person(name: "Fred2", age: 18))
+        then:
+            def count = personRepository.findOne(new CriteriaQueryBuilder<Long>() {
+                @Override
+                CriteriaQuery<Long> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(Long)
+                    def root = query.from(Person)
+                    query.select(criteriaBuilder.function("MAX", Long, root.get("age")))
+                    return query
+                }
+            })
+            count == 50
+    }
+
+    void "test sum function"() {
+        when:
+            personRepository.deleteAll()
+            personRepository.save(new Person(name: "Fred1", age: 50))
+            personRepository.save(new Person(name: "Fred2", age: 18))
+        then:
+            def count = personRepository.findOne(new CriteriaQueryBuilder<Long>() {
+                @Override
+                CriteriaQuery<Long> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(Long)
+                    def root = query.from(Person)
+                    query.select(criteriaBuilder.sum(root.<Integer>get("age"), 100))
+                    query.where(criteriaBuilder.equal(root.<String>get("name"), "Fred1"))
+                    return query
+                }
+            })
+            count == 150
+    }
+
+    void "test concat function"() {
+        when:
+            personRepository.deleteAll()
+            personRepository.save(new Person(name: "Fred1", age: 50))
+            personRepository.save(new Person(name: "Fred2", age: 18))
+        then:
+            def name = personRepository.findOne(new CriteriaQueryBuilder<String>() {
+                @Override
+                CriteriaQuery<String> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(String)
+                    def root = query.from(Person)
+                    query.select(criteriaBuilder.concat(root.<String>get("name"), "Xyz"))
+                    query.where(criteriaBuilder.equal(root.<String>get("name"), "Fred1"))
+                    return query
+                }
+            })
+            name == "Fred1Xyz"
     }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {

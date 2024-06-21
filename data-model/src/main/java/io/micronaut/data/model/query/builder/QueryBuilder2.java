@@ -20,7 +20,6 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.JoinPath;
@@ -203,29 +202,6 @@ public interface QueryBuilder2 {
          * @return The join type for the association.
          */
         Optional<JoinPath> getJoinPath(String path);
-
-        /**
-         * Join on the given association.
-         *
-         * @param path     The join path
-         * @param joinType The join type
-         * @param alias    The alias to use.
-         * @return The query
-         */
-        @NonNull
-        JoinPath join(String path, @NonNull Join.Type joinType, @Nullable String alias);
-
-        /**
-         * Join on the given association.
-         *
-         * @param path     The join path
-         * @param joinType The join type
-         * @return The query
-         */
-        @NonNull
-        default JoinPath join(String path, @NonNull Join.Type joinType) {
-            return join(path, joinType, null);
-        }
 
         /**
          * @return The limit or -1 if not set

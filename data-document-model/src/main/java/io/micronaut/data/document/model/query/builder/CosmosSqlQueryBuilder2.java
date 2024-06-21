@@ -24,13 +24,12 @@ import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.repeatable.WhereSpecifications;
 import io.micronaut.data.model.Association;
-import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.PersistentAssociationPath;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentPropertyPath;
-import io.micronaut.data.model.jpa.criteria.impl.selection.AggregateExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import io.micronaut.data.model.naming.NamingStrategies;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.JoinPath;
@@ -126,9 +125,9 @@ public final class CosmosSqlQueryBuilder2 extends SqlQueryBuilder2 {
             }
 
             @Override
-            public void visit(AggregateExpression<?, ?> aggregateExpression) {
+            public void visit(UnaryExpression<?> unaryExpression) {
                 query.append(VALUE);
-                super.visit(aggregateExpression);
+                super.visit(unaryExpression);
             }
         };
     }
@@ -228,7 +227,7 @@ public final class CosmosSqlQueryBuilder2 extends SqlQueryBuilder2 {
         Map<String, String> joinedPaths = new HashMap<>();
         for (JoinPath joinPath : allPaths) {
             Association association = joinPath.getAssociation();
-            if (association instanceof Embedded) {
+            if (association.isEmbedded()) {
                 // joins on embedded don't make sense
                 continue;
             }

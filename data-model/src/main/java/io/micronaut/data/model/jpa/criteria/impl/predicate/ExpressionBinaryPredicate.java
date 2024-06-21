@@ -16,7 +16,6 @@
 package io.micronaut.data.model.jpa.criteria.impl.predicate;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitable;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
 import jakarta.persistence.criteria.Expression;
 
@@ -27,7 +26,7 @@ import jakarta.persistence.criteria.Expression;
  * @since 3.3
  */
 @Internal
-public final class ExpressionBinaryPredicate extends AbstractPredicate implements PredicateVisitable {
+public final class ExpressionBinaryPredicate extends AbstractPredicate {
 
     private final Expression<?> left;
     private final Expression<?> right;
@@ -54,7 +53,7 @@ public final class ExpressionBinaryPredicate extends AbstractPredicate implement
     }
 
     @Override
-    public void accept(PredicateVisitor predicateVisitor) {
+    public void visitPredicate(PredicateVisitor predicateVisitor) {
         predicateVisitor.visit(this);
     }
 

@@ -17,7 +17,7 @@ package io.micronaut.data.model.query.impl;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
-import io.micronaut.data.model.jpa.criteria.impl.IdExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExpressionBinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBetweenPredicate;

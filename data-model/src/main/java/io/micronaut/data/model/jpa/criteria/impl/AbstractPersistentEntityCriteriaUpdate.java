@@ -21,6 +21,8 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.jpa.criteria.IExpression;
+import io.micronaut.data.model.jpa.criteria.IPredicate;
+import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery.BaseQueryDefinitionImpl;
@@ -92,13 +94,13 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
         }
         QueryModel qm = QueryModel.from(entityRoot.getPersistentEntity());
         Joiner joiner = new Joiner();
-        if (predicate instanceof PredicateVisitable predicateVisitable) {
-            predicateVisitable.accept(createPredicateVisitor(qm));
-            predicateVisitable.accept(joiner);
+        if (predicate instanceof IPredicate predicateVisitable) {
+            predicateVisitable.visitPredicate(createPredicateVisitor(qm));
+            predicateVisitable.visitPredicate(joiner);
         }
-        if (returning instanceof SelectionVisitable selectionVisitable) {
-            selectionVisitable.accept(new QueryModelSelectionVisitor(qm, false));
-            selectionVisitable.accept(joiner);
+        if (returning instanceof ISelection<?> selectionVisitable) {
+            selectionVisitable.visitSelection(new QueryModelSelectionVisitor(qm, false));
+            selectionVisitable.visitSelection(joiner);
         }
         for (Map.Entry<String, Joiner.Joined> e : joiner.getJoins().entrySet()) {
             qm.join(e.getKey(), Optional.ofNullable(e.getValue().getType()).orElse(Join.Type.DEFAULT), e.getValue().getAlias());
@@ -253,8 +255,11 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
         private final Map<String, Object> propertiesToUpdate;
         private final Selection<?> returningSelection;
 
-        public UpdateQueryDefinitionImpl(PersistentEntity persistentEntity, Predicate predicate, Selection<?> returningSelection, Map<String, Object> propertiesToUpdate) {
-            super(persistentEntity, predicate);
+        public UpdateQueryDefinitionImpl(PersistentEntity persistentEntity,
+                                         Predicate predicate,
+                                         Selection<?> returningSelection,
+                                         Map<String, Object> propertiesToUpdate) {
+            super(persistentEntity, predicate, Map.of());
             this.propertiesToUpdate = propertiesToUpdate;
             this.returningSelection = returningSelection;
         }

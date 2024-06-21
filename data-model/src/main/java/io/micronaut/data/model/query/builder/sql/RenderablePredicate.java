@@ -18,6 +18,8 @@ package io.micronaut.data.model.query.builder.sql;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
+import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 
@@ -61,6 +63,16 @@ public abstract class RenderablePredicate implements IPredicate, IExpression<Boo
 
     @Override
     public Class<? extends Boolean> getJavaType() {
+        throw new IllegalStateException("Not supported for: " + this);
+    }
+
+    @Override
+    public void visitPredicate(PredicateVisitor predicateVisitor) {
+        throw new IllegalStateException("Not supported for: " + this);
+    }
+
+    @Override
+    public void visitExpression(ExpressionVisitor expressionVisitor) {
         throw new IllegalStateException("Not supported for: " + this);
     }
 }

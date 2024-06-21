@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 original authors
+ * Copyright 2017-2024 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.model.jpa.criteria.impl;
+package io.micronaut.data.model.jpa.criteria.impl.expression;
 
 import io.micronaut.core.annotation.Internal;
 
 /**
- * The visitable selection.
+ * The aggregate type.
  *
  * @author Denis Stepanov
- * @since 3.2
+ * @since 4.9
  */
 @Internal
-public interface SelectionVisitable {
-
-    void accept(SelectionVisitor selectionVisitor);
-
+public enum BinaryExpressionType {
+    CONCAT, SUM
 }

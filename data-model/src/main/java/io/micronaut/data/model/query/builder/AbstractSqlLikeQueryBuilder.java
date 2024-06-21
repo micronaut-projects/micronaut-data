@@ -41,7 +41,7 @@ import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.Sort;
-import io.micronaut.data.model.jpa.criteria.impl.LiteralExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.AssociationQuery;
 import io.micronaut.data.model.query.BindingParameter;

@@ -28,24 +28,25 @@ import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.document.mongo.MongoAnnotations;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
-import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.IExpression;
+import io.micronaut.data.model.jpa.criteria.IPredicate;
+import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
-import io.micronaut.data.model.jpa.criteria.impl.IdExpression;
-import io.micronaut.data.model.jpa.criteria.impl.LiteralExpression;
-import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitable;
-import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitable;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
+import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.selection.AggregateExpression;
 import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.naming.NamingStrategy;
@@ -477,8 +478,8 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
             return Map.of();
         }
         Map<String, Object> query = new LinkedHashMap<>();
-        if (predicate instanceof PredicateVisitable predicateVisitable) {
-            predicateVisitable.accept(new MongoPredicateVisitor(queryState, query));
+        if (predicate instanceof IPredicate predicateVisitable) {
+            predicateVisitable.visitPredicate(new MongoPredicateVisitor(queryState, query));
         } else {
             throw new IllegalStateException("Unsupported predicate type: " + predicate.getClass().getName());
         }
@@ -492,8 +493,8 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
         if (selection == null) {
             return;
         }
-        if (selection instanceof SelectionVisitable selectionVisitable) {
-            selectionVisitable.accept(new MongoSelectionVisitor(projectionObj, groupObj, countObj));
+        if (selection instanceof ISelection<?> selectionVisitable) {
+            selectionVisitable.visitSelection(new MongoSelectionVisitor(projectionObj, groupObj, countObj));
         } else {
             throw new IllegalStateException("Unsupported selection type: " + selection.getClass().getName());
         }
@@ -514,7 +515,7 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
             StringJoiner joinPathJoiner = new StringJoiner(".");
             for (Association association : propertyPath.getAssociations()) {
                 joinPathJoiner.add(association.getName());
-                if (association instanceof Embedded) {
+                if (association.isEmbedded()) {
                     continue;
                 }
                 if (joinAssociation == null) {
@@ -908,8 +909,8 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
         }
 
         private void visitPredicate(IExpression<Boolean> expression) {
-            if (expression instanceof PredicateVisitable predicateVisitable) {
-                predicateVisitable.accept(this);
+            if (expression instanceof IPredicate predicateVisitable) {
+                predicateVisitable.visitPredicate(this);
             } else if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath) {
                 visitIsTrue(getRequiredProperty(propertyPath));
             } else {
@@ -1244,7 +1245,7 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
 
     }
 
-    private class MongoSelectionVisitor implements SelectionVisitor {
+    private final class MongoSelectionVisitor implements SelectionVisitor {
 
         private final Map<String, Object> projectionObj;
         private final Map<String, Object> groupObj;
@@ -1267,7 +1268,7 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
         @Override
         public void visit(AliasedSelection<?> aliasedSelection) {
             alias = aliasedSelection.getAlias();
-            ((SelectionVisitable) aliasedSelection.getSelection()).accept(this);
+            aliasedSelection.getSelection().visitSelection(this);
             alias = null;
         }
 
@@ -1279,8 +1280,8 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
         @Override
         public void visit(CompoundSelection<?> compoundSelection) {
             for (Selection<?> selection : compoundSelection.getCompoundSelectionItems()) {
-                if (selection instanceof SelectionVisitable selectionVisitable) {
-                    selectionVisitable.accept(this);
+                if (selection instanceof ISelection<?> selectionVisitable) {
+                    selectionVisitable.visitSelection(this);
                 } else {
                     throw new IllegalStateException("Unknown selection object: " + selection);
                 }
@@ -1293,18 +1294,18 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
         }
 
         @Override
-        public void visit(AggregateExpression<?, ?> aggregateExpression) {
-            Expression<?> expression = aggregateExpression.getExpression();
-            switch (aggregateExpression.getType()) {
+        public void visit(UnaryExpression<?> unaryExpression) {
+            Expression<?> expression = unaryExpression.getExpression();
+            switch (unaryExpression.getType()) {
                 case SUM, AVG, MAX, MIN -> {
                     PersistentPropertyPath propertyPath = requireProperty(expression).getPropertyPath();
-                    switch (aggregateExpression.getType()) {
+                    switch (unaryExpression.getType()) {
                         case SUM -> addProjection(groupObj, "$sum", propertyPath);
                         case AVG -> addProjection(groupObj, "$avg", propertyPath);
                         case MAX -> addProjection(groupObj, "$max", propertyPath);
                         case MIN -> addProjection(groupObj, "$min", propertyPath);
                         default ->
-                            throw new IllegalStateException("Unknown aggregation: " + aggregateExpression.getExpression());
+                            throw new IllegalStateException("Unsupported expression type: " + unaryExpression.getExpression());
                     }
                 }
                 case COUNT -> {
@@ -1324,7 +1325,7 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
                     }
                 }
                 default ->
-                    throw new IllegalStateException("Unknown aggregation: " + aggregateExpression.getExpression());
+                    throw new IllegalStateException("Unsupported expression type: " + unaryExpression.getExpression());
             }
         }
 
@@ -1337,5 +1338,14 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
             groupBy.put(alias == null ? propertyPath.getProperty().getName() : alias, Map.of(op, "$" + propertyPath.getPath()));
         }
 
+        @Override
+        public void visit(FunctionExpression<?> functionExpression) {
+            throw new UnsupportedOperationException("Function expression is not supported by Micronaut Data MongoDB.");
+        }
+
+        @Override
+        public void visit(BinaryExpression<?> binaryExpression) {
+            throw new UnsupportedOperationException("Binary expression: " + binaryExpression + " is not supported by Micronaut Data MongoDB.");
+        }
     }
 }

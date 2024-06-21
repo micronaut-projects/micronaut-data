@@ -35,7 +35,6 @@ import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
-import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
@@ -79,7 +78,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
@@ -678,44 +676,41 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             JsonDataType jsonDataType = getJsonDataType(queryResultInfo);
             return createQueryResultMapper(preparedQuery, column, jsonDataType, rsType, persistentEntity, loadListener);
         }
-        if (isEntityResult || preparedQuery.isDtoProjection()) {
-            Class<R> resultType = preparedQuery.getResultType();
-            final Set<JoinPath> joinPaths = preparedQuery.getJoinPaths();
-            if (isEntityResult) {
-                return new SqlResultEntityTypeMapper<>(
-                    getEntity(resultType),
-                    columnNameResultSetReader,
-                    joinPaths,
-                    sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, rsType),
-                    loadListener,
-                    conversionService);
-            } else {
-                RuntimePersistentEntity<R> resultPersistentEntity = getEntity(resultType);
-                Collection<BeanProperty<R, Object>> beanProperties = resultPersistentEntity.getIntrospection().getBeanProperties();
-                RuntimePersistentEntity<R> dtoPersistentEntity = new RuntimePersistentEntity<>(
-                    resultPersistentEntity.getIntrospection(),
-                    beanProperties.stream().map(p -> {
-                        if (p.hasAnnotation(MappedProperty.class)) {
-                            return p;
-                        }
-                        RuntimePersistentProperty<E> entityProperty = persistentEntity.getPropertyByName(p.getName());
-                        if (entityProperty == null || !ReflectionUtils.getWrapperType(entityProperty.getType()).equals(ReflectionUtils.getWrapperType(p.getType()))) {
-                            return p;
-                        }
-                        return new BeanPropertyWithAnnotationMetadata<>(
-                            p,
-                            new AnnotationMetadataHierarchy(p.getAnnotationMetadata(), entityProperty.getAnnotationMetadata())
-                        );
-                    }).toList()
-                );
-                return new SqlResultEntityTypeMapper<>(
-                    dtoPersistentEntity,
-                    columnNameResultSetReader,
-                    joinPaths,
-                    sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, rsType),
-                    null,
-                    conversionService);
-            }
+        if (isEntityResult) {
+            return new SqlResultEntityTypeMapper<>(
+                getEntity(preparedQuery.getResultType()),
+                columnNameResultSetReader,
+                preparedQuery.getJoinPaths(),
+                sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, rsType),
+                loadListener,
+                conversionService);
+        }
+        if (preparedQuery.isDtoProjection()) {
+            RuntimePersistentEntity<R> resultPersistentEntity = getEntity(preparedQuery.getResultType());
+            Collection<BeanProperty<R, Object>> beanProperties = resultPersistentEntity.getIntrospection().getBeanProperties();
+            RuntimePersistentEntity<R> dtoPersistentEntity = new RuntimePersistentEntity<>(
+                resultPersistentEntity.getIntrospection(),
+                beanProperties.stream().map(p -> {
+                    if (p.hasAnnotation(MappedProperty.class)) {
+                        return p;
+                    }
+                    RuntimePersistentProperty<E> entityProperty = persistentEntity.getPropertyByName(p.getName());
+                    if (entityProperty == null || !ReflectionUtils.getWrapperType(entityProperty.getType()).equals(ReflectionUtils.getWrapperType(p.getType()))) {
+                        return p;
+                    }
+                    return new BeanPropertyWithAnnotationMetadata<>(
+                        p,
+                        new AnnotationMetadataHierarchy(p.getAnnotationMetadata(), entityProperty.getAnnotationMetadata())
+                    );
+                }).toList()
+            );
+            return new SqlResultEntityTypeMapper<>(
+                dtoPersistentEntity,
+                columnNameResultSetReader,
+                preparedQuery.getJoinPaths(),
+                sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, rsType),
+                null,
+                conversionService);
         }
         return new SqlTypeMapper<>() {
             @Override

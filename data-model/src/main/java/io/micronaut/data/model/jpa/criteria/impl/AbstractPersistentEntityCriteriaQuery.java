@@ -23,6 +23,8 @@ import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.jpa.criteria.IExpression;
+import io.micronaut.data.model.jpa.criteria.IPredicate;
+import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
@@ -95,13 +97,13 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
             entityRoot.getPersistentEntity(),
             predicate,
             selection == null ? entityRoot : selection,
+            calculateJoins(entityRoot.getPersistentEntity(), false),
             forUpdate,
             distinct,
             orders == null ? List.of() : orders,
             max,
             offset
         );
-        calculateJoins(definition, false);
         return queryBuilder.buildSelect(annotationMetadata, definition);
     }
 
@@ -111,34 +113,33 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
             entityRoot.getPersistentEntity(),
             predicate,
             criteriaBuilder.count(entityRoot),
+            calculateJoins(entityRoot.getPersistentEntity(), true),
             false,
             distinct,
             List.of(),
             -1,
             -1
         );
-        calculateJoins(definition, true);
         return queryBuilder.buildSelect(annotationMetadata, definition);
     }
 
-    private void calculateJoins(SelectQueryDefinitionImpl definition, boolean remapFetchJoins) {
+    private Map<String, JoinPath> calculateJoins(PersistentEntity persistentEntity, boolean remapFetchJoins) {
         Joiner joiner = new Joiner();
-        if (predicate instanceof PredicateVisitable predicateVisitable) {
-            predicateVisitable.accept(joiner);
+        if (predicate instanceof IPredicate predicateVisitable) {
+            predicateVisitable.visitPredicate(joiner);
         }
-        if (selection instanceof SelectionVisitable selectionVisitable) {
-            selectionVisitable.accept(joiner);
-            SelectionVisitable entityRoot = (SelectionVisitable) this.entityRoot;
-            entityRoot.accept(joiner);
+        if (selection instanceof ISelection<?> selectionVisitable) {
+            selectionVisitable.visitSelection(joiner);
+            entityRoot.visitSelection(joiner);
         } else {
-            SelectionVisitable entityRoot = (SelectionVisitable) this.entityRoot;
-            entityRoot.accept(joiner);
+            entityRoot.visitSelection(joiner);
         }
         if (orders != null) {
             for (Order o : orders) {
                 joiner.joinIfNeeded(requireProperty(o.getExpression()));
             }
         }
+        Map<String, JoinPath> joinPaths = new LinkedHashMap<>();
         for (Map.Entry<String, Joiner.Joined> e : joiner.getJoins().entrySet()) {
             Join.Type joinType = Optional.ofNullable(e.getValue().getType()).orElse(Join.Type.DEFAULT);
             if (remapFetchJoins) {
@@ -154,9 +155,24 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
                     default -> joinType;
                 };
             }
-
-            definition.join(e.getKey(), joinType, e.getValue().getAlias());
+            String path = e.getKey();
+            io.micronaut.data.model.PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(path);
+            if (propertyPath == null) {
+                throw new IllegalArgumentException("Invalid association path. Element [" + path + "] is not an association for [" + persistentEntity + "]");
+            }
+            Association[] associationPath;
+            if (propertyPath.getProperty() instanceof Association) {
+                associationPath = Stream.concat(
+                    propertyPath.getAssociations().stream(),
+                    Stream.of(propertyPath.getProperty())
+                ).toArray(Association[]::new);
+            } else {
+                associationPath = propertyPath.getAssociations().toArray(new Association[0]);
+            }
+            JoinPath jp = new JoinPath(path, associationPath, joinType, e.getValue().getAlias());
+            joinPaths.put(e.getKey(), jp);
         }
+        return joinPaths;
     }
 
     @NonNull
@@ -167,19 +183,17 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
         }
         QueryModel qm = QueryModel.from(entityRoot.getPersistentEntity());
         Joiner joiner = new Joiner();
-        if (predicate instanceof PredicateVisitable predicateVisitable) {
-            predicateVisitable.accept(createPredicateVisitor(qm));
-            predicateVisitable.accept(joiner);
+        if (predicate instanceof IPredicate predicateVisitable) {
+            predicateVisitable.visitPredicate(createPredicateVisitor(qm));
+            predicateVisitable.visitPredicate(joiner);
         }
-        if (selection instanceof SelectionVisitable selectionVisitable) {
-            selectionVisitable.accept(new QueryModelSelectionVisitor(qm, distinct));
-            selectionVisitable.accept(joiner);
-            SelectionVisitable entityRoot = (SelectionVisitable) this.entityRoot;
-            entityRoot.accept(joiner);
+        if (selection instanceof ISelection<?> selectionVisitable) {
+            selectionVisitable.visitSelection(new QueryModelSelectionVisitor(qm, distinct));
+            selectionVisitable.visitSelection(joiner);
+            entityRoot.visitSelection(joiner);
         } else {
-            SelectionVisitable entityRoot = (SelectionVisitable) this.entityRoot;
-            entityRoot.accept(new QueryModelSelectionVisitor(qm, distinct));
-            entityRoot.accept(joiner);
+            entityRoot.visitSelection(new QueryModelSelectionVisitor(qm, distinct));
+            entityRoot.visitSelection(joiner);
         }
         if (orders != null && !orders.isEmpty()) {
             List<Sort.Order> sortOrders = orders.stream().map(o -> {
@@ -427,12 +441,13 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
         public SelectQueryDefinitionImpl(PersistentEntity persistentEntity,
                                          Predicate predicate,
                                          Selection<?> selection,
+                                         Map<String, JoinPath> joinPaths,
                                          boolean isForUpdate,
                                          boolean isDistinct,
                                          List<Order> order,
                                          int limit,
                                          int offset) {
-            super(persistentEntity, predicate);
+            super(persistentEntity, predicate, joinPaths);
             this.selection = selection;
             this.isForUpdate = isForUpdate;
             this.isDistinct = isDistinct;
@@ -477,11 +492,14 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
 
         private final PersistentEntity persistentEntity;
         private final Predicate predicate;
-        private final Map<String, JoinPath> joinPaths = new LinkedHashMap<>(5);
+        private final Map<String, JoinPath> joinPaths;
 
-        protected BaseQueryDefinitionImpl(PersistentEntity persistentEntity, Predicate predicate) {
+        protected BaseQueryDefinitionImpl(PersistentEntity persistentEntity,
+                                          Predicate predicate,
+                                          Map<String, JoinPath> joinPaths) {
             this.persistentEntity = persistentEntity;
             this.predicate = predicate;
+            this.joinPaths = joinPaths;
         }
 
         @Override
@@ -505,26 +523,6 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
                 return Optional.ofNullable(joinPaths.get(path));
             }
             return Optional.empty();
-        }
-
-        @Override
-        public JoinPath join(@NonNull String path, @NonNull Join.Type joinType, String alias) {
-            io.micronaut.data.model.PersistentPropertyPath propertyPath = persistentEntity().getPropertyPath(path);
-            if (propertyPath == null) {
-                throw new IllegalArgumentException("Invalid association path. Element [" + path + "] is not an association for [" + persistentEntity() + "]");
-            }
-            Association[] associationPath;
-            if (propertyPath.getProperty() instanceof Association) {
-                associationPath = Stream.concat(
-                    propertyPath.getAssociations().stream(),
-                    Stream.of(propertyPath.getProperty())
-                ).toArray(Association[]::new);
-            } else {
-                associationPath = propertyPath.getAssociations().toArray(new Association[0]);
-            }
-            JoinPath jp = new JoinPath(path, associationPath, joinType, alias);
-            joinPaths.put(path, jp);
-            return jp;
         }
 
     }

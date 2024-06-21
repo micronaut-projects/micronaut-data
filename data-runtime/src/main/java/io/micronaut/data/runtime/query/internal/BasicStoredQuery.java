@@ -84,7 +84,7 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
         this.isSingleResult = isSingleResult;
         this.isCount = isCount;
         this.operationType = operationType;
-        this.resultDataType = isCount ? DataType.forType(resultType) : DataType.ENTITY;
+        this.resultDataType = isCount ? DataType.forType(resultType) : (rootEntity == resultType) ? DataType.ENTITY : DataType.forType(resultType);
         this.rawQuery = annotationMetadata.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
     }
 

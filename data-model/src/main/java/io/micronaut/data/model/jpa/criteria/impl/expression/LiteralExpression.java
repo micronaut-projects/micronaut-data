@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.model.jpa.criteria.impl;
+package io.micronaut.data.model.jpa.criteria.impl.expression;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.data.model.jpa.criteria.IExpression;
+import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
 
 /**
  * The literal expression implementation.
@@ -27,25 +27,19 @@ import io.micronaut.data.model.jpa.criteria.IExpression;
  * @since 3.2
  */
 @Internal
-public final class LiteralExpression<T> implements IExpression<T>, SelectionVisitable {
+public final class LiteralExpression<T> extends AbstractExpression<T> {
 
-    private final Class<T> clazz;
     @Nullable
     private final T value;
 
     public LiteralExpression(Class<T> clazz) {
-        this.clazz = clazz;
+        super(clazz);
         this.value = null;
     }
 
     public LiteralExpression(@Nullable T object) {
-        this.clazz = object == null ? null : (Class<T>) object.getClass();
+        super(object == null ? null : (Class<T>) object.getClass());
         this.value = object;
-    }
-
-    @Override
-    public void accept(SelectionVisitor selectionVisitor) {
-        selectionVisitor.visit(this);
     }
 
     public T getValue() {
@@ -53,31 +47,15 @@ public final class LiteralExpression<T> implements IExpression<T>, SelectionVisi
     }
 
     @Override
-    public boolean isBoolean() {
-        return value instanceof Boolean;
-    }
-
-    @Override
-    public boolean isNumeric() {
-        return value instanceof Number;
-    }
-
-    @Override
-    public boolean isComparable() {
-        return value instanceof Comparable;
-    }
-
-    @Override
-    @Nullable
-    public Class<? extends T> getJavaType() {
-        return clazz;
+    public void visitExpression(ExpressionVisitor expressionVisitor) {
+        expressionVisitor.visit(this);
     }
 
     @Override
     public String toString() {
         return "LiteralExpression{" +
-                "value=" + value +
-                '}';
+            "value=" + value +
+            '}';
     }
 
 }

@@ -265,6 +265,39 @@ interface MyInterface extends CrudRepository<AliasBook, Long> {
         'findAliasBook'         | 'SELECT alias_book_.`id`,alias_book_.`title`,alias_book_.`total_pages`,alias_book_.`last_updated`,alias_book_.`author_id`,alias_book_.`co_author_id`,au_ob.`id` AS au_obid,au_ob.`title` AS au_obtitle,au_ob.`total_pages` AS au_obtotal_pages,au_ob.`last_updated` AS au_oblast_updated,au_ob.`author_id` AS au_obauthor_id,au_ob.`co_author_id` AS au_obco_author_id,au.`name` AS auname,au.`nick_name` AS aunick_name FROM `alias_book` alias_book_ INNER JOIN `alias_author` au ON alias_book_.`author_id`=au.`id` INNER JOIN `alias_book` au_ob ON au.`id`=au_ob.`author_id` WHERE (alias_book_.`id` = ?)'
     }
 
+    void "test join on repository type that inherits from CrudRepository 2"() {
+        given:
+        def repository = buildRepository('test.MyInterface', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.processor.sql.AliasAuthor;
+import io.micronaut.data.processor.sql.AliasBook;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+@Join("author")
+@io.micronaut.context.annotation.Executable
+interface MyInterface extends GenericRepository<AliasBook, Long> {
+
+    @Join("coAuthor")
+    @Join("coAuthor.otherBooks")
+    AliasBook findOne(Long id);
+}
+"""
+        )
+
+        String query = getQuery(repository.getRequiredMethod(method, Long))
+
+        expect:
+        query == sql
+
+        where:
+        method                  | sql
+        'findOne'               | 'SELECT alias_book_.`id`,alias_book_.`title`,alias_book_.`total_pages`,alias_book_.`last_updated`,alias_book_.`author_id`,alias_book_.`co_author_id`,alias_book_co_author_ob.`id` AS co_author_obid,alias_book_co_author_ob.`title` AS co_author_obtitle,alias_book_co_author_ob.`total_pages` AS co_author_obtotal_pages,alias_book_co_author_ob.`last_updated` AS co_author_oblast_updated,alias_book_co_author_ob.`author_id` AS co_author_obauthor_id,alias_book_co_author_ob.`co_author_id` AS co_author_obco_author_id,alias_book_co_author_.`name` AS co_author_name,alias_book_co_author_.`nick_name` AS co_author_nick_name,au.`name` AS auname,au.`nick_name` AS aunick_name FROM `alias_book` alias_book_ INNER JOIN `alias_author` au ON alias_book_.`author_id`=au.`id` INNER JOIN `alias_author` alias_book_co_author_ ON alias_book_.`co_author_id`=alias_book_co_author_.`id` INNER JOIN `alias_book` alias_book_co_author_ob ON alias_book_co_author_.`id`=alias_book_co_author_ob.`author_id` WHERE (alias_book_.`id` = ?)'
+    }
+
       void "test to-one join on repository type that inherits from CrudRepository"() {
         given:
         def repository = buildRepository('test.MyInterface', """
@@ -1451,5 +1484,71 @@ interface EntityWithIdClassRepository extends GenericRepository<Book, Long> {
         expect:
             getQuery(findAll) == 'SELECT book_ FROM io.micronaut.data.tck.entities.Book AS book_ JOIN FETCH book_.author book_author_'
             getCountQuery(findAll) == 'SELECT COUNT(book_) FROM io.micronaut.data.tck.entities.Book AS book_ JOIN book_.author book_author_'
+    }
+
+    void "test criteria"() {
+        given:
+        def repository = buildRepository('test.BookRepository', """
+
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder;
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
+import io.micronaut.data.repository.jpa.criteria.QuerySpecification;
+import io.micronaut.data.tck.entities.Book;
+
+import java.util.List;
+
+@Repository
+interface BookRepository extends GenericRepository<Book, Long> {
+
+   List<Book> findAllBooksByCriteria1(CriteriaQueryBuilder<Book> builder);
+   List<Book> findAllBooksByCriteria2(QuerySpecification<Book> spec);
+   List<Book> findAllBooksByCriteria3(PredicateSpecification<Book> spec);
+
+   Book findBookByCriteria1(CriteriaQueryBuilder<Book> builder);
+   Book findBookByCriteria2(QuerySpecification<Book> spec);
+   Book findBookByCriteria3(PredicateSpecification<Book> spec);
+
+   Long findCountByCriteria1(CriteriaQueryBuilder<Long> builder);
+   Long findCountByCriteria2(QuerySpecification<Long> spec);
+   Long findCountByCriteria3(PredicateSpecification<Long> spec);
+
+   Long findOne(CriteriaQueryBuilder<Long> builder);
+}
+
+""")
+        when:
+            def findAllBooksByCriteria1 = repository.findPossibleMethods("findAllBooksByCriteria1").findFirst().get()
+            def findAllBooksByCriteria2 = repository.findPossibleMethods("findAllBooksByCriteria2").findFirst().get()
+            def findAllBooksByCriteria3 = repository.findPossibleMethods("findAllBooksByCriteria3").findFirst().get()
+        then:
+            getResultDataType(findAllBooksByCriteria1) == DataType.ENTITY
+            getResultDataType(findAllBooksByCriteria2) == DataType.ENTITY
+            getResultDataType(findAllBooksByCriteria3) == DataType.ENTITY
+
+        when:
+            def findBookByCriteria1 = repository.findPossibleMethods("findBookByCriteria1").findFirst().get()
+            def findBookByCriteria2 = repository.findPossibleMethods("findBookByCriteria2").findFirst().get()
+            def findBookByCriteria3 = repository.findPossibleMethods("findBookByCriteria3").findFirst().get()
+        then:
+            getResultDataType(findBookByCriteria1) == DataType.ENTITY
+            getResultDataType(findBookByCriteria2) == DataType.ENTITY
+            getResultDataType(findBookByCriteria3) == DataType.ENTITY
+
+        when:
+            def findCountByCriteria1 = repository.findPossibleMethods("findCountByCriteria1").findFirst().get()
+            def findCountByCriteria2 = repository.findPossibleMethods("findCountByCriteria2").findFirst().get()
+            def findCountByCriteria3 = repository.findPossibleMethods("findCountByCriteria3").findFirst().get()
+        then:
+            getResultDataType(findCountByCriteria1) == DataType.LONG
+            getResultDataType(findCountByCriteria2) == DataType.LONG
+            getResultDataType(findCountByCriteria3) == DataType.LONG
+
+        when:
+            def findOne = repository.findPossibleMethods("findOne").findFirst().get()
+        then:
+            getResultDataType(findOne) == DataType.LONG
     }
 }

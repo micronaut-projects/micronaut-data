@@ -211,20 +211,14 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
 
         Pageable pageable = findPageable(context);
         QueryBuilder sqlQueryBuilder = getQueryBuilder(methodKey, context);
-        StoredQuery<E, ?> storedQuery;
-        if (type == Type.FIND_ALL || type == Type.FIND_ONE || type == Type.FIND_PAGE) {
-            storedQuery = buildFind(methodKey, context, type, methodJoinPaths);
-        } else if (type == Type.COUNT) {
-            storedQuery = buildCount(methodKey, context);
-        } else if (type == Type.DELETE_ALL) {
-            storedQuery = buildDeleteAll(context, sqlQueryBuilder);
-        } else if (type == Type.UPDATE_ALL) {
-            storedQuery = buildUpdateAll(context, sqlQueryBuilder);
-        } else if (type == Type.EXISTS) {
-            storedQuery = buildExists(context, sqlQueryBuilder, methodJoinPaths);
-        } else {
-            throw new IllegalStateException("Unknown criteria type: " + type);
-        }
+        StoredQuery<E, ?> storedQuery = switch (type) {
+            case FIND_ALL, FIND_ONE, FIND_PAGE -> buildFind(methodKey, context, type, methodJoinPaths);
+            case COUNT -> buildCount(methodKey, context);
+            case DELETE_ALL -> buildDeleteAll(context, sqlQueryBuilder);
+            case UPDATE_ALL -> buildUpdateAll(context, sqlQueryBuilder);
+            case EXISTS -> buildExists(context, sqlQueryBuilder, methodJoinPaths);
+            default -> throw new IllegalStateException("Unknown criteria type: " + type);
+        };
         storedQuery = storedQueryDecorator.decorate(context, storedQuery);
         PreparedQuery<E, QR> preparedQuery = (PreparedQuery<E, QR>) preparedQueryResolver.resolveQuery(context, storedQuery, pageable);
         return preparedQueryDecorator.decorate(preparedQuery);

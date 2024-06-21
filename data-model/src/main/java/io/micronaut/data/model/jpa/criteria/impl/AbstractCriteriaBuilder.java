@@ -19,13 +19,16 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NextMajorVersion;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
-import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
+import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpressionType;
+import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExpressionBinaryPredicate;
@@ -36,8 +39,9 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInP
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyUnaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateBinaryOp;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateUnaryOp;
-import io.micronaut.data.model.jpa.criteria.impl.selection.AggregateExpression;
-import io.micronaut.data.model.jpa.criteria.impl.selection.AggregateType;
+import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpressionType;
+import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.CollectionJoin;
@@ -64,8 +68,6 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -186,61 +188,61 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
     @NonNull
     public <N extends Number> Expression<Double> avg(@NonNull Expression<N> x) {
-        return new AggregateExpression<>(requireNumericProperty(x), AggregateType.AVG);
+        return new UnaryExpression<>(requireNumericProperty(x), UnaryExpressionType.AVG);
     }
 
     @Override
     @NonNull
     public <N extends Number> Expression<N> sum(@NonNull Expression<N> x) {
-        return new AggregateExpression<>(requireNumericProperty(x), AggregateType.SUM);
+        return new UnaryExpression<>(requireNumericProperty(x), UnaryExpressionType.SUM);
     }
 
     @Override
     @NonNull
     public Expression<Long> sumAsLong(@NonNull Expression<Integer> x) {
-        return new AggregateExpression<>(requireNumericProperty(x), AggregateType.SUM, Long.class);
+        return new UnaryExpression<>(requireNumericProperty(x), UnaryExpressionType.SUM, Long.class);
     }
 
     @Override
     @NonNull
     public Expression<Double> sumAsDouble(@NonNull Expression<Float> x) {
-        return new AggregateExpression<>(requireNumericProperty(x), AggregateType.SUM, Double.class);
+        return new UnaryExpression<>(requireNumericProperty(x), UnaryExpressionType.SUM, Double.class);
     }
 
     @Override
     @NonNull
     public <N extends Number> Expression<N> max(@NonNull Expression<N> x) {
-        return new AggregateExpression<>(requireNumericProperty(x), AggregateType.MAX);
+        return new UnaryExpression<>(requireNumericProperty(x), UnaryExpressionType.MAX);
     }
 
     @Override
     @NonNull
     public <N extends Number> Expression<N> min(@NonNull Expression<N> x) {
-        return new AggregateExpression<>(requireNumericProperty(x), AggregateType.MIN);
+        return new UnaryExpression<>(requireNumericProperty(x), UnaryExpressionType.MIN);
     }
 
     @Override
     @NonNull
     public <X extends Comparable<? super X>> Expression<X> greatest(@NonNull Expression<X> x) {
-        return new AggregateExpression<>(requireComparableProperty(x), AggregateType.MAX);
+        return new UnaryExpression<>(requireComparableProperty(x), UnaryExpressionType.MAX);
     }
 
     @Override
     @NonNull
     public <X extends Comparable<? super X>> Expression<X> least(@NonNull Expression<X> x) {
-        return new AggregateExpression<>(requireComparableProperty(x), AggregateType.MIN);
+        return new UnaryExpression<>(requireComparableProperty(x), UnaryExpressionType.MIN);
     }
 
     @Override
     @NonNull
     public Expression<Long> count(@NonNull Expression<?> x) {
-        return new AggregateExpression<>(requirePropertyOrRoot(x), AggregateType.COUNT, Long.class);
+        return new UnaryExpression<>(requirePropertyOrRoot(x), UnaryExpressionType.COUNT, Long.class);
     }
 
     @Override
     @NonNull
     public Expression<Long> countDistinct(@NonNull Expression<?> x) {
-        return new AggregateExpression<>(requirePropertyOrRoot(x), AggregateType.COUNT_DISTINCT, Long.class);
+        return new UnaryExpression<>(requirePropertyOrRoot(x), UnaryExpressionType.COUNT_DISTINCT, Long.class);
     }
 
     /**
@@ -290,13 +292,13 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
     @NonNull
     public Predicate and(@NonNull Expression<Boolean> x, @NonNull Expression<Boolean> y) {
-        return new ConjunctionPredicate(Arrays.asList(requireBoolExpression(x), requireBoolExpression(y)));
+        return new ConjunctionPredicate(List.of(requireBoolExpression(x), requireBoolExpression(y)));
     }
 
     @Override
     @NonNull
     public Predicate and(@NonNull Predicate... restrictions) {
-        return and(Arrays.asList(restrictions));
+        return and(List.of(restrictions));
     }
 
     @Override
@@ -390,13 +392,13 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
     @NonNull
     public Predicate or(@NonNull Expression<Boolean> x, @NonNull Expression<Boolean> y) {
-        return new DisjunctionPredicate(Arrays.asList(requireBoolExpression(x), requireBoolExpression(y)));
+        return new DisjunctionPredicate(List.of(requireBoolExpression(x), requireBoolExpression(y)));
     }
 
     @Override
     @NonNull
     public Predicate or(@NonNull Predicate... restrictions) {
-        return or(Arrays.asList(restrictions));
+        return or(List.of(restrictions));
     }
 
     @Override
@@ -602,15 +604,10 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
         throw notSupportedOperation();
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     @NonNull
     public <N extends Number> Expression<N> sum(@NonNull Expression<? extends N> x, Expression<? extends N> y) {
-        throw notSupportedOperation();
+        return new BinaryExpression<>(x, y, BinaryExpressionType.SUM, (Class<N>) Number.class);
     }
 
     /**
@@ -621,7 +618,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
     @NonNull
     public <N extends Number> Expression<N> sum(@NonNull Expression<? extends N> x, @NonNull N y) {
-        throw notSupportedOperation();
+        return new BinaryExpression<>(x, literal(y), BinaryExpressionType.SUM, (Class<N>) Number.class);
     }
 
     /**
@@ -632,7 +629,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
     @NonNull
     public <N extends Number> Expression<N> sum(@NonNull N x, @NonNull Expression<? extends N> y) {
-        throw notSupportedOperation();
+        return new BinaryExpression<>(literal(x), y, BinaryExpressionType.SUM, (Class<N>) Number.class);
     }
 
     /**
@@ -863,25 +860,13 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
     @NonNull
     public <T> Expression<T> nullLiteral(@NonNull Class<T> x) {
-        return new LiteralExpression<>(null);
+        return new LiteralExpression<>(x);
     }
 
     @Override
     @NonNull
     public <T> ParameterExpression<T> parameter(@NonNull Class<T> paramClass) {
         return parameter(paramClass, null, null);
-    }
-
-    private String[] asStringPath(List<Association> associations, PersistentProperty property) {
-        if (associations.isEmpty()) {
-            return new String[]{property.getName()};
-        }
-        List<String> path = new ArrayList<>(associations.size() + 1);
-        for (Association association : associations) {
-            path.add(association.getName());
-        }
-        path.add(property.getName());
-        return path.toArray(new String[0]);
     }
 
     @Override
@@ -892,7 +877,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     /**
      * Create a new parameter with possible constant value.
      *
-     * @param paramClass The param calss
+     * @param paramClass The param class
      * @param name       The param name
      * @param value      The param value
      * @param <T>        The param type
@@ -906,42 +891,32 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
             public QueryParameterBinding bind(BindingContext bindingContext) {
                 String name = bindingContext.getName() == null ? String.valueOf(bindingContext.getIndex()) : bindingContext.getName();
                 PersistentPropertyPath outgoingQueryParameterProperty = bindingContext.getOutgoingQueryParameterProperty();
-                return new QueryParameterBinding() {
-                    @Override
-                    public String getName() {
-                        return name;
-                    }
+                if (outgoingQueryParameterProperty == null) {
+                    return new SimpleParameterBinding(name, DataType.forType(paramClass), bindingContext, value);
+                }
+                return new PropertyPathParameterBinding(name, outgoingQueryParameterProperty, bindingContext, value);
+            }
+        };
+    }
 
-                    @Override
-                    public String getKey() {
-                        return name;
-                    }
+    /**
+     * Create a new parameter with possible constant value.
+     *
+     * @param paramClass   The param class
+     * @param propertyPath The property path
+     * @param value        The param value
+     * @param <T>          The param type
+     * @return the parameter expression
+     * @since 4.9
+     */
+    @NonNull
+    public <T> ParameterExpression<T> parameterOfProperty(@NonNull Class<T> paramClass, @NonNull PersistentPropertyPath propertyPath, @Nullable Object value) {
+        return new ParameterExpressionImpl<>(paramClass, propertyPath.getProperty().getName()) {
 
-                    @Override
-                    public DataType getDataType() {
-                        return outgoingQueryParameterProperty.getProperty().getDataType();
-                    }
-
-                    @Override
-                    public JsonDataType getJsonDataType() {
-                        return outgoingQueryParameterProperty.getProperty().getJsonDataType();
-                    }
-
-                    @Override
-                    public String[] getPropertyPath() {
-                        return asStringPath(outgoingQueryParameterProperty.getAssociations(), outgoingQueryParameterProperty.getProperty());
-                    }
-
-                    @Override
-                    public boolean isExpandable() {
-                        return bindingContext.isExpandable();
-                    }
-
-                    @Override
-                    public Object getValue() {
-                        return value;
-                    }
-                };
+            @Override
+            public QueryParameterBinding bind(BindingContext bindingContext) {
+                String name = bindingContext.getName() == null ? String.valueOf(bindingContext.getIndex()) : bindingContext.getName();
+                return new PropertyPathParameterBinding(name, propertyPath, bindingContext, value);
             }
         };
     }
@@ -1184,37 +1159,22 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
         throw notSupportedOperation();
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     @NonNull
     public Expression<String> concat(@NonNull Expression<String> x, @NonNull Expression<String> y) {
-        throw notSupportedOperation();
+        return new BinaryExpression<>(x, y, BinaryExpressionType.CONCAT, String.class);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     @NonNull
     public Expression<String> concat(@NonNull Expression<String> x, @NonNull String y) {
-        throw notSupportedOperation();
+        return new BinaryExpression<>(x, literal(y), BinaryExpressionType.CONCAT, String.class);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     @NonNull
     public Expression<String> concat(@NonNull String x, @NonNull Expression<String> y) {
-        throw notSupportedOperation();
+        return new BinaryExpression<>(literal(x), y, BinaryExpressionType.CONCAT, String.class);
     }
 
     /**
@@ -1327,26 +1287,16 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
         throw notSupportedOperation();
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     @NonNull
     public Expression<String> lower(@NonNull Expression<String> x) {
-        throw notSupportedOperation();
+        return new UnaryExpression<>(x, UnaryExpressionType.LOWER);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     @NonNull
     public Expression<String> upper(@NonNull Expression<String> x) {
-        throw notSupportedOperation();
+        return new UnaryExpression<>(x, UnaryExpressionType.UPPER);
     }
 
     /**
@@ -1520,15 +1470,10 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
         throw notSupportedOperation();
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     @NonNull
     public <T> Expression<T> function(@NonNull String name, @NonNull Class<T> type, @NonNull Expression<?>... args) {
-        throw notSupportedOperation();
+        return new FunctionExpression<>(Objects.requireNonNull(name), List.of(args), Objects.requireNonNull(type));
     }
 
     /**
@@ -1666,5 +1611,77 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
     public <T extends Number> Expression<T> round(Expression<T> x, Integer n) {
         throw notSupportedOperation();
+    }
+
+    private record PropertyPathParameterBinding(String getName,
+                                                PersistentPropertyPath outgoingQueryParameterProperty,
+                                                BindingParameter.BindingContext bindingContext,
+                                                @Nullable Object value) implements QueryParameterBinding {
+
+        @Override
+        public String getKey() {
+            return getName;
+        }
+
+        @Override
+        public DataType getDataType() {
+            return outgoingQueryParameterProperty.getProperty().getDataType();
+        }
+
+        @Override
+        public JsonDataType getJsonDataType() {
+            return outgoingQueryParameterProperty.getProperty().getJsonDataType();
+        }
+
+        @Override
+        public String[] getPropertyPath() {
+            return outgoingQueryParameterProperty.getArrayPath();
+        }
+
+        @Override
+        public boolean isExpandable() {
+            return bindingContext.isExpandable();
+        }
+
+        @Override
+        public Object getValue() {
+            return value;
+        }
+    }
+
+    private record SimpleParameterBinding(String getName,
+                                          DataType dataType,
+                                          BindingParameter.BindingContext bindingContext,
+                                          @Nullable Object value) implements QueryParameterBinding {
+
+        @Override
+        public String getKey() {
+            return getName;
+        }
+
+        @Override
+        public DataType getDataType() {
+            return dataType;
+        }
+
+        @Override
+        public JsonDataType getJsonDataType() {
+            return JsonDataType.DEFAULT;
+        }
+
+        @Override
+        public String[] getPropertyPath() {
+            return null;
+        }
+
+        @Override
+        public boolean isExpandable() {
+            return bindingContext.isExpandable();
+        }
+
+        @Override
+        public Object getValue() {
+            return value;
+        }
     }
 }

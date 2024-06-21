@@ -834,7 +834,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
             StringJoiner joinPathJoiner = new StringJoiner(".");
             for (Association association : propertyPath.getAssociations()) {
                 joinPathJoiner.add(association.getName());
-                if (association instanceof Embedded) {
+                if (association.isEmbedded()) {
                     continue;
                 }
                 if (joinAssociation == null) {

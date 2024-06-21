@@ -48,7 +48,7 @@ public final class PersistentPropertyBetweenPredicate<T> extends AbstractPersist
     }
 
     @Override
-    public void accept(PredicateVisitor predicateVisitor) {
+    public void visitPredicate(PredicateVisitor predicateVisitor) {
         predicateVisitor.visit(this);
     }
 

@@ -483,7 +483,11 @@ public interface FindersUtils {
                 getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.reactive.FindAllReactiveSpecificationInterceptor")
             );
         }
-        return typeAndInterceptorEntry(returnType.getType(),
+        ClassElement type = returnType.getType();
+        if (isContainer(returnType, Iterable.class)) {
+            type = returnType.getFirstTypeArgument().orElse(null);
+        }
+        return typeAndInterceptorEntry(type,
             getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.FindAllSpecificationInterceptor")
         );
     }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.model.jpa.criteria.impl.selection;
+package io.micronaut.data.model.jpa.criteria.impl.expression;
 
 import io.micronaut.core.annotation.Internal;
 
@@ -24,6 +24,6 @@ import io.micronaut.core.annotation.Internal;
  * @since 3.2
  */
 @Internal
-public enum AggregateType {
-    AVG, SUM, MAX, MIN, COUNT, COUNT_DISTINCT
+public enum UnaryExpressionType {
+    AVG, SUM, MAX, MIN, COUNT, COUNT_DISTINCT, UPPER, LOWER
 }
