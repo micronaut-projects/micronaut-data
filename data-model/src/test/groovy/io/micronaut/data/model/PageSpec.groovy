@@ -164,14 +164,25 @@ class PageSpec extends Specification {
     }
 
     void "test empty page map"() {
-        when:
+        when:"Map empty page"
         def page = Page.empty()
-        def mapped = page.map { it }
-        then:
+        def mappedPage = page.map { it }
+        then:"No exception thrown, page is mapped"
         page.size == -1
         !page.hasTotalSize()
-        mapped.size == -1
-        !mapped.hasTotalSize()
+        mappedPage.size == -1
+        !mappedPage.hasTotalSize()
+
+        when:"Map empty cursored page"
+        def cursoredPage = CursoredPage.empty()
+        def mappedCursoredPage = cursoredPage.map { it }
+        then:"No exception thrown, cursored page is mapped"
+        cursoredPage.size == -1
+        !cursoredPage.cursors
+        !cursoredPage.hasTotalSize()
+        mappedCursoredPage.size == -1
+        !mappedCursoredPage.cursors
+        !mappedCursoredPage.hasTotalSize()
     }
 
     @EqualsAndHashCode
