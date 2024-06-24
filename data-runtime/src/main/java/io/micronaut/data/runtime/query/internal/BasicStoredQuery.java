@@ -17,6 +17,8 @@ package io.micronaut.data.runtime.query.internal;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.beans.BeanIntrospection;
+import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.RepositoryConfiguration;
@@ -52,6 +54,7 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
     private final DataType resultDataType;
     private final boolean rawQuery;
     private final OperationType operationType;
+    private final boolean isDto;
 
     public BasicStoredQuery(String query,
                             String[] expandableQueryParts,
@@ -86,6 +89,12 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
         this.operationType = operationType;
         this.resultDataType = isCount ? DataType.forType(resultType) : (rootEntity == resultType) ? DataType.ENTITY : DataType.forType(resultType);
         this.rawQuery = annotationMetadata.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
+        this.isDto = resultDataType == DataType.OBJECT && BeanIntrospector.SHARED.findIntrospection(resultType).isPresent();
+    }
+
+    @Override
+    public boolean isDtoProjection() {
+        return isDto;
     }
 
     @Override
