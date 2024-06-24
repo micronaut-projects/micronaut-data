@@ -37,6 +37,7 @@ class H2AutoPopulateSpec extends Specification {
         then:
         exampleEntity.id.otherProp == "data1"
         exampleEntity.id.uuid
+        exampleEntity.guid
 
         when:"An entity is retrieved by ID"
         exampleEntity = exampleRepository.findById(exampleEntity.id).orElse(null)
@@ -61,6 +62,8 @@ class ExampleEntity {
     @Embedded
     private Audit audit
     private String name
+    @AutoPopulated
+    UUID guid
 
     ExampleEntity(ExampleId id, String name) {
         this.id = id
@@ -90,6 +93,14 @@ class ExampleEntity {
 
     void setName(String name) {
         this.name = name
+    }
+
+    UUID getGuid() {
+        return guid
+    }
+
+    void setGuid(UUID guid) {
+        this.guid = guid
     }
 
     @PrePersist
