@@ -1274,23 +1274,23 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
     }
 
     private void appendConcat(StringBuilder writer, Collection<Runnable> partsWriters) {
-        String concatSeparator = concatSeparator();
-        writer.append("CONCAT(");
-        for (Iterator<Runnable> iterator = partsWriters.iterator(); iterator.hasNext(); ) {
-            Runnable partWriter = iterator.next();
-            partWriter.run();
-            if (iterator.hasNext()) {
-                writer.append(concatSeparator);
-            }
-        }
-        writer.append(")");
-    }
-
-    private String concatSeparator() {
         if (getDialect() == Dialect.ORACLE) {
-            return " || ";
+            for (Iterator<Runnable> iterator = partsWriters.iterator(); iterator.hasNext(); ) {
+                iterator.next().run();
+                if (iterator.hasNext()) {
+                    writer.append(" || ");
+                }
+            }
+        } else {
+            writer.append("CONCAT(");
+            for (Iterator<Runnable> iterator = partsWriters.iterator(); iterator.hasNext(); ) {
+                iterator.next().run();
+                if (iterator.hasNext()) {
+                    writer.append(COMMA);
+                }
+            }
+            writer.append(")");
         }
-        return ",";
     }
 
     /**
@@ -2338,13 +2338,9 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
             Expression<?> right = binaryExpression.getRight();
             switch (binaryExpression.getType()) {
                 case SUM -> {
-                    if (getDialect() == Dialect.H2) {
-                        appendExpression(left);
-                        query.append(" + ");
-                        appendExpression(right);
-                    } else {
-                        appendFunction("SUM", List.of(left, right));
-                    }
+                    appendExpression(left);
+                    query.append(" + ");
+                    appendExpression(right);
                 }
                 case CONCAT -> appendFunction("CONCAT", List.of(left, right));
                 default ->
