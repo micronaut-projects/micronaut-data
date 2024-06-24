@@ -126,7 +126,7 @@ public interface CursoredPage<T> extends Page<T> {
     @Override
     default @NonNull <T2> CursoredPage<T2> map(Function<T, T2> function) {
         List<T2> content = getContent().stream().map(function).collect(Collectors.toList());
-        return new DefaultCursoredPage<>(content, getPageable(), getCursors(), getTotalSize());
+        return new DefaultCursoredPage<>(content, getPageable(), getCursors(), hasTotalSize() ? getTotalSize() : null);
     }
 
     /**
