@@ -26,7 +26,6 @@ import io.micronaut.data.document.serde.IdDeserializer;
 import io.micronaut.data.document.serde.IdPropertyNamingStrategy;
 import io.micronaut.data.document.serde.OneRelationDeserializer;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
-import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.mongodb.conf.MongoDataConfiguration;
 import io.micronaut.serde.Decoder;

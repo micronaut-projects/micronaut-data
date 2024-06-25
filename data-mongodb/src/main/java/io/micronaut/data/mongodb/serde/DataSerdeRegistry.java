@@ -17,7 +17,6 @@ package io.micronaut.data.mongodb.serde;
 
 import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
@@ -73,7 +72,7 @@ final class DataSerdeRegistry implements SerdeRegistry {
      * @param attributeConverterRegistry   The attributeConverterRegistry
      * @param mongoDataConfiguration       The Mongo configuration
      */
-    public DataSerdeRegistry(@Nullable BeanContext beanContext,
+    public DataSerdeRegistry(BeanContext beanContext,
                              RuntimeEntityRegistry runtimeEntityRegistry,
                              AttributeConverterRegistry attributeConverterRegistry,
                              MongoDataConfiguration mongoDataConfiguration) {
