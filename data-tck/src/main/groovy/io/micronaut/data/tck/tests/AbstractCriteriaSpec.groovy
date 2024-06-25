@@ -303,7 +303,7 @@ abstract class AbstractCriteriaSpec extends Specification {
                     criteriaBuilder.parameter(Long)
             ))
         then:
-            getSelectQueryPart(criteriaQuery) == 'SUM(?,?)'
+            getSelectQueryPart(criteriaQuery) == '? + ?'
     }
 
     void "test binary sum 2"() {
@@ -316,7 +316,7 @@ abstract class AbstractCriteriaSpec extends Specification {
                     criteriaBuilder.parameter(Long)
             ))
         then:
-            getSelectQueryPart(criteriaQuery) == 'SUM(test_."age",?)'
+            getSelectQueryPart(criteriaQuery) == 'test_."age" + ?'
     }
 
     void "test binary concat 1"() {
