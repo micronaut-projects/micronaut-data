@@ -119,6 +119,11 @@ extends jakarta.persistence.criteria.Root&lt;T&gt;, <a href="PersistentEntityFro
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Returns the entity version expression.</div>
 </div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#visitExpression(io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor)" class="member-name-link">visitExpression</a><wbr>(<a href="impl/ExpressionVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">ExpressionVisitor</a>&nbsp;expressionVisitor)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Visit the expression.</div>
+</div>
 </div>
 </div>
 </div>
@@ -130,7 +135,7 @@ extends jakarta.persistence.criteria.Root&lt;T&gt;, <a href="PersistentEntityFro
 <code>getCorrelationParent, getJoins, isCorrelated, join, join, joinMap, joinMap</code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.model.jpa.criteria.IExpression">Methods inherited from interface&nbsp;io.micronaut.data.model.jpa.criteria.<a href="IExpression.html" title="interface in io.micronaut.data.model.jpa.criteria">IExpression</a></h3>
-<code><a href="IExpression.html#as(java.lang.Class)">as</a>, <a href="IExpression.html#in(jakarta.persistence.criteria.Expression...)">in</a>, <a href="IExpression.html#in(jakarta.persistence.criteria.Expression)">in</a>, <a href="IExpression.html#in(java.lang.Object...)">in</a>, <a href="IExpression.html#in(java.util.Collection)">in</a>, <a href="IExpression.html#isBoolean()">isBoolean</a>, <a href="IExpression.html#isComparable()">isComparable</a>, <a href="IExpression.html#isNotNull()">isNotNull</a>, <a href="IExpression.html#isNull()">isNull</a>, <a href="IExpression.html#isNumeric()">isNumeric</a></code></div>
+<code><a href="IExpression.html#as(java.lang.Class)">as</a>, <a href="IExpression.html#in(jakarta.persistence.criteria.Expression...)">in</a>, <a href="IExpression.html#in(jakarta.persistence.criteria.Expression)">in</a>, <a href="IExpression.html#in(java.lang.Object...)">in</a>, <a href="IExpression.html#in(java.util.Collection)">in</a>, <a href="IExpression.html#isBoolean()">isBoolean</a>, <a href="IExpression.html#isComparable()">isComparable</a>, <a href="IExpression.html#isNotNull()">isNotNull</a>, <a href="IExpression.html#isNull()">isNull</a>, <a href="IExpression.html#isNumeric()">isNumeric</a>, <a href="IExpression.html#visitSelection(io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor)">visitSelection</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.model.jpa.criteria.ISelection">Methods inherited from interface&nbsp;io.micronaut.data.model.jpa.criteria.<a href="ISelection.html" title="interface in io.micronaut.data.model.jpa.criteria">ISelection</a></h3>
 <code><a href="ISelection.html#alias(java.lang.String)">alias</a>, <a href="ISelection.html#getAlias()">getAlias</a>, <a href="ISelection.html#getCompoundSelectionItems()">getCompoundSelectionItems</a>, <a href="ISelection.html#isCompoundSelection()">isCompoundSelection</a></code></div>
@@ -139,7 +144,7 @@ extends jakarta.persistence.criteria.Root&lt;T&gt;, <a href="PersistentEntityFro
 <code>get, get, get, getParentPath, type</code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.model.jpa.criteria.PersistentEntityFrom">Methods inherited from interface&nbsp;io.micronaut.data.model.jpa.criteria.<a href="PersistentEntityFrom.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityFrom</a></h3>
-<code><a href="PersistentEntityFrom.html#join(jakarta.persistence.metamodel.CollectionAttribute)">join</a>, <a href="PersistentEntityFrom.html#join(jakarta.persistence.metamodel.CollectionAttribute,jakarta.persistence.criteria.JoinType)">join</a>, <a href="PersistentEntityFrom.html#join(jakarta.persistence.metamodel.ListAttribute)">join</a>, <a href="PersistentEntityFrom.html#join(jakarta.persistence.metamodel.ListAttribute,jakarta.persistence.criteria.JoinType)">join</a>, <a href="PersistentEntityFrom.html#join(jakarta.persistence.metamodel.SetAttribute)">join</a>, <a href="PersistentEntityFrom.html#join(jakarta.persistence.metamodel.SetAttribute,jakarta.persistence.criteria.JoinType)">join</a>, <a href="PersistentEntityFrom.html#join(jakarta.persistence.metamodel.SingularAttribute)">join</a>, <a href="PersistentEntityFrom.html#join(jakarta.persistence.metamodel.SingularAttribute,jakarta.persistence.criteria.JoinType)">join</a>, <a href="PersistentEntityFrom.html#join(java.lang.String)">join</a>, <a href="PersistentEntityFrom.html#join(java.lang.String,jakarta.persistence.criteria.JoinType)">join</a>, <a href="PersistentEntityFrom.html#join(java.lang.String,io.micronaut.data.annotation.Join.Type)">join</a>, <a href="PersistentEntityFrom.html#join(java.lang.String,io.micronaut.data.annotation.Join.Type,java.lang.String)">join</a>, <a href="PersistentEntityFrom.html#joinCollection(java.lang.String)">joinCollection</a>, <a href="PersistentEntityFrom.html#joinCollection(java.lang.String,jakarta.persistence.criteria.JoinType)">joinCollection</a>, <a href="PersistentEntityFrom.html#joinList(java.lang.String)">joinList</a>, <a href="PersistentEntityFrom.html#joinList(java.lang.String,jakarta.persistence.criteria.JoinType)">joinList</a>, <a href="PersistentEntityFrom.html#joinSet(java.lang.String)">joinSet</a>, <a href="PersistentEntityFrom.html#joinSet(java.lang.String,jakarta.persistence.criteria.JoinType)">joinSet</a></code></div>
+<code><a href="PersistentEntityFrom.html#getPersistentJoins()">getPersistentJoins</a>, <a href="PersistentEntityFrom.html#join(jakarta.persistence.metamodel.CollectionAttribute)">join</a>, <a href="PersistentEntityFrom.html#join(jakarta.persistence.metamodel.CollectionAttribute,jakarta.persistence.criteria.JoinType)">join</a>, <a href="PersistentEntityFrom.html#join(jakarta.persistence.metamodel.ListAttribute)">join</a>, <a href="PersistentEntityFrom.html#join(jakarta.persistence.metamodel.ListAttribute,jakarta.persistence.criteria.JoinType)">join</a>, <a href="PersistentEntityFrom.html#join(jakarta.persistence.metamodel.SetAttribute)">join</a>, <a href="PersistentEntityFrom.html#join(jakarta.persistence.metamodel.SetAttribute,jakarta.persistence.criteria.JoinType)">join</a>, <a href="PersistentEntityFrom.html#join(jakarta.persistence.metamodel.SingularAttribute)">join</a>, <a href="PersistentEntityFrom.html#join(jakarta.persistence.metamodel.SingularAttribute,jakarta.persistence.criteria.JoinType)">join</a>, <a href="PersistentEntityFrom.html#join(java.lang.String)">join</a>, <a href="PersistentEntityFrom.html#join(java.lang.String,jakarta.persistence.criteria.JoinType)">join</a>, <a href="PersistentEntityFrom.html#join(java.lang.String,io.micronaut.data.annotation.Join.Type)">join</a>, <a href="PersistentEntityFrom.html#join(java.lang.String,io.micronaut.data.annotation.Join.Type,java.lang.String)">join</a>, <a href="PersistentEntityFrom.html#joinCollection(java.lang.String)">joinCollection</a>, <a href="PersistentEntityFrom.html#joinCollection(java.lang.String,jakarta.persistence.criteria.JoinType)">joinCollection</a>, <a href="PersistentEntityFrom.html#joinList(java.lang.String)">joinList</a>, <a href="PersistentEntityFrom.html#joinList(java.lang.String,jakarta.persistence.criteria.JoinType)">joinList</a>, <a href="PersistentEntityFrom.html#joinSet(java.lang.String)">joinSet</a>, <a href="PersistentEntityFrom.html#joinSet(java.lang.String,jakarta.persistence.criteria.JoinType)">joinSet</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.model.jpa.criteria.PersistentEntityPath">Methods inherited from interface&nbsp;io.micronaut.data.model.jpa.criteria.<a href="PersistentEntityPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityPath</a></h3>
 <code><a href="PersistentEntityPath.html#get(java.lang.String)">get</a>, <a href="PersistentEntityPath.html#getPersistentEntity()">getPersistentEntity</a></code></div>
@@ -203,6 +208,20 @@ extends jakarta.persistence.criteria.Root&lt;T&gt;, <a href="PersistentEntityFro
 <dd><code>persistentProperty</code> - The persistent property</dd>
 <dt>Returns:</dt>
 <dd>The property expression</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="visitExpression(io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor)">
+<h3>visitExpression</h3>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">visitExpression</span><wbr><span class="parameters">(<a href="impl/ExpressionVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">ExpressionVisitor</a>&nbsp;expressionVisitor)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="IExpression.html#visitExpression(io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor)">IExpression</a></code></span></div>
+<div class="block">Visit the expression.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="IExpression.html#visitExpression(io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor)">visitExpression</a></code>&nbsp;in interface&nbsp;<code><a href="IExpression.html" title="interface in io.micronaut.data.model.jpa.criteria">IExpression</a>&lt;<a href="PersistentEntityRoot.html" title="type parameter in PersistentEntityRoot">T</a>&gt;</code></dd>
+<dt>Parameters:</dt>
+<dd><code>expressionVisitor</code> - The expression visitor</dd>
 </dl>
 </section>
 </li>

@@ -105,19 +105,6 @@ loadScripts(document, 'script');</script>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getJoinPaths()" class="member-name-link">getJoinPaths</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="../JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#join(java.lang.String,io.micronaut.data.annotation.Join.Type)" class="member-name-link">join</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;path,
- <a href="../../../annotation/Join.Type.html" title="enum class in io.micronaut.data.annotation">Join.Type</a>&nbsp;joinType)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
-<div class="block">Join on the given association.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="../JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#join(java.lang.String,io.micronaut.data.annotation.Join.Type,java.lang.String)" class="member-name-link">join</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;path,
- <a href="../../../annotation/Join.Type.html" title="enum class in io.micronaut.data.annotation">Join.Type</a>&nbsp;joinType,
- @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;alias)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
-<div class="block">Join on the given association.</div>
-</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default int</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#limit()" class="member-name-link">limit</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
@@ -186,43 +173,6 @@ loadScripts(document, 'script');</script>
 <dd><code>path</code> - The path</dd>
 <dt>Returns:</dt>
 <dd>The join type for the association.</dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="join(java.lang.String,io.micronaut.data.annotation.Join.Type,java.lang.String)">
-<h3>join</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type">@NonNull <a href="../JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a></span>&nbsp;<span class="element-name">join</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;path,
- @NonNull
- <a href="../../../annotation/Join.Type.html" title="enum class in io.micronaut.data.annotation">Join.Type</a>&nbsp;joinType,
- @Nullable
- @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;alias)</span></div>
-<div class="block">Join on the given association.</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>path</code> - The join path</dd>
-<dd><code>joinType</code> - The join type</dd>
-<dd><code>alias</code> - The alias to use.</dd>
-<dt>Returns:</dt>
-<dd>The query</dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="join(java.lang.String,io.micronaut.data.annotation.Join.Type)">
-<h3>join</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="../JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a></span>&nbsp;<span class="element-name">join</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;path,
- @NonNull
- <a href="../../../annotation/Join.Type.html" title="enum class in io.micronaut.data.annotation">Join.Type</a>&nbsp;joinType)</span></div>
-<div class="block">Join on the given association.</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>path</code> - The join path</dd>
-<dd><code>joinType</code> - The join type</dd>
-<dt>Returns:</dt>
-<dd>The query</dd>
 </dl>
 </section>
 </li>

@@ -239,20 +239,34 @@ implements <a href="../QueryBuilder2.html" title="interface in io.micronaut.data
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Append the delete clause.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#appendForUpdate(io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder2.QueryPosition,io.micronaut.data.model.query.builder.QueryBuilder2.SelectQueryDefinition,java.lang.StringBuilder)" class="member-name-link">appendForUpdate</a><wbr>(<a href="AbstractSqlLikeQueryBuilder2.QueryPosition.html" title="enum class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder2.QueryPosition</a>&nbsp;queryPosition,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#appendExpression(io.micronaut.core.annotation.AnnotationMetadata,java.lang.StringBuilder,io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder2.QueryState,jakarta.persistence.criteria.Expression,boolean)" class="member-name-link">appendExpression</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/StringBuilder.html" title="class or interface in java.lang" class="external-link">StringBuilder</a>&nbsp;query,
+ <a href="AbstractSqlLikeQueryBuilder2.QueryState.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder2.QueryState</a>&nbsp;queryState,
+ jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ boolean&nbsp;isProjection)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#appendForUpdate(io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder2.QueryPosition,io.micronaut.data.model.query.builder.QueryBuilder2.SelectQueryDefinition,java.lang.StringBuilder)" class="member-name-link">appendForUpdate</a><wbr>(<a href="AbstractSqlLikeQueryBuilder2.QueryPosition.html" title="enum class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder2.QueryPosition</a>&nbsp;queryPosition,
  <a href="../QueryBuilder2.SelectQueryDefinition.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder2.SelectQueryDefinition</a>&nbsp;definition,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/StringBuilder.html" title="class or interface in java.lang" class="external-link">StringBuilder</a>&nbsp;queryBuilder)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Adds "forUpdate" pisimmistic locking.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#appendOrder(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryBuilder2.SelectQueryDefinition,io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder2.QueryState)" class="member-name-link">appendOrder</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#appendOrder(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryBuilder2.SelectQueryDefinition,io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder2.QueryState)" class="member-name-link">appendOrder</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  <a href="../QueryBuilder2.SelectQueryDefinition.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder2.SelectQueryDefinition</a>&nbsp;definition,
  <a href="AbstractSqlLikeQueryBuilder2.QueryState.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder2.QueryState</a>&nbsp;queryState)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Appends order to the query.</div>
 </div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#appendPropertyRef(io.micronaut.core.annotation.AnnotationMetadata,java.lang.StringBuilder,io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder2.QueryState,io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder2.QueryPropertyPath,boolean)" class="member-name-link">appendPropertyRef</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/StringBuilder.html" title="class or interface in java.lang" class="external-link">StringBuilder</a>&nbsp;query,
+ <a href="AbstractSqlLikeQueryBuilder2.QueryState.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder2.QueryState</a>&nbsp;queryState,
+ <a href="AbstractSqlLikeQueryBuilder2.QueryPropertyPath.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder2.QueryPropertyPath</a>&nbsp;propertyPath,
+ boolean&nbsp;isProjection)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#appendTransformed(java.lang.StringBuilder,java.lang.String,java.lang.Runnable)" class="member-name-link">appendTransformed</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/StringBuilder.html" title="class or interface in java.lang" class="external-link">StringBuilder</a>&nbsp;sb,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;transformed,
@@ -1538,6 +1552,26 @@ implements <a href="../QueryBuilder2.html" title="interface in io.micronaut.data
 <dt>Returns:</dt>
 <dd>true if <a href="../../../../annotation/EntityRepresentation.html" title="annotation interface in io.micronaut.data.annotation"><code>EntityRepresentation</code></a> annotation with JSON type is used for the repository method</dd>
 </dl>
+</section>
+</li>
+<li>
+<section class="detail" id="appendExpression(io.micronaut.core.annotation.AnnotationMetadata,java.lang.StringBuilder,io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder2.QueryState,jakarta.persistence.criteria.Expression,boolean)">
+<h3>appendExpression</h3>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">appendExpression</span><wbr><span class="parameters">(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/StringBuilder.html" title="class or interface in java.lang" class="external-link">StringBuilder</a>&nbsp;query,
+ <a href="AbstractSqlLikeQueryBuilder2.QueryState.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder2.QueryState</a>&nbsp;queryState,
+ jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;expression,
+ boolean&nbsp;isProjection)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="appendPropertyRef(io.micronaut.core.annotation.AnnotationMetadata,java.lang.StringBuilder,io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder2.QueryState,io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder2.QueryPropertyPath,boolean)">
+<h3>appendPropertyRef</h3>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">appendPropertyRef</span><wbr><span class="parameters">(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/StringBuilder.html" title="class or interface in java.lang" class="external-link">StringBuilder</a>&nbsp;query,
+ <a href="AbstractSqlLikeQueryBuilder2.QueryState.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder2.QueryState</a>&nbsp;queryState,
+ <a href="AbstractSqlLikeQueryBuilder2.QueryPropertyPath.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder2.QueryPropertyPath</a>&nbsp;propertyPath,
+ boolean&nbsp;isProjection)</span></div>
 </section>
 </li>
 </ul>

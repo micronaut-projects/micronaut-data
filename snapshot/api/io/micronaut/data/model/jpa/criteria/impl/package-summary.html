@@ -74,14 +74,16 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color"><a href="../package-summary.html">io.micronaut.data.model.jpa.criteria</a></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><a href="predicate/package-summary.html">io.micronaut.data.model.jpa.criteria.impl.predicate</a></div>
+<div class="col-first odd-row-color"><a href="expression/package-summary.html">io.micronaut.data.model.jpa.criteria.impl.expression</a></div>
 <div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><a href="query/package-summary.html">io.micronaut.data.model.jpa.criteria.impl.query</a></div>
+<div class="col-first even-row-color"><a href="predicate/package-summary.html">io.micronaut.data.model.jpa.criteria.impl.predicate</a></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><a href="selection/package-summary.html">io.micronaut.data.model.jpa.criteria.impl.selection</a></div>
+<div class="col-first odd-row-color"><a href="query/package-summary.html">io.micronaut.data.model.jpa.criteria.impl.query</a></div>
 <div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><a href="util/package-summary.html">io.micronaut.data.model.jpa.criteria.impl.util</a></div>
+<div class="col-first even-row-color"><a href="selection/package-summary.html">io.micronaut.data.model.jpa.criteria.impl.selection</a></div>
 <div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><a href="util/package-summary.html">io.micronaut.data.model.jpa.criteria.impl.util</a></div>
+<div class="col-last odd-row-color">&nbsp;</div>
 </div>
 </div>
 </li>
@@ -120,25 +122,17 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">Criteria util class.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="IdExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl">IdExpression</a>&lt;E,<wbr>T&gt;</div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
-<div class="block">The ID expression implementation.</div>
+<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="ExpressionVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">ExpressionVisitor</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab1">
+<div class="block">The expression visitor.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="LiteralExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl">LiteralExpression</a>&lt;T&gt;</div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="ParameterExpressionImpl.html" title="class in io.micronaut.data.model.jpa.criteria.impl">ParameterExpressionImpl</a>&lt;T&gt;</div>
 <div class="col-last even-row-color class-summary class-summary-tab2">
-<div class="block">The literal expression implementation.</div>
-</div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="ParameterExpressionImpl.html" title="class in io.micronaut.data.model.jpa.criteria.impl">ParameterExpressionImpl</a>&lt;T&gt;</div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">The abstract implementation of <code>ParameterExpression</code>.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="PersistentPropertyOrder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">PersistentPropertyOrder</a>&lt;T&gt;</div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="PersistentPropertyOrder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">PersistentPropertyOrder</a>&lt;T&gt;</div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">The implementation of <code>Order</code>.</div>
-</div>
-<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="PredicateVisitable.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">PredicateVisitable</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab1">
-<div class="block">The visitable predicate.</div>
 </div>
 <div class="col-first even-row-color class-summary class-summary-tab1"><a href="PredicateVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">PredicateVisitor</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab1">
@@ -148,12 +142,8 @@ loadScripts(document, 'script');</script>
 <div class="col-last odd-row-color class-summary class-summary-tab1">
 <div class="block">The query provider.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab1"><a href="SelectionVisitable.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">SelectionVisitable</a></div>
+<div class="col-first even-row-color class-summary class-summary-tab1"><a href="SelectionVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">SelectionVisitor</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab1">
-<div class="block">The visitable selection.</div>
-</div>
-<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="SelectionVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">SelectionVisitor</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab1">
 <div class="block">The selection visitor.</div>
 </div>
 </div>
