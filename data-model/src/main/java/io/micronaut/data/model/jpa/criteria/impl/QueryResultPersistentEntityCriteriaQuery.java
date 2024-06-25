@@ -38,43 +38,46 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
 @Internal
 public interface QueryResultPersistentEntityCriteriaQuery {
 
-    default QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder queryBuilder) {
-        if (queryBuilder.getClass().getSimpleName().equals("CosmosSqlQueryBuilder")) {
+    static QueryBuilder2 findQueryBuilder2(QueryBuilder queryBuilder) {
+        Class<? extends QueryBuilder> queryBuilderClass = queryBuilder.getClass();
+        if (queryBuilderClass.getSimpleName().equals("CosmosSqlQueryBuilder")) {
             // Use new implementation
             try {
-                return buildQuery(annotationMetadata, (QueryBuilder2) getClass()
+                return (QueryBuilder2) queryBuilderClass
                     .getClassLoader().loadClass("io.micronaut.data.document.model.query.builder.CosmosSqlQueryBuilder2")
                     .getDeclaredConstructor(AnnotationMetadata.class)
-                    .newInstance(((SqlQueryBuilder) queryBuilder).getAnnotationMetadata()));
+                    .newInstance(((SqlQueryBuilder) queryBuilder).getAnnotationMetadata());
             } catch (RuntimeException e) {
                 throw e;
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         }
-        if (queryBuilder.getClass().getSimpleName().equals("MongoQueryBuilder")) {
+        if (queryBuilderClass.getSimpleName().equals("MongoQueryBuilder")) {
             // Use new implementation
             try {
-                return buildQuery(annotationMetadata, (QueryBuilder2) getClass()
+                return (QueryBuilder2)  queryBuilderClass
                     .getClassLoader().loadClass("io.micronaut.data.document.model.query.builder.MongoQueryBuilder2")
                     .getDeclaredConstructor()
-                    .newInstance());
+                    .newInstance();
             } catch (RuntimeException e) {
                 throw e;
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         }
-        if (queryBuilder.getClass() == SqlQueryBuilder.class) {
+        if (queryBuilderClass == SqlQueryBuilder.class) {
             // Use new implementation
-            return buildQuery(annotationMetadata, newSqlQueryBuilder((SqlQueryBuilder) queryBuilder));
+            return newSqlQueryBuilder((SqlQueryBuilder) queryBuilder);
         }
-        if (queryBuilder.getClass() == JpaQueryBuilder.class) {
+        if (queryBuilderClass == JpaQueryBuilder.class) {
             // Use new implementation
-            return buildQuery(annotationMetadata, new JpaQueryBuilder2());
+            return new JpaQueryBuilder2();
         }
-        return queryBuilder.buildQuery(annotationMetadata, getQueryModel());
+        return null;
     }
+
+    QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder queryBuilder);
 
     QueryModel getQueryModel();
 
@@ -128,7 +131,7 @@ public interface QueryResultPersistentEntityCriteriaQuery {
         throw new UnsupportedOperationException();
     }
 
-    private QueryBuilder2 newSqlQueryBuilder(SqlQueryBuilder sqlQueryBuilder) {
+    private static QueryBuilder2 newSqlQueryBuilder(SqlQueryBuilder sqlQueryBuilder) {
         // Use new implementation
         AnnotationMetadata builderAnnotationMetadata = sqlQueryBuilder.getAnnotationMetadata();
         if (builderAnnotationMetadata == null) {

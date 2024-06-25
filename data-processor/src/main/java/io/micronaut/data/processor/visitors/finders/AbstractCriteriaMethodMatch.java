@@ -205,7 +205,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             for (ParameterElement queryParam : queryParams) {
                 String paramName = queryParam.getName();
                 PersistentPropertyPath propPath = rootEntity.getPropertyPath(rootEntity.getPath(paramName).orElse(paramName));
-                ParameterExpression<Object> param = cb.parameter(queryParam);
+                ParameterExpression<Object> param = cb.parameter(queryParam, propPath);
                 if (propPath == null) {
                     if (TypeRole.ID.equals(paramName) && (rootEntity.hasIdentity() || rootEntity.hasCompositeIdentity())) {
                         predicates.add(cb.equal(root.id(), param));
@@ -365,7 +365,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                 restrictionName += IGNORE_CASE;
                 propertyName = propertyName.substring(IGNORE_CASE.length());
             }
-            Restrictions.PropertyRestriction<?> restriction = Restrictions.findPropertyRestriction(restrictionName);
+            Restrictions.PropertyRestriction<Object> restriction = Restrictions.findPropertyRestriction(restrictionName);
             if (restriction == null) {
                 throw new MatchFailedException("Unknown restriction: " + restrictionName);
             }
@@ -375,7 +375,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         Matcher matcher = RESTRICTIONS_PATTERN.matcher(expression);
         if (matcher.find()) {
             String restrictionName = matcher.group(1);
-            Restrictions.Restriction<?> restriction = Restrictions.findRestriction(restrictionName);
+            Restrictions.Restriction<Object> restriction = Restrictions.findRestriction(restrictionName);
             if (restriction == null) {
                 throw new MatchFailedException("Unknown restriction: " + restrictionName);
             }
@@ -388,7 +388,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             restrictionName += IGNORE_CASE;
             propertyName = extractPropertyName(propertyName, IGNORE_CASE);
         }
-        Restrictions.PropertyRestriction<?> restriction = Restrictions.findPropertyRestriction(restrictionName);
+        Restrictions.PropertyRestriction<Object> restriction = Restrictions.findPropertyRestriction(restrictionName);
         return getPropertyRestriction(propertyName, root, cb, parameters, restriction);
     }
 
@@ -412,7 +412,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                                                  PersistentEntityRoot<T> root,
                                                  SourcePersistentEntityCriteriaBuilder cb,
                                                  Iterator<ParameterElement> parameters,
-                                                 Restrictions.PropertyRestriction<?> restriction) {
+                                                 Restrictions.PropertyRestriction<Object> restriction) {
         boolean negation = false;
 
         if (propertyName.endsWith(NOT)) {
@@ -425,17 +425,18 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             throw new MatchFailedException("No property name specified in clause: " + restriction.getName());
         }
 
-        Expression prop = getProperty(root, propertyName);
+        Expression<Object> prop = getProperty(root, propertyName);
 
+        List<ParameterExpression<Object>> parameterExpressions = provideParams(parameters,
+            restriction.getRequiredParameters(),
+            restriction.getName(),
+            cb,
+            prop
+        );
         Predicate predicate = restriction.find(root,
             cb,
             prop,
-            provideParams(parameters,
-                restriction.getRequiredParameters(),
-                restriction.getName(),
-                cb,
-                prop
-            ).toArray(new ParameterExpression[0]));
+            parameterExpressions);
 
         if (negation) {
             predicate = predicate.not();
@@ -446,20 +447,18 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     private <T> Predicate getRestriction(PersistentEntityRoot<T> root,
                                          SourcePersistentEntityCriteriaBuilder cb,
                                          Iterator<ParameterElement> parameters,
-                                         Restrictions.Restriction<?> restriction) {
+                                         Restrictions.Restriction<Object> restriction) {
         Expression<?> property = null;
         if (restriction.getName().equals("Ids")) {
             property = root.id();
         }
-        return restriction.find(root,
+        List<ParameterExpression<Object>> parameterExpressions = provideParams(parameters,
+            restriction.getRequiredParameters(),
+            restriction.getName(),
             cb,
-            provideParams(parameters,
-                restriction.getRequiredParameters(),
-                restriction.getName(),
-                cb,
-                property
-            ).toArray(new ParameterExpression[0])
+            property
         );
+        return restriction.find(root, cb, parameterExpressions);
     }
 
     private <T> List<ParameterExpression<T>> provideParams(Iterator<ParameterElement> parameters,
@@ -488,9 +487,10 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                     SourcePersistentProperty property = (SourcePersistentProperty) propertyPath.getProperty();
                     throw new IllegalArgumentException("Parameter [" + genericType.getType().getName() + " " + parameter.getName() + "] is not compatible with property [" + property.getType().getName() + " " + property.getName() + "] of entity: " + property.getOwner().getName());
                 }
+                params.add(cb.parameter(parameter, propertyPath));
+            } else {
+                params.add(cb.parameter(parameter, null));
             }
-            ParameterExpression p = cb.parameter(parameter);
-            params.add(p);
         }
         return params;
     }
@@ -518,7 +518,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     }
 
     @NonNull
-    protected final <T> Expression<?> getProperty(PersistentEntityRoot<T> root, String propertyName) {
+    protected final <T> Expression<Object> getProperty(PersistentEntityRoot<T> root, String propertyName) {
         if (TypeRole.ID.equals(NameUtils.decapitalize(propertyName)) && (root.getPersistentEntity().hasIdentity() || root.getPersistentEntity().hasCompositeIdentity())) {
             return root.id();
         }

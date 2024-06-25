@@ -17,6 +17,7 @@ package io.micronaut.data.processor.model.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractCriteriaBuilder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -77,12 +78,12 @@ public final class SourcePersistentEntityCriteriaBuilderImpl extends AbstractCri
     }
 
     @Override
-    public <T> ParameterExpression<T> parameter(ParameterElement parameterElement) {
+    public <T> ParameterExpression<T> parameter(ParameterElement parameterElement, PersistentPropertyPath propertyPath) {
         throw notSupportedOperation();
     }
 
     @Override
-    public <T> ParameterExpression<T> entityPropertyParameter(ParameterElement entityParameter) {
+    public <T> ParameterExpression<T> entityPropertyParameter(ParameterElement entityParameter, PersistentPropertyPath propertyPath) {
         throw notSupportedOperation();
     }
 }

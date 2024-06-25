@@ -18,7 +18,6 @@ package io.micronaut.data.model.query.builder.sql;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NextMajorVersion;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
@@ -36,6 +35,7 @@ import io.micronaut.data.annotation.Where;
 import io.micronaut.data.annotation.repeatable.WhereSpecifications;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentAssociationPath;
 import io.micronaut.data.model.PersistentEntity;
@@ -47,16 +47,20 @@ import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
 import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.impl.DefaultPersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
-import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
+import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateBinaryOp;
 import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.naming.NamingStrategy;
@@ -446,7 +450,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
      * Gets the mapped name from the association using {@link NamingStrategy}.
      *
      * @param namingStrategy the naming strategy being used
-     * @param association    the associatioon
+     * @param association    the association
      * @return the mapped name for the association
      */
     @NonNull
@@ -465,6 +469,18 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
     @NonNull
     protected String getMappedName(@NonNull NamingStrategy namingStrategy, @NonNull List<Association> associations, @NonNull PersistentProperty property) {
         return namingStrategy.mappedName(associations, property);
+    }
+
+    /**
+     * Gets the mapped name from for the list of associations and property using {@link NamingStrategy}.
+     *
+     * @param namingStrategy the naming strategy
+     * @param propertyPath   the property path
+     * @return the mappen name for the list of associations and property using given naming strategy
+     */
+    @NonNull
+    protected String getMappedName(@NonNull NamingStrategy namingStrategy, @NonNull PersistentPropertyPath propertyPath) {
+        return namingStrategy.mappedName(propertyPath.getAssociations(), propertyPath.getProperty());
     }
 
     /**
@@ -641,7 +657,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
     }
 
     /**
-     * Adds "forUpdate" pisimmistic locking.
+     * Adds "forUpdate" pessimistic locking.
      *
      * @param queryPosition The query position
      * @param definition    The definition
@@ -1199,8 +1215,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
                                           Expression<?> expression,
                                           boolean isProjection) {
         if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
-            QueryPropertyPath propertyPath = queryState.findProperty(persistentPropertyPath.getPropertyPath());
-            appendPropertyRef(annotationMetadata, query, queryState, propertyPath, isProjection);
+            appendPropertyRef(annotationMetadata, query, queryState, persistentPropertyPath.getPropertyPath(), isProjection);
         } else if (expression instanceof ParameterExpression<?> parameterExpression) {
             if (expression instanceof BindingParameter bindingParameter) {
                 queryState.pushParameter(bindingParameter, newBindingContext(null));
@@ -1217,10 +1232,14 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
     protected final void appendPropertyRef(AnnotationMetadata annotationMetadata,
                                            StringBuilder query,
                                            QueryState queryState,
-                                           QueryPropertyPath propertyPath,
+                                           PersistentPropertyPath pp,
                                            boolean isProjection) {
+        if (computePropertyPaths() && pp.getProperty() instanceof Embedded) {
+            throw new IllegalArgumentException("Embedded are not allowed as an expression!");
+        }
+        QueryPropertyPath propertyPath = queryState.findProperty(pp);
         String tableAlias = propertyPath.getTableAlias();
-        String readTransformer = getDataTransformerReadValue(tableAlias, propertyPath.getProperty()).orElse(null);
+        String readTransformer = isProjection ? getDataTransformerReadValue(tableAlias, propertyPath.getProperty()).orElse(null) : null;
         if (readTransformer != null) {
             query.append(readTransformer);
             return;
@@ -1616,7 +1635,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
                     joinAssociation = association;
                     continue;
                 }
-                if (association != joinAssociation.getAssociatedEntity().getIdentity()) {
+                if (!PersistentEntityUtils.isAccessibleWithoutJoin(joinAssociation, association)) {
                     lastJoinAlias = getRequiredJoinPathAlias(joinPathJoiner.toString());
                     // Continue to look for a joined property
                     joinAssociation = association;
@@ -1645,7 +1664,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         @NonNull
         private String getRequiredJoinPathAlias(String path) {
             if (!isAllowJoins()) {
-                throw new IllegalArgumentException("Joins cannot be used in a DELETE or UPDATE operation");
+                throw new IllegalArgumentException("Joins cannot be used in a DELETE or UPDATE operation and path: " + path);
             }
             return getJoinAlias(path);
         }
@@ -1757,7 +1776,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
     /**
      * The predicate visitor to construct the query.
      */
-    protected class SqlPredicateVisitor implements AdvancedPredicateVisitor<QueryPropertyPath> {
+    protected class SqlPredicateVisitor implements AdvancedPredicateVisitor<PersistentPropertyPath> {
 
         protected final PersistentEntity persistentEntity;
         protected final String tableAlias;
@@ -1774,8 +1793,8 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         }
 
         @Override
-        public QueryPropertyPath getRequiredProperty(io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
-            return queryState.findProperty(persistentPropertyPath.getPropertyPath());
+        public PersistentPropertyPath getRequiredProperty(io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
+            return persistentPropertyPath.getPropertyPath();
         }
 
         private void visitPredicate(IExpression<Boolean> expression) {
@@ -1795,9 +1814,14 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
             if (conjunction.getPredicates().isEmpty()) {
                 return;
             }
-            query.append(OPEN_BRACKET);
+            boolean requiresBracket = query.charAt(query.length() - 1) != '(';
+            if (requiresBracket) {
+                query.append(OPEN_BRACKET);
+            }
             visitConjunctionPredicates(conjunction.getPredicates());
-            query.append(CLOSE_BRACKET);
+            if (requiresBracket) {
+                query.append(CLOSE_BRACKET);
+            }
         }
 
         private void visitConjunctionPredicates(Collection<? extends IExpression<Boolean>> predicates) {
@@ -1859,86 +1883,132 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         }
 
         @Override
-        public void visitEquals(QueryPropertyPath leftProperty, Expression<?> expression, boolean ignoreCase) {
-            if (ignoreCase) {
-                appendCaseInsensitiveCriterion(leftProperty, expression, " = ");
+        public void visit(LikePredicate likePredicate) {
+            boolean supportsILike = getDialect() == Dialect.POSTGRES;
+            boolean isCaseInsensitive = !supportsILike && likePredicate.isCaseInsensitive();
+            if (isCaseInsensitive) {
+                query.append("LOWER(");
+            }
+            appendExpression(likePredicate.getExpression());
+            if (isCaseInsensitive) {
+                query.append(")");
+            }
+            if (likePredicate.isNegated()) {
+                query.append(" NOT");
+            }
+            if (likePredicate.isCaseInsensitive() && supportsILike) {
+                query.append(" ILIKE ");
             } else {
-                PersistentProperty property = leftProperty.getProperty();
-                PersistentEntity owner = property.getOwner();
-                if (owner.equals(persistentEntity) && leftProperty.getAssociations().isEmpty() && (owner.hasIdentity() && owner.getIdentity() == property)) {
-                    visitIdEquals(expression);
-                } else if (leftProperty.getAssociations().isEmpty() && owner.getVersion() == property) {
-                    appendPredicateOfVersionEquals(expression);
+                query.append(" LIKE ");
+            }
+            Expression<String> pattern = likePredicate.getPattern();
+            if (isCaseInsensitive) {
+                if (pattern instanceof LiteralExpression<String> literalExpression) {
+                    query.append(literalExpression.getValue().toUpperCase());
                 } else {
-                    appendCriteriaForOperator(leftProperty, expression, " = ");
+                    query.append("LOWER(");
+                    appendExpression(pattern);
+                    query.append(")");
+                }
+            } else {
+                appendExpression(pattern);
+            }
+
+            Expression<Character> escapeChar = likePredicate.getEscapeChar();
+            if (escapeChar != null) {
+                query.append(" ESCAPE ");
+                appendExpression(escapeChar);
+            }
+        }
+
+        @Override
+        public void visitEquals(PersistentPropertyPath leftProperty, Expression<?> expression, boolean ignoreCase) {
+            PersistentProperty property = leftProperty.getProperty();
+            if (computePropertyPaths() && property instanceof Association) {
+                List<IPredicate> predicates = new ArrayList<>();
+                PersistentEntityUtils.traverse(leftProperty, pp ->
+                    predicates.add(new PersistentPropertyBinaryPredicate<>(
+                        new DefaultPersistentPropertyPath<>(pp, null),
+                        expression,
+                        ignoreCase ? PredicateBinaryOp.EQUALS_IGNORE_CASE : PredicateBinaryOp.EQUALS
+                    ))
+                );
+                if (predicates.size() == 1) {
+                    predicates.iterator().next().visitPredicate(this);
+                } else {
+                    visit(new ConjunctionPredicate(predicates));
+                }
+            } else {
+                if (ignoreCase) {
+                    appendCaseInsensitiveOp(leftProperty, expression, " = ");
+                } else {
+                    appendSingle(" = ", expression, leftProperty);
                 }
             }
         }
 
         @Override
-        public void visitNotEquals(QueryPropertyPath leftProperty, Expression<?> expression, boolean ignoreCase) {
-            if (ignoreCase) {
-                appendCaseInsensitiveCriterion(leftProperty, expression, " != ");
+        public void visitNotEquals(PersistentPropertyPath leftProperty, Expression<?> expression, boolean ignoreCase) {
+            PersistentProperty property = leftProperty.getProperty();
+            if (computePropertyPaths() && property instanceof Association) {
+                List<IPredicate> predicates = new ArrayList<>();
+                PersistentEntityUtils.traverse(leftProperty, pp ->
+                    predicates.add(new PersistentPropertyBinaryPredicate<>(
+                        new DefaultPersistentPropertyPath<>(pp, null),
+                        expression,
+                        ignoreCase ? PredicateBinaryOp.NOT_EQUALS_IGNORE_CASE : PredicateBinaryOp.NOT_EQUALS
+                    ))
+                );
+                if (predicates.size() == 1) {
+                    predicates.iterator().next().visitPredicate(this);
+                } else {
+                    visit(new ConjunctionPredicate(predicates));
+                }
             } else {
-                appendCriteriaForOperator(leftProperty, expression, " != ");
+                if (ignoreCase) {
+                    appendCaseInsensitiveOp(leftProperty, expression, " != ");
+                } else {
+                    appendSingle(" != ", expression, leftProperty);
+                }
             }
         }
 
         @Override
-        public void visitGreaterThan(QueryPropertyPath leftProperty, Expression<?> expression) {
-            appendCriteriaForOperator(leftProperty, expression, " > ");
+        public void visitGreaterThan(PersistentPropertyPath leftProperty, Expression<?> expression) {
+            appendSingle(" > ", expression, leftProperty);
         }
 
         @Override
-        public void visitGreaterThanOrEquals(QueryPropertyPath leftProperty, Expression<?> expression) {
-            appendCriteriaForOperator(leftProperty, expression, " >= ");
+        public void visitGreaterThanOrEquals(PersistentPropertyPath leftProperty, Expression<?> expression) {
+            appendSingle(" >= ", expression, leftProperty);
         }
 
         @Override
-        public void visitLessThan(QueryPropertyPath leftProperty, Expression<?> expression) {
-            appendCriteriaForOperator(leftProperty, expression, " < ");
+        public void visitLessThan(PersistentPropertyPath leftProperty, Expression<?> expression) {
+            appendSingle(" < ", expression, leftProperty);
         }
 
         @Override
-        public void visitLessThanOrEquals(QueryPropertyPath leftProperty, Expression<?> expression) {
-            appendCriteriaForOperator(leftProperty, expression, " <= ");
+        public void visitLessThanOrEquals(PersistentPropertyPath leftProperty, Expression<?> expression) {
+            appendSingle(" <= ", expression, leftProperty);
         }
 
         @Override
-        public void visitLike(QueryPropertyPath leftProperty, Expression<?> expression) {
-            appendCriteriaForOperator(leftProperty, expression, " LIKE ");
-        }
-
-        @Override
-        public void visitILike(QueryPropertyPath leftProperty, Expression<?> expression) {
-            if (getDialect() == Dialect.POSTGRES) {
-                appendCriteriaForOperator(leftProperty, expression, " ILIKE ");
-            } else {
-                appendCaseInsensitiveCriterion(leftProperty, expression, " LIKE ");
-            }
-        }
-
-        @Override
-        public void visitRLike(QueryPropertyPath leftProperty, Expression<?> expression) {
-            throw new IllegalStateException("Not supported");
-        }
-
-        @Override
-        public void visitStartsWith(QueryPropertyPath leftProperty, Expression<?> expression, boolean ignoreCase) {
+        public void visitStartsWith(PersistentPropertyPath leftProperty, Expression<?> expression, boolean ignoreCase) {
             appendLikeConcatComparison(leftProperty, expression, ignoreCase, "?", "'%'");
         }
 
         @Override
-        public void visitContains(QueryPropertyPath leftProperty, Expression<?> expression, boolean ignoreCase) {
+        public void visitContains(PersistentPropertyPath leftProperty, Expression<?> expression, boolean ignoreCase) {
             appendLikeConcatComparison(leftProperty, expression, ignoreCase, "'%'", "?", "'%'");
         }
 
         @Override
-        public void visitEndsWith(QueryPropertyPath leftProperty, Expression<?> expression, boolean ignoreCase) {
+        public void visitEndsWith(PersistentPropertyPath leftProperty, Expression<?> expression, boolean ignoreCase) {
             appendLikeConcatComparison(leftProperty, expression, ignoreCase, "'%'", "?");
         }
 
-        private void appendLikeConcatComparison(QueryPropertyPath propertyPath, Expression<?> expression, boolean ignoreCase, String... parts) {
+        private void appendLikeConcatComparison(PersistentPropertyPath propertyPath, Expression<?> expression, boolean ignoreCase, String... parts) {
             boolean isPostgres = getDialect() == Dialect.POSTGRES;
             if (ignoreCase && !isPostgres) {
                 query.append("LOWER(");
@@ -1957,11 +2027,11 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
                     if (ignoreCase && !isPostgres) {
                         return (Runnable) () -> {
                             query.append("LOWER(");
-                            appendExpression(propertyPath, expression);
+                            appendExpression(expression, propertyPath);
                             query.append(")");
                         };
                     } else {
-                        return (Runnable) () -> appendExpression(propertyPath, expression);
+                        return (Runnable) () -> appendExpression(expression, propertyPath);
                     }
                 }
                 return (Runnable) () -> query.append(p);
@@ -1971,165 +2041,112 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         @Override
         public void visitIdEquals(Expression<?> expression) {
             if (persistentEntity.hasCompositeIdentity()) {
-                for (PersistentProperty prop : persistentEntity.getCompositeIdentity()) {
-                    appendCriteriaForOperator(
-                        null,
-                        asQueryPropertyPath(tableAlias, prop),
-                        expression,
-                        " = "
-                    );
-                    query.append(LOGICAL_AND);
-                }
-                query.setLength(query.length() - LOGICAL_AND.length());
+                new ConjunctionPredicate(
+                    Arrays.stream(persistentEntity.getCompositeIdentity())
+                        .map(prop -> {
+                                PersistentPropertyPath propertyPath = asPersistentPropertyPath(prop);
+                                return new PersistentPropertyBinaryPredicate<>(
+                                    new DefaultPersistentPropertyPath<>(propertyPath, null),
+                                    expression,
+                                    PredicateBinaryOp.EQUALS
+                                );
+                            }
+                        )
+                        .toList()
+                ).visitPredicate(this);
             } else if (persistentEntity.hasIdentity()) {
-                appendCriteriaForOperator(
-                    asQueryPropertyPath(tableAlias, persistentEntity.getIdentity()),
+                new PersistentPropertyBinaryPredicate<>(
+                    new DefaultPersistentPropertyPath<>(new PersistentPropertyPath(persistentEntity.getIdentity()), null),
                     expression,
-                    " = "
-                );
+                    PredicateBinaryOp.EQUALS
+                ).visitPredicate(this);
             } else {
                 throw new IllegalStateException("No ID found for entity: " + persistentEntity.getName());
             }
         }
 
-        private void appendPredicateOfVersionEquals(Expression<?> expression) {
-            PersistentProperty prop = persistentEntity.getVersion();
-            if (prop == null) {
-                throw new IllegalStateException("No Version found for entity: " + persistentEntity.getName());
-            }
-            appendCriteriaForOperator(
-                asQueryPropertyPath(tableAlias, prop),
-                expression,
-                " = "
-            );
-        }
-
-        protected final void appendPropertyRef(QueryPropertyPath propertyPath) {
+        protected final void appendPropertyRef(PersistentPropertyPath propertyPath) {
             AbstractSqlLikeQueryBuilder2.this.appendPropertyRef(annotationMetadata, query, queryState, propertyPath, false);
         }
 
-        private void appendCriteriaForOperator(QueryPropertyPath propertyPath,
-                                               Expression<?> value,
-                                               String operator) {
-            appendCriteriaForOperator(propertyPath.propertyPath, propertyPath, value, operator);
+        private void appendSingle(String operator, Expression<?> expression, @Nullable PersistentPropertyPath propertyPath) {
+            appendPropertyRef(propertyPath);
+            query.append(operator);
+            appendExpression(expression, propertyPath);
         }
 
-        @NextMajorVersion("Remove the trim to have the operators look consistent")
-        private void appendCriteriaForOperator(PersistentPropertyPath parameterPropertyPath,
-                                               QueryPropertyPath propertyPath,
-                                               Expression<?> expression,
-                                               String operator) {
+        private void appendExpression(Expression<?> expression) {
+            appendExpression(expression, null);
+        }
+
+        protected final void appendExpression(Expression<?> expression, PersistentPropertyPath propertyPath) {
             if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
-                appendPropertyRef(propertyPath);
-                query.append(operator.trim());
-                appendPropertyRef(getRequiredProperty(persistentPropertyPath));
+                appendPropertyRef(persistentPropertyPath.getPropertyPath());
             } else if (expression instanceof BindingParameter bindingParameter) {
-                boolean computePropertyPaths = computePropertyPaths();
-                boolean jsonEntity = isJsonEntity(annotationMetadata, persistentEntity);
-                if (!computePropertyPaths || jsonEntity) {
-                    appendPropertyRef(propertyPath);
-                    query.append(operator);
-                    queryState.pushParameter(
-                        bindingParameter,
-                        newBindingContext(parameterPropertyPath, propertyPath.propertyPath)
-                    );
-                    return;
-                }
-
-                String currentAlias = propertyPath.getTableAlias();
-                NamingStrategy namingStrategy = propertyPath.getNamingStrategy();
-                boolean shouldEscape = propertyPath.shouldEscape();
-                boolean[] needsTrimming = {false};
-                PersistentEntityUtils.traversePersistentProperties(propertyPath.getPropertyPath(), (associations, property) -> {
-                    if (currentAlias != null) {
-                        query.append(currentAlias).append(DOT);
-                    }
-
-                    String columnName = getMappedName(namingStrategy, associations, property);
-                    if (shouldEscape) {
-                        columnName = quote(columnName);
-                    }
-                    query.append(columnName);
-
-                    query.append(operator);
-                    String writeTransformer = getDataTransformerWriteValue(currentAlias, property).orElse(null);
-                    Runnable pushParameter = () -> {
-                        queryState.pushParameter(
-                            bindingParameter,
-                            newBindingContext(parameterPropertyPath, PersistentPropertyPath.of(associations, property))
-                        );
-                    };
-                    if (writeTransformer != null) {
-                        appendTransformed(query, writeTransformer, pushParameter);
-                    } else {
-                        pushParameter.run();
-                    }
-                    query.append(LOGICAL_AND);
-                    needsTrimming[0] = true;
-                });
-
-                if (needsTrimming[0]) {
-                    query.setLength(query.length() - LOGICAL_AND.length());
-                }
+                appendBindingParameter(bindingParameter, propertyPath);
             } else {
-                appendPropertyRef(propertyPath);
-                query.append(operator).append(asLiteral(expression));
+                query.append(asLiteral(expression));
             }
         }
 
-        private void appendCaseInsensitiveCriterion(QueryPropertyPath leftProperty, Expression<?> expression, String operator) {
+        private void appendBindingParameter(BindingParameter bindingParameter,
+                                            @Nullable PersistentPropertyPath entityPropertyPath) {
+            Runnable pushParameter = () -> {
+                queryState.pushParameter(
+                    bindingParameter,
+                    newBindingContext(null, entityPropertyPath)
+                );
+            };
+            if (entityPropertyPath == null) {
+                pushParameter.run();
+            } else {
+                QueryPropertyPath qpp = queryState.findProperty(entityPropertyPath);
+                String writeTransformer = getDataTransformerWriteValue(qpp.tableAlias, entityPropertyPath.getProperty()).orElse(null);
+                if (writeTransformer != null) {
+                    appendTransformed(query, writeTransformer, pushParameter);
+                } else {
+                    pushParameter.run();
+                }
+            }
+        }
+
+        private void appendCaseInsensitiveOp(PersistentPropertyPath leftProperty, Expression<?> expression, String operator) {
             query.append("LOWER(");
             appendPropertyRef(leftProperty);
             query.append(")")
                 .append(operator)
                 .append("LOWER(");
-            appendExpression(leftProperty, expression);
+            appendExpression(expression, leftProperty);
             query.append(")");
         }
 
-        protected final void appendExpression(QueryPropertyPath leftProperty, Expression<?> expression) {
-            if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
-                appendPropertyRef(getRequiredProperty(persistentPropertyPath));
-            } else if (expression instanceof ParameterExpression<?> parameterExpression) {
-                if (expression instanceof BindingParameter bindingParameter) {
-                    queryState.pushParameter(bindingParameter, newBindingContext(leftProperty.propertyPath));
-                } else {
-                    throw new IllegalArgumentException("Unknown parameter: " + parameterExpression);
-                }
-            } else if (expression instanceof LiteralExpression<?> literalExpression) {
-                query.append(asLiteral(literalExpression.getValue()));
-            } else {
-                throw new IllegalArgumentException("Unsupported expression type: " + expression.getClass());
-            }
-        }
-
         @Override
-        public void visitIsFalse(QueryPropertyPath propertyPath) {
+        public void visitIsFalse(PersistentPropertyPath propertyPath) {
             appendUnaryCondition(" = FALSE", propertyPath);
         }
 
         @Override
-        public void visitIsNotNull(QueryPropertyPath propertyPath) {
+        public void visitIsNotNull(PersistentPropertyPath propertyPath) {
             appendUnaryCondition(" IS NOT NULL", propertyPath);
         }
 
         @Override
-        public void visitIsNull(QueryPropertyPath propertyPath) {
+        public void visitIsNull(PersistentPropertyPath propertyPath) {
             appendUnaryCondition(" IS NULL", propertyPath);
         }
 
         @Override
-        public void visitIsTrue(QueryPropertyPath propertyPath) {
+        public void visitIsTrue(PersistentPropertyPath propertyPath) {
             appendUnaryCondition(" = TRUE", propertyPath);
         }
 
         @Override
-        public void visitIsEmpty(QueryPropertyPath propertyPath) {
+        public void visitIsEmpty(PersistentPropertyPath propertyPath) {
             appendEmptyExpression(" IS NULL" + " " + OR + StringUtils.SPACE, " = ''", " IS EMPTY", propertyPath);
         }
 
         @Override
-        public void visitIsNotEmpty(QueryPropertyPath propertyPath) {
+        public void visitIsNotEmpty(PersistentPropertyPath propertyPath) {
             if (getDialect() == Dialect.ORACLE) {
                 // Oracle treats blank and null the same
                 if (propertyPath.getProperty().isAssignable(CharSequence.class)) {
@@ -2147,7 +2164,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         private void appendEmptyExpression(String charSequencePrefix,
                                            String charSequenceSuffix,
                                            String listSuffix,
-                                           QueryPropertyPath propertyPath) {
+                                           PersistentPropertyPath propertyPath) {
             if (propertyPath.getProperty().isAssignable(CharSequence.class)) {
                 appendPropertyRef(propertyPath);
                 query.append(charSequencePrefix);
@@ -2159,21 +2176,21 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
             }
         }
 
-        private void appendUnaryCondition(String sqlOp, QueryPropertyPath propertyPath) {
+        private void appendUnaryCondition(String sqlOp, PersistentPropertyPath propertyPath) {
             appendPropertyRef(propertyPath);
             query.append(sqlOp);
         }
 
         @Override
-        public void visitInBetween(QueryPropertyPath property, Expression<?> from, Expression<?> to) {
+        public void visitInBetween(PersistentPropertyPath propertyPath, Expression<?> from, Expression<?> to) {
             query.append(OPEN_BRACKET);
-            appendPropertyRef(property);
+            appendPropertyRef(propertyPath);
             query.append(" >= ");
-            appendExpression(property, from);
+            appendExpression(from, propertyPath);
             query.append(LOGICAL_AND);
-            appendPropertyRef(property);
+            appendPropertyRef(propertyPath);
             query.append(" <= ");
-            appendExpression(property, to);
+            appendExpression(to, propertyPath);
             query.append(CLOSE_BRACKET);
         }
 
@@ -2183,7 +2200,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         }
 
         @Override
-        public void visitIn(QueryPropertyPath propertyPath, Collection<?> values, boolean negated) {
+        public void visitIn(PersistentPropertyPath propertyPath, Collection<?> values, boolean negated) {
             if (values.isEmpty()) {
                 return;
             }
@@ -2194,7 +2211,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
             while (iterator.hasNext()) {
                 Object value = iterator.next();
                 if (value instanceof ParameterExpression) {
-                    BindingParameter.BindingContext bindingContext = newBindingContext(propertyPath.propertyPath);
+                    BindingParameter.BindingContext bindingContext = newBindingContext(propertyPath);
                     if (hasOneParameter) {
                         bindingContext = bindingContext.expandable();
                     }
@@ -2307,7 +2324,8 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         public void visit(UnaryExpression<?> unaryExpression) {
             Expression<?> expression = unaryExpression.getExpression();
             switch (unaryExpression.getType()) {
-                case SUM, AVG, MAX, MIN, UPPER, LOWER -> appendFunction(unaryExpression.getType().name(), expression);
+                case SUM, AVG, MAX, MIN, UPPER, LOWER ->
+                    appendFunction(unaryExpression.getType().name(), expression);
                 case COUNT -> {
                     if (expression instanceof PersistentEntityRoot) {
                         appendRowCount(tableAlias);

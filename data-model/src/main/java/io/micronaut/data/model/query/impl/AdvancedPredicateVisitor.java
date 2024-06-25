@@ -109,9 +109,6 @@ public interface AdvancedPredicateVisitor<P> extends PredicateVisitor {
             case GREATER_THAN_OR_EQUALS -> visitGreaterThanOrEquals(leftProperty, expression);
             case LESS_THAN -> visitLessThan(leftProperty, expression);
             case LESS_THAN_OR_EQUALS -> visitLessThanOrEquals(leftProperty, expression);
-            case LIKE -> visitLike(leftProperty, expression);
-            case RLIKE -> visitRLike(leftProperty, expression);
-            case ILIKE -> visitILike(leftProperty, expression);
             case STARTS_WITH -> visitStartsWith(leftProperty, expression, false);
             case STARTS_WITH_IGNORE_CASE -> visitStartsWith(leftProperty, expression, true);
             case REGEX -> visitRegexp(leftProperty, expression);
@@ -137,12 +134,6 @@ public interface AdvancedPredicateVisitor<P> extends PredicateVisitor {
     }
 
     void visitStartsWith(P leftProperty, Expression<?> expression, boolean ignoreCase);
-
-    void visitLike(P leftProperty, Expression<?> expression);
-
-    void visitRLike(P leftProperty, Expression<?> expression);
-
-    void visitILike(P leftProperty, Expression<?> expression);
 
     void visitEquals(P leftProperty, Expression<?> expression, boolean ignoreCase);
 

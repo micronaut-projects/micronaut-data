@@ -376,7 +376,7 @@ interface MyInterface extends CrudRepository<Food, UUID> {
         def method = beanDefinition.findPossibleMethods("update").findFirst().get()
         expect:
 
-        getQuery(method) == 'UPDATE "food" SET "key"=?,"carbohydrates"=?,"portion_grams"=?,"updated_on"=?,"fk_meal_id"=?,"fk_alt_meal"=?,"loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name"=?,"fresh"=? WHERE ("fid" = ? AND (fresh = \'Y\'))'
+        getQuery(method) == 'UPDATE "food" SET "key"=?,"carbohydrates"=?,"portion_grams"=?,"updated_on"=?,"fk_meal_id"=?,"fk_alt_meal"=?,"loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name"=?,"fresh"=? WHERE ("fid" = ? AND fresh = \'Y\')'
         getParameterPropertyPaths(method) == ["key", "carbohydrates", "portionGrams", "updatedOn", "meal.mid", "alternativeMeal.mid", "longName", "fresh", "fid"] as String[]
     }
 

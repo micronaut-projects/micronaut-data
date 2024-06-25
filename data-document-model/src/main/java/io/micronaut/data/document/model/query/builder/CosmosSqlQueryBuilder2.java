@@ -141,7 +141,7 @@ public final class CosmosSqlQueryBuilder2 extends SqlQueryBuilder2 {
             private static final String ARRAY_CONTAINS = "ARRAY_CONTAINS";
 
             @Override
-            public void visitIsNull(QueryPropertyPath propertyPath) {
+            public void visitIsNull(PersistentPropertyPath propertyPath) {
                 query.append(NOT).append(SPACE).append(IS_DEFINED).append(OPEN_BRACKET);
                 appendPropertyRef(propertyPath);
                 query.append(CLOSE_BRACKET).append(SPACE).append(OR).append(SPACE);
@@ -151,7 +151,7 @@ public final class CosmosSqlQueryBuilder2 extends SqlQueryBuilder2 {
             }
 
             @Override
-            public void visitIsNotNull(QueryPropertyPath propertyPath) {
+            public void visitIsNotNull(PersistentPropertyPath propertyPath) {
                 query.append(IS_DEFINED).append(OPEN_BRACKET);
                 appendPropertyRef(propertyPath);
                 query.append(CLOSE_BRACKET).append(SPACE).append(AND).append(SPACE);
@@ -161,7 +161,7 @@ public final class CosmosSqlQueryBuilder2 extends SqlQueryBuilder2 {
             }
 
             @Override
-            public void visitIsEmpty(QueryPropertyPath propertyPath) {
+            public void visitIsEmpty(PersistentPropertyPath propertyPath) {
                 query.append(NOT).append(SPACE).append(IS_DEFINED).append(OPEN_BRACKET);
                 appendPropertyRef(propertyPath);
                 query.append(CLOSE_BRACKET).append(SPACE).append(OR).append(SPACE);
@@ -173,7 +173,7 @@ public final class CosmosSqlQueryBuilder2 extends SqlQueryBuilder2 {
             }
 
             @Override
-            public void visitIsNotEmpty(QueryPropertyPath propertyPath) {
+            public void visitIsNotEmpty(PersistentPropertyPath propertyPath) {
                 query.append(IS_DEFINED).append(OPEN_BRACKET);
                 appendPropertyRef(propertyPath);
                 query.append(CLOSE_BRACKET).append(SPACE).append(AND).append(SPACE);
@@ -185,11 +185,11 @@ public final class CosmosSqlQueryBuilder2 extends SqlQueryBuilder2 {
             }
 
             @Override
-            public void visitArrayContains(QueryPropertyPath leftProperty, Expression<?> expression) {
+            public void visitArrayContains(PersistentPropertyPath leftProperty, Expression<?> expression) {
                 query.append(ARRAY_CONTAINS).append(OPEN_BRACKET);
                 appendPropertyRef(leftProperty);
                 query.append(COMMA);
-                appendExpression(leftProperty, expression);
+                appendExpression(expression, leftProperty);
                 query.append(COMMA);
                 query.append("true").append(CLOSE_BRACKET);
             }

@@ -349,6 +349,27 @@ public class TypeUtils {
      * @param methodElement The method
      * @return True if it is supported
      */
+    public static boolean doesMethodProducesIterable(MethodElement methodElement) {
+        ClassElement returnType = methodElement.getGenericReturnType();
+        if (TypeUtils.isReactiveType(returnType)) {
+            return true;
+        }
+        if (TypeUtils.isFutureType(returnType)) {
+            returnType = returnType.getFirstTypeArgument().orElse(null);
+            return returnType != null && returnType.isAssignable(Iterable.class);
+        }
+        if (methodElement.isSuspend()) {
+            returnType = TypeUtils.getKotlinCoroutineProducedType(methodElement);
+        }
+        return returnType.isAssignable(Iterable.class);
+    }
+
+    /**
+     * Checks whether the return type is supported.
+     *
+     * @param methodElement The method
+     * @return True if it is supported
+     */
     public static boolean doesMethodProducesAnEntityIterableOfAnEntity(MethodElement methodElement) {
         ClassElement returnType = methodElement.getGenericReturnType();
         if (TypeUtils.isReactiveType(returnType)) {

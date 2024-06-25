@@ -21,6 +21,7 @@ import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder
 import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder
 import io.micronaut.data.repository.jpa.criteria.DeleteSpecification
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
@@ -60,6 +61,7 @@ import io.micronaut.transaction.TransactionStatus
 import jakarta.persistence.criteria.CriteriaBuilder
 import jakarta.persistence.criteria.CriteriaQuery
 import jakarta.persistence.criteria.CriteriaUpdate
+import jakarta.persistence.criteria.Path
 import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Root
 import reactor.core.publisher.Mono
@@ -2871,6 +2873,107 @@ abstract class AbstractRepositorySpec extends Specification {
                 }
             })
             name == "Fred1Xyz"
+    }
+
+    void "test like function"() {
+        when:
+            personRepository.deleteAll()
+            personRepository.save(new Person(name: "Fr_dA1", age: 50))
+            personRepository.save(new Person(name: "Fr_dA2", age: 18))
+            personRepository.save(new Person(name: "Fr_dB1", age: 18))
+            personRepository.save(new Person(name: "Fr_dB2", age: 18))
+        then:
+            def names = personRepository.findAll(new CriteriaQueryBuilder<String>() {
+                @Override
+                CriteriaQuery<String> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(String)
+                    def root = query.from(Person)
+                    def name = root.<String> get("name")
+                    query.select(name)
+                    query.where(criteriaBuilder.like(
+                            name,
+                            "%r\\_dA%",
+                            '\\' as char
+                    ))
+                    return query
+                }
+            })
+            names.toSet() == ["Fr_dA1", "Fr_dA2"].toSet()
+
+        when:
+            def negatedNames = personRepository.findAll(new CriteriaQueryBuilder<String>() {
+                @Override
+                CriteriaQuery<String> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(String)
+                    def root = query.from(Person)
+                    def name = root.<String> get("name")
+                    query.select(name)
+                    query.where(criteriaBuilder.notLike(
+                            name,
+                            "%r\\_dA%",
+                            '\\' as char
+                    ))
+                    return query
+                }
+            })
+        then:
+            negatedNames.toSet() == ["Fr_dB1", "Fr_dB2"].toSet()
+
+        when:
+            negatedNames = personRepository.findAll(new CriteriaQueryBuilder<String>() {
+                @Override
+                CriteriaQuery<String> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(String)
+                    def root = query.from(Person)
+                    def name = root.<String> get("name")
+                    query.select(name)
+                    query.where(criteriaBuilder.like(
+                            name,
+                            "%r\\_dA%",
+                            '\\' as char
+                    ).not())
+                    return query
+                }
+            })
+        then:
+            negatedNames.toSet() == ["Fr_dB1", "Fr_dB2"].toSet()
+
+        when:
+            def caseSensitiveNames = personRepository.findAll(new CriteriaQueryBuilder<String>() {
+                @Override
+                CriteriaQuery<String> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(String)
+                    def root = query.from(Person)
+                    def name = root.<String> get("name")
+                    query.select(name)
+                    query.where(criteriaBuilder.like(
+                            name,
+                            "%db%",
+                    ))
+                    return query
+                }
+            })
+        then:
+            caseSensitiveNames.isEmpty()
+
+        when:
+            def ilikeNames = personRepository.findAll(new CriteriaQueryBuilder<String>() {
+                @Override
+                CriteriaQuery<String> build(CriteriaBuilder criteriaBuilder) {
+                    PersistentEntityCriteriaBuilder cb = criteriaBuilder
+                    def query = criteriaBuilder.createQuery(String)
+                    def root = query.from(Person)
+                    def name = root.<String> get("name")
+                    query.select(name)
+                    query.where(cb.ilike(
+                            name,
+                            "%db%",
+                    ))
+                    return query
+                }
+            })
+        then:
+            ilikeNames.toSet() == ["Fr_dB1", "Fr_dB2"].toSet()
     }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {

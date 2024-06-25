@@ -17,7 +17,7 @@ package io.micronaut.data.processor.visitors.finders.criteria;
 
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.intercept.annotation.DataMethod;
-import io.micronaut.data.model.Embedded;
+import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
@@ -115,17 +115,17 @@ public class DeleteCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             final SourcePersistentEntity rootEntity = (SourcePersistentEntity) root.getPersistentEntity();
             if (rootEntity.getVersion() != null) {
                 predicate = cb.and(
-                    cb.equal(root.id(), cb.entityPropertyParameter(entityParameter)),
-                    cb.equal(root.version(), cb.entityPropertyParameter(entityParameter))
+                    cb.equal(root.id(), cb.entityPropertyParameter(entityParameter, new PersistentPropertyPath(rootEntity.getIdentity()))),
+                    cb.equal(root.version(), cb.entityPropertyParameter(entityParameter, new PersistentPropertyPath(rootEntity.getVersion())))
                 );
             } else {
                 boolean generateInIdList = getEntitiesParameter() != null
                     && !rootEntity.hasCompositeIdentity()
                     && !rootEntity.getIdentity().isEmbedded();
                 if (generateInIdList) {
-                    predicate = root.id().in(cb.entityPropertyParameter(entityParameter));
+                    predicate = root.id().in(cb.entityPropertyParameter(entityParameter, new PersistentPropertyPath(rootEntity.getIdentity())));
                 } else {
-                    predicate = cb.equal(root.id(), cb.entityPropertyParameter(entityParameter));
+                    predicate = cb.equal(root.id(), cb.entityPropertyParameter(entityParameter, new PersistentPropertyPath(rootEntity.getIdentity())));
                 }
             }
         } else {

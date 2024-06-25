@@ -20,6 +20,7 @@ import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Version;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
@@ -115,10 +116,10 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         // Add updatable auto-populated parameters
         entity.getPersistentProperties().stream()
             .filter(p -> p != null && p.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATEABLE, Boolean.class)).orElse(false))
-            .forEach(p -> query.set(p.getName(), cb.parameter((ParameterElement) null)));
+            .forEach(p -> query.set(p.getName(), cb.parameter(null, new PersistentPropertyPath(p))));
 
         if (entity.getVersion() != null && !entity.getVersion().isGenerated() && criteriaUpdate.hasVersionRestriction()) {
-            query.set(entity.getVersion().getName(), cb.parameter((ParameterElement) null));
+            query.set(entity.getVersion().getName(), cb.parameter(null, new PersistentPropertyPath(entity.getVersion())));
         }
 
         if (criteriaUpdate.getUpdateValues().isEmpty()) {
@@ -166,16 +167,16 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         if (entityParameter == null) {
             entityParameter = getEntitiesParameter();
         }
+        final SourcePersistentEntity rootEntity = (SourcePersistentEntity) root.getPersistentEntity();
         Predicate predicate = null;
         if (entityParameter != null) {
-            final SourcePersistentEntity rootEntity = (SourcePersistentEntity) root.getPersistentEntity();
             if (rootEntity.getVersion() != null) {
                 predicate = cb.and(
-                    cb.equal(root.id(), cb.entityPropertyParameter(entityParameter)),
-                    cb.equal(root.version(), cb.entityPropertyParameter(entityParameter))
+                    cb.equal(root.id(), cb.entityPropertyParameter(entityParameter, new PersistentPropertyPath(rootEntity.getIdentity()))),
+                    cb.equal(root.version(), cb.entityPropertyParameter(entityParameter, new PersistentPropertyPath(rootEntity.getVersion())))
                 );
             } else {
-                predicate = cb.equal(root.id(), cb.entityPropertyParameter(entityParameter));
+                predicate = cb.equal(root.id(), cb.entityPropertyParameter(entityParameter, new PersistentPropertyPath(rootEntity.getIdentity())));
             }
         } else {
             ParameterElement idParameter = notConsumedParameters.stream()
@@ -184,11 +185,11 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                 .filter(p -> p.hasAnnotation(Version.class)).findFirst().orElse(null);
             if (idParameter != null) {
                 notConsumedParameters.remove(idParameter);
-                predicate = cb.equal(root.id(), cb.parameter(idParameter));
+                predicate = cb.equal(root.id(), cb.parameter(idParameter, new PersistentPropertyPath(rootEntity.getIdentity())));
             }
             if (versionParameter != null) {
                 notConsumedParameters.remove(versionParameter);
-                Predicate versionPredicate = cb.equal(root.version(), cb.parameter(versionParameter));
+                Predicate versionPredicate = cb.equal(root.version(), cb.parameter(versionParameter, new PersistentPropertyPath(rootEntity.getVersion())));
                 if (predicate != null) {
                     predicate = cb.and(predicate, versionPredicate);
                 } else {

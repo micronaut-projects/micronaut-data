@@ -97,7 +97,11 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
 
     @Override
     public QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder queryBuilder) {
-        return queryBuilder.buildDelete(annotationMetadata, getQueryModel());
+        QueryBuilder2 queryBuilder2 = QueryResultPersistentEntityCriteriaQuery.findQueryBuilder2(queryBuilder);
+        if (queryBuilder2 == null) {
+            return queryBuilder.buildDelete(annotationMetadata, getQueryModel());
+        }
+        return buildQuery(annotationMetadata, queryBuilder2);
     }
 
     @Override
