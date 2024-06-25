@@ -61,8 +61,6 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
 
     private final MongoDataConfiguration mongoDataConfiguration;
     private final AttributeConverterRegistry attributeConverterRegistry;
-    private final Argument argument;
-    private final RuntimePersistentEntity<Object> runtimePersistentEntity;
     private final Deserializer.DecoderContext parent;
     private final CodecRegistry codecRegistry;
 
@@ -71,21 +69,15 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
      *
      * @param mongoDataConfiguration     The Mongo data configuration
      * @param attributeConverterRegistry The attributeConverterRegistry
-     * @param argument                   The argument
-     * @param runtimePersistentEntity    The runtime persistent entity
      * @param parent                     The parent context
      * @param codecRegistry              The codec registry
      */
     DataDecoderContext(MongoDataConfiguration mongoDataConfiguration,
                        AttributeConverterRegistry attributeConverterRegistry,
-                       Argument argument,
-                       RuntimePersistentEntity<Object> runtimePersistentEntity,
                        Deserializer.DecoderContext parent,
                        CodecRegistry codecRegistry) {
         this.mongoDataConfiguration = mongoDataConfiguration;
         this.attributeConverterRegistry = attributeConverterRegistry;
-        this.argument = argument;
-        this.runtimePersistentEntity = runtimePersistentEntity;
         this.parent = parent;
         this.codecRegistry = codecRegistry;
     }
