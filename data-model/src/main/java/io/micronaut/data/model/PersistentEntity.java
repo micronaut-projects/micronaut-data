@@ -154,7 +154,7 @@ public interface PersistentEntity extends PersistentElement {
      */
     default @NonNull Collection<Embedded> getEmbedded() {
         return getPersistentProperties().stream()
-                .filter(p -> p instanceof Embedded)
+                .filter(PersistentProperty::isEmbedded)
                 .map(p -> (Embedded) p)
                 .toList();
     }

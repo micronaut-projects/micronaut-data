@@ -60,7 +60,7 @@ public final class PersistentPropertyBinaryPredicate<T> extends AbstractPersiste
     }
 
     @Override
-    public void accept(PredicateVisitor predicateVisitor) {
+    public void visitPredicate(PredicateVisitor predicateVisitor) {
         predicateVisitor.visit(this);
     }
 

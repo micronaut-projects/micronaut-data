@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 original authors
+ * Copyright 2017-2024 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,48 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.model.jpa.criteria.impl.selection;
+package io.micronaut.data.model.jpa.criteria.impl.expression;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
-import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitable;
-import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
-import jakarta.persistence.criteria.Expression;
 
 /**
- * The aggregate expression.
+ * The abstract expression.
  *
- * @param <T> The originating expression type
- * @param <E> The aggregate expression type
+ * @param <E> The expression type
  * @author Denis Stepanov
- * @since 3.2
+ * @since 4.9
  */
 @Internal
-public final class AggregateExpression<T, E> implements IExpression<E>, SelectionVisitable {
+abstract class AbstractExpression<E> implements IExpression<E> {
 
-    private final AggregateType type;
-    private final Expression<T> expression;
+    @Nullable
     private final Class<E> expressionType;
 
-    public AggregateExpression(Expression<T> expression, AggregateType type) {
-        this(expression, type, null);
-    }
-
-    public AggregateExpression(Expression<T> expression, AggregateType type, Class<E> expressionType) {
-        this.expression = expression;
-        this.type = type;
+    public AbstractExpression(@Nullable Class<E> expressionType) {
         this.expressionType = expressionType;
     }
 
     @Override
-    public void accept(SelectionVisitor selectionVisitor) {
-        selectionVisitor.visit(this);
-    }
-
-    @Override
     public boolean isBoolean() {
+        if (expressionType != null) {
+            return CriteriaUtils.isBoolean(expressionType);
+        }
         return false;
     }
 
@@ -76,18 +63,7 @@ public final class AggregateExpression<T, E> implements IExpression<E>, Selectio
 
     @Override
     public Class<E> getJavaType() {
-        if (expressionType == null) {
-            return (Class<E>) expression.getJavaType();
-        }
         return expressionType;
-    }
-
-    public AggregateType getType() {
-        return type;
-    }
-
-    public Expression<T> getExpression() {
-        return expression;
     }
 
     @Nullable

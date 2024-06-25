@@ -22,6 +22,7 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBinaryPredicate;

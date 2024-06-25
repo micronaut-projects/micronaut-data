@@ -193,18 +193,15 @@ public class PersistentPropertyPath {
      */
     @NonNull
     public String[] getArrayPath() {
-        if (path == null) {
-            if (associations.isEmpty()) {
-                return new String[]{property.getName()};
-            }
-            List<String> strings = new ArrayList<>(associations.size() + 1);
-            for (Association association : associations) {
-                strings.add(association.getName());
-            }
-            strings.add(property.getName());
-            return strings.toArray(new String[0]);
+        if (associations.isEmpty()) {
+            return new String[]{property.getName()};
         }
-        return new String[0];
+        List<String> strings = new ArrayList<>(associations.size() + 1);
+        for (Association association : associations) {
+            strings.add(association.getName());
+        }
+        strings.add(property.getName());
+        return strings.toArray(new String[0]);
     }
 
     /**

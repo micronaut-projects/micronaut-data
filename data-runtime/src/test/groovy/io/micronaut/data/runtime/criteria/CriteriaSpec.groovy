@@ -71,6 +71,23 @@ class CriteriaSpec extends AbstractCriteriaSpec {
         return query.from(Test)
     }
 
+    void "test function projection 3"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            criteriaQuery.select(
+                    criteriaBuilder.function(
+                            "MYFUNC3",
+                            String,
+                            criteriaBuilder.parameter(String),
+                            criteriaBuilder.literal("abc")
+                    )
+            )
+            String query = getSqlQuery(criteriaQuery)
+
+        expect:
+            query == '''SELECT MYFUNC3(?,?) FROM "test" test_'''
+    }
+
     @Unroll
     void "test criteria predicate"(Specification specification) {
         given:

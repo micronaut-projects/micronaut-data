@@ -36,7 +36,6 @@ import io.micronaut.data.annotation.Where;
 import io.micronaut.data.annotation.repeatable.WhereSpecifications;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentAssociationPath;
 import io.micronaut.data.model.PersistentEntity;
@@ -45,17 +44,19 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.jpa.criteria.IExpression;
+import io.micronaut.data.model.jpa.criteria.IPredicate;
+import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
-import io.micronaut.data.model.jpa.criteria.impl.IdExpression;
-import io.micronaut.data.model.jpa.criteria.impl.LiteralExpression;
-import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitable;
-import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitable;
+import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.selection.AggregateExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.naming.NamingStrategy;
@@ -398,8 +399,8 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
                                Selection<?> selection,
                                boolean distinct) {
 
-        if (selection instanceof SelectionVisitable selectionVisitable) {
-            selectionVisitable.accept(createSelectionVisitor(annotationMetadata, queryState, distinct));
+        if (selection instanceof ISelection<?> selectionVisitable) {
+            selectionVisitable.visitSelection(createSelectionVisitor(annotationMetadata, queryState, distinct));
         } else {
             throw new IllegalStateException("Unknown selection type: " + selection.getClass().getName());
         }
@@ -485,8 +486,8 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         }
         if (predicate != null) {
             queryState.getQuery().append(WHERE_CLAUSE);
-            if (predicate instanceof PredicateVisitable predicateVisitable) {
-                predicateVisitable.accept(createPredicateVisitor(annotationMetadata, queryState));
+            if (predicate instanceof IPredicate predicateVisitable) {
+                predicateVisitable.visitPredicate(createPredicateVisitor(annotationMetadata, queryState));
             } else {
                 throw new IllegalStateException("Unsupported predicate type: " + predicate.getClass().getName());
             }
@@ -1008,7 +1009,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         int assocCount = associations.size();
         // If last association is embedded, it does not need to be joined to the alias since it will be in the destination table
         // JPA/Hibernate is special case and in that case we leave association for specific handling below
-        if (assocCount > 0 && computePropertyPaths() && associations.get(assocCount - 1) instanceof Embedded) {
+        if (assocCount > 0 && computePropertyPaths() && associations.get(assocCount - 1).isEmbedded()) {
             associations.remove(assocCount - 1);
         }
 
@@ -1192,6 +1193,106 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         return jsonEntity;
     }
 
+    protected final void appendExpression(AnnotationMetadata annotationMetadata,
+                                          StringBuilder query,
+                                          QueryState queryState,
+                                          Expression<?> expression,
+                                          boolean isProjection) {
+        if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
+            QueryPropertyPath propertyPath = queryState.findProperty(persistentPropertyPath.getPropertyPath());
+            appendPropertyRef(annotationMetadata, query, queryState, propertyPath, isProjection);
+        } else if (expression instanceof ParameterExpression<?> parameterExpression) {
+            if (expression instanceof BindingParameter bindingParameter) {
+                queryState.pushParameter(bindingParameter, newBindingContext(null));
+            } else {
+                throw new IllegalArgumentException("Unknown parameter: " + parameterExpression);
+            }
+        } else if (expression instanceof LiteralExpression<?> literalExpression) {
+            query.append(asLiteral(literalExpression.getValue()));
+        } else {
+            throw new IllegalArgumentException("Unsupported expression type: " + expression.getClass());
+        }
+    }
+
+    protected final void appendPropertyRef(AnnotationMetadata annotationMetadata,
+                                           StringBuilder query,
+                                           QueryState queryState,
+                                           QueryPropertyPath propertyPath,
+                                           boolean isProjection) {
+        String tableAlias = propertyPath.getTableAlias();
+        String readTransformer = getDataTransformerReadValue(tableAlias, propertyPath.getProperty()).orElse(null);
+        if (readTransformer != null) {
+            query.append(readTransformer);
+            return;
+        }
+        if (tableAlias != null) {
+            query.append(tableAlias).append(DOT);
+        }
+        boolean computePropertyPaths = computePropertyPaths();
+        boolean jsonEntity = isJsonEntity(annotationMetadata, queryState.entity);
+        if (computePropertyPaths && !jsonEntity) {
+            query.append(propertyPath.getColumnName());
+        } else {
+            if (jsonEntity) {
+                String jsonEntityColumn = getJsonEntityColumn(annotationMetadata);
+                if (jsonEntityColumn != null) {
+                    query.append(jsonEntityColumn).append(DOT);
+                    PersistentProperty property = propertyPath.getProperty();
+                    if (property == queryState.entity.getIdentity()) {
+                        query.append('"').append(property.getPersistedName()).append('"');
+                    } else {
+                        query.append(propertyPath.getPath());
+                    }
+                }
+                if (jsonEntityColumn != null && isProjection) {
+                    DataType dataType = propertyPath.getProperty().getDataType();
+                    appendJsonProjection(query, dataType);
+                }
+            } else {
+                query.append(propertyPath.getPath());
+            }
+        }
+    }
+
+    /**
+     * Appends value projection for JSON View field.
+     *
+     * @param sb       the string builder
+     * @param dataType the property data type
+     */
+    private void appendJsonProjection(StringBuilder sb, DataType dataType) {
+        if (dataType == DataType.STRING) {
+            sb.append(".string()");
+        } else if (dataType.isNumeric() || dataType == DataType.BOOLEAN) {
+            // Boolean is represented as number in Oracle (which only supports json view)
+            sb.append(".number()");
+        } else if (dataType == DataType.TIMESTAMP) {
+            sb.append(".timestamp()");
+        } else if (dataType == DataType.DATE) {
+            sb.append(".date()");
+        }
+    }
+
+    private void appendConcat(StringBuilder writer, Collection<Runnable> partsWriters) {
+        if (getDialect() == Dialect.ORACLE) {
+            for (Iterator<Runnable> iterator = partsWriters.iterator(); iterator.hasNext(); ) {
+                iterator.next().run();
+                if (iterator.hasNext()) {
+                    writer.append(" || ");
+                }
+            }
+        } else {
+            writer.append("CONCAT(");
+            for (Iterator<Runnable> iterator = partsWriters.iterator(); iterator.hasNext(); ) {
+                iterator.next().run();
+                if (iterator.hasNext()) {
+                    writer.append(COMMA);
+                }
+            }
+            writer.append(")");
+        }
+    }
+
     /**
      * The state of the query.
      */
@@ -1323,7 +1424,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
                 Association association = associationPath[i];
                 pathSoFar.add(association.getName());
 
-                if (association instanceof Embedded) {
+                if (association.isEmbedded()) {
                     continue;
                 }
 
@@ -1360,7 +1461,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
 
                 for (int i = previousAssociations.size(); i-- > 0; ) {
                     Association association = previousAssociations.get(i);
-                    if (association instanceof Embedded) {
+                    if (association.isEmbedded()) {
                         joinAssociationsPath.add(0, association);
                         continue;
                     }
@@ -1508,7 +1609,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
             String lastJoinAlias = null;
             for (Association association : propertyPath.getAssociations()) {
                 joinPathJoiner.add(association.getName());
-                if (association instanceof Embedded) {
+                if (association.isEmbedded()) {
                     continue;
                 }
                 if (joinAssociation == null) {
@@ -1678,12 +1779,12 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         }
 
         private void visitPredicate(IExpression<Boolean> expression) {
-            if (expression instanceof PredicateVisitable predicateVisitable) {
-                predicateVisitable.accept(this);
+            if (expression instanceof RenderablePredicate renderablePredicate) {
+                renderablePredicate.render(query, queryState);
+            } else if (expression instanceof IPredicate predicateVisitable) {
+                predicateVisitable.visitPredicate(this);
             } else if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath) {
                 visitIsTrue(getRequiredProperty(propertyPath));
-            } else if (expression instanceof RenderablePredicate renderablePredicate) {
-                renderablePredicate.render(query, queryState);
             } else {
                 throw new IllegalStateException("Unknown boolean expression: " + expression);
             }
@@ -1904,35 +2005,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         }
 
         protected final void appendPropertyRef(QueryPropertyPath propertyPath) {
-            String tableAlias = propertyPath.getTableAlias();
-            String readTransformer = getDataTransformerReadValue(tableAlias, propertyPath.getProperty()).orElse(null);
-            if (readTransformer != null) {
-                query.append(readTransformer);
-                return;
-            }
-            if (tableAlias != null) {
-                query.append(tableAlias).append(DOT);
-            }
-            boolean computePropertyPaths = computePropertyPaths();
-            boolean jsonEntity = isJsonEntity(annotationMetadata, persistentEntity);
-            if (computePropertyPaths && !jsonEntity) {
-                query.append(propertyPath.getColumnName());
-            } else {
-                if (jsonEntity) {
-                    String jsonEntityColumn = getJsonEntityColumn(annotationMetadata);
-                    if (jsonEntityColumn != null) {
-                        query.append(jsonEntityColumn).append(DOT);
-                        PersistentProperty property = propertyPath.getProperty();
-                        if (property == persistentEntity.getIdentity()) {
-                            query.append('"').append(property.getPersistedName()).append('"');
-                        } else {
-                            query.append(propertyPath.getPath());
-                        }
-                    }
-                } else {
-                    query.append(propertyPath.getPath());
-                }
-            }
+            AbstractSqlLikeQueryBuilder2.this.appendPropertyRef(annotationMetadata, query, queryState, propertyPath, false);
         }
 
         private void appendCriteriaForOperator(QueryPropertyPath propertyPath,
@@ -2136,22 +2209,6 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
             query.append(CLOSE_BRACKET);
         }
 
-        /**
-         * @param writer       The writer
-         * @param partsWriters The parts writers
-         */
-        protected void appendConcat(StringBuilder writer, Collection<Runnable> partsWriters) {
-            writer.append("CONCAT(");
-            for (Iterator<Runnable> iterator = partsWriters.iterator(); iterator.hasNext(); ) {
-                Runnable partWriter = iterator.next();
-                partWriter.run();
-                if (iterator.hasNext()) {
-                    writer.append(",");
-                }
-            }
-            writer.append(")");
-        }
-
     }
 
     /**
@@ -2183,7 +2240,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
             PersistentProperty property = propertyPath.getProperty();
             if (isCompound) {
                 // Compound property which is part of a DTO
-                if (property instanceof Association association && !(property instanceof Embedded)) {
+                if (property instanceof Association association && !property.isEmbedded()) {
                     if (queryState.isJoined(propertyPath.getPath())) {
                         appendCompoundAssociationProjection(new PersistentAssociationPath(propertyPath.getAssociations(), association));
                     } else {
@@ -2196,7 +2253,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
                 if (distinct) {
                     query.append(DISTINCT);
                 }
-                if (property instanceof Association association && !(property instanceof Embedded)) {
+                if (property instanceof Association association && !property.isEmbedded()) {
                     appendAssociationProjection(association, propertyPath);
                 } else {
                     appendPropertyProjection(findProperty(propertyPath.getPath()));
@@ -2207,7 +2264,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         @Override
         public void visit(AliasedSelection<?> aliasedSelection) {
             columnAlias = aliasedSelection.getAlias();
-            ((SelectionVisitable) aliasedSelection.getSelection()).accept(this);
+            aliasedSelection.getSelection().visitSelection(this);
             columnAlias = null;
         }
 
@@ -2228,8 +2285,8 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
             Iterator<Selection<?>> iterator = compoundSelection.getCompoundSelectionItems().iterator();
             while (iterator.hasNext()) {
                 Selection<?> selection = iterator.next();
-                if (selection instanceof SelectionVisitable selectionVisitable) {
-                    selectionVisitable.accept(this);
+                if (selection instanceof ISelection<?> selectionVisitable) {
+                    selectionVisitable.visitSelection(this);
                 } else {
                     throw new IllegalStateException("Unknown selection object: " + selection);
                 }
@@ -2247,18 +2304,15 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         }
 
         @Override
-        public void visit(AggregateExpression<?, ?> aggregateExpression) {
-            Expression<?> expression = aggregateExpression.getExpression();
-            switch (aggregateExpression.getType()) {
-                case SUM, AVG, MAX, MIN -> {
-                    PersistentPropertyPath propertyPath = requireProperty(expression).getPropertyPath();
-                    appendFunctionProjection(aggregateExpression.getType().name(), propertyPath);
-                }
+        public void visit(UnaryExpression<?> unaryExpression) {
+            Expression<?> expression = unaryExpression.getExpression();
+            switch (unaryExpression.getType()) {
+                case SUM, AVG, MAX, MIN, UPPER, LOWER -> appendFunction(unaryExpression.getType().name(), expression);
                 case COUNT -> {
                     if (expression instanceof PersistentEntityRoot) {
                         appendRowCount(tableAlias);
-                    } else if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath) {
-                        appendRowCount(tableAlias);
+                    } else if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
+                        appendFunction("COUNT", persistentPropertyPath);
                     } else {
                         throw new IllegalStateException("Illegal expression: " + expression + " for count selection!");
                     }
@@ -2267,14 +2321,30 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
                     if (expression instanceof PersistentEntityRoot) {
                         appendRowCountDistinct(tableAlias);
                     } else if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
-                        appendFunctionProjection("COUNT(DISTINCT", persistentPropertyPath.getPropertyPath());
+                        appendFunction("COUNT(DISTINCT", persistentPropertyPath);
                         query.append(CLOSE_BRACKET);
                     } else {
                         throw new IllegalStateException("Illegal expression: " + expression + " for count distinct selection!");
                     }
                 }
                 default ->
-                    throw new IllegalStateException("Unknown aggregation: " + aggregateExpression.getExpression());
+                    throw new IllegalStateException("Unsupported expression: " + unaryExpression.getType());
+            }
+        }
+
+        @Override
+        public void visit(BinaryExpression<?> binaryExpression) {
+            Expression<?> left = binaryExpression.getLeft();
+            Expression<?> right = binaryExpression.getRight();
+            switch (binaryExpression.getType()) {
+                case SUM -> {
+                    appendExpression(left);
+                    query.append(" + ");
+                    appendExpression(right);
+                }
+                case CONCAT -> appendFunction("CONCAT", List.of(left, right));
+                default ->
+                    throw new IllegalStateException("Unsupported expression: " + binaryExpression.getType());
             }
         }
 
@@ -2298,6 +2368,11 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
             } else {
                 throw new IllegalArgumentException(CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID);
             }
+        }
+
+        @Override
+        public void visit(FunctionExpression<?> functionExpression) {
+            appendFunction(functionExpression.getName(), functionExpression.getExpressions());
         }
 
         /**
@@ -2502,29 +2577,19 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
             sb.append(COMMA);
         }
 
-        private void appendFunctionProjection(String functionName, PersistentPropertyPath propertyPath) {
-            boolean jsonEntity = isJsonEntity(annotationMetadata, entity);
-            String columnName;
-            if (computePropertyPaths() && !jsonEntity) {
-                columnName = getMappedName(getNamingStrategy(entity), propertyPath.getAssociations(), propertyPath.getProperty());
-                if (shouldEscape(entity)) {
-                    columnName = quote(columnName);
-                }
-            } else {
-                columnName = propertyPath.getPath();
-            }
+        private void appendFunction(String functionName, Expression<?> expression) {
+            appendFunction(functionName, List.of(expression));
+        }
+
+        private void appendFunction(String functionName, List<Expression<?>> expressions) {
             query.append(functionName)
-                .append(OPEN_BRACKET)
-                .append(tableAlias)
-                .append(DOT);
-            String jsonEntityColumn = getJsonEntityColumn(annotationMetadata);
-            if (jsonEntityColumn != null) {
-                query.append(jsonEntityColumn).append(DOT);
-            }
-            query.append(columnName);
-            if (jsonEntityColumn != null) {
-                DataType dataType = propertyPath.getProperty().getDataType();
-                appendJsonProjection(query, dataType);
+                .append(OPEN_BRACKET);
+            for (Iterator<Expression<?>> iterator = expressions.iterator(); iterator.hasNext(); ) {
+                Expression<?> expression = iterator.next();
+                appendExpression(expression);
+                if (iterator.hasNext()) {
+                    query.append(COMMA);
+                }
             }
             query.append(CLOSE_BRACKET);
             if (columnAlias != null) {
@@ -2532,23 +2597,8 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
             }
         }
 
-        /**
-         * Appends value projection for JSON View field.
-         *
-         * @param sb       the string builder
-         * @param dataType the property data type
-         */
-        private void appendJsonProjection(StringBuilder sb, DataType dataType) {
-            if (dataType == DataType.STRING) {
-                sb.append(".string()");
-            } else if (dataType.isNumeric() || dataType == DataType.BOOLEAN) {
-                // Boolean is represented as number in Oracle (which only supports json view)
-                sb.append(".number()");
-            } else if (dataType == DataType.TIMESTAMP) {
-                sb.append(".timestamp()");
-            } else if (dataType == DataType.DATE) {
-                sb.append(".date()");
-            }
+        private void appendExpression(Expression<?> expression) {
+            AbstractSqlLikeQueryBuilder2.this.appendExpression(annotationMetadata, query, queryState, expression, true);
         }
 
         private QueryPropertyPath findProperty(String propertyPath) {

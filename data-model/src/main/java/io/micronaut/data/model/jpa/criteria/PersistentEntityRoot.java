@@ -19,7 +19,8 @@ import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
-import io.micronaut.data.model.jpa.criteria.impl.IdExpression;
+import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
+import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Root;
 
@@ -77,6 +78,11 @@ public interface PersistentEntityRoot<T> extends Root<T>, PersistentEntityFrom<T
     @NonNull
     default <Y> PersistentPropertyPath<Y> get(@NonNull PersistentProperty persistentProperty) {
         return get(persistentProperty.getName());
+    }
+
+    @Override
+    default void visitExpression(ExpressionVisitor expressionVisitor) {
+        expressionVisitor.visit(this);
     }
 
 }

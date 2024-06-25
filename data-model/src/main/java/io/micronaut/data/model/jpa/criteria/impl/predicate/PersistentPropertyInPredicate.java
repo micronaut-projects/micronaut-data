@@ -73,7 +73,7 @@ public final class PersistentPropertyInPredicate<T> extends AbstractPersistentPr
     }
 
     @Override
-    public void accept(PredicateVisitor predicateVisitor) {
+    public void visitPredicate(PredicateVisitor predicateVisitor) {
         predicateVisitor.visit(this);
     }
 

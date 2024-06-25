@@ -17,9 +17,9 @@ package io.micronaut.data.processor.model.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
-import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitable;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaQuery;
 import io.micronaut.inject.ast.ClassElement;
@@ -68,9 +68,9 @@ final class SourcePersistentEntityCriteriaQueryImpl<T> extends AbstractPersisten
 
     @Override
     public String getQueryResultTypeName() {
-        if (selection instanceof SelectionVisitable selectionVisitable) {
+        if (selection instanceof ISelection<?> selectionVisitable) {
             QueryResultAnalyzer selectionVisitor = new QueryResultAnalyzer();
-            selectionVisitable.accept(selectionVisitor);
+            selectionVisitable.visitSelection(selectionVisitor);
             return selectionVisitor.getQueryResultTypeName();
         }
         return null;

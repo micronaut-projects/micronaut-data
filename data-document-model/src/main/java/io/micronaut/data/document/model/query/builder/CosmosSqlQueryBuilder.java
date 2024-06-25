@@ -209,7 +209,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
         Map<String, String> joinedPaths = new HashMap<>();
         for (JoinPath joinPath : allPaths) {
             Association association = joinPath.getAssociation();
-            if (association instanceof Embedded) {
+            if (association.isEmbedded()) {
                 // joins on embedded don't make sense
                 continue;
             }

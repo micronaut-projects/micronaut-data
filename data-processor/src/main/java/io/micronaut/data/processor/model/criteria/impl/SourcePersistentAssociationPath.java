@@ -20,7 +20,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
-import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
 import io.micronaut.data.processor.model.SourceAssociation;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -39,27 +39,32 @@ import java.util.List;
  */
 @Internal
 final class SourcePersistentAssociationPath<Owner, E> extends AbstractSourcePersistentEntityJoinSupport<Owner, E>
-        implements SourcePersistentEntityPath<E>, SourcePersistentPropertyPath<E>, PersistentAssociationPath<Owner, E> {
+    implements SourcePersistentEntityPath<E>, SourcePersistentPropertyPath<E>, PersistentAssociationPath<Owner, E> {
 
-    private final Path<?> parentRoot;
+    private final PersistentEntityFrom<?, Owner> parent;
     private final SourceAssociation association;
     private final List<Association> associations;
     private io.micronaut.data.annotation.Join.Type associationJoinType;
     @Nullable
     private String alias;
 
-    SourcePersistentAssociationPath(Path<?> parentRoot,
+    SourcePersistentAssociationPath(PersistentEntityFrom<?, Owner> parent,
                                     SourceAssociation association,
                                     List<Association> associations,
                                     Join.Type associationJoinType,
                                     String alias,
                                     CriteriaBuilder criteriaBuilder) {
         super(criteriaBuilder);
-        this.parentRoot = parentRoot;
+        this.parent = parent;
         this.association = association;
         this.associations = associations;
         this.associationJoinType = associationJoinType;
         this.alias = alias;
+    }
+
+    @Override
+    public PersistentEntityFrom<?, Owner> getParent() {
+        return parent;
     }
 
     @Override
@@ -84,13 +89,8 @@ final class SourcePersistentAssociationPath<Owner, E> extends AbstractSourcePers
     }
 
     @Override
-    public void accept(SelectionVisitor selectionVisitor) {
-        selectionVisitor.visit(this);
-    }
-
-    @Override
     public Path<?> getParentPath() {
-        return parentRoot;
+        return parent;
     }
 
     @Override

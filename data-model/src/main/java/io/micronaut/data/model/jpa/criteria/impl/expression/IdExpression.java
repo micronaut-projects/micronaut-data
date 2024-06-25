@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.model.jpa.criteria.impl;
+package io.micronaut.data.model.jpa.criteria.impl.expression;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
 
 /**
  * The ID expression implementation.
@@ -29,7 +30,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
  * @since 3.3
  */
 @Internal
-public final class IdExpression<E, T> implements IExpression<T>, SelectionVisitable {
+public final class IdExpression<E, T> implements IExpression<T> {
 
     private final PersistentEntityRoot<E> root;
 
@@ -39,11 +40,6 @@ public final class IdExpression<E, T> implements IExpression<T>, SelectionVisita
 
     public PersistentEntityRoot<E> getRoot() {
         return root;
-    }
-
-    @Override
-    public void accept(SelectionVisitor selectionVisitor) {
-        selectionVisitor.visit(this);
     }
 
     @Override
@@ -80,6 +76,11 @@ public final class IdExpression<E, T> implements IExpression<T>, SelectionVisita
             throw new IllegalStateException("IdClass is unknown!");
         }
         return (Class<? extends T>) root.get(persistentEntity.getIdentity().getName()).getJavaType();
+    }
+
+    @Override
+    public void visitExpression(ExpressionVisitor expressionVisitor) {
+        expressionVisitor.visit(this);
     }
 
     @Override

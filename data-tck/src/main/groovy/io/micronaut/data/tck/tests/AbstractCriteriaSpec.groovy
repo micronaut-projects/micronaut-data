@@ -42,6 +42,43 @@ abstract class AbstractCriteriaSpec extends Specification {
 
     abstract PersistentEntityRoot createRoot(CriteriaUpdate query);
 
+    void "test join"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            def specification = { root, query, cb ->
+                def othersJoin = root.join("others")
+                def simpleJoin = othersJoin.join("simple")
+                cb.and(
+                        cb.equal(root.get("amount"), othersJoin.get("amount")),
+                        cb.equal(root.get("amount"), simpleJoin.get("amount")),
+                )
+                root.joins.size() == 1
+                root.joins[0] == othersJoin
+                def persistentRoot = root as PersistentEntityRoot
+                persistentRoot.persistentJoins.size() == 1
+                persistentRoot.persistentJoins.joins[0] == othersJoin
+                root.joins[0] == othersJoin
+                othersJoin.joins.size() == 1
+                othersJoin.joins[0] == simpleJoin
+                simpleJoin.parent == othersJoin
+                cb.and(
+                        cb.equal(root.get("amount"), othersJoin.get("amount")),
+                        cb.equal(root.get("amount"), simpleJoin.get("amount")),
+                )
+            } as Specification
+            def predicate = specification.toPredicate(entityRoot, criteriaQuery, criteriaBuilder)
+            if (predicate) {
+                criteriaQuery.where(predicate)
+            }
+            String sqlQuery = getSqlQuery(criteriaQuery)
+
+        expect:
+            sqlQuery ==  'SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget" ' +
+                    'FROM "test" test_ INNER JOIN "other_entity" test_others_ ON test_."id"=test_others_."test_id" ' +
+                    'INNER JOIN "simple_entity" test_others_simple_ ON test_others_."simple_id"=test_others_simple_."id" ' +
+                    'WHERE (test_."amount"=test_others_."amount" AND test_."amount"=test_others_simple_."amount")'
+    }
+
     @Unroll
     void "test joins"(Specification specification) {
         given:
@@ -183,6 +220,35 @@ abstract class AbstractCriteriaSpec extends Specification {
             "amount"  | "budget"   | "le"                   | '(NOT(test_."amount"<=test_."budget"))'
     }
 
+    void "test function projection 1"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            criteriaQuery.select(
+                    criteriaBuilder.function(
+                            "MYFUNC1",
+                            String,
+                            criteriaBuilder.parameter(String),
+                            criteriaBuilder.parameter(String)
+                    )
+            )
+            String query = getSqlQuery(criteriaQuery)
+
+        expect:
+            query == '''SELECT MYFUNC1(?,?) FROM "test" test_'''
+    }
+
+    void "test function projection 2"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            criteriaQuery.select(
+                    criteriaBuilder.function("MYFUNC2", String)
+            )
+            String query = getSqlQuery(criteriaQuery)
+
+        expect:
+            query == '''SELECT MYFUNC2() FROM "test" test_'''
+    }
+
     @Unroll
     void "test #projection projection produces selection: #expectedSelectQuery"() {
         given:
@@ -199,8 +265,97 @@ abstract class AbstractCriteriaSpec extends Specification {
             "age"    | "avg"           | 'AVG(test_."age")'
             "age"    | "max"           | 'MAX(test_."age")'
             "age"    | "min"           | 'MIN(test_."age")'
-// TODO:            "age"    | "count"    | 'COUNT(test_."age")'
+            "age"    | "count"         | 'COUNT(test_."age")'
             "age"    | "countDistinct" | 'COUNT(DISTINCT(test_."age"))'
+            "age"    | "lower"         | 'LOWER(test_."age")'
+            "age"    | "upper"         | 'UPPER(test_."age")'
+    }
+
+    @Unroll
+    void "test unary expression #projection produces selection: #expectedSelectQuery"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            criteriaQuery.select(project(projection, entityRoot, property))
+            String selectSqlQuery = getSelectQueryPart(criteriaQuery)
+
+        expect:
+            selectSqlQuery == expectedSelectQuery
+
+        where:
+            property | projection      | expectedSelectQuery
+            "age"    | "sum"           | 'SUM(test_."age")'
+            "age"    | "avg"           | 'AVG(test_."age")'
+            "age"    | "max"           | 'MAX(test_."age")'
+            "age"    | "min"           | 'MIN(test_."age")'
+            "age"    | "count"         | 'COUNT(test_."age")'
+            "age"    | "countDistinct" | 'COUNT(DISTINCT(test_."age"))'
+            "age"    | "lower"         | 'LOWER(test_."age")'
+            "age"    | "upper"         | 'UPPER(test_."age")'
+    }
+
+    void "test binary sum 1"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+
+        when:
+            criteriaQuery.select(criteriaBuilder.sum(
+                    criteriaBuilder.parameter(Long),
+                    criteriaBuilder.parameter(Long)
+            ))
+        then:
+            getSelectQueryPart(criteriaQuery) == '? + ?'
+    }
+
+    void "test binary sum 2"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+
+        when:
+            criteriaQuery.select(criteriaBuilder.sum(
+                    entityRoot.<Long>get("age"),
+                    criteriaBuilder.parameter(Long)
+            ))
+        then:
+            getSelectQueryPart(criteriaQuery) == 'test_."age" + ?'
+    }
+
+    void "test binary concat 1"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+
+        when:
+            criteriaQuery.select(criteriaBuilder.concat(
+                    criteriaBuilder.parameter(String),
+                    entityRoot.<String>get("name")
+            ))
+        then:
+            getSelectQueryPart(criteriaQuery) == 'CONCAT(?,test_."name")'
+    }
+
+    void "test binary concat 2"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+
+        when:
+            criteriaQuery.select(criteriaBuilder.concat(
+                    entityRoot.<String>get("name"),
+                    criteriaBuilder.parameter(String)
+            ))
+        then:
+            getSelectQueryPart(criteriaQuery) == 'CONCAT(test_."name",?)'
+    }
+
+    void "test binary concat 3"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+
+        when:
+            criteriaQuery.select(criteriaBuilder.concat(
+                    criteriaBuilder.parameter(String),
+                    criteriaBuilder.parameter(String)
+            ))
+        then:
+            getSelectQueryPart(criteriaQuery) == 'CONCAT(?,?)'
     }
 
     @Unroll

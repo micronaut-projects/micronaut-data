@@ -32,12 +32,12 @@ import java.util.List;
  * The internal source implementation of {@link AbstractPersistentEntityJoinSupport}.
  *
  * @param <T> The association entity type
- * @param <J>     The association entity type
+ * @param <E> The association entity type
  * @author Denis Stepanov
  * @since 3.2
  */
 @Internal
-abstract class AbstractSourcePersistentEntityJoinSupport<T, J> extends AbstractPersistentEntityJoinSupport<T, J> {
+abstract class AbstractSourcePersistentEntityJoinSupport<T, E> extends AbstractPersistentEntityJoinSupport<T, E> {
 
     private final CriteriaBuilder criteriaBuilder;
 
@@ -67,9 +67,9 @@ abstract class AbstractSourcePersistentEntityJoinSupport<T, J> extends AbstractP
     }
 
     @Override
-    protected <X, Y> PersistentAssociationPath<X, Y> createJoinAssociation(Association association,
-                                                                           io.micronaut.data.annotation.Join.Type associationJoinType,
-                                                                           String alias) {
+    protected <Y> PersistentAssociationPath<E, Y> createJoinAssociation(Association association,
+                                                                        io.micronaut.data.annotation.Join.Type associationJoinType,
+                                                                        String alias) {
         return new SourcePersistentAssociationPath<>(this,
             (SourceAssociation) association,
             getCurrentPath(),

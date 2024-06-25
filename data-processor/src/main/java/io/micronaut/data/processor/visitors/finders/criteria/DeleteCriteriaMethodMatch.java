@@ -121,7 +121,7 @@ public class DeleteCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             } else {
                 boolean generateInIdList = getEntitiesParameter() != null
                     && !rootEntity.hasCompositeIdentity()
-                    && !(rootEntity.getIdentity() instanceof Embedded);
+                    && !rootEntity.getIdentity().isEmbedded();
                 if (generateInIdList) {
                     predicate = root.id().in(cb.entityPropertyParameter(entityParameter));
                 } else {

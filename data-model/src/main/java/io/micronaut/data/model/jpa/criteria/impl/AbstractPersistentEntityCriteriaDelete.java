@@ -21,6 +21,8 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.jpa.criteria.IExpression;
+import io.micronaut.data.model.jpa.criteria.IPredicate;
+import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
@@ -68,13 +70,13 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
         }
         QueryModel qm = QueryModel.from(entityRoot.getPersistentEntity());
         Joiner joiner = new Joiner();
-        if (predicate instanceof PredicateVisitable predicateVisitable) {
-            predicateVisitable.accept(createPredicateVisitor(qm));
-            predicateVisitable.accept(joiner);
+        if (predicate instanceof IPredicate predicateVisitable) {
+            predicateVisitable.visitPredicate(createPredicateVisitor(qm));
+            predicateVisitable.visitPredicate(joiner);
         }
-        if (returning instanceof SelectionVisitable selectionVisitable) {
-            selectionVisitable.accept(new QueryModelSelectionVisitor(qm, false));
-            selectionVisitable.accept(joiner);
+        if (returning instanceof ISelection<?> selectionVisitable) {
+            selectionVisitable.visitSelection(new QueryModelSelectionVisitor(qm, false));
+            selectionVisitable.visitSelection(joiner);
         }
         for (Map.Entry<String, Joiner.Joined> e : joiner.getJoins().entrySet()) {
             qm.join(e.getKey(), Optional.ofNullable(e.getValue().getType()).orElse(Join.Type.DEFAULT), e.getValue().getAlias());
@@ -192,7 +194,7 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
         private final Selection<?> returningSelection;
 
         DeleteQueryDefinitionImpl(PersistentEntity persistentEntity, Predicate predicate, Selection<?> returningSelection) {
-            super(persistentEntity, predicate);
+            super(persistentEntity, predicate, Map.of());
             this.returningSelection = returningSelection;
         }
 

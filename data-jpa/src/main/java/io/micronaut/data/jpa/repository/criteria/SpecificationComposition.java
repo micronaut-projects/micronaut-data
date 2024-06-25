@@ -33,7 +33,9 @@ import java.io.Serializable;
  * @author Jens Schauder
  * @see Specification
  * @since 3.1
+ * @deprecated Internal class will be removed
  */
+@Deprecated(forRemoval = true, since = "4.9")
 class SpecificationComposition {
 
     @NonNull

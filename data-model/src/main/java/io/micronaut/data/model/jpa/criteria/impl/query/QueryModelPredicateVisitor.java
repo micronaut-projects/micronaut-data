@@ -20,10 +20,10 @@ import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.IExpression;
+import io.micronaut.data.model.jpa.criteria.IPredicate;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
-import io.micronaut.data.model.jpa.criteria.impl.IdExpression;
-import io.micronaut.data.model.jpa.criteria.impl.LiteralExpression;
-import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitable;
+import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.AbstractPersistentPropertyPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
@@ -62,8 +62,8 @@ public final class QueryModelPredicateVisitor implements PredicateVisitor {
     }
 
     private void visit(IExpression<Boolean> expression) {
-        if (expression instanceof PredicateVisitable predicateVisitable) {
-            predicateVisitable.accept(this);
+        if (expression instanceof IPredicate predicateVisitable) {
+            predicateVisitable.visitPredicate(this);
         } else if (expression instanceof PersistentPropertyPath<?> propertyPath) {
             // TODO
             add(Restrictions.isTrue(getPropertyPath(propertyPath)));

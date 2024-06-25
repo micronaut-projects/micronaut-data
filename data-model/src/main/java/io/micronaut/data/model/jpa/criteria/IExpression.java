@@ -17,6 +17,8 @@ package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
+import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 
@@ -91,4 +93,15 @@ public interface IExpression<T> extends Expression<T>, ISelection<T> {
         throw notSupportedOperation();
     }
 
+    /**
+     * Visit the expression.
+     *
+     * @param expressionVisitor The expression visitor
+     */
+    void visitExpression(ExpressionVisitor expressionVisitor);
+
+    @Override
+    default void visitSelection(SelectionVisitor selectionVisitor) {
+        visitExpression(selectionVisitor);
+    }
 }
