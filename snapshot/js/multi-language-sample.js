@@ -102,6 +102,14 @@ function postProcessCodeBlocks() {
         return string.charAt(0).toUpperCase() + string.slice(1);
     }
 
+    function ensureAtLeastOneCodeBlockIsVisible(collectionOfSampleElements) {
+        if (collectionOfSampleElements.length > 0 && collectionOfSampleElements.every(a => a.classList.contains("hidden"))) {
+            const firstElement = collectionOfSampleElements[0];
+            console.info("No code snippet in default preferred language, showing first", firstElement)
+            firstElement.classList.remove("hidden")
+        }
+    }
+
     function processSampleEl(sampleEl, prefLangId, prefBuildId, prefConfigId) {
         var codeEl = sampleEl.querySelector("code[data-lang]");
         if (codeEl != null) {
@@ -181,7 +189,7 @@ function postProcessCodeBlocks() {
                 processSampleEl(currentSampleElement, languageId, buildId, configId);
                 i++;
             }
-
+            ensureAtLeastOneCodeBlockIsVisible(currentCollection);
             multiLanguageSets.push(currentCollection);
         }
 
