@@ -100,17 +100,6 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static int</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#countPersistentProperties(io.micronaut.data.model.PersistentProperty)" class="member-name-link">countPersistentProperties</a><wbr>(<a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
-<div class="block">Count possible embedded properties.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static int</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#countPersistentProperties(java.util.List,io.micronaut.data.model.PersistentProperty)" class="member-name-link">countPersistentProperties</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;&nbsp;associations,
- <a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
-<div class="block">Count possible embedded properties.</div>
-</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#getPersistentPropertyPath(io.micronaut.data.model.PersistentEntity,java.lang.String)" class="member-name-link">getPersistentPropertyPath</a><wbr>(<a href="PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;path)</code></div>
@@ -138,31 +127,16 @@ loadScripts(document, 'script');</script>
 <div class="block">Traverses properties that should be persisted.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#traversePersistentProperties(io.micronaut.data.model.PersistentPropertyPath,boolean,java.util.function.BiConsumer)" class="member-name-link">traversePersistentProperties</a><wbr>(<a href="PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a>&nbsp;propertyPath,
- boolean&nbsp;traverseEmbedded,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/BiConsumer.html" title="class or interface in java.util.function" class="external-link">BiConsumer</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;,<wbr><a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&gt;&nbsp;consumerProperty)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#traversePersistentProperties(io.micronaut.data.model.PersistentPropertyPath,java.util.function.BiConsumer)" class="member-name-link">traversePersistentProperties</a><wbr>(<a href="PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a>&nbsp;propertyPath,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/BiConsumer.html" title="class or interface in java.util.function" class="external-link">BiConsumer</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;,<wbr><a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&gt;&nbsp;consumerProperty)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static void</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#traversePersistentProperties(io.micronaut.data.model.PersistentProperty,java.util.function.BiConsumer)" class="member-name-link">traversePersistentProperties</a><wbr>(<a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/BiConsumer.html" title="class or interface in java.util.function" class="external-link">BiConsumer</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;,<wbr><a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&gt;&nbsp;consumer)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Traverses properties that should be persisted.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#traversePersistentProperties(java.util.List,io.micronaut.data.model.PersistentProperty,boolean,java.util.function.BiConsumer)" class="member-name-link">traversePersistentProperties</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;&nbsp;associations,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#traversePersistentProperties(java.util.List,io.micronaut.data.model.PersistentProperty,java.util.function.BiConsumer)" class="member-name-link">traversePersistentProperties</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;&nbsp;associations,
  <a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property,
- boolean&nbsp;traverseEmbedded,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/BiConsumer.html" title="class or interface in java.util.function" class="external-link">BiConsumer</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;,<wbr><a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&gt;&nbsp;consumerProperty)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#traversePersistentProperties(java.util.List,io.micronaut.data.model.PersistentProperty,java.util.function.BiConsumer)" class="member-name-link">traversePersistentProperties</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;&nbsp;associations,
- <a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/BiConsumer.html" title="class or interface in java.util.function" class="external-link">BiConsumer</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;,<wbr><a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&gt;&nbsp;consumerProperty)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -241,62 +215,10 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="countPersistentProperties(io.micronaut.data.model.PersistentProperty)">
-<h3>countPersistentProperties</h3>
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">countPersistentProperties</span><wbr><span class="parameters">(<a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property)</span></div>
-<div class="block">Count possible embedded properties.</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>property</code> - The property</dd>
-<dt>Returns:</dt>
-<dd>the count</dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="countPersistentProperties(java.util.List,io.micronaut.data.model.PersistentProperty)">
-<h3>countPersistentProperties</h3>
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">countPersistentProperties</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;&nbsp;associations,
- <a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property)</span></div>
-<div class="block">Count possible embedded properties.</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>property</code> - The property</dd>
-<dd><code>associations</code> - The associations</dd>
-<dt>Returns:</dt>
-<dd>the count</dd>
-</dl>
-</section>
-</li>
-<li>
 <section class="detail" id="traversePersistentProperties(java.util.List,io.micronaut.data.model.PersistentProperty,java.util.function.BiConsumer)">
 <h3>traversePersistentProperties</h3>
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">traversePersistentProperties</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;&nbsp;associations,
  <a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/BiConsumer.html" title="class or interface in java.util.function" class="external-link">BiConsumer</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;,<wbr><a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&gt;&nbsp;consumerProperty)</span></div>
-</section>
-</li>
-<li>
-<section class="detail" id="traversePersistentProperties(io.micronaut.data.model.PersistentPropertyPath,java.util.function.BiConsumer)">
-<h3>traversePersistentProperties</h3>
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">traversePersistentProperties</span><wbr><span class="parameters">(<a href="PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a>&nbsp;propertyPath,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/BiConsumer.html" title="class or interface in java.util.function" class="external-link">BiConsumer</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;,<wbr><a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&gt;&nbsp;consumerProperty)</span></div>
-</section>
-</li>
-<li>
-<section class="detail" id="traversePersistentProperties(io.micronaut.data.model.PersistentPropertyPath,boolean,java.util.function.BiConsumer)">
-<h3>traversePersistentProperties</h3>
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">traversePersistentProperties</span><wbr><span class="parameters">(<a href="PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a>&nbsp;propertyPath,
- boolean&nbsp;traverseEmbedded,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/BiConsumer.html" title="class or interface in java.util.function" class="external-link">BiConsumer</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;,<wbr><a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&gt;&nbsp;consumerProperty)</span></div>
-</section>
-</li>
-<li>
-<section class="detail" id="traversePersistentProperties(java.util.List,io.micronaut.data.model.PersistentProperty,boolean,java.util.function.BiConsumer)">
-<h3>traversePersistentProperties</h3>
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">traversePersistentProperties</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;&nbsp;associations,
- <a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property,
- boolean&nbsp;traverseEmbedded,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/BiConsumer.html" title="class or interface in java.util.function" class="external-link">BiConsumer</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;,<wbr><a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&gt;&nbsp;consumerProperty)</span></div>
 </section>
 </li>
