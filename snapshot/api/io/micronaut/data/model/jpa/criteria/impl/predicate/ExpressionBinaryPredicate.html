@@ -79,13 +79,12 @@ loadScripts(document, 'script');</script>
 <section class="class-description" id="class-description">
 <dl class="notes">
 <dt>All Implemented Interfaces:</dt>
-<dd><code><a href="../../IExpression.html" title="interface in io.micronaut.data.model.jpa.criteria">IExpression</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;</code>, <code><a href="../PredicateVisitable.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">PredicateVisitable</a></code>, <code><a href="../SelectionVisitable.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">SelectionVisitable</a></code>, <code><a href="../../IPredicate.html" title="interface in io.micronaut.data.model.jpa.criteria">IPredicate</a></code>, <code><a href="../../ISelection.html" title="interface in io.micronaut.data.model.jpa.criteria">ISelection</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;</code>, <code>jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;</code>, <code>jakarta.persistence.criteria.Predicate</code>, <code>jakarta.persistence.criteria.Selection&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;</code>, <code>jakarta.persistence.TupleElement&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;</code></dd>
+<dd><code><a href="../../IExpression.html" title="interface in io.micronaut.data.model.jpa.criteria">IExpression</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;</code>, <code><a href="../../IPredicate.html" title="interface in io.micronaut.data.model.jpa.criteria">IPredicate</a></code>, <code><a href="../../ISelection.html" title="interface in io.micronaut.data.model.jpa.criteria">ISelection</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;</code>, <code>jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;</code>, <code>jakarta.persistence.criteria.Predicate</code>, <code>jakarta.persistence.criteria.Selection&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;</code>, <code>jakarta.persistence.TupleElement&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;</code></dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="annotations">@Internal
 </span><span class="modifiers">public final class </span><span class="element-name type-name-label">ExpressionBinaryPredicate</span>
-<span class="extends-implements">extends <a href="AbstractPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">AbstractPredicate</a>
-implements <a href="../PredicateVisitable.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">PredicateVisitable</a></span></div>
+<span class="extends-implements">extends <a href="AbstractPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">AbstractPredicate</a></span></div>
 <div class="block">The expression binary operation predicate implementation.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -131,33 +130,35 @@ implements <a href="../PredicateVisitable.html" title="interface in io.micronaut
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression&lt;?&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getLeft()" class="member-name-link">getLeft</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="PredicateBinaryOp.html" title="enum class in io.micronaut.data.model.jpa.criteria.impl.predicate">PredicateBinaryOp</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getOp()" class="member-name-link">getOp</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression&lt;?&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRight()" class="member-name-link">getRight</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#accept(io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor)" class="member-name-link">accept</a><wbr>(<a href="../PredicateVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">PredicateVisitor</a>&nbsp;predicateVisitor)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression&lt;?&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getLeft()" class="member-name-link">getLeft</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="PredicateBinaryOp.html" title="enum class in io.micronaut.data.model.jpa.criteria.impl.predicate">PredicateBinaryOp</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getOp()" class="member-name-link">getOp</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression&lt;?&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRight()" class="member-name-link">getRight</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visitPredicate(io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor)" class="member-name-link">visitPredicate</a><wbr>(<a href="../PredicateVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">PredicateVisitor</a>&nbsp;predicateVisitor)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Visit predicate.</div>
+</div>
 </div>
 </div>
 </div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.model.jpa.criteria.impl.predicate.AbstractPredicate">Methods inherited from class&nbsp;io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="AbstractPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">AbstractPredicate</a></h3>
-<code><a href="AbstractPredicate.html#accept(io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor)">accept</a>, <a href="AbstractPredicate.html#getAlias()">getAlias</a>, <a href="AbstractPredicate.html#getExpressions()">getExpressions</a>, <a href="AbstractPredicate.html#getJavaType()">getJavaType</a>, <a href="AbstractPredicate.html#getOperator()">getOperator</a>, <a href="AbstractPredicate.html#isNegated()">isNegated</a>, <a href="AbstractPredicate.html#not()">not</a></code></div>
+<code><a href="AbstractPredicate.html#getAlias()">getAlias</a>, <a href="AbstractPredicate.html#getExpressions()">getExpressions</a>, <a href="AbstractPredicate.html#getJavaType()">getJavaType</a>, <a href="AbstractPredicate.html#getOperator()">getOperator</a>, <a href="AbstractPredicate.html#isNegated()">isNegated</a>, <a href="AbstractPredicate.html#not()">not</a>, <a href="AbstractPredicate.html#visitExpression(io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor)">visitExpression</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-java.lang.Object">Methods inherited from class&nbsp;java.lang.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></h3>
 <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.model.jpa.criteria.IExpression">Methods inherited from interface&nbsp;io.micronaut.data.model.jpa.criteria.<a href="../../IExpression.html" title="interface in io.micronaut.data.model.jpa.criteria">IExpression</a></h3>
-<code><a href="../../IExpression.html#as(java.lang.Class)">as</a>, <a href="../../IExpression.html#in(jakarta.persistence.criteria.Expression...)">in</a>, <a href="../../IExpression.html#in(jakarta.persistence.criteria.Expression)">in</a>, <a href="../../IExpression.html#in(java.lang.Object...)">in</a>, <a href="../../IExpression.html#in(java.util.Collection)">in</a>, <a href="../../IExpression.html#isNotNull()">isNotNull</a>, <a href="../../IExpression.html#isNull()">isNull</a></code></div>
+<code><a href="../../IExpression.html#as(java.lang.Class)">as</a>, <a href="../../IExpression.html#in(jakarta.persistence.criteria.Expression...)">in</a>, <a href="../../IExpression.html#in(jakarta.persistence.criteria.Expression)">in</a>, <a href="../../IExpression.html#in(java.lang.Object...)">in</a>, <a href="../../IExpression.html#in(java.util.Collection)">in</a>, <a href="../../IExpression.html#isNotNull()">isNotNull</a>, <a href="../../IExpression.html#isNull()">isNull</a>, <a href="../../IExpression.html#visitSelection(io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor)">visitSelection</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.model.jpa.criteria.IPredicate">Methods inherited from interface&nbsp;io.micronaut.data.model.jpa.criteria.<a href="../../IPredicate.html" title="interface in io.micronaut.data.model.jpa.criteria">IPredicate</a></h3>
 <code><a href="../../IPredicate.html#isBoolean()">isBoolean</a>, <a href="../../IPredicate.html#isComparable()">isComparable</a>, <a href="../../IPredicate.html#isNumeric()">isNumeric</a></code></div>
@@ -210,12 +211,14 @@ implements <a href="../PredicateVisitable.html" title="interface in io.micronaut
 </section>
 </li>
 <li>
-<section class="detail" id="accept(io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor)">
-<h3>accept</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">accept</span><wbr><span class="parameters">(<a href="../PredicateVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">PredicateVisitor</a>&nbsp;predicateVisitor)</span></div>
+<section class="detail" id="visitPredicate(io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor)">
+<h3>visitPredicate</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">visitPredicate</span><wbr><span class="parameters">(<a href="../PredicateVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">PredicateVisitor</a>&nbsp;predicateVisitor)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../../IPredicate.html#visitPredicate(io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor)">IPredicate</a></code></span></div>
+<div class="block">Visit predicate.</div>
 <dl class="notes">
-<dt>Specified by:</dt>
-<dd><code><a href="../PredicateVisitable.html#accept(io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor)">accept</a></code>&nbsp;in interface&nbsp;<code><a href="../PredicateVisitable.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">PredicateVisitable</a></code></dd>
+<dt>Parameters:</dt>
+<dd><code>predicateVisitor</code> - The visitor</dd>
 </dl>
 </section>
 </li>
