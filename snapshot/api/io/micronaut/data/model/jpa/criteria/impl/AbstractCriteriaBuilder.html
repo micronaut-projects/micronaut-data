@@ -372,10 +372,10 @@ implements <a href="../PersistentEntityCriteriaBuilder.html" title="interface in
  @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&nbsp;y)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull jakarta.persistence.criteria.Predicate</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#ilikeString(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">ilikeString</a><wbr>(@NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
- @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;y)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#ilike(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">ilike</a><wbr>(@NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+ @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;pattern)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Creates an ilike predicate between an expression x and y.</div>
+<div class="block">Creates an case-insensitive like predicate.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;@NonNull jakarta.persistence.criteria.CriteriaBuilder.In&lt;T&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#in(jakarta.persistence.criteria.Expression)" class="member-name-link">in</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends T&gt;&nbsp;expression)</code></div>
@@ -487,16 +487,12 @@ M extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#like(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,char)" class="member-name-link">like</a><wbr>(@NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
  @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;pattern,
  char&nbsp;escapeChar)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Not supported yet.</div>
-</div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull jakarta.persistence.criteria.Predicate</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#like(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">like</a><wbr>(@NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
  @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;pattern,
  @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Character.html" title="class or interface in java.lang" class="external-link">Character</a>&gt;&nbsp;escapeChar)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Not supported yet.</div>
-</div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull jakarta.persistence.criteria.Predicate</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#like(jakarta.persistence.criteria.Expression,java.lang.String)" class="member-name-link">like</a><wbr>(@NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;pattern)</code></div>
@@ -505,16 +501,12 @@ M extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#like(jakarta.persistence.criteria.Expression,java.lang.String,char)" class="member-name-link">like</a><wbr>(@NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;pattern,
  char&nbsp;escapeChar)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Not supported yet.</div>
-</div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull jakarta.persistence.criteria.Predicate</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#like(jakarta.persistence.criteria.Expression,java.lang.String,jakarta.persistence.criteria.Expression)" class="member-name-link">like</a><wbr>(@NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;pattern,
  @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Character.html" title="class or interface in java.lang" class="external-link">Character</a>&gt;&nbsp;escapeChar)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Not supported yet.</div>
-</div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;@NonNull jakarta.persistence.criteria.Expression&lt;T&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#literal(T)" class="member-name-link">literal</a><wbr>(T&nbsp;value)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
@@ -622,43 +614,31 @@ M extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull jakarta.persistence.criteria.Predicate</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#notLike(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">notLike</a><wbr>(@NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
  @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;pattern)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Not supported yet.</div>
-</div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull jakarta.persistence.criteria.Predicate</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#notLike(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,char)" class="member-name-link">notLike</a><wbr>(@NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
  @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;pattern,
  char&nbsp;escapeChar)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Not supported yet.</div>
-</div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull jakarta.persistence.criteria.Predicate</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#notLike(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">notLike</a><wbr>(@NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
  @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;pattern,
  @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Character.html" title="class or interface in java.lang" class="external-link">Character</a>&gt;&nbsp;escapeChar)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Not supported yet.</div>
-</div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull jakarta.persistence.criteria.Predicate</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#notLike(jakarta.persistence.criteria.Expression,java.lang.String)" class="member-name-link">notLike</a><wbr>(@NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;pattern)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Not supported yet.</div>
-</div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull jakarta.persistence.criteria.Predicate</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#notLike(jakarta.persistence.criteria.Expression,java.lang.String,char)" class="member-name-link">notLike</a><wbr>(@NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;pattern,
  char&nbsp;escapeChar)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Not supported yet.</div>
-</div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull jakarta.persistence.criteria.Predicate</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#notLike(jakarta.persistence.criteria.Expression,java.lang.String,jakarta.persistence.criteria.Expression)" class="member-name-link">notLike</a><wbr>(@NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;pattern,
  @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Character.html" title="class or interface in java.lang" class="external-link">Character</a>&gt;&nbsp;escapeChar)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Not supported yet.</div>
-</div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;Y&gt;&nbsp;@NonNull jakarta.persistence.criteria.Expression&lt;Y&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#nullif(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">nullif</a><wbr>(@NonNull jakarta.persistence.criteria.Expression&lt;Y&gt;&nbsp;x,
  @NonNull jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;y)</code></div>
@@ -700,68 +680,55 @@ M extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Create a new parameter with possible constant value.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;@NonNull jakarta.persistence.criteria.ParameterExpression&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#parameterOfProperty(java.lang.Class,io.micronaut.data.model.PersistentPropertyPath,java.lang.Object)" class="member-name-link">parameterOfProperty</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;paramClass,
- @NonNull <a href="../../../PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a>&nbsp;propertyPath,
- @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Create a new parameter with possible constant value.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Double.html" title="class or interface in java.lang" class="external-link">Double</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#power(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">power</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x,
- jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;y)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Double.html" title="class or interface in java.lang" class="external-link">Double</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#power(jakarta.persistence.criteria.Expression,java.lang.Number)" class="member-name-link">power</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&nbsp;y)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#power(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">power</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x,
+ jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;y)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;N extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;<br>@NonNull jakarta.persistence.criteria.Expression&lt;N&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prod(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">prod</a><wbr>(@NonNull jakarta.persistence.criteria.Expression&lt;? extends N&gt;&nbsp;x,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Double.html" title="class or interface in java.lang" class="external-link">Double</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#power(jakarta.persistence.criteria.Expression,java.lang.Number)" class="member-name-link">power</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&nbsp;y)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;N extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;<br>@NonNull jakarta.persistence.criteria.Expression&lt;N&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prod(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">prod</a><wbr>(@NonNull jakarta.persistence.criteria.Expression&lt;? extends N&gt;&nbsp;x,
  @NonNull jakarta.persistence.criteria.Expression&lt;? extends N&gt;&nbsp;y)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Not supported yet.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;N extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;<br>@NonNull jakarta.persistence.criteria.Expression&lt;N&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prod(jakarta.persistence.criteria.Expression,N)" class="member-name-link">prod</a><wbr>(@NonNull jakarta.persistence.criteria.Expression&lt;? extends N&gt;&nbsp;x,
+ N&nbsp;y)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Not supported yet.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;N extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;<br>@NonNull jakarta.persistence.criteria.Expression&lt;N&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prod(jakarta.persistence.criteria.Expression,N)" class="member-name-link">prod</a><wbr>(@NonNull jakarta.persistence.criteria.Expression&lt;? extends N&gt;&nbsp;x,
- N&nbsp;y)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Not supported yet.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;N extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;<br>@NonNull jakarta.persistence.criteria.Expression&lt;N&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prod(N,jakarta.persistence.criteria.Expression)" class="member-name-link">prod</a><wbr>(N&nbsp;x,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prod(N,jakarta.persistence.criteria.Expression)" class="member-name-link">prod</a><wbr>(N&nbsp;x,
  @NonNull jakarta.persistence.criteria.Expression&lt;? extends N&gt;&nbsp;y)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Not supported yet.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#quot(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">quot</a><wbr>(@NonNull jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x,
- @NonNull jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;y)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Not supported yet.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#quot(jakarta.persistence.criteria.Expression,java.lang.Number)" class="member-name-link">quot</a><wbr>(@NonNull jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x,
- @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&nbsp;y)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#quot(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">quot</a><wbr>(@NonNull jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x,
+ @NonNull jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;y)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Not supported yet.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#quot(java.lang.Number,jakarta.persistence.criteria.Expression)" class="member-name-link">quot</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&nbsp;x,
- @NonNull jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;y)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#quot(jakarta.persistence.criteria.Expression,java.lang.Number)" class="member-name-link">quot</a><wbr>(@NonNull jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;x,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&nbsp;y)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Not supported yet.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull jakarta.persistence.criteria.Predicate</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#regex(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">regex</a><wbr>(@NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
- @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;pattern)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#quot(java.lang.Number,jakarta.persistence.criteria.Expression)" class="member-name-link">quot</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&nbsp;x,
+ @NonNull jakarta.persistence.criteria.Expression&lt;? extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;&nbsp;y)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Create a predicate for testing whether the expression satisfies the given pattern.</div>
+<div class="block">Not supported yet.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull jakarta.persistence.criteria.Predicate</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#rlikeString(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">rlikeString</a><wbr>(@NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
- @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;y)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#regex(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">regex</a><wbr>(@NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+ @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;pattern)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Creates a rlike predicate between an expression x and y.</div>
+<div class="block">Create a predicate for testing whether the expression satisfies the given pattern.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Number.html" title="class or interface in java.lang" class="external-link">Number</a>&gt;<br>jakarta.persistence.criteria.Expression&lt;T&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#round(jakarta.persistence.criteria.Expression,java.lang.Integer)" class="member-name-link">round</a><wbr>(jakarta.persistence.criteria.Expression&lt;T&gt;&nbsp;x,
@@ -1014,7 +981,7 @@ V&gt;&gt;<br>@NonNull jakarta.persistence.criteria.Expression&lt;<a href="https:
 <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#toString()" title="class or interface in java.lang" class="external-link">toString</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder">Methods inherited from interface&nbsp;io.micronaut.data.model.jpa.criteria.<a href="../PersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaBuilder</a></h3>
-<code><a href="../PersistentEntityCriteriaBuilder.html#createCriteriaDelete(java.lang.Class)">createCriteriaDelete</a>, <a href="../PersistentEntityCriteriaBuilder.html#createCriteriaUpdate(java.lang.Class)">createCriteriaUpdate</a>, <a href="../PersistentEntityCriteriaBuilder.html#createQuery()">createQuery</a>, <a href="../PersistentEntityCriteriaBuilder.html#createQuery(java.lang.Class)">createQuery</a></code></div>
+<code><a href="../PersistentEntityCriteriaBuilder.html#createCriteriaDelete(java.lang.Class)">createCriteriaDelete</a>, <a href="../PersistentEntityCriteriaBuilder.html#createCriteriaUpdate(java.lang.Class)">createCriteriaUpdate</a>, <a href="../PersistentEntityCriteriaBuilder.html#createQuery()">createQuery</a>, <a href="../PersistentEntityCriteriaBuilder.html#createQuery(java.lang.Class)">createQuery</a>, <a href="../PersistentEntityCriteriaBuilder.html#ilike(jakarta.persistence.criteria.Expression,java.lang.String)">ilike</a></code></div>
 </section>
 </li>
 </ul>
@@ -1398,42 +1365,21 @@ V&gt;&gt;<br>@NonNull jakarta.persistence.criteria.Expression&lt;<a href="https:
 </section>
 </li>
 <li>
-<section class="detail" id="rlikeString(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">
-<h3>rlikeString</h3>
+<section class="detail" id="ilike(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">
+<h3>ilike</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">rlikeString</span><wbr><span class="parameters">(@NonNull
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">ilike</span><wbr><span class="parameters">(@NonNull
  @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
  @NonNull
- @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;y)</span></div>
-<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../PersistentEntityCriteriaBuilder.html#rlikeString(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">PersistentEntityCriteriaBuilder</a></code></span></div>
-<div class="block">Creates a rlike predicate between an expression x and y.</div>
+ @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;pattern)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../PersistentEntityCriteriaBuilder.html#ilike(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">PersistentEntityCriteriaBuilder</a></code></span></div>
+<div class="block">Creates an case-insensitive like predicate.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../PersistentEntityCriteriaBuilder.html#rlikeString(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">rlikeString</a></code>&nbsp;in interface&nbsp;<code><a href="../PersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaBuilder</a></code></dd>
+<dd><code><a href="../PersistentEntityCriteriaBuilder.html#ilike(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">ilike</a></code>&nbsp;in interface&nbsp;<code><a href="../PersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaBuilder</a></code></dd>
 <dt>Parameters:</dt>
 <dd><code>x</code> - The expression</dd>
-<dd><code>y</code> - The expression</dd>
-<dt>Returns:</dt>
-<dd>a new predicate</dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="ilikeString(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">
-<h3>ilikeString</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">ilikeString</span><wbr><span class="parameters">(@NonNull
- @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
- @NonNull
- @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;y)</span></div>
-<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../PersistentEntityCriteriaBuilder.html#ilikeString(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">PersistentEntityCriteriaBuilder</a></code></span></div>
-<div class="block">Creates an ilike predicate between an expression x and y.</div>
-<dl class="notes">
-<dt>Specified by:</dt>
-<dd><code><a href="../PersistentEntityCriteriaBuilder.html#ilikeString(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">ilikeString</a></code>&nbsp;in interface&nbsp;<code><a href="../PersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaBuilder</a></code></dd>
-<dt>Parameters:</dt>
-<dd><code>x</code> - The expression</dd>
-<dd><code>y</code> - The expression</dd>
+<dd><code>pattern</code> - The pattern</dd>
 <dt>Returns:</dt>
 <dd>a new predicate</dd>
 </dl>
@@ -2582,32 +2528,6 @@ V&gt;&gt;<br>@NonNull jakarta.persistence.criteria.Expression&lt;<a href="https:
 </section>
 </li>
 <li>
-<section class="detail" id="parameterOfProperty(java.lang.Class,io.micronaut.data.model.PersistentPropertyPath,java.lang.Object)">
-<h3>parameterOfProperty</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>
-<span class="return-type">@NonNull jakarta.persistence.criteria.ParameterExpression&lt;T&gt;</span>&nbsp;<span class="element-name">parameterOfProperty</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;paramClass,
- @NonNull
- @NonNull <a href="../../../PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a>&nbsp;propertyPath,
- @Nullable
- @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value)</span></div>
-<div class="block">Create a new parameter with possible constant value.</div>
-<dl class="notes">
-<dt>Type Parameters:</dt>
-<dd><code>T</code> - The param type</dd>
-<dt>Parameters:</dt>
-<dd><code>paramClass</code> - The param class</dd>
-<dd><code>propertyPath</code> - The property path</dd>
-<dd><code>value</code> - The param value</dd>
-<dt>Returns:</dt>
-<dd>the parameter expression</dd>
-<dt>Since:</dt>
-<dd>4.9</dd>
-</dl>
-</section>
-</li>
-<li>
 <section class="detail" id="isEmpty(jakarta.persistence.criteria.Expression)">
 <h3>isEmpty</h3>
 <div class="member-signature"><span class="annotations">@NonNull
@@ -2784,20 +2704,6 @@ M extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/
 </section>
 </li>
 <li>
-<section class="detail" id="like(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">
-<h3>like</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">like</span><wbr><span class="parameters">(@NonNull
- @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
- @NonNull
- @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;pattern)</span></div>
-<dl class="notes">
-<dt>Specified by:</dt>
-<dd><code>like</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
-</dl>
-</section>
-</li>
-<li>
 <section class="detail" id="regex(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">
 <h3>regex</h3>
 <div class="member-signature"><span class="annotations">@NonNull
@@ -2815,6 +2721,20 @@ M extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/
 <dd><code>pattern</code> - string expression</dd>
 <dt>Returns:</dt>
 <dd>like predicate</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="like(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">
+<h3>like</h3>
+<div class="member-signature"><span class="annotations">@NonNull
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull jakarta.persistence.criteria.Predicate</span>&nbsp;<span class="element-name">like</span><wbr><span class="parameters">(@NonNull
+ @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
+ @NonNull
+ @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;pattern)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>like</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
 </dl>
 </section>
 </li>
@@ -2842,9 +2762,6 @@ M extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/
  @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;pattern,
  @NonNull
  @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Character.html" title="class or interface in java.lang" class="external-link">Character</a>&gt;&nbsp;escapeChar)</span></div>
-<div class="block">Not supported yet.
-
- </div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>like</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
@@ -2860,9 +2777,6 @@ M extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/
  @NonNull
  @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;pattern,
  char&nbsp;escapeChar)</span></div>
-<div class="block">Not supported yet.
-
- </div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>like</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
@@ -2879,9 +2793,6 @@ M extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/
  @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;pattern,
  @NonNull
  @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Character.html" title="class or interface in java.lang" class="external-link">Character</a>&gt;&nbsp;escapeChar)</span></div>
-<div class="block">Not supported yet.
-
- </div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>like</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
@@ -2897,9 +2808,6 @@ M extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/
  @NonNull
  @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;pattern,
  char&nbsp;escapeChar)</span></div>
-<div class="block">Not supported yet.
-
- </div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>like</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
@@ -2914,9 +2822,6 @@ M extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/
  @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
  @NonNull
  @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;pattern)</span></div>
-<div class="block">Not supported yet.
-
- </div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>notLike</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
@@ -2931,9 +2836,6 @@ M extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/
  @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;x,
  @NonNull
  @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;pattern)</span></div>
-<div class="block">Not supported yet.
-
- </div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>notLike</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
@@ -2950,9 +2852,6 @@ M extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/
  @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;pattern,
  @NonNull
  @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Character.html" title="class or interface in java.lang" class="external-link">Character</a>&gt;&nbsp;escapeChar)</span></div>
-<div class="block">Not supported yet.
-
- </div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>notLike</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
@@ -2968,9 +2867,6 @@ M extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/
  @NonNull
  @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;pattern,
  char&nbsp;escapeChar)</span></div>
-<div class="block">Not supported yet.
-
- </div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>notLike</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
@@ -2987,9 +2883,6 @@ M extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/
  @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;pattern,
  @NonNull
  @NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Character.html" title="class or interface in java.lang" class="external-link">Character</a>&gt;&nbsp;escapeChar)</span></div>
-<div class="block">Not supported yet.
-
- </div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>notLike</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
@@ -3005,9 +2898,6 @@ M extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/
  @NonNull
  @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;pattern,
  char&nbsp;escapeChar)</span></div>
-<div class="block">Not supported yet.
-
- </div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>notLike</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
