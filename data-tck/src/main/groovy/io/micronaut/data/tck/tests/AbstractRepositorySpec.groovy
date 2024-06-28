@@ -2938,7 +2938,7 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
             negatedNames.toSet() == ["Fr_dB1", "Fr_dB2"].toSet()
 
-        if (personRepository.getClass().getSimpleName().contains("MSSQL")) {
+        if (personRepository.getClass().getSimpleName().contains("MS")) {
             // SQL server case sensitivity is based on the column configuration
             return
         }
