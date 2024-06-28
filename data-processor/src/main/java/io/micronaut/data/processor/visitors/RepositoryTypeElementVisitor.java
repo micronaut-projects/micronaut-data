@@ -614,7 +614,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
         if (parameterExpression.isPresent()) {
             ClassElement type = RawQueryMethodMatcher.extractExpressionType(matchContext, parameterExpression.orElseThrow());
-            return new SourceParameterExpressionImpl(configuredDataTypes, name, type)
+            return new SourceParameterExpressionImpl(configuredDataTypes, name, type, null)
                 .bind(bindingContext);
         }
 
@@ -634,7 +634,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         return new SourceParameterExpressionImpl(configuredDataTypes,
             matchContext.parameters,
             parameter,
-            false)
+            false,
+            null)
             .bind(bindingContext);
     }
 

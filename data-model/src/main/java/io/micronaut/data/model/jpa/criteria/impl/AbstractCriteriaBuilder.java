@@ -19,9 +19,6 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NextMajorVersion;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.JsonDataType;
-import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
@@ -32,6 +29,7 @@ import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExpressionBinaryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBinaryPredicate;
@@ -41,8 +39,6 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateBinaryOp;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateUnaryOp;
 import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpressionType;
-import io.micronaut.data.model.query.BindingParameter;
-import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.CollectionJoin;
 import jakarta.persistence.criteria.CompoundSelection;
@@ -321,14 +317,8 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
 
     @Override
     @NonNull
-    public Predicate rlikeString(@NonNull Expression<String> x, @NonNull Expression<String> y) {
-        return new PersistentPropertyBinaryPredicate<>(requireProperty(x), requirePropertyParameterOrLiteral(y), PredicateBinaryOp.RLIKE);
-    }
-
-    @Override
-    @NonNull
-    public Predicate ilikeString(@NonNull Expression<String> x, @NonNull Expression<String> y) {
-        return new PersistentPropertyBinaryPredicate<>(requireProperty(x), requirePropertyParameterOrLiteral(y), PredicateBinaryOp.ILIKE);
+    public Predicate ilike(@NonNull Expression<String> x, @NonNull Expression<String> pattern) {
+        return new LikePredicate(x, pattern, null, false, true);
     }
 
     @Override
@@ -885,40 +875,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
      */
     @NonNull
     public <T> ParameterExpression<T> parameter(@NonNull Class<T> paramClass, @Nullable String name, @Nullable Object value) {
-        return new ParameterExpressionImpl<>(paramClass, name) {
-
-            @Override
-            public QueryParameterBinding bind(BindingContext bindingContext) {
-                String name = bindingContext.getName() == null ? String.valueOf(bindingContext.getIndex()) : bindingContext.getName();
-                PersistentPropertyPath outgoingQueryParameterProperty = bindingContext.getOutgoingQueryParameterProperty();
-                if (outgoingQueryParameterProperty == null) {
-                    return new SimpleParameterBinding(name, DataType.forType(paramClass), bindingContext, value);
-                }
-                return new PropertyPathParameterBinding(name, outgoingQueryParameterProperty, bindingContext, value);
-            }
-        };
-    }
-
-    /**
-     * Create a new parameter with possible constant value.
-     *
-     * @param paramClass   The param class
-     * @param propertyPath The property path
-     * @param value        The param value
-     * @param <T>          The param type
-     * @return the parameter expression
-     * @since 4.9
-     */
-    @NonNull
-    public <T> ParameterExpression<T> parameterOfProperty(@NonNull Class<T> paramClass, @NonNull PersistentPropertyPath propertyPath, @Nullable Object value) {
-        return new ParameterExpressionImpl<>(paramClass, propertyPath.getProperty().getName()) {
-
-            @Override
-            public QueryParameterBinding bind(BindingContext bindingContext) {
-                String name = bindingContext.getName() == null ? String.valueOf(bindingContext.getIndex()) : bindingContext.getName();
-                return new PropertyPathParameterBinding(name, propertyPath, bindingContext, value);
-            }
-        };
+        return new DefaultParameterExpression<>(paramClass, name, value);
     }
 
     /**
@@ -1033,130 +990,80 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
 
     @Override
     @NonNull
-    public Predicate like(@NonNull Expression<String> x, @NonNull Expression<String> pattern) {
-        return new PersistentPropertyBinaryPredicate<>(requireProperty(x), requirePropertyParameterOrLiteral(pattern), PredicateBinaryOp.LIKE);
-    }
-
-    @Override
-    @NonNull
     public Predicate regex(@NonNull Expression<String> x, @NonNull Expression<String> pattern) {
         return new PersistentPropertyBinaryPredicate<>(requireProperty(x), requirePropertyParameterOrLiteral(pattern), PredicateBinaryOp.REGEX);
     }
 
     @Override
     @NonNull
-    public Predicate like(@NonNull Expression<String> x, @NonNull String pattern) {
-        return new PersistentPropertyBinaryPredicate<>(requireProperty(x), literal(pattern), PredicateBinaryOp.LIKE);
+    public Predicate like(@NonNull Expression<String> x, @NonNull Expression<String> pattern) {
+        return new LikePredicate(x, pattern, null, false);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
+    @Override
+    @NonNull
+    public Predicate like(@NonNull Expression<String> x, @NonNull String pattern) {
+        return new LikePredicate(x, literal(pattern), null, false);
+    }
+
     @Override
     @NonNull
     public Predicate like(@NonNull Expression<String> x, @NonNull Expression<String> pattern, @NonNull Expression<Character> escapeChar) {
-        throw notSupportedOperation();
+        return new LikePredicate(x, pattern, escapeChar, false);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     @NonNull
     public Predicate like(@NonNull Expression<String> x, @NonNull Expression<String> pattern, char escapeChar) {
-        throw notSupportedOperation();
+        return new LikePredicate(x, pattern, literal(escapeChar), false);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     @NonNull
     public Predicate like(@NonNull Expression<String> x, @NonNull String pattern, @NonNull Expression<Character> escapeChar) {
-        throw notSupportedOperation();
+        return new LikePredicate(x, literal(pattern), escapeChar, false);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     @NonNull
     public Predicate like(@NonNull Expression<String> x, @NonNull String pattern, char escapeChar) {
-        throw notSupportedOperation();
+        return new LikePredicate(x, literal(pattern), literal(escapeChar), false);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     @NonNull
     public Predicate notLike(@NonNull Expression<String> x, @NonNull Expression<String> pattern) {
-        throw notSupportedOperation();
+        return new LikePredicate(x, pattern, null, true);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     @NonNull
     public Predicate notLike(@NonNull Expression<String> x, @NonNull String pattern) {
-        throw notSupportedOperation();
+        return new LikePredicate(x, literal(pattern), null, true);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     @NonNull
     public Predicate notLike(@NonNull Expression<String> x, @NonNull Expression<String> pattern, @NonNull Expression<Character> escapeChar) {
-        throw notSupportedOperation();
+        return new LikePredicate(x, pattern, escapeChar, true);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     @NonNull
     public Predicate notLike(@NonNull Expression<String> x, @NonNull Expression<String> pattern, char escapeChar) {
-        throw notSupportedOperation();
+        return new LikePredicate(x, pattern, literal(escapeChar), true);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     @NonNull
     public Predicate notLike(@NonNull Expression<String> x, @NonNull String pattern, @NonNull Expression<Character> escapeChar) {
-        throw notSupportedOperation();
+        return new LikePredicate(x, literal(pattern), escapeChar, true);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     @NonNull
     public Predicate notLike(@NonNull Expression<String> x, @NonNull String pattern, char escapeChar) {
-        throw notSupportedOperation();
+        return new LikePredicate(x, literal(pattern), literal(escapeChar), true);
     }
 
     @Override
@@ -1613,75 +1520,4 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
         throw notSupportedOperation();
     }
 
-    private record PropertyPathParameterBinding(String getName,
-                                                PersistentPropertyPath outgoingQueryParameterProperty,
-                                                BindingParameter.BindingContext bindingContext,
-                                                @Nullable Object value) implements QueryParameterBinding {
-
-        @Override
-        public String getKey() {
-            return getName;
-        }
-
-        @Override
-        public DataType getDataType() {
-            return outgoingQueryParameterProperty.getProperty().getDataType();
-        }
-
-        @Override
-        public JsonDataType getJsonDataType() {
-            return outgoingQueryParameterProperty.getProperty().getJsonDataType();
-        }
-
-        @Override
-        public String[] getPropertyPath() {
-            return outgoingQueryParameterProperty.getArrayPath();
-        }
-
-        @Override
-        public boolean isExpandable() {
-            return bindingContext.isExpandable();
-        }
-
-        @Override
-        public Object getValue() {
-            return value;
-        }
-    }
-
-    private record SimpleParameterBinding(String getName,
-                                          DataType dataType,
-                                          BindingParameter.BindingContext bindingContext,
-                                          @Nullable Object value) implements QueryParameterBinding {
-
-        @Override
-        public String getKey() {
-            return getName;
-        }
-
-        @Override
-        public DataType getDataType() {
-            return dataType;
-        }
-
-        @Override
-        public JsonDataType getJsonDataType() {
-            return JsonDataType.DEFAULT;
-        }
-
-        @Override
-        public String[] getPropertyPath() {
-            return null;
-        }
-
-        @Override
-        public boolean isExpandable() {
-            return bindingContext.isExpandable();
-        }
-
-        @Override
-        public Object getValue() {
-            return value;
-        }
-    }
 }

@@ -37,6 +37,7 @@ import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.jpa.criteria.impl.util.Joiner;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.QueryModel;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder2;
 import io.micronaut.data.model.query.builder.QueryResult;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -89,6 +90,15 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
     protected AbstractPersistentEntityCriteriaQuery(Class<T> resultType, CriteriaBuilder criteriaBuilder) {
         this.resultType = resultType;
         this.criteriaBuilder = criteriaBuilder;
+    }
+
+    @Override
+    public QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder queryBuilder) {
+        QueryBuilder2 queryBuilder2 = QueryResultPersistentEntityCriteriaQuery.findQueryBuilder2(queryBuilder);
+        if (queryBuilder2 == null) {
+            return queryBuilder.buildQuery(annotationMetadata, getQueryModel());
+        }
+        return buildQuery(annotationMetadata, queryBuilder2);
     }
 
     @Override

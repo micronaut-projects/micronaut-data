@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * Persistent entity utils.
@@ -51,7 +52,16 @@ public final class PersistentEntityUtils {
      * @since 4.2.0
      */
     public static boolean isAccessibleWithoutJoin(Association association, PersistentProperty persistentProperty) {
-        return association.getAssociatedEntity().getIdentity() == persistentProperty && !association.isForeignKey();
+        PersistentProperty identity = association.getAssociatedEntity().getIdentity();
+        if (identity instanceof Embedded embedded) {
+            for (PersistentProperty property : embedded.getAssociatedEntity().getPersistentProperties()) {
+                if (property == persistentProperty) {
+                    return !association.isForeignKey();
+                }
+            }
+
+        }
+        return identity == persistentProperty && !association.isForeignKey();
     }
 
     /**
@@ -136,6 +146,12 @@ public final class PersistentEntityUtils {
 
     public static void traversePersistentProperties(PersistentPropertyPath propertyPath,
                                                     BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
+        traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), true, consumerProperty);
+    }
+
+    public static void traverse(PersistentPropertyPath propertyPath, Consumer<PersistentPropertyPath> consumer) {
+        BiConsumer<List<Association>, PersistentProperty> consumerProperty
+            = (associations, property) -> consumer.accept(new PersistentPropertyPath(associations, property));
         traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), true, consumerProperty);
     }
 

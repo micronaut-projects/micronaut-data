@@ -16,8 +16,10 @@
 package io.micronaut.data.processor.model.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractCriteriaBuilder;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
@@ -74,12 +76,14 @@ public final class MethodMatchSourcePersistentEntityCriteriaBuilderImpl extends 
     }
 
     @Override
-    public ParameterExpression<Object> parameter(ParameterElement parameterElement) {
-        return new SourceParameterExpressionImpl(dataTypes, methodMatchContext.getParameters(), parameterElement, false);
+    public ParameterExpression<Object> parameter(ParameterElement parameterElement,
+                                                 PersistentPropertyPath propertyPath) {
+        return new SourceParameterExpressionImpl(dataTypes, methodMatchContext.getParameters(), parameterElement, false, propertyPath);
     }
 
     @Override
-    public ParameterExpression<Object> entityPropertyParameter(ParameterElement entityParameter) {
-        return new SourceParameterExpressionImpl(dataTypes, methodMatchContext.getParameters(), entityParameter, true);
+    public ParameterExpression<Object> entityPropertyParameter(ParameterElement entityParameter,
+                                                               @Nullable PersistentPropertyPath propertyPath) {
+        return new SourceParameterExpressionImpl(dataTypes, methodMatchContext.getParameters(), entityParameter, true, propertyPath);
     }
 }

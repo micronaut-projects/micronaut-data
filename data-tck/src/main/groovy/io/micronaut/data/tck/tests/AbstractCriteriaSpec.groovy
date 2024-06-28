@@ -76,7 +76,7 @@ abstract class AbstractCriteriaSpec extends Specification {
             sqlQuery ==  'SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget" ' +
                     'FROM "test" test_ INNER JOIN "other_entity" test_others_ ON test_."id"=test_others_."test_id" ' +
                     'INNER JOIN "simple_entity" test_others_simple_ ON test_others_."simple_id"=test_others_simple_."id" ' +
-                    'WHERE (test_."amount"=test_others_."amount" AND test_."amount"=test_others_simple_."amount")'
+                    'WHERE (test_."amount" = test_others_."amount" AND test_."amount" = test_others_simple_."amount")'
     }
 
     @Unroll
@@ -116,12 +116,12 @@ abstract class AbstractCriteriaSpec extends Specification {
                     'SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget" ' +
                             'FROM "test" test_ ' +
                             'INNER JOIN "other_entity" test_others_ ON test_."id"=test_others_."test_id"' +
-                            ' WHERE (test_."amount"=test_others_."amount")',
+                            ' WHERE (test_."amount" = test_others_."amount")',
 
                     'SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget" ' +
                             'FROM "test" test_ INNER JOIN "other_entity" test_others_ ON test_."id"=test_others_."test_id" ' +
                             'INNER JOIN "simple_entity" test_others_simple_ ON test_others_."simple_id"=test_others_simple_."id" ' +
-                            'WHERE (test_."amount"=test_others_."amount" AND test_."amount"=test_others_simple_."amount")',
+                            'WHERE (test_."amount" = test_others_."amount" AND test_."amount" = test_others_simple_."amount")',
                     'SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget" FROM "test" test_ INNER JOIN "other_entity" test_others_ ON test_."id"=test_others_."test_id"'
             ]
     }
@@ -184,16 +184,16 @@ abstract class AbstractCriteriaSpec extends Specification {
 
         where:
             property1 | property2  | predicate              | expectedWhereQuery
-            "enabled" | "enabled2" | "equal"                | '(test_."enabled"=test_."enabled2")'
-            "enabled" | "enabled2" | "notEqual"             | '(test_."enabled"!=test_."enabled2")'
-            "enabled" | "enabled2" | "greaterThan"          | '(test_."enabled">test_."enabled2")'
-            "enabled" | "enabled2" | "greaterThanOrEqualTo" | '(test_."enabled">=test_."enabled2")'
-            "enabled" | "enabled2" | "lessThan"             | '(test_."enabled"<test_."enabled2")'
-            "enabled" | "enabled2" | "lessThanOrEqualTo"    | '(test_."enabled"<=test_."enabled2")'
-            "amount"  | "budget"   | "gt"                   | '(test_."amount">test_."budget")'
-            "amount"  | "budget"   | "ge"                   | '(test_."amount">=test_."budget")'
-            "amount"  | "budget"   | "lt"                   | '(test_."amount"<test_."budget")'
-            "amount"  | "budget"   | "le"                   | '(test_."amount"<=test_."budget")'
+            "enabled" | "enabled2" | "equal"                | '(test_."enabled" = test_."enabled2")'
+            "enabled" | "enabled2" | "notEqual"             | '(test_."enabled" != test_."enabled2")'
+            "enabled" | "enabled2" | "greaterThan"          | '(test_."enabled" > test_."enabled2")'
+            "enabled" | "enabled2" | "greaterThanOrEqualTo" | '(test_."enabled" >= test_."enabled2")'
+            "enabled" | "enabled2" | "lessThan"             | '(test_."enabled" < test_."enabled2")'
+            "enabled" | "enabled2" | "lessThanOrEqualTo"    | '(test_."enabled" <= test_."enabled2")'
+            "amount"  | "budget"   | "gt"                   | '(test_."amount" > test_."budget")'
+            "amount"  | "budget"   | "ge"                   | '(test_."amount" >= test_."budget")'
+            "amount"  | "budget"   | "lt"                   | '(test_."amount" < test_."budget")'
+            "amount"  | "budget"   | "le"                   | '(test_."amount" <= test_."budget")'
     }
 
     @Unroll
@@ -208,16 +208,16 @@ abstract class AbstractCriteriaSpec extends Specification {
 
         where:
             property1 | property2  | predicate              | expectedWhereQuery
-            "enabled" | "enabled2" | "equal"                | '(test_."enabled"!=test_."enabled2")'
-            "enabled" | "enabled2" | "notEqual"             | '(test_."enabled"=test_."enabled2")'
-            "enabled" | "enabled2" | "greaterThan"          | '(NOT(test_."enabled">test_."enabled2"))'
-            "enabled" | "enabled2" | "greaterThanOrEqualTo" | '(NOT(test_."enabled">=test_."enabled2"))'
-            "enabled" | "enabled2" | "lessThan"             | '(NOT(test_."enabled"<test_."enabled2"))'
-            "enabled" | "enabled2" | "lessThanOrEqualTo"    | '(NOT(test_."enabled"<=test_."enabled2"))'
-            "amount"  | "budget"   | "gt"                   | '(NOT(test_."amount">test_."budget"))'
-            "amount"  | "budget"   | "ge"                   | '(NOT(test_."amount">=test_."budget"))'
-            "amount"  | "budget"   | "lt"                   | '(NOT(test_."amount"<test_."budget"))'
-            "amount"  | "budget"   | "le"                   | '(NOT(test_."amount"<=test_."budget"))'
+            "enabled" | "enabled2" | "equal"                | '(test_."enabled" != test_."enabled2")'
+            "enabled" | "enabled2" | "notEqual"             | '(test_."enabled" = test_."enabled2")'
+            "enabled" | "enabled2" | "greaterThan"          | '(NOT(test_."enabled" > test_."enabled2"))'
+            "enabled" | "enabled2" | "greaterThanOrEqualTo" | '(NOT(test_."enabled" >= test_."enabled2"))'
+            "enabled" | "enabled2" | "lessThan"             | '(NOT(test_."enabled" < test_."enabled2"))'
+            "enabled" | "enabled2" | "lessThanOrEqualTo"    | '(NOT(test_."enabled" <= test_."enabled2"))'
+            "amount"  | "budget"   | "gt"                   | '(NOT(test_."amount" > test_."budget"))'
+            "amount"  | "budget"   | "ge"                   | '(NOT(test_."amount" >= test_."budget"))'
+            "amount"  | "budget"   | "lt"                   | '(NOT(test_."amount" < test_."budget"))'
+            "amount"  | "budget"   | "le"                   | '(NOT(test_."amount" <= test_."budget"))'
     }
 
     void "test function projection 1"() {
@@ -356,6 +356,37 @@ abstract class AbstractCriteriaSpec extends Specification {
             ))
         then:
             getSelectQueryPart(criteriaQuery) == 'CONCAT(?,?)'
+    }
+
+    void "test like"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+
+        when:
+            criteriaQuery.where(
+                    criteriaBuilder.like(
+                            criteriaBuilder.parameter(String),
+                            criteriaBuilder.parameter(String),
+                            criteriaBuilder.parameter(Character),
+                    )
+            )
+        then:
+            getWhereQueryPart(criteriaQuery) == '(? LIKE ? ESCAPE ?)'
+    }
+
+    void "test like case insensitive"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+
+        when:
+            criteriaQuery.where(
+                    criteriaBuilder.ilike(
+                            criteriaBuilder.parameter(String),
+                            criteriaBuilder.parameter(String),
+                    )
+            )
+        then:
+            getWhereQueryPart(criteriaQuery) == '(LOWER(?) LIKE LOWER(?))'
     }
 
     @Unroll

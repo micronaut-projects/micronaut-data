@@ -236,16 +236,16 @@ class CriteriaSpec extends AbstractCriteriaSpec {
 
         where:
             property1 | property2  | predicate              | expectedWhereQuery
-            "enabled" | "enabled2" | "equal"                | '(test_."enabled"!=test_."enabled2")'
-            "enabled" | "enabled2" | "notEqual"             | '(test_."enabled"=test_."enabled2")'
-            "enabled" | "enabled2" | "greaterThan"          | '(NOT(test_."enabled">test_."enabled2"))'
-            "enabled" | "enabled2" | "greaterThanOrEqualTo" | '(NOT(test_."enabled">=test_."enabled2"))'
-            "enabled" | "enabled2" | "lessThan"             | '(NOT(test_."enabled"<test_."enabled2"))'
-            "enabled" | "enabled2" | "lessThanOrEqualTo"    | '(NOT(test_."enabled"<=test_."enabled2"))'
-            "amount"  | "budget"   | "gt"                   | '(NOT(test_."amount">test_."budget"))'
-            "amount"  | "budget"   | "ge"                   | '(NOT(test_."amount">=test_."budget"))'
-            "amount"  | "budget"   | "lt"                   | '(NOT(test_."amount"<test_."budget"))'
-            "amount"  | "budget"   | "le"                   | '(NOT(test_."amount"<=test_."budget"))'
+            "enabled" | "enabled2" | "equal"                | '(test_."enabled" != test_."enabled2")'
+            "enabled" | "enabled2" | "notEqual"             | '(test_."enabled" = test_."enabled2")'
+            "enabled" | "enabled2" | "greaterThan"          | '(NOT(test_."enabled" > test_."enabled2"))'
+            "enabled" | "enabled2" | "greaterThanOrEqualTo" | '(NOT(test_."enabled" >= test_."enabled2"))'
+            "enabled" | "enabled2" | "lessThan"             | '(NOT(test_."enabled" < test_."enabled2"))'
+            "enabled" | "enabled2" | "lessThanOrEqualTo"    | '(NOT(test_."enabled" <= test_."enabled2"))'
+            "amount"  | "budget"   | "gt"                   | '(NOT(test_."amount" > test_."budget"))'
+            "amount"  | "budget"   | "ge"                   | '(NOT(test_."amount" >= test_."budget"))'
+            "amount"  | "budget"   | "lt"                   | '(NOT(test_."amount" < test_."budget"))'
+            "amount"  | "budget"   | "le"                   | '(NOT(test_."amount" <= test_."budget"))'
     }
 
     @Unroll
