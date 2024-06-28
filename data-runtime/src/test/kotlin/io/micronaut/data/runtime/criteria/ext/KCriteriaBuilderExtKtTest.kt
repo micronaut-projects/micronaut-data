@@ -140,7 +140,7 @@ class KCriteriaBuilderExtKtTest(private val runtimeCriteriaBuilder: RuntimeCrite
         val criteriaQuery = query.build(runtimeCriteriaBuilder) as QueryResultPersistentEntityCriteriaQuery
         val q = criteriaQuery.buildQuery(AnnotationMetadata.EMPTY_METADATA, SqlQueryBuilder()).query
 
-        Assertions.assertEquals("""SELECT MIN(test_entity_."name") FROM "test_entity" test_entity_ INNER JOIN "other_entity" test_entity_others_ ON test_entity_."id"=test_entity_others_."test_id" WHERE (NOT(test_entity_."enabled"=test_entity_others_."enabled" AND test_entity_."enabled"!=test_entity_others_."enabled" AND test_entity_."enabled"=test_entity_others_."enabled" AND test_entity_."enabled"!=test_entity_others_."enabled") AND (test_entity_."name"<test_entity_others_."name" OR test_entity_."name"<=test_entity_others_."name") AND test_entity_."name">test_entity_others_."name" AND test_entity_."name">=test_entity_others_."name" AND (test_entity_."age">test_entity_others_."age" OR test_entity_."age">=test_entity_others_."age" OR test_entity_."age"<test_entity_others_."age" OR test_entity_."age"<=test_entity_others_."age"))""", q)
+        Assertions.assertEquals("""SELECT MIN(test_entity_."name") FROM "test_entity" test_entity_ INNER JOIN "other_entity" test_entity_others_ ON test_entity_."id"=test_entity_others_."test_id" WHERE (NOT(test_entity_."enabled" = test_entity_others_."enabled" AND test_entity_."enabled" != test_entity_others_."enabled" AND test_entity_."enabled" = test_entity_others_."enabled" AND test_entity_."enabled" != test_entity_others_."enabled") AND (test_entity_."name" < test_entity_others_."name" OR test_entity_."name" <= test_entity_others_."name") AND test_entity_."name" > test_entity_others_."name" AND test_entity_."name" >= test_entity_others_."name" AND (test_entity_."age" > test_entity_others_."age" OR test_entity_."age" >= test_entity_others_."age" OR test_entity_."age" < test_entity_others_."age" OR test_entity_."age" <= test_entity_others_."age"))""", q)
     }
 
     @Test
@@ -157,7 +157,7 @@ class KCriteriaBuilderExtKtTest(private val runtimeCriteriaBuilder: RuntimeCrite
         val criteriaQuery = query.build(runtimeCriteriaBuilder) as QueryResultPersistentEntityCriteriaQuery
         val q = criteriaQuery.buildQuery(AnnotationMetadata.EMPTY_METADATA, SqlQueryBuilder()).query
 
-        Assertions.assertEquals("""SELECT test_entity_."name" FROM "test_entity" test_entity_ INNER JOIN "other_entity" test_entity_others_ ON test_entity_."id"=test_entity_others_."test_id" WHERE (test_entity_others_."id">test_entity_."id")""", q)
+        Assertions.assertEquals("""SELECT test_entity_."name" FROM "test_entity" test_entity_ INNER JOIN "other_entity" test_entity_others_ ON test_entity_."id"=test_entity_others_."test_id" WHERE (test_entity_others_."id" > test_entity_."id")""", q)
     }
 
     @Test
