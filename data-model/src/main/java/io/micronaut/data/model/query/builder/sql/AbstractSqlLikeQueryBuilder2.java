@@ -1884,8 +1884,23 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
 
         @Override
         public void visit(LikePredicate likePredicate) {
-            boolean supportsILike = getDialect() == Dialect.POSTGRES;
-            boolean isCaseInsensitive = !supportsILike && likePredicate.isCaseInsensitive();
+            boolean isIlike = false;
+            boolean isBinary = false;
+            boolean isCaseInsensitive = likePredicate.isCaseInsensitive();
+            if (isCaseInsensitive) {
+                Dialect dialect = getDialect();
+                if (dialect == Dialect.POSTGRES) {
+                    // ILIKE is a case-insensitive LIKE
+                    isCaseInsensitive = false;
+                    isIlike = true;
+                } else if (dialect == Dialect.MYSQL) {
+                    // MySQL is case-insensitive by default
+                    isCaseInsensitive = false;
+                }
+            } else if (getDialect() == Dialect.MYSQL) {
+                // MySQL is case-insensitive by default
+                isBinary = true;
+            }
             if (isCaseInsensitive) {
                 query.append("LOWER(");
             }
@@ -1896,10 +1911,13 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
             if (likePredicate.isNegated()) {
                 query.append(" NOT");
             }
-            if (likePredicate.isCaseInsensitive() && supportsILike) {
+            if (isIlike) {
                 query.append(" ILIKE ");
             } else {
                 query.append(" LIKE ");
+                if (isBinary) {
+                    query.append("BINARY ");
+                }
             }
             Expression<String> pattern = likePredicate.getPattern();
             if (isCaseInsensitive) {
