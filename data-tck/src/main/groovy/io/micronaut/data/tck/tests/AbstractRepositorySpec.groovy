@@ -2938,6 +2938,15 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
             negatedNames.toSet() == ["Fr_dB1", "Fr_dB2"].toSet()
 
+        if (personRepository.getClass().getSimpleName().contains("MSSQLPersonRepository")) {
+            // SQL server case sensitivity is based on the column configuration
+            return
+        }
+        if (personRepository.getClass().getSimpleName().contains("MySqlPersonRepository")) {
+            // MySQL Like is case insensitive by default
+            return
+        }
+
         when:
             def caseSensitiveNames = personRepository.findAll(new CriteriaQueryBuilder<String>() {
                 @Override
