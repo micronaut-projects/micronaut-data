@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.tck.tests
 
+import io.micronaut.context.ApplicationContext
 import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
@@ -23,20 +24,23 @@ import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.PersonRepository
+import spock.lang.AutoCleanup
+import spock.lang.Shared
 import spock.lang.Specification
 
 import java.util.function.Function
 
 abstract class AbstractCursoredPageSpec extends Specification {
 
+    @AutoCleanup
+    @Shared
+    ApplicationContext context = ApplicationContext.run(properties)
+
     abstract PersonRepository getPersonRepository()
 
     abstract BookRepository getBookRepository()
 
-    abstract void init()
-
     def setup() {
-        init()
 
         // Create a repository that will look something like this:
         // id | name     | age
