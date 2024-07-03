@@ -256,8 +256,8 @@ abstract class AbstractCursoredPageSpec extends Specification {
 
         where:
         resultFunction << [
-                            (cursoredPageableOther) -> personRepository.findByNameLike("A%", cursoredPageableOther),
-                            (cursoredPageable) -> personRepository.findAll(PersonRepository.Specifications.nameLike("A%"), cursoredPageable),
+                            (cursoredPageable) -> personRepository.findByNameLike("A%", (Pageable) cursoredPageable),
+                            (cursoredPageable) -> personRepository.findAll(PersonRepository.Specifications.nameLike("A%"), (Pageable) cursoredPageable),
                           ]
     }
 

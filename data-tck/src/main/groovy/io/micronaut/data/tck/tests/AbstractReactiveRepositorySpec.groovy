@@ -682,7 +682,7 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
         personRepository.saveAll(people).collectList().block()
     }
 
-    void "test pageable list"() {
+    void "test pageable list"(Pageable pageable) {
         given:
             setupPersonsForPageableTest()
         when: "All the people are count"
@@ -692,7 +692,6 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
             count == 1300
 
         when: "10 people are paged"
-            def pageable = Pageable.from(0, 10, Sort.of(Sort.Order.asc("id")))
             Page<Person> page = personRepository.findAll(pageable).block()
 
         then: "The data is correct"
@@ -725,39 +724,8 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
             page.content[0].name.startsWith("A")
             page.content.size() == 10
 
-        when: "10 people are paged using CursoredPage"
-        pageable = CursoredPageable.from(10, null)
-        page = personRepository.findAll(pageable).block()
-
-        then: "The data is correct"
-        page.content.size() == 10
-        page.content.every() { it instanceof Person }
-        page.content[0].name.startsWith("A")
-        page.content[1].name.startsWith("B")
-        page.totalSize == 1300
-        page.totalPages == 130
-        page.nextPageable().offset == 10
-        page.nextPageable().size == 10
-
-        when: "The next page is selected"
-        pageable = page.nextPageable()
-        page = personRepository.findAll(pageable).block()
-
-        then: "it is correct"
-        page.offset == 10
-        page.pageNumber == 1
-        page.content[0].name.startsWith("K")
-        page.content.size() == 10
-
-        when: "The previous page is selected"
-        pageable = page.previousPageable()
-        page = personRepository.findAll(pageable).block()
-
-        then: "it is correct"
-        page.offset == 0
-        page.pageNumber == 0
-        page.content[0].name.startsWith("A")
-        page.content.size() == 10
+        where:
+        pageable << [Pageable.from(0, 10, Sort.of(Sort.Order.asc("id"))), CursoredPageable.from(10, null)]
     }
 
     void "test pageable sort"() {
