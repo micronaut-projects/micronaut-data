@@ -38,8 +38,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Stepwise
 
-import java.util.stream.Collectors
-import java.util.stream.IntStream
+import java.util.function.Function
 import java.util.stream.LongStream
 
 import static io.micronaut.data.repository.jpa.criteria.QuerySpecification.where
@@ -795,12 +794,11 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
             page.content[0].name.startsWith("Z")
     }
 
-    void "test pageable findBy"() {
+    void "test pageable findBy"(Function<Pageable, Page<Person>> resultFunction, Pageable pageable) {
         given:
             setupPersonsForPageableTest()
         when: "People are searched for"
-            def pageable = Pageable.from(0, 10)
-            Page<Person> page = personRepository.findByNameLike("A%", pageable).block()
+            Page<Person> page = resultFunction.apply(pageable)
             Page<Person> page2 = personRepository.findPeople("A%", pageable).block()
 
         then: "The page is correct"
@@ -819,6 +817,13 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
             page.totalSize == 50
             page.nextPageable().offset == 20
             page.nextPageable().number == 2
+
+        where:
+        pageable << [Pageable.from(0, 10), CursoredPageable.from(10, null)]
+        resultFunction << [
+                            (firstPageable) -> personRepository.findByNameLike("A%", firstPageable).block(),
+                            (secondPageable) -> personRepository.findAll(PersonReactiveRepository.Specifications.nameLike("A%"), (Pageable) secondPageable).block()
+                          ]
     }
 
     protected void savePersons(List<String> names) {

@@ -25,6 +25,8 @@ import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.PersonRepository
 import spock.lang.Specification
 
+import java.util.function.Function
+
 abstract class AbstractCursoredPageSpec extends Specification {
 
     abstract PersonRepository getPersonRepository()
@@ -218,11 +220,11 @@ abstract class AbstractCursoredPageSpec extends Specification {
         Sort.of(Sort.Order.desc("name")) | "ZZZZZ09" | "ZZZZZ09" | "ZZZZZ09" | "ZZZZZ06" | "ZZZZZ03"
     }
 
-    void "test pageable findBy"() {
+    void "test cursored pageable"(Function<Pageable, Page<Person>> resultFunction) {
         when: "People are searched for"
         def pageable = CursoredPageable.from(10, null)
-        Page<Person> page = personRepository.findByNameLike("A%", pageable)
-        Page<Person> page2 = personRepository.findPeople("A%", pageable)
+        def page = resultFunction.apply(pageable)
+        def page2 = personRepository.findPeople("A%", pageable)
 
         then: "The page is correct"
         page.offset == 0
@@ -233,7 +235,7 @@ abstract class AbstractCursoredPageSpec extends Specification {
         page.content.name.every{ it.startsWith("A") }
 
         when: "The next page is retrieved"
-        page = personRepository.findByNameLike("A%", page.nextPageable())
+        page = resultFunction.apply(page.nextPageable())
 
         then: "it is correct"
         page.offset == 10
@@ -243,7 +245,7 @@ abstract class AbstractCursoredPageSpec extends Specification {
 
         when: "The previous page is selected"
         pageable = page.previousPageable()
-        page = personRepository.findByNameLike("A%", pageable)
+        page = resultFunction.apply(pageable)
 
         then: "it is correct"
         page.offset == 0
@@ -251,39 +253,12 @@ abstract class AbstractCursoredPageSpec extends Specification {
         page.content.size() == 10
         page.content.id == firstContent.id
         page.content.name.every{ it.startsWith("A") }
-    }
 
-    void "test pageable findAll using PredicateSpecification"() {
-        when:"findAll using PredicateSpecification and CursoredPage"
-        def pageable = CursoredPageable.from(10, null)
-        def page = personRepository.findAll(PersonRepository.Specifications.nameLike("A%"), pageable)
-
-        then:"The page is correct"
-        page.offset == 0
-        page.pageNumber == 0
-        page.totalSize == 30
-        page.content.name.every{ it.startsWith("A") }
-        var firstContent = page.content
-
-        when:"The next page is retrieved"
-        page = personRepository.findAll(PersonRepository.Specifications.nameLike("A%"), page.nextPageable())
-
-        then:"it is correct"
-        page.offset == 10
-        page.pageNumber == 1
-        page.content.id != firstContent.id
-        page.content.name.every{ it.startsWith("A") }
-
-        when:"The previous page is selected"
-        pageable = page.previousPageable()
-        page = personRepository.findAll(PersonRepository.Specifications.nameLike("A%"), pageable)
-
-        then:"it is correct"
-        page.offset == 0
-        page.pageNumber == 0
-        page.content.size() == 10
-        page.content.id == firstContent.id
-        page.content.name.every{ it.startsWith("A") }
+        where:
+        resultFunction << [
+                            (cursoredPageableOther) -> personRepository.findByNameLike("A%", cursoredPageableOther),
+                            (cursoredPageable) -> personRepository.findAll(PersonRepository.Specifications.nameLike("A%"), cursoredPageable),
+                          ]
     }
 
     void "test find with left join"() {
