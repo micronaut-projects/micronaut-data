@@ -183,6 +183,10 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
             return (root, criteriaBuilder) -> criteriaBuilder.equal(root.get("name"), name);
         }
 
+        public static PredicateSpecification<Person> nameLike(String name) {
+            return (root, criteriaBuilder) -> criteriaBuilder.like(root.get("name"), name);
+        }
+
         public static PredicateSpecification<Person> nameEqualsCaseInsensitive(String name) {
             return (root, criteriaBuilder) -> criteriaBuilder.equal(criteriaBuilder.lower(root.get("name")), name.toLowerCase());
         }

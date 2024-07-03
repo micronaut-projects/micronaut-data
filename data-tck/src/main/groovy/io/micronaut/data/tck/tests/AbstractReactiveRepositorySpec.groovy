@@ -16,6 +16,7 @@
 package io.micronaut.data.tck.tests
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
@@ -724,6 +725,40 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
             page.pageNumber == 0
             page.content[0].name.startsWith("A")
             page.content.size() == 10
+
+        when: "10 people are paged using CursoredPage"
+        pageable = CursoredPageable.from(10, null)
+        page = personRepository.findAll(pageable).block()
+
+        then: "The data is correct"
+        page.content.size() == 10
+        page.content.every() { it instanceof Person }
+        page.content[0].name.startsWith("A")
+        page.content[1].name.startsWith("B")
+        page.totalSize == 1300
+        page.totalPages == 130
+        page.nextPageable().offset == 10
+        page.nextPageable().size == 10
+
+        when: "The next page is selected"
+        pageable = page.nextPageable()
+        page = personRepository.findAll(pageable).block()
+
+        then: "it is correct"
+        page.offset == 10
+        page.pageNumber == 1
+        page.content[0].name.startsWith("K")
+        page.content.size() == 10
+
+        when: "The previous page is selected"
+        pageable = page.previousPageable()
+        page = personRepository.findAll(pageable).block()
+
+        then: "it is correct"
+        page.offset == 0
+        page.pageNumber == 0
+        page.content[0].name.startsWith("A")
+        page.content.size() == 10
     }
 
     void "test pageable sort"() {

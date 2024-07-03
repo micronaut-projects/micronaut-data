@@ -253,6 +253,39 @@ abstract class AbstractCursoredPageSpec extends Specification {
         page.content.name.every{ it.startsWith("A") }
     }
 
+    void "test pageable findAll using PredicateSpecification"() {
+        when:"findAll using PredicateSpecification and CursoredPage"
+        def pageable = CursoredPageable.from(10, null)
+        def page = personRepository.findAll(PersonRepository.Specifications.nameLike("A%"), pageable)
+
+        then:"The page is correct"
+        page.offset == 0
+        page.pageNumber == 0
+        page.totalSize == 30
+        page.content.name.every{ it.startsWith("A") }
+        var firstContent = page.content
+
+        when:"The next page is retrieved"
+        page = personRepository.findAll(PersonRepository.Specifications.nameLike("A%"), page.nextPageable())
+
+        then:"it is correct"
+        page.offset == 10
+        page.pageNumber == 1
+        page.content.id != firstContent.id
+        page.content.name.every{ it.startsWith("A") }
+
+        when:"The previous page is selected"
+        pageable = page.previousPageable()
+        page = personRepository.findAll(PersonRepository.Specifications.nameLike("A%"), pageable)
+
+        then:"it is correct"
+        page.offset == 0
+        page.pageNumber == 0
+        page.content.size() == 10
+        page.content.id == firstContent.id
+        page.content.name.every{ it.startsWith("A") }
+    }
+
     void "test find with left join"() {
         given:
         def books = bookRepository.saveAll([

@@ -21,6 +21,7 @@ import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 import io.micronaut.data.repository.jpa.reactive.ReactorJpaSpecificationExecutor;
 import io.micronaut.data.repository.reactive.ReactorPageableRepository;
 import io.micronaut.data.tck.entities.Person;
@@ -90,4 +91,10 @@ public interface PersonReactiveRepository extends ReactorPageableRepository<Pers
     @Query("DELETE FROM person WHERE name = :xyz")
     Mono<Long> deleteCustomSingleNoEntity(String xyz);
 
+    class Specifications {
+
+        public static PredicateSpecification<Person> nameLike(String name) {
+            return (root, criteriaBuilder) -> criteriaBuilder.like(root.get("name"), name);
+        }
+    }
 }
