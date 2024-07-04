@@ -96,7 +96,7 @@ public interface Page<T> extends Slice<T> {
     @Override
     default @NonNull <T2> Page<T2> map(Function<T, T2> function) {
         List<T2> content = getContent().stream().map(function).toList();
-        return new DefaultPage<>(content, getPageable(), getTotalSize());
+        return new DefaultPage<>(content, getPageable(), hasTotalSize() ? getTotalSize() : null);
     }
 
     /**
