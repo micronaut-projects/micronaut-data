@@ -77,7 +77,7 @@ loadScripts(document, 'script');</script>
 <section class="class-description" id="class-description">
 <dl class="notes">
 <dt>All Implemented Interfaces:</dt>
-<dd><code><a href="../PredicateVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">PredicateVisitor</a></code>, <code><a href="../SelectionVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">SelectionVisitor</a></code></dd>
+<dd><code><a href="../ExpressionVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">ExpressionVisitor</a></code>, <code><a href="../PredicateVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">PredicateVisitor</a></code>, <code><a href="../SelectionVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">SelectionVisitor</a></code></dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="annotations">@Internal
@@ -146,29 +146,49 @@ implements <a href="../SelectionVisitor.html" title="interface in io.micronaut.d
 <div class="block">Join property relationships if needed.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.IdExpression)" class="member-name-link">visit</a><wbr>(<a href="../IdExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl">IdExpression</a>&lt;?,<wbr>?&gt;&nbsp;idExpression)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression)" class="member-name-link">visit</a><wbr>(<a href="../expression/BinaryExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression">BinaryExpression</a>&lt;?&gt;&nbsp;binaryExpression)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Visit <a href="../IdExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl"><code>IdExpression</code></a>.</div>
+<div class="block">Visit <a href="../expression/BinaryExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression"><code>BinaryExpression</code></a>.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.LiteralExpression)" class="member-name-link">visit</a><wbr>(<a href="../LiteralExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl">LiteralExpression</a>&lt;?&gt;&nbsp;literalExpression)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression)" class="member-name-link">visit</a><wbr>(<a href="../expression/FunctionExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression">FunctionExpression</a>&lt;?&gt;&nbsp;functionExpression)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Visit <a href="../LiteralExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl"><code>LiteralExpression</code></a>.</div>
+<div class="block">Visit <a href="../expression/FunctionExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression"><code>FunctionExpression</code></a>.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/ConjunctionPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">ConjunctionPredicate</a>&nbsp;conjunction)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression)" class="member-name-link">visit</a><wbr>(<a href="../expression/IdExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression">IdExpression</a>&lt;?,<wbr>?&gt;&nbsp;idExpression)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Visit <a href="../expression/IdExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression"><code>IdExpression</code></a>.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression)" class="member-name-link">visit</a><wbr>(<a href="../expression/LiteralExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression">LiteralExpression</a>&lt;?&gt;&nbsp;literalExpression)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Visit <a href="../expression/LiteralExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression"><code>LiteralExpression</code></a>.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression)" class="member-name-link">visit</a><wbr>(<a href="../expression/UnaryExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression">UnaryExpression</a>&lt;?&gt;&nbsp;unaryExpression)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Visit <a href="../expression/UnaryExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression"><code>UnaryExpression</code></a>.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/ConjunctionPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">ConjunctionPredicate</a>&nbsp;conjunction)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Visit <a href="../predicate/ConjunctionPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate"><code>ConjunctionPredicate</code></a>.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/DisjunctionPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">DisjunctionPredicate</a>&nbsp;disjunction)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/DisjunctionPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">DisjunctionPredicate</a>&nbsp;disjunction)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Visit <a href="../predicate/DisjunctionPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate"><code>DisjunctionPredicate</code></a>.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.ExpressionBinaryPredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/ExpressionBinaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">ExpressionBinaryPredicate</a>&nbsp;expressionBinaryPredicate)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.ExpressionBinaryPredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/ExpressionBinaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">ExpressionBinaryPredicate</a>&nbsp;expressionBinaryPredicate)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Visit <a href="../predicate/ExpressionBinaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate"><code>ExpressionBinaryPredicate</code></a>.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/LikePredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">LikePredicate</a>&nbsp;likePredicate)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Visit <a href="../predicate/LikePredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate"><code>LikePredicate</code></a>.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/NegatedPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">NegatedPredicate</a>&nbsp;negate)</code></div>
@@ -186,24 +206,14 @@ implements <a href="../SelectionVisitor.html" title="interface in io.micronaut.d
 <div class="block">Visit <a href="../predicate/PersistentPropertyBinaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate"><code>PersistentPropertyBinaryPredicate</code></a>.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInPredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/PersistentPropertyInPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">PersistentPropertyInPredicate</a>&lt;?&gt;&nbsp;propertyIn)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInPredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/PersistentPropertyInPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">PersistentPropertyInPredicate</a>&lt;?&gt;&nbsp;inValues)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Visit <a href="../predicate/PersistentPropertyInPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate"><code>PersistentPropertyInPredicate</code></a>.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInValuesPredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/PersistentPropertyInValuesPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">PersistentPropertyInValuesPredicate</a>&lt;?&gt;&nbsp;inValues)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyUnaryPredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/PersistentPropertyUnaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">PersistentPropertyUnaryPredicate</a>&lt;?&gt;&nbsp;propertyOp)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Visit <a href="../predicate/PersistentPropertyInValuesPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate"><code>PersistentPropertyInValuesPredicate</code></a>.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyUnaryPredicate)" class="member-name-link">visit</a><wbr>(<a href="../predicate/PersistentPropertyUnaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">PersistentPropertyUnaryPredicate</a>&lt;?&gt;&nbsp;propertyOp)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Visit <a href="../predicate/PersistentPropertyUnaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate"><code>PersistentPropertyUnaryPredicate</code></a>.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.selection.AggregateExpression)" class="member-name-link">visit</a><wbr>(<a href="../selection/AggregateExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.selection">AggregateExpression</a>&lt;?,<wbr>?&gt;&nbsp;aggregateExpression)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Visit <a href="../selection/AggregateExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.selection"><code>AggregateExpression</code></a>.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#visit(io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection)" class="member-name-link">visit</a><wbr>(<a href="../selection/AliasedSelection.html" title="class in io.micronaut.data.model.jpa.criteria.impl.selection">AliasedSelection</a>&lt;?&gt;&nbsp;aliasedSelection)</code></div>
@@ -287,11 +297,11 @@ implements <a href="../SelectionVisitor.html" title="interface in io.micronaut.d
 <section class="detail" id="visit(io.micronaut.data.model.jpa.criteria.PersistentEntityRoot)">
 <h3>visit</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">visit</span><wbr><span class="parameters">(<a href="../../PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;?&gt;&nbsp;entityRoot)</span></div>
-<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../SelectionVisitor.html#visit(io.micronaut.data.model.jpa.criteria.PersistentEntityRoot)">SelectionVisitor</a></code></span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../ExpressionVisitor.html#visit(io.micronaut.data.model.jpa.criteria.PersistentEntityRoot)">ExpressionVisitor</a></code></span></div>
 <div class="block">Visit <a href="../../PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria"><code>PersistentEntityRoot</code></a>.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../SelectionVisitor.html#visit(io.micronaut.data.model.jpa.criteria.PersistentEntityRoot)">visit</a></code>&nbsp;in interface&nbsp;<code><a href="../SelectionVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">SelectionVisitor</a></code></dd>
+<dd><code><a href="../ExpressionVisitor.html#visit(io.micronaut.data.model.jpa.criteria.PersistentEntityRoot)">visit</a></code>&nbsp;in interface&nbsp;<code><a href="../ExpressionVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">ExpressionVisitor</a></code></dd>
 <dt>Parameters:</dt>
 <dd><code>entityRoot</code> - The entityRoot</dd>
 </dl>
@@ -301,11 +311,11 @@ implements <a href="../SelectionVisitor.html" title="interface in io.micronaut.d
 <section class="detail" id="visit(io.micronaut.data.model.jpa.criteria.PersistentPropertyPath)">
 <h3>visit</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">visit</span><wbr><span class="parameters">(<a href="../../PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;?&gt;&nbsp;persistentPropertyPath)</span></div>
-<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../SelectionVisitor.html#visit(io.micronaut.data.model.jpa.criteria.PersistentPropertyPath)">SelectionVisitor</a></code></span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../ExpressionVisitor.html#visit(io.micronaut.data.model.jpa.criteria.PersistentPropertyPath)">ExpressionVisitor</a></code></span></div>
 <div class="block">Visit <a href="../../PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria"><code>PersistentPropertyPath</code></a>.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../SelectionVisitor.html#visit(io.micronaut.data.model.jpa.criteria.PersistentPropertyPath)">visit</a></code>&nbsp;in interface&nbsp;<code><a href="../SelectionVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">SelectionVisitor</a></code></dd>
+<dd><code><a href="../ExpressionVisitor.html#visit(io.micronaut.data.model.jpa.criteria.PersistentPropertyPath)">visit</a></code>&nbsp;in interface&nbsp;<code><a href="../ExpressionVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">ExpressionVisitor</a></code></dd>
 <dt>Parameters:</dt>
 <dd><code>persistentPropertyPath</code> - The persistentPropertyPath</dd>
 </dl>
@@ -315,11 +325,11 @@ implements <a href="../SelectionVisitor.html" title="interface in io.micronaut.d
 <section class="detail" id="visit(jakarta.persistence.criteria.Predicate)">
 <h3>visit</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">visit</span><wbr><span class="parameters">(jakarta.persistence.criteria.Predicate&nbsp;predicate)</span></div>
-<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../SelectionVisitor.html#visit(jakarta.persistence.criteria.Predicate)">SelectionVisitor</a></code></span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../ExpressionVisitor.html#visit(jakarta.persistence.criteria.Predicate)">ExpressionVisitor</a></code></span></div>
 <div class="block">Visit <code>Predicate</code>.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../SelectionVisitor.html#visit(jakarta.persistence.criteria.Predicate)">visit</a></code>&nbsp;in interface&nbsp;<code><a href="../SelectionVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">SelectionVisitor</a></code></dd>
+<dd><code><a href="../ExpressionVisitor.html#visit(jakarta.persistence.criteria.Predicate)">visit</a></code>&nbsp;in interface&nbsp;<code><a href="../ExpressionVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">ExpressionVisitor</a></code></dd>
 <dt>Parameters:</dt>
 <dd><code>predicate</code> - The predicate</dd>
 </dl>
@@ -354,44 +364,72 @@ implements <a href="../SelectionVisitor.html" title="interface in io.micronaut.d
 </section>
 </li>
 <li>
-<section class="detail" id="visit(io.micronaut.data.model.jpa.criteria.impl.LiteralExpression)">
+<section class="detail" id="visit(io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression)">
 <h3>visit</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">visit</span><wbr><span class="parameters">(<a href="../LiteralExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl">LiteralExpression</a>&lt;?&gt;&nbsp;literalExpression)</span></div>
-<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../SelectionVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.LiteralExpression)">SelectionVisitor</a></code></span></div>
-<div class="block">Visit <a href="../LiteralExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl"><code>LiteralExpression</code></a>.</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">visit</span><wbr><span class="parameters">(<a href="../expression/LiteralExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression">LiteralExpression</a>&lt;?&gt;&nbsp;literalExpression)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../ExpressionVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression)">ExpressionVisitor</a></code></span></div>
+<div class="block">Visit <a href="../expression/LiteralExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression"><code>LiteralExpression</code></a>.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../SelectionVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.LiteralExpression)">visit</a></code>&nbsp;in interface&nbsp;<code><a href="../SelectionVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">SelectionVisitor</a></code></dd>
+<dd><code><a href="../ExpressionVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression)">visit</a></code>&nbsp;in interface&nbsp;<code><a href="../ExpressionVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">ExpressionVisitor</a></code></dd>
 <dt>Parameters:</dt>
 <dd><code>literalExpression</code> - The literalExpression</dd>
 </dl>
 </section>
 </li>
 <li>
-<section class="detail" id="visit(io.micronaut.data.model.jpa.criteria.impl.IdExpression)">
+<section class="detail" id="visit(io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression)">
 <h3>visit</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">visit</span><wbr><span class="parameters">(<a href="../IdExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl">IdExpression</a>&lt;?,<wbr>?&gt;&nbsp;idExpression)</span></div>
-<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../SelectionVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.IdExpression)">SelectionVisitor</a></code></span></div>
-<div class="block">Visit <a href="../IdExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl"><code>IdExpression</code></a>.</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">visit</span><wbr><span class="parameters">(<a href="../expression/IdExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression">IdExpression</a>&lt;?,<wbr>?&gt;&nbsp;idExpression)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../ExpressionVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression)">ExpressionVisitor</a></code></span></div>
+<div class="block">Visit <a href="../expression/IdExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression"><code>IdExpression</code></a>.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../SelectionVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.IdExpression)">visit</a></code>&nbsp;in interface&nbsp;<code><a href="../SelectionVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">SelectionVisitor</a></code></dd>
+<dd><code><a href="../ExpressionVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression)">visit</a></code>&nbsp;in interface&nbsp;<code><a href="../ExpressionVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">ExpressionVisitor</a></code></dd>
 <dt>Parameters:</dt>
 <dd><code>idExpression</code> - The idExpression</dd>
 </dl>
 </section>
 </li>
 <li>
-<section class="detail" id="visit(io.micronaut.data.model.jpa.criteria.impl.selection.AggregateExpression)">
+<section class="detail" id="visit(io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression)">
 <h3>visit</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">visit</span><wbr><span class="parameters">(<a href="../selection/AggregateExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.selection">AggregateExpression</a>&lt;?,<wbr>?&gt;&nbsp;aggregateExpression)</span></div>
-<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../SelectionVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.selection.AggregateExpression)">SelectionVisitor</a></code></span></div>
-<div class="block">Visit <a href="../selection/AggregateExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.selection"><code>AggregateExpression</code></a>.</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">visit</span><wbr><span class="parameters">(<a href="../expression/UnaryExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression">UnaryExpression</a>&lt;?&gt;&nbsp;unaryExpression)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../ExpressionVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression)">ExpressionVisitor</a></code></span></div>
+<div class="block">Visit <a href="../expression/UnaryExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression"><code>UnaryExpression</code></a>.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../SelectionVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.selection.AggregateExpression)">visit</a></code>&nbsp;in interface&nbsp;<code><a href="../SelectionVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">SelectionVisitor</a></code></dd>
+<dd><code><a href="../ExpressionVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression)">visit</a></code>&nbsp;in interface&nbsp;<code><a href="../ExpressionVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">ExpressionVisitor</a></code></dd>
 <dt>Parameters:</dt>
-<dd><code>aggregateExpression</code> - The aggregateExpression</dd>
+<dd><code>unaryExpression</code> - The unary expression</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="visit(io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression)">
+<h3>visit</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">visit</span><wbr><span class="parameters">(<a href="../expression/BinaryExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression">BinaryExpression</a>&lt;?&gt;&nbsp;binaryExpression)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../ExpressionVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression)">ExpressionVisitor</a></code></span></div>
+<div class="block">Visit <a href="../expression/BinaryExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression"><code>BinaryExpression</code></a>.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../ExpressionVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression)">visit</a></code>&nbsp;in interface&nbsp;<code><a href="../ExpressionVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">ExpressionVisitor</a></code></dd>
+<dt>Parameters:</dt>
+<dd><code>binaryExpression</code> - The aggregateExpression</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="visit(io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression)">
+<h3>visit</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">visit</span><wbr><span class="parameters">(<a href="../expression/FunctionExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression">FunctionExpression</a>&lt;?&gt;&nbsp;functionExpression)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../ExpressionVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression)">ExpressionVisitor</a></code></span></div>
+<div class="block">Visit <a href="../expression/FunctionExpression.html" title="class in io.micronaut.data.model.jpa.criteria.impl.expression"><code>FunctionExpression</code></a>.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../ExpressionVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression)">visit</a></code>&nbsp;in interface&nbsp;<code><a href="../ExpressionVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">ExpressionVisitor</a></code></dd>
+<dt>Parameters:</dt>
+<dd><code>functionExpression</code> - The function expression</dd>
 </dl>
 </section>
 </li>
@@ -438,20 +476,6 @@ implements <a href="../SelectionVisitor.html" title="interface in io.micronaut.d
 </section>
 </li>
 <li>
-<section class="detail" id="visit(io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInPredicate)">
-<h3>visit</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">visit</span><wbr><span class="parameters">(<a href="../predicate/PersistentPropertyInPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">PersistentPropertyInPredicate</a>&lt;?&gt;&nbsp;propertyIn)</span></div>
-<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../PredicateVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInPredicate)">PredicateVisitor</a></code></span></div>
-<div class="block">Visit <a href="../predicate/PersistentPropertyInPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate"><code>PersistentPropertyInPredicate</code></a>.</div>
-<dl class="notes">
-<dt>Specified by:</dt>
-<dd><code><a href="../PredicateVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInPredicate)">visit</a></code>&nbsp;in interface&nbsp;<code><a href="../PredicateVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">PredicateVisitor</a></code></dd>
-<dt>Parameters:</dt>
-<dd><code>propertyIn</code> - The propertyIn</dd>
-</dl>
-</section>
-</li>
-<li>
 <section class="detail" id="visit(io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyUnaryPredicate)">
 <h3>visit</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">visit</span><wbr><span class="parameters">(<a href="../predicate/PersistentPropertyUnaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">PersistentPropertyUnaryPredicate</a>&lt;?&gt;&nbsp;propertyOp)</span></div>
@@ -494,16 +518,16 @@ implements <a href="../SelectionVisitor.html" title="interface in io.micronaut.d
 </section>
 </li>
 <li>
-<section class="detail" id="visit(io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInValuesPredicate)">
+<section class="detail" id="visit(io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInPredicate)">
 <h3>visit</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">visit</span><wbr><span class="parameters">(<a href="../predicate/PersistentPropertyInValuesPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">PersistentPropertyInValuesPredicate</a>&lt;?&gt;&nbsp;inValues)</span></div>
-<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../PredicateVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInValuesPredicate)">PredicateVisitor</a></code></span></div>
-<div class="block">Visit <a href="../predicate/PersistentPropertyInValuesPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate"><code>PersistentPropertyInValuesPredicate</code></a>.</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">visit</span><wbr><span class="parameters">(<a href="../predicate/PersistentPropertyInPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">PersistentPropertyInPredicate</a>&lt;?&gt;&nbsp;inValues)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../PredicateVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInPredicate)">PredicateVisitor</a></code></span></div>
+<div class="block">Visit <a href="../predicate/PersistentPropertyInPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate"><code>PersistentPropertyInPredicate</code></a>.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../PredicateVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInValuesPredicate)">visit</a></code>&nbsp;in interface&nbsp;<code><a href="../PredicateVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">PredicateVisitor</a></code></dd>
+<dd><code><a href="../PredicateVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInPredicate)">visit</a></code>&nbsp;in interface&nbsp;<code><a href="../PredicateVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">PredicateVisitor</a></code></dd>
 <dt>Parameters:</dt>
-<dd><code>inValues</code> - The inValues</dd>
+<dd><code>inValues</code> - The propertyIn</dd>
 </dl>
 </section>
 </li>
@@ -518,6 +542,20 @@ implements <a href="../SelectionVisitor.html" title="interface in io.micronaut.d
 <dd><code><a href="../PredicateVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.ExpressionBinaryPredicate)">visit</a></code>&nbsp;in interface&nbsp;<code><a href="../PredicateVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">PredicateVisitor</a></code></dd>
 <dt>Parameters:</dt>
 <dd><code>expressionBinaryPredicate</code> - The expressionBinaryPredicate</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="visit(io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate)">
+<h3>visit</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">visit</span><wbr><span class="parameters">(<a href="../predicate/LikePredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">LikePredicate</a>&nbsp;likePredicate)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../PredicateVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate)">PredicateVisitor</a></code></span></div>
+<div class="block">Visit <a href="../predicate/LikePredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate"><code>LikePredicate</code></a>.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../PredicateVisitor.html#visit(io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate)">visit</a></code>&nbsp;in interface&nbsp;<code><a href="../PredicateVisitor.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">PredicateVisitor</a></code></dd>
+<dt>Parameters:</dt>
+<dd><code>likePredicate</code> - The like predicate</dd>
 </dl>
 </section>
 </li>

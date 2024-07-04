@@ -52,6 +52,7 @@ loadScripts(document, 'script');</script>
 <h2 title="Contents">Contents</h2>
 <ul>
 <li><a href="#for-removal">Terminally Deprecated</a></li>
+<li><a href="#interface">Interfaces</a></li>
 <li><a href="#class">Classes</a></li>
 <li><a href="#field">Fields</a></li>
 <li><a href="#method">Methods</a></li>
@@ -105,41 +106,116 @@ loadScripts(document, 'script');</script>
 <div class="col-last odd-row-color">
 <div class="deprecation-comment">No longer used</div>
 </div>
-<div class="col-summary-item-name even-row-color"><a href="io/micronaut/data/model/PersistentProperty.html#getCapitilizedName()">io.micronaut.data.model.PersistentProperty.getCapitilizedName()</a></div>
+<div class="col-summary-item-name even-row-color"><a href="io/micronaut/data/jpa/repository/criteria/Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria">io.micronaut.data.jpa.repository.criteria.Specification</a></div>
 <div class="col-last even-row-color">
+<div class="deprecation-comment">replaced by <a href="io/micronaut/data/repository/jpa/JpaSpecificationExecutor.html" title="interface in io.micronaut.data.repository.jpa"><code>JpaSpecificationExecutor</code></a> and <a href="io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a></div>
+</div>
+<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/data/jpa/repository/JpaSpecificationExecutor.html" title="interface in io.micronaut.data.jpa.repository">io.micronaut.data.jpa.repository.JpaSpecificationExecutor</a></div>
+<div class="col-last odd-row-color">
+<div class="deprecation-comment">Replaced with <a href="io/micronaut/data/repository/jpa/JpaSpecificationExecutor.html" title="interface in io.micronaut.data.repository.jpa"><code>JpaSpecificationExecutor</code></a></div>
+</div>
+<div class="col-summary-item-name even-row-color"><a href="io/micronaut/data/model/DataType.html#EMPTY_DATA_TYPE_ARRAY">io.micronaut.data.model.DataType.EMPTY_DATA_TYPE_ARRAY</a></div>
+<div class="col-last even-row-color">
+<div class="deprecation-comment">Not needed</div>
+</div>
+<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/data/model/PersistentProperty.html#getCapitilizedName()">io.micronaut.data.model.PersistentProperty.getCapitilizedName()</a></div>
+<div class="col-last odd-row-color">
 <div class="deprecation-comment">The method with a type replaced with <a href="io/micronaut/data/model/PersistentProperty.html#getCapitalizedName()"><code>PersistentProperty.getCapitalizedName()</code></a>.</div>
+</div>
+<div class="col-summary-item-name even-row-color"><a href="io/micronaut/data/model/query/AssociationQuery.html" title="class in io.micronaut.data.model.query">io.micronaut.data.model.query.AssociationQuery</a></div>
+<div class="col-last even-row-color">
+<div class="deprecation-comment">Replaced by JPA criteria</div>
 </div>
 <div class="col-summary-item-name odd-row-color"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#buildOrderBy(java.lang.String,io.micronaut.data.model.PersistentEntity,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.Sort)">io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.buildOrderBy<wbr>(String, PersistentEntity, AnnotationMetadata, Sort)</a></div>
 <div class="col-last odd-row-color">
 <div class="deprecation-comment">use <a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#buildOrderBy(java.lang.String,io.micronaut.data.model.PersistentEntity,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.Sort,boolean)"><code>AbstractSqlLikeQueryBuilder.buildOrderBy(String, PersistentEntity, AnnotationMetadata, Sort, boolean)</code></a></div>
 </div>
-<div class="col-summary-item-name even-row-color"><a href="io/micronaut/data/model/runtime/StoredQuery.html#getArgumentTypes()">io.micronaut.data.model.runtime.StoredQuery.getArgumentTypes()</a></div>
+<div class="col-summary-item-name even-row-color"><a href="io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">io.micronaut.data.model.query.Criteria</a></div>
 <div class="col-last even-row-color">
-<div class="deprecation-comment">Not used anymore</div>
+<div class="deprecation-comment">Replaced by JPA criteria</div>
 </div>
-<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/data/model/runtime/StoredQuery.html#getEntityIdentifierType()">io.micronaut.data.model.runtime.StoredQuery.getEntityIdentifierType()</a></div>
+<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/data/model/query/DefaultQuery.html" title="class in io.micronaut.data.model.query">io.micronaut.data.model.query.DefaultQuery</a></div>
+<div class="col-last odd-row-color">
+<div class="deprecation-comment">Replaced by JPA criteria</div>
+</div>
+<div class="col-summary-item-name even-row-color"><a href="io/micronaut/data/model/query/factory/Projections.html" title="class in io.micronaut.data.model.query.factory">io.micronaut.data.model.query.factory.Projections</a></div>
+<div class="col-last even-row-color">
+<div class="deprecation-comment">Replaced by JPA criteria</div>
+</div>
+<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/data/model/query/factory/Restrictions.html" title="class in io.micronaut.data.model.query.factory">io.micronaut.data.model.query.factory.Restrictions</a></div>
+<div class="col-last odd-row-color">
+<div class="deprecation-comment">Replaced by JPA criteria</div>
+</div>
+<div class="col-summary-item-name even-row-color"><a href="io/micronaut/data/model/query/ProjectionList.html" title="interface in io.micronaut.data.model.query">io.micronaut.data.model.query.ProjectionList</a></div>
+<div class="col-last even-row-color">
+<div class="deprecation-comment">Replaced by JPA criteria</div>
+</div>
+<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">io.micronaut.data.model.query.QueryModel</a></div>
+<div class="col-last odd-row-color">
+<div class="deprecation-comment">Replaced by JPA criteria</div>
+</div>
+<div class="col-summary-item-name even-row-color"><a href="io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">io.micronaut.data.model.query.QueryParameter</a></div>
+<div class="col-last even-row-color">
+<div class="deprecation-comment">Will switch to an internal</div>
+</div>
+<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/data/model/runtime/StoredQuery.html#getArgumentTypes()">io.micronaut.data.model.runtime.StoredQuery.getArgumentTypes()</a></div>
 <div class="col-last odd-row-color">
 <div class="deprecation-comment">Not used anymore</div>
 </div>
-<div class="col-summary-item-name even-row-color"><a href="io/micronaut/data/model/runtime/StoredQuery.html#getJoinFetchPaths()">io.micronaut.data.model.runtime.StoredQuery.getJoinFetchPaths()</a></div>
+<div class="col-summary-item-name even-row-color"><a href="io/micronaut/data/model/runtime/StoredQuery.html#getEntityIdentifierType()">io.micronaut.data.model.runtime.StoredQuery.getEntityIdentifierType()</a></div>
 <div class="col-last even-row-color">
+<div class="deprecation-comment">Not used anymore</div>
+</div>
+<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/data/model/runtime/StoredQuery.html#getJoinFetchPaths()">io.micronaut.data.model.runtime.StoredQuery.getJoinFetchPaths()</a></div>
+<div class="col-last odd-row-color">
 <div class="deprecation-comment">Use <a href="io/micronaut/data/model/runtime/StoredQuery.html#getJoinPaths()"><code>StoredQuery.getJoinPaths()</code></a> and filter the paths</div>
 </div>
-<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/data/model/runtime/StoredQuery.html#isSingleResult()">io.micronaut.data.model.runtime.StoredQuery.isSingleResult()</a></div>
-<div class="col-last odd-row-color">
-<div class="deprecation-comment">Not used anymore</div>
-</div>
-<div class="col-summary-item-name even-row-color"><a href="io/micronaut/data/model/runtime/StoredQuery.html#useNumericPlaceholders()">io.micronaut.data.model.runtime.StoredQuery.useNumericPlaceholders()</a></div>
+<div class="col-summary-item-name even-row-color"><a href="io/micronaut/data/model/runtime/StoredQuery.html#isSingleResult()">io.micronaut.data.model.runtime.StoredQuery.isSingleResult()</a></div>
 <div class="col-last even-row-color">
 <div class="deprecation-comment">Not used anymore</div>
 </div>
-<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/data/processor/visitors/finders/AbstractPatternMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">io.micronaut.data.processor.visitors.finders.AbstractPatternMethodMatcher</a></div>
+<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/data/model/runtime/StoredQuery.html#useNumericPlaceholders()">io.micronaut.data.model.runtime.StoredQuery.useNumericPlaceholders()</a></div>
 <div class="col-last odd-row-color">
+<div class="deprecation-comment">Not used anymore</div>
+</div>
+<div class="col-summary-item-name even-row-color"><a href="io/micronaut/data/processor/visitors/finders/AbstractPatternMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">io.micronaut.data.processor.visitors.finders.AbstractPatternMethodMatcher</a></div>
+<div class="col-last even-row-color">
 <div class="deprecation-comment">No longer used</div>
 </div>
-<div class="col-summary-item-name even-row-color"><a href="io/micronaut/data/runtime/mapper/sql/SqlDTOMapper.html" title="class in io.micronaut.data.runtime.mapper.sql">io.micronaut.data.runtime.mapper.sql.SqlDTOMapper</a></div>
-<div class="col-last even-row-color">
+<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/data/runtime/mapper/sql/SqlDTOMapper.html" title="class in io.micronaut.data.runtime.mapper.sql">io.micronaut.data.runtime.mapper.sql.SqlDTOMapper</a></div>
+<div class="col-last odd-row-color">
 <div class="deprecation-comment">Not used as of 4.2</div>
+</div>
+</div>
+</div>
+</li>
+</ul>
+<ul class="block-list">
+<li>
+<div id="interface">
+<div class="caption"><span>Deprecated Interfaces</span></div>
+<div class="summary-table two-column-summary">
+<div class="table-header col-first">Interface</div>
+<div class="table-header col-last">Description</div>
+<div class="col-summary-item-name even-row-color"><a href="io/micronaut/data/jpa/repository/criteria/Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria">io.micronaut.data.jpa.repository.criteria.Specification</a></div>
+<div class="col-last even-row-color">
+<div class="deprecation-comment">replaced by <a href="io/micronaut/data/repository/jpa/JpaSpecificationExecutor.html" title="interface in io.micronaut.data.repository.jpa"><code>JpaSpecificationExecutor</code></a> and <a href="io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a></div>
+</div>
+<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/data/jpa/repository/JpaSpecificationExecutor.html" title="interface in io.micronaut.data.jpa.repository">io.micronaut.data.jpa.repository.JpaSpecificationExecutor</a></div>
+<div class="col-last odd-row-color">
+<div class="deprecation-comment">Replaced with <a href="io/micronaut/data/repository/jpa/JpaSpecificationExecutor.html" title="interface in io.micronaut.data.repository.jpa"><code>JpaSpecificationExecutor</code></a></div>
+</div>
+<div class="col-summary-item-name even-row-color"><a href="io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">io.micronaut.data.model.query.Criteria</a></div>
+<div class="col-last even-row-color">
+<div class="deprecation-comment">Replaced by JPA criteria</div>
+</div>
+<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/data/model/query/ProjectionList.html" title="interface in io.micronaut.data.model.query">io.micronaut.data.model.query.ProjectionList</a></div>
+<div class="col-last odd-row-color">
+<div class="deprecation-comment">Replaced by JPA criteria</div>
+</div>
+<div class="col-summary-item-name even-row-color"><a href="io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">io.micronaut.data.model.query.QueryModel</a></div>
+<div class="col-last even-row-color">
+<div class="deprecation-comment">Replaced by JPA criteria</div>
 </div>
 </div>
 </div>
@@ -152,12 +228,32 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Class</div>
 <div class="table-header col-last">Description</div>
-<div class="col-summary-item-name even-row-color"><a href="io/micronaut/data/processor/visitors/finders/AbstractPatternMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">io.micronaut.data.processor.visitors.finders.AbstractPatternMethodMatcher</a></div>
+<div class="col-summary-item-name even-row-color"><a href="io/micronaut/data/model/query/AssociationQuery.html" title="class in io.micronaut.data.model.query">io.micronaut.data.model.query.AssociationQuery</a></div>
 <div class="col-last even-row-color">
+<div class="deprecation-comment">Replaced by JPA criteria</div>
+</div>
+<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/data/model/query/DefaultQuery.html" title="class in io.micronaut.data.model.query">io.micronaut.data.model.query.DefaultQuery</a></div>
+<div class="col-last odd-row-color">
+<div class="deprecation-comment">Replaced by JPA criteria</div>
+</div>
+<div class="col-summary-item-name even-row-color"><a href="io/micronaut/data/model/query/factory/Projections.html" title="class in io.micronaut.data.model.query.factory">io.micronaut.data.model.query.factory.Projections</a></div>
+<div class="col-last even-row-color">
+<div class="deprecation-comment">Replaced by JPA criteria</div>
+</div>
+<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/data/model/query/factory/Restrictions.html" title="class in io.micronaut.data.model.query.factory">io.micronaut.data.model.query.factory.Restrictions</a></div>
+<div class="col-last odd-row-color">
+<div class="deprecation-comment">Replaced by JPA criteria</div>
+</div>
+<div class="col-summary-item-name even-row-color"><a href="io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">io.micronaut.data.model.query.QueryParameter</a></div>
+<div class="col-last even-row-color">
+<div class="deprecation-comment">Will switch to an internal</div>
+</div>
+<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/data/processor/visitors/finders/AbstractPatternMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">io.micronaut.data.processor.visitors.finders.AbstractPatternMethodMatcher</a></div>
+<div class="col-last odd-row-color">
 <div class="deprecation-comment">No longer used</div>
 </div>
-<div class="col-summary-item-name odd-row-color"><a href="io/micronaut/data/runtime/mapper/sql/SqlDTOMapper.html" title="class in io.micronaut.data.runtime.mapper.sql">io.micronaut.data.runtime.mapper.sql.SqlDTOMapper</a></div>
-<div class="col-last odd-row-color">
+<div class="col-summary-item-name even-row-color"><a href="io/micronaut/data/runtime/mapper/sql/SqlDTOMapper.html" title="class in io.micronaut.data.runtime.mapper.sql">io.micronaut.data.runtime.mapper.sql.SqlDTOMapper</a></div>
+<div class="col-last even-row-color">
 <div class="deprecation-comment">Not used as of 4.2</div>
 </div>
 </div>
@@ -202,6 +298,10 @@ loadScripts(document, 'script');</script>
 <div class="col-summary-item-name odd-row-color"><a href="io/micronaut/data/intercept/annotation/DataMethod.html#META_MEMBER_PARAMETER_TYPE_DEFS">io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS</a></div>
 <div class="col-last odd-row-color">
 <div class="deprecation-comment">No longer used</div>
+</div>
+<div class="col-summary-item-name even-row-color"><a href="io/micronaut/data/model/DataType.html#EMPTY_DATA_TYPE_ARRAY">io.micronaut.data.model.DataType.EMPTY_DATA_TYPE_ARRAY</a></div>
+<div class="col-last even-row-color">
+<div class="deprecation-comment">Not needed</div>
 </div>
 </div>
 </div>
