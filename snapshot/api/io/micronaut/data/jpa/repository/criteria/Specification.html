@@ -77,12 +77,7 @@ loadScripts(document, 'script');</script>
 <dd><code>T</code> - The entity root type</dd>
 </dl>
 <hr>
-<div class="type-signature"><span class="annotations"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Deprecated.html" title="class or interface in java.lang" class="external-link">@Deprecated</a>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Deprecated.html#forRemoval()" title="class or interface in java.lang" class="external-link">forRemoval</a>=true,
-            <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Deprecated.html#since()" title="class or interface in java.lang" class="external-link">since</a>="4.9")
-</span><span class="modifiers">public interface </span><span class="element-name type-name-label">Specification&lt;T&gt;</span></div>
-<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span>
-<div class="deprecation-comment">replaced by <a href="../../../repository/jpa/JpaSpecificationExecutor.html" title="interface in io.micronaut.data.repository.jpa"><code>JpaSpecificationExecutor</code></a> and <a href="../../../repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a></div>
-</div>
+<div class="type-signature"><span class="modifiers">public interface </span><span class="element-name type-name-label">Specification&lt;T&gt;</span></div>
 <div class="block">Specification in the sense of Domain Driven Design.
  Fork from org.springframework.data.jpa.domain.Specification.</div>
 <dl class="notes">
@@ -99,43 +94,38 @@ loadScripts(document, 'script');</script>
 <section class="method-summary" id="method-summary">
 <h2>Method Summary</h2>
 <div id="method-summary-table">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab1" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab1', 3)" class="table-tab">Static Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab3" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab3', 3)" class="table-tab">Abstract Methods</button><button id="method-summary-table-tab5" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab5', 3)" class="table-tab">Default Methods</button><button id="method-summary-table-tab6" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab6', 3)" class="table-tab">Deprecated Methods</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab1" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab1', 3)" class="table-tab">Static Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab3" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab3', 3)" class="table-tab">Abstract Methods</button><button id="method-summary-table-tab5" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab5', 3)" class="table-tab">Default Methods</button></div>
 <div id="method-summary-table.tabpanel" role="tabpanel">
 <div class="summary-table three-column-summary" aria-labelledby="method-summary-table-tab0">
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5 method-summary-table-tab6"><code>default @NonNull <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria">Specification</a>&lt;<a href="Specification.html" title="type parameter in Specification">T</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5 method-summary-table-tab6"><code><a href="#and(io.micronaut.data.jpa.repository.criteria.Specification)" class="member-name-link">and</a><wbr>(@Nullable <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria">Specification</a>&lt;<a href="Specification.html" title="type parameter in Specification">T</a>&gt;&nbsp;other)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5 method-summary-table-tab6">
-<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria">Specification</a>&lt;<a href="Specification.html" title="type parameter in Specification">T</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#and(io.micronaut.data.jpa.repository.criteria.Specification)" class="member-name-link">and</a><wbr>(@Nullable <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria">Specification</a>&lt;<a href="Specification.html" title="type parameter in Specification">T</a>&gt;&nbsp;other)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">ANDs the given <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria"><code>Specification</code></a> to the current one.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab6"><code>static &lt;T&gt;&nbsp;@NonNull <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria">Specification</a>&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab6"><code><a href="#not(io.micronaut.data.jpa.repository.criteria.Specification)" class="member-name-link">not</a><wbr>(@Nullable <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria">Specification</a>&lt;T&gt;&nbsp;spec)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab6">
-<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static &lt;T&gt;&nbsp;@NonNull <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria">Specification</a>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#not(io.micronaut.data.jpa.repository.criteria.Specification)" class="member-name-link">not</a><wbr>(@Nullable <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria">Specification</a>&lt;T&gt;&nbsp;spec)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1">
 <div class="block">Negates the given <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria"><code>Specification</code></a>.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5 method-summary-table-tab6"><code>default @NonNull <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria">Specification</a>&lt;<a href="Specification.html" title="type parameter in Specification">T</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5 method-summary-table-tab6"><code><a href="#or(io.micronaut.data.jpa.repository.criteria.Specification)" class="member-name-link">or</a><wbr>(@Nullable <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria">Specification</a>&lt;<a href="Specification.html" title="type parameter in Specification">T</a>&gt;&nbsp;other)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5 method-summary-table-tab6">
-<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria">Specification</a>&lt;<a href="Specification.html" title="type parameter in Specification">T</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#or(io.micronaut.data.jpa.repository.criteria.Specification)" class="member-name-link">or</a><wbr>(@Nullable <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria">Specification</a>&lt;<a href="Specification.html" title="type parameter in Specification">T</a>&gt;&nbsp;other)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">ORs the given specification to the current one.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3 method-summary-table-tab6"><code>@Nullable jakarta.persistence.criteria.Predicate</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3 method-summary-table-tab6"><code><a href="#toPredicate(jakarta.persistence.criteria.Root,jakarta.persistence.criteria.CriteriaQuery,jakarta.persistence.criteria.CriteriaBuilder)" class="member-name-link">toPredicate</a><wbr>(@NonNull jakarta.persistence.criteria.Root&lt;<a href="Specification.html" title="type parameter in Specification">T</a>&gt;&nbsp;root,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@Nullable jakarta.persistence.criteria.Predicate</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#toPredicate(jakarta.persistence.criteria.Root,jakarta.persistence.criteria.CriteriaQuery,jakarta.persistence.criteria.CriteriaBuilder)" class="member-name-link">toPredicate</a><wbr>(@NonNull jakarta.persistence.criteria.Root&lt;<a href="Specification.html" title="type parameter in Specification">T</a>&gt;&nbsp;root,
  @NonNull jakarta.persistence.criteria.CriteriaQuery&lt;?&gt;&nbsp;query,
  @NonNull jakarta.persistence.criteria.CriteriaBuilder&nbsp;criteriaBuilder)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3 method-summary-table-tab6">
-<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Creates a WHERE clause for a query of the referenced entity in form of a <code>Predicate</code> for the given
  <code>Root</code> and <code>CriteriaQuery</code>.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab6"><code>static &lt;T&gt;&nbsp;@NonNull <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria">Specification</a>&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab6"><code><a href="#where(io.micronaut.data.jpa.repository.criteria.Specification)" class="member-name-link">where</a><wbr>(@Nullable <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria">Specification</a>&lt;T&gt;&nbsp;spec)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab6">
-<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1"><code>static &lt;T&gt;&nbsp;@NonNull <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria">Specification</a>&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1"><code><a href="#where(io.micronaut.data.jpa.repository.criteria.Specification)" class="member-name-link">where</a><wbr>(@Nullable <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria">Specification</a>&lt;T&gt;&nbsp;spec)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1">
 <div class="block">Simple static factory method to add some syntactic sugar around a <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria"><code>Specification</code></a>.</div>
 </div>
 </div>
@@ -158,7 +148,6 @@ loadScripts(document, 'script');</script>
 <div class="member-signature"><span class="annotations">@NonNull
 </span><span class="modifiers">static</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria">Specification</a>&lt;T&gt;</span>&nbsp;<span class="element-name">not</span><wbr><span class="parameters">(@Nullable
  @Nullable <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria">Specification</a>&lt;T&gt;&nbsp;spec)</span></div>
-<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <div class="block">Negates the given <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria"><code>Specification</code></a>.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
@@ -176,7 +165,6 @@ loadScripts(document, 'script');</script>
 <div class="member-signature"><span class="annotations">@NonNull
 </span><span class="modifiers">static</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria">Specification</a>&lt;T&gt;</span>&nbsp;<span class="element-name">where</span><wbr><span class="parameters">(@Nullable
  @Nullable <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria">Specification</a>&lt;T&gt;&nbsp;spec)</span></div>
-<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <div class="block">Simple static factory method to add some syntactic sugar around a <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria"><code>Specification</code></a>.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
@@ -194,7 +182,6 @@ loadScripts(document, 'script');</script>
 <div class="member-signature"><span class="annotations">@NonNull
 </span><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria">Specification</a>&lt;<a href="Specification.html" title="type parameter in Specification">T</a>&gt;</span>&nbsp;<span class="element-name">and</span><wbr><span class="parameters">(@Nullable
  @Nullable <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria">Specification</a>&lt;<a href="Specification.html" title="type parameter in Specification">T</a>&gt;&nbsp;other)</span></div>
-<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <div class="block">ANDs the given <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria"><code>Specification</code></a> to the current one.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -210,7 +197,6 @@ loadScripts(document, 'script');</script>
 <div class="member-signature"><span class="annotations">@NonNull
 </span><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria">Specification</a>&lt;<a href="Specification.html" title="type parameter in Specification">T</a>&gt;</span>&nbsp;<span class="element-name">or</span><wbr><span class="parameters">(@Nullable
  @Nullable <a href="Specification.html" title="interface in io.micronaut.data.jpa.repository.criteria">Specification</a>&lt;<a href="Specification.html" title="type parameter in Specification">T</a>&gt;&nbsp;other)</span></div>
-<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <div class="block">ORs the given specification to the current one.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -230,7 +216,6 @@ loadScripts(document, 'script');</script>
  @NonNull jakarta.persistence.criteria.CriteriaQuery&lt;?&gt;&nbsp;query,
  @NonNull
  @NonNull jakarta.persistence.criteria.CriteriaBuilder&nbsp;criteriaBuilder)</span></div>
-<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <div class="block">Creates a WHERE clause for a query of the referenced entity in form of a <code>Predicate</code> for the given
  <code>Root</code> and <code>CriteriaQuery</code>.</div>
 <dl class="notes">
