@@ -16,6 +16,7 @@
 package io.micronaut.data.tck.tests
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
@@ -37,8 +38,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Stepwise
 
-import java.util.stream.Collectors
-import java.util.stream.IntStream
+import java.util.function.Function
 import java.util.stream.LongStream
 
 import static io.micronaut.data.repository.jpa.criteria.QuerySpecification.where
@@ -682,7 +682,7 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
         personRepository.saveAll(people).collectList().block()
     }
 
-    void "test pageable list"() {
+    void "test pageable list"(Pageable pageable) {
         given:
             setupPersonsForPageableTest()
         when: "All the people are count"
@@ -692,7 +692,6 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
             count == 1300
 
         when: "10 people are paged"
-            def pageable = Pageable.from(0, 10, Sort.of(Sort.Order.asc("id")))
             Page<Person> page = personRepository.findAll(pageable).block()
 
         then: "The data is correct"
@@ -724,6 +723,9 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
             page.pageNumber == 0
             page.content[0].name.startsWith("A")
             page.content.size() == 10
+
+        where:
+        pageable << [Pageable.from(0, 10, Sort.of(Sort.Order.asc("id"))), CursoredPageable.from(10, null)]
     }
 
     void "test pageable sort"() {
@@ -760,12 +762,11 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
             page.content[0].name.startsWith("Z")
     }
 
-    void "test pageable findBy"() {
+    void "test pageable findBy"(Function<Pageable, Page<Person>> resultFunction, Pageable pageable) {
         given:
             setupPersonsForPageableTest()
         when: "People are searched for"
-            def pageable = Pageable.from(0, 10)
-            Page<Person> page = personRepository.findByNameLike("A%", pageable).block()
+            Page<Person> page = resultFunction.apply(pageable)
             Page<Person> page2 = personRepository.findPeople("A%", pageable).block()
 
         then: "The page is correct"
@@ -784,6 +785,13 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
             page.totalSize == 50
             page.nextPageable().offset == 20
             page.nextPageable().number == 2
+
+        where:
+        pageable << [Pageable.from(0, 10), CursoredPageable.from(10, null)]
+        resultFunction << [
+                            (firstPageable) -> personRepository.findByNameLike("A%", firstPageable).block(),
+                            (secondPageable) -> personRepository.findAll(PersonReactiveRepository.Specifications.nameLike("A%"), (Pageable) secondPageable).block()
+                          ]
     }
 
     protected void savePersons(List<String> names) {
