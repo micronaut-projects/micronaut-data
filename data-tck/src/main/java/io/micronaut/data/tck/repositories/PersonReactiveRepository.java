@@ -91,7 +91,10 @@ public interface PersonReactiveRepository extends ReactorPageableRepository<Pers
     @Query("DELETE FROM person WHERE name = :xyz")
     Mono<Long> deleteCustomSingleNoEntity(String xyz);
 
-    class Specifications {
+    final class Specifications {
+
+        private Specifications() {
+        }
 
         public static PredicateSpecification<Person> nameLike(String name) {
             return (root, criteriaBuilder) -> criteriaBuilder.like(root.get("name"), name);
