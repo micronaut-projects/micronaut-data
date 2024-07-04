@@ -53,7 +53,6 @@ io.micronaut.data.jpa.repository.intercept
 io.micronaut.data.model
 io.micronaut.data.model.jpa.criteria
 io.micronaut.data.model.jpa.criteria.impl
-io.micronaut.data.model.jpa.criteria.impl.expression
 io.micronaut.data.model.jpa.criteria.impl.predicate
 io.micronaut.data.model.jpa.criteria.impl.query
 io.micronaut.data.model.jpa.criteria.impl.selection
@@ -64,7 +63,6 @@ io.micronaut.data.model.query.builder
 io.micronaut.data.model.query.builder.jpa
 io.micronaut.data.model.query.builder.sql
 io.micronaut.data.model.query.factory
-io.micronaut.data.model.query.impl
 io.micronaut.data.model.runtime
 io.micronaut.data.model.runtime.convert
 io.micronaut.data.mongodb.advice
