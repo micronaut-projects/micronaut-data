@@ -16,16 +16,11 @@
 package io.micronaut.data.jdbc.mysql
 
 import groovy.transform.Memoized
-import io.micronaut.context.ApplicationContext
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.tests.AbstractCursoredPageSpec
-import spock.lang.AutoCleanup
-import spock.lang.Shared
 
 class MysqlCursoredPaginationSpec extends AbstractCursoredPageSpec implements MySQLTestPropertyProvider {
-
-    @Shared @AutoCleanup ApplicationContext context
 
     @Memoized
     @Override
@@ -37,11 +32,6 @@ class MysqlCursoredPaginationSpec extends AbstractCursoredPageSpec implements My
     @Override
     BookRepository getBookRepository() {
         return context.getBean(MySqlBookRepository)
-    }
-
-    @Override
-    void init() {
-        context = ApplicationContext.run(properties)
     }
 
 }

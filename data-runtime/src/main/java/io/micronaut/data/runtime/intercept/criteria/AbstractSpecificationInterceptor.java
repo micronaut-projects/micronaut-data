@@ -86,6 +86,8 @@ import static io.micronaut.data.model.runtime.StoredQuery.OperationType;
 @Internal
 public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQueryInterceptor<T, R> {
 
+    protected static final String PREPARED_QUERY_KEY = "PREPARED_QUERY";
+
     protected final CriteriaRepositoryOperations criteriaRepositoryOperations;
     private final Map<RepositoryMethodKey, QueryBuilder> sqlQueryBuilderForRepositories = new ConcurrentHashMap<>();
     private final Map<RepositoryMethodKey, Set<JoinPath>> methodsJoinPaths = new ConcurrentHashMap<>();
@@ -149,7 +151,9 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
             }
             return criteriaRepositoryOperations.findAll(query);
         }
-        return operations.findAll(preparedQueryForCriteria(methodKey, context, type, methodJoinPaths));
+        PreparedQuery<?, ?> preparedQuery = preparedQueryForCriteria(methodKey, context, type, methodJoinPaths);
+        context.setAttribute(PREPARED_QUERY_KEY, preparedQuery);
+        return operations.findAll(preparedQuery);
     }
 
     @NonNull

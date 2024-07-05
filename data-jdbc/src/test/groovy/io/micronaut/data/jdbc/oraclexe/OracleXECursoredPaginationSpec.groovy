@@ -16,16 +16,11 @@
 package io.micronaut.data.jdbc.oraclexe
 
 import groovy.transform.Memoized
-import io.micronaut.context.ApplicationContext
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.tests.AbstractCursoredPageSpec
-import spock.lang.AutoCleanup
-import spock.lang.Shared
 
 class OracleXECursoredPaginationSpec extends AbstractCursoredPageSpec implements OracleTestPropertyProvider {
-
-    @Shared @AutoCleanup ApplicationContext context
 
     @Override
     @Memoized
@@ -37,11 +32,6 @@ class OracleXECursoredPaginationSpec extends AbstractCursoredPageSpec implements
     @Memoized
     BookRepository getBookRepository() {
         return context.getBean(OracleXEBookRepository)
-    }
-
-    @Override
-    void init() {
-        context = ApplicationContext.run(properties)
     }
 
 }

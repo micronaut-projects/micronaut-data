@@ -177,10 +177,17 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
 
     CursoredPage<Person> retrieve(@NonNull Pageable pageable);
 
-    class Specifications {
+    final class Specifications {
+
+        private Specifications() {
+        }
 
         public static PredicateSpecification<Person> nameEquals(String name) {
             return (root, criteriaBuilder) -> criteriaBuilder.equal(root.get("name"), name);
+        }
+
+        public static PredicateSpecification<Person> nameLike(String name) {
+            return (root, criteriaBuilder) -> criteriaBuilder.like(root.get("name"), name);
         }
 
         public static PredicateSpecification<Person> nameEqualsCaseInsensitive(String name) {

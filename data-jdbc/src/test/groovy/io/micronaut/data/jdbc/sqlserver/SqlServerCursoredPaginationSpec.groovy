@@ -15,16 +15,11 @@
  */
 package io.micronaut.data.jdbc.sqlserver
 
-import io.micronaut.context.ApplicationContext
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.tests.AbstractCursoredPageSpec
-import spock.lang.AutoCleanup
-import spock.lang.Shared
 
 class SqlServerCursoredPaginationSpec extends AbstractCursoredPageSpec implements MSSQLTestPropertyProvider {
-
-    @Shared @AutoCleanup ApplicationContext context
 
     @Override
     PersonRepository getPersonRepository() {
@@ -36,8 +31,4 @@ class SqlServerCursoredPaginationSpec extends AbstractCursoredPageSpec implement
         return context.getBean(MSBookRepository)
     }
 
-    @Override
-    void init() {
-        context = ApplicationContext.run(properties)
-    }
 }

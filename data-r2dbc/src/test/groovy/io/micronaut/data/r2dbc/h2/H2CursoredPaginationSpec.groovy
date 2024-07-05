@@ -16,18 +16,10 @@
 package io.micronaut.data.r2dbc.h2
 
 import groovy.transform.Memoized
-import io.micronaut.context.ApplicationContext
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractCursoredPageSpec
-import io.micronaut.data.tck.tests.AbstractRepositorySpec
-import spock.lang.AutoCleanup
-import spock.lang.Shared
 
 class H2CursoredPaginationSpec extends AbstractCursoredPageSpec implements H2TestPropertyProvider {
-
-    @Shared
-    @AutoCleanup
-    ApplicationContext context
 
     @Memoized
     @Override
@@ -39,10 +31,5 @@ class H2CursoredPaginationSpec extends AbstractCursoredPageSpec implements H2Tes
     @Override
     BookRepository getBookRepository() {
         return context.getBean(H2BookRepository)
-    }
-
-    @Override
-    void init() {
-        context = ApplicationContext.run(properties)
     }
 }
