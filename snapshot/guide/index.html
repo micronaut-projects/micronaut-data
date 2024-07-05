@@ -15699,6 +15699,7 @@ azure.cosmos.default-gateway-mode=true
 azure.cosmos.endpoint-discovery-enabled=false
 azure.cosmos.endpoint=https://localhost:8081
 azure.cosmos.key=
+azure.cosmos.database.disable-non-streaming-order-by=true
 azure.cosmos.database.throughput-settings.request-units=1000
 azure.cosmos.database.throughput-settings.auto-scale=false
 azure.cosmos.database.database-name=testDb
@@ -15726,6 +15727,7 @@ azure:
     endpoint: https://localhost:8081
     key: ''
     database:
+      disable-non-streaming-order-by: true
       throughput-settings:
         request-units: 1000
         auto-scale: false
@@ -15757,6 +15759,7 @@ azure:
     endpoint="https://localhost:8081"
     key=""
     [azure.cosmos.database]
+      disable-non-streaming-order-by=true
       database-name="testDb"
       packages="io.micronaut.data.azure.entities"
       update-policy="CREATE_IF_NOT_EXISTS"
@@ -15791,6 +15794,7 @@ azure {
     endpoint = "https://localhost:8081"
     key = ""
     database {
+      disableNonStreamingOrderBy = true
       throughputSettings {
         requestUnits = 1000
         autoScale = false
@@ -15833,6 +15837,7 @@ azure {
       endpoint = "https://localhost:8081"
       key = ""
       database {
+        disable-non-streaming-order-by = true
         throughput-settings {
           request-units = 1000
           auto-scale = false
@@ -15876,6 +15881,7 @@ azure {
       "endpoint": "https://localhost:8081",
       "key": "",
       "database": {
+        "disable-non-streaming-order-by": true,
         "throughput-settings": {
           "request-units": 1000,
           "auto-scale": false
@@ -15905,6 +15911,18 @@ azure {
 </div>
 </div>
 </div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<code>azure.cosmos.database.disable-non-streaming-order-by</code> needs to be set to true if the query runs against a region or emulator that has not yet been updated with the new NonStreamingOrderBy query feature.
+</td>
+</tr>
+</table>
 </div>
 
 <h2 id="azureCosmosRepositories"><a class="anchor" href="#azureCosmosRepositories"></a>8.3 Repositories</h2>
