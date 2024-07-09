@@ -113,18 +113,18 @@ public final class UpdateMethodMatcher extends AbstractMethodMatcher {
                 if (DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(matchContext.getAnnotationMetadata())) {
                     AnnotationValue<EntityRepresentation> entityRepresentationAnnotationValue = rootEntity.getAnnotationMetadata().getAnnotation(EntityRepresentation.class);
                     String columnName = entityRepresentationAnnotationValue.getRequiredValue("column", String.class);
-                    query.set(columnName, cb.parameter(entityParameter));
+                    query.set(columnName, cb.parameter(entityParameter, null));
                     return;
                 }
 
                 Stream.concat(rootEntity.getPersistentProperties().stream(), Stream.of(rootEntity.getVersion()))
                         .filter(p -> p != null && !(p instanceof Association association && association.isForeignKey()) && !p.isGenerated() &&
                                 p.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATEABLE, Boolean.class)).orElse(true))
-                        .forEach(p -> query.set(p.getName(), cb.entityPropertyParameter(entityParam)));
+                        .forEach(p -> query.set(p.getName(), cb.entityPropertyParameter(entityParam, new PersistentPropertyPath(p))));
 
                 if (((AbstractPersistentEntityCriteriaUpdate<T>) query).getUpdateValues().isEmpty()) {
                     // Workaround for only ID entities
-                    query.set(rootEntity.getIdentity().getName(), cb.entityPropertyParameter(entityParam));
+                    query.set(rootEntity.getIdentity().getName(), cb.entityPropertyParameter(entityParam, new PersistentPropertyPath(rootEntity.getIdentity())));
                 }
             }
 
@@ -199,7 +199,7 @@ public final class UpdateMethodMatcher extends AbstractMethodMatcher {
                         if (prop.isGenerated()) {
                             throw new MatchFailedException("Cannot update a generated property: " + name);
                         } else {
-                            query.set(name, cb.parameter(parameter));
+                            query.set(name, cb.parameter(parameter, new PersistentPropertyPath(prop)));
                         }
                     }
                 }
@@ -226,14 +226,14 @@ public final class UpdateMethodMatcher extends AbstractMethodMatcher {
                     if (path != null) {
                         PersistentProperty property = path.getProperty();
                         if (path.getAssociations().isEmpty()) {
-                            query.set(property.getName(), cb.parameter(p));
+                            query.set(property.getName(), cb.parameter(p, path));
                         } else {
                             // TODO: support embedded ID
                             Association association = path.getAssociations().get(0);
                             if (path.getAssociations().size() == 1 && PersistentEntityUtils.isAccessibleWithoutJoin(association, property)) {
                                 // Added Void type to satisfy the type check
                                 Path<Void> pp = root.join(association.getName()).get(property.getName());
-                                Expression<Void> parameter = cb.parameter(p);
+                                Expression<Void> parameter = cb.parameter(p, path);
                                 query.set(pp, parameter);
                             } else {
                                 throw new MatchFailedException("Cannot perform batch update for a property with an association: " + parameterName);

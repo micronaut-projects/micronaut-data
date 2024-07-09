@@ -37,6 +37,7 @@ import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
 import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
@@ -45,6 +46,7 @@ import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
@@ -1033,18 +1035,14 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
         }
 
         @Override
-        public void visitLike(PersistentPropertyPath leftProperty, Expression<?> expression) {
-            handleRegexPropertyExpression(leftProperty, false, false, false, false, expression);
-        }
-
-        @Override
-        public void visitRLike(PersistentPropertyPath leftProperty, Expression<?> expression) {
-            throw new UnsupportedOperationException("RLike is not supported by this implementation.");
-        }
-
-        @Override
-        public void visitILike(PersistentPropertyPath leftProperty, Expression<?> expression) {
-            throw new UnsupportedOperationException("ILike is not supported by this implementation.");
+        public void visit(LikePredicate likePredicate) {
+            if (likePredicate.isCaseInsensitive()) {
+                throw new UnsupportedOperationException("ILike is not supported by this implementation.");
+            }
+            handleRegexPropertyExpression(
+                CriteriaUtils.requireProperty(likePredicate.getExpression()).getPropertyPath(),
+                false, false, false, false,
+                likePredicate.getPattern());
         }
 
         @Override

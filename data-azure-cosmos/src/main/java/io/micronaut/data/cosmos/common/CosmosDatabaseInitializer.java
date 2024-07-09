@@ -66,6 +66,11 @@ import java.util.stream.Collectors;
 @Requires(property = "azure.cosmos.key")
 final class CosmosDatabaseInitializer {
 
+    // For a limited time, if the query runs against a region or emulator that has not yet been updated with the
+    // new NonStreamingOrderBy query feature the client might run into some issue of not being able to recognize this,
+    // and throw a 400 exception. If the environment variable `AZURE_COSMOS_DISABLE_NON_STREAMING_ORDER_BY` is set to
+    // True to opt out of this new query feature, then OLD query features will be used to operate correctly.
+    private static final String DISABLE_NON_STREAMING_ORDER_BY = "COSMOS.AZURE_COSMOS_DISABLE_NON_STREAMING_ORDER_BY";
     private static final Logger LOG = LoggerFactory.getLogger(CosmosDatabaseInitializer.class);
 
     /**
@@ -82,6 +87,7 @@ final class CosmosDatabaseInitializer {
                     @Nullable
                     CosmosDiagnosticsProcessor cosmosDiagnosticsProcessor,
                     CosmosDatabaseConfiguration configuration) {
+        System.setProperty(DISABLE_NON_STREAMING_ORDER_BY, Boolean.toString(configuration.isDisableNonStreamingOrderBy()));
         if (LOG.isDebugEnabled()) {
             LOG.debug("Cosmos Db Initialization Start");
         }

@@ -372,7 +372,8 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                 Utils.getConfiguredDataTypes(matchContext.getRepositoryClass()),
                 matchContext.getParameters(),
                 element,
-                isEntityParameter);
+                isEntityParameter,
+            null);
     }
 
     private static SourceParameterExpressionImpl bindingParameter(MethodMatchContext matchContext,
@@ -381,7 +382,8 @@ public class RawQueryMethodMatcher implements MethodMatcher {
         return new SourceParameterExpressionImpl(
                 Utils.getConfiguredDataTypes(matchContext.getRepositoryClass()),
             name,
-            type);
+            type,
+            null);
     }
 
     /**

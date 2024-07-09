@@ -197,7 +197,9 @@ public final class CriteriaUtils {
     }
 
     private static void extractPredicateParameters(Expression<?> predicate, Set<ParameterExpression<?>> parameters) {
-        if (predicate instanceof PersistentPropertyBinaryPredicate<?> pp) {
+        if (predicate instanceof LiteralExpression<?>) {
+            return;
+        } else if (predicate instanceof PersistentPropertyBinaryPredicate<?> pp) {
             if (pp.getExpression() instanceof ParameterExpression<?> parameterExpression) {
                 parameters.add(parameterExpression);
             }
@@ -215,6 +217,8 @@ public final class CriteriaUtils {
             for (IExpression<Boolean> pred : disjunctionPredicate.getPredicates()) {
                 extractPredicateParameters(pred, parameters);
             }
+        } else {
+            throw new IllegalStateException("Unsupported predicate type: " + predicate.getClass().getSimpleName());
         }
     }
 

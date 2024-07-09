@@ -228,8 +228,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
     }
 
     private Object resolveParameterValue(QueryParameterBinding queryParameterBinding, Object[] parameterArray) {
-        Object value;
-        value = parameterArray[queryParameterBinding.getParameterIndex()];
+        Object value = parameterArray[queryParameterBinding.getParameterIndex()];
         String[] parameterBindingPath = queryParameterBinding.getParameterBindingPath();
         if (parameterBindingPath != null) {
             for (String prop : parameterBindingPath) {

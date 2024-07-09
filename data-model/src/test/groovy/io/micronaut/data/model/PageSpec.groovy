@@ -163,6 +163,28 @@ class PageSpec extends Specification {
         deserializedSort == sort
     }
 
+    void "test empty page map"() {
+        when:"Map empty page"
+        def page = Page.empty()
+        def mappedPage = page.map { it }
+        then:"No exception thrown, page is mapped"
+        page.size == -1
+        !page.hasTotalSize()
+        mappedPage.size == -1
+        !mappedPage.hasTotalSize()
+
+        when:"Map empty cursored page"
+        def cursoredPage = CursoredPage.empty()
+        def mappedCursoredPage = cursoredPage.map { it }
+        then:"No exception thrown, cursored page is mapped"
+        cursoredPage.size == -1
+        !cursoredPage.cursors
+        !cursoredPage.hasTotalSize()
+        mappedCursoredPage.size == -1
+        !mappedCursoredPage.cursors
+        !mappedCursoredPage.hasTotalSize()
+    }
+
     @EqualsAndHashCode
     @ToString
     @Serdeable

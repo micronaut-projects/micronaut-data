@@ -491,7 +491,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                             } else {
                                 final Relation.Kind kind = entityAssociation.getKind();
                                 final boolean isInverse = parent != null && isAssociation && ctx.association.getOwner() == entityAssociation.getAssociatedEntity();
-                                if (isInverse && kind.isSingleEnded()) {
+                                if (isInverse && kind.isSingleEnded() && mappedByMatchesOrEmpty(ctx.association, prop.getProperty())) {
                                     args[i] = parent;
                                 } else {
                                     MappingContext<K> joinCtx = ctx.join(fetchJoinPaths, entityAssociation);
@@ -590,7 +590,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                         entity = setProperty(property, entity, value);
                     } else {
                         final boolean isInverse = parent != null && entityAssociation.getKind().isSingleEnded() && isAssociation && ctx.association.getOwner() == entityAssociation.getAssociatedEntity();
-                        if (isInverse) {
+                        // Before setting property value, check if mappedBy is not different from the property name
+                        if (isInverse && mappedByMatchesOrEmpty(ctx.association, property)) {
                             entity = setProperty(property, entity, parent);
                         } else {
                             MappingContext<K> joinCtx = ctx.join(fetchJoinPaths, entityAssociation);
@@ -635,6 +636,23 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         } catch (InstantiationException e) {
             throw new DataAccessException("Error instantiating entity [" + persistentEntity.getName() + "]: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Checks if association mappedBy property is empty or matches with given property name.
+     * @param association the association
+     * @param property the bean property
+     * @return true if mappedBy is not set or else if matches with given property name
+     * @param <K> The field type
+     */
+    private <K> boolean mappedByMatchesOrEmpty(Association association, BeanProperty<K, Object> property) {
+        String mappedBy = association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").orElse(null);
+        if (mappedBy == null) {
+            // If mappedBy not set then we don't have what to compare and assume association
+            // is related to the property being set
+            return true;
+        }
+        return mappedBy.equals(property.getName());
     }
 
     private <K> Object provideConstructorArgumentValue(@NonNull RS rs,

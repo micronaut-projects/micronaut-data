@@ -99,7 +99,7 @@ class Category {
         repository.getRequiredMethod("findById", Long)
                 .stringValue(Query).get() == "SELECT user_ FROM test.User AS user_ WHERE (user_.id = :p1 AND user_.enabled = true)"
         repository.getRequiredMethod("deleteById", Long)
-                .stringValue(Query).get() == "DELETE test.User  AS user_ WHERE (user_.id = :p1 AND (user_.enabled = true))"
+                .stringValue(Query).get() == "DELETE test.User  AS user_ WHERE (user_.id = :p1 AND user_.enabled = true)"
         repository.getRequiredMethod("deleteAll")
                 .stringValue(Query).get() == "DELETE test.User  AS user_ WHERE (user_.enabled = true)"
         repository.getRequiredMethod("count")
@@ -173,7 +173,7 @@ interface TestRepository extends CrudRepository<Person, Long> {
         repository.getRequiredMethod("findById", Long)
             .stringValue(Query).get() == "SELECT person_ FROM $Person.name AS person_ WHERE (person_.id = :p1 AND person_.age > 18)"
         repository.getRequiredMethod("deleteById", Long)
-                .stringValue(Query).get() == "DELETE $Person.name  AS person_ WHERE (person_.id = :p1 AND (person_.age > 18))"
+                .stringValue(Query).get() == "DELETE $Person.name  AS person_ WHERE (person_.id = :p1 AND person_.age > 18)"
         repository.getRequiredMethod("deleteAll")
                 .stringValue(Query).get() == "DELETE $Person.name  AS person_ WHERE (person_.age > 18)"
         repository.getRequiredMethod("count")

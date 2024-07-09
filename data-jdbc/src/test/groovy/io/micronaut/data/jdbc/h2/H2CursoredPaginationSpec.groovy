@@ -43,8 +43,4 @@ class H2CursoredPaginationSpec extends AbstractCursoredPageSpec {
         return br
     }
 
-    @Override
-    void init() {
-        pr.deleteAll()
-    }
 }

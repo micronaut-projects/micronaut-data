@@ -75,7 +75,11 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
 
     @Override
     public QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder queryBuilder) {
-        return queryBuilder.buildUpdate(annotationMetadata, getQueryModel(), updateValues);
+        QueryBuilder2 queryBuilder2 = QueryResultPersistentEntityCriteriaQuery.findQueryBuilder2(queryBuilder);
+        if (queryBuilder2 == null) {
+            return queryBuilder.buildUpdate(annotationMetadata, getQueryModel(), updateValues);
+        }
+        return buildQuery(annotationMetadata, queryBuilder2);
     }
 
     @Override

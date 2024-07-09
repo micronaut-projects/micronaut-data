@@ -36,6 +36,7 @@ import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExpressionBinaryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBinaryPredicate;
@@ -260,6 +261,11 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
     public void visit(ExpressionBinaryPredicate expressionBinaryPredicate) {
         visitPredicateExpression(expressionBinaryPredicate.getLeft());
         visitPredicateExpression(expressionBinaryPredicate.getRight());
+    }
+
+    @Override
+    public void visit(LikePredicate likePredicate) {
+        visitPredicateExpression(likePredicate.getExpression());
     }
 
     /**

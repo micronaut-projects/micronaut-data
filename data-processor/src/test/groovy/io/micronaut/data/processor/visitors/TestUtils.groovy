@@ -19,7 +19,6 @@ import groovy.transform.CompileStatic
 import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.core.annotation.AnnotationMetadataProvider
 import io.micronaut.core.annotation.AnnotationValue
-import io.micronaut.core.convert.ConversionContext
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.annotation.DataMethod

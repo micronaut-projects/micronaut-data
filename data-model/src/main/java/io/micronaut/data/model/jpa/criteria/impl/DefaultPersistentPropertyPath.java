@@ -46,15 +46,17 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupport
  * @since 3.2
  */
 @Internal
-public abstract class AbstractPersistentPropertyPath<T> implements PersistentPropertyPath<T> {
+public class DefaultPersistentPropertyPath<T> implements PersistentPropertyPath<T> {
 
-    private final PersistentProperty persistentProperty;
-    private final List<Association> path;
+    private final io.micronaut.data.model.PersistentPropertyPath propertyPath;
     private final CriteriaBuilder criteriaBuilder;
 
-    public AbstractPersistentPropertyPath(PersistentProperty persistentProperty, List<Association> path, CriteriaBuilder criteriaBuilder) {
-        this.persistentProperty = persistentProperty;
-        this.path = path;
+    public DefaultPersistentPropertyPath(PersistentProperty persistentProperty, List<Association> associations, CriteriaBuilder criteriaBuilder) {
+        this(new io.micronaut.data.model.PersistentPropertyPath(associations, persistentProperty), criteriaBuilder);
+    }
+
+    public DefaultPersistentPropertyPath(io.micronaut.data.model.PersistentPropertyPath propertyPath, CriteriaBuilder criteriaBuilder) {
+        this.propertyPath = propertyPath;
         this.criteriaBuilder = criteriaBuilder;
     }
 
@@ -81,12 +83,17 @@ public abstract class AbstractPersistentPropertyPath<T> implements PersistentPro
 
     @Override
     public PersistentProperty getProperty() {
-        return persistentProperty;
+        return propertyPath.getProperty();
     }
 
     @Override
     public List<Association> getAssociations() {
-        return path;
+        return propertyPath.getAssociations();
+    }
+
+    @Override
+    public io.micronaut.data.model.PersistentPropertyPath getPropertyPath() {
+        return propertyPath;
     }
 
     @Override
@@ -136,9 +143,6 @@ public abstract class AbstractPersistentPropertyPath<T> implements PersistentPro
 
     @Override
     public String toString() {
-        return "PersistentPropertyPath{" +
-            "persistentProperty=" + persistentProperty +
-            ", path=" + path +
-            '}';
+        return "PersistentPropertyPath{" + propertyPath + '}';
     }
 }

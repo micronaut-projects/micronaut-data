@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExpressionBinaryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBinaryPredicate;
@@ -89,5 +90,12 @@ public interface PredicateVisitor {
      * @param expressionBinaryPredicate The expressionBinaryPredicate
      */
     void visit(ExpressionBinaryPredicate expressionBinaryPredicate);
+
+    /**
+     * Visit {@link LikePredicate}.
+     *
+     * @param likePredicate The like predicate
+     */
+    void visit(LikePredicate likePredicate);
 
 }

@@ -36,6 +36,7 @@ import spock.lang.Unroll
 
 import static io.micronaut.data.processor.visitors.TestUtils.anyParameterExpandable
 import static io.micronaut.data.processor.visitors.TestUtils.getCountQuery
+import static io.micronaut.data.processor.visitors.TestUtils.getDataInterceptor
 import static io.micronaut.data.processor.visitors.TestUtils.getDataTypes
 import static io.micronaut.data.processor.visitors.TestUtils.getJoins
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterBindingIndexes
@@ -1516,6 +1517,7 @@ interface BookRepository extends GenericRepository<Book, Long> {
    Long findCountByCriteria3(PredicateSpecification<Long> spec);
 
    Long findOne(CriteriaQueryBuilder<Long> builder);
+   List<String> findAll(CriteriaQueryBuilder<String> builder);
 }
 
 """)
@@ -1527,6 +1529,9 @@ interface BookRepository extends GenericRepository<Book, Long> {
             getResultDataType(findAllBooksByCriteria1) == DataType.ENTITY
             getResultDataType(findAllBooksByCriteria2) == DataType.ENTITY
             getResultDataType(findAllBooksByCriteria3) == DataType.ENTITY
+            getDataInterceptor(findAllBooksByCriteria1) == "io.micronaut.data.runtime.intercept.criteria.FindAllSpecificationInterceptor"
+            getDataInterceptor(findAllBooksByCriteria2) == "io.micronaut.data.runtime.intercept.criteria.FindAllSpecificationInterceptor"
+            getDataInterceptor(findAllBooksByCriteria3) == "io.micronaut.data.runtime.intercept.criteria.FindAllSpecificationInterceptor"
 
         when:
             def findBookByCriteria1 = repository.findPossibleMethods("findBookByCriteria1").findFirst().get()
@@ -1536,6 +1541,9 @@ interface BookRepository extends GenericRepository<Book, Long> {
             getResultDataType(findBookByCriteria1) == DataType.ENTITY
             getResultDataType(findBookByCriteria2) == DataType.ENTITY
             getResultDataType(findBookByCriteria3) == DataType.ENTITY
+            getDataInterceptor(findBookByCriteria1) == "io.micronaut.data.runtime.intercept.criteria.FindOneSpecificationInterceptor"
+            getDataInterceptor(findBookByCriteria2) == "io.micronaut.data.runtime.intercept.criteria.FindOneSpecificationInterceptor"
+            getDataInterceptor(findBookByCriteria3) == "io.micronaut.data.runtime.intercept.criteria.FindOneSpecificationInterceptor"
 
         when:
             def findCountByCriteria1 = repository.findPossibleMethods("findCountByCriteria1").findFirst().get()
@@ -1545,10 +1553,218 @@ interface BookRepository extends GenericRepository<Book, Long> {
             getResultDataType(findCountByCriteria1) == DataType.LONG
             getResultDataType(findCountByCriteria2) == DataType.LONG
             getResultDataType(findCountByCriteria3) == DataType.LONG
+            getDataInterceptor(findCountByCriteria1) == "io.micronaut.data.runtime.intercept.criteria.FindOneSpecificationInterceptor"
+            getDataInterceptor(findCountByCriteria2) == "io.micronaut.data.runtime.intercept.criteria.FindOneSpecificationInterceptor"
+            getDataInterceptor(findCountByCriteria3) == "io.micronaut.data.runtime.intercept.criteria.FindOneSpecificationInterceptor"
 
         when:
             def findOne = repository.findPossibleMethods("findOne").findFirst().get()
         then:
             getResultDataType(findOne) == DataType.LONG
+            getDataInterceptor(findOne) == "io.micronaut.data.runtime.intercept.criteria.FindOneSpecificationInterceptor"
+
+        when:
+            def findAll = repository.findPossibleMethods("findAll").findFirst().get()
+        then:
+            getResultDataType(findAll) == DataType.STRING
+            getDataInterceptor(findAll) == "io.micronaut.data.runtime.intercept.criteria.FindAllSpecificationInterceptor"
+    }
+
+    void "test embedded id"() {
+        given:
+        def repository = buildRepository('test.SettlementRepository', """
+
+import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.repository.CrudRepository;
+
+import java.util.List;
+import java.util.Optional;
+
+@JdbcRepository(dialect = io.micronaut.data.model.query.builder.sql.Dialect.H2)
+interface SettlementRepository extends CrudRepository<Settlement, SettlementPk> {
+    @Join(value = "settlementType")
+    @Join(value = "zone")
+    @Override
+    Optional<Settlement> findById(@NonNull SettlementPk settlementPk);
+
+    @Join(value = "settlementType")
+    @Join(value = "zone")
+    @Join(value = "id.county")
+    Optional<Settlement> queryById(@NonNull SettlementPk settlementPk);
+
+    @Join(value = "settlementType")
+    @Join(value = "zone")
+    @Join(value = "id.county")
+    List<Settlement> findAll(Pageable pageable);
+}
+
+@Introspected(accessKind = Introspected.AccessKind.FIELD)
+@MappedEntity("comp_state")
+class State {
+    @Id
+    Integer id;
+    @MappedProperty
+    String stateName;
+    @MappedProperty("is_enabled")
+    Boolean enabled;
+}
+
+@Introspected(accessKind = Introspected.AccessKind.FIELD)
+@Embeddable
+class CountyPk {
+    @MappedProperty(value = "id")
+    Integer id;
+    @MappedProperty(value = "state_id")
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    State state;
+}
+
+@Introspected(accessKind = Introspected.AccessKind.FIELD)
+@MappedEntity("comp_country")
+class County {
+    @EmbeddedId
+    CountyPk id;
+    @MappedProperty
+    String countyName;
+    @MappedProperty("is_enabled")
+    Boolean enabled;
+}
+
+@Introspected(accessKind = Introspected.AccessKind.FIELD)
+@Embeddable
+class SettlementPk {
+    @MappedProperty(value = "code")
+    String code;
+
+    @MappedProperty(value = "code_id")
+    Integer codeId;
+
+    @Relation(value = Relation.Kind.MANY_TO_ONE)
+    County county;
+}
+
+@Introspected(accessKind = Introspected.AccessKind.FIELD)
+@MappedEntity("comp_settlement")
+class Settlement {
+    @EmbeddedId
+    SettlementPk id;
+    @MappedProperty
+    String description;
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    SettlementType settlementType;
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    Zone zone;
+    @MappedProperty("is_enabled")
+    Boolean enabled;
+}
+
+@Introspected(accessKind = Introspected.AccessKind.FIELD)
+@MappedEntity("comp_sett_type")
+class SettlementType {
+    @Id
+    @GeneratedValue
+    Long id;
+    @MappedProperty
+    String name;
+}
+
+@Introspected(accessKind = Introspected.AccessKind.FIELD)
+@MappedEntity("comp_zone")
+class Zone {
+    @Id
+    @GeneratedValue
+    Long id;
+    @MappedProperty
+    String name;
+}
+
+""")
+        when:
+            def update = repository.findPossibleMethods("update").findFirst().get()
+        then:
+            getQuery(update) == "UPDATE `comp_settlement` SET `description`=?,`settlement_type_id`=?,`zone_id`=?,`is_enabled`=? WHERE (`code` = ? AND `code_id` = ? AND `id_county_id_id` = ? AND `id_county_id_state_id` = ?)"
+    }
+
+    void "test combined id"() {
+        given:
+        def repository = buildRepository('test.EntityWithIdClassRepository', """
+
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.repository.GenericRepository;import io.micronaut.data.tck.entities.EntityIdClass;
+import io.micronaut.data.tck.entities.EntityWithIdClass;
+
+import java.util.List;
+
+@Repository
+interface EntityWithIdClassRepository extends GenericRepository<EntityWithIdClass, EntityIdClass> {
+    List<EntityWithIdClass> findById(EntityIdClass id);
+    List<EntityWithIdClass> findById1(Long id1);
+    List<EntityWithIdClass> findById2(Long id2);
+}
+
+
+""")
+        when:
+            def findById1 = repository.findPossibleMethods("findById1").findFirst().get()
+            def findById = repository.findPossibleMethods("findById").findFirst().get()
+        then:
+            getQuery(findById1) == "SELECT entityWithIdClass_ FROM io.micronaut.data.tck.entities.EntityWithIdClass AS entityWithIdClass_ WHERE (entityWithIdClass_.id1 = :p1)"
+            getParameterBindingPaths(findById1) == [""] as String[]
+            getParameterPropertyPaths(findById1) == ["id1"] as String[]
+            getQuery(findById) == "SELECT entityWithIdClass_ FROM io.micronaut.data.tck.entities.EntityWithIdClass AS entityWithIdClass_ WHERE (entityWithIdClass_.id1 = :p1 AND entityWithIdClass_.id2 = :p2)"
+            getParameterBindingPaths(findById) == ["id1", "id2"] as String[]
+            getParameterPropertyPaths(findById) == ["id1", "id2"] as String[]
+    }
+
+    void "test projection"() {
+        given:
+        def repository = buildRepository('test.BookRepository', """
+
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+
+import java.util.List;
+
+@JdbcRepository(dialect = io.micronaut.data.model.query.builder.sql.Dialect.POSTGRES)
+interface BookRepository extends GenericRepository<Book, Long> {
+    List<Book> queryTop3ByAuthorNameOrderByTitle(String name);
+}
+
+""")
+        when:
+            def queryTop3ByAuthorNameOrderByTitle = repository.findPossibleMethods("queryTop3ByAuthorNameOrderByTitle").findFirst().get()
+        then:
+            getQuery(queryTop3ByAuthorNameOrderByTitle) == '''SELECT book_."id",book_."author_id",book_."genre_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated" FROM "book" book_ INNER JOIN "author" book_author_ ON book_."author_id"=book_author_."id" WHERE (book_author_."name" = ?) ORDER BY book_."title" ASC'''
+            getParameterBindingPaths(queryTop3ByAuthorNameOrderByTitle) == [""] as String[]
+            getParameterPropertyPaths(queryTop3ByAuthorNameOrderByTitle) == ["author.name"] as String[]
+    }
+
+    void "test association projection"() {
+        given:
+            def repository = buildRepository('test.BookRepository', '''
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.tck.repositories.AuthorRepository;
+
+@JdbcRepository(dialect = io.micronaut.data.model.query.builder.sql.Dialect.ANSI)
+abstract class BookRepository extends io.micronaut.data.tck.repositories.BookRepository {
+
+    public BookRepository(AuthorRepository authorRepository) {
+        super(authorRepository);
+    }
+}
+
+''')
+
+        when:
+            def method =  repository.findPossibleMethods("findByAuthorIsNull").findFirst().get()
+        then:
+            getQuery(method) == '''SELECT book_."id",book_."author_id",book_."genre_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated" FROM "book" book_ WHERE (book_."author_id" IS NULL)'''
+
     }
 }

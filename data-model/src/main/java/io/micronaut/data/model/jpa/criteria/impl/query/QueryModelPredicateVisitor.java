@@ -29,6 +29,7 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.AbstractPersistentPro
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExpressionBinaryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBinaryPredicate;
@@ -204,12 +205,6 @@ public final class QueryModelPredicateVisitor implements PredicateVisitor {
                 return Restrictions.endsWith(leftProperty, rightProperty);
             case STARTS_WITH:
                 return Restrictions.startsWith(leftProperty, rightProperty);
-            case ILIKE:
-                return Restrictions.ilike(leftProperty, rightProperty);
-            case RLIKE:
-                return Restrictions.rlike(leftProperty, rightProperty);
-            case LIKE:
-                return Restrictions.like(leftProperty, rightProperty);
             case REGEX:
                 return Restrictions.regex(leftProperty, rightProperty);
             case EQUALS_IGNORE_CASE:
@@ -311,6 +306,10 @@ public final class QueryModelPredicateVisitor implements PredicateVisitor {
                     values.stream().map(this::asValue).toList()
             ));
         }
+    }
+
+    @Override
+    public void visit(LikePredicate likePredicate) {
     }
 
     private Object asValue(Object value) {
