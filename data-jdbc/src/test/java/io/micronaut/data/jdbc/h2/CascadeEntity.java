@@ -14,4 +14,4 @@ public record CascadeEntity(
         List<CascadeSubEntityA> subEntityAs,
         @Relation(value = Relation.Kind.ONE_TO_MANY, cascade = Relation.Cascade.ALL, mappedBy = "entity")
         List<CascadeSubEntityB> subEntityBs
-){};
+){}

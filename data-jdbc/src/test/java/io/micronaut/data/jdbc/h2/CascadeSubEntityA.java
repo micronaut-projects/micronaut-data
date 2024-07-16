@@ -13,4 +13,4 @@ public record CascadeSubEntityA(
         @Relation(Relation.Kind.MANY_TO_ONE)
         @Nullable
         CascadeEntity entity
-){};
+){}
