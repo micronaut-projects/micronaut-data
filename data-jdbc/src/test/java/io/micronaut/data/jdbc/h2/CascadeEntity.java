@@ -12,7 +12,6 @@ public record CascadeEntity(
         @Id @GeneratedValue Long id,
         @Relation(value = Relation.Kind.ONE_TO_MANY, cascade = Relation.Cascade.ALL, mappedBy = "entity")
         List<CascadeSubEntityA> subEntityAs,
-        // a second relationship is needed to trigger the error
         @Relation(value = Relation.Kind.ONE_TO_MANY, cascade = Relation.Cascade.ALL, mappedBy = "entity")
         List<CascadeSubEntityB> subEntityBs
 ){};
