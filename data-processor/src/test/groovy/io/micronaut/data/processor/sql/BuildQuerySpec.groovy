@@ -579,7 +579,31 @@ interface CitiesRepository extends GenericRepository<City, Long> {
         def query = getQuery(repository.getRequiredMethod("countDistinctByCountryRegionCountryUuid", UUID))
 
         expect:
-        query == 'SELECT COUNT(DISTINCT(city_.`id`)) FROM `T_CITY` city_ INNER JOIN `CountryRegion` city_country_region_ ON city_.`country_region_id`=city_country_region_.`id` INNER JOIN `country` city_country_region_country_ ON city_country_region_.`countryId`=city_country_region_country_.`uuid` WHERE (city_country_region_country_.`uuid` = ?)'
+        // Extra JOIN is not needed in this case but is added because user defined it
+        query == 'SELECT COUNT(DISTINCT(city_.`id`)) FROM `T_CITY` city_ INNER JOIN `CountryRegion` city_country_region_ ON city_.`country_region_id`=city_country_region_.`id` INNER JOIN `country` city_country_region_country_ ON city_country_region_.`countryId`=city_country_region_country_.`uuid` WHERE (city_country_region_.`countryId` = ?)'
+
+    }
+
+    void "test multiple join query by identity 2"() {
+        given:
+            def repository = buildRepository('test.CitiesRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.City;
+import java.util.UUID;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
+interface CitiesRepository extends CrudRepository<City, Long> {
+
+    @Join("countryRegion")
+    int countDistinctByCountryRegionCountryUuid(UUID id);
+}
+""")
+        def query = getQuery(repository.getRequiredMethod("countDistinctByCountryRegionCountryUuid", UUID))
+
+        expect:
+        query == 'SELECT COUNT(DISTINCT(city_.`id`)) FROM `T_CITY` city_ INNER JOIN `CountryRegion` city_country_region_ ON city_.`country_region_id`=city_country_region_.`id` WHERE (city_country_region_.`countryId` = ?)'
 
     }
 
@@ -1757,8 +1781,8 @@ abstract class BookRepository extends io.micronaut.data.tck.repositories.BookRep
     public BookRepository(AuthorRepository authorRepository) {
         super(authorRepository);
     }
-}
 
+}
 ''')
 
         when:
@@ -1766,5 +1790,84 @@ abstract class BookRepository extends io.micronaut.data.tck.repositories.BookRep
         then:
             getQuery(method) == '''SELECT book_."id",book_."author_id",book_."genre_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated" FROM "book" book_ WHERE (book_."author_id" IS NULL)'''
 
+    }
+
+    void "test match by id"() {
+        given:
+            def repository = buildRepository('test.UserGroupMembershipRepository', """
+
+import io.micronaut.core.annotation.Introspected;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Account;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface UserGroupMembershipRepository extends GenericRepository<UserGroupMembership, Long> {
+
+    @Join(value = "userGroup.area", type = Join.Type.FETCH)
+    List<UserGroupMembership> findAllByUserLoginAndUserGroup_AreaId(String login, Long uid);
+}
+
+@Introspected(accessKind = Introspected.AccessKind.FIELD)
+@MappedEntity(value = "ugm", alias = "ugm_")
+class UserGroupMembership {
+
+    @Id
+    @GeneratedValue
+    Long id;
+
+    @Relation(value = Relation.Kind.MANY_TO_ONE, cascade = Relation.Cascade.PERSIST)
+    UserGroup userGroup;
+
+    @Relation(value = Relation.Kind.MANY_TO_ONE, cascade = Relation.Cascade.PERSIST)
+    User user;
+
+}
+
+@Introspected(accessKind = Introspected.AccessKind.FIELD)
+@MappedEntity(value = "ug", alias = "ug_")
+class UserGroup {
+
+    @Id
+    @GeneratedValue
+    Long id;
+
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "userGroup")
+    Set<UserGroupMembership> userAuthorizations = new HashSet<UserGroupMembership>();
+
+    @Relation(value = Relation.Kind.MANY_TO_ONE, cascade = Relation.Cascade.PERSIST)
+    Area area;
+}
+
+@Introspected(accessKind = Introspected.AccessKind.FIELD)
+@MappedEntity(value = "a", alias = "a_")
+class Area {
+
+    @Id
+    @GeneratedValue
+    Long id;
+
+    String name;
+}
+
+@Introspected(accessKind = Introspected.AccessKind.FIELD)
+@MappedEntity(value = "u", alias = "u_")
+class User {
+
+    @Id
+    @GeneratedValue
+    Long id;
+
+    String login;
+}
+
+""")
+            def findAllByUserLoginAndUserGroup_AreaIdMethod = repository.findPossibleMethods("findAllByUserLoginAndUserGroup_AreaId").findFirst().get()
+        expect:
+            getQuery(findAllByUserLoginAndUserGroup_AreaIdMethod) == 'SELECT ugm_.`id`,ugm_.`user_group_id`,ugm_.`user_id`,ugm_user_group_area_.`name` AS user_group_area_name,ugm_user_group_.`area_id` AS user_group_area_id FROM `ugm` ugm_ INNER JOIN `u` ugm_user_ ON ugm_.`user_id`=ugm_user_.`id` INNER JOIN `ug` ugm_user_group_ ON ugm_.`user_group_id`=ugm_user_group_.`id` INNER JOIN `a` ugm_user_group_area_ ON ugm_user_group_.`area_id`=ugm_user_group_area_.`id` WHERE (ugm_user_.`login` = ? AND ugm_user_group_.`area_id` = ?)'
+            getParameterPropertyPaths(findAllByUserLoginAndUserGroup_AreaIdMethod) == ["user.login", "userGroup.area.id"] as String[]
+            getParameterBindingIndexes(findAllByUserLoginAndUserGroup_AreaIdMethod) == ["0", "1"] as String[]
+            getParameterBindingPaths(findAllByUserLoginAndUserGroup_AreaIdMethod) == ["", ""] as String[]
     }
 }

@@ -1734,38 +1734,50 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (propertyPath.getAssociations().isEmpty()) {
                 return new QueryPropertyPath(propertyPath, tableAlias);
             }
+            PersistentProperty property = propertyPath.getProperty();
             Association joinAssociation = null;
             StringJoiner joinPathJoiner = new StringJoiner(".");
             String lastJoinAlias = null;
             for (Association association : propertyPath.getAssociations()) {
-                joinPathJoiner.add(association.getName());
                 if (association instanceof Embedded) {
+                    joinPathJoiner.add(association.getName());
                     continue;
                 }
                 if (joinAssociation == null) {
+                    joinPathJoiner.add(association.getName());
                     joinAssociation = association;
                     continue;
                 }
-                if (association != joinAssociation.getAssociatedEntity().getIdentity()) {
-                    if (!queryState.isAllowJoins()) {
-                        throw new IllegalArgumentException("Joins cannot be used in a DELETE or UPDATE operation");
-                    }
-                    String joinStringPath = joinPathJoiner.toString();
-                    if (!queryState.isJoined(joinStringPath)) {
-                        throw new IllegalArgumentException("Property is not joined at path: " + joinStringPath);
-                    }
-                    lastJoinAlias = joinInPath(queryState, joinStringPath);
-                    // Continue to look for a joined property
-                    joinAssociation = association;
-                } else {
+                if (PersistentEntityUtils.isAccessibleWithoutJoin(association, propertyPath.getProperty())) {
                     // We don't need to join to access the id of the relation
-                    joinAssociation = null;
+                    if (lastJoinAlias == null) {
+                        String joinStringPath = joinPathJoiner.toString();
+                        if (!queryState.isJoined(joinStringPath)) {
+                            throw new IllegalArgumentException("Property is not joined at path: " + joinStringPath);
+                        }
+                        lastJoinAlias = joinInPath(queryState, joinPathJoiner.toString());
+                    }
+                    return new QueryPropertyPath(
+                        new PersistentPropertyPath(Collections.emptyList(), association),
+                        lastJoinAlias
+                    );
                 }
+
+                joinPathJoiner.add(association.getName());
+                if (!queryState.isAllowJoins()) {
+                    throw new IllegalArgumentException("Joins cannot be used in a DELETE or UPDATE operation" + (association.getAssociatedEntity().getIdentity() == propertyPath.getProperty()));
+                }
+                String joinStringPath = joinPathJoiner.toString();
+                if (!queryState.isJoined(joinStringPath)) {
+                    throw new IllegalArgumentException("Property is not joined at path: " + joinStringPath);
+                }
+                lastJoinAlias = joinInPath(queryState, joinStringPath);
+                // Continue to look for a joined property
+                joinAssociation = association;
             }
-            PersistentProperty property = propertyPath.getProperty();
             if (joinAssociation != null) {
                 // We don't need to join to access the id of the relation if it is not a foreign key association
-                if (property != joinAssociation.getAssociatedEntity().getIdentity() || joinAssociation.isForeignKey()) {
+                if (!PersistentEntityUtils.isAccessibleWithoutJoin(joinAssociation, propertyPath.getProperty())) {
                     String joinStringPath = joinPathJoiner.toString();
                     if (!queryState.isJoined(joinStringPath)) {
                         throw new IllegalArgumentException("Property is not joined at path: " + joinStringPath);
@@ -1777,7 +1789,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 if (lastJoinAlias != null) {
                     // 'joinPath.prop' should be represented as a path of 'prop' with a join alias
                     return new QueryPropertyPath(
-                        new PersistentPropertyPath(Collections.emptyList(), property, property.getName()),
+                        new PersistentPropertyPath(Collections.emptyList(), property),
                         lastJoinAlias
                     );
                 }
