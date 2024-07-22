@@ -44,6 +44,7 @@ import io.micronaut.data.model.jpa.criteria.impl.selection.AggregateExpression;
 import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Selection;
@@ -105,10 +106,15 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
             }
         } else if (path instanceof PersistentPropertyPath<?> persistentPropertyPath) {
             Path<?> parentPath = persistentPropertyPath.getParentPath();
-            if (parentPath instanceof PersistentAssociationPath<?, ?> parent
-                && PersistentEntityUtils.isAccessibleWithoutJoin(parent.getAssociation(), persistentPropertyPath.getProperty())) {
-                // We don't need a join to access the ID
-                return;
+            if (parentPath instanceof PersistentAssociationPath<?, ?> parent) {
+                if (PersistentEntityUtils.isAccessibleWithoutJoin(parent.getAssociation(), persistentPropertyPath.getProperty())) {
+                    // We don't need a join to access the ID
+                    Path<?> parentParentPath = parent.getParentPath();
+                    if (parentParentPath != null) {
+                        joinAssociation(parentPath);
+                    }
+                    return;
+                }
             }
             joinAssociation(parentPath);
         }
