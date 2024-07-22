@@ -23,6 +23,7 @@ import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.IdExpression;
@@ -99,7 +100,6 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
         if (path instanceof PersistentAssociationPath<?, ?> associationPath) {
             if (associationPath.getAssociation().getKind() == Relation.Kind.EMBEDDED) {
                 // Cannot join embedded
-
                 joinAssociation(path.getParentPath());
             } else {
                 join(associationPath);
@@ -108,10 +108,14 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
             Path<?> parentPath = persistentPropertyPath.getParentPath();
             if (parentPath instanceof PersistentAssociationPath<?, ?> parent) {
                 if (PersistentEntityUtils.isAccessibleWithoutJoin(parent.getAssociation(), persistentPropertyPath.getProperty())) {
-                    // We don't need a join to access the ID
+                    // We don't need a join this association to access the ID
+                    // Previous association should be joined
                     Path<?> parentParentPath = parent.getParentPath();
+                    if (parentParentPath instanceof PersistentEntityRoot<?>) {
+                        return;
+                    }
                     if (parentParentPath != null) {
-                        joinAssociation(parentPath);
+                        joinAssociation(parentParentPath);
                     }
                     return;
                 }

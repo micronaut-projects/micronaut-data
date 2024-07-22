@@ -1734,6 +1734,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (propertyPath.getAssociations().isEmpty()) {
                 return new QueryPropertyPath(propertyPath, tableAlias);
             }
+            PersistentProperty property = propertyPath.getProperty();
             Association joinAssociation = null;
             StringJoiner joinPathJoiner = new StringJoiner(".");
             String lastJoinAlias = null;
@@ -1746,7 +1747,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     joinAssociation = association;
                     continue;
                 }
-                if (association != joinAssociation.getAssociatedEntity().getIdentity()) {
+                if (!PersistentEntityUtils.isAccessibleWithoutJoin(association, propertyPath.getProperty())) {
                     if (!queryState.isAllowJoins()) {
                         throw new IllegalArgumentException("Joins cannot be used in a DELETE or UPDATE operation");
                     }
@@ -1758,14 +1759,16 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     // Continue to look for a joined property
                     joinAssociation = association;
                 } else {
+                    return new QueryPropertyPath(
+                        new PersistentPropertyPath(Collections.emptyList(), property, property.getName()),
+                        lastJoinAlias
+                    );
                     // We don't need to join to access the id of the relation
-                    joinAssociation = null;
                 }
             }
-            PersistentProperty property = propertyPath.getProperty();
             if (joinAssociation != null) {
                 // We don't need to join to access the id of the relation if it is not a foreign key association
-                if (property != joinAssociation.getAssociatedEntity().getIdentity() || joinAssociation.isForeignKey()) {
+                if (!PersistentEntityUtils.isAccessibleWithoutJoin(joinAssociation, propertyPath.getProperty())) {
                     String joinStringPath = joinPathJoiner.toString();
                     if (!queryState.isJoined(joinStringPath)) {
                         throw new IllegalArgumentException("Property is not joined at path: " + joinStringPath);
