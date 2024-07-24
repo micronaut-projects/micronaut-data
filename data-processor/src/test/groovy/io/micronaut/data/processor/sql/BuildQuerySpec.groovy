@@ -546,7 +546,31 @@ interface CitiesRepository extends CrudRepository<City, Long> {
         def query = getQuery(repository.getRequiredMethod("countDistinctByCountryRegionCountryUuid", UUID))
 
         expect:
-        query == 'SELECT COUNT(DISTINCT(city_.`id`)) FROM `T_CITY` city_ INNER JOIN `CountryRegion` city_country_region_ ON city_.`country_region_id`=city_country_region_.`id` INNER JOIN `country` city_country_region_country_ ON city_country_region_.`countryId`=city_country_region_country_.`uuid` WHERE (city_country_region_country_.`uuid` = ?)'
+        // Extra JOIN is not needed in this case but is added because user defined it
+        query == 'SELECT COUNT(DISTINCT(city_.`id`)) FROM `T_CITY` city_ INNER JOIN `CountryRegion` city_country_region_ ON city_.`country_region_id`=city_country_region_.`id` INNER JOIN `country` city_country_region_country_ ON city_country_region_.`countryId`=city_country_region_country_.`uuid` WHERE (city_country_region_.`countryId` = ?)'
+
+    }
+
+    void "test multiple join query by identity 2"() {
+        given:
+            def repository = buildRepository('test.CitiesRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.City;
+import java.util.UUID;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
+interface CitiesRepository extends CrudRepository<City, Long> {
+
+    @Join("countryRegion")
+    int countDistinctByCountryRegionCountryUuid(UUID id);
+}
+""")
+        def query = getQuery(repository.getRequiredMethod("countDistinctByCountryRegionCountryUuid", UUID))
+
+        expect:
+        query == 'SELECT COUNT(DISTINCT(city_.`id`)) FROM `T_CITY` city_ INNER JOIN `CountryRegion` city_country_region_ ON city_.`country_region_id`=city_country_region_.`id` WHERE (city_country_region_.`countryId` = ?)'
 
     }
 
