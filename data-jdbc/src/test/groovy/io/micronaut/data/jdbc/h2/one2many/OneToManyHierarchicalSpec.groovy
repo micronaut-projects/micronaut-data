@@ -61,7 +61,7 @@ class OneToManyHierarchicalSpec extends Specification implements H2TestPropertyP
         testEntities.size() == 1
         testEntities[0].code == testEntity.code
         when:
-        testEntities = testEntityRepository.findAll(Specifications.getChildrenByParentIdSpecification(testEntity.id))
+        testEntities = testEntityRepository.findAll(Specifications.getChildrenByParentIdSpecification(testEntity2.id))
         then:
         testEntities.size() == 1
         testEntities[0].id == testEntity.id
