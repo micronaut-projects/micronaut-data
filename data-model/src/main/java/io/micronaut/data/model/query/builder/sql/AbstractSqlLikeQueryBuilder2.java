@@ -67,6 +67,7 @@ import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.QueryParameter;
+import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder2;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
@@ -1623,40 +1624,28 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
             if (propertyPath.getAssociations().isEmpty()) {
                 return new QueryPropertyPath(propertyPath, rootAlias);
             }
-            Association joinAssociation = null;
-            StringJoiner joinPathJoiner = new StringJoiner(".");
-            String lastJoinAlias = null;
-            for (Association association : propertyPath.getAssociations()) {
-                joinPathJoiner.add(association.getName());
+            PersistentProperty property = propertyPath.getProperty();
+            List<Association> joinPath = new ArrayList<>(propertyPath.getAssociations());
+            ListIterator<Association> listIterator = joinPath.listIterator(joinPath.size());
+
+            while (listIterator.hasPrevious()) {
+                Association association = listIterator.previous();
                 if (association.isEmbedded()) {
-                    continue;
-                }
-                if (joinAssociation == null) {
-                    joinAssociation = association;
-                    continue;
-                }
-                if (!PersistentEntityUtils.isAccessibleWithoutJoin(joinAssociation, association)) {
-                    lastJoinAlias = getRequiredJoinPathAlias(joinPathJoiner.toString());
-                    // Continue to look for a joined property
-                    joinAssociation = association;
+                    listIterator.remove();
+                } else if (PersistentEntityUtils.isAccessibleWithoutJoin(association, property)) {
+                    property = association;
+                    // We don't need to join to access the id of the relation if it is not a foreign key association
+                    listIterator.remove();
                 } else {
-                    // We don't need to join to access the id of the relation
-                    joinAssociation = null;
+                    break;
                 }
             }
-            PersistentProperty property = propertyPath.getProperty();
-            if (joinAssociation != null) {
-                // We don't need to join to access the id of the relation if it is not a foreign key association
-                if (!PersistentEntityUtils.isAccessibleWithoutJoin(joinAssociation, property)) {
-                    lastJoinAlias = getRequiredJoinPathAlias(joinPathJoiner.toString());
-                }
-                if (lastJoinAlias != null) {
-                    // 'joinPath.prop' should be represented as a path of 'prop' with a join alias
-                    return new QueryPropertyPath(
-                        new PersistentPropertyPath(Collections.emptyList(), property, property.getName()),
-                        lastJoinAlias
-                    );
-                }
+            if (!joinPath.isEmpty()) {
+                // 'joinPath.prop' should be represented as a path of 'prop' with a join alias
+                return new QueryPropertyPath(
+                    new PersistentPropertyPath(Collections.emptyList(), property),
+                    getRequiredJoinPathAlias(asPath(joinPath))
+                );
             }
             return new QueryPropertyPath(propertyPath, rootAlias);
         }
