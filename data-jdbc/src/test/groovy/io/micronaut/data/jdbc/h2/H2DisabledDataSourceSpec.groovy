@@ -27,5 +27,6 @@ class H2DisabledDataSourceSpec extends Specification {
         then:
         def exception = thrown(NoSuchBeanException)
         exception.message.contains('is disabled since bean property [enabled] value is not equal to [true]')
+            || exception.message.contains('The datasource "default" is disabled')
     }
 }
