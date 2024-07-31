@@ -1180,7 +1180,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             }
 
             builder = "";
-            if (dialect == Dialect.ORACLE) {
+            if (isReturning && dialect == Dialect.ORACLE) {
                 builder = MessageFormat.format("DECLARE\n" +
                     "   TYPE {0}Rec IS TABLE OF {0}%ROWTYPE;\n" +
                     "   inserted {0}Rec;\n" +

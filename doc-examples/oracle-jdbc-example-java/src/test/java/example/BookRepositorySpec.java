@@ -180,6 +180,7 @@ class BookRepositorySpec {
 
 	@Test
 	void testReturning() {
+        bookRepository.save(new Book("1984", 100));
 		bookRepository.saveReturning(new Book("The Shining", 400));
 		BookDTO book = bookRepository.findOne("The Shining");
 
