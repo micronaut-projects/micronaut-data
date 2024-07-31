@@ -71,6 +71,23 @@ class CriteriaSpec extends AbstractCriteriaSpec {
         return query.from(Test)
     }
 
+    void "test function projection 3"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            criteriaQuery.select(
+                    criteriaBuilder.function(
+                            "MYFUNC3",
+                            String,
+                            criteriaBuilder.parameter(String),
+                            criteriaBuilder.literal("abc")
+                    )
+            )
+            String query = getSqlQuery(criteriaQuery)
+
+        expect:
+            query == '''SELECT MYFUNC3(?,?) FROM "test" test_'''
+    }
+
     @Unroll
     void "test criteria predicate"(Specification specification) {
         given:
@@ -130,17 +147,17 @@ class CriteriaSpec extends AbstractCriteriaSpec {
                     } as Specification
             ]
             expectedWhereQuery << [
-                    '(test_."amount" IN (?))',
-                    '(test_."amount" NOT IN (?))',
-                    '(test_."amount" IN (?))',
-                    '(test_."amount" NOT IN (?))',
+                    '(test_."amount" IN (?,?))',
+                    '(test_."amount" NOT IN (?,?))',
+                    '(test_."amount" IN (?,?))',
+                    '(test_."amount" NOT IN (?,?))',
                     '(test_."amount" IN (?))',
                     '(test_."amount" NOT IN (?))',
                     '((test_."enabled" >= ? AND test_."enabled" <= ?))',
                     '((test_."amount" >= ? AND test_."amount" <= ?))',
                     '(test_."enabled" = TRUE)',
                     '(test_."enabled" = TRUE) ORDER BY test_."amount" DESC,test_."budget" ASC',
-                    '(test_."budget" = ? AND ((test_."enabled" = TRUE OR test_."enabled2" = TRUE) OR test_."amount" = ?))'
+                    '(test_."budget" = ? AND (test_."enabled" = TRUE OR test_."enabled2" = TRUE OR test_."amount" = ?))'
             ]
     }
 
@@ -219,16 +236,16 @@ class CriteriaSpec extends AbstractCriteriaSpec {
 
         where:
             property1 | property2  | predicate              | expectedWhereQuery
-            "enabled" | "enabled2" | "equal"                | '(test_."enabled"!=test_."enabled2")'
-            "enabled" | "enabled2" | "notEqual"             | '(test_."enabled"=test_."enabled2")'
-            "enabled" | "enabled2" | "greaterThan"          | '(NOT(test_."enabled">test_."enabled2"))'
-            "enabled" | "enabled2" | "greaterThanOrEqualTo" | '(NOT(test_."enabled">=test_."enabled2"))'
-            "enabled" | "enabled2" | "lessThan"             | '(NOT(test_."enabled"<test_."enabled2"))'
-            "enabled" | "enabled2" | "lessThanOrEqualTo"    | '(NOT(test_."enabled"<=test_."enabled2"))'
-            "amount"  | "budget"   | "gt"                   | '(NOT(test_."amount">test_."budget"))'
-            "amount"  | "budget"   | "ge"                   | '(NOT(test_."amount">=test_."budget"))'
-            "amount"  | "budget"   | "lt"                   | '(NOT(test_."amount"<test_."budget"))'
-            "amount"  | "budget"   | "le"                   | '(NOT(test_."amount"<=test_."budget"))'
+            "enabled" | "enabled2" | "equal"                | '(test_."enabled" != test_."enabled2")'
+            "enabled" | "enabled2" | "notEqual"             | '(test_."enabled" = test_."enabled2")'
+            "enabled" | "enabled2" | "greaterThan"          | '(NOT(test_."enabled" > test_."enabled2"))'
+            "enabled" | "enabled2" | "greaterThanOrEqualTo" | '(NOT(test_."enabled" >= test_."enabled2"))'
+            "enabled" | "enabled2" | "lessThan"             | '(NOT(test_."enabled" < test_."enabled2"))'
+            "enabled" | "enabled2" | "lessThanOrEqualTo"    | '(NOT(test_."enabled" <= test_."enabled2"))'
+            "amount"  | "budget"   | "gt"                   | '(NOT(test_."amount" > test_."budget"))'
+            "amount"  | "budget"   | "ge"                   | '(NOT(test_."amount" >= test_."budget"))'
+            "amount"  | "budget"   | "lt"                   | '(NOT(test_."amount" < test_."budget"))'
+            "amount"  | "budget"   | "le"                   | '(NOT(test_."amount" <= test_."budget"))'
     }
 
     @Unroll

@@ -502,7 +502,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                     return new BsonObjectId(new ObjectId(string));
                 }
                 return MongoUtils.toBsonValue(conversionService, val, codecRegistry.get());
-            }).collect(Collectors.toList()));
+            }).toList());
         }
         return MongoUtils.toBsonValue(conversionService, value, codecRegistry.get());
     }

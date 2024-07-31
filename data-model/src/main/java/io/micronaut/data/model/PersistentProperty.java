@@ -214,4 +214,14 @@ public interface PersistentProperty extends PersistentElement {
     default String getAlias() {
         return getAnnotationMetadata().stringValue(MappedProperty.class, MappedProperty.ALIAS).orElse(null);
     }
+
+    /**
+     * Is embedded property?
+     *
+     * @return True if the property is an embedded association.
+     * @since 4.9
+     */
+    default boolean isEmbedded() {
+        return false;
+    }
 }

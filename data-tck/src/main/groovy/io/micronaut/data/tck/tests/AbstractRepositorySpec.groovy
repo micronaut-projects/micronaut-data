@@ -21,6 +21,8 @@ import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder
+import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder
 import io.micronaut.data.repository.jpa.criteria.DeleteSpecification
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
@@ -57,9 +59,12 @@ import io.micronaut.transaction.SynchronousTransactionManager
 import io.micronaut.transaction.TransactionCallback
 import io.micronaut.transaction.TransactionStatus
 import jakarta.persistence.criteria.CriteriaBuilder
+import jakarta.persistence.criteria.CriteriaQuery
 import jakarta.persistence.criteria.CriteriaUpdate
+import jakarta.persistence.criteria.Path
 import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Root
+import reactor.core.publisher.Mono
 import spock.lang.AutoCleanup
 import spock.lang.IgnoreIf
 import spock.lang.Shared
@@ -1116,7 +1121,7 @@ abstract class AbstractRepositorySpec extends Specification {
         List<Author> authors = transactionManager.get().executeRead(new TransactionCallback<Connection, List<Author>>() {
             @Override
             List<Author> call(TransactionStatus<Connection> status) throws Exception {
-                authorRepository.queryByNameContains("e").collect(Collectors.toList())
+                authorRepository.queryByNameContains("e").toList()
             }
         })
 
@@ -1127,7 +1132,7 @@ abstract class AbstractRepositorySpec extends Specification {
         List<Author> emptyAuthors = transactionManager.get().executeRead(new TransactionCallback<Connection, List<Author>>() {
             @Override
             List<Author> call(TransactionStatus<Connection> status) throws Exception {
-                authorRepository.queryByNameContains("x").collect(Collectors.toList())
+                authorRepository.queryByNameContains("x").toList()
             }
         })
 
@@ -1395,7 +1400,7 @@ abstract class AbstractRepositorySpec extends Specification {
             def authors = transactionManager.get().executeRead(new TransactionCallback<Connection, List<Author>>() {
                 @Override
                 List<Author> call(TransactionStatus<Connection> status) throws Exception {
-                    authorRepository.queryByIdIsNotNull().collect(Collectors.toList())
+                    authorRepository.queryByIdIsNotNull().toList()
                 }
             })
 
@@ -2538,6 +2543,12 @@ abstract class AbstractRepositorySpec extends Specification {
         book2.getStudents().add(student)
         bookRepository.save(book1)
         bookRepository.save(book2)
+        def otherStudent = new Student("Ioana")
+        studentRepository.save(otherStudent)
+        when:
+        def students = studentRepository.queryByName(otherStudent.name, Pageable.from(0, 2))
+        then:
+        students.size() == 1
         when:
         def loadedStudent = studentRepository.findByName(student.name).get()
         def loadedBook1 = bookRepository.findById(book1.id).get()
@@ -2553,6 +2564,10 @@ abstract class AbstractRepositorySpec extends Specification {
         loadedBook2
         loadedBook2.title == book2.title
         loadedBook2.id == book2.id
+        when:
+        students = studentRepository.queryByName(student.name, Pageable.from(0, 2))
+        then:
+        students.size() == 1
         cleanup:
         studentRepository.delete(student)
         bookRepository.delete(book1)
@@ -2670,6 +2685,7 @@ abstract class AbstractRepositorySpec extends Specification {
 
      void "entity with id class"() {
         given:
+        entityWithIdClassRepository.deleteAll()
         EntityWithIdClass e = new EntityWithIdClass()
         e.id1 = 11
         e.id2 = 22
@@ -2735,10 +2751,14 @@ abstract class AbstractRepositorySpec extends Specification {
 
         then:
         !result.isPresent()
+
+         cleanup:
+         entityWithIdClassRepository.deleteAll()
     }
 
      void "entity with id class 2"() {
         given:
+        entityWithIdClass2Repository.deleteAll()
         EntityWithIdClass2 e = new EntityWithIdClass2(11, 22, "Xyz")
         EntityWithIdClass2 f = new EntityWithIdClass2(33, e.id2(), "Xyz")
         EntityWithIdClass2 g = new EntityWithIdClass2(e.id1(), 44, "Xyz")
@@ -2794,6 +2814,175 @@ abstract class AbstractRepositorySpec extends Specification {
 
         then:
         !result.isPresent()
+
+         cleanup:
+         entityWithIdClass2Repository.deleteAll()
+    }
+
+    void "test criteria functions"() {
+        when:
+            personRepository.deleteAll()
+            personRepository.save(new Person(name: "Fred1", age: 50))
+            personRepository.save(new Person(name: "Fred2", age: 18))
+        then:
+            def count = personRepository.findOne(new CriteriaQueryBuilder<Long>() {
+                @Override
+                CriteriaQuery<Long> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(Long)
+                    def root = query.from(Person)
+                    query.select(criteriaBuilder.function("MAX", Long, root.get("age")))
+                    return query
+                }
+            })
+            count == 50
+    }
+
+    void "test sum function"() {
+        when:
+            personRepository.deleteAll()
+            personRepository.save(new Person(name: "Fred1", age: 50))
+            personRepository.save(new Person(name: "Fred2", age: 18))
+        then:
+            def count = personRepository.findOne(new CriteriaQueryBuilder<Long>() {
+                @Override
+                CriteriaQuery<Long> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(Long)
+                    def root = query.from(Person)
+                    query.select(criteriaBuilder.sum(root.<Integer>get("age"), 100))
+                    query.where(criteriaBuilder.equal(root.<String>get("name"), "Fred1"))
+                    return query
+                }
+            })
+            count == 150
+    }
+
+    void "test concat function"() {
+        when:
+            personRepository.deleteAll()
+            personRepository.save(new Person(name: "Fred1", age: 50))
+            personRepository.save(new Person(name: "Fred2", age: 18))
+        then:
+            def name = personRepository.findOne(new CriteriaQueryBuilder<String>() {
+                @Override
+                CriteriaQuery<String> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(String)
+                    def root = query.from(Person)
+                    query.select(criteriaBuilder.concat(root.<String>get("name"), "Xyz"))
+                    query.where(criteriaBuilder.equal(root.<String>get("name"), "Fred1"))
+                    return query
+                }
+            })
+            name == "Fred1Xyz"
+    }
+
+    void "test like function"() {
+        when:
+            personRepository.deleteAll()
+            personRepository.save(new Person(name: "Fr_dA1", age: 50))
+            personRepository.save(new Person(name: "Fr_dA2", age: 18))
+            personRepository.save(new Person(name: "Fr_dB1", age: 18))
+            personRepository.save(new Person(name: "Fr_dB2", age: 18))
+        then:
+            def names = personRepository.findAll(new CriteriaQueryBuilder<String>() {
+                @Override
+                CriteriaQuery<String> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(String)
+                    def root = query.from(Person)
+                    def name = root.<String> get("name")
+                    query.select(name)
+                    query.where(criteriaBuilder.like(
+                            name,
+                            "%r\\_dA%",
+                            '\\' as char
+                    ))
+                    return query
+                }
+            })
+            names.toSet() == ["Fr_dA1", "Fr_dA2"].toSet()
+
+        when:
+            def negatedNames = personRepository.findAll(new CriteriaQueryBuilder<String>() {
+                @Override
+                CriteriaQuery<String> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(String)
+                    def root = query.from(Person)
+                    def name = root.<String> get("name")
+                    query.select(name)
+                    query.where(criteriaBuilder.notLike(
+                            name,
+                            "%r\\_dA%",
+                            '\\' as char
+                    ))
+                    return query
+                }
+            })
+        then:
+            negatedNames.toSet() == ["Fr_dB1", "Fr_dB2"].toSet()
+
+        when:
+            negatedNames = personRepository.findAll(new CriteriaQueryBuilder<String>() {
+                @Override
+                CriteriaQuery<String> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(String)
+                    def root = query.from(Person)
+                    def name = root.<String> get("name")
+                    query.select(name)
+                    query.where(criteriaBuilder.like(
+                            name,
+                            "%r\\_dA%",
+                            '\\' as char
+                    ).not())
+                    return query
+                }
+            })
+        then:
+            negatedNames.toSet() == ["Fr_dB1", "Fr_dB2"].toSet()
+
+        if (personRepository.getClass().getSimpleName().contains("MS")) {
+            // SQL server case sensitivity is based on the column configuration
+            return
+        }
+        if (personRepository.getClass().getSimpleName().contains("MySql")) {
+            // MySQL Like is case insensitive by default
+            return
+        }
+
+        when:
+            def caseSensitiveNames = personRepository.findAll(new CriteriaQueryBuilder<String>() {
+                @Override
+                CriteriaQuery<String> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(String)
+                    def root = query.from(Person)
+                    def name = root.<String> get("name")
+                    query.select(name)
+                    query.where(criteriaBuilder.like(
+                            name,
+                            "%db%",
+                    ))
+                    return query
+                }
+            })
+        then:
+            caseSensitiveNames.isEmpty()
+
+        when:
+            def ilikeNames = personRepository.findAll(new CriteriaQueryBuilder<String>() {
+                @Override
+                CriteriaQuery<String> build(CriteriaBuilder criteriaBuilder) {
+                    PersistentEntityCriteriaBuilder cb = criteriaBuilder
+                    def query = criteriaBuilder.createQuery(String)
+                    def root = query.from(Person)
+                    def name = root.<String> get("name")
+                    query.select(name)
+                    query.where(cb.ilike(
+                            name,
+                            "%db%",
+                    ))
+                    return query
+                }
+            })
+        then:
+            ilikeNames.toSet() == ["Fr_dB1", "Fr_dB2"].toSet()
     }
 
     void "test data with datetime fields and custom time zone"() {

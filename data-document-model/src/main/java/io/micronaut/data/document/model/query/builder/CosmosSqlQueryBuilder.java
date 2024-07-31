@@ -26,6 +26,7 @@ import io.micronaut.data.annotation.repeatable.WhereSpecifications;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
@@ -208,7 +209,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
         Map<String, String> joinedPaths = new HashMap<>();
         for (JoinPath joinPath : allPaths) {
             Association association = joinPath.getAssociation();
-            if (association instanceof Embedded) {
+            if (association.isEmbedded()) {
                 // joins on embedded don't make sense
                 continue;
             }
@@ -329,6 +330,9 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     @NonNull
     @Override
     public QueryResult buildPagination(@NonNull Pageable pageable) {
+        if (pageable.getMode() != Mode.OFFSET) {
+            throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported by cosmos operations");
+        }
         int size = pageable.getSize();
         if (size > 0) {
             StringBuilder builder = new StringBuilder(" ");

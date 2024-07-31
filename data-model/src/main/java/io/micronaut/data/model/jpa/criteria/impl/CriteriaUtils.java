@@ -22,10 +22,11 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBinaryPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInValuesPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInPredicate;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.ParameterExpression;
 
@@ -33,7 +34,6 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Criteria util class.
@@ -63,7 +63,7 @@ public final class CriteriaUtils {
     }
 
     public static List<IExpression<Boolean>> requireBoolExpressions(Iterable<? extends Expression<?>> restrictions) {
-        return CollectionUtils.iterableToList(restrictions).stream().map(CriteriaUtils::requireBoolExpression).collect(Collectors.toList());
+        return CollectionUtils.iterableToList(restrictions).stream().map(CriteriaUtils::requireBoolExpression).toList();
     }
 
     public static IExpression<Boolean> requireBoolExpression(Expression<?> exp) {
@@ -114,10 +114,6 @@ public final class CriteriaUtils {
             }
             return exp;
         }
-        if (exp instanceof ParameterExpression) {
-            // TODO: validation
-            return exp;
-        }
         if (exp instanceof LiteralExpression<T> tLiteralExpression) {
             if (tLiteralExpression.getValue() instanceof Comparable) {
                 return exp;
@@ -133,14 +129,6 @@ public final class CriteriaUtils {
             if (!propertyPath.isNumeric()) {
                 throw new IllegalStateException("Expected a numeric expression property! Got: " + exp);
             }
-            return exp;
-        }
-        if (exp instanceof ParameterExpression) {
-            // TODO: validation
-            return exp;
-        }
-        if (exp instanceof LiteralExpression) {
-            // TODO: validation
             return exp;
         }
         return exp;
@@ -209,11 +197,13 @@ public final class CriteriaUtils {
     }
 
     private static void extractPredicateParameters(Expression<?> predicate, Set<ParameterExpression<?>> parameters) {
-        if (predicate instanceof PersistentPropertyBinaryPredicate<?> pp) {
+        if (predicate instanceof LiteralExpression<?>) {
+            return;
+        } else if (predicate instanceof PersistentPropertyBinaryPredicate<?> pp) {
             if (pp.getExpression() instanceof ParameterExpression<?> parameterExpression) {
                 parameters.add(parameterExpression);
             }
-        } else if (predicate instanceof PersistentPropertyInValuesPredicate<?> pp) {
+        } else if (predicate instanceof PersistentPropertyInPredicate<?> pp) {
             for (Expression<?> expression : pp.getValues()) {
                 if (expression instanceof ParameterExpression<?> parameterExpression) {
                     parameters.add(parameterExpression);
@@ -227,6 +217,8 @@ public final class CriteriaUtils {
             for (IExpression<Boolean> pred : disjunctionPredicate.getPredicates()) {
                 extractPredicateParameters(pred, parameters);
             }
+        } else {
+            throw new IllegalStateException("Unsupported predicate type: " + predicate.getClass().getSimpleName());
         }
     }
 

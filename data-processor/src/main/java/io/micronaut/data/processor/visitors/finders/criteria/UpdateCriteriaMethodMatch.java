@@ -17,12 +17,15 @@ package io.micronaut.data.processor.visitors.finders.criteria;
 
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.annotation.AutoPopulated;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Version;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaUpdate;
-import io.micronaut.data.model.query.QueryModel;
+import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -40,10 +43,12 @@ import io.micronaut.data.processor.visitors.finders.QueryMatchId;
 import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ParameterElement;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Selection;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -84,9 +89,10 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
         boolean predicatedApplied = false;
         boolean projectionApplied = false;
+        List<ParameterElement> nonConsumedParameters = new ArrayList<>(matchContext.getParametersNotInRole());
         for (MethodNameParser.Match match : matches) {
             if (match.id() == QueryMatchId.PREDICATE) {
-                applyPredicates(match.part(), matchContext.getParameters(), root, query, cb);
+                applyPredicates(matchContext, match.part(), nonConsumedParameters, root, query, cb);
                 predicatedApplied = true;
             }
             if (match.id() == QueryMatchId.RETURNING) {
@@ -95,7 +101,7 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             }
         }
         if (!predicatedApplied) {
-            applyPredicates(root, query, cb);
+            applyPredicates(matchContext, nonConsumedParameters, root, query, cb);
         }
         if (!projectionApplied) {
             applyProjections("", root, query, cb);
@@ -103,17 +109,17 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
         SourcePersistentEntity entity = matchContext.getRootEntity();
 
-        addPropertiesToUpdate(matchContext, root, query, cb);
+        addPropertiesToUpdate(nonConsumedParameters, matchContext, root, query, cb);
 
         AbstractPersistentEntityCriteriaUpdate<T> criteriaUpdate = (AbstractPersistentEntityCriteriaUpdate<T>) query;
 
         // Add updatable auto-populated parameters
         entity.getPersistentProperties().stream()
-                .filter(p -> p != null && p.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATEABLE, Boolean.class)).orElse(false))
-                .forEach(p -> query.set(p.getName(), cb.parameter((ParameterElement) null)));
+            .filter(p -> p != null && p.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATEABLE, Boolean.class)).orElse(false))
+            .forEach(p -> query.set(p.getName(), cb.parameter(null, new PersistentPropertyPath(p))));
 
-        if (entity.getVersion() != null && criteriaUpdate.hasVersionRestriction()) {
-            query.set(entity.getVersion().getName(), cb.parameter((ParameterElement) null));
+        if (entity.getVersion() != null && !entity.getVersion().isGenerated() && criteriaUpdate.hasVersionRestriction()) {
+            query.set(entity.getVersion().getName(), cb.parameter(null, new PersistentPropertyPath(entity.getVersion())));
         }
 
         if (criteriaUpdate.getUpdateValues().isEmpty()) {
@@ -121,14 +127,94 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         }
     }
 
+    private <T> void applyPredicates(MethodMatchContext matchContext,
+                                     String querySequence,
+                                     List<ParameterElement> parameters,
+                                     PersistentEntityRoot<T> root,
+                                     PersistentEntityCriteriaUpdate<T> query,
+                                     SourcePersistentEntityCriteriaBuilder cb) {
+        Iterator<ParameterElement> parametersIterator = parameters.iterator();
+        Predicate predicate = extractPredicates(querySequence, parametersIterator, root, cb);
+        List<ParameterElement> remainingParameters = new ArrayList<>(parameters.size());
+        while (parametersIterator.hasNext()) {
+            remainingParameters.add(parametersIterator.next());
+        }
+        parameters.retainAll(remainingParameters);
+        predicate = interceptPredicate(matchContext, parameters, root, cb, predicate);
+        if (predicate != null) {
+            query.where(predicate);
+        }
+    }
+
+    private <T> void applyPredicates(MethodMatchContext matchContext,
+                                     List<ParameterElement> parameters,
+                                     PersistentEntityRoot<T> root,
+                                     PersistentEntityCriteriaUpdate<T> query,
+                                     SourcePersistentEntityCriteriaBuilder cb) {
+        Predicate predicate = interceptPredicate(matchContext, parameters, root, cb, null);
+        if (predicate != null) {
+            query.where(predicate);
+        }
+    }
+
+    @Override
+    protected <T> Predicate interceptPredicate(MethodMatchContext matchContext,
+                                               List<ParameterElement> notConsumedParameters,
+                                               PersistentEntityRoot<T> root,
+                                               SourcePersistentEntityCriteriaBuilder cb,
+                                               Predicate existingPredicate) {
+        ParameterElement entityParameter = getEntityParameter();
+        if (entityParameter == null) {
+            entityParameter = getEntitiesParameter();
+        }
+        final SourcePersistentEntity rootEntity = (SourcePersistentEntity) root.getPersistentEntity();
+        Predicate predicate = null;
+        if (entityParameter != null) {
+            if (rootEntity.getVersion() != null) {
+                predicate = cb.and(
+                    cb.equal(root.id(), cb.entityPropertyParameter(entityParameter, new PersistentPropertyPath(rootEntity.getIdentity()))),
+                    cb.equal(root.version(), cb.entityPropertyParameter(entityParameter, new PersistentPropertyPath(rootEntity.getVersion())))
+                );
+            } else {
+                predicate = cb.equal(root.id(), cb.entityPropertyParameter(entityParameter, new PersistentPropertyPath(rootEntity.getIdentity())));
+            }
+        } else {
+            ParameterElement idParameter = notConsumedParameters.stream()
+                .filter(p -> p.hasAnnotation(Id.class)).findFirst().orElse(null);
+            ParameterElement versionParameter = notConsumedParameters.stream()
+                .filter(p -> p.hasAnnotation(Version.class)).findFirst().orElse(null);
+            if (idParameter != null) {
+                notConsumedParameters.remove(idParameter);
+                predicate = cb.equal(root.id(), cb.parameter(idParameter, new PersistentPropertyPath(rootEntity.getIdentity())));
+            }
+            if (versionParameter != null) {
+                notConsumedParameters.remove(versionParameter);
+                Predicate versionPredicate = cb.equal(root.version(), cb.parameter(versionParameter, new PersistentPropertyPath(rootEntity.getVersion())));
+                if (predicate != null) {
+                    predicate = cb.and(predicate, versionPredicate);
+                } else {
+                    predicate = versionPredicate;
+                }
+            }
+        }
+        if (existingPredicate != null) {
+            if (predicate != null) {
+                predicate = cb.and(existingPredicate, predicate);
+            } else {
+                predicate = existingPredicate;
+            }
+        }
+        return super.interceptPredicate(matchContext, notConsumedParameters, root, cb, predicate);
+    }
+
     /**
      * Apply projections.
      *
      * @param projection The querySequence
-     * @param root          The root
-     * @param query         The query
-     * @param cb            The criteria builder
-     * @param <T>           The entity type
+     * @param root       The root
+     * @param query      The query
+     * @param cb         The criteria builder
+     * @param <T>        The entity type
      */
     protected <T> void applyProjections(String projection,
                                         PersistentEntityRoot<T> root,
@@ -147,7 +233,8 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         }
     }
 
-    protected <T> void addPropertiesToUpdate(MethodMatchContext matchContext,
+    protected <T> void addPropertiesToUpdate(List<ParameterElement> nonConsumedParameters,
+                                             MethodMatchContext matchContext,
                                              PersistentEntityRoot<T> root,
                                              PersistentEntityCriteriaUpdate<T> query,
                                              SourcePersistentEntityCriteriaBuilder cb) {
@@ -200,14 +287,12 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         boolean optimisticLock = query.hasVersionRestriction();
 
         final AnnotationMetadataHierarchy annotationMetadataHierarchy = new AnnotationMetadataHierarchy(
-                matchContext.getRepositoryClass().getAnnotationMetadata(),
-                matchContext.getAnnotationMetadata()
+            matchContext.getRepositoryClass().getAnnotationMetadata(),
+            matchContext.getAnnotationMetadata()
         );
         QueryBuilder queryBuilder = matchContext.getQueryBuilder();
 
-        Map<String, Object> propertiesToUpdate = query.getUpdateValues();
-        QueryModel queryModel = query.getQueryModel();
-        QueryResult queryResult = queryBuilder.buildUpdate(annotationMetadataHierarchy, queryModel, propertiesToUpdate);
+        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(annotationMetadataHierarchy, queryBuilder);
 
         return new MethodMatchInfo(
             getOperationType(),

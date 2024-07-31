@@ -17,14 +17,9 @@ package io.micronaut.data.processor.model.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Association;
-import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityPath;
-import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
-import io.micronaut.data.processor.model.SourcePersistentProperty;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -41,21 +36,5 @@ interface SourcePersistentEntityPath<T> extends PersistentEntityPath<T> {
     SourcePersistentEntity getPersistentEntity();
 
     List<Association> getAssociations();
-
-    @Override
-    default <Y> PersistentPropertyPath<Y> get(String attributeName) {
-        SourcePersistentProperty property = getPersistentEntity().getPropertyByName(attributeName);
-        if (property == null) {
-            throw new IllegalStateException("Cannot query entity [" + getPersistentEntity().getSimpleName() + "] on non-existent property: " + attributeName);
-        }
-        if (this instanceof PersistentAssociationPath associationPath) {
-            List<Association> associations = associationPath.getAssociations();
-            List<Association> newAssociations = new ArrayList<>(associations.size() + 1);
-            newAssociations.addAll(associations);
-            newAssociations.add(associationPath.getAssociation());
-            return new SourcePersistentPropertyPathImpl<>(this, newAssociations, property);
-        }
-        return new SourcePersistentPropertyPathImpl<>(this, Collections.emptyList(), property);
-    }
 
 }

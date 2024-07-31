@@ -20,27 +20,63 @@ import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityJoinSupport;
 import io.micronaut.data.processor.model.SourceAssociation;
+import io.micronaut.data.processor.model.SourcePersistentEntity;
+import io.micronaut.data.processor.model.SourcePersistentProperty;
+import jakarta.persistence.criteria.CriteriaBuilder;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * The internal source implementation of {@link AbstractPersistentEntityJoinSupport}.
  *
  * @param <T> The association entity type
- * @param <J>     The association entity type
+ * @param <E> The association entity type
  * @author Denis Stepanov
  * @since 3.2
  */
 @Internal
-abstract class AbstractSourcePersistentEntityJoinSupport<T, J> extends AbstractPersistentEntityJoinSupport<T, J> {
+abstract class AbstractSourcePersistentEntityJoinSupport<T, E> extends AbstractPersistentEntityJoinSupport<T, E> {
+
+    private final CriteriaBuilder criteriaBuilder;
+
+    AbstractSourcePersistentEntityJoinSupport(CriteriaBuilder criteriaBuilder) {
+        this.criteriaBuilder = criteriaBuilder;
+    }
 
     protected abstract List<Association> getCurrentPath();
 
     @Override
-    protected <X, Y> PersistentAssociationPath<X, Y> createJoinAssociation(Association association,
-                                                                           io.micronaut.data.annotation.Join.Type associationJoinType,
-                                                                           String alias) {
-        return new SourcePersistentAssociationPath<>(this, (SourceAssociation) association, getCurrentPath(), associationJoinType, alias);
+    public abstract SourcePersistentEntity getPersistentEntity();
+
+    @Override
+    public <Y> SourcePersistentPropertyPath<Y> get(String attributeName) {
+        SourcePersistentProperty property = getPersistentEntity().getPropertyByName(attributeName);
+        if (property == null) {
+            throw new IllegalStateException("Cannot query entity [" + getPersistentEntity().getSimpleName() + "] on non-existent property: " + attributeName);
+        }
+        if (this instanceof PersistentAssociationPath<?, ?> associationPath) {
+            List<Association> associations = associationPath.getAssociations();
+            List<Association> newAssociations = new ArrayList<>(associations.size() + 1);
+            newAssociations.addAll(associations);
+            newAssociations.add(associationPath.getAssociation());
+            return new SourcePersistentPropertyPathImpl<>(this, newAssociations, property, criteriaBuilder);
+        }
+        return new SourcePersistentPropertyPathImpl<>(this, Collections.emptyList(), property, criteriaBuilder);
+    }
+
+    @Override
+    protected <Y> PersistentAssociationPath<E, Y> createJoinAssociation(Association association,
+                                                                        io.micronaut.data.annotation.Join.Type associationJoinType,
+                                                                        String alias) {
+        return new SourcePersistentAssociationPath<>(this,
+            (SourceAssociation) association,
+            getCurrentPath(),
+            associationJoinType,
+            alias,
+            criteriaBuilder
+        );
     }
 
 }

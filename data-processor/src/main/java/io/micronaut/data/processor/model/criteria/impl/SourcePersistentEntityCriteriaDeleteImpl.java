@@ -22,6 +22,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaDelete;
 import io.micronaut.inject.ast.ClassElement;
+import jakarta.persistence.criteria.CriteriaBuilder;
 
 import java.util.function.Function;
 
@@ -39,9 +40,13 @@ final class SourcePersistentEntityCriteriaDeleteImpl<T> extends AbstractPersiste
         implements SourcePersistentEntityCriteriaDelete<T> {
 
     private final Function<ClassElement, SourcePersistentEntity> entityResolver;
+    private final CriteriaBuilder criteriaBuilder;
 
-    public SourcePersistentEntityCriteriaDeleteImpl(Function<ClassElement, SourcePersistentEntity> entityResolver, Class<T> root) {
+    public SourcePersistentEntityCriteriaDeleteImpl(Function<ClassElement, SourcePersistentEntity> entityResolver,
+                                                    Class<T> root,
+                                                    CriteriaBuilder criteriaBuilder) {
         this.entityResolver = entityResolver;
+        this.criteriaBuilder = criteriaBuilder;
     }
 
     @Override
@@ -59,7 +64,7 @@ final class SourcePersistentEntityCriteriaDeleteImpl<T> extends AbstractPersiste
         if (entityRoot != null) {
             throw new IllegalStateException("The root entity is already specified!");
         }
-        SourcePersistentEntityRoot<T> newEntityRoot = new SourcePersistentEntityRoot<>((SourcePersistentEntity) persistentEntity);
+        SourcePersistentEntityRoot<T> newEntityRoot = new SourcePersistentEntityRoot<>((SourcePersistentEntity) persistentEntity, criteriaBuilder);
         entityRoot = newEntityRoot;
         return newEntityRoot;
     }

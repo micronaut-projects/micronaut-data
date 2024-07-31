@@ -17,12 +17,20 @@ package io.micronaut.data.runtime.operations.internal.sql;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.model.CursoredPageable;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Pageable.Cursor;
+import io.micronaut.data.model.Pageable.Mode;
+import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.Sort.Order;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.QueryResultInfo;
@@ -34,7 +42,10 @@ import io.micronaut.data.runtime.query.internal.DelegatePreparedQuery;
 import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 
 import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -48,6 +59,8 @@ import java.util.Map;
 @Internal
 public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPreparedQuery<E, R> implements SqlPreparedQuery<E, R>, DelegatePreparedQuery<E, R> {
 
+    protected List<QueryParameterBinding> cursorQueryBindings;
+    protected List<RuntimePersistentProperty<E>> cursorProperties;
     protected final SqlStoredQuery<E, R> sqlStoredQuery;
     protected String query;
 
@@ -88,7 +101,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
     }
 
     @Override
-    public SqlQueryBuilder getQueryBuilder() {
+    public SqlQueryBuilder2 getQueryBuilder() {
         return sqlStoredQuery.getQueryBuilder();
     }
 
@@ -110,7 +123,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
     @Override
     public void prepare(E entity) {
         if (isExpandableQuery()) {
-            SqlQueryBuilder queryBuilder = sqlStoredQuery.getQueryBuilder();
+            SqlQueryBuilder2 queryBuilder = sqlStoredQuery.getQueryBuilder();
             String positionalParameterFormat = queryBuilder.positionalParameterFormat();
             StringBuilder q = new StringBuilder(sqlStoredQuery.getExpandableQueryParts()[0]);
             int queryParamIndex = 1;
@@ -154,9 +167,25 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
     public void attachPageable(Pageable pageable, boolean isSingleResult) {
         if (pageable != Pageable.UNPAGED) {
             RuntimePersistentEntity<E> persistentEntity = getPersistentEntity();
-            SqlQueryBuilder queryBuilder = sqlStoredQuery.getQueryBuilder();
+            SqlQueryBuilder2 queryBuilder = sqlStoredQuery.getQueryBuilder();
             StringBuilder added = new StringBuilder();
             Sort sort = pageable.getSort();
+            if (pageable instanceof CursoredPageable cursored) {
+                // Create a sort for the cursored pagination. The sort must produce a unique
+                // sorting on the rows. Therefore, we make sure id is present in it.
+                List<Order> orders = new ArrayList<>(sort.getOrderBy());
+                for (PersistentProperty idProperty: persistentEntity.getIdentityProperties()) {
+                    String name = idProperty.getName();
+                    if (orders.stream().noneMatch(o -> o.getProperty().equals(name))) {
+                        orders.add(Order.asc(name));
+                    }
+                }
+                sort = Sort.of(orders);
+                if (cursored.isBackward()) {
+                    sort = reverseSort(sort);
+                }
+                added.append(buildCursorPagination(cursored.cursor().orElse(null), sort));
+            }
             if (sort.isSorted()) {
                 added.append(queryBuilder.buildOrderBy("", persistentEntity, sqlStoredQuery.getAnnotationMetadata(), sort, isNative()).getQuery());
             } else if (isSqlServerWithoutOrderBy(query, sqlStoredQuery.getDialect())) {
@@ -176,6 +205,124 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
                 query = query.substring(0, forUpdateIndex) + added + query.substring(forUpdateIndex);
             } else {
                 query += added;
+            }
+        }
+    }
+
+    /**
+     * A utility method for reversing the sort.
+     *
+     * @param sort The current sort
+     * @return reversed sort
+     */
+    private Sort reverseSort(Sort sort) {
+        if (!sort.isSorted()) {
+            return sort;
+        }
+        return Sort.of(sort.getOrderBy().stream().map(Order::reverse).toList());
+    }
+
+    /**
+     * Add relevant query clauses and query bindings to use cursored pagination.
+     *
+     * @param cursor The supplied cursor
+     * @param sort The sorting that will be used in the query
+     * @return The additional query part
+     */
+    @NonNull
+    private String buildCursorPagination(@Nullable Pageable.Cursor cursor, @NonNull Sort sort) {
+        List<Sort.Order> orders = sort.getOrderBy();
+        cursorProperties = new ArrayList<>(orders.size());
+        for (Order order: orders) {
+            cursorProperties.add(getPersistentEntity().getPropertyByName(order.getProperty()));
+        }
+        if (cursor == null) {
+            return "";
+        }
+        if (orders.size() != cursor.size()) {
+            throw new IllegalArgumentException("The cursor must match the sorting size");
+        }
+        if (orders.isEmpty()) {
+            throw new IllegalArgumentException("At least one sorting property must be supplied");
+        }
+
+        List<QueryParameterBinding> cursorBindings = new ArrayList<>(orders.size());
+        cursorQueryBindings = new ArrayList<>(orders.size() * (orders.size() + 1) / 2);
+        for (int i = 0; i < orders.size(); ++i) {
+            cursorBindings.add(new CursoredQueryParameterBinder(
+                "cursor_" + i, cursorProperties.get(i).getDataType(), cursor.get(i)
+            ));
+        }
+
+        StringBuilder builder = new StringBuilder(" ");
+        if (query.contains("WHERE")) {
+            int i = query.indexOf("WHERE") + "WHERE".length();
+            query = query.substring(0, i) + "(" + query.substring(i) + ")";
+            builder.append(" AND (");
+        } else {
+            builder.append("WHERE (");
+        }
+        String positionalParameter = getQueryBuilder().positionalParameterFormat();
+        int paramIndex = storedQuery.getQueryBindings().size() + 1;
+        for (int i = 0; i < orders.size(); ++i) {
+            builder.append("(");
+            for (int j = 0; j <= i; ++j) {
+                String propertyName = orders.get(j).getProperty();
+                builder.append(sqlStoredQuery.getQueryBuilder().buildPropertyByName(propertyName, query, getPersistentEntity(), getAnnotationMetadata(), isNative()));
+                if (orders.get(i).isAscending()) {
+                    builder.append(i == j ? " > " : " = ");
+                } else {
+                    builder.append(i == j ? " < " : " = ");
+                }
+                cursorQueryBindings.add(cursorBindings.get(j));
+                builder.append(String.format(positionalParameter, paramIndex++));
+                if (i != j) {
+                    builder.append(" AND ");
+                }
+            }
+            builder.append(")");
+            if (i < orders.size() - 1) {
+                builder.append(" OR ");
+            }
+        }
+        builder.append(")");
+        return builder.toString();
+    }
+
+    /**
+     * Modify pageable based on the scan results.
+     * This is required for cursored pageable, as cursor is created from the results.
+     *
+     * @param results The scanning results
+     * @param pageable The pageable sent by user
+     * @return The updated pageable
+     * @since 4.8.0
+     */
+    @Internal
+    public List<Cursor> createCursors(List<Object> results, Pageable pageable) {
+        if (pageable.getMode() != Mode.CURSOR_NEXT && pageable.getMode() != Mode.CURSOR_PREVIOUS) {
+            return null;
+        }
+        if (pageable.getMode() == Mode.CURSOR_PREVIOUS) {
+            Collections.reverse(results);
+        }
+        List<Cursor> cursors = new ArrayList<>(results.size());
+        for (Object result: results) {
+            List<Object> cursorElements = new ArrayList<>(cursorProperties.size());
+            for (RuntimePersistentProperty<E> property : cursorProperties) {
+                cursorElements.add(property.getProperty().get((E) result));
+            }
+            cursors.add(Cursor.of(cursorElements));
+        }
+        return cursors;
+    }
+
+    @Override
+    public void bindParameters(Binder binder, E entity, Map<QueryParameterBinding, Object> previousValues) {
+        super.bindParameters(binder, entity, previousValues);
+        if (cursorQueryBindings != null) {
+            for (QueryParameterBinding queryParameterBinding : cursorQueryBindings) {
+                binder.bindOne(queryParameterBinding, queryParameterBinding.getValue());
             }
         }
     }
@@ -236,5 +383,26 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
             return Array.getLength(value);
         }
         return 1;
+    }
+
+    private record CursoredQueryParameterBinder(
+        String name,
+        DataType dataType,
+        Object value
+    ) implements QueryParameterBinding {
+        @Override
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public DataType getDataType() {
+            return dataType;
+        }
+
+        @Override
+        public Object getValue() {
+            return value;
+        }
     }
 }

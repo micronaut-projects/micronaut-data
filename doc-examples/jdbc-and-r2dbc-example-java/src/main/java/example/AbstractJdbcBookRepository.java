@@ -26,7 +26,7 @@ public abstract class AbstractJdbcBookRepository implements CrudRepository<Book,
         return jdbcOperations.prepareStatement(sql, statement -> {
             statement.setString(1, title);
             ResultSet resultSet = statement.executeQuery();
-            return jdbcOperations.entityStream(resultSet, Book.class).collect(Collectors.toList());
+            return jdbcOperations.entityStream(resultSet, Book.class).toList();
         });
     }
 }

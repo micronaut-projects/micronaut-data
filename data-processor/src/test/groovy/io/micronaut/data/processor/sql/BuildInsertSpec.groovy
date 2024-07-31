@@ -80,7 +80,7 @@ class Test {
         where:
         dialect            | query
         Dialect.ORACLE     | 'CREATE TABLE "TEST" ("ID" NUMBER(19) GENERATED ALWAYS AS IDENTITY (MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE) PRIMARY KEY,"NAME" VARCHAR(255) NOT NULL)'
-        Dialect.H2         | 'CREATE TABLE `test` (`id` BIGINT AUTO_INCREMENT PRIMARY KEY,`name` VARCHAR(255) NOT NULL);'
+        Dialect.H2         | 'CREATE TABLE `test` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`name` VARCHAR(255) NOT NULL);'
         Dialect.POSTGRES   | 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"name" VARCHAR(255) NOT NULL);'
         Dialect.SQL_SERVER | 'CREATE TABLE [test] ([id] BIGINT PRIMARY KEY IDENTITY(1,1) NOT NULL,[name] VARCHAR(255) NOT NULL);'
         Dialect.MYSQL      | 'CREATE TABLE `test` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`name` VARCHAR(255) NOT NULL);'
@@ -93,6 +93,8 @@ class Test {
 import java.util.UUID;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Version;
 
 @JdbcRepository(dialect=Dialect.${dialect.name()})
 @io.micronaut.context.annotation.Executable
@@ -108,6 +110,9 @@ class Test {
     @GeneratedValue(GeneratedValue.Type.IDENTITY)
     private Long id;
     private String name;
+    @Version
+    @GeneratedValue
+    private Long version;
 
     public Test(String name) {
         this.name = name;
@@ -123,6 +128,14 @@ class Test {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 }
 
@@ -363,7 +376,7 @@ interface MyInterface extends CrudRepository<Food, UUID> {
         def method = beanDefinition.findPossibleMethods("update").findFirst().get()
         expect:
 
-        getQuery(method) == 'UPDATE "food" SET "key"=?,"carbohydrates"=?,"portion_grams"=?,"updated_on"=?,"fk_meal_id"=?,"fk_alt_meal"=?,"loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name"=?,"fresh"=? WHERE ("fid" = ? AND (fresh = \'Y\'))'
+        getQuery(method) == 'UPDATE "food" SET "key"=?,"carbohydrates"=?,"portion_grams"=?,"updated_on"=?,"fk_meal_id"=?,"fk_alt_meal"=?,"loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name"=?,"fresh"=? WHERE ("fid" = ? AND fresh = \'Y\')'
         getParameterPropertyPaths(method) == ["key", "carbohydrates", "portionGrams", "updatedOn", "meal.mid", "alternativeMeal.mid", "longName", "fresh", "fid"] as String[]
     }
 
@@ -551,5 +564,29 @@ interface PersonRepository extends GenericRepository<Person, Long> {
             getDataInterceptor(saveReturningMethod) == "io.micronaut.data.intercept.SaveEntityInterceptor"
             getResultDataType(saveReturningMethod) == DataType.INTEGER
             getOperationType(saveReturningMethod) == DataMethod.OperationType.INSERT
+    }
+
+    void "POSTGRES save with tenant id"() {
+        given:
+            def repository = buildRepository('test.AccountRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Account;
+
+@JdbcRepository(dialect= Dialect.POSTGRES)
+interface AccountRepository extends CrudRepository<Account, Long> {
+}
+""")
+        when:
+            def saveMethod = repository.findPossibleMethods("save").findFirst().get()
+        then:
+            getQuery(saveMethod) == 'INSERT INTO "account" ("name","tenancy") VALUES (?,?)'
+            getDataResultType(saveMethod) == "io.micronaut.data.tck.entities.Account"
+            getParameterPropertyPaths(saveMethod) == ["name", "tenancy"] as String[]
+            getDataInterceptor(saveMethod) == "io.micronaut.data.intercept.SaveEntityInterceptor"
+            getResultDataType(saveMethod) == DataType.ENTITY
+            getOperationType(saveMethod) == DataMethod.OperationType.INSERT
     }
 }

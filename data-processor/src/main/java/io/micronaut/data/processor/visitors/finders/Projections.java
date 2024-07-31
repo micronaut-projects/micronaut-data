@@ -31,7 +31,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 
 /**
  * Projections.
@@ -50,7 +49,7 @@ public final class Projections {
                 } catch (Throwable e) {
                     return null;
                 }
-            }).collect(Collectors.toList());
+            }).toList();
 
     @Nullable
     public static Selection<?> find(@NonNull PersistentEntityRoot<?> entityRoot,

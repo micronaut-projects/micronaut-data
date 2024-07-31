@@ -26,7 +26,6 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.Association;
-import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.PersistentAssociationPath;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -82,7 +81,7 @@ abstract class AbstractCascadeOperations {
             if (child == null) {
                 continue;
             }
-            if (association instanceof Embedded) {
+            if (association.isEmbedded()) {
                 cascade(annotationMetadata, repositoryType, fkOnly, cascadeType, ctx.embedded(association),
                         (RuntimePersistentEntity) association.getAssociatedEntity(),
                         child,

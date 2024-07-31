@@ -150,7 +150,7 @@ public interface QueryParameterBinding {
 
     /**
      * @return Is expression value
-     * @see 4.5.0
+     * @since 4.5.0
      */
     default boolean isExpression() {
         return false;

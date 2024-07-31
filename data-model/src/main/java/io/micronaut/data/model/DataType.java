@@ -146,7 +146,9 @@ public enum DataType {
 
     /**
      * Empty array of data types.
+     * @deprecated Not needed
      */
+    @Deprecated(forRemoval = true, since = "4.9")
     public static final DataType[] EMPTY_DATA_TYPE_ARRAY = new DataType[0];
     private static final Map<Class<?>, DataType> CLASS_DATA_TYPE_MAP = new HashMap<>();
 

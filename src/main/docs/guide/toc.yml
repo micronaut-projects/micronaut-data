@@ -15,6 +15,7 @@ shared:
     title: Writing Queries
     criteria: Query Criteria
     pagination: Pagination
+    cursored-pagination: Cursored Pagination
     ordering: Ordering
     projections: Query Projections
     dto: DTO Projections
@@ -34,8 +35,11 @@ shared:
     programmaticTransactions: Programmatic Transactions
     transactionalEvents: Transactional Events
   kotlinCriteria: Kotlin Criteria API extensions
-  multitenancy: Multi-tenancy
-
+  multitenancy:
+    title: Multi-tenancy
+    discriminatormode: Discriminator Mode
+    datasourcemode: DataSource Mode
+    schemamode: Schema Mode
 hibernate:
   title: Micronaut Data JPA Hibernate
   hibernateJpaAnnotations: JPA Annotations

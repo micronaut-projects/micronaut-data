@@ -19,8 +19,10 @@ import io.micronaut.annotation.processing.TypeElementVisitorProcessor
 import io.micronaut.annotation.processing.test.JavaParser
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.Query
+import io.micronaut.data.intercept.FindCursoredPageInterceptor
 import io.micronaut.data.intercept.FindPageInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
+import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
@@ -264,6 +266,42 @@ interface MyInterface extends GenericRepository<Person, Long> {
         then:
         def e = thrown(RuntimeException)
         e.message.contains('Query returns a Page and does not specify a \'countQuery\' member')
+    }
+
+    void "test cursored page method match"() {
+        given:
+        BeanDefinition beanDefinition = buildRepository('test.MyInterface' , """
+
+import io.micronaut.context.annotation.Executable;
+import io.micronaut.data.model.entities.Person;
+
+@Repository
+@Executable
+interface MyInterface extends GenericRepository<Person, Long> {
+
+    CursoredPage<Person> list(Pageable pageable);
+
+    CursoredPage<Person> findByName(String title, Pageable pageable);
+
+}
+""")
+
+        def alias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Person))
+
+        when: "the list method is retrieved"
+        def listMethod = beanDefinition.getRequiredMethod("list", Pageable)
+        def listAnn = listMethod.synthesize(DataMethod)
+
+        def findMethod = beanDefinition.getRequiredMethod("findByName", String, Pageable)
+        def findAnn = findMethod.synthesize(DataMethod)
+
+
+        then:"it is configured correctly"
+        listAnn.interceptor() == FindCursoredPageInterceptor
+        findAnn.interceptor() == FindCursoredPageInterceptor
+        findMethod.hasAnnotation(Query.class)
+        findMethod.getValue(Query.class, "value", String).get() == "SELECT $alias FROM io.micronaut.data.model.entities.Person AS $alias WHERE (${alias}.name = :p1)"
+        findMethod.getValue(Query.class, "countQuery", String).get() == "SELECT COUNT($alias) FROM io.micronaut.data.model.entities.Person AS $alias WHERE (${alias}.name = :p1)"
     }
 
     @Override

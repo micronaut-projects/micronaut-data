@@ -34,7 +34,9 @@ import java.util.Objects;
  *
  * @author graemerocher
  * @since 1.0
+ * @deprecated Will switch to an internal
  */
+@Deprecated(forRemoval = true, since = "4.9")
 public class QueryParameter implements Named, BindingParameter {
 
     private final String name;

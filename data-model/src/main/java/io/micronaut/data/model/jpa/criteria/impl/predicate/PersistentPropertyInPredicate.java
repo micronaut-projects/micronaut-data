@@ -16,35 +16,65 @@
 package io.micronaut.data.model.jpa.criteria.impl.predicate;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Expression;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
- * The property IN predicate implementation.
+ * The property IN value predicate implementation.
  *
  * @param <T> The property type
  * @author Denis Stepanov
  * @since 3.2
  */
 @Internal
-public final class PersistentPropertyInPredicate<T> extends AbstractPersistentPropertyPredicate<T> {
+public final class PersistentPropertyInPredicate<T> extends AbstractPersistentPropertyPredicate<T> implements CriteriaBuilder.In<T> {
 
-    private final Collection<?> values;
+    private final List<Expression<?>> values;
+    private final CriteriaBuilder criteriaBuilder;
 
-    public PersistentPropertyInPredicate(PersistentPropertyPath<T> persistentPropertyPath, Collection<?> values) {
-        super(persistentPropertyPath);
-        this.values = values;
+    public PersistentPropertyInPredicate(PersistentPropertyPath<T> propertyPath, CriteriaBuilder criteriaBuilder) {
+        this(propertyPath, Collections.emptyList(), criteriaBuilder);
+    }
+
+    public PersistentPropertyInPredicate(PersistentPropertyPath<T> propertyPath, Collection<Expression<?>> values, CriteriaBuilder criteriaBuilder) {
+        super(propertyPath);
+        this.values = new ArrayList<>(values);
+        this.criteriaBuilder = criteriaBuilder;
+    }
+
+    @NonNull
+    public List<Expression<?>> getValues() {
+        return values;
     }
 
     @Override
-    public void accept(PredicateVisitor predicateVisitor) {
-        predicateVisitor.visit(this);
+    public Expression<T> getExpression() {
+        return getPropertyPath();
     }
 
-    public Collection<?> getValues() {
-        return values;
+    @Override
+    public PersistentPropertyInPredicate<T> value(T value) {
+        values.add(criteriaBuilder.literal(value));
+        return this;
+    }
+
+    @Override
+    public PersistentPropertyInPredicate<T> value(Expression<? extends T> value) {
+        values.add(value);
+        return this;
+    }
+
+    @Override
+    public void visitPredicate(PredicateVisitor predicateVisitor) {
+        predicateVisitor.visit(this);
     }
 
     @Override

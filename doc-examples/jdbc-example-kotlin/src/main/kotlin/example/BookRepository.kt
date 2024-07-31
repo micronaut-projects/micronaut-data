@@ -8,9 +8,7 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.annotation.sql.Procedure
 import io.micronaut.data.jdbc.annotation.JdbcRepository
-import io.micronaut.data.model.Page
-import io.micronaut.data.model.Pageable
-import io.micronaut.data.model.Slice
+import io.micronaut.data.model.*
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
 import jakarta.transaction.Transactional
@@ -49,6 +47,14 @@ interface BookRepository : CrudRepository<Book, Long> { // <2>
 
     fun list(pageable: Pageable): Slice<Book>
     // end::pageable[]
+
+    // tag::cursored-pageable[]
+    fun find(pageable: CursoredPageable): CursoredPage<Book> // <1>
+
+    fun findByPagesBetween(minPageCount: Int, maxPageCount: Int, pageable: Pageable): CursoredPage<Book> // <2>
+
+    fun findByTitleStartingWith(title: String, pageable: Pageable): Page<Book>  // <3>
+    // end::cursored-pageable[]
 
     // tag::simple-projection[]
     fun findTitleByPagesGreaterThan(pageCount: Int): List<String>

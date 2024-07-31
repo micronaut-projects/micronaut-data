@@ -26,9 +26,11 @@ import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
 import io.micronaut.data.model.runtime.PagedQuery;
@@ -335,6 +337,9 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
         String queryStr = preparedQuery.getQuery();
         Pageable pageable = preparedQuery.getPageable();
         if (pageable != Pageable.UNPAGED) {
+            if (pageable.getMode() != Mode.OFFSET) {
+                throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported by hibernate operations");
+            }
             Sort sort = pageable.getSort();
             if (sort.isSorted()) {
                 queryStr += QUERY_BUILDER.buildOrderBy(queryStr, getEntity(preparedQuery.getRootEntity()), AnnotationMetadata.EMPTY_METADATA, sort,
@@ -599,6 +604,9 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
             // no pagination
             return;
         }
+        if (pageable.getMode() != Mode.OFFSET) {
+            throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported by hibernate operations");
+        }
 
         int max = pageable.getSize();
         if (max > 0) {
@@ -634,13 +642,12 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
 
     private <T> void bindCriteriaSort(CriteriaQuery<T> criteriaQuery, Root<?> root, CriteriaBuilder builder, @NonNull Sort sort) {
         List<Order> orders = new ArrayList<>();
-        Path<?> path = null;
         for (Sort.Order order : sort.getOrderBy()) {
-            String[] propertyArray = order.getProperty().split("\\.");
-            for (String property : propertyArray) {
-                path = path == null ? root.get(property) : path.get(property);
+            Path<?> path = root;
+            for (String property : StringUtils.splitOmitEmptyStrings(order.getProperty(), '.')) {
+                path = path.get(property);
             }
-            Expression<?> expression = order.isIgnoreCase() && path != null ? builder.lower(path.type().as(String.class)) : path;
+            Expression<?> expression = order.isIgnoreCase() ? builder.lower(path.type().as(String.class)) : path;
             orders.add(order.isAscending() ? builder.asc(expression) : builder.desc(expression));
         }
         criteriaQuery.orderBy(orders);

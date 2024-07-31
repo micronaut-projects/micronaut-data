@@ -34,7 +34,6 @@ import io.micronaut.data.model.runtime.UpdateOperation;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -166,7 +165,7 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
     default <T> Iterable<T> updateAll(@NonNull UpdateBatchOperation<T> operation) {
         return operation.split().stream()
                 .map(this::update)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -179,7 +178,7 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
     default <T> Iterable<T> persistAll(@NonNull InsertBatchOperation<T> operation) {
         return operation.split().stream()
                 .map(this::persist)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**

@@ -134,14 +134,14 @@ class ProjectionSpec extends Specification {
         types.contains(Pet.PetType.CAT)
 
         when:"a native query is used"
-        List names = petRepository.findPetNamesNative().collect(Collectors.toList())
+        List names = petRepository.findPetNamesNative().toList()
 
         then:
         names.size() == 3
         names.containsAll(["A", "B", "C"])
 
         when:"a native query is used"
-        types = petRepository.findPetTypesNative().collect(Collectors.toList())
+        types = petRepository.findPetTypesNative().toList()
 
         then:
         types.size() == 2

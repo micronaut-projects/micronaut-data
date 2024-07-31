@@ -23,7 +23,9 @@ import io.micronaut.core.annotation.NonNull;
  *
  * @author graemerocher
  * @since 1.0
+ * @deprecated Replaced by JPA criteria
  */
+@Deprecated(forRemoval = true, since = "4.9")
 public class AssociationQuery extends DefaultQuery implements QueryModel.Criterion {
 
     private final Association association;

@@ -22,25 +22,27 @@ import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.IExpression;
+import io.micronaut.data.model.jpa.criteria.IPredicate;
+import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
-import io.micronaut.data.model.jpa.criteria.impl.IdExpression;
-import io.micronaut.data.model.jpa.criteria.impl.LiteralExpression;
-import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitable;
+import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
-import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitable;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
+import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExpressionBinaryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInValuesPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyUnaryPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.selection.AggregateExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import jakarta.persistence.criteria.Expression;
@@ -98,17 +100,25 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
         if (path instanceof PersistentAssociationPath<?, ?> associationPath) {
             if (associationPath.getAssociation().getKind() == Relation.Kind.EMBEDDED) {
                 // Cannot join embedded
-
                 joinAssociation(path.getParentPath());
             } else {
                 join(associationPath);
             }
         } else if (path instanceof PersistentPropertyPath<?> persistentPropertyPath) {
             Path<?> parentPath = persistentPropertyPath.getParentPath();
-            if (parentPath instanceof PersistentAssociationPath<?, ?> parent
-                && PersistentEntityUtils.isAccessibleWithoutJoin(parent.getAssociation(), persistentPropertyPath.getProperty())) {
-                // We don't need a join to access the ID
-                return;
+            if (parentPath instanceof PersistentAssociationPath<?, ?> parent) {
+                if (PersistentEntityUtils.isAccessibleWithoutJoin(parent.getAssociation(), persistentPropertyPath.getProperty())) {
+                    // We don't need a join this association to access the ID
+                    // Previous association should be joined
+                    Path<?> parentParentPath = parent.getParentPath();
+                    if (parentParentPath instanceof PersistentEntityRoot<?>) {
+                        return;
+                    }
+                    if (parentParentPath != null) {
+                        joinAssociation(parentParentPath);
+                    }
+                    return;
+                }
             }
             joinAssociation(parentPath);
         }
@@ -151,14 +161,14 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
     }
 
     private void visitPredicateExpression(Expression<?> expression) {
-        if (expression instanceof PredicateVisitable predicateVisitable) {
-            predicateVisitable.accept(this);
+        if (expression instanceof IPredicate predicateVisitable) {
+            predicateVisitable.visitPredicate(this);
         } else if (expression instanceof PersistentPropertyPath<?> persistentPropertyPath) {
             joinIfNeeded(persistentPropertyPath, true);
         }
     }
 
-    private void visitSelectionExpression(Expression<?> expression) {
+    private void visitExpression(Expression<?> expression) {
         if (expression instanceof PersistentPropertyPath<?> persistentPropertyPath) {
             joinIfNeeded(persistentPropertyPath, false);
         }
@@ -176,14 +186,14 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
 
     @Override
     public void visit(AliasedSelection<?> aliasedSelection) {
-        ((SelectionVisitable) aliasedSelection.getSelection()).accept(this);
+        aliasedSelection.getSelection().visitSelection(this);
     }
 
     @Override
     public void visit(CompoundSelection<?> compoundSelection) {
         for (Selection<?> selection : compoundSelection.getCompoundSelectionItems()) {
-            if (selection instanceof SelectionVisitable selectionVisitable) {
-                selectionVisitable.accept(this);
+            if (selection instanceof ISelection<?> selectionVisitable) {
+                selectionVisitable.visitSelection(this);
             } else {
                 throw new IllegalStateException("Unknown selection object: " + selection);
             }
@@ -199,8 +209,19 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
     }
 
     @Override
-    public void visit(AggregateExpression<?, ?> aggregateExpression) {
-        visitSelectionExpression(aggregateExpression.getExpression());
+    public void visit(UnaryExpression<?> unaryExpression) {
+        visitExpression(unaryExpression.getExpression());
+    }
+
+    @Override
+    public void visit(BinaryExpression<?> binaryExpression) {
+        visitExpression(binaryExpression.getLeft());
+        visitExpression(binaryExpression.getRight());
+    }
+
+    @Override
+    public void visit(FunctionExpression<?> functionExpression) {
+        functionExpression.getExpressions().forEach(this::visitExpression);
     }
 
     @Override
@@ -223,11 +244,6 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
     }
 
     @Override
-    public void visit(PersistentPropertyInPredicate<?> propertyIn) {
-        joinIfNeeded(propertyIn.getPropertyPath(), true);
-    }
-
-    @Override
     public void visit(PersistentPropertyUnaryPredicate<?> propertyOp) {
         joinIfNeeded(propertyOp.getPropertyPath(), true);
     }
@@ -244,7 +260,7 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
     }
 
     @Override
-    public void visit(PersistentPropertyInValuesPredicate<?> inValues) {
+    public void visit(PersistentPropertyInPredicate<?> inValues) {
         joinIfNeeded(inValues.getPropertyPath(), true);
         inValues.getValues().forEach(this::visitPredicateExpression);
     }
@@ -253,6 +269,11 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
     public void visit(ExpressionBinaryPredicate expressionBinaryPredicate) {
         visitPredicateExpression(expressionBinaryPredicate.getLeft());
         visitPredicateExpression(expressionBinaryPredicate.getRight());
+    }
+
+    @Override
+    public void visit(LikePredicate likePredicate) {
+        visitPredicateExpression(likePredicate.getExpression());
     }
 
     /**

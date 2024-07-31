@@ -24,6 +24,7 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.operations.RepositoryOperations;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Runtime implementation of {@code CompletableFuture<Page> find(Specification, Pageable)}.
@@ -57,11 +58,14 @@ public class FindPageAsyncSpecificationInterceptor extends AbstractAsyncSpecific
         if (pageable.isUnpaged()) {
             return findAllAsync(methodKey, context, Type.FIND_PAGE).thenApply(iterable -> {
                 List<?> resultList = CollectionUtils.iterableToList(iterable);
-                return Page.of(resultList, pageable, resultList.size());
+                return Page.of(resultList, pageable, (long) resultList.size());
             });
         }
-        return findAllAsync(methodKey, context, Type.FIND_PAGE).thenCompose(iterable -> countAsync(methodKey, context)
-            .thenApply(count -> Page.of(CollectionUtils.iterableToList(iterable), pageable, count.longValue())));
+        return findAllAsync(methodKey, context, Type.FIND_PAGE).thenCompose(iterable ->
+            pageable.requestTotal()
+                ? countAsync(methodKey, context).thenApply(count -> Page.of(CollectionUtils.iterableToList(iterable), pageable, count.longValue()))
+                : CompletableFuture.completedFuture(Page.of(CollectionUtils.iterableToList(iterable), pageable, null))
+        );
 
     }
 

@@ -44,7 +44,7 @@ class CriteriaSpec extends AbstractCriteriaSpec {
 
     void setup() {
         testEntityElement = buildCustomElement()
-        criteriaBuilder = new SourcePersistentEntityCriteriaBuilderImpl(entityResolver)
+        criteriaBuilder = new SourcePersistentEntityCriteriaBuilderImpl(entityResolver, criteriaBuilder)
         criteriaQuery = criteriaBuilder.createQuery()
         criteriaDelete = criteriaBuilder.createCriteriaDelete(null)
         criteriaUpdate = criteriaBuilder.createCriteriaUpdate(null)
@@ -63,6 +63,23 @@ class CriteriaSpec extends AbstractCriteriaSpec {
     @Override
     PersistentEntityRoot createRoot(CriteriaUpdate query) {
         return query.from(testEntityElement)
+    }
+
+    void "test function projection 3"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            criteriaQuery.select(
+                    criteriaBuilder.function(
+                            "MYFUNC3",
+                            String,
+                            criteriaBuilder.parameter(String),
+                            criteriaBuilder.literal("abc")
+                    )
+            )
+            String query = getSqlQuery(criteriaQuery)
+
+        expect:
+            query == '''SELECT MYFUNC3(?,'abc') FROM "test" test_'''
     }
 
     @Unroll
@@ -134,10 +151,9 @@ class CriteriaSpec extends AbstractCriteriaSpec {
                     '((test_."amount" >= ? AND test_."amount" <= ?))',
                     '(test_."enabled" = TRUE)',
                     '(test_."enabled" = TRUE) ORDER BY test_."amount" DESC,test_."budget" ASC',
-                    '(test_."budget" = 200 AND ((test_."enabled" = TRUE OR test_."enabled2" = TRUE) OR test_."amount" = 100))'
+                    '(test_."budget" = 200 AND (test_."enabled" = TRUE OR test_."enabled2" = TRUE OR test_."amount" = 100))'
             ]
     }
-
 
     @Unroll
     void "test delete"(DeleteSpecification specification) {

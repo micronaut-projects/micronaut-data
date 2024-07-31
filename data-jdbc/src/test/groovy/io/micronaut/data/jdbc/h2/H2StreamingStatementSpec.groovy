@@ -37,7 +37,7 @@ class H2StreamingStatementSpec extends Specification {
         personRepository.save(new Person(name: 'd'))
 
         when:
-            def list = personRepository.findAllAndStream().collect(Collectors.toList())
+            def list = personRepository.findAllAndStream().toList()
 
         then:
             list.size() == 4

@@ -17,14 +17,15 @@ package io.micronaut.data.processor.visitors.finders.criteria;
 
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaDelete;
-import io.micronaut.data.model.jpa.criteria.impl.QueryModelPersistentEntityCriteriaQuery;
-import io.micronaut.data.model.query.QueryModel;
+import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
+import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
 import io.micronaut.data.processor.model.criteria.impl.MethodMatchSourcePersistentEntityCriteriaBuilderImpl;
@@ -37,8 +38,13 @@ import io.micronaut.data.processor.visitors.finders.MethodNameParser;
 import io.micronaut.data.processor.visitors.finders.QueryMatchId;
 import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
 import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.inject.ast.ParameterElement;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Selection;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -81,7 +87,7 @@ public class DeleteCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         boolean predicatedApplied = false;
         for (MethodNameParser.Match match : matches) {
             if (match.id() == QueryMatchId.PREDICATE) {
-                applyPredicates(match.part(), matchContext.getParameters(), root, query, cb);
+                applyPredicates(matchContext, match.part(), matchContext.getParameters(), root, query, cb);
                 predicatedApplied = true;
             }
             if (match.id() == QueryMatchId.RETURNING) {
@@ -89,10 +95,75 @@ public class DeleteCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             }
         }
         if (!predicatedApplied) {
-            applyPredicates(matchContext.getParametersNotInRole(), root, query, cb);
+            applyPredicates(matchContext, matchContext.getParametersNotInRole(), root, query, cb);
         }
 
         applyJoinSpecs(root, joinSpecsAtMatchContext(matchContext, true));
+    }
+
+    private <T> void applyPredicates(MethodMatchContext matchContext,
+                                     List<ParameterElement> parameters,
+                                     PersistentEntityRoot<T> root,
+                                     PersistentEntityCriteriaDelete<T> query,
+                                     SourcePersistentEntityCriteriaBuilder cb) {
+        ParameterElement entityParameter = getEntityParameter();
+        if (entityParameter == null) {
+            entityParameter = getEntitiesParameter();
+        }
+        Predicate predicate;
+        if (entityParameter != null) {
+            final SourcePersistentEntity rootEntity = (SourcePersistentEntity) root.getPersistentEntity();
+            if (rootEntity.getVersion() != null) {
+                predicate = cb.and(
+                    cb.equal(root.id(), cb.entityPropertyParameter(entityParameter, new PersistentPropertyPath(rootEntity.getIdentity()))),
+                    cb.equal(root.version(), cb.entityPropertyParameter(entityParameter, new PersistentPropertyPath(rootEntity.getVersion())))
+                );
+            } else {
+                boolean generateInIdList = getEntitiesParameter() != null
+                    && !rootEntity.hasCompositeIdentity()
+                    && !rootEntity.getIdentity().isEmbedded();
+                if (generateInIdList) {
+                    predicate = root.id().in(cb.entityPropertyParameter(entityParameter, new PersistentPropertyPath(rootEntity.getIdentity())));
+                } else {
+                    predicate = cb.equal(root.id(), cb.entityPropertyParameter(entityParameter, new PersistentPropertyPath(rootEntity.getIdentity())));
+                }
+            }
+        } else {
+            predicate = extractPredicates(parameters, root, cb);
+        }
+        predicate = interceptPredicate(matchContext, List.of(), root, cb, predicate);
+        if (predicate != null) {
+            query.where(predicate);
+        }
+    }
+
+    /**
+     * Apply predicates.
+     *
+     * @param matchContext  The matchContext
+     * @param querySequence The query sequence
+     * @param parameters    The parameters
+     * @param root          The root
+     * @param query         The query
+     * @param cb            The criteria builder
+     * @param <T>           The entity type
+     */
+    private <T> void applyPredicates(MethodMatchContext matchContext,
+                                     String querySequence,
+                                     ParameterElement[] parameters,
+                                     PersistentEntityRoot<T> root,
+                                     PersistentEntityCriteriaDelete<T> query,
+                                     SourcePersistentEntityCriteriaBuilder cb) {
+        Iterator<ParameterElement> parametersIterator = Arrays.asList(parameters).iterator();
+        Predicate predicate = extractPredicates(querySequence, parametersIterator, root, cb);
+        List<ParameterElement> remainingParameters = new ArrayList<>(parameters.length);
+        while (parametersIterator.hasNext()) {
+            remainingParameters.add(parametersIterator.next());
+        }
+        predicate = interceptPredicate(matchContext, remainingParameters, root, cb, predicate);
+        if (predicate != null) {
+            query.where(predicate);
+        }
     }
 
     /**
@@ -138,8 +209,8 @@ public class DeleteCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         boolean optimisticLock = ((AbstractPersistentEntityCriteriaDelete<?>) criteriaQuery).hasVersionRestriction();
 
         final AnnotationMetadataHierarchy annotationMetadataHierarchy = new AnnotationMetadataHierarchy(
-                matchContext.getRepositoryClass().getAnnotationMetadata(),
-                matchContext.getAnnotationMetadata()
+            matchContext.getRepositoryClass().getAnnotationMetadata(),
+            matchContext.getAnnotationMetadata()
         );
 
         MethodResult result = analyzeMethodResult(
@@ -168,16 +239,15 @@ public class DeleteCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         }
 
         QueryBuilder queryBuilder = matchContext.getQueryBuilder();
-        QueryModel queryModel = ((QueryModelPersistentEntityCriteriaQuery) criteriaQuery).getQueryModel();
-        QueryResult queryResult = queryBuilder.buildDelete(annotationMetadataHierarchy, queryModel);
+        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(annotationMetadataHierarchy, queryBuilder);
 
         return new MethodMatchInfo(
-                getOperationType(),
-                resultType,
-                interceptorType
+            getOperationType(),
+            resultType,
+            interceptorType
         )
-                .optimisticLock(optimisticLock)
-                .queryResult(queryResult);
+            .optimisticLock(optimisticLock)
+            .queryResult(queryResult);
     }
 
     @Override

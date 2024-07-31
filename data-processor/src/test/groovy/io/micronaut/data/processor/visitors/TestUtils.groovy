@@ -95,6 +95,10 @@ class TestUtils {
         return getParameterBindingPaths(metadata.getAnnotation(DataMethod))
     }
 
+    static Object[] getParameterValues(AnnotationMetadataProvider metadata) {
+        return getParameterValues(metadata.getAnnotation(DataMethod))
+    }
+
     static DataType[] getDataTypes(AnnotationMetadataProvider metadata) {
         return getDataTypes(metadata.getAnnotation(DataMethod))
     }
@@ -173,6 +177,15 @@ class TestUtils {
                 .stream()
                 .map(p -> isExpression(p))
                 .toArray(Boolean[]::new)
+    }
+
+    static Object[] getParameterValues(AnnotationValue<DataMethod> annotationValue) {
+        return annotationValue.getAnnotations(DataMethod.META_MEMBER_PARAMETERS, DataMethodQueryParameter)
+                .stream()
+                .map(p -> {
+                    p.get(AnnotationMetadata.VALUE_MEMBER, Object).orElse(null)
+                })
+                .toArray(Object[]::new)
     }
 
     private static String getPropertyPath(AnnotationValue<DataMethodQueryParameter> p) {

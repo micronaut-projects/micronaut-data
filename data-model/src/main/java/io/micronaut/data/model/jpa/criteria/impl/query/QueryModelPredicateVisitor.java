@@ -20,20 +20,20 @@ import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.IExpression;
+import io.micronaut.data.model.jpa.criteria.IPredicate;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
-import io.micronaut.data.model.jpa.criteria.impl.IdExpression;
-import io.micronaut.data.model.jpa.criteria.impl.LiteralExpression;
-import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitable;
+import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.AbstractPersistentPropertyPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExpressionBinaryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInValuesPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyUnaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateBinaryOp;
 import io.micronaut.data.model.query.QueryModel;
@@ -45,7 +45,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.StringJoiner;
-import java.util.stream.Collectors;
 
 /**
  * The predicate visitor to convert criteria predicates to {@link QueryModel}.
@@ -54,7 +53,7 @@ import java.util.stream.Collectors;
  * @since 3.2
  */
 @Internal
-public class QueryModelPredicateVisitor implements PredicateVisitor {
+public final class QueryModelPredicateVisitor implements PredicateVisitor {
 
     private final QueryModel queryModel;
     private State state = new State();
@@ -64,8 +63,8 @@ public class QueryModelPredicateVisitor implements PredicateVisitor {
     }
 
     private void visit(IExpression<Boolean> expression) {
-        if (expression instanceof PredicateVisitable predicateVisitable) {
-            predicateVisitable.accept(this);
+        if (expression instanceof IPredicate predicateVisitable) {
+            predicateVisitable.visitPredicate(this);
         } else if (expression instanceof PersistentPropertyPath<?> propertyPath) {
             // TODO
             add(Restrictions.isTrue(getPropertyPath(propertyPath)));
@@ -206,12 +205,6 @@ public class QueryModelPredicateVisitor implements PredicateVisitor {
                 return Restrictions.endsWith(leftProperty, rightProperty);
             case STARTS_WITH:
                 return Restrictions.startsWith(leftProperty, rightProperty);
-            case ILIKE:
-                return Restrictions.ilike(leftProperty, rightProperty);
-            case RLIKE:
-                return Restrictions.rlike(leftProperty, rightProperty);
-            case LIKE:
-                return Restrictions.like(leftProperty, rightProperty);
             case REGEX:
                 return Restrictions.regex(leftProperty, rightProperty);
             case EQUALS_IGNORE_CASE:
@@ -283,25 +276,7 @@ public class QueryModelPredicateVisitor implements PredicateVisitor {
     }
 
     @Override
-    public void visit(PersistentPropertyInPredicate<?> propertyIn) {
-        Collection<?> values = propertyIn.getValues();
-        Object value = values;
-        if (!values.isEmpty()) {
-            Object first = values.iterator().next();
-            if (first instanceof ParameterExpression) {
-                value = asValue(first);
-            }
-        }
-        if (state.negated) {
-            state.negated = false;
-            add(Restrictions.notIn(getPropertyPath(propertyIn), value));
-        } else {
-            add(Restrictions.in(getPropertyPath(propertyIn), value));
-        }
-    }
-
-    @Override
-    public void visit(PersistentPropertyInValuesPredicate<?> inValues) {
+    public void visit(PersistentPropertyInPredicate<?> inValues) {
         Collection<?> values = inValues.getValues();
         if (!values.isEmpty()) {
             Iterator<?> iterator = values.iterator();
@@ -323,14 +298,18 @@ public class QueryModelPredicateVisitor implements PredicateVisitor {
             state.negated = false;
             add(Restrictions.notIn(
                     getPropertyPath(inValues),
-                    values.stream().map(this::asValue).collect(Collectors.toList())
+                    values.stream().map(this::asValue).toList()
             ));
         } else {
             add(Restrictions.in(
                     getPropertyPath(inValues),
-                    values.stream().map(this::asValue).collect(Collectors.toList())
+                    values.stream().map(this::asValue).toList()
             ));
         }
+    }
+
+    @Override
+    public void visit(LikePredicate likePredicate) {
     }
 
     private Object asValue(Object value) {

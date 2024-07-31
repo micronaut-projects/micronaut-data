@@ -19,11 +19,11 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExpressionBinaryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInValuesPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyUnaryPredicate;
 
 /**
@@ -85,17 +85,17 @@ public interface PredicateVisitor {
     void visit(PersistentPropertyBinaryPredicate<?> propertyToExpressionOp);
 
     /**
-     * Visit {@link PersistentPropertyInValuesPredicate}.
-     *
-     * @param inValues The inValues
-     */
-    void visit(PersistentPropertyInValuesPredicate<?> inValues);
-
-    /**
      * Visit {@link ExpressionBinaryPredicate}.
      *
      * @param expressionBinaryPredicate The expressionBinaryPredicate
      */
     void visit(ExpressionBinaryPredicate expressionBinaryPredicate);
+
+    /**
+     * Visit {@link LikePredicate}.
+     *
+     * @param likePredicate The like predicate
+     */
+    void visit(LikePredicate likePredicate);
 
 }

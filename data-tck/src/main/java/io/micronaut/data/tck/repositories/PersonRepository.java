@@ -16,10 +16,12 @@
 package io.micronaut.data.tck.repositories;
 
 import io.micronaut.context.annotation.Parameter;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.model.CursoredPage;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Slice;
@@ -173,10 +175,19 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
 
     List<String> findDistinctName();
 
-    class Specifications {
+    CursoredPage<Person> retrieve(@NonNull Pageable pageable);
+
+    final class Specifications {
+
+        private Specifications() {
+        }
 
         public static PredicateSpecification<Person> nameEquals(String name) {
             return (root, criteriaBuilder) -> criteriaBuilder.equal(root.get("name"), name);
+        }
+
+        public static PredicateSpecification<Person> nameLike(String name) {
+            return (root, criteriaBuilder) -> criteriaBuilder.like(root.get("name"), name);
         }
 
         public static PredicateSpecification<Person> nameEqualsCaseInsensitive(String name) {

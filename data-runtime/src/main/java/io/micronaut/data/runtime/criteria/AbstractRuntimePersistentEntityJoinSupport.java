@@ -19,33 +19,65 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
+import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityJoinSupport;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import jakarta.persistence.criteria.CriteriaBuilder;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 @Internal
-abstract class AbstractRuntimePersistentEntityJoinSupport<T, J> extends AbstractPersistentEntityJoinSupport<T, J> {
+abstract class AbstractRuntimePersistentEntityJoinSupport<T, E> extends AbstractPersistentEntityJoinSupport<T, E> {
+
+    private final CriteriaBuilder criteriaBuilder;
+
+    AbstractRuntimePersistentEntityJoinSupport(CriteriaBuilder criteriaBuilder) {
+        this.criteriaBuilder = criteriaBuilder;
+    }
 
     protected abstract List<Association> getCurrentPath();
 
     @Override
-    protected <X, Y> PersistentAssociationPath<X, Y> createJoinAssociation(Association association,
-                                                                           Join.Type associationJoinType,
-                                                                           String alias) {
+    public abstract RuntimePersistentEntity<E> getPersistentEntity();
+
+    @Override
+    protected <Y> PersistentAssociationPath<E, Y> createJoinAssociation(Association association,
+                                                                        Join.Type associationJoinType,
+                                                                        String alias) {
         Class<?> type = ((RuntimeAssociation<?>) association).getProperty().getType();
+        RuntimeAssociation<E> runtimeAssociation = (RuntimeAssociation<E>) association;
         if (List.class.isAssignableFrom(type)) {
-            return new RuntimePersistentListAssociationPath<X, Y>(this, (RuntimeAssociation) association, getCurrentPath(), associationJoinType, alias);
+            return new RuntimePersistentListAssociationPath<>(this, runtimeAssociation, getCurrentPath(), associationJoinType, alias, criteriaBuilder);
         }
         if (Set.class.isAssignableFrom(type)) {
-            return new RuntimePersistentSetAssociationPath<X, Y>(this, (RuntimeAssociation) association, getCurrentPath(), associationJoinType, alias);
+            return new RuntimePersistentSetAssociationPath<>(this, runtimeAssociation, getCurrentPath(), associationJoinType, alias, criteriaBuilder);
         }
         if (Collection.class.isAssignableFrom(type)) {
-            return new RuntimePersistentCollectionAssociationPath<X, Y>(this, (RuntimeAssociation) association, getCurrentPath(), associationJoinType, alias);
+            return new RuntimePersistentCollectionAssociationPath<>(this, runtimeAssociation, getCurrentPath(), associationJoinType, alias, criteriaBuilder);
         }
-        return new RuntimePersistentAssociationPath<X, Y>(this, (RuntimeAssociation) association, getCurrentPath(), associationJoinType, alias);
+        return new RuntimePersistentAssociationPath<>(this, runtimeAssociation, getCurrentPath(), associationJoinType, alias, criteriaBuilder);
+    }
+
+    @Override
+    public <Y> PersistentPropertyPath<Y> get(String attributeName) {
+        RuntimePersistentProperty<?> property = getPersistentEntity().getPropertyByName(attributeName);
+        if (property == null) {
+            throw new IllegalStateException("Cannot query entity [" + getPersistentEntity().getSimpleName() + "] on non-existent property: " + attributeName);
+        }
+        if (this instanceof PersistentAssociationPath<?, ?> associationPath) {
+            List<Association> associations = associationPath.getAssociations();
+            List<Association> newAssociations = new ArrayList<>(associations.size() + 1);
+            newAssociations.addAll(associations);
+            newAssociations.add(associationPath.getAssociation());
+            return new RuntimePersistentPropertyPathImpl<>(this, newAssociations, property, criteriaBuilder);
+        }
+        return new RuntimePersistentPropertyPathImpl<>(this, Collections.emptyList(), property, criteriaBuilder);
     }
 
 }

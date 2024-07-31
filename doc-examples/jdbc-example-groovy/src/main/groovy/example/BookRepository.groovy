@@ -46,6 +46,14 @@ interface BookRepository extends CrudRepository<Book, Long> { // <2>
     Slice<Book> list(Pageable pageable);
     // end::pageable[]
 
+    // tag::cursored-pageable[]
+    CursoredPage<Book> find(CursoredPageable pageable) // <1>
+
+    CursoredPage<Book> findByPagesBetween(int minPageCount, int maxPageCount, Pageable pageable) // <2>
+
+    Page<Book> findByTitleStartingWith(String title, Pageable pageable) // <3>
+    // end::cursored-pageable[]
+
     // tag::simple-projection[]
     List<String> findTitleByPagesGreaterThan(int pageCount);
     // end::simple-projection[]
