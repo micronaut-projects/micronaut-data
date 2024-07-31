@@ -54,7 +54,7 @@ dependencies {
 
     // mysql
     //testImplementation mnR2dbc.r2dbc.io.asyncer.mysql
-    testImplementation "io.asyncer:r2dbc-mysql:1.1.3"
+    testImplementation "io.asyncer:r2dbc-mysql:1.2.0"
     testImplementation mnSql.mysql.connector.java
 
     // h2
