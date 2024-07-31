@@ -1,0 +1,29 @@
+// Simple module without test resources and native just for testing current work. To be removed.
+
+plugins {
+    id "java"
+    id "io.micronaut.application"
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+tasks.register("testExamples") {
+    dependsOn "test"
+}
+
+dependencies {
+    micronautBoms(
+            platform("io.micronaut:micronaut-core-bom:$micronautVersion"),
+            platform(mnTest.micronaut.test.bom)
+    )
+    testRuntimeOnly mnSerde.micronaut.serde.jackson
+    runtimeOnly mn.snakeyaml
+}
+
+configurations.configureEach {
+    resolutionStrategy.preferProjectModules()
+}

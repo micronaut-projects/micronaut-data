@@ -56,6 +56,7 @@ import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 
 import java.lang.annotation.Annotation;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1178,12 +1179,26 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 });
             }
 
-            builder = INSERT_INTO + getTableName(entity) +
-                " (" + String.join(",", columns) + CLOSE_BRACKET + " " +
-                "VALUES (" + String.join(String.valueOf(COMMA), values) + CLOSE_BRACKET;
+            builder = "";
+            if (dialect == Dialect.ORACLE) {
+                builder = MessageFormat.format("DECLARE\n" +
+                    "   TYPE {0}Rec IS TABLE OF {0}%ROWTYPE;\n" +
+                    "   inserted {0}Rec;\n" +
+                    "BEGIN\n", entity.getPersistedName());
+            }
+            builder += INSERT_INTO + getTableName(entity) +
+                    " (" + String.join(",", columns) + CLOSE_BRACKET + " " +
+                    "VALUES (" + String.join(String.valueOf(COMMA), values) + CLOSE_BRACKET;
 
             if (isReturning) {
-                builder += RETURNING + String.join(",", resultColumns);
+                builder += RETURNING;
+                if (dialect == Dialect.ORACLE) {
+                    // TODO: Temp hard coded to see what is returned
+                    builder += "\"ID\", \"TITLE\", \"PAGES\"";
+                    builder += " BULK COLLECT INTO inserted;\nEND;\n";
+                } else {
+                    builder += String.join(",", resultColumns);
+                }
             }
         }
         return QueryResult.of(

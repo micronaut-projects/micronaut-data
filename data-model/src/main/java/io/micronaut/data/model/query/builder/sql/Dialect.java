@@ -73,7 +73,7 @@ public enum Dialect {
     /**
      * Oracle 12c or above.
      */
-    ORACLE(true, true, ALL_TYPES, true, false, false, false),
+    ORACLE(true, true, ALL_TYPES, true, false, true, false),
     /**
      * Ansi compliant SQL.
      */
