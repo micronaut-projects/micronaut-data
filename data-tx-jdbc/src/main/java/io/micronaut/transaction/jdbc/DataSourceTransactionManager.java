@@ -260,7 +260,7 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
 
     /**
      * Checks if thrown exception is from the JDBC driver telling that feature is not supported.
-     * Foe example, some drivers don't release {@link Connection#releaseSavepoint(Savepoint)}
+     * For example, some drivers don't support {@link Connection#releaseSavepoint(Savepoint)}
      * and we want to handle that case and continue execution.
      *
      * @param exception The thrown exception
