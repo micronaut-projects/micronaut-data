@@ -179,8 +179,7 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
     protected void doNestedBegin(DefaultTransactionStatus<Connection> status) {
         try {
             Connection connection = status.getConnection();
-            String savePointName = getSavepointName(status.getTransactionDefinition().getName());
-            Savepoint savepoint = connection.setSavepoint(savePointName);
+            Savepoint savepoint = connection.setSavepoint();
             status.setSavepoint(savepoint);
         } catch (SQLException e) {
             throw new CannotCreateTransactionException("Could not create JDBC savepoint", e);
@@ -273,21 +272,5 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
             return OPERATION_NOT_SUPPORTED.equals(sqlException.getMessage());
         }
         return false;
-    }
-
-    /**
-     * Generates savepoint name from the given transaction name.
-     * Some connections don't support '.' (Oracle) and some accept max length 32
-     * so this method will return 'SavePoint' plus transaction name hash code in the result.
-     *
-     * @param transactionName The transaction name
-     * @return savepoint name for given transaction name
-     */
-    private static String getSavepointName(String transactionName) {
-        String savePointname = "SavePoint" + transactionName.hashCode();
-        // if hash code is negative, must replace '-' with '_' as some drivers
-        // don't except '-'
-        savePointname = savePointname.replace('-', '_');
-        return savePointname;
     }
 }
