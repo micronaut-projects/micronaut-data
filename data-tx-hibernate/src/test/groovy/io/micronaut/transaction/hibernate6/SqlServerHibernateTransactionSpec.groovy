@@ -4,7 +4,7 @@ package io.micronaut.transaction.hibernate6
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.tck.tests.TestResourcesDatabaseTestPropertyProvider
 
-class MSSQLHibernateTransactionSpec extends HibernateTransactionSpec implements TestResourcesDatabaseTestPropertyProvider {
+class SqlServerHibernateTransactionSpec extends HibernateTransactionSpec implements TestResourcesDatabaseTestPropertyProvider {
 
     @Override
     Dialect dialect() {
