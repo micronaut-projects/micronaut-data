@@ -22,6 +22,7 @@ import io.micronaut.data.connection.SynchronousConnectionManager;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
 
+
 /**
  * Abstract default transaction operations.
  *
@@ -50,4 +51,5 @@ public abstract class AbstractDefaultTransactionOperations<C> extends AbstractTr
     protected DefaultTransactionStatus<C> createNoTxTransactionStatus(ConnectionStatus<C> connectionStatus, TransactionDefinition definition) {
         return DefaultTransactionStatus.noTx(connectionStatus, definition);
     }
+
 }
