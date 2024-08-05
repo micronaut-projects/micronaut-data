@@ -211,7 +211,7 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
     protected void doNestedBegin(DefaultTransactionStatus<Session> status) {
         try {
             Session session = status.getConnection();
-            Savepoint savepoint = getConnection(session).setSavepoint(status.getTransactionDefinition().getName());
+            Savepoint savepoint = getConnection(session).setSavepoint();
             status.setSavepoint(savepoint);
         } catch (SQLException e) {
             throw new CannotCreateTransactionException("Could not create JDBC savepoint", e);
@@ -228,7 +228,13 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
             try {
                 getConnection(session).releaseSavepoint((Savepoint) status.getSavepoint());
             } catch (Exception e) {
-                throw new TransactionSystemException("Could release JDBC savepoint", e);
+                if (isUnsupportedOperation(e)) {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("JDBC SavePoint release not supported by the Session [{}]", session, e);
+                    }
+                } else {
+                    throw new TransactionSystemException("Could not release JDBC savepoint", e);
+                }
             }
         } else {
             throw new TransactionSystemException("Missing a JDBC savepoint");

@@ -36,7 +36,6 @@ import io.micronaut.transaction.support.AbstractDefaultTransactionOperations;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -57,8 +56,6 @@ import java.util.Objects;
 @TypeHint(DataSourceTransactionManager.class)
 public final class DataSourceTransactionManager extends AbstractDefaultTransactionOperations<Connection> {
 
-    // Error with this message is thrown from SQL server when operation is not supported (like Connection.releaseSavepoint)
-    private static final String OPERATION_NOT_SUPPORTED = "This operation is not supported.";
     private final DataSource dataSource;
 
     private boolean enforceReadOnly = false;
@@ -257,20 +254,4 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
         return connectionOperations.getConnectionStatus().getConnection();
     }
 
-    /**
-     * Checks if thrown exception is from the JDBC driver telling that feature is not supported.
-     * For example, some drivers don't support {@link Connection#releaseSavepoint(Savepoint)}
-     * and we want to handle that case and continue execution.
-     *
-     * @param exception The thrown exception
-     * @return true if exception is thrown for unsupported operation
-     */
-    private static boolean isUnsupportedOperation(Exception exception) {
-        if (exception instanceof SQLFeatureNotSupportedException) {
-            return true;
-        } else if (exception instanceof SQLException sqlException) {
-            return OPERATION_NOT_SUPPORTED.equals(sqlException.getMessage());
-        }
-        return false;
-    }
 }

@@ -22,6 +22,11 @@ import io.micronaut.data.connection.SynchronousConnectionManager;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
+import java.sql.Savepoint;
+
 /**
  * Abstract default transaction operations.
  *
@@ -31,6 +36,9 @@ import io.micronaut.transaction.impl.DefaultTransactionStatus;
  */
 @Internal
 public abstract class AbstractDefaultTransactionOperations<C> extends AbstractTransactionOperations<DefaultTransactionStatus<C>, C> {
+
+    // Error with this message is thrown from SQL server when operation is not supported (like Connection.releaseSavepoint)
+    protected static final String OPERATION_NOT_SUPPORTED = "This operation is not supported.";
 
     public AbstractDefaultTransactionOperations(ConnectionOperations<C> connectionOperations, SynchronousConnectionManager<C> synchronousConnectionManager) {
         super(connectionOperations, synchronousConnectionManager);
@@ -49,5 +57,22 @@ public abstract class AbstractDefaultTransactionOperations<C> extends AbstractTr
     @Override
     protected DefaultTransactionStatus<C> createNoTxTransactionStatus(ConnectionStatus<C> connectionStatus, TransactionDefinition definition) {
         return DefaultTransactionStatus.noTx(connectionStatus, definition);
+    }
+
+    /**
+     * Checks if thrown exception is from the JDBC driver telling that feature is not supported.
+     * For example, some drivers don't support {@link Connection#releaseSavepoint(Savepoint)}
+     * and we want to handle that case and continue execution.
+     *
+     * @param exception The thrown exception
+     * @return true if exception is thrown for unsupported operation
+     */
+    protected boolean isUnsupportedOperation(Exception exception) {
+        if (exception instanceof SQLFeatureNotSupportedException) {
+            return true;
+        } else if (exception instanceof SQLException sqlException) {
+            return OPERATION_NOT_SUPPORTED.equals(sqlException.getMessage());
+        }
+        return false;
     }
 }
