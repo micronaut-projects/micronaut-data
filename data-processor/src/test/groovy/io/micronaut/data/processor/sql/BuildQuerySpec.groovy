@@ -18,6 +18,7 @@ package io.micronaut.data.processor.sql
 import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.intercept.annotation.DataMethod
+import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.PersistentEntity
@@ -1397,5 +1398,60 @@ interface AccountRepository extends GenericRepository<Account, Long> {
             getQuery(findAll__withAllTenantsMethod) == 'SELECT account_.`id`,account_.`name`,account_.`tenancy` FROM `account` account_'
             getQuery(findAll__withTenantBar) == 'SELECT account_.`id`,account_.`name`,account_.`tenancy` FROM `account` account_ WHERE (account_.`tenancy` = \'bar\')'
             getQuery(findAll__withTenantFoo) == 'SELECT account_.`id`,account_.`name`,account_.`tenancy` FROM `account` account_ WHERE (account_.`tenancy` = \'foo\')'
+    }
+
+    void "test find CursoredPage with join"() {
+        given:
+        def repository = buildRepository('test.WorkRequestRepository', """
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.CursoredPage;
+import io.micronaut.data.model.CursoredPageable;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import jakarta.persistence.JoinColumn;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface WorkRequestRepository extends GenericRepository<WorkRequest, Long> {
+    @Join("resources")
+    CursoredPage<WorkRequest> findByResourcesName(String name, CursoredPageable pageable);
+}
+@MappedEntity
+class WorkRequest {
+
+    @Id
+    private Long id;
+    private String name;
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "workRequest")
+    private List<Resource> resources = List.of();
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public List<Resource> getResources() { return resources; }
+    public void setResources(List<Resource> resources) { this.resources = resources; }
+}
+@MappedEntity
+class Resource {
+    @Id
+    private Long id;
+    private String name;
+    private int pages;
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private WorkRequest workRequest;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public WorkRequest getWorkRequest() { return workRequest; }
+    public void setWorkRequest(WorkRequest workRequest) { this.workRequest = workRequest; }
+}
+""")
+
+        def findByResourceNameMethod = repository.getRequiredMethod("findByResourcesName", String, CursoredPageable)
+        def findByResourceNameQuery = getQuery(findByResourceNameMethod)
+
+        expect:
+        findByResourceNameQuery == 'SELECT work_request_.`id`,work_request_.`name`,work_request_resources_.`id` AS resources_id,work_request_resources_.`name` AS resources_name,work_request_resources_.`work_request_id` AS resources_work_request_id FROM `work_request` work_request_ INNER JOIN `resource` work_request_resources_ ON work_request_.`id`=work_request_resources_.`work_request_id` WHERE (work_request_resources_.`name` = ?)'
     }
 }
