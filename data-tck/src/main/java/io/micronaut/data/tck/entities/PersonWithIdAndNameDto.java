@@ -3,23 +3,5 @@ package io.micronaut.data.tck.entities;
 import io.micronaut.core.annotation.Introspected;
 
 @Introspected
-public class PersonWithIdAndNameDto {
-    private Long id;
-    private String name;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
+public record PersonWithIdAndNameDto(Long id, String name) {
 }
