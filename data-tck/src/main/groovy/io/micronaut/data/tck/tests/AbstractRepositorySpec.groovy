@@ -19,6 +19,7 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.core.util.CollectionUtils
 import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.exceptions.OptimisticLockException
+import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.repository.jpa.criteria.DeleteSpecification
@@ -60,7 +61,6 @@ import jakarta.persistence.criteria.CriteriaBuilder
 import jakarta.persistence.criteria.CriteriaUpdate
 import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Root
-import reactor.core.publisher.Mono
 import spock.lang.AutoCleanup
 import spock.lang.IgnoreIf
 import spock.lang.Shared
@@ -72,7 +72,6 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import java.util.stream.Collectors
 
 import static io.micronaut.data.tck.repositories.BookSpecifications.hasChapter
 import static io.micronaut.data.tck.repositories.BookSpecifications.titleEquals
@@ -523,10 +522,24 @@ abstract class AbstractRepositorySpec extends Specification {
 
         when:
         def book = bookDtoRepository.findByTitleWithQuery("The Stand")
-
         then:
         book.isPresent()
         book.get().title == "The Stand"
+
+        when:"Find projection cursored"
+        bookDtoRepository.findTitle(CursoredPageable.from(10, null))
+        then:"Exception is thrown"
+        thrown(IllegalStateException)
+
+        when:"Find dto without id property that is needed for cursors"
+        bookDtoRepository.findAll(CursoredPageable.from(10, null))
+        then:"Exception is thrown"
+        thrown(IllegalStateException)
+
+        when:"Find DTOs cursored"
+        def bookDtos = bookDtoRepository.findAllByTitle("The Stand", CursoredPageable.from(10, null))
+        then:"Successfully returned cursored page with DTOs as a result"
+        !bookDtos.empty
 
         cleanup:
         cleanupData()

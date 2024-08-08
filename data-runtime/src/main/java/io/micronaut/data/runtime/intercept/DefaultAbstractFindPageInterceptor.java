@@ -21,11 +21,13 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.CursoredPage;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Pageable.Cursor;
 import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
 
@@ -71,7 +73,16 @@ public abstract class DefaultAbstractFindPageInterceptor<T, R> extends AbstractQ
             if (pageable.getMode() == Mode.OFFSET) {
                 page = Page.of(results, pageable, totalCount);
             } else if (preparedQuery instanceof DefaultSqlPreparedQuery<?, ?> sqlPreparedQuery) {
-                List<Cursor> cursors = sqlPreparedQuery.createCursors((List<Object>) results, pageable);
+                List<Cursor> cursors;
+                List<Object> resultList = (List<Object>) results;
+                if (preparedQuery.getResultDataType() == DataType.ENTITY) {
+                    cursors = sqlPreparedQuery.createCursors(resultList, pageable);
+                } else if (sqlPreparedQuery.isDtoProjection()) {
+                    RuntimePersistentEntity<?> runtimePersistentEntity = operations.getEntity(sqlPreparedQuery.getResultType());
+                    cursors = sqlPreparedQuery.createCursors(resultList, pageable, runtimePersistentEntity);
+                } else {
+                    throw new IllegalStateException("CursoredPage cannot produce projection result");
+                }
                 page = CursoredPage.of(results, pageable, cursors, totalCount);
             } else {
                 throw new UnsupportedOperationException("Only offset pageable mode is supported by this query implementation");

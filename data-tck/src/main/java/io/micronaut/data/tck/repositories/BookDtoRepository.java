@@ -16,11 +16,14 @@
 package io.micronaut.data.tck.repositories;
 
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.model.CursoredPage;
+import io.micronaut.data.model.CursoredPageable;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.entities.BookDto;
+import io.micronaut.data.tck.entities.BookWithIdAndTitle;
 
 import java.util.List;
 import java.util.Optional;
@@ -40,4 +43,12 @@ public interface BookDtoRepository extends GenericRepository<Book, Long> {
     Page<BookDto> queryAll(Pageable pageable);
 
     Stream<BookDto> findStream(String title);
+
+    // This method will fail because DTO projection does not have ID
+    CursoredPage<BookDto> findAll(CursoredPageable pageable);
+
+    CursoredPage<BookWithIdAndTitle> findAllByTitle(String title, CursoredPageable pageable);
+
+    // This method will fail because CursoredPage cannot return single property
+    CursoredPage<String> findTitle(CursoredPageable pageable);
 }
