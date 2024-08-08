@@ -284,4 +284,29 @@ abstract class AbstractCursoredPageSpec extends Specification {
         cleanup:
         bookRepository.deleteAll()
     }
+
+    void "test cursored pageable without page size"() {
+        when: "People are searched for"
+        def pageable = CursoredPageable.from(Sort.of(Sort.Order.desc("name")))
+        def page = personRepository.findAll(PersonRepository.Specifications.nameLike("BBBB%"), pageable)
+
+        then: "The page is correct"
+        page.offset == 0
+        page.pageNumber == 0
+        page.totalSize == 30
+        page.content
+        !page.content.empty
+        page.content.forEach { it -> it instanceof Person}
+
+        when: "The next page is retrieved"
+        page = personRepository.findAll(PersonRepository.Specifications.nameLike("BBBB%"), page.nextPageable())
+
+        then: "it is correct"
+        page.offset == 0
+        page.pageNumber == 1
+        page.totalSize == 30
+        page.nextPageable().offset == 0
+        page.nextPageable().number == 2
+        page.content.empty
+    }
 }
