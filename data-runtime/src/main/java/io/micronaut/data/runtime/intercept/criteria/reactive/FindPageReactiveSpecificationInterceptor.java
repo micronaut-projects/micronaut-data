@@ -20,11 +20,9 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.CursoredPage;
-import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.runtime.PreparedQuery;
-import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
 import org.reactivestreams.Publisher;
@@ -82,15 +80,7 @@ public class FindPageReactiveSpecificationInterceptor extends AbstractReactiveSp
         } else {
             PreparedQuery preparedQuery = (PreparedQuery) context.getAttribute(PREPARED_QUERY_KEY).orElse(null);
             if (preparedQuery instanceof DefaultSqlPreparedQuery<?, ?> sqlPreparedQuery) {
-                List<Pageable.Cursor> cursors;
-                if (preparedQuery.getResultDataType() == DataType.ENTITY) {
-                    cursors = sqlPreparedQuery.createCursors(list, pageable);
-                } else if (sqlPreparedQuery.isDtoProjection()) {
-                    RuntimePersistentEntity<?> runtimePersistentEntity = operations.getEntity(sqlPreparedQuery.getResultType());
-                    cursors = sqlPreparedQuery.createCursors((List<Object>) list, pageable, runtimePersistentEntity);
-                } else {
-                    throw new IllegalStateException("CursoredPage cannot produce projection result");
-                }
+                List<Pageable.Cursor> cursors = sqlPreparedQuery.createCursors(list, pageable);
                 page = CursoredPage.of(list, pageable, cursors, count);
             } else {
                 throw new UnsupportedOperationException("Only offset pageable mode is supported by this query implementation");
