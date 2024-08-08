@@ -1,5 +1,6 @@
 introduction:
   title: Introduction
+  repository: Repository  
   whatsNew: What's New?
   breaks: Breaking Changes
   releaseHistory: Release History
