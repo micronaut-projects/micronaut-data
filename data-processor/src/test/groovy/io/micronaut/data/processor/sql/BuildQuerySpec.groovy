@@ -851,9 +851,9 @@ interface AuthorRepository extends GenericRepository<Author, Long> {
 
         expect:
         findAllQuery == 'SELECT author_.`id`,author_.`name`,author_.`nick_name`,author_books_.`id` AS books_id,author_books_.`author_id` AS books_author_id,author_books_.`genre_id` AS books_genre_id,author_books_.`title` AS books_title,author_books_.`total_pages` AS books_total_pages,author_books_.`publisher_id` AS books_publisher_id,author_books_.`last_updated` AS books_last_updated FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id`'
-        findAllCountQuery == 'SELECT COUNT(*) FROM `author` author_'
+        findAllCountQuery == 'SELECT COUNT(*) FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id`'
         findByNameQuery == 'SELECT author_.`id`,author_.`name`,author_.`nick_name`,author_books_.`id` AS books_id,author_books_.`author_id` AS books_author_id,author_books_.`genre_id` AS books_genre_id,author_books_.`title` AS books_title,author_books_.`total_pages` AS books_total_pages,author_books_.`publisher_id` AS books_publisher_id,author_books_.`last_updated` AS books_last_updated FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id` WHERE (author_.`name` = ? AND (author_.nick_name =?))'
-        findByNameCountQuery == 'SELECT COUNT(*) FROM `author` author_ WHERE (author_.`name` = ? AND (author_.nick_name =?))'
+        findByNameCountQuery == 'SELECT COUNT(*) FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id` WHERE (author_.`name` = ? AND (author_.nick_name =?))'
         findByNickNameQuery == 'SELECT author_.`id`,author_.`name`,author_.`nick_name` FROM `author` author_ WHERE (author_.`nick_name` = ? AND (author_.name =?))'
         findByNickNameCountQuery == 'SELECT COUNT(*) FROM `author` author_ WHERE (author_.`nick_name` = ? AND (author_.name =?))'
         getResultDataType(findAllMethod) == DataType.ENTITY
@@ -915,9 +915,9 @@ interface AuthorRepository extends GenericRepository<Author, Long> {
 
         expect:
             findAllQuery == 'SELECT author_.`id`,author_.`name`,author_.`nick_name`,author_books_.`id` AS books_id,author_books_.`author_id` AS books_author_id,author_books_.`genre_id` AS books_genre_id,author_books_.`title` AS books_title,author_books_.`total_pages` AS books_total_pages,author_books_.`publisher_id` AS books_publisher_id,author_books_.`last_updated` AS books_last_updated FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id`'
-            findAllCountQuery == 'SELECT COUNT(*) FROM `author` author_'
+            findAllCountQuery == 'SELECT COUNT(*) FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id`'
             findByNameQuery == 'SELECT author_.`id`,author_.`name`,author_.`nick_name`,author_books_.`id` AS books_id,author_books_.`author_id` AS books_author_id,author_books_.`genre_id` AS books_genre_id,author_books_.`title` AS books_title,author_books_.`total_pages` AS books_total_pages,author_books_.`publisher_id` AS books_publisher_id,author_books_.`last_updated` AS books_last_updated FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id` WHERE (author_.`name` = ? AND (author_.nick_name =?))'
-            findByNameCountQuery == 'SELECT COUNT(*) FROM `author` author_ WHERE (author_.`name` = ? AND (author_.nick_name =?))'
+            findByNameCountQuery == 'SELECT COUNT(*) FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id` WHERE (author_.`name` = ? AND (author_.nick_name =?))'
             findByNickNameQuery == 'SELECT author_.`id`,author_.`name`,author_.`nick_name` FROM `author` author_ WHERE (author_.`nick_name` = ? AND (author_.name =?))'
             findByNickNameCountQuery == 'SELECT COUNT(*) FROM `author` author_ WHERE (author_.`nick_name` = ? AND (author_.name =?))'
             getResultDataType(findAllMethod) == DataType.ENTITY
@@ -1400,13 +1400,14 @@ interface AccountRepository extends GenericRepository<Account, Long> {
             getQuery(findAll__withTenantFoo) == 'SELECT account_.`id`,account_.`name`,account_.`tenancy` FROM `account` account_ WHERE (account_.`tenancy` = \'foo\')'
     }
 
-    void "test find CursoredPage with join"() {
+    void "test find Pageable with join criteria"() {
         given:
         def repository = buildRepository('test.WorkRequestRepository', """
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.CursoredPage;
 import io.micronaut.data.model.CursoredPageable;
+import io.micronaut.data.model.Page;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.GenericRepository;
 import jakarta.persistence.JoinColumn;
@@ -1414,7 +1415,10 @@ import jakarta.persistence.JoinColumn;
 @JdbcRepository(dialect = Dialect.H2)
 interface WorkRequestRepository extends GenericRepository<WorkRequest, Long> {
     @Join("resources")
-    CursoredPage<WorkRequest> findByResourcesName(String name, CursoredPageable pageable);
+    Page<WorkRequest> findByResourcesName(String name, Pageable pageable);
+
+    @Join("resources")
+    CursoredPage<WorkRequest> findByResourcesKind(String kind, CursoredPageable pageable);
 }
 @MappedEntity
 class WorkRequest {
@@ -1439,19 +1443,25 @@ class Resource {
     private int pages;
     @Relation(Relation.Kind.MANY_TO_ONE)
     private WorkRequest workRequest;
+    private String kind;
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
     public WorkRequest getWorkRequest() { return workRequest; }
     public void setWorkRequest(WorkRequest workRequest) { this.workRequest = workRequest; }
+    public String getKind() { return kind; }
+    public void setKind(String kind) { this.kind = kind; }
 }
 """)
 
-        def findByResourceNameMethod = repository.getRequiredMethod("findByResourcesName", String, CursoredPageable)
-        def findByResourceNameQuery = getQuery(findByResourceNameMethod)
+        def findByResourcesNameMethod = repository.getRequiredMethod("findByResourcesName", String, Pageable)
+        def findByResourcesNameCountQuery = getCountQuery(findByResourcesNameMethod)
+        def findByResourcesKindMethod = repository.getRequiredMethod("findByResourcesKind", String, CursoredPageable)
+        def findByResourcesKindCountQuery = getCountQuery(findByResourcesKindMethod)
 
         expect:
-        findByResourceNameQuery == 'SELECT work_request_.`id`,work_request_.`name`,work_request_resources_.`id` AS resources_id,work_request_resources_.`name` AS resources_name,work_request_resources_.`work_request_id` AS resources_work_request_id FROM `work_request` work_request_ INNER JOIN `resource` work_request_resources_ ON work_request_.`id`=work_request_resources_.`work_request_id` WHERE (work_request_resources_.`name` = ?)'
+        findByResourcesNameCountQuery == 'SELECT COUNT(*) FROM `work_request` work_request_ INNER JOIN `resource` work_request_resources_ ON work_request_.`id`=work_request_resources_.`work_request_id` WHERE (work_request_resources_.`name` = ?)'
+        findByResourcesKindCountQuery == 'SELECT COUNT(*) FROM `work_request` work_request_ INNER JOIN `resource` work_request_resources_ ON work_request_.`id`=work_request_resources_.`work_request_id` WHERE (work_request_resources_.`kind` = ?)'
     }
 }

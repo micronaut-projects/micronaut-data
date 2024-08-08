@@ -230,19 +230,10 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             QueryModel countQuery = QueryModel.from(queryModel.getPersistentEntity());
             countQuery.projections().count();
             QueryModel.Junction junction = queryModel.getCriteria();
-            boolean emptyCriteria = true;
             for (QueryModel.Criterion criterion : junction.getCriteria()) {
                 countQuery.add(criterion);
-                emptyCriteria = false;
             }
-            // Joins are skipped for count query for OneToMany, ManyToMany
-            // however skipping joins from criteria could cause issues (in many to many?)
             for (JoinPath joinPath : queryModel.getJoinPaths()) {
-                Association association = joinPath.getAssociation();
-                if (emptyCriteria && association != null && !association.getKind().isSingleEnded()) {
-                    // skip OneToMany and ManyToMany
-                    continue;
-                }
                 Join.Type joinType = joinPath.getJoinType();
                 switch (joinType) {
                     case INNER:
