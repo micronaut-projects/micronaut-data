@@ -18,6 +18,7 @@ package io.micronaut.data.runtime.operations.internal.sql;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.CursoredPageable;
 import io.micronaut.data.model.DataType;
@@ -299,17 +300,46 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
      */
     @Internal
     public List<Cursor> createCursors(List<Object> results, Pageable pageable) {
+        return createCursors(results, pageable, getPersistentEntity());
+    }
+
+    /**
+     * Modify pageable based on the scan results.
+     * This is required for cursored pageable, as cursor is created from the results.
+     *
+     * @param results The scanning results
+     * @param pageable The pageable sent by user
+     * @param runtimePersistentEntity The runtime persistent entity. Actual repository persistent
+     *                                entity type or custom runtime persistent entity in case of DTO projection.
+     * @return The updated pageable
+     * @since 4.8.0
+     */
+    @Internal
+    public List<Cursor> createCursors(List<Object> results, Pageable pageable, RuntimePersistentEntity runtimePersistentEntity) {
         if (pageable.getMode() != Mode.CURSOR_NEXT && pageable.getMode() != Mode.CURSOR_PREVIOUS) {
             return null;
         }
+        if (CollectionUtils.isEmpty(results)) {
+            return List.of();
+        }
+
         if (pageable.getMode() == Mode.CURSOR_PREVIOUS) {
             Collections.reverse(results);
         }
         List<Cursor> cursors = new ArrayList<>(results.size());
-        for (Object result: results) {
+        boolean isDto = preparedQuery.isDtoProjection();
+        for (Object result : results) {
             List<Object> cursorElements = new ArrayList<>(cursorProperties.size());
             for (RuntimePersistentProperty<E> property : cursorProperties) {
-                cursorElements.add(property.getProperty().get((E) result));
+                if (isDto) {
+                    RuntimePersistentProperty dtoProperty = runtimePersistentEntity.getPropertyByName(property.getName());
+                    if (dtoProperty == null) {
+                        throw new IllegalStateException("DTO projection " + runtimePersistentEntity + " must contain property " + property.getName());
+                    }
+                    cursorElements.add(dtoProperty.getProperty().get(result));
+                } else {
+                    cursorElements.add(property.getProperty().get((E) result));
+                }
             }
             cursors.add(Cursor.of(cursorElements));
         }

@@ -21,9 +21,11 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.FindPageReactiveInterceptor;
 import io.micronaut.data.model.CursoredPage;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
 import org.reactivestreams.Publisher;
@@ -63,7 +65,15 @@ public class DefaultFindPageReactiveInterceptor extends AbstractPublisherInterce
                             if (pageable.getMode() == Pageable.Mode.OFFSET) {
                                 page = Page.of(list, pageable, total.longValue());
                             } else if (preparedQuery instanceof DefaultSqlPreparedQuery<?, ?> sqlPreparedQuery) {
-                                List<Pageable.Cursor> cursors = sqlPreparedQuery.createCursors(list, pageable);
+                                List<Pageable.Cursor> cursors;
+                                if (preparedQuery.getResultDataType() == DataType.ENTITY) {
+                                    cursors = sqlPreparedQuery.createCursors(list, pageable);
+                                } else if (sqlPreparedQuery.isDtoProjection()) {
+                                    RuntimePersistentEntity<?> runtimePersistentEntity = operations.getEntity(sqlPreparedQuery.getResultType());
+                                    cursors = sqlPreparedQuery.createCursors(list, pageable, runtimePersistentEntity);
+                                } else {
+                                    throw new IllegalStateException("CursoredPage cannot produce projection result");
+                                }
                                 page = CursoredPage.of(list, pageable, cursors, total.longValue());
                             } else {
                                 throw new UnsupportedOperationException("Only offset pageable mode is supported by this query implementation");
