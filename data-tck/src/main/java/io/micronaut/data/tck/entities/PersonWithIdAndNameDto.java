@@ -3,10 +3,10 @@ package io.micronaut.data.tck.entities;
 import io.micronaut.core.annotation.Introspected;
 
 @Introspected
-public class BookWithIdAndTitle {
-
+public class PersonWithIdAndNameDto {
     private Long id;
-    private String title;
+    private String name;
+
     public Long getId() {
         return id;
     }
@@ -15,11 +15,11 @@ public class BookWithIdAndTitle {
         this.id = id;
     }
 
-    public String getTitle() {
-        return title;
+    public String getName() {
+        return name;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public void setName(String name) {
+        this.name = name;
     }
 }
