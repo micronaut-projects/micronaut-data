@@ -63,6 +63,8 @@ import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Root
 import spock.lang.AutoCleanup
 import spock.lang.IgnoreIf
+import spock.lang.Issue
+import spock.lang.PendingFeature
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -2624,6 +2626,8 @@ abstract class AbstractRepositorySpec extends Specification {
         mealRepository.deleteById(meal.mid)
     }
 
+    @PendingFeature(reason = "Until fixed issue with count and joins")
+    @Issue("https://github.com/micronaut-projects/micronaut-data/issues/1882")
     void "test author page total size"() {
         given:
         def author = new Author()
@@ -2645,6 +2649,31 @@ abstract class AbstractRepositorySpec extends Specification {
         authorPage.content.size() == 1
         authorPage.content[0].books.size() == 2
         bookPage.totalSize == 2
+    }
+
+    void "test pageable with join criteria"() {
+        given:
+        def author = new Author()
+        author.name = "author1"
+        authorRepository.save(author)
+        def book1 = new Book()
+        book1.title = "book1"
+        book1.totalPages = 120
+        book1.author = author
+        def book2 = new Book()
+        book2.title = "book2"
+        book2.author = author
+        book2.totalPages = 120
+        bookRepository.save(book1)
+        bookRepository.save(book2)
+        when:
+        def authorPage = authorRepository.findByBooksTotalPages(120, CursoredPageable.from(10, null))
+        then:
+        !authorPage.empty
+        // TODO: Currently does not return correct total counts due to https://github.com/micronaut-projects/micronaut-data/issues/1882
+        // so once it is fixed check totalCount == 1
+        authorPage.cursors.size() == 1
+        authorPage.content.size() == 1
     }
 
     void 'test @Where and count'() {

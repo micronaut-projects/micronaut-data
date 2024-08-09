@@ -21,7 +21,6 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
-import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
@@ -233,14 +232,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             for (QueryModel.Criterion criterion : junction.getCriteria()) {
                 countQuery.add(criterion);
             }
-            // Joins are skipped for count query for OneToMany, ManyToMany
-            // however skipping joins from criteria could cause issues (in many to many?)
             for (JoinPath joinPath : queryModel.getJoinPaths()) {
-                Association association = joinPath.getAssociation();
-                if (association != null && !association.getKind().isSingleEnded()) {
-                    // skip OneToMany and ManyToMany
-                    continue;
-                }
                 Join.Type joinType = joinPath.getJoinType();
                 switch (joinType) {
                     case INNER:
