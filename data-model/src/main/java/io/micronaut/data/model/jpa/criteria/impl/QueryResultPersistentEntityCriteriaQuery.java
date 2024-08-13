@@ -18,7 +18,6 @@ package io.micronaut.data.model.jpa.criteria.impl;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.Join;
-import io.micronaut.data.model.Association;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.builder.QueryBuilder;
