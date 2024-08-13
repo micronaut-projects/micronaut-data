@@ -22,6 +22,7 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.CursoredPage;
+import io.micronaut.data.model.CursoredPageable;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Slice;
@@ -176,6 +177,9 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
     List<String> findDistinctName();
 
     CursoredPage<Person> retrieve(@NonNull Pageable pageable);
+
+    @NonNull
+    CursoredPage<Person> findAll(@Nullable PredicateSpecification<Person> spec, CursoredPageable pageable);
 
     final class Specifications {
 

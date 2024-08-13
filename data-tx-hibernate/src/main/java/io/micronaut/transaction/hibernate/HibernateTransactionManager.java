@@ -45,6 +45,7 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Savepoint;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -63,6 +64,9 @@ import java.util.Objects;
 @Requires(condition = HibernateTransactionManagerCondition.class)
 @TypeHint(HibernateTransactionManager.class)
 public final class HibernateTransactionManager extends AbstractDefaultTransactionOperations<Session> {
+
+    // Error with this message is thrown from SQL server when operation is not supported (like Connection.releaseSavepoint)
+    private static final String OPERATION_NOT_SUPPORTED = "This operation is not supported.";
 
     private boolean prepareConnection = true;
 
@@ -211,7 +215,7 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
     protected void doNestedBegin(DefaultTransactionStatus<Session> status) {
         try {
             Session session = status.getConnection();
-            Savepoint savepoint = getConnection(session).setSavepoint(status.getTransactionDefinition().getName());
+            Savepoint savepoint = getConnection(session).setSavepoint();
             status.setSavepoint(savepoint);
         } catch (SQLException e) {
             throw new CannotCreateTransactionException("Could not create JDBC savepoint", e);
@@ -228,7 +232,13 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
             try {
                 getConnection(session).releaseSavepoint((Savepoint) status.getSavepoint());
             } catch (Exception e) {
-                throw new TransactionSystemException("Could release JDBC savepoint", e);
+                if (isUnsupportedOperation(e)) {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("JDBC SavePoint release not supported by the Session [{}]", session, e);
+                    }
+                } else {
+                    throw new TransactionSystemException("Could not release JDBC savepoint", e);
+                }
             }
         } else {
             throw new TransactionSystemException("Missing a JDBC savepoint");
@@ -307,4 +317,20 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
         return ((SessionImplementor) session).getJdbcCoordinator().getLogicalConnection().getPhysicalConnection();
     }
 
+    /**
+     * Checks if thrown exception is from the JDBC driver telling that feature is not supported.
+     * For example, some drivers don't support {@link Connection#releaseSavepoint(Savepoint)}
+     * and we want to handle that case and continue execution.
+     *
+     * @param exception The thrown exception
+     * @return true if exception is thrown for unsupported operation
+     */
+    private static boolean isUnsupportedOperation(Exception exception) {
+        if (exception instanceof SQLFeatureNotSupportedException) {
+            return true;
+        } else if (exception instanceof SQLException sqlException) {
+            return OPERATION_NOT_SUPPORTED.equals(sqlException.getMessage());
+        }
+        return false;
+    }
 }
