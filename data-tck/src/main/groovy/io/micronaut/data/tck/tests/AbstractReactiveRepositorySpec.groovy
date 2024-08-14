@@ -26,6 +26,7 @@ import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.data.tck.entities.PersonDto
+import io.micronaut.data.tck.entities.PersonWithIdAndNameDto
 import io.micronaut.data.tck.entities.Student
 import io.micronaut.data.tck.repositories.PersonReactiveRepository
 import io.micronaut.data.tck.repositories.StudentReactiveRepository
@@ -676,7 +677,7 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
         List<Person> people = []
         50.times { num ->
             ('A'..'Z').each {
-                people << new Person(name: it * 5 + num)
+                people << new Person(name: it * 5 + num, age: new Random().nextInt(7, 77))
             }
         }
         personRepository.saveAll(people).collectList().block()
@@ -792,6 +793,48 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
                             (firstPageable) -> personRepository.findByNameLike("A%", firstPageable).block(),
                             (secondPageable) -> personRepository.findAll(PersonReactiveRepository.Specifications.nameLike("A%"), (Pageable) secondPageable).block()
                           ]
+    }
+
+    void "test pageable dto"() {
+        given:
+        setupPersonsForPageableTest()
+        when: "People are searched for"
+        def pageable = CursoredPageable.from(10, null)
+        Page<PersonWithIdAndNameDto> page = personRepository.searchByNameLike("AAAA%", pageable).block()
+
+        then: "The page is correct"
+        page.offset == 0
+        page.pageNumber == 0
+        page.totalSize == 50
+        page.content
+        page.content.forEach { it -> it instanceof PersonWithIdAndNameDto}
+
+        when: "The next page is retrieved"
+        page = personRepository.searchByNameLike("AAAA%", page.nextPageable()).block()
+
+        then: "it is correct"
+        page.offset == 10
+        page.pageNumber == 1
+        page.totalSize == 50
+        page.nextPageable().offset == 20
+        page.nextPageable().number == 2
+
+        when:"Find projection cursored"
+        personRepository.findNameByNameLike("BBBB%", CursoredPageable.from(10, null)).block()
+        then:"Exception is thrown"
+        thrown(IllegalStateException)
+
+        when:"Find cursored pageable DTO without id field"
+        personRepository.queryByAgeGreaterThan(15, CursoredPageable.from(10, null)).block()
+        then:"Exception thrown"
+        def err = thrown(IllegalStateException)
+        err.message == 'DTO projection ' + PersonDto.name + ' must contain property id'
+
+        when:"Find pageable DTO without id field"
+        def personDtoPage = personRepository.queryByAgeGreaterThan(15, Pageable.from(0, 10)).block()
+        then:"Result is returned without error"
+        personDtoPage
+        personDtoPage.content.forEach { it -> it instanceof PersonDto}
     }
 
     protected void savePersons(List<String> names) {
