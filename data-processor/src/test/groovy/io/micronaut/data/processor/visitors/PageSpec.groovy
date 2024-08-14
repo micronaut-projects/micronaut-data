@@ -218,7 +218,7 @@ interface MyInterface extends GenericRepository<Author, Long> {
         query.contains(expectedJoin)
         println(query)
         countQuery.contains("$alias")
-        !countQuery.contains(expectedJoin)
+        countQuery.contains(expectedJoin)
         println(countQuery)
 
         where:

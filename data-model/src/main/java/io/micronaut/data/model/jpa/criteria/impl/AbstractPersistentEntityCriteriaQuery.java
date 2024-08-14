@@ -153,11 +153,6 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
         for (Map.Entry<String, Joiner.Joined> e : joiner.getJoins().entrySet()) {
             Join.Type joinType = Optional.ofNullable(e.getValue().getType()).orElse(Join.Type.DEFAULT);
             if (remapFetchJoins) {
-                Association association = e.getValue().getAssociation().getAssociation();
-                if (association != null && !association.getKind().isSingleEnded()) {
-                    // skip OneToMany and ManyToMany
-                    continue;
-                }
                 joinType = switch (joinType) {
                     case INNER, FETCH -> Join.Type.DEFAULT;
                     case LEFT_FETCH -> Join.Type.LEFT;

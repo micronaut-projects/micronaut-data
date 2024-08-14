@@ -63,6 +63,10 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
         return false
     }
 
+    boolean failsInsertInReadOnlyTx() {
+        return false
+    }
+
     void "custom name transaction"() {
         when:
             bookService.bookAddedCustomNamedTransaction(new Runnable() {
@@ -77,8 +81,8 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
             assert bookService.countBooksTransactional() == 1
     }
 
-    void "test book added in read only transaction"() {
-        if (!supportsReadOnlyFlag()) {
+    void "test book added in read only transaction throws error"() {
+        if (!supportsReadOnlyFlag() || !failsInsertInReadOnlyTx()) {
             return
         }
         when:
@@ -88,8 +92,19 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
             cannotInsertInReadOnlyTx(e)
     }
 
-    void "test read only transaction adding book in inner transaction"() {
-        if (!supportsReadOnlyFlag()) {
+    void "test book added in read only transaction not throwing error"() {
+        if (!supportsReadOnlyFlag() || failsInsertInReadOnlyTx()) {
+            return
+        }
+        when:
+        bookService.bookAddedInReadOnlyTransaction()
+        then:
+        noExceptionThrown()
+        bookService.countBooksTransactional() == 1
+    }
+
+    void "test read only transaction adding book in inner transaction throws error"() {
+        if (!supportsReadOnlyFlag() || !failsInsertInReadOnlyTx()) {
             return
         }
         when:
@@ -97,6 +112,17 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
         then:
             def e = thrown(Exception)
             cannotInsertInReadOnlyTx(e)
+    }
+
+    void "test read only transaction adding book in inner transaction not throwing error"() {
+        if (!supportsReadOnlyFlag() || failsInsertInReadOnlyTx()) {
+            return
+        }
+        when:
+        bookService.readOnlyTxCallingAddingBookInAnotherTransaction()
+        then:
+        noExceptionThrown()
+        bookService.countBooksTransactional() == 1
     }
 
     void "test book added in never propagation"() {
