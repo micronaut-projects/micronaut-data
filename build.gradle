@@ -6,7 +6,6 @@ plugins {
 
 repositories {
     mavenCentral()
-    mavenLocal()
 }
 
 if (System.getenv("SONAR_TOKEN") != null) {

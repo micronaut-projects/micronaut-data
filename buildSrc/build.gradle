@@ -5,7 +5,6 @@ plugins {
 repositories {
     gradlePluginPortal()
     mavenCentral()
-    mavenLocal()
 }
 
 configurations.all {
