@@ -21,6 +21,7 @@ dependencies {
     implementation mn.micronaut.json.core
     compileOnly mnSerde.micronaut.serde.oracle.jdbc.json
     implementation mnReactor.micronaut.reactor
+    implementation libs.managed.reactor.netty.core
 
     compileOnly mnR2dbc.r2dbc.oracle
 
