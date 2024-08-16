@@ -26,11 +26,11 @@ managed-javax-persistence = "2.2"
 managed-jakarta-persistence-api = "3.1.0"
 managed-jakarta-transaction-api = "2.0.1"
 
-spring-data = "3.3.2"
+spring-data = "3.3.3"
 
 # Testing and benchmarking
 
-benchmark-spring-data = "2024.0.2"
+benchmark-spring-data = "2024.0.3"
 spock = "2.2-groovy-4.0"
 testcontainers = "1.19.4"
 jmh = "1.37"
