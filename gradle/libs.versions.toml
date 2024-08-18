@@ -48,9 +48,6 @@ shadow-gradle-plugin = "8.0.0"
 # meaning that they should be extracted into their own BOM
 kotlin-coroutines = "1.8.1"
 
-# Reactory Netty Dependencies
-managed-reactor-netty = "1.1.20"
-
 [libraries]
 micronaut-core = { module = 'io.micronaut:micronaut-core-bom', version.ref = 'micronaut' }
 
@@ -99,7 +96,7 @@ spring-data-commons = { module = "org.springframework.data:spring-data-commons",
 micronaut-azure-cosmos = { module = "io.micronaut.azure:micronaut-azure-cosmos", version.ref = "micronaut-azure" }
 
 # Reactor Netty Dependencies
-managed-reactor-netty-core = { module = "io.projectreactor.netty:reactor-netty-core", version.ref = "managed-reactor-netty" }
+reactor-netty-core = { module = "io.projectreactor.netty:reactor-netty-core" }
 
 # Test
 
