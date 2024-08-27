@@ -392,7 +392,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @param <RT>    The generic type
      * @return An result
      */
-    private <RT> RT getRequiredParameterInRole(MethodInvocationContext<?, ?> context, @NonNull String role, @NonNull Class<RT> type) {
+    protected <RT> RT getRequiredParameterInRole(MethodInvocationContext<?, ?> context, @NonNull String role, @NonNull Class<RT> type) {
         return getParameterInRole(context, role, type).orElseThrow(() -> new IllegalStateException("Cannot find parameter with role: " + role));
     }
 
@@ -405,7 +405,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @param <RT>    The generic type
      * @return An optional result
      */
-    private <RT> Optional<RT> getParameterInRole(MethodInvocationContext<?, ?> context, @NonNull String role, @NonNull Class<RT> type) {
+    protected <RT> Optional<RT> getParameterInRole(MethodInvocationContext<?, ?> context, @NonNull String role, @NonNull Class<RT> type) {
         return context.stringValue(DataMethod.NAME, role).flatMap(name -> {
             RT parameterValue = null;
             Map<String, MutableArgumentValue<?>> params = context.getParameters();
