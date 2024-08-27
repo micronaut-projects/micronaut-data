@@ -2,6 +2,7 @@ package io.micronaut.data.jdbc.postgres
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.exceptions.NoSuchBeanException
+import io.micronaut.data.jdbc.config.DataJdbcConfiguration
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Shared
@@ -22,6 +23,11 @@ class PostgresDisabledDataSourceSpec extends Specification implements PostgresTe
         applicationContext.getBean(DataSource)
         then:
         thrown(NoSuchBeanException)
+        when:
+        def dataJdbcConfiguration = applicationContext.getBean(DataJdbcConfiguration)
+        then:
+        dataJdbcConfiguration
+        !dataJdbcConfiguration.enabled
     }
 
     @Override
