@@ -82,12 +82,12 @@ public class SchemaGenerator {
     public void createSchema(BeanLocator beanLocator) {
         RuntimeEntityRegistry runtimeEntityRegistry = beanLocator.getBean(RuntimeEntityRegistry.class);
         for (DataJdbcConfiguration configuration : configurations) {
-            if (!configuration.isEnabled()) {
-                LOG.info("The datasource \"" + configuration.getName() + "\" is disabled, skipping schema generator.");
-                continue;
-            }
+            boolean enabled = configuration.isEnabled();
             SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
-            if (schemaGenerate == null || schemaGenerate == SchemaGenerate.NONE) {
+            if (!enabled || schemaGenerate == null || schemaGenerate == SchemaGenerate.NONE) {
+                if (!enabled && LOG.isDebugEnabled()) {
+                    LOG.debug("The datasource [{}] is disabled, skipping schema generator.", configuration.getName());
+                }
                 continue;
             }
             Dialect dialect = configuration.getDialect();

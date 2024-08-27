@@ -3,6 +3,7 @@ package io.micronaut.data.jdbc.h2
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Property
 import io.micronaut.context.exceptions.NoSuchBeanException
+import io.micronaut.data.jdbc.config.DataJdbcConfiguration
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Shared
@@ -25,5 +26,10 @@ class H2DisabledDataSourceSpec extends Specification {
         applicationContext.getBean(DataSource)
         then:
         thrown(NoSuchBeanException)
+        when:
+        def dataJdbcConfiguration = applicationContext.getBean(DataJdbcConfiguration)
+        then:
+        dataJdbcConfiguration
+        !dataJdbcConfiguration.enabled
     }
 }
