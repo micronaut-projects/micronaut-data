@@ -16,8 +16,6 @@
 package io.micronaut.data.jdbc.h2
 
 import groovy.transform.Memoized
-import io.micronaut.data.tck.entities.EntityIdClass
-import io.micronaut.data.tck.entities.EntityWithIdClass
 import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.data.tck.repositories.BasicTypesRepository
 import io.micronaut.data.tck.repositories.BookDtoRepository
@@ -112,6 +110,12 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
 
     @Shared
     H2EntityWithIdClass2Repository entityWithIdClass2Repo = context.getBean(H2EntityWithIdClass2Repository)
+
+    @Shared
+    H2HeadlessBookRepository headlessBookRepository = context.getBean(H2HeadlessBookRepository)
+
+    @Shared
+    H2HeadlessAuthorRepository headlessAuthorRepository = context.getBean(H2HeadlessAuthorRepository)
 
     @Override
     EntityWithIdClassRepository getEntityWithIdClassRepository() {
@@ -288,6 +292,34 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
         then:"The result is correct"
         book != null
         book.author.name == 'Stephen King'
+
+        then:
+        cleanupData()
+    }
+
+    void "test headless repos"() {
+        given:
+        saveSampleBooks()
+
+        when: "Test object mapping"
+        def author = headlessAuthorRepository.getByName("Stephen King")
+
+        then: "The result is correct"
+        author != null
+
+        when: "Find books"
+        def books = headlessBookRepository.findByPattern("The%")
+
+        then: "The result is correct"
+        books.size() == 3
+
+        // TODO Could not resolve root entity.
+        //  Either implement the Repository interface or define the entity as part of the signature
+        // when: "Count books"
+        // def count = headlessBookRepository.countBooks()
+
+        // then: "The result is correct"
+        // count == 6
 
         then:
         cleanupData()
