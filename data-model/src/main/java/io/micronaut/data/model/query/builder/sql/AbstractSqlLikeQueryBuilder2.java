@@ -2072,9 +2072,28 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
                 appendPropertyRef(persistentPropertyPath.getPropertyPath());
             } else if (expression instanceof BindingParameter bindingParameter) {
                 appendBindingParameter(bindingParameter, propertyPath);
+            } else if (expression instanceof UnaryExpression<?> unaryExpression) {
+                appendUnaryExpression(unaryExpression);
             } else {
                 query.append(asLiteral(expression));
             }
+        }
+
+        private void appendUnaryExpression(UnaryExpression<?> unaryExpression) {
+            Expression<?> expression = unaryExpression.getExpression();
+            switch (unaryExpression.getType()) {
+                case SUM, AVG, MAX, MIN, UPPER, LOWER ->
+                    appendFunction(unaryExpression.getType().name(), expression);
+                default ->
+                    throw new IllegalStateException("Unsupported expression: " + unaryExpression.getType());
+            }
+        }
+
+        private void appendFunction(String functionName, Expression<?> expression) {
+            query.append(functionName)
+                .append(OPEN_BRACKET);
+            appendExpression(expression);
+            query.append(CLOSE_BRACKET);
         }
 
         private void appendBindingParameter(BindingParameter bindingParameter,
