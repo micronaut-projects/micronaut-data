@@ -22,6 +22,7 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
@@ -310,6 +311,20 @@ public final class QueryModelPredicateVisitor implements PredicateVisitor {
 
     @Override
     public void visit(LikePredicate likePredicate) {
+        PersistentPropertyPath<?> propertyPath = CriteriaUtils.requireProperty(likePredicate.getExpression());
+        QueryModel.PropertyCriterion criterion;
+        if (likePredicate.isCaseInsensitive()) {
+            criterion = Restrictions.ilike(getPropertyPath(propertyPath), likePredicate.getPattern());
+        } else {
+            criterion = Restrictions.like(getPropertyPath(propertyPath), likePredicate.getPattern());
+        }
+        if (likePredicate.isNegated()) {
+            QueryModel.Negation negation = new QueryModel.Negation();
+            negation.add(criterion);
+            add(negation);
+        } else {
+            add(criterion);
+        }
     }
 
     private Object asValue(Object value) {
