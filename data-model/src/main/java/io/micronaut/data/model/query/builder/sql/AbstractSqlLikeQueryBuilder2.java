@@ -130,6 +130,8 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
     protected static final String ALIAS_REPLACE_QUOTED = "@\\.";
     protected static final String CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID = "Cannot query on ID with entity that has no ID";
 
+    private static final String UNSUPPORTED_EXPRESSION = "Unsupported expression: ";
+
     /**
      * Get dialect.
      *
@@ -2072,9 +2074,28 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
                 appendPropertyRef(persistentPropertyPath.getPropertyPath());
             } else if (expression instanceof BindingParameter bindingParameter) {
                 appendBindingParameter(bindingParameter, propertyPath);
+            } else if (expression instanceof UnaryExpression<?> unaryExpression) {
+                appendUnaryExpression(unaryExpression);
             } else {
                 query.append(asLiteral(expression));
             }
+        }
+
+        private void appendUnaryExpression(UnaryExpression<?> unaryExpression) {
+            Expression<?> expression = unaryExpression.getExpression();
+            switch (unaryExpression.getType()) {
+                case SUM, AVG, MAX, MIN, UPPER, LOWER ->
+                    appendFunction(unaryExpression.getType().name(), expression);
+                default ->
+                    throw new IllegalStateException(UNSUPPORTED_EXPRESSION + unaryExpression.getType());
+            }
+        }
+
+        private void appendFunction(String functionName, Expression<?> expression) {
+            query.append(functionName)
+                .append(OPEN_BRACKET);
+            appendExpression(expression);
+            query.append(CLOSE_BRACKET);
         }
 
         private void appendBindingParameter(BindingParameter bindingParameter,
@@ -2334,7 +2355,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
                     }
                 }
                 default ->
-                    throw new IllegalStateException("Unsupported expression: " + unaryExpression.getType());
+                    throw new IllegalStateException(UNSUPPORTED_EXPRESSION + unaryExpression.getType());
             }
         }
 
@@ -2350,7 +2371,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
                 }
                 case CONCAT -> appendFunction("CONCAT", List.of(left, right));
                 default ->
-                    throw new IllegalStateException("Unsupported expression: " + binaryExpression.getType());
+                    throw new IllegalStateException(UNSUPPORTED_EXPRESSION + binaryExpression.getType());
             }
         }
 

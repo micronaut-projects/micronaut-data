@@ -80,6 +80,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 import static io.micronaut.data.tck.repositories.BookSpecifications.hasChapter
+import static io.micronaut.data.tck.repositories.BookSpecifications.titleContains
 import static io.micronaut.data.tck.repositories.BookSpecifications.titleEquals
 import static io.micronaut.data.tck.repositories.BookSpecifications.titleEqualsWithJoin
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.distinct
@@ -2419,6 +2420,7 @@ abstract class AbstractRepositorySpec extends Specification {
         when:
         def bookLoadedUsingFindAllByGenre = bookRepository.findAllByGenre(genre).get(0)
         def bookLoadedUsingFindOneWithCriteriaApi = bookRepository.findOne(titleEquals(book.title)).get()
+        def bookLoadedUsingFindOneWithContainsCriteriaApi = bookRepository.findOne(titleContains(book.title)).orElse(null)
         def bookNotFoundUsingFindOneWithCriteriaApi = bookRepository.findOne(titleEquals("non_existing_book_" + System.currentTimeMillis()))
         def bookLoadedUsingFindAllWithCriteriaApi = bookRepository.findAll(titleEquals(book.title)).get(0)
         def bookLoadedUsingFindAllByCriteriaWithoutAnnotationJoin = bookRepository.findAllByCriteria(titleEqualsWithJoin(book.title)).get(0)
@@ -2432,6 +2434,8 @@ abstract class AbstractRepositorySpec extends Specification {
         bookLoadedUsingFindAllByGenre.genre.genreName != null
         bookLoadedUsingFindOneWithCriteriaApi != null
         bookLoadedUsingFindOneWithCriteriaApi.genre.genreName == genre.genreName
+        bookLoadedUsingFindOneWithContainsCriteriaApi != null
+        bookLoadedUsingFindOneWithContainsCriteriaApi.title == bookLoadedUsingFindOneWithCriteriaApi.title
         bookNotFoundUsingFindOneWithCriteriaApi.present == false
         bookLoadedUsingFindAllWithCriteriaApi != null
         bookLoadedUsingFindAllWithCriteriaApi.genre.genreName == genre.genreName
