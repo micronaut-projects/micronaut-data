@@ -1,0 +1,39 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
+plugins {
+    id "io.micronaut.build.internal.data-native-example"
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "junit5"
+    testResources {
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+        additionalModules.add(KnownModules.R2DBC_POSTGRESQL)
+    }
+}
+
+dependencies {
+    annotationProcessor mn.micronaut.graal
+    annotationProcessor projects.micronautDataProcessor
+    implementation projects.micronautDataR2dbc
+    implementation mnSql.micronaut.jdbc.hikari
+    implementation(libs.managed.jakarta.transaction.api)
+    implementation mnSerde.micronaut.serde.jackson
+    implementation mnReactor.micrometer.context.propagation
+
+    runtimeOnly mnR2dbc.r2dbc.postgresql
+    runtimeOnly mnSql.postgresql
+    runtimeOnly mn.snakeyaml
+    testRuntimeOnly mnSerde.micronaut.serde.jackson
+
+    testImplementation mn.micronaut.http.client
+
+
+}
