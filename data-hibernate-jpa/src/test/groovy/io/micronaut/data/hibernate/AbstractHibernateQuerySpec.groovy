@@ -71,6 +71,30 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
     @Inject
     RelPersonRepository relPersonRepo
 
+    void "test where in empty list of entities"() {
+        when:
+        def found = bookRepository.findByAuthors(List.of())
+        then:
+        found.empty
+        when:
+        def author = authorRepository.findByName("Stephen King")
+        found = bookRepository.findByAuthors(List.of(author))
+        then:
+        !found.empty
+    }
+
+    void "test where in empty list of basic type"() {
+        when:
+        def found = bookRepository.findByAuthorIds(List.of())
+        then:
+        found.empty
+        when:
+        def author = authorRepository.findByName("Stephen King")
+        found = bookRepository.findByAuthorIds(List.of(author.id))
+        then:
+        !found.empty
+    }
+
     void "test @where with nullable property values"() {
         when:
             userWithWhereRepository.update(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: null))

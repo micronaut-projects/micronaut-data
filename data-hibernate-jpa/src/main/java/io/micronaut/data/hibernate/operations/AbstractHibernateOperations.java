@@ -470,7 +470,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
             @Override
             public void bindOne(QueryParameterBinding binding, Object value) {
                 String parameterName = Objects.requireNonNull(binding.getName(), "Parameter name cannot be null!");
-                if (storedQuery.isNative()) {
+                if (binding.getParameterIndex() != -1) {
                     int parameterIndex = binding.getParameterIndex();
                     Argument<?> argument = arguments[parameterIndex];
                     Class<?> argumentType = argument.getType();
