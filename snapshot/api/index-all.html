@@ -129,6 +129,12 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/transaction/support/AbstractDefaultTransactionOperations.html#%3Cinit%3E(io.micronaut.data.connection.ConnectionOperations,io.micronaut.data.connection.SynchronousConnectionManager)" class="member-name-link">AbstractDefaultTransactionOperations(ConnectionOperations&lt;C&gt;, SynchronousConnectionManager&lt;C&gt;)</a> - Constructor for class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractDefaultTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractDefaultTransactionOperations</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html" class="type-name-link" title="class in io.micronaut.data.runtime.mapper">AbstractDelegatingResultReader</a>&lt;<a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html" title="type parameter in AbstractDelegatingResultReader">RS</a>,<wbr><a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html" title="type parameter in AbstractDelegatingResultReader">ID</a>&gt; - Class in <a href="io/micronaut/data/runtime/mapper/package-summary.html">io.micronaut.data.runtime.mapper</a></dt>
+<dd>
+<div class="block">The delegating <a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper"><code>ResultReader</code></a>.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html#%3Cinit%3E(io.micronaut.data.runtime.mapper.ResultReader)" class="member-name-link">AbstractDelegatingResultReader(ResultReader&lt;RS, ID&gt;)</a> - Constructor for class io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html" title="class in io.micronaut.data.runtime.mapper">AbstractDelegatingResultReader</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/hibernate/operations/AbstractHibernateOperations.html" class="type-name-link" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;<a href="io/micronaut/data/hibernate/operations/AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>,<wbr><a href="io/micronaut/data/hibernate/operations/AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>,<wbr><a href="io/micronaut/data/hibernate/operations/AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a> extends <a href="io/micronaut/data/hibernate/operations/AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>&gt; - Class in <a href="io/micronaut/data/hibernate/operations/package-summary.html">io.micronaut.data.hibernate.operations</a></dt>
 <dd>
 <div class="block">Abstract Hibernate operations shared between the synchronous and the reactive implementations.</div>
@@ -1255,6 +1261,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">The basic implementation of <a href="io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime"><code>StoredQuery</code></a>.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/query/internal/BasicStoredQuery.html#%3Cinit%3E(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,java.lang.String,java.lang.String%5B%5D,java.util.List,java.lang.Class,java.lang.Class,boolean,boolean,boolean,boolean,io.micronaut.data.model.runtime.StoredQuery.OperationType)" class="member-name-link">BasicStoredQuery(String, AnnotationMetadata, String, String[], List&lt;QueryParameterBinding&gt;, Class&lt;E&gt;, Class&lt;R&gt;, boolean, boolean, boolean, boolean, StoredQuery.OperationType)</a> - Constructor for class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/BasicStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">BasicStoredQuery</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/query/internal/BasicStoredQuery.html#%3Cinit%3E(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,java.lang.String,java.lang.String%5B%5D,java.util.List,java.lang.Class,java.lang.Class,boolean,boolean,boolean,io.micronaut.data.model.runtime.StoredQuery.OperationType)" class="member-name-link">BasicStoredQuery(String, AnnotationMetadata, String, String[], List&lt;QueryParameterBinding&gt;, Class&lt;E&gt;, Class&lt;R&gt;, boolean, boolean, boolean, StoredQuery.OperationType)</a> - Constructor for class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/BasicStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">BasicStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/query/internal/BasicStoredQuery.html#%3Cinit%3E(java.lang.String,java.lang.String%5B%5D,java.util.List,java.lang.Class,java.lang.Class,io.micronaut.data.model.runtime.StoredQuery.OperationType)" class="member-name-link">BasicStoredQuery(String, String[], List&lt;QueryParameterBinding&gt;, Class&lt;E&gt;, Class&lt;R&gt;, StoredQuery.OperationType)</a> - Constructor for class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/BasicStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">BasicStoredQuery</a></dt>
@@ -2155,6 +2163,18 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Constructs a new instance.</div>
 </dd>
+<dt><a href="io/micronaut/data/r2dbc/mapper/ColumnNameExistenceAwareR2dbcResultSetReader.html" class="type-name-link" title="class in io.micronaut.data.r2dbc.mapper">ColumnNameExistenceAwareR2dbcResultSetReader</a> - Class in <a href="io/micronaut/data/r2dbc/mapper/package-summary.html">io.micronaut.data.r2dbc.mapper</a></dt>
+<dd>
+<div class="block">The reader that will return null if the column doesn't exist in the result.</div>
+</dd>
+<dt><a href="io/micronaut/data/r2dbc/mapper/ColumnNameExistenceAwareR2dbcResultSetReader.html#%3Cinit%3E()" class="member-name-link">ColumnNameExistenceAwareR2dbcResultSetReader()</a> - Constructor for class io.micronaut.data.r2dbc.mapper.<a href="io/micronaut/data/r2dbc/mapper/ColumnNameExistenceAwareR2dbcResultSetReader.html" title="class in io.micronaut.data.r2dbc.mapper">ColumnNameExistenceAwareR2dbcResultSetReader</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/mapper/ColumnNameExistenceAwareResultSetReader.html" class="type-name-link" title="class in io.micronaut.data.jdbc.mapper">ColumnNameExistenceAwareResultSetReader</a> - Class in <a href="io/micronaut/data/jdbc/mapper/package-summary.html">io.micronaut.data.jdbc.mapper</a></dt>
+<dd>
+<div class="block">The reader that will return null if the column doesn't exist in the result.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/mapper/ColumnNameExistenceAwareResultSetReader.html#%3Cinit%3E()" class="member-name-link">ColumnNameExistenceAwareResultSetReader()</a> - Constructor for class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnNameExistenceAwareResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameExistenceAwareResultSetReader</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/r2dbc/mapper/ColumnNameR2dbcResultReader.html" class="type-name-link" title="class in io.micronaut.data.r2dbc.mapper">ColumnNameR2dbcResultReader</a> - Class in <a href="io/micronaut/data/r2dbc/mapper/package-summary.html">io.micronaut.data.r2dbc.mapper</a></dt>
 <dd>
 <div class="block">Implementation of <a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper"><code>ResultReader</code></a> for R2DBC.</div>
@@ -2507,6 +2527,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Convert the value to the given type.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html#convertRequired(java.lang.Object,io.micronaut.core.type.Argument)" class="member-name-link">convertRequired(Object, Argument&lt;T&gt;)</a> - Method in class io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html" title="class in io.micronaut.data.runtime.mapper">AbstractDelegatingResultReader</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html#convertRequired(java.lang.Object,java.lang.Class)" class="member-name-link">convertRequired(Object, Class&lt;T&gt;)</a> - Method in class io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html" title="class in io.micronaut.data.runtime.mapper">AbstractDelegatingResultReader</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html#convertResult(org.bson.codecs.configuration.CodecRegistry,java.lang.Class,org.bson.BsonDocument,boolean)" class="member-name-link">convertResult(CodecRegistry, Class&lt;R&gt;, BsonDocument, boolean)</a> - Method in class io.micronaut.data.mongodb.operations.<a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/runtime/convert/AttributeConverter.html#convertToEntityValue(Y,io.micronaut.core.convert.ConversionContext)" class="member-name-link">convertToEntityValue(Y, ConversionContext)</a> - Method in interface io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/AttributeConverter.html" title="interface in io.micronaut.data.model.runtime.convert">AttributeConverter</a></dt>
@@ -2866,6 +2890,10 @@ loadScripts(document, 'script');</script>
 <div class="block">Database (or container) will be created if not exists with given properties from the configuration.</div>
 </dd>
 <dt><a href="io/micronaut/data/cosmos/operations/CosmosDiagnosticsProcessor.html#CREATE_ITEM" class="member-name-link">CREATE_ITEM</a> - Static variable in interface io.micronaut.data.cosmos.operations.<a href="io/micronaut/data/cosmos/operations/CosmosDiagnosticsProcessor.html" title="interface in io.micronaut.data.cosmos.operations">CosmosDiagnosticsProcessor</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#createColumnNameResultSetReaderWithColumnExistenceAware()" class="member-name-link">createColumnNameResultSetReaderWithColumnExistenceAware()</a> - Method in class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#createColumnNameResultSetReaderWithColumnExistenceAware()" class="member-name-link">createColumnNameResultSetReaderWithColumnExistenceAware()</a> - Method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal.sql">AbstractSqlRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/query/DefaultStoredQueryResolver.html#createCountStoredQuery(io.micronaut.inject.ExecutableMethod,io.micronaut.data.model.runtime.StoredQuery.OperationType,java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,java.lang.Class,java.lang.String,java.lang.String%5B%5D,java.util.List)" class="member-name-link">createCountStoredQuery(ExecutableMethod&lt;?, ?&gt;, StoredQuery.OperationType, String, AnnotationMetadata, Class&lt;Object&gt;, String, String[], List&lt;QueryParameterBinding&gt;)</a> - Method in class io.micronaut.data.runtime.query.<a href="io/micronaut/data/runtime/query/DefaultStoredQueryResolver.html" title="class in io.micronaut.data.runtime.query">DefaultStoredQueryResolver</a></dt>
 <dd>&nbsp;</dd>
@@ -4095,6 +4123,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Used to define the mapping.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html#delegate" class="member-name-link">delegate</a> - Variable in class io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html" title="class in io.micronaut.data.runtime.mapper">AbstractDelegatingResultReader</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/query/internal/DelegatePreparedQuery.html" class="type-name-link" title="interface in io.micronaut.data.runtime.query.internal">DelegatePreparedQuery</a>&lt;<a href="io/micronaut/data/runtime/query/internal/DelegatePreparedQuery.html" title="type parameter in DelegatePreparedQuery">E</a>,<wbr><a href="io/micronaut/data/runtime/query/internal/DelegatePreparedQuery.html" title="type parameter in DelegatePreparedQuery">R</a>&gt; - Interface in <a href="io/micronaut/data/runtime/query/internal/package-summary.html">io.micronaut.data.runtime.query.internal</a></dt>
 <dd>
 <div class="block">Delegate implementation of <a href="io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime"><code>PreparedQuery</code></a>.</div>
@@ -7361,6 +7391,8 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/r2dbc/mapper/R2dbcQueryStatement.html#getConversionService()" class="member-name-link">getConversionService()</a> - Method in class io.micronaut.data.r2dbc.mapper.<a href="io/micronaut/data/r2dbc/mapper/R2dbcQueryStatement.html" title="class in io.micronaut.data.r2dbc.mapper">R2dbcQueryStatement</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html#getConversionService()" class="member-name-link">getConversionService()</a> - Method in class io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html" title="class in io.micronaut.data.runtime.mapper">AbstractDelegatingResultReader</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/mapper/DTOMapper.html#getConversionService()" class="member-name-link">getConversionService()</a> - Method in class io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/DTOMapper.html" title="class in io.micronaut.data.runtime.mapper">DTOMapper</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/mapper/QueryStatement.html#getConversionService()" class="member-name-link">getConversionService()</a> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a></dt>
@@ -9193,6 +9225,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#getRequiredValue(java.sql.ResultSet,java.lang.Integer,java.lang.Class)" class="member-name-link">getRequiredValue(ResultSet, Integer, Class&lt;T&gt;)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnIndexResultSetReader</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html#getRequiredValue(java.sql.ResultSet,java.lang.String,java.lang.Class)" class="member-name-link">getRequiredValue(ResultSet, String, Class&lt;T&gt;)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameResultSetReader</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html#getRequiredValue(RS,ID,java.lang.Class)" class="member-name-link">getRequiredValue(RS, ID, Class&lt;T&gt;)</a> - Method in class io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html" title="class in io.micronaut.data.runtime.mapper">AbstractDelegatingResultReader</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/mapper/ResultReader.html#getRequiredValue(RS,IDX,java.lang.Class)" class="member-name-link">getRequiredValue(RS, IDX, Class&lt;T&gt;)</a> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a></dt>
 <dd>
@@ -12925,6 +12959,8 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html#many(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,boolean)" class="member-name-link">many(String, AnnotationMetadata, QueryResult, Class&lt;T&gt;, boolean)</a> - Static method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html#many(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class,boolean,boolean,java.util.Collection)" class="member-name-link">many(String, AnnotationMetadata, QueryResult, Class&lt;T&gt;, Class&lt;R&gt;, boolean, boolean, Collection&lt;JoinPath&gt;)</a> - Static method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html#many(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class,boolean,java.util.Collection)" class="member-name-link">many(String, AnnotationMetadata, QueryResult, Class&lt;T&gt;, Class&lt;R&gt;, boolean, Collection&lt;JoinPath&gt;)</a> - Static method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/annotation/Relation.Kind.html#MANY_TO_MANY" class="member-name-link">MANY_TO_MANY</a> - Enum constant in enum class io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/Relation.Kind.html" title="enum class in io.micronaut.data.annotation">Relation.Kind</a></dt>
@@ -14154,6 +14190,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#next(java.sql.ResultSet)" class="member-name-link">next(ResultSet)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnIndexResultSetReader</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html#next(java.sql.ResultSet)" class="member-name-link">next(ResultSet)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameResultSetReader</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html#next(RS)" class="member-name-link">next(RS)</a> - Method in class io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html" title="class in io.micronaut.data.runtime.mapper">AbstractDelegatingResultReader</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/mapper/ResultReader.html#next(RS)" class="member-name-link">next(RS)</a> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a></dt>
 <dd>
@@ -16551,6 +16589,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">The basic <a href="io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime"><code>StoredQuery</code></a> created from <a href="io/micronaut/data/model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder"><code>QueryResult</code></a>.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html#%3Cinit%3E(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class,boolean,boolean,boolean,boolean,io.micronaut.data.model.runtime.StoredQuery.OperationType,java.util.Collection)" class="member-name-link">QueryResultStoredQuery(String, AnnotationMetadata, QueryResult, Class&lt;E&gt;, Class&lt;R&gt;, boolean, boolean, boolean, boolean, StoredQuery.OperationType, Collection&lt;JoinPath&gt;)</a> - Constructor for class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html#%3Cinit%3E(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class,boolean,boolean,boolean,io.micronaut.data.model.runtime.StoredQuery.OperationType,java.util.Collection)" class="member-name-link">QueryResultStoredQuery(String, AnnotationMetadata, QueryResult, Class&lt;E&gt;, Class&lt;R&gt;, boolean, boolean, boolean, StoredQuery.OperationType, Collection&lt;JoinPath&gt;)</a> - Constructor for class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" class="type-name-link" title="interface in io.micronaut.data.repository.jpa.criteria">QuerySpecification</a>&lt;<a href="io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="type parameter in QuerySpecification">T</a>&gt; - Interface in <a href="io/micronaut/data/repository/jpa/criteria/package-summary.html">io.micronaut.data.repository.jpa.criteria</a></dt>
@@ -16915,6 +16955,8 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html#readBigDecimal(java.sql.ResultSet,java.lang.String)" class="member-name-link">readBigDecimal(ResultSet, String)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameResultSetReader</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html#readBigDecimal(RS,ID)" class="member-name-link">readBigDecimal(RS, ID)</a> - Method in class io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html" title="class in io.micronaut.data.runtime.mapper">AbstractDelegatingResultReader</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/mapper/ResultReader.html#readBigDecimal(RS,IDX)" class="member-name-link">readBigDecimal(RS, IDX)</a> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a></dt>
 <dd>
 <div class="block">Read a BigDecimal value for the given name.</div>
@@ -16934,6 +16976,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#readBoolean(java.sql.ResultSet,java.lang.Integer)" class="member-name-link">readBoolean(ResultSet, Integer)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnIndexResultSetReader</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html#readBoolean(java.sql.ResultSet,java.lang.String)" class="member-name-link">readBoolean(ResultSet, String)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameResultSetReader</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html#readBoolean(RS,ID)" class="member-name-link">readBoolean(RS, ID)</a> - Method in class io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html" title="class in io.micronaut.data.runtime.mapper">AbstractDelegatingResultReader</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/mapper/ResultReader.html#readBoolean(RS,IDX)" class="member-name-link">readBoolean(RS, IDX)</a> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a></dt>
 <dd>
@@ -16955,6 +16999,8 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html#readByte(java.sql.ResultSet,java.lang.String)" class="member-name-link">readByte(ResultSet, String)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameResultSetReader</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html#readByte(RS,ID)" class="member-name-link">readByte(RS, ID)</a> - Method in class io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html" title="class in io.micronaut.data.runtime.mapper">AbstractDelegatingResultReader</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/mapper/ResultReader.html#readByte(RS,IDX)" class="member-name-link">readByte(RS, IDX)</a> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a></dt>
 <dd>
 <div class="block">Read a byte value for the given name.</div>
@@ -16974,6 +17020,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#readBytes(java.sql.ResultSet,java.lang.Integer)" class="member-name-link">readBytes(ResultSet, Integer)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnIndexResultSetReader</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html#readBytes(java.sql.ResultSet,java.lang.String)" class="member-name-link">readBytes(ResultSet, String)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameResultSetReader</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html#readBytes(RS,ID)" class="member-name-link">readBytes(RS, ID)</a> - Method in class io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html" title="class in io.micronaut.data.runtime.mapper">AbstractDelegatingResultReader</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/mapper/ResultReader.html#readBytes(RS,IDX)" class="member-name-link">readBytes(RS, IDX)</a> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a></dt>
 <dd>
@@ -16995,6 +17043,8 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html#readChar(java.sql.ResultSet,java.lang.String)" class="member-name-link">readChar(ResultSet, String)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameResultSetReader</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html#readChar(RS,ID)" class="member-name-link">readChar(RS, ID)</a> - Method in class io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html" title="class in io.micronaut.data.runtime.mapper">AbstractDelegatingResultReader</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/mapper/ResultReader.html#readChar(RS,IDX)" class="member-name-link">readChar(RS, IDX)</a> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a></dt>
 <dd>
 <div class="block">Read a char value for the given name.</div>
@@ -17015,6 +17065,8 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html#readDate(java.sql.ResultSet,java.lang.String)" class="member-name-link">readDate(ResultSet, String)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameResultSetReader</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html#readDate(RS,ID)" class="member-name-link">readDate(RS, ID)</a> - Method in class io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html" title="class in io.micronaut.data.runtime.mapper">AbstractDelegatingResultReader</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/mapper/ResultReader.html#readDate(RS,IDX)" class="member-name-link">readDate(RS, IDX)</a> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a></dt>
 <dd>
 <div class="block">Read a date value for the given name.</div>
@@ -17034,6 +17086,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#readDouble(java.sql.ResultSet,java.lang.Integer)" class="member-name-link">readDouble(ResultSet, Integer)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnIndexResultSetReader</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html#readDouble(java.sql.ResultSet,java.lang.String)" class="member-name-link">readDouble(ResultSet, String)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameResultSetReader</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html#readDouble(RS,ID)" class="member-name-link">readDouble(RS, ID)</a> - Method in class io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html" title="class in io.micronaut.data.runtime.mapper">AbstractDelegatingResultReader</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/mapper/ResultReader.html#readDouble(RS,IDX)" class="member-name-link">readDouble(RS, IDX)</a> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a></dt>
 <dd>
@@ -17064,6 +17118,12 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#readDynamic(java.sql.ResultSet,java.lang.Integer,io.micronaut.data.model.DataType)" class="member-name-link">readDynamic(ResultSet, Integer, DataType)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnIndexResultSetReader</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html#readDynamic(java.sql.ResultSet,java.lang.String,io.micronaut.data.model.DataType)" class="member-name-link">readDynamic(ResultSet, String, DataType)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameResultSetReader</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/r2dbc/mapper/ColumnNameExistenceAwareR2dbcResultSetReader.html#readDynamic(io.r2dbc.spi.Row,java.lang.String,io.micronaut.data.model.DataType)" class="member-name-link">readDynamic(Row, String, DataType)</a> - Method in class io.micronaut.data.r2dbc.mapper.<a href="io/micronaut/data/r2dbc/mapper/ColumnNameExistenceAwareR2dbcResultSetReader.html" title="class in io.micronaut.data.r2dbc.mapper">ColumnNameExistenceAwareR2dbcResultSetReader</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/mapper/ColumnNameExistenceAwareResultSetReader.html#readDynamic(java.sql.ResultSet,java.lang.String,io.micronaut.data.model.DataType)" class="member-name-link">readDynamic(ResultSet, String, DataType)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnNameExistenceAwareResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameExistenceAwareResultSetReader</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html#readDynamic(RS,ID,io.micronaut.data.model.DataType)" class="member-name-link">readDynamic(RS, ID, DataType)</a> - Method in class io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html" title="class in io.micronaut.data.runtime.mapper">AbstractDelegatingResultReader</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/mapper/ResultReader.html#readDynamic(RS,IDX,io.micronaut.data.model.DataType)" class="member-name-link">readDynamic(RS, IDX, DataType)</a> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a></dt>
 <dd>
@@ -17103,6 +17163,8 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html#readFloat(java.sql.ResultSet,java.lang.String)" class="member-name-link">readFloat(ResultSet, String)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameResultSetReader</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html#readFloat(RS,ID)" class="member-name-link">readFloat(RS, ID)</a> - Method in class io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html" title="class in io.micronaut.data.runtime.mapper">AbstractDelegatingResultReader</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/mapper/ResultReader.html#readFloat(RS,IDX)" class="member-name-link">readFloat(RS, IDX)</a> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a></dt>
 <dd>
 <div class="block">Read a float value for the given name.</div>
@@ -17122,6 +17184,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#readInt(java.sql.ResultSet,java.lang.Integer)" class="member-name-link">readInt(ResultSet, Integer)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnIndexResultSetReader</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html#readInt(java.sql.ResultSet,java.lang.String)" class="member-name-link">readInt(ResultSet, String)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameResultSetReader</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html#readInt(RS,ID)" class="member-name-link">readInt(RS, ID)</a> - Method in class io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html" title="class in io.micronaut.data.runtime.mapper">AbstractDelegatingResultReader</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/mapper/ResultReader.html#readInt(RS,IDX)" class="member-name-link">readInt(RS, IDX)</a> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a></dt>
 <dd>
@@ -17146,6 +17210,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#readLong(java.sql.ResultSet,java.lang.Integer)" class="member-name-link">readLong(ResultSet, Integer)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnIndexResultSetReader</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html#readLong(java.sql.ResultSet,java.lang.String)" class="member-name-link">readLong(ResultSet, String)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameResultSetReader</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html#readLong(RS,ID)" class="member-name-link">readLong(RS, ID)</a> - Method in class io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html" title="class in io.micronaut.data.runtime.mapper">AbstractDelegatingResultReader</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/mapper/ResultReader.html#readLong(RS,IDX)" class="member-name-link">readLong(RS, IDX)</a> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a></dt>
 <dd>
@@ -17193,6 +17259,8 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html#readShort(java.sql.ResultSet,java.lang.String)" class="member-name-link">readShort(ResultSet, String)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameResultSetReader</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html#readShort(RS,ID)" class="member-name-link">readShort(RS, ID)</a> - Method in class io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html" title="class in io.micronaut.data.runtime.mapper">AbstractDelegatingResultReader</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/mapper/ResultReader.html#readShort(RS,IDX)" class="member-name-link">readShort(RS, IDX)</a> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a></dt>
 <dd>
 <div class="block">Read a short value for the given name.</div>
@@ -17213,6 +17281,8 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html#readString(java.sql.ResultSet,java.lang.String)" class="member-name-link">readString(ResultSet, String)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameResultSetReader</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html#readString(RS,ID)" class="member-name-link">readString(RS, ID)</a> - Method in class io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html" title="class in io.micronaut.data.runtime.mapper">AbstractDelegatingResultReader</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/mapper/ResultReader.html#readString(RS,IDX)" class="member-name-link">readString(RS, IDX)</a> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a></dt>
 <dd>
 <div class="block">Read a string value for the given name.</div>
@@ -17224,6 +17294,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#readTime(java.sql.ResultSet,java.lang.Integer)" class="member-name-link">readTime(ResultSet, Integer)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnIndexResultSetReader</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html#readTime(java.sql.ResultSet,java.lang.String)" class="member-name-link">readTime(ResultSet, String)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameResultSetReader</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html#readTime(RS,ID)" class="member-name-link">readTime(RS, ID)</a> - Method in class io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html" title="class in io.micronaut.data.runtime.mapper">AbstractDelegatingResultReader</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/mapper/ResultReader.html#readTime(RS,IDX)" class="member-name-link">readTime(RS, IDX)</a> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a></dt>
 <dd>
@@ -17245,10 +17317,14 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html#readTimestamp(java.sql.ResultSet,java.lang.String)" class="member-name-link">readTimestamp(ResultSet, String)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameResultSetReader</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html#readTimestamp(RS,ID)" class="member-name-link">readTimestamp(RS, ID)</a> - Method in class io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html" title="class in io.micronaut.data.runtime.mapper">AbstractDelegatingResultReader</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/mapper/ResultReader.html#readTimestamp(RS,IDX)" class="member-name-link">readTimestamp(RS, IDX)</a> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a></dt>
 <dd>
 <div class="block">Read a timestamp value for the given index.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html#readUUID(RS,ID)" class="member-name-link">readUUID(RS, ID)</a> - Method in class io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/AbstractDelegatingResultReader.html" title="class in io.micronaut.data.runtime.mapper">AbstractDelegatingResultReader</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/mapper/ResultReader.html#readUUID(RS,IDX)" class="member-name-link">readUUID(RS, IDX)</a> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a></dt>
 <dd>
 <div class="block">Read a UUID value for the given name.</div>
@@ -18761,6 +18837,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html#sign(jakarta.persistence.criteria.Expression)" class="member-name-link">sign(Expression&lt;? extends Number&gt;)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractCriteriaBuilder</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html#single(io.micronaut.data.model.runtime.StoredQuery.OperationType,java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class)" class="member-name-link">single(StoredQuery.OperationType, String, AnnotationMetadata, QueryResult, Class&lt;T&gt;)</a> - Static method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html#single(io.micronaut.data.model.runtime.StoredQuery.OperationType,java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class,boolean,java.util.Collection)" class="member-name-link">single(StoredQuery.OperationType, String, AnnotationMetadata, QueryResult, Class&lt;T&gt;, Class&lt;R&gt;, boolean, Collection&lt;JoinPath&gt;)</a> - Static method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html#single(io.micronaut.data.model.runtime.StoredQuery.OperationType,java.lang.String,io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryResult,java.lang.Class,java.lang.Class,java.util.Collection)" class="member-name-link">single(StoredQuery.OperationType, String, AnnotationMetadata, QueryResult, Class&lt;T&gt;, Class&lt;R&gt;, Collection&lt;JoinPath&gt;)</a> - Static method in class io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/QueryResultStoredQuery.html" title="class in io.micronaut.data.runtime.query.internal">QueryResultStoredQuery</a></dt>
 <dd>&nbsp;</dd>
