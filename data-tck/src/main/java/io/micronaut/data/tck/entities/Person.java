@@ -25,7 +25,6 @@ import jakarta.persistence.Id;
 public class Person {
     @Id
     @GeneratedValue
-    @Nullable
     private Long id;
 
     private String name;

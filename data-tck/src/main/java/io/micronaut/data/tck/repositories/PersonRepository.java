@@ -36,10 +36,6 @@ import io.micronaut.data.repository.jpa.criteria.UpdateSpecification;
 import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.tck.entities.TotalDto;
 import io.reactivex.Single;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
 
 import java.util.Arrays;
 import java.util.List;
@@ -224,13 +220,6 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
             return (root, query, criteriaBuilder) -> {
                 query.set("name", name == null ? criteriaBuilder.nullLiteral(String.class) : name);
                 return null;
-            };
-        }
-
-        public static QuerySpecification<Person> personWithOnlyNameAndAgeByName(String name) {
-            return (root, query, criteriaBuilder) -> {
-                query.multiselect(root.get("name").alias("name"), root.get("age").alias("age"));
-                return criteriaBuilder.equal(root.get("name"), name);
             };
         }
     }

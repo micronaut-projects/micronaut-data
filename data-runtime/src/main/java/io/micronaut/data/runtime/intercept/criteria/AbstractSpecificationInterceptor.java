@@ -31,7 +31,6 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
-import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryBuilder;
@@ -63,7 +62,6 @@ import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
-import jakarta.persistence.criteria.Selection;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -328,15 +326,13 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(context, sqlQueryBuilder);
         Set<JoinPath> joinPaths = mergeJoinPaths(methodJoinPaths, queryResult.getJoinPaths());
         Class<E> rootEntity = getRequiredRootEntity(context);
-        Selection<?> selection = ((AbstractPersistentEntityCriteriaQuery<?>) criteriaQuery).getSelection();
-        boolean isCompoundSelection = selection != null && selection.isCompoundSelection();
         if (type == Type.FIND_ONE) {
             return QueryResultStoredQuery.single(OperationType.QUERY, context.getName(), context.getAnnotationMetadata(),
-                queryResult, rootEntity, criteriaQuery.getResultType(), isCompoundSelection, joinPaths);
+                queryResult, rootEntity, criteriaQuery.getResultType(), joinPaths);
         }
         Pageable pageable = findPageable(context);
         return QueryResultStoredQuery.many(context.getName(), context.getAnnotationMetadata(), queryResult, rootEntity,
-            criteriaQuery.getResultType(), !pageable.isUnpaged(), isCompoundSelection, joinPaths);
+            criteriaQuery.getResultType(), !pageable.isUnpaged(), joinPaths);
     }
 
     private <N> CriteriaQuery<N> buildInternalQuery(MethodInvocationContext<T, R> context, Type type, Set<JoinPath> methodJoinPaths) {
