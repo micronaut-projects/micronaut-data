@@ -18,11 +18,13 @@ package io.micronaut.data.mongodb.conf;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.condition.Condition;
 import io.micronaut.context.condition.ConditionContext;
+import io.micronaut.core.annotation.ReflectiveAccess;
 
 /**
  * Micronaut Data MongoDB integration configuration.
  */
 @ConfigurationProperties(MongoDataConfiguration.PREFIX)
+@ReflectiveAccess
 public final class MongoDataConfiguration {
 
     public static final String PREFIX = "micronaut.data.mongodb";

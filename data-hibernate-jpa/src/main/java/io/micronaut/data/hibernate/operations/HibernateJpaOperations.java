@@ -152,8 +152,11 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
 
     @Override
     protected void setParameterList(CommonQueryContract query, String parameterName, Collection<Object> value) {
+        if (value == null) {
+            value = Collections.emptyList();
+        }
         // Passing collection as param like this as well, before Hibernate 6 there was other method to pass collection
-        query.setParameter(parameterName, value);
+        query.setParameterList(parameterName, value);
     }
 
     @Override
@@ -162,7 +165,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
             value = Collections.emptyList();
         }
         // Can we ignore type? Was needed before Hibernate 6
-        query.setParameter(parameterName, value);
+        query.setParameterList(parameterName, value);
     }
 
     @Override
@@ -177,7 +180,10 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
 
     @Override
     protected void setParameterList(CommonQueryContract query, int parameterIndex, Collection<Object> value) {
-        query.setParameter(parameterIndex, value);
+        if (value == null) {
+            value = Collections.emptyList();
+        }
+        query.setParameterList(parameterIndex, value);
     }
 
     @Override
@@ -186,7 +192,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
             value = Collections.emptyList();
         }
         // Can we ignore type? Was needed before Hibernate 6
-        query.setParameter(parameterIndex, parameterIndex);
+        query.setParameterList(parameterIndex, value);
     }
 
     @Override

@@ -51,6 +51,8 @@ import io.micronaut.data.tck.entities.Meal
 import io.micronaut.data.tck.entities.Nose
 import io.micronaut.data.tck.entities.Page
 import io.micronaut.data.tck.entities.Person
+import io.micronaut.data.tck.entities.PersonDto
+import io.micronaut.data.tck.entities.PersonDto2
 import io.micronaut.data.tck.entities.Student
 import io.micronaut.data.tck.entities.TimezoneBasicTypes
 import io.micronaut.data.tck.jdbc.entities.Role
@@ -80,11 +82,14 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 import static io.micronaut.data.tck.repositories.BookSpecifications.hasChapter
+import static io.micronaut.data.tck.repositories.BookSpecifications.titleContains
 import static io.micronaut.data.tck.repositories.BookSpecifications.titleEquals
 import static io.micronaut.data.tck.repositories.BookSpecifications.titleEqualsWithJoin
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.distinct
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.idsIn
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEquals
+import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEqualsCaseInsensitive
+import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.personWithOnlyNameAndAgeByName
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.setIncome
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.setName
 
@@ -2394,7 +2399,58 @@ abstract class AbstractRepositorySpec extends Specification {
             !existsNotPredicateSpec
             existsQuerySpec
             !existsNotQuerySpec
+    }
 
+    void "test criteria select" () {
+        when:
+            personRepository.save(new Person(name: "Denis", age: 123, income: 10000, enabled: false))
+            def person = personRepository.findOne(personWithOnlyNameAndAgeByName("Denis")).get()
+        then:
+            person.id == null
+            person.income == null
+            person.name == "Denis"
+            person.age == 123
+            !person.income
+            person.enabled
+    }
+
+    void "test criteria DTO projection"() {
+        when:
+            personRepository.deleteAll()
+            personRepository.save(new Person(name: "Fred1", age: 50))
+            personRepository.save(new Person(name: "Fred2", age: 18))
+        then:
+            def dto = personRepository.findOne(new CriteriaQueryBuilder<PersonDto>() {
+                @Override
+                CriteriaQuery<PersonDto> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(PersonDto)
+                    def root = query.from(Person)
+                    query.multiselect(root.<Integer>get("age"))
+                    query.where(criteriaBuilder.equal(root.<String>get("name"), "Fred1"))
+                    return query
+                }
+            })
+            dto.age == 50
+    }
+
+    void "test criteria DTO projection 2"() {
+        when:
+            personRepository.deleteAll()
+            personRepository.save(new Person(name: "Fred1", age: 50))
+            personRepository.save(new Person(name: "Fred2", age: 18))
+        then:
+            def dto = personRepository.findOne(new CriteriaQueryBuilder<PersonDto2>() {
+                @Override
+                CriteriaQuery<PersonDto2> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(PersonDto2)
+                    def root = query.from(Person)
+                    query.multiselect(root.<String>get("name"), root.<Integer>get("age"))
+                    query.where(criteriaBuilder.equal(root.<String>get("name"), "Fred1"))
+                    return query
+                }
+            })
+            dto.name() == "Fred1"
+            dto.age() == 50
     }
 
     void "test join/fetch"() {
@@ -2419,6 +2475,7 @@ abstract class AbstractRepositorySpec extends Specification {
         when:
         def bookLoadedUsingFindAllByGenre = bookRepository.findAllByGenre(genre).get(0)
         def bookLoadedUsingFindOneWithCriteriaApi = bookRepository.findOne(titleEquals(book.title)).get()
+        def bookLoadedUsingFindOneWithContainsCriteriaApi = bookRepository.findOne(titleContains(book.title)).orElse(null)
         def bookNotFoundUsingFindOneWithCriteriaApi = bookRepository.findOne(titleEquals("non_existing_book_" + System.currentTimeMillis()))
         def bookLoadedUsingFindAllWithCriteriaApi = bookRepository.findAll(titleEquals(book.title)).get(0)
         def bookLoadedUsingFindAllByCriteriaWithoutAnnotationJoin = bookRepository.findAllByCriteria(titleEqualsWithJoin(book.title)).get(0)
@@ -2432,6 +2489,8 @@ abstract class AbstractRepositorySpec extends Specification {
         bookLoadedUsingFindAllByGenre.genre.genreName != null
         bookLoadedUsingFindOneWithCriteriaApi != null
         bookLoadedUsingFindOneWithCriteriaApi.genre.genreName == genre.genreName
+        bookLoadedUsingFindOneWithContainsCriteriaApi != null
+        bookLoadedUsingFindOneWithContainsCriteriaApi.title == bookLoadedUsingFindOneWithCriteriaApi.title
         bookNotFoundUsingFindOneWithCriteriaApi.present == false
         bookLoadedUsingFindAllWithCriteriaApi != null
         bookLoadedUsingFindAllWithCriteriaApi.genre.genreName == genre.genreName

@@ -1933,4 +1933,40 @@ class Resource {
         findByResourcesNameCountQuery == 'SELECT COUNT(*) FROM `work_request` work_request_ INNER JOIN `resource` work_request_resources_ ON work_request_.`id`=work_request_resources_.`work_request_id` WHERE (work_request_resources_.`name` = ?)'
         findByResourcesKindCountQuery == 'SELECT COUNT(*) FROM `work_request` work_request_ INNER JOIN `resource` work_request_resources_ ON work_request_.`id`=work_request_resources_.`work_request_id` WHERE (work_request_resources_.`kind` = ?)'
     }
+
+    void "test find using LIKE with custom query builder"() {
+        given:
+        def repository = buildRepository('test.TestRepository', """
+
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.annotation.custom.CustomRepository;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+
+import java.util.List;
+
+@CustomRepository("book")
+interface TestRepository extends GenericRepository<Book, Long> {
+   List<Book> findByTitleLike(String title);
+   Optional<Book> findByTitleContains(String title);
+   @Nullable
+   Book findByTitleIlike(String title);
+   List<Book> findByTitleNotLike(String title);
+}
+
+""")
+        def findByTitleContainsMethod = repository.getRequiredMethod("findByTitleContains", String)
+        def findByTitleContainsQuery = getQuery(findByTitleContainsMethod)
+        def findByTitleLikeMethod = repository.getRequiredMethod("findByTitleLike", String)
+        def findByTitleLikeQuery = getQuery(findByTitleLikeMethod)
+        def findByTitleIlikeMethod = repository.getRequiredMethod("findByTitleIlike", String)
+        def findByTitleIlikeQuery = getQuery(findByTitleIlikeMethod)
+        def findByTitleNotLikeMethod = repository.getRequiredMethod("findByTitleNotLike", String)
+        def findByTitleNotLikeQuery = getQuery(findByTitleNotLikeMethod)
+        expect:
+        findByTitleContainsQuery.endsWith('FROM "book" book_ WHERE (book_."title" LIKE CONCAT(\'%\',?,\'%\'))')
+        findByTitleLikeQuery.endsWith('FROM "book" book_ WHERE (book_."title" LIKE ?)')
+        findByTitleIlikeQuery.endsWith('FROM "book" book_ WHERE (LOWER(book_."title") LIKE LOWER(?))')
+        findByTitleNotLikeQuery.endsWith('FROM "book" book_ WHERE (NOT(book_."title" LIKE ?))')
+    }
 }
