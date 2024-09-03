@@ -73,7 +73,7 @@ public interface PersistentEntityRoot<T> extends Root<T>, PersistentEntityFrom<T
      * @param persistentProperty The persistent property
      * @param <Y> The persistent property
      * @return The property expression
-     * @see 4.8.0
+     * @since 4.8.0
      */
     @NonNull
     default <Y> PersistentPropertyPath<Y> get(@NonNull PersistentProperty persistentProperty) {

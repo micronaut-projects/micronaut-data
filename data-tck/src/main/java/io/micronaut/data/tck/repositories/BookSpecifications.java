@@ -15,6 +15,10 @@ public class BookSpecifications {
         return (root, criteriaBuilder) -> criteriaBuilder.equal(root.get(TITLE_FIELD), title);
     }
 
+    public static PredicateSpecification<Book> titleContains(String title) {
+        return (root, criteriaBuilder) -> criteriaBuilder.like(criteriaBuilder.upper(root.get(TITLE_FIELD)), "%" + title.toUpperCase() + "%");
+    }
+
     public static PredicateSpecification<Book> titleEqualsWithJoin(String title) {
         return (root, criteriaBuilder) -> {
             ((PersistentEntityFrom<?, ?>) root).join("genre", io.micronaut.data.annotation.Join.Type.LEFT_FETCH);

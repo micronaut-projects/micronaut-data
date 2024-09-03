@@ -19,6 +19,7 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.core.util.CollectionUtils
 import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.exceptions.OptimisticLockException
+import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder
@@ -64,9 +65,10 @@ import jakarta.persistence.criteria.CriteriaUpdate
 import jakarta.persistence.criteria.Path
 import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Root
-import reactor.core.publisher.Mono
 import spock.lang.AutoCleanup
 import spock.lang.IgnoreIf
+import spock.lang.Issue
+import spock.lang.PendingFeature
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -76,9 +78,9 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import java.util.stream.Collectors
 
 import static io.micronaut.data.tck.repositories.BookSpecifications.hasChapter
+import static io.micronaut.data.tck.repositories.BookSpecifications.titleContains
 import static io.micronaut.data.tck.repositories.BookSpecifications.titleEquals
 import static io.micronaut.data.tck.repositories.BookSpecifications.titleEqualsWithJoin
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.distinct
@@ -527,10 +529,24 @@ abstract class AbstractRepositorySpec extends Specification {
 
         when:
         def book = bookDtoRepository.findByTitleWithQuery("The Stand")
-
         then:
         book.isPresent()
         book.get().title == "The Stand"
+
+        when:"Find projection cursored"
+        bookDtoRepository.findTitle(CursoredPageable.from(10, null))
+        then:"Exception is thrown"
+        thrown(IllegalStateException)
+
+        when:"Find dto without id property that is needed for cursors"
+        bookDtoRepository.findAll(CursoredPageable.from(10, null))
+        then:"Exception is thrown"
+        thrown(IllegalStateException)
+
+        when:"Find DTOs cursored"
+        def bookDtos = bookDtoRepository.findAllByTitle("The Stand", CursoredPageable.from(10, null))
+        then:"Successfully returned cursored page with DTOs as a result"
+        !bookDtos.empty
 
         cleanup:
         cleanupData()
@@ -2404,6 +2420,7 @@ abstract class AbstractRepositorySpec extends Specification {
         when:
         def bookLoadedUsingFindAllByGenre = bookRepository.findAllByGenre(genre).get(0)
         def bookLoadedUsingFindOneWithCriteriaApi = bookRepository.findOne(titleEquals(book.title)).get()
+        def bookLoadedUsingFindOneWithContainsCriteriaApi = bookRepository.findOne(titleContains(book.title)).orElse(null)
         def bookNotFoundUsingFindOneWithCriteriaApi = bookRepository.findOne(titleEquals("non_existing_book_" + System.currentTimeMillis()))
         def bookLoadedUsingFindAllWithCriteriaApi = bookRepository.findAll(titleEquals(book.title)).get(0)
         def bookLoadedUsingFindAllByCriteriaWithoutAnnotationJoin = bookRepository.findAllByCriteria(titleEqualsWithJoin(book.title)).get(0)
@@ -2417,6 +2434,8 @@ abstract class AbstractRepositorySpec extends Specification {
         bookLoadedUsingFindAllByGenre.genre.genreName != null
         bookLoadedUsingFindOneWithCriteriaApi != null
         bookLoadedUsingFindOneWithCriteriaApi.genre.genreName == genre.genreName
+        bookLoadedUsingFindOneWithContainsCriteriaApi != null
+        bookLoadedUsingFindOneWithContainsCriteriaApi.title == bookLoadedUsingFindOneWithCriteriaApi.title
         bookNotFoundUsingFindOneWithCriteriaApi.present == false
         bookLoadedUsingFindAllWithCriteriaApi != null
         bookLoadedUsingFindAllWithCriteriaApi.genre.genreName == genre.genreName
@@ -2615,6 +2634,8 @@ abstract class AbstractRepositorySpec extends Specification {
         mealRepository.deleteById(meal.mid)
     }
 
+    @PendingFeature(reason = "Until fixed issue with count and joins")
+    @Issue("https://github.com/micronaut-projects/micronaut-data/issues/1882")
     void "test author page total size"() {
         given:
         def author = new Author()
@@ -2636,6 +2657,31 @@ abstract class AbstractRepositorySpec extends Specification {
         authorPage.content.size() == 1
         authorPage.content[0].books.size() == 2
         bookPage.totalSize == 2
+    }
+
+    void "test pageable with join criteria"() {
+        given:
+        def author = new Author()
+        author.name = "author1"
+        authorRepository.save(author)
+        def book1 = new Book()
+        book1.title = "book1"
+        book1.totalPages = 120
+        book1.author = author
+        def book2 = new Book()
+        book2.title = "book2"
+        book2.author = author
+        book2.totalPages = 120
+        bookRepository.save(book1)
+        bookRepository.save(book2)
+        when:
+        def authorPage = authorRepository.findByBooksTotalPages(120, CursoredPageable.from(10, null))
+        then:
+        !authorPage.empty
+        // TODO: Currently does not return correct total counts due to https://github.com/micronaut-projects/micronaut-data/issues/1882
+        // so once it is fixed check totalCount == 1
+        authorPage.cursors.size() == 1
+        authorPage.content.size() == 1
     }
 
     void 'test @Where and count'() {

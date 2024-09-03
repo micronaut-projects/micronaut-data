@@ -53,19 +53,8 @@ public class FindPageSpecificationInterceptor extends AbstractSpecificationInter
         }
 
         Pageable pageable = getPageable(context);
-        if (pageable.isUnpaged()) {
-            Iterable<?> iterable = findAll(methodKey, context, Type.FIND_PAGE);
-            List<Object> resultList = (List<Object>) CollectionUtils.iterableToList(iterable);
-            return Page.of(
-                resultList,
-                pageable,
-                (long) resultList.size()
-            );
-        }
-
         Iterable<?> iterable = findAll(methodKey, context, Type.FIND_PAGE);
         List<Object> resultList = (List<Object>) CollectionUtils.iterableToList(iterable);
-
         Long count = null;
         if (pageable.requestTotal()) {
             count = count(methodKey, context);

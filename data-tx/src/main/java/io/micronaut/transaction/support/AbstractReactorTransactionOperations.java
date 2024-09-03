@@ -250,7 +250,8 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
     protected <R> Flux<R> executeCallbackFlux(@NonNull ReactiveTransactionStatus<C> status,
                                               @NonNull TransactionalCallback<C, R> handler) {
         try {
-            return Flux.from(handler.doInTransaction(status))
+            return Flux.just(status)
+                .flatMap(handler::doInTransaction)
                 .contextWrite(context -> addTxStatus(context, status));
         } catch (Exception e) {
             return Flux.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
@@ -269,7 +270,8 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
     protected <R> Mono<R> executeCallbackMono(@NonNull ReactiveTransactionStatus<C> status,
                                               @NonNull Function<ReactiveTransactionStatus<C>, Mono<R>> handler) {
         try {
-            return handler.apply(status)
+            return Mono.just(status)
+                .flatMap(handler::apply)
                 .contextWrite(context -> addTxStatus(context, status));
         } catch (Exception e) {
             return Mono.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));

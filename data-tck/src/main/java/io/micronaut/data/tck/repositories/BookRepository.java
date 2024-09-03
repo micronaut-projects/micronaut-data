@@ -172,4 +172,10 @@ public abstract class BookRepository implements PageableRepository<Book, Long>, 
     abstract List<Book> findByTitleInAndTotalPagesGreaterThan(List<String> titles, int totalPages);
 
     abstract Long countByTitleInAndTotalPagesGreaterThan(List<String> titles, int totalPages);
+
+    @Query("SELECT b FROM Book b WHERE b.author in :authors")
+    public abstract List<Book> findByAuthors(List<Author> authors);
+
+    @Query("SELECT b FROM Book b WHERE b.author.id in :authorIds")
+    public abstract List<Book> findByAuthorIds(List<Long> authorIds);
 }
