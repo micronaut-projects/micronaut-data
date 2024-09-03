@@ -55,7 +55,7 @@ dependencies {
     testImplementation mnSql.mariadb.java.client
 
     // mysql
-    testImplementation mnR2dbc.r2dbc.mysql
+    testImplementation mnR2dbc.r2dbc.io.asyncer.mysql
     testImplementation mnSql.mysql.connector.java
 
     // h2

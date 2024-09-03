@@ -31,13 +31,12 @@ import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.annotation.Connectable;
-import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.jdbc.convert.JdbcConversionContext;
 import io.micronaut.data.jdbc.mapper.ColumnIndexCallableResultReader;
 import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;
-import io.micronaut.data.jdbc.mapper.ColumnNameCallableResultReader;
+import io.micronaut.data.jdbc.mapper.ColumnNameExistenceAwareResultSetReader;
 import io.micronaut.data.jdbc.mapper.ColumnNameResultSetReader;
 import io.micronaut.data.jdbc.mapper.JdbcQueryStatement;
 import io.micronaut.data.jdbc.mapper.SqlResultConsumer;
@@ -148,7 +147,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final ConnectionOperations<Connection> connectionOperations;
     private final TransactionOperations<Connection> transactionOperations;
     private final DataSource dataSource;
-    private final DataSource unwrapedDataSource;
     private ExecutorAsyncOperations asyncOperations;
     private ExecutorService executorService;
     private final SyncCascadeOperations<JdbcOperationContext> cascadeOperations;
@@ -157,7 +155,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final SchemaTenantResolver schemaTenantResolver;
     private final JdbcSchemaHandler schemaHandler;
 
-    private final ColumnNameCallableResultReader columnNameCallableResultReader;
     private final ColumnIndexCallableResultReader columnIndexCallableResultReader;
     private final Map<Dialect, List<SqlExceptionMapper>> sqlExceptionMappers = new EnumMap<>(Dialect.class);
 
@@ -217,12 +214,10 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         ArgumentUtils.requireNonNull("dataSource", dataSource);
         ArgumentUtils.requireNonNull("transactionOperations", transactionOperations);
         this.dataSource = dataSource;
-        this.unwrapedDataSource = DelegatingDataSource.unwrapDataSource(dataSource);
         this.transactionOperations = transactionOperations;
         this.executorService = executorService;
         this.cascadeOperations = new SyncCascadeOperations<>(conversionService, this);
         this.jdbcConfiguration = jdbcConfiguration;
-        this.columnNameCallableResultReader = new ColumnNameCallableResultReader(conversionService);
         this.columnIndexCallableResultReader = new ColumnIndexCallableResultReader(conversionService);
         if (CollectionUtils.isNotEmpty(sqlExceptionMapperList)) {
             for (SqlExceptionMapper sqlExceptionMapper : sqlExceptionMapperList) {
@@ -235,6 +230,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 sqlExceptionMappers.put(dialect, dialectSqlExceptionMapperList);
             }
         }
+    }
+
+    @Override
+    protected ResultReader<ResultSet, String> createColumnNameResultSetReaderWithColumnExistenceAware() {
+        return new ColumnNameExistenceAwareResultSetReader();
     }
 
     @NonNull
