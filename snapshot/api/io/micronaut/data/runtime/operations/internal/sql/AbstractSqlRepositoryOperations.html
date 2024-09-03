@@ -203,145 +203,142 @@ implements io.micronaut.context.ApplicationContextProvider, <a href="../../../qu
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="../../../mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">RS</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createColumnNameResultSetReaderWithColumnExistenceAware()" class="member-name-link">createColumnNameResultSetReaderWithColumnExistenceAware</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E,<wbr>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E,<wbr>
 R&gt;&nbsp;<a href="../../../mapper/sql/SqlTypeMapper.html" title="interface in io.micronaut.data.runtime.mapper.sql">SqlTypeMapper</a>&lt;<a href="AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">RS</a>,<wbr>R&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createMapper(io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery,java.lang.Class)" class="member-name-link">createMapper</a><wbr>(<a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;E,<wbr>R&gt;&nbsp;preparedQuery,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createMapper(io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery,java.lang.Class)" class="member-name-link">createMapper</a><wbr>(<a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;E,<wbr>R&gt;&nbsp;preparedQuery,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">RS</a>&gt;&nbsp;rsType)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Creates a result mapper.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;T,<wbr>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;T,<wbr>
 R&gt;&nbsp;<a href="../../../mapper/sql/SqlTypeMapper.html" title="interface in io.micronaut.data.runtime.mapper.sql">SqlTypeMapper</a>&lt;<a href="AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">RS</a>,<wbr>R&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createQueryResultMapper(io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery,java.lang.String,io.micronaut.data.model.JsonDataType,java.lang.Class,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.util.function.BiFunction)" class="member-name-link">createQueryResultMapper</a><wbr>(<a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;?,<wbr>?&gt;&nbsp;sqlStoredQuery,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createQueryResultMapper(io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery,java.lang.String,io.micronaut.data.model.JsonDataType,java.lang.Class,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.util.function.BiFunction)" class="member-name-link">createQueryResultMapper</a><wbr>(<a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;?,<wbr>?&gt;&nbsp;sqlStoredQuery,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;columnName,
  <a href="../../../../model/JsonDataType.html" title="enum class in io.micronaut.data.model">JsonDataType</a>&nbsp;jsonDataType,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">RS</a>&gt;&nbsp;resultSetType,
  <a href="../../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/BiFunction.html" title="class or interface in java.util.function" class="external-link">BiFunction</a>&lt;<a href="../../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;loadListener)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Creates <a href="../../../mapper/sql/SqlTypeMapper.html" title="interface in io.micronaut.data.runtime.mapper.sql"><code>SqlTypeMapper</code></a> for reading results from single column into an entity.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;E,<wbr>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;E,<wbr>
 R&gt;&nbsp;<a href="../../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#decorate(io.micronaut.aop.MethodInvocationContext,io.micronaut.data.model.runtime.StoredQuery)" class="member-name-link">decorate</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#decorate(io.micronaut.aop.MethodInvocationContext,io.micronaut.data.model.runtime.StoredQuery)" class="member-name-link">decorate</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
  <a href="../../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;&nbsp;storedQuery)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Decorate stored query.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;E,<wbr>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;E,<wbr>
 R&gt;&nbsp;<a href="../../../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#decorate(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">decorate</a><wbr>(<a href="../../../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt;&nbsp;preparedQuery)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#decorate(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">decorate</a><wbr>(<a href="../../../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt;&nbsp;preparedQuery)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Decorate prepared query.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getFirstResultSetIndex()" class="member-name-link">getFirstResultSetIndex</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getJsonColumn(io.micronaut.data.model.runtime.QueryResultInfo)" class="member-name-link">getJsonColumn</a><wbr>(<a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a>&nbsp;queryResultInfo)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getFirstResultSetIndex()" class="member-name-link">getFirstResultSetIndex</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getJsonColumn(io.micronaut.data.model.runtime.QueryResultInfo)" class="member-name-link">getJsonColumn</a><wbr>(<a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a>&nbsp;queryResultInfo)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Gets column name for JSON result.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="../../../../model/JsonDataType.html" title="enum class in io.micronaut.data.model">JsonDataType</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getJsonDataType(io.micronaut.data.model.runtime.QueryResultInfo)" class="member-name-link">getJsonDataType</a><wbr>(<a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a>&nbsp;queryResultInfo)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="../../../../model/JsonDataType.html" title="enum class in io.micronaut.data.model">JsonDataType</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getJsonDataType(io.micronaut.data.model.runtime.QueryResultInfo)" class="member-name-link">getJsonDataType</a><wbr>(<a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a>&nbsp;queryResultInfo)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Gets JSON data type for JSON result.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;E,<wbr>
-R&gt;&nbsp;<a href="SqlPreparedQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlPreparedQuery</a>&lt;E,<wbr>R&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getSqlPreparedQuery(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">getSqlPreparedQuery</a><wbr>(<a href="../../../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt;&nbsp;preparedQuery)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;E,<wbr>
-R&gt;&nbsp;<a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;E,<wbr>R&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getSqlStoredQuery(io.micronaut.data.model.runtime.StoredQuery)" class="member-name-link">getSqlStoredQuery</a><wbr>(<a href="../../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;&nbsp;storedQuery)</code></div>
+R&gt;&nbsp;<a href="SqlPreparedQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlPreparedQuery</a>&lt;E,<wbr>R&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getSqlPreparedQuery(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">getSqlPreparedQuery</a><wbr>(<a href="../../../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt;&nbsp;preparedQuery)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isJsonEntityGeneratedId(io.micronaut.data.model.runtime.StoredQuery,io.micronaut.data.model.PersistentEntity)" class="member-name-link">isJsonEntityGeneratedId</a><wbr>(<a href="../../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;?,<wbr>?&gt;&nbsp;storedQuery,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;E,<wbr>
+R&gt;&nbsp;<a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;E,<wbr>R&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getSqlStoredQuery(io.micronaut.data.model.runtime.StoredQuery)" class="member-name-link">getSqlStoredQuery</a><wbr>(<a href="../../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;&nbsp;storedQuery)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isJsonEntityGeneratedId(io.micronaut.data.model.runtime.StoredQuery,io.micronaut.data.model.PersistentEntity)" class="member-name-link">isJsonEntityGeneratedId</a><wbr>(<a href="../../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;?,<wbr>?&gt;&nbsp;storedQuery,
  <a href="../../../../model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Inserting JSON entity representation (like Oracle Json View) can generate new id, and we support retrieval only numeric auto generated ids.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isJsonResult(io.micronaut.data.model.runtime.StoredQuery,io.micronaut.data.model.runtime.QueryResultInfo)" class="member-name-link">isJsonResult</a><wbr>(<a href="../../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;?,<wbr>?&gt;&nbsp;preparedQuery,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isJsonResult(io.micronaut.data.model.runtime.StoredQuery,io.micronaut.data.model.runtime.QueryResultInfo)" class="member-name-link">isJsonResult</a><wbr>(<a href="../../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;?,<wbr>?&gt;&nbsp;preparedQuery,
  <a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a>&nbsp;queryResultInfo)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Return an indicator telling whether prepared query result produces JSON result.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isSupportsBatchDelete(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">isSupportsBatchDelete</a><wbr>(<a href="../../../../model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isSupportsBatchDelete(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">isSupportsBatchDelete</a><wbr>(<a href="../../../../model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity,
  <a href="../../../../model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Does supports batch for delete queries.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isSupportsBatchInsert(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">isSupportsBatchInsert</a><wbr>(<a href="../../../../model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity,
- <a href="../../../../model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Does supports batch for update queries.</div>
-</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isSupportsBatchInsert(io.micronaut.data.model.PersistentEntity,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)" class="member-name-link">isSupportsBatchInsert</a><wbr>(<a href="../../../../model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity,
- <a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;?,<wbr>?&gt;&nbsp;sqlStoredQuery)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isSupportsBatchInsert(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">isSupportsBatchInsert</a><wbr>(<a href="../../../../model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity,
+ <a href="../../../../model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Does supports batch for update queries.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isSupportsBatchUpdate(io.micronaut.data.model.PersistentEntity,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)" class="member-name-link">isSupportsBatchUpdate</a><wbr>(<a href="../../../../model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isSupportsBatchInsert(io.micronaut.data.model.PersistentEntity,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)" class="member-name-link">isSupportsBatchInsert</a><wbr>(<a href="../../../../model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity,
  <a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;?,<wbr>?&gt;&nbsp;sqlStoredQuery)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Does supports batch for update queries.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;T,<wbr>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isSupportsBatchUpdate(io.micronaut.data.model.PersistentEntity,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)" class="member-name-link">isSupportsBatchUpdate</a><wbr>(<a href="../../../../model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity,
+ <a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;?,<wbr>?&gt;&nbsp;sqlStoredQuery)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Does supports batch for update queries.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;T,<wbr>
 R&gt;&nbsp;<a href="AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prepareStatement(io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOperations.StatementSupplier,io.micronaut.data.model.runtime.PreparedQuery,boolean,boolean)" class="member-name-link">prepareStatement</a><wbr>(<a href="AbstractSqlRepositoryOperations.StatementSupplier.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">AbstractSqlRepositoryOperations.StatementSupplier</a>&lt;<a href="AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>&gt;&nbsp;statementFunction,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prepareStatement(io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOperations.StatementSupplier,io.micronaut.data.model.runtime.PreparedQuery,boolean,boolean)" class="member-name-link">prepareStatement</a><wbr>(<a href="AbstractSqlRepositoryOperations.StatementSupplier.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">AbstractSqlRepositoryOperations.StatementSupplier</a>&lt;<a href="AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>&gt;&nbsp;statementFunction,
  @NonNull <a href="../../../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,<wbr>R&gt;&nbsp;preparedQuery,
  boolean&nbsp;isUpdate,
  boolean&nbsp;isSingleResult)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Prepare a statement for execution.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;T&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#resolveAssociationInsert(java.lang.Class,io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.model.runtime.RuntimeAssociation)" class="member-name-link">resolveAssociationInsert</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&nbsp;repositoryType,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;T&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#resolveAssociationInsert(java.lang.Class,io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.data.model.runtime.RuntimeAssociation)" class="member-name-link">resolveAssociationInsert</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&nbsp;repositoryType,
  <a href="../../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity,
  <a href="../../../../model/runtime/RuntimeAssociation.html" title="class in io.micronaut.data.model.runtime">RuntimeAssociation</a>&lt;T&gt;&nbsp;association)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Builds a join table insert.</div>
 </div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E&gt;&nbsp;@NonNull <a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;E,<wbr>E&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#resolveEntityInsert(io.micronaut.core.annotation.AnnotationMetadata,java.lang.Class,java.lang.Class,io.micronaut.data.model.runtime.RuntimePersistentEntity)" class="member-name-link">resolveEntityInsert</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;repositoryType,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;E&gt;&nbsp;rootEntity,
+ @NonNull <a href="../../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;E&gt;&nbsp;persistentEntity)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Resolves a stored insert for the given entity.</div>
+</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E&gt;&nbsp;@NonNull <a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;E,<wbr>E&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#resolveEntityInsert(io.micronaut.core.annotation.AnnotationMetadata,java.lang.Class,java.lang.Class,io.micronaut.data.model.runtime.RuntimePersistentEntity)" class="member-name-link">resolveEntityInsert</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#resolveEntityUpdate(io.micronaut.core.annotation.AnnotationMetadata,java.lang.Class,java.lang.Class,io.micronaut.data.model.runtime.RuntimePersistentEntity)" class="member-name-link">resolveEntityUpdate</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;repositoryType,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;E&gt;&nbsp;rootEntity,
  @NonNull <a href="../../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;E&gt;&nbsp;persistentEntity)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Resolves a stored insert for the given entity.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;E&gt;&nbsp;@NonNull <a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;E,<wbr>E&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#resolveEntityUpdate(io.micronaut.core.annotation.AnnotationMetadata,java.lang.Class,java.lang.Class,io.micronaut.data.model.runtime.RuntimePersistentEntity)" class="member-name-link">resolveEntityUpdate</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;repositoryType,
- @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;E&gt;&nbsp;rootEntity,
- @NonNull <a href="../../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;E&gt;&nbsp;persistentEntity)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Resolves a stored update for the given entity.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;T&gt;&nbsp;<a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;T,<wbr>?&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#resolveSqlInsertAssociation(java.lang.Class,io.micronaut.data.model.runtime.RuntimeAssociation,io.micronaut.data.model.runtime.RuntimePersistentEntity,T)" class="member-name-link">resolveSqlInsertAssociation</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;repositoryType,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;T&gt;&nbsp;<a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;T,<wbr>?&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#resolveSqlInsertAssociation(java.lang.Class,io.micronaut.data.model.runtime.RuntimeAssociation,io.micronaut.data.model.runtime.RuntimePersistentEntity,T)" class="member-name-link">resolveSqlInsertAssociation</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;repositoryType,
  <a href="../../../../model/runtime/RuntimeAssociation.html" title="class in io.micronaut.data.model.runtime">RuntimeAssociation</a>&lt;T&gt;&nbsp;association,
  <a href="../../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity,
  T&nbsp;entity)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Resolve SQL insert association operation.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setStatementParameter(PS,int,io.micronaut.data.model.DataType,io.micronaut.data.model.JsonDataType,java.lang.Object,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)" class="member-name-link">setStatementParameter</a><wbr>(<a href="AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>&nbsp;preparedStatement,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setStatementParameter(PS,int,io.micronaut.data.model.DataType,io.micronaut.data.model.JsonDataType,java.lang.Object,io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery)" class="member-name-link">setStatementParameter</a><wbr>(<a href="AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>&nbsp;preparedStatement,
  int&nbsp;index,
  <a href="../../../../model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a>&nbsp;dataType,
  <a href="../../../../model/JsonDataType.html" title="enum class in io.micronaut.data.model">JsonDataType</a>&nbsp;jsonDataType,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;value,
  <a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;?,<wbr>?&gt;&nbsp;storedQuery)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Set the parameter value on the given statement.</div>
 </div>
 </div>
@@ -471,16 +468,6 @@ R&gt;&nbsp;<a href="AbstractSqlRepositoryOperations.html" title="type parameter 
 <section class="method-details" id="method-detail">
 <h2>Method Details</h2>
 <ul class="member-list">
-<li>
-<section class="detail" id="createColumnNameResultSetReaderWithColumnExistenceAware()">
-<h3>createColumnNameResultSetReaderWithColumnExistenceAware</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="../../../mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">RS</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">createColumnNameResultSetReaderWithColumnExistenceAware</span>()</div>
-<dl class="notes">
-<dt>Returns:</dt>
-<dd>The result reader that will check for the column existence and return null for <a href="../../../mapper/ResultReader.html#readDynamic(RS,IDX,io.micronaut.data.model.DataType)"><code>ResultReader.readDynamic(Object, Object, DataType)</code></a></dd>
-</dl>
-</section>
-</li>
 <li>
 <section class="detail" id="decorate(io.micronaut.data.model.runtime.PreparedQuery)">
 <h3>decorate</h3>
