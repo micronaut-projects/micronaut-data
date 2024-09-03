@@ -20,7 +20,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyUnaryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.UnaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateUnaryOp;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
@@ -74,13 +74,18 @@ public interface PersistentPropertyPath<T> extends Path<T>, IExpression<T> {
     }
 
     @Override
+    default boolean isTextual() {
+        return CriteriaUtils.isTextual(getJavaType());
+    }
+
+    @Override
     default Predicate isNull() {
-        return new PersistentPropertyUnaryPredicate<>(this, PredicateUnaryOp.IS_NULL);
+        return new UnaryPredicate(this, PredicateUnaryOp.IS_NULL);
     }
 
     @Override
     default Predicate isNotNull() {
-        return new PersistentPropertyUnaryPredicate<>(this, PredicateUnaryOp.IS_NON_NULL);
+        return new UnaryPredicate(this, PredicateUnaryOp.IS_NON_NULL);
     }
 
 }

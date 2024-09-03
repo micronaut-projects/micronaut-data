@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 original authors
+ * Copyright 2017-2024 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,45 +16,42 @@
 package io.micronaut.data.processor.model.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.model.jpa.criteria.IExpression;
+import io.micronaut.data.processor.visitors.finders.TypeUtils;
 import io.micronaut.inject.ast.ClassElement;
 
 /**
- * The internal source version of {@link PersistentPropertyPath}.
+ * A source expression.
  *
- * @param <T> The entity type
- * @author Denis Stepanov
- * @since 3.2
+ * @param <T> The expression type
  */
 @Internal
-interface SourcePersistentPropertyPath<T> extends PersistentPropertyPath<T>, SourceExpression<T> {
+public interface SourceExpression<T> extends IExpression<T> {
 
-    @Override
-    io.micronaut.data.processor.model.SourcePersistentProperty getProperty();
+    /**
+     * @return The source expression type
+     */
+    @NonNull
+    ClassElement getSourceExpressionType();
 
     @Override
     default boolean isBoolean() {
-        return SourceExpression.super.isBoolean();
+        return TypeUtils.isBoolean(getSourceExpressionType());
     }
 
     @Override
     default boolean isNumeric() {
-        return SourceExpression.super.isNumeric();
+        return TypeUtils.isNumber(getSourceExpressionType());
     }
 
     @Override
     default boolean isComparable() {
-        return SourceExpression.super.isComparable();
+        return TypeUtils.isComparable(getSourceExpressionType());
     }
 
     @Override
     default boolean isTextual() {
-        return SourceExpression.super.isTextual();
+        return TypeUtils.isTextual(getSourceExpressionType());
     }
-
-    @Override
-    default ClassElement getSourceExpressionType() {
-        return getProperty().getType();
-    }
-
 }

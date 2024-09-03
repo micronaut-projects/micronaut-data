@@ -16,40 +16,44 @@
 package io.micronaut.data.model.jpa.criteria.impl.predicate;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
 import jakarta.persistence.criteria.Expression;
 
 /**
- * The expression binary operation predicate implementation.
+ * The between predicate implementation.
  *
  * @author Denis Stepanov
- * @since 3.3
+ * @since 3.2
  */
 @Internal
-public final class ExpressionBinaryPredicate extends AbstractPredicate {
+public final class BetweenPredicate extends AbstractPredicate {
 
-    private final Expression<?> left;
-    private final Expression<?> right;
-    private final PredicateBinaryOp op;
+    private final Expression<?> value;
+    private final Expression<?> from;
+    private final Expression<?> to;
 
-    public ExpressionBinaryPredicate(Expression<?> left,
-                                     Expression<?> right,
-                                     PredicateBinaryOp op) {
-        this.left = left;
-        this.right = right;
-        this.op = op;
+    public BetweenPredicate(Expression<?> value,
+                            Expression<?> from,
+                            Expression<?> to) {
+        this.value = value;
+        this.from = from;
+        this.to = to;
+        CriteriaUtils.requireComparableExpression(value);
+        CriteriaUtils.requireComparableExpression(from);
+        CriteriaUtils.requireComparableExpression(to);
     }
 
-    public PredicateBinaryOp getOp() {
-        return op;
+    public Expression<?> getValue() {
+        return value;
     }
 
-    public Expression<?> getLeft() {
-        return left;
+    public Expression<?> getFrom() {
+        return from;
     }
 
-    public Expression<?> getRight() {
-        return right;
+    public Expression<?> getTo() {
+        return to;
     }
 
     @Override
@@ -59,10 +63,10 @@ public final class ExpressionBinaryPredicate extends AbstractPredicate {
 
     @Override
     public String toString() {
-        return "ExpressionBinaryPredicate{" +
-                "left=" + left +
-                ", right=" + right +
-                ", op=" + op +
-                '}';
+        return "BetweenPredicate{" +
+            "value=" + value +
+            ", from=" + from +
+            ", to=" + to +
+            '}';
     }
 }

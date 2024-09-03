@@ -19,11 +19,10 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.ExpressionBinaryPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBetweenPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBinaryPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyUnaryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.UnaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateBinaryOp;
 import jakarta.persistence.criteria.Expression;
 
@@ -48,123 +47,103 @@ public interface AdvancedPredicateVisitor<P> extends PredicateVisitor {
     P getRequiredProperty(PersistentPropertyPath<?> persistentPropertyPath);
 
     @Override
-    default void visit(PersistentPropertyUnaryPredicate<?> propertyOp) {
-        P property = getRequiredProperty(propertyOp.getPropertyPath());
-        switch (propertyOp.getOp()) {
-            case IS_NULL -> visitIsNull(property);
-            case IS_NON_NULL -> visitIsNotNull(property);
-            case IS_TRUE -> visitIsTrue(property);
-            case IS_FALSE -> visitIsFalse(property);
-            case IS_EMPTY -> visitIsEmpty(property);
-            case IS_NOT_EMPTY -> visitIsNotEmpty(property);
-            default -> throw new IllegalStateException("Unsupported property operation: " + propertyOp.getOp());
+    default void visit(UnaryPredicate unaryPredicate) {
+        Expression<?> expression = unaryPredicate.getExpression();
+        switch (unaryPredicate.getOp()) {
+            case IS_NULL -> visitIsNull(expression);
+            case IS_NON_NULL -> visitIsNotNull(expression);
+            case IS_TRUE -> visitIsTrue(expression);
+            case IS_FALSE -> visitIsFalse(expression);
+            case IS_EMPTY -> visitIsEmpty(expression);
+            case IS_NOT_EMPTY -> visitIsNotEmpty(expression);
+            default -> throw new IllegalStateException("Unsupported property operation: " + unaryPredicate.getOp());
         }
     }
 
     @Override
-    default void visit(PersistentPropertyBetweenPredicate<?> propertyBetweenPredicate) {
-        P property = getRequiredProperty(propertyBetweenPredicate.getPropertyPath());
-        visitInBetween(property, propertyBetweenPredicate.getFrom(), propertyBetweenPredicate.getTo());
+    default void visit(BetweenPredicate betweenPredicate) {
+        visitInBetween(betweenPredicate.getValue(), betweenPredicate.getFrom(), betweenPredicate.getTo());
     }
 
     @Override
-    default void visit(PersistentPropertyBinaryPredicate<?> propertyToExpressionOp) {
-        io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath = propertyToExpressionOp.getPropertyPath();
-        PredicateBinaryOp op = propertyToExpressionOp.getOp();
-        Expression<?> expression = propertyToExpressionOp.getExpression();
-        visitPropertyPathPredicate(propertyPath, expression, op);
-    }
-
-    default void visit(ExpressionBinaryPredicate expressionBinaryPredicate) {
-        Expression<?> left = expressionBinaryPredicate.getLeft();
-        PredicateBinaryOp op = expressionBinaryPredicate.getOp();
-        if (left instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
-            visitPropertyPathPredicate(persistentPropertyPath, expressionBinaryPredicate.getRight(), op);
-        } else if (left instanceof IdExpression) {
-            if (op == PredicateBinaryOp.EQUALS) {
-                visitIdEquals(expressionBinaryPredicate.getRight());
-            } else {
-                throw new IllegalStateException("Unsupported ID expression OP: " + op);
-            }
-        } else {
-            throw new IllegalStateException("Unsupported expression: " + left);
-        }
+    default void visit(BinaryPredicate binaryPredicate) {
+        appendPredicate(binaryPredicate.getOp(), binaryPredicate.getLeftExpression(), binaryPredicate.getRightExpression());
     }
 
     void visitIdEquals(Expression<?> expression);
 
-    default void visitPropertyPathPredicate(io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath,
-                                            Expression<?> expression, PredicateBinaryOp op) {
-        P leftProperty = getRequiredProperty(propertyPath);
-        appendPredicateOfPropertyAndExpression(op, leftProperty, expression);
-    }
-
-    default void appendPredicateOfPropertyAndExpression(PredicateBinaryOp op, P leftProperty, Expression<?> expression) {
+    default void appendPredicate(PredicateBinaryOp op, Expression<?> leftExpression, Expression<?> rightExpression) {
         switch (op) {
-            case EQUALS -> visitEquals(leftProperty, expression, false);
-            case NOT_EQUALS -> visitNotEquals(leftProperty, expression, false);
-            case EQUALS_IGNORE_CASE -> visitEquals(leftProperty, expression, true);
-            case NOT_EQUALS_IGNORE_CASE -> visitNotEquals(leftProperty, expression, true);
-            case GREATER_THAN -> visitGreaterThan(leftProperty, expression);
-            case GREATER_THAN_OR_EQUALS -> visitGreaterThanOrEquals(leftProperty, expression);
-            case LESS_THAN -> visitLessThan(leftProperty, expression);
-            case LESS_THAN_OR_EQUALS -> visitLessThanOrEquals(leftProperty, expression);
-            case STARTS_WITH -> visitStartsWith(leftProperty, expression, false);
-            case STARTS_WITH_IGNORE_CASE -> visitStartsWith(leftProperty, expression, true);
-            case REGEX -> visitRegexp(leftProperty, expression);
-            case ARRAY_CONTAINS -> visitArrayContains(leftProperty, expression);
-            case CONTAINS -> visitContains(leftProperty, expression, false);
-            case CONTAINS_IGNORE_CASE -> visitContains(leftProperty, expression, true);
-            case ENDS_WITH -> visitEndsWith(leftProperty, expression, false);
-            case ENDS_WITH_IGNORE_CASE -> visitEndsWith(leftProperty, expression, true);
+            case EQUALS -> {
+                if (leftExpression instanceof IdExpression) {
+                    visitIdEquals(rightExpression);
+                } else {
+                    visitEquals(leftExpression, rightExpression, false);
+                }
+            }
+            case NOT_EQUALS -> visitNotEquals(leftExpression, rightExpression, false);
+            case EQUALS_IGNORE_CASE -> visitEquals(leftExpression, rightExpression, true);
+            case NOT_EQUALS_IGNORE_CASE -> visitNotEquals(leftExpression, rightExpression, true);
+            case GREATER_THAN -> visitGreaterThan(leftExpression, rightExpression);
+            case GREATER_THAN_OR_EQUALS -> visitGreaterThanOrEquals(leftExpression, rightExpression);
+            case LESS_THAN -> visitLessThan(leftExpression, rightExpression);
+            case LESS_THAN_OR_EQUALS -> visitLessThanOrEquals(leftExpression, rightExpression);
+            case STARTS_WITH -> visitStartsWith(leftExpression, rightExpression, false);
+            case STARTS_WITH_IGNORE_CASE -> visitStartsWith(leftExpression, rightExpression, true);
+            case REGEX -> visitRegexp(leftExpression, rightExpression);
+            case ARRAY_CONTAINS -> visitArrayContains(leftExpression, rightExpression);
+            case CONTAINS -> visitContains(leftExpression, rightExpression, false);
+            case CONTAINS_IGNORE_CASE -> visitContains(leftExpression, rightExpression, true);
+            case ENDS_WITH -> visitEndsWith(leftExpression, rightExpression, false);
+            case ENDS_WITH_IGNORE_CASE -> visitEndsWith(leftExpression, rightExpression, true);
             default -> throw new IllegalStateException("Unsupported operation: " + op);
         }
     }
 
-    void visitContains(P leftProperty, Expression<?> expression, boolean ignoreCase);
+    void visitContains(Expression<?> leftExpression, Expression<?> expression, boolean ignoreCase);
 
-    void visitEndsWith(P leftProperty, Expression<?> expression, boolean ignoreCase);
+    void visitEndsWith(Expression<?> leftExpression, Expression<?> expression, boolean ignoreCase);
 
-    default void visitRegexp(P leftProperty, Expression<?> expression) {
+    default void visitRegexp(Expression<?> leftExpression, Expression<?> expression) {
         throw new UnsupportedOperationException("Regexp is not supported by this implementation.");
     }
 
-    default void visitArrayContains(P leftProperty, Expression<?> expression) {
+    default void visitArrayContains(Expression<?> leftExpression, Expression<?> expression) {
         throw new UnsupportedOperationException("ArrayContains is not supported by this implementation.");
     }
 
-    void visitStartsWith(P leftProperty, Expression<?> expression, boolean ignoreCase);
+    void visitStartsWith(Expression<?> leftExpression, Expression<?> rightExpression, boolean ignoreCase);
 
-    void visitEquals(P leftProperty, Expression<?> expression, boolean ignoreCase);
+    void visitEquals(Expression<?> leftExpression, Expression<?> rightExpression, boolean ignoreCase);
 
-    void visitNotEquals(P leftProperty, Expression<?> expression, boolean ignoreCase);
+    void visitNotEquals(Expression<?> leftExpression, Expression<?> rightExpression, boolean ignoreCase);
 
-    void visitGreaterThan(P leftProperty, Expression<?> expression);
+    void visitGreaterThan(Expression<?> leftExpression, Expression<?> rightExpression);
 
-    void visitGreaterThanOrEquals(P leftProperty, Expression<?> expression);
+    void visitGreaterThanOrEquals(Expression<?> leftExpression, Expression<?> rightExpression);
 
-    void visitLessThan(P leftProperty, Expression<?> expression);
+    void visitLessThan(Expression<?> leftExpression, Expression<?> rightExpression);
 
-    void visitLessThanOrEquals(P leftProperty, Expression<?> expression);
+    void visitLessThanOrEquals(Expression<?> leftExpression, Expression<?> rightExpression);
 
-    void visitInBetween(P property, Expression<?> from, Expression<?> to);
+    void visitInBetween(Expression<?> value, Expression<?> from, Expression<?> to);
 
-    void visitIsFalse(P property);
+    void visitIsFalse(Expression<?> expression);
 
-    void visitIsNotNull(P property);
+    void visitIsNotNull(Expression<?> expression);
 
-    void visitIsNull(P property);
+    void visitIsNull(Expression<?> expression);
 
-    void visitIsTrue(P property);
+    void visitIsTrue(Expression<?> expression);
 
-    void visitIsEmpty(P property);
+    void visitIsEmpty(Expression<?> expression);
 
-    void visitIsNotEmpty(P property);
+    void visitIsNotEmpty(Expression<?> expression);
 
-    default void visit(PersistentPropertyInPredicate<?> predicate) {
-        visitIn(getRequiredProperty(predicate.getPropertyPath()), predicate.getValues(), false);
+    default void visit(InPredicate<?> inPredicate) {
+        visitIn(inPredicate.getExpression(), inPredicate.getValues(), false);
     }
 
-    void visitIn(P propertyPath, Collection<?> values, boolean negated);
+    void visitIn(Expression<?> expression, Collection<?> values, boolean negated);
 
 }

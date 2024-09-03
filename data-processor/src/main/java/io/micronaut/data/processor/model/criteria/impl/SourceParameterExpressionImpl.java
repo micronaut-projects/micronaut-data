@@ -49,7 +49,7 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupport
  * @since 3.2
  */
 @Internal
-public final class SourceParameterExpressionImpl extends ParameterExpressionImpl<Object> implements BindingParameter {
+public final class SourceParameterExpressionImpl extends ParameterExpressionImpl<Object> implements BindingParameter, SourceExpression<Object> {
 
     private final Map<String, DataType> dataTypes;
     private final ClassElement expressionType;
@@ -92,6 +92,41 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
         this.isEntityParameter = isEntityParameter;
         this.isUpdate = isUpdate;
         this.parameterPropertyPath = parameterPropertyPath;
+    }
+
+    @Override
+    public ClassElement getSourceExpressionType() {
+        if (expressionType != null) {
+            return expressionType;
+        }
+        if (parameterPropertyPath != null) {
+            SourcePersistentProperty property = (SourcePersistentProperty) parameterPropertyPath.getProperty();
+            return property.getType();
+        }
+        if (parameterElement != null) {
+            return parameterElement.getType();
+        }
+        return null;
+    }
+
+    @Override
+    public boolean isBoolean() {
+        return SourceExpression.super.isBoolean();
+    }
+
+    @Override
+    public boolean isNumeric() {
+        return SourceExpression.super.isNumeric();
+    }
+
+    @Override
+    public boolean isComparable() {
+        return SourceExpression.super.isComparable();
+    }
+
+    @Override
+    public boolean isTextual() {
+        return SourceExpression.super.isTextual();
     }
 
     @Override

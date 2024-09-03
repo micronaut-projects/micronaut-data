@@ -71,6 +71,11 @@ final class RuntimePersistentEntityRoot<T> extends AbstractRuntimePersistentEnti
     }
 
     @Override
+    public boolean isTextual() {
+        return false;
+    }
+
+    @Override
     public EntityType<T> getModel() {
         throw notSupportedOperation();
     }

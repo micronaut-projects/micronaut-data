@@ -16,16 +16,10 @@
 package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.jpa.criteria.IExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.AbstractExpression;
 import io.micronaut.data.model.query.BindingParameter;
-import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.ParameterExpression;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Selection;
-
-import java.util.Collection;
-import java.util.List;
-
-import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupportedOperation;
 
 /**
  * The abstract implementation of {@link ParameterExpression}.
@@ -35,14 +29,23 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupport
  * @since 3.2
  */
 @Internal
-public abstract class ParameterExpressionImpl<T> implements ParameterExpression<T>, BindingParameter {
+public abstract class ParameterExpressionImpl<T> extends AbstractExpression<T> implements ParameterExpression<T>, IExpression<T>, BindingParameter {
 
-    private final Class<T> type;
     private final String name;
 
     public ParameterExpressionImpl(Class<T> type, String name) {
-        this.type = type;
+        super(type);
         this.name = name;
+    }
+
+    @Override
+    public void visitExpression(ExpressionVisitor expressionVisitor) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Class<T> getParameterType() {
+        return getExpressionType();
     }
 
     @Override
@@ -56,74 +59,9 @@ public abstract class ParameterExpressionImpl<T> implements ParameterExpression<
     }
 
     @Override
-    public Class<T> getParameterType() {
-        return type;
-    }
-
-    @Override
-    public Predicate isNull() {
-        throw notSupportedOperation();
-    }
-
-    @Override
-    public Predicate isNotNull() {
-        throw notSupportedOperation();
-    }
-
-    @Override
-    public Predicate in(Object... values) {
-        throw notSupportedOperation();
-    }
-
-    @Override
-    public Predicate in(Expression<?>... values) {
-        throw notSupportedOperation();
-    }
-
-    @Override
-    public Predicate in(Collection<?> values) {
-        throw notSupportedOperation();
-    }
-
-    @Override
-    public Predicate in(Expression<Collection<?>> values) {
-        throw notSupportedOperation();
-    }
-
-    @Override
-    public <X> Expression<X> as(Class<X> type) {
-        throw notSupportedOperation();
-    }
-
-    @Override
-    public Selection<T> alias(String name) {
-        throw notSupportedOperation();
-    }
-
-    @Override
-    public boolean isCompoundSelection() {
-        throw notSupportedOperation();
-    }
-
-    @Override
-    public List<Selection<?>> getCompoundSelectionItems() {
-        throw notSupportedOperation();
-    }
-
-    @Override
-    public Class<? extends T> getJavaType() {
-        return getParameterType();
-    }
-
-    @Override
-    public String getAlias() {
-        throw notSupportedOperation();
-    }
-
-    @Override
     public String toString() {
         return "ParameterExpressionImpl{" +
-            "type=" + type +
+            "type=" + getExpressionType() +
             ", name='" + name + '\'' +
             '}';
     }

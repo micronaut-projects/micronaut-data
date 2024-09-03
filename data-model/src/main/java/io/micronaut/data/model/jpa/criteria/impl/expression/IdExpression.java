@@ -70,6 +70,15 @@ public final class IdExpression<E, T> implements IExpression<T> {
     }
 
     @Override
+    public boolean isTextual() {
+        PersistentEntity persistentEntity = root.getPersistentEntity();
+        if (persistentEntity.hasCompositeIdentity()) {
+            return false;
+        }
+        return root.get(persistentEntity.getIdentity().getName()).isTextual();
+    }
+
+    @Override
     public Class<? extends T> getJavaType() {
         PersistentEntity persistentEntity = root.getPersistentEntity();
         if (persistentEntity.hasCompositeIdentity()) {

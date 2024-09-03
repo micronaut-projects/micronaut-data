@@ -279,6 +279,18 @@ public class TypeUtils {
     }
 
     /**
+     * Is the type a string.
+     * @param type The type
+     * @return True if is a number
+     */
+    public static boolean isTextual(@Nullable ClassElement type) {
+        if (type == null) {
+            return false;
+        }
+        return type.isAssignable(CharSequence.class);
+    }
+
+    /**
      * Is the type void.
      * @param type The type
      * @return True if is void

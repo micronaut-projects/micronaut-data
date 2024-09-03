@@ -43,6 +43,11 @@ public interface IPredicate extends Predicate, IExpression<Boolean> {
         return true;
     }
 
+    @Override
+    default boolean isTextual() {
+        return false;
+    }
+
     /**
      * Visit predicate.
      *

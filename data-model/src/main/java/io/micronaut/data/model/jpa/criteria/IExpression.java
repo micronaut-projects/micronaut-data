@@ -51,6 +51,11 @@ public interface IExpression<T> extends Expression<T>, ISelection<T> {
      */
     boolean isComparable();
 
+    /**
+     * @return true if the expression is of string type
+     */
+    boolean isTextual();
+
     @Override
     @NonNull
     default Predicate isNull() {

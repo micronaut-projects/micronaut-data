@@ -30,7 +30,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBinaryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.query.QueryModelPredicateVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.query.QueryModelSelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
@@ -410,8 +410,13 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
     }
 
     private boolean isOnlyIdRestriction(Expression<?> predicate) {
-        if (predicate instanceof PersistentPropertyBinaryPredicate<?> pp) {
-            return pp.getProperty() == pp.getProperty().getOwner().getIdentity();
+        if (predicate instanceof BinaryPredicate binaryPredicate) {
+            if (binaryPredicate.getLeftExpression() instanceof PersistentPropertyPath<?> pp) {
+                return pp.getProperty() == pp.getProperty().getOwner().getIdentity();
+            }
+            if (binaryPredicate.getRightExpression() instanceof PersistentPropertyPath<?> pp) {
+                return pp.getProperty() == pp.getProperty().getOwner().getIdentity();
+            }
         }
         if (predicate instanceof ConjunctionPredicate conjunctionPredicate) {
             if (conjunctionPredicate.getPredicates().size() == 1) {

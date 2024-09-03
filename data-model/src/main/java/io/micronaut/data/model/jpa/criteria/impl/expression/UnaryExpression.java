@@ -42,6 +42,7 @@ public final class UnaryExpression<E> extends AbstractExpression<E> {
         super(expressionType);
         this.expression = expression;
         this.type = type;
+        type.validate(expression);
     }
 
     @Override

@@ -16,35 +16,46 @@
 package io.micronaut.data.model.jpa.criteria.impl.predicate;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
 import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Predicate;
 
 /**
- * The property between predicate implementation.
+ * The unary predicate implementation.
  *
- * @param <T> The property type
  * @author Denis Stepanov
  * @since 3.2
  */
 @Internal
-public final class PersistentPropertyBetweenPredicate<T> extends AbstractPersistentPropertyPredicate<T> {
+public final class UnaryPredicate extends AbstractPredicate {
 
-    private final Expression<?> from;
-    private final Expression<?> to;
+    private final Expression<?> expression;
+    private final PredicateUnaryOp op;
 
-    public PersistentPropertyBetweenPredicate(PersistentPropertyPath<T> persistentPropertyPath, Expression<?> from, Expression<?> to) {
-        super(persistentPropertyPath);
-        this.from = from;
-        this.to = to;
+    public UnaryPredicate(@NonNull Expression<?> expression, @NonNull PredicateUnaryOp op) {
+        this.expression = expression;
+        this.op = op;
+        op.validate(expression);
     }
 
-    public Expression<?> getFrom() {
-        return from;
+    @NonNull
+    public Expression<?> getExpression() {
+        return expression;
     }
 
-    public Expression<?> getTo() {
-        return to;
+    @NonNull
+    public PredicateUnaryOp getOp() {
+        return op;
+    }
+
+    @Override
+    public Predicate not() {
+        PredicateUnaryOp negatedOp = op.negate();
+        if (negatedOp != null) {
+            return new UnaryPredicate(expression, negatedOp);
+        }
+        return super.not();
     }
 
     @Override
@@ -54,10 +65,9 @@ public final class PersistentPropertyBetweenPredicate<T> extends AbstractPersist
 
     @Override
     public String toString() {
-        return "PersistentPropertyBetweenPredicate{" +
-                "persistentPropertyPath=" + persistentPropertyPath +
-                ", from=" + from +
-                ", to=" + to +
-                '}';
+        return "UnaryPredicate{" +
+            "expression=" + expression +
+            ", op=" + op +
+            '}';
     }
 }

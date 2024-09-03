@@ -25,8 +25,8 @@ import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBinaryPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.ParameterExpression;
 
@@ -62,76 +62,49 @@ public final class CriteriaUtils {
         return Comparable.class.isAssignableFrom(clazz) || isNumeric(clazz) ;
     }
 
+    public static boolean isTextual(@NonNull Class<?> clazz) {
+        return CharSequence.class.isAssignableFrom(clazz);
+    }
+
     public static List<IExpression<Boolean>> requireBoolExpressions(Iterable<? extends Expression<?>> restrictions) {
         return CollectionUtils.iterableToList(restrictions).stream().map(CriteriaUtils::requireBoolExpression).toList();
     }
 
-    public static IExpression<Boolean> requireBoolExpression(Expression<?> exp) {
+    public static IExpression<String> requireNumericExpression(Expression<?> exp) {
         if (exp instanceof IExpression expression) {
-            if (!expression.isBoolean()) {
-                throw new IllegalStateException("Expected a boolean expression! Got: " + exp);
+            if (expression.isNumeric()) {
+                return expression;
             }
+        }
+        throw new IllegalStateException("Expected a numeric expression! Got: " + exp);
+    }
+
+    public static IExpression<String> requireStringExpression(Expression<?> exp) {
+        if (exp instanceof IExpression expression) {
+//            if (!expression.is()) {
+//                throw new IllegalStateException("Expected a boolean expression! Got: " + exp);
+//            }
             return expression;
         }
         throw new IllegalStateException("Expression is unknown! Got: " + exp);
     }
 
-    public static <T> PersistentPropertyPath<T> requireBoolProperty(Expression<Boolean> exp) {
-        if (exp instanceof PersistentPropertyPath propertyPath) {
-            if (!propertyPath.isBoolean()) {
-                throw new IllegalStateException("Expected a boolean expression property! Got: " + exp);
+    public static <T> Expression<T> requireComparableExpression(Expression<T> exp) {
+        if (exp instanceof IExpression<T> expression) {
+            if (expression.isComparable()) {
+                return expression;
             }
-            return propertyPath;
         }
-        throw new IllegalStateException("Expression is expected to be a property path! Got: " + exp);
+        throw new IllegalStateException("Expected a comparable expression! Got: " + exp);
     }
 
-    public static <T> PersistentPropertyPath<T> requireNumericProperty(Expression<T> exp) {
-        if (exp instanceof PersistentPropertyPath<T> propertyPath) {
-            if (!propertyPath.isNumeric()) {
-                throw new IllegalStateException("Expected a numeric expression property! Got: " + exp);
+    public static IExpression<Boolean> requireBoolExpression(Expression<?> exp) {
+        if (exp instanceof IExpression expression) {
+            if (expression.isBoolean()) {
+                return expression;
             }
-            return propertyPath;
         }
-        throw new IllegalStateException("Expression is expected to be a property path! Got: " + exp);
-    }
-
-    public static <T> PersistentPropertyPath<T> requireComparableProperty(Expression<T> exp) {
-        if (exp instanceof PersistentPropertyPath<T> propertyPath) {
-            if (!propertyPath.isComparable()) {
-                throw new IllegalStateException("Expected a comparable expression property! Got: " + exp);
-            }
-            return propertyPath;
-        }
-        throw new IllegalStateException("Expression is expected to be a property path! Got: " + exp);
-    }
-
-    public static <T> Expression<T> requireComparablePropertyParameterOrLiteral(Expression<T> exp) {
-        exp = requirePropertyParameterOrLiteral(exp);
-        if (exp instanceof PersistentPropertyPath<?> propertyPath) {
-            if (!propertyPath.isComparable()) {
-                throw new IllegalStateException("Expected a comparable expression property! Got: " + exp);
-            }
-            return exp;
-        }
-        if (exp instanceof LiteralExpression<T> tLiteralExpression) {
-            if (tLiteralExpression.getValue() instanceof Comparable) {
-                return exp;
-            }
-            throw new IllegalStateException("Expected a comparable expression property! Got: " + exp);
-        }
-        return exp;
-    }
-
-    public static <T> Expression<T> requireNumericPropertyParameterOrLiteral(Expression<T> exp) {
-        exp = requirePropertyParameterOrLiteral(exp);
-        if (exp instanceof PersistentPropertyPath<?> propertyPath) {
-            if (!propertyPath.isNumeric()) {
-                throw new IllegalStateException("Expected a numeric expression property! Got: " + exp);
-            }
-            return exp;
-        }
-        return exp;
+        throw new IllegalStateException("Expected a boolean expression! Got: " + exp);
     }
 
     public static <T> ParameterExpression<T> requireParameter(Expression<T> exp) {
@@ -148,13 +121,6 @@ public final class CriteriaUtils {
         throw new IllegalStateException("Expression is expected to be a property path! Got: " + exp);
     }
 
-    public static <T> Expression<T> requirePropertyParameterOrLiteral(Expression<T> exp) {
-        if (exp instanceof PersistentPropertyPath || exp instanceof ParameterExpression || exp instanceof LiteralExpression) {
-            return exp;
-        }
-        throw new IllegalStateException("Expression is expected to be a property path, a parameter or literal! Got: " + exp);
-    }
-
     public static <T> IExpression<T> requirePropertyOrRoot(Expression<T> exp) {
         if (exp instanceof PersistentPropertyPath || exp instanceof PersistentEntityRoot) {
             return (IExpression<T>) exp;
@@ -167,9 +133,17 @@ public final class CriteriaUtils {
     }
 
     public static boolean hasVersionPredicate(Expression<?> predicate) {
-        if (predicate instanceof PersistentPropertyBinaryPredicate<?> pp) {
-            return pp.getProperty() == pp.getProperty().getOwner().getVersion();
+        if (predicate instanceof BinaryPredicate binaryPredicate) {
+            if (binaryPredicate.getLeftExpression() instanceof PersistentPropertyPath<?> pp &&
+                pp.getProperty() == pp.getProperty().getOwner().getVersion()) {
+                return true;
+            }
+            if (binaryPredicate.getRightExpression() instanceof PersistentPropertyPath<?> pp &&
+                pp.getProperty() == pp.getProperty().getOwner().getVersion()) {
+                return true;
+            }
         }
+
         if (predicate instanceof ConjunctionPredicate conjunctionPredicate) {
             for (IExpression<Boolean> pred : conjunctionPredicate.getPredicates()) {
                 if (hasVersionPredicate(pred)) {
@@ -199,11 +173,14 @@ public final class CriteriaUtils {
     private static void extractPredicateParameters(Expression<?> predicate, Set<ParameterExpression<?>> parameters) {
         if (predicate instanceof LiteralExpression<?>) {
             return;
-        } else if (predicate instanceof PersistentPropertyBinaryPredicate<?> pp) {
-            if (pp.getExpression() instanceof ParameterExpression<?> parameterExpression) {
+        } else if (predicate instanceof BinaryPredicate binaryPredicate) {
+            if (binaryPredicate.getLeftExpression() instanceof ParameterExpression<?> parameterExpression) {
                 parameters.add(parameterExpression);
             }
-        } else if (predicate instanceof PersistentPropertyInPredicate<?> pp) {
+            if (binaryPredicate.getRightExpression() instanceof ParameterExpression<?> parameterExpression) {
+                parameters.add(parameterExpression);
+            }
+        } else if (predicate instanceof InPredicate<?> pp) {
             for (Expression<?> expression : pp.getValues()) {
                 if (expression instanceof ParameterExpression<?> parameterExpression) {
                     parameters.add(parameterExpression);

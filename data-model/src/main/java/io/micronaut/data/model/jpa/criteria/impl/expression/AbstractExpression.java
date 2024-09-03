@@ -28,7 +28,7 @@ import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
  * @since 4.9
  */
 @Internal
-abstract class AbstractExpression<E> implements IExpression<E> {
+public abstract class AbstractExpression<E> implements IExpression<E> {
 
     @Nullable
     private final Class<E> expressionType;
@@ -62,12 +62,20 @@ abstract class AbstractExpression<E> implements IExpression<E> {
     }
 
     @Override
+    public boolean isTextual() {
+        if (expressionType != null) {
+            return CriteriaUtils.isTextual(expressionType);
+        }
+        return false;
+    }
+
+    @Override
     public Class<E> getJavaType() {
         return expressionType;
     }
 
     @Nullable
-    public Class<E> getExpressionType() {
+    public final Class<E> getExpressionType() {
         return expressionType;
     }
 }

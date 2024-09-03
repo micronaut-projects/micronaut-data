@@ -82,6 +82,11 @@ final class SourcePersistentEntityRoot<T> extends AbstractSourcePersistentEntity
     }
 
     @Override
+    public boolean isTextual() {
+        return false;
+    }
+
+    @Override
     public String toString() {
         return "SourcePersistentEntityRoot{" +
             "sourcePersistentEntity=" + sourcePersistentEntity +
