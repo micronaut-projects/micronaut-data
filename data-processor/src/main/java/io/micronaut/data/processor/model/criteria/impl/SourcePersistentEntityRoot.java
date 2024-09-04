@@ -67,29 +67,10 @@ final class SourcePersistentEntityRoot<T> extends AbstractSourcePersistentEntity
     }
 
     @Override
-    public boolean isBoolean() {
-        return false;
-    }
-
-    @Override
-    public boolean isNumeric() {
-        return false;
-    }
-
-    @Override
-    public boolean isComparable() {
-        return false;
-    }
-
-    @Override
-    public boolean isTextual() {
-        return false;
-    }
-
-    @Override
     public String toString() {
         return "SourcePersistentEntityRoot{" +
             "sourcePersistentEntity=" + sourcePersistentEntity +
             '}';
     }
+
 }

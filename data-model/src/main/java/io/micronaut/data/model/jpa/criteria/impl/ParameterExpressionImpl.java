@@ -16,6 +16,7 @@
 package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.AbstractExpression;
 import io.micronaut.data.model.query.BindingParameter;
@@ -33,7 +34,7 @@ public abstract class ParameterExpressionImpl<T> extends AbstractExpression<T> i
 
     private final String name;
 
-    public ParameterExpressionImpl(Class<T> type, String name) {
+    public ParameterExpressionImpl(ExpressionType<T> type, String name) {
         super(type);
         this.name = name;
     }
@@ -45,7 +46,7 @@ public abstract class ParameterExpressionImpl<T> extends AbstractExpression<T> i
 
     @Override
     public Class<T> getParameterType() {
-        return getExpressionType();
+        return getExpressionType().getJavaType();
     }
 
     @Override

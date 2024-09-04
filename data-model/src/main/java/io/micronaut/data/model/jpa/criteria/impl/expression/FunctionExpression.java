@@ -36,15 +36,9 @@ public final class FunctionExpression<E> extends AbstractExpression<E> {
     private final List<Expression<?>> expressions;
 
     public FunctionExpression(String name, List<Expression<?>> expressions, @NonNull Class<E> expressionType) {
-        super(expressionType);
+        super(new ClassExpressionType<>(expressionType));
         this.name = name;
         this.expressions = expressions;
-    }
-
-    @NonNull
-    @Override
-    public Class<E> getJavaType() {
-        return super.getJavaType();
     }
 
     @NonNull

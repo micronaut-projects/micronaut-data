@@ -267,8 +267,8 @@ abstract class AbstractCriteriaSpec extends Specification {
             "age"    | "min"           | 'MIN(test_."age")'
             "age"    | "count"         | 'COUNT(test_."age")'
             "age"    | "countDistinct" | 'COUNT(DISTINCT(test_."age"))'
-            "age"    | "lower"         | 'LOWER(test_."age")'
-            "age"    | "upper"         | 'UPPER(test_."age")'
+            "name"    | "lower"         | 'LOWER(test_."name")'
+            "name"    | "upper"         | 'UPPER(test_."name")'
     }
 
     @Unroll
@@ -289,8 +289,8 @@ abstract class AbstractCriteriaSpec extends Specification {
             "age"    | "min"           | 'MIN(test_."age")'
             "age"    | "count"         | 'COUNT(test_."age")'
             "age"    | "countDistinct" | 'COUNT(DISTINCT(test_."age"))'
-            "age"    | "lower"         | 'LOWER(test_."age")'
-            "age"    | "upper"         | 'UPPER(test_."age")'
+            "name"    | "lower"         | 'LOWER(test_."name")'
+            "name"    | "upper"         | 'UPPER(test_."name")'
     }
 
     void "test binary sum 1"() {

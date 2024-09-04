@@ -17,10 +17,13 @@ package io.micronaut.data.processor.model.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Association;
+import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityPath;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 
 import java.util.List;
+
+import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupportedOperation;
 
 /**
  * The internal source version of {@link PersistentEntityPath}.
@@ -36,5 +39,15 @@ interface SourcePersistentEntityPath<T> extends PersistentEntityPath<T> {
     SourcePersistentEntity getPersistentEntity();
 
     List<Association> getAssociations();
+
+    @Override
+    default ExpressionType<T> getExpressionType() {
+        return new ClassElementExpressionType<>(getPersistentEntity().getClassElement());
+    }
+
+    @Override
+    default Class<? extends T> getJavaType() {
+        throw notSupportedOperation();
+    }
 
 }

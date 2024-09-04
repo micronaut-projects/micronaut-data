@@ -49,7 +49,7 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupport
  * @since 3.2
  */
 @Internal
-public final class SourceParameterExpressionImpl extends ParameterExpressionImpl<Object> implements BindingParameter, SourceExpression<Object> {
+public final class SourceParameterExpressionImpl extends ParameterExpressionImpl<Object> implements BindingParameter {
 
     private final Map<String, DataType> dataTypes;
     private final ClassElement expressionType;
@@ -84,7 +84,7 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
                                           boolean isEntityParameter,
                                           boolean isUpdate,
                                           PersistentPropertyPath parameterPropertyPath) {
-        super(null, name);
+        super(new ClassElementExpressionType<>(getSourceExpressionType(expressionType, parameterElement, parameterPropertyPath)), name);
         this.dataTypes = dataTypes;
         this.expressionType = expressionType;
         this.parameters = parameters;
@@ -94,8 +94,9 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
         this.parameterPropertyPath = parameterPropertyPath;
     }
 
-    @Override
-    public ClassElement getSourceExpressionType() {
+    public static ClassElement getSourceExpressionType(ClassElement expressionType,
+                                                       ParameterElement parameterElement,
+                                                       PersistentPropertyPath parameterPropertyPath) {
         if (expressionType != null) {
             return expressionType;
         }
@@ -107,26 +108,6 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
             return parameterElement.getType();
         }
         return null;
-    }
-
-    @Override
-    public boolean isBoolean() {
-        return SourceExpression.super.isBoolean();
-    }
-
-    @Override
-    public boolean isNumeric() {
-        return SourceExpression.super.isNumeric();
-    }
-
-    @Override
-    public boolean isComparable() {
-        return SourceExpression.super.isComparable();
-    }
-
-    @Override
-    public boolean isTextual() {
-        return SourceExpression.super.isTextual();
     }
 
     @Override

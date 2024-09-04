@@ -17,7 +17,7 @@ package io.micronaut.data.model.jpa.criteria.impl.expression;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.PersistentEntity;
-import io.micronaut.data.model.jpa.criteria.IExpression;
+import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
 
@@ -30,52 +30,21 @@ import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
  * @since 3.3
  */
 @Internal
-public final class IdExpression<E, T> implements IExpression<T> {
+public final class IdExpression<E, T> extends AbstractExpression<T> {
 
     private final PersistentEntityRoot<E> root;
 
     public IdExpression(PersistentEntityRoot<E> root) {
+        super(getExpressionType(root));
         this.root = root;
     }
 
-    public PersistentEntityRoot<E> getRoot() {
-        return root;
-    }
-
-    @Override
-    public boolean isBoolean() {
+    private static <T> ExpressionType<T> getExpressionType(PersistentEntityRoot<?> root) {
         PersistentEntity persistentEntity = root.getPersistentEntity();
         if (persistentEntity.hasCompositeIdentity()) {
-            return false;
+            return (ExpressionType<T>) ExpressionType.OBJECT;
         }
-        return root.get(persistentEntity.getIdentity().getName()).isBoolean();
-    }
-
-    @Override
-    public boolean isNumeric() {
-        PersistentEntity persistentEntity = root.getPersistentEntity();
-        if (persistentEntity.hasCompositeIdentity()) {
-            return false;
-        }
-        return root.get(persistentEntity.getIdentity().getName()).isNumeric();
-    }
-
-    @Override
-    public boolean isComparable() {
-        PersistentEntity persistentEntity = root.getPersistentEntity();
-        if (persistentEntity.hasCompositeIdentity()) {
-            return false;
-        }
-        return root.get(persistentEntity.getIdentity().getName()).isComparable();
-    }
-
-    @Override
-    public boolean isTextual() {
-        PersistentEntity persistentEntity = root.getPersistentEntity();
-        if (persistentEntity.hasCompositeIdentity()) {
-            return false;
-        }
-        return root.get(persistentEntity.getIdentity().getName()).isTextual();
+        return (ExpressionType<T>) root.get(persistentEntity.getIdentity().getName()).getExpressionType();
     }
 
     @Override
@@ -87,6 +56,10 @@ public final class IdExpression<E, T> implements IExpression<T> {
         return (Class<? extends T>) root.get(persistentEntity.getIdentity().getName()).getJavaType();
     }
 
+    public PersistentEntityRoot<E> getRoot() {
+        return root;
+    }
+
     @Override
     public void visitExpression(ExpressionVisitor expressionVisitor) {
         expressionVisitor.visit(this);
@@ -95,8 +68,8 @@ public final class IdExpression<E, T> implements IExpression<T> {
     @Override
     public String toString() {
         return "IdExpression{" +
-                "root=" + root +
-                '}';
+            "root=" + root +
+            '}';
     }
 
 }

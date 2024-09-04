@@ -70,41 +70,43 @@ public final class CriteriaUtils {
         return CollectionUtils.iterableToList(restrictions).stream().map(CriteriaUtils::requireBoolExpression).toList();
     }
 
-    public static IExpression<String> requireNumericExpression(Expression<?> exp) {
-        if (exp instanceof IExpression expression) {
-            if (expression.isNumeric()) {
-                return expression;
-            }
+    public static <T> IExpression<T> requireIExpression(Expression<T> exp) {
+        if (exp instanceof IExpression<T> expression) {
+            return expression;
         }
-        throw new IllegalStateException("Expected a numeric expression! Got: " + exp);
+        throw new IllegalStateException("Expected an IExpression! Got: " + exp);
+    }
+
+    public static IExpression<String> requireNumericExpression(Expression<?> exp) {
+        IExpression expression = requireIExpression(exp);
+        if (expression.getExpressionType().isNumeric()) {
+            return expression;
+        }
+        throw new IllegalStateException("Expected a numeric expression! Got: " + expression.getExpressionType().getName());
     }
 
     public static IExpression<String> requireStringExpression(Expression<?> exp) {
-        if (exp instanceof IExpression expression) {
-//            if (!expression.is()) {
-//                throw new IllegalStateException("Expected a boolean expression! Got: " + exp);
-//            }
+        IExpression expression = requireIExpression(exp);
+        if (expression.getExpressionType().isTextual()) {
             return expression;
         }
-        throw new IllegalStateException("Expression is unknown! Got: " + exp);
+        throw new IllegalStateException("Expected a string expression! Got: " + expression.getExpressionType().getName());
     }
 
     public static <T> Expression<T> requireComparableExpression(Expression<T> exp) {
-        if (exp instanceof IExpression<T> expression) {
-            if (expression.isComparable()) {
-                return expression;
-            }
+        IExpression expression = requireIExpression(exp);
+        if (expression.getExpressionType().isComparable()) {
+            return expression;
         }
-        throw new IllegalStateException("Expected a comparable expression! Got: " + exp);
+        throw new IllegalStateException("Expected a comparable expression! Got: " + expression.getExpressionType().getName());
     }
 
     public static IExpression<Boolean> requireBoolExpression(Expression<?> exp) {
-        if (exp instanceof IExpression expression) {
-            if (expression.isBoolean()) {
-                return expression;
-            }
+        IExpression expression = requireIExpression(exp);
+        if (expression.getExpressionType().isBoolean()) {
+            return expression;
         }
-        throw new IllegalStateException("Expected a boolean expression! Got: " + exp);
+        throw new IllegalStateException("Expected a boolean expression! Got: " + expression.getExpressionType().getName());
     }
 
     public static <T> ParameterExpression<T> requireParameter(Expression<T> exp) {

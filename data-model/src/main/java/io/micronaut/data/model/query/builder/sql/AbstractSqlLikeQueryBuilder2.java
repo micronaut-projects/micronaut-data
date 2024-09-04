@@ -2195,7 +2195,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
                                            String charSequenceSuffix,
                                            String listSuffix,
                                            Expression<?> expression) {
-            if (((IExpression<?>) expression).isTextual()) {
+            if (((IExpression<?>) expression).getExpressionType().isTextual()) {
                 appendExpression(expression);
                 query.append(charSequencePrefix);
                 appendExpression(expression);

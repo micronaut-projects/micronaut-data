@@ -37,24 +37,15 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupport
 public interface IExpression<T> extends Expression<T>, ISelection<T> {
 
     /**
-     * @return true if the expression is of boolean type
+     * @return The expression type
      */
-    boolean isBoolean();
+    @NonNull
+    ExpressionType<T> getExpressionType();
 
-    /**
-     * @return true if the expression is of numeric type
-     */
-    boolean isNumeric();
-
-    /**
-     * @return true if the expression is of comparable type
-     */
-    boolean isComparable();
-
-    /**
-     * @return true if the expression is of string type
-     */
-    boolean isTextual();
+    @Override
+    default Class<? extends T> getJavaType() {
+        return getExpressionType().getJavaType();
+    }
 
     @Override
     @NonNull

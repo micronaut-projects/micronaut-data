@@ -316,9 +316,4 @@ public abstract class AbstractPersistentEntityJoinSupport<J, E> implements Persi
         throw notSupportedOperation();
     }
 
-    @Override
-    public Class<? extends E> getJavaType() {
-        throw notSupportedOperation();
-    }
-
 }

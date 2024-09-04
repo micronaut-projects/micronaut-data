@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Association;
+import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
 import io.micronaut.data.processor.model.SourceAssociation;
@@ -60,6 +61,11 @@ final class SourcePersistentAssociationPath<Owner, E> extends AbstractSourcePers
         this.associations = associations;
         this.associationJoinType = associationJoinType;
         this.alias = alias;
+    }
+
+    @Override
+    public ExpressionType<E> getExpressionType() {
+        return SourcePersistentPropertyPath.super.getExpressionType();
     }
 
     @Override
