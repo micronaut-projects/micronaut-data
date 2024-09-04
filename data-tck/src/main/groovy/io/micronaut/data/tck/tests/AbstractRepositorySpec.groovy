@@ -3031,6 +3031,54 @@ abstract class AbstractRepositorySpec extends Specification {
             ilikeNames.toSet() == ["Fr_dB1", "Fr_dB2"].toSet()
     }
 
+    void "test data with datetime fields and custom time zone"() {
+        given:
+        def defaultTimeZone = TimeZone.getDefault()
+        TimeZone.setDefault(TimeZone.getTimeZone("Europe/Berlin"))
+        when: "we save a new entity"
+        def entity = basicTypeRepository.save(new BasicTypes())
+
+        then: "The ID is assigned"
+        entity.myId != null
+
+        when: "An entity is found"
+        def retrievedEntity = basicTypeRepository.findById(entity.myId).orElse(null)
+
+        then: "The found entity is correct"
+        retrievedEntity.uuid == entity.uuid
+        retrievedEntity.bigDecimal == entity.bigDecimal
+        retrievedEntity.byteArray == entity.byteArray
+        retrievedEntity.charSequence == entity.charSequence
+        retrievedEntity.charset == entity.charset
+        retrievedEntity.primitiveBoolean == entity.primitiveBoolean
+        retrievedEntity.primitiveByte == entity.primitiveByte
+        retrievedEntity.primitiveChar == entity.primitiveChar
+        retrievedEntity.primitiveDouble == entity.primitiveDouble
+        retrievedEntity.primitiveFloat == entity.primitiveFloat
+        retrievedEntity.primitiveInteger == entity.primitiveInteger
+        retrievedEntity.primitiveLong == entity.primitiveLong
+        retrievedEntity.primitiveShort == entity.primitiveShort
+        retrievedEntity.wrapperBoolean == entity.wrapperBoolean
+        retrievedEntity.wrapperByte == entity.wrapperByte
+        retrievedEntity.wrapperChar == entity.wrapperChar
+        retrievedEntity.wrapperDouble == entity.wrapperDouble
+        retrievedEntity.wrapperFloat == entity.wrapperFloat
+        retrievedEntity.wrapperInteger == entity.wrapperInteger
+        retrievedEntity.wrapperLong == entity.wrapperLong
+        retrievedEntity.uri == entity.uri
+        retrievedEntity.url == entity.url
+        retrievedEntity.instant == entity.instant
+        retrievedEntity.localDateTime == entity.localDateTime
+        retrievedEntity.zonedDateTime == entity.zonedDateTime
+        retrievedEntity.offsetDateTime == entity.offsetDateTime
+        retrievedEntity.dateCreated == entity.dateCreated
+        retrievedEntity.dateUpdated == entity.dateUpdated
+
+        cleanup:
+        basicTypeRepository.deleteById(entity.myId)
+        TimeZone.setDefault(defaultTimeZone)
+    }
+    
     private GregorianCalendar getYearMonthDay(Date dateCreated) {
         def cal = dateCreated.toCalendar()
         def localDate = LocalDate.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH))

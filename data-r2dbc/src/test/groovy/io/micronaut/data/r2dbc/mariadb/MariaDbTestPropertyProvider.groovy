@@ -17,7 +17,7 @@ trait MariaDbTestPropertyProvider implements TestResourcesDatabaseTestPropertyPr
 
 
     Map<String, String> getDataSourceProperties(String dataSourceName) {
-        return super.getDataSourceProperties(dataSourceName) + ["test-resources.containers.mysql.image-name": "mariadb:10.6"]
+        return super.getDataSourceProperties(dataSourceName) + ["test-resources.containers.mysql.image-name": "mariadb"]
     }
 
 }
