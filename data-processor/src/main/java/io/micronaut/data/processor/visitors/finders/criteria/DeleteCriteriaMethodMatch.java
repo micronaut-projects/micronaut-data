@@ -123,9 +123,9 @@ public class DeleteCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                     && !rootEntity.hasCompositeIdentity()
                     && !rootEntity.getIdentity().isEmbedded();
                 if (generateInIdList) {
-                    predicate = root.id().in(cb.entityPropertyParameter(entityParameter, new PersistentPropertyPath(rootEntity.getIdentity())));
+                    predicate = root.id().in(cb.entityPropertyParameter(entityParameter, null));
                 } else {
-                    predicate = cb.equal(root.id(), cb.entityPropertyParameter(entityParameter, new PersistentPropertyPath(rootEntity.getIdentity())));
+                    predicate = cb.equal(root.id(), cb.entityPropertyParameter(entityParameter, null));
                 }
             }
         } else {
