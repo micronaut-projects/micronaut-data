@@ -39,7 +39,7 @@ import java.util.List;
 @Internal
 abstract class AbstractSourcePersistentEntityJoinSupport<T, E> extends AbstractPersistentEntityJoinSupport<T, E> {
 
-    private final CriteriaBuilder criteriaBuilder;
+    protected final CriteriaBuilder criteriaBuilder;
 
     AbstractSourcePersistentEntityJoinSupport(CriteriaBuilder criteriaBuilder) {
         this.criteriaBuilder = criteriaBuilder;
