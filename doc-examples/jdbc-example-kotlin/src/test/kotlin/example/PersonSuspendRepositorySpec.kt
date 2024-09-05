@@ -1,14 +1,20 @@
 package example
 
 import example.PersonRepository.Specifications.ageIsLessThan
+import example.PersonRepository.Specifications.deleteByName
 import example.PersonRepository.Specifications.nameEquals
 import example.PersonRepository.Specifications.nameInList
+import example.PersonRepository.Specifications.nameMatches
+import example.PersonRepository.Specifications.nameOrAgeMatches
 import example.PersonRepository.Specifications.setNewName
+import example.PersonRepository.Specifications.updateName
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import jakarta.inject.Inject
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification.not
+import io.micronaut.data.runtime.criteria.get
+import io.micronaut.data.runtime.criteria.where
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
@@ -119,7 +125,6 @@ internal class PersonSuspendRepositorySpec {
         Assertions.assertEquals("Denis", countAgeLess30Page.content[0].name)
     }
 
-
     @Test
     fun testInListWithPagination() = runBlocking {
         val people = personRepository.findAll(nameInList(listOf("Denis", "Josh")), Sort.of(Sort.Order.asc("name"))).toList()
@@ -130,5 +135,59 @@ internal class PersonSuspendRepositorySpec {
         Assertions.assertEquals(2, peoplePage.totalPages)
         Assertions.assertEquals(1, peoplePage.content.size)
         Assertions.assertEquals("Denis", peoplePage.content[0].name)
+    }
+
+    @Test
+    fun testFindAllCriteriaQueryBuilder() = runBlocking {
+        val people = personRepository.findAll(nameOrAgeMatches("Denis", 22)).toList()
+        Assertions.assertEquals(2, people.size)
+    }
+
+    @Test
+    fun testFindAllCriteriaQueryBuilderPageable() = runBlocking {
+        val pageable = Pageable.from(0, 1).order("name")
+        val criteria = nameOrAgeMatches("Denis", 22)
+        val page1 = personRepository.findAll(criteria, pageable)
+        Assertions.assertEquals(2, page1.totalPages)
+        Assertions.assertEquals(1, page1.content.size)
+        Assertions.assertEquals("Denis", page1.content[0].name)
+        val page2 = personRepository.findAll(criteria, pageable.next())
+        Assertions.assertEquals(2, page2.totalPages)
+        Assertions.assertEquals(1, page2.content.size)
+        Assertions.assertEquals("Josh", page2.content[0].name)
+    }
+
+    @Test
+    fun testFindOneCriteriaQueryBuilder() = runBlocking {
+        val person = personRepository.findOne(nameMatches("Denis"))!!
+        Assertions.assertEquals("Denis", person.name)
+    }
+
+    @Test
+    fun testUpdateCriteria() = runBlocking {
+        val empty: PredicateSpecification<Person>? = null
+        var all = personRepository.findAll(empty).toList()
+        Assertions.assertEquals(2, all.size)
+        Assertions.assertTrue(all.stream().anyMatch { p: Person -> p.name == "Denis" })
+        Assertions.assertTrue(all.stream().anyMatch { p: Person -> p.name == "Josh" })
+
+        val recordsUpdated = personRepository.updateAll(updateName("Steven", "Denis"))
+        Assertions.assertEquals(1, recordsUpdated)
+        all = personRepository.findAll(empty).toList()
+        Assertions.assertEquals(2, all.size)
+        Assertions.assertTrue(all.stream().anyMatch { p: Person -> p.name == "Steven" })
+        Assertions.assertTrue(all.stream().anyMatch { p: Person -> p.name == "Josh" })
+    }
+
+    @Test
+    fun testDeleteUsingCriteriaBuilder() = runBlocking {
+        val empty: PredicateSpecification<Person>? = null
+        var all = personRepository.findAll(empty).toList()
+        Assertions.assertEquals(2, all.size)
+
+        val recordsDeleted = personRepository.deleteAll(deleteByName("Denis"))
+        Assertions.assertEquals(1, recordsDeleted)
+        all = personRepository.findAll(empty).toList()
+        Assertions.assertEquals(1, all.size)
     }
 }
