@@ -1,0 +1,34 @@
+plugins {
+    id "org.jetbrains.kotlin.jvm"
+    id "org.jetbrains.kotlin.kapt"
+    id "org.jetbrains.kotlin.plugin.allopen"
+    id "io.micronaut.build.internal.data-kotlin-example"
+}
+
+application {
+    mainClass = "example.ApplicationKt"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "junit5"
+}
+
+dependencies {
+    kapt projects.micronautDataProcessor
+    kapt mnValidation.micronaut.validation
+
+    implementation mnSerde.micronaut.serde.support
+    implementation projects.micronautDataJdbc
+    implementation mn.micronaut.http.client
+    implementation mnValidation.micronaut.validation
+    implementation libs.managed.jakarta.persistence.api
+
+    implementation libs.kotlin.coroutines
+    implementation libs.kotlin.coroutines.reactive
+
+    runtimeOnly mnSql.micronaut.jdbc.tomcat
+    runtimeOnly mnLogging.logback.classic
+    runtimeOnly mnSql.h2
+}

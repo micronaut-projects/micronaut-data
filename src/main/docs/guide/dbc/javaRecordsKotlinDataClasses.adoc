@@ -1,0 +1,15 @@
+Since 2.3.0, Micronaut Data JDBC / R2DBC has support for using Java 16 records to model entities. For Kotlin projects Micronaut Data JDBC / R2DBC supports using immutable data classes as model entities. With Groovy  POGOs there is not a need for using Java records.
+
+The following example illustrates demonstrates these capabilities:
+
+snippet::example.Book[project-base="doc-examples/jdbc-example-records", source="main"]
+
+<1> The ann:data.annotation.MappedEntity[] annotation is used on the Java record. For Kotlin a data class is used instead, and for Groovy a standard POGO.
+<2> The database identifier is annotated with ann:data.annotation.Id[] and ann:data.annotation.GeneratedValue[] plus marked as `@Nullable`
+
+Since records are immutable constructor arguments that are generated values need to be marked as `@Nullable` and you should pass `null` for those arguments. Kotlin data classes are implemented similarly: to modify an entity a copy-constructor is used and every modification means a new entity instance. Groovy uses an idiomatic POGO. The following example illustrates this:
+
+snippet::example.BookRepositorySpec[project-base="doc-examples/jdbc-example-records", tags="save", indent="0"]
+
+NOTE: It is important to keep in mind that for Java records and Kotlin data classes returned instances are not the same objects passed to the `save` method. When a write operation is performed Micronaut Data uses a copy-constructor approach to populate the database identifier and return a new instance from the `save` method.
+
