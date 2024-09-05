@@ -21,13 +21,20 @@ import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInPredicate;
 import io.micronaut.data.processor.model.SourceAssociation;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Path;
+import jakarta.persistence.criteria.Predicate;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * The internal source implementation of {@link PersistentAssociationPath}.
@@ -60,6 +67,27 @@ final class SourcePersistentAssociationPath<Owner, E> extends AbstractSourcePers
         this.associations = associations;
         this.associationJoinType = associationJoinType;
         this.alias = alias;
+    }
+
+    @Override
+    public Predicate in(Object... values) {
+        return in(Arrays.asList(Objects.requireNonNull(values)));
+    }
+
+    @Override
+    public Predicate in(Collection<?> values) {
+        List<Expression<?>> expressions = Objects.requireNonNull(values).stream().map(criteriaBuilder::literal).collect(Collectors.toList());
+        return new PersistentPropertyInPredicate<>(this, expressions, criteriaBuilder);
+    }
+
+    @Override
+    public Predicate in(Expression<?>... values) {
+        return new PersistentPropertyInPredicate<>(this, Arrays.asList(values), criteriaBuilder);
+    }
+
+    @Override
+    public Predicate in(Expression<Collection<?>> values) {
+        return new PersistentPropertyInPredicate<>(this, List.of(Objects.requireNonNull(values)), criteriaBuilder);
     }
 
     @Override

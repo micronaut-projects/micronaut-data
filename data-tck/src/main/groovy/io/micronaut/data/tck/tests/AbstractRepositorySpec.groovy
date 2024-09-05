@@ -3078,7 +3078,18 @@ abstract class AbstractRepositorySpec extends Specification {
         basicTypeRepository.deleteById(entity.myId)
         TimeZone.setDefault(defaultTimeZone)
     }
-    
+
+    void "find by joined entity in list"() {
+        given:
+        saveSampleBooks()
+
+        when:
+        def author = authorRepository.findByName("Stephen King")
+        def books = bookRepository.findByAuthorInList(List.of(author))
+        then:
+        books.size() > 0
+    }
+
     private GregorianCalendar getYearMonthDay(Date dateCreated) {
         def cal = dateCreated.toCalendar()
         def localDate = LocalDate.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH))
