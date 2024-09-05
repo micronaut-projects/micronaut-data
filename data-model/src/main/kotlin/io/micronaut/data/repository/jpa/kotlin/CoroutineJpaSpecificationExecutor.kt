@@ -18,7 +18,9 @@ package io.micronaut.data.repository.jpa.kotlin
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.repository.jpa.criteria.CriteriaDeleteBuilder
 import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder
+import io.micronaut.data.repository.jpa.criteria.CriteriaUpdateBuilder
 import io.micronaut.data.repository.jpa.criteria.DeleteSpecification
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
@@ -59,6 +61,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @param <R> the result type
      *
      * @return optional found result
+     * @since 4.10
      */
     suspend fun <R> findOne(builder: CriteriaQueryBuilder<R>?): R?
 
@@ -85,6 +88,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @param <R> the result type
      *
      * @return found results
+     * @since 4.10
      */
     fun <R> findAll(builder: CriteriaQueryBuilder<R>?): Flow<R>
 
@@ -114,6 +118,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
      * @param <R> the result type
      *
      * @return found results
+     * @since 4.10
      */
     suspend fun <R> findAll(builder: CriteriaQueryBuilder<R>?, pageable: Pageable): Page<R>
 
@@ -186,10 +191,28 @@ interface CoroutineJpaSpecificationExecutor<T> {
     suspend fun deleteAll(spec: PredicateSpecification<T>?): Long
 
     /**
+     * Delete all entities using build criteria query.
+     *
+     * @param builder The delete criteria query builder
+     * @return the number records updated.
+     * @since 4.10
+     */
+    suspend fun deleteAll(builder: CriteriaDeleteBuilder<T>?): Long
+
+    /**
      * Updates all entities matching the given [UpdateSpecification].
      *
      * @param spec The update specification
      * @return the number records updated.
      */
     suspend fun updateAll(spec: UpdateSpecification<T>?): Long
+
+    /**
+     * Updates all entities using build criteria query.
+     *
+     * @param builder The update criteria query builder
+     * @return the number records updated.
+     * @since 4.10
+     */
+    suspend fun updateAll(builder: CriteriaUpdateBuilder<T>?): Long
 }

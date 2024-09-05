@@ -82,6 +82,9 @@ inline fun <reified E, reified R> query(noinline dsl: SelectQuery<E, R>.() -> Un
 inline fun <reified E> update(noinline dsl: UpdateQuery<E>.() -> Unit) = UpdateQueryBuilder(dsl, E::class.java)
 
 @Experimental
+inline fun <reified E> delete(noinline dsl: Where<E>.() -> Unit) = DeleteQueryBuilder(dsl, E::class.java)
+
+@Experimental
 class QueryBuilder<E, R>(private var dsl: SelectQuery<E, R>.() -> Unit, private var entityType: Class<E>, var resultType: Class<R>) : CriteriaQueryBuilder<R> {
 
     override fun build(criteriaBuilder: CriteriaBuilder): CriteriaQuery<R> {
@@ -143,7 +146,6 @@ class QueryPredicate<T>(var query: SelectQuery<T, *>.() -> Unit) : QuerySpecific
 
 @Experimental
 class SelectQuery<T, V>(var root: Root<T>, var query: CriteriaQuery<V>, var criteriaBuilder: CriteriaBuilder) : WhereQuery<T>(root, criteriaBuilder) {
-
 
     fun select(prop: KProperty<V>) {
         select(prop.asPath(root))
