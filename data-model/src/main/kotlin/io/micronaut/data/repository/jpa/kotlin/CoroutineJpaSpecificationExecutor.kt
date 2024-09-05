@@ -111,7 +111,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
     suspend fun findAll(spec: PredicateSpecification<T>?, pageable: Pageable): Page<T>
 
     /**
-     * Returns a single entity using build criteria query.
+     * Returns a page using build criteria query.
      *
      * @param builder The criteria query builder
      * @param pageable The pageable object
