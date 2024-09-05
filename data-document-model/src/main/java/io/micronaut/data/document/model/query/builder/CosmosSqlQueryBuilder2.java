@@ -49,6 +49,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.StringJoiner;
 
+import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requireProperty;
+
 /**
  * The Azure Cosmos DB sql query builder.
  *
@@ -141,7 +143,8 @@ public final class CosmosSqlQueryBuilder2 extends SqlQueryBuilder2 {
             private static final String ARRAY_CONTAINS = "ARRAY_CONTAINS";
 
             @Override
-            public void visitIsNull(PersistentPropertyPath propertyPath) {
+            public void visitIsNull(Expression<?> expression) {
+                PersistentPropertyPath propertyPath = requireProperty(expression).getPropertyPath();
                 query.append(NOT).append(SPACE).append(IS_DEFINED).append(OPEN_BRACKET);
                 appendPropertyRef(propertyPath);
                 query.append(CLOSE_BRACKET).append(SPACE).append(OR).append(SPACE);
@@ -151,7 +154,8 @@ public final class CosmosSqlQueryBuilder2 extends SqlQueryBuilder2 {
             }
 
             @Override
-            public void visitIsNotNull(PersistentPropertyPath propertyPath) {
+            public void visitIsNotNull(Expression<?> expression) {
+                PersistentPropertyPath propertyPath = requireProperty(expression).getPropertyPath();
                 query.append(IS_DEFINED).append(OPEN_BRACKET);
                 appendPropertyRef(propertyPath);
                 query.append(CLOSE_BRACKET).append(SPACE).append(AND).append(SPACE);
@@ -161,7 +165,8 @@ public final class CosmosSqlQueryBuilder2 extends SqlQueryBuilder2 {
             }
 
             @Override
-            public void visitIsEmpty(PersistentPropertyPath propertyPath) {
+            public void visitIsEmpty(Expression<?> expression) {
+                PersistentPropertyPath propertyPath = requireProperty(expression).getPropertyPath();
                 query.append(NOT).append(SPACE).append(IS_DEFINED).append(OPEN_BRACKET);
                 appendPropertyRef(propertyPath);
                 query.append(CLOSE_BRACKET).append(SPACE).append(OR).append(SPACE);
@@ -173,7 +178,8 @@ public final class CosmosSqlQueryBuilder2 extends SqlQueryBuilder2 {
             }
 
             @Override
-            public void visitIsNotEmpty(PersistentPropertyPath propertyPath) {
+            public void visitIsNotEmpty(Expression<?> expression) {
+                PersistentPropertyPath propertyPath = requireProperty(expression).getPropertyPath();
                 query.append(IS_DEFINED).append(OPEN_BRACKET);
                 appendPropertyRef(propertyPath);
                 query.append(CLOSE_BRACKET).append(SPACE).append(AND).append(SPACE);
@@ -185,11 +191,12 @@ public final class CosmosSqlQueryBuilder2 extends SqlQueryBuilder2 {
             }
 
             @Override
-            public void visitArrayContains(PersistentPropertyPath leftProperty, Expression<?> expression) {
+            public void visitArrayContains(Expression<?> leftExpression, Expression<?> rightExpression) {
+                PersistentPropertyPath leftProperty = requireProperty(leftExpression).getPropertyPath();
                 query.append(ARRAY_CONTAINS).append(OPEN_BRACKET);
                 appendPropertyRef(leftProperty);
                 query.append(COMMA);
-                appendExpression(expression, leftProperty);
+                appendExpression(rightExpression, leftExpression);
                 query.append(COMMA);
                 query.append("true").append(CLOSE_BRACKET);
             }

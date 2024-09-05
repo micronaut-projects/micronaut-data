@@ -84,7 +84,7 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
                                           boolean isEntityParameter,
                                           boolean isUpdate,
                                           PersistentPropertyPath parameterPropertyPath) {
-        super(null, name);
+        super(new ClassElementExpressionType<>(getSourceExpressionType(expressionType, parameterElement, parameterPropertyPath)), name);
         this.dataTypes = dataTypes;
         this.expressionType = expressionType;
         this.parameters = parameters;
@@ -92,6 +92,22 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
         this.isEntityParameter = isEntityParameter;
         this.isUpdate = isUpdate;
         this.parameterPropertyPath = parameterPropertyPath;
+    }
+
+    public static ClassElement getSourceExpressionType(ClassElement expressionType,
+                                                       ParameterElement parameterElement,
+                                                       PersistentPropertyPath parameterPropertyPath) {
+        if (expressionType != null) {
+            return expressionType;
+        }
+        if (parameterPropertyPath != null) {
+            SourcePersistentProperty property = (SourcePersistentProperty) parameterPropertyPath.getProperty();
+            return property.getType();
+        }
+        if (parameterElement != null) {
+            return parameterElement.getType();
+        }
+        return null;
     }
 
     @Override

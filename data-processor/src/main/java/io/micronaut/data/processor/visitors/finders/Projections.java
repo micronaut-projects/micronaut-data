@@ -77,7 +77,7 @@ public final class Projections {
 
         @Override
         public Selection<?> createProjection(CriteriaBuilder cb, PersistentPropertyPath<?> propertyPath) {
-            return propertyPath.isNumeric()
+            return propertyPath.getExpressionType().isNumeric()
                 ? cb.max((PersistentPropertyPath<? extends Number>) propertyPath)
                 : cb.greatest((PersistentPropertyPath<? extends Comparable>) propertyPath);
         }
@@ -95,7 +95,7 @@ public final class Projections {
 
         @Override
         public Selection<?> createProjection(CriteriaBuilder cb, PersistentPropertyPath<?> propertyPath) {
-            return propertyPath.isNumeric()
+            return propertyPath.getExpressionType().isNumeric()
                 ? cb.min((PersistentPropertyPath<? extends Number>) propertyPath)
                 : cb.least((PersistentPropertyPath<? extends Comparable>) propertyPath);
         }

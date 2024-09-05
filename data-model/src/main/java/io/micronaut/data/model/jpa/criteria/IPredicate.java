@@ -29,18 +29,8 @@ import jakarta.persistence.criteria.Predicate;
 public interface IPredicate extends Predicate, IExpression<Boolean> {
 
     @Override
-    default boolean isBoolean() {
-        return true;
-    }
-
-    @Override
-    default boolean isNumeric() {
-        return false;
-    }
-
-    @Override
-    default boolean isComparable() {
-        return true;
+    default ExpressionType<Boolean> getExpressionType() {
+        return ExpressionType.BOOLEAN;
     }
 
     /**

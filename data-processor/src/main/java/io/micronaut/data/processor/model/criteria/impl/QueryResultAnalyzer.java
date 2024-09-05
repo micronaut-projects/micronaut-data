@@ -85,9 +85,7 @@ final class QueryResultAnalyzer implements SelectionVisitor {
             case SUM:
             case AVG:
                 Expression<?> expression = unaryExpression.getExpression();
-                if (unaryExpression.getExpressionType() != null) {
-                    queryResultTypeName = unaryExpression.getExpressionType().getName();
-                }
+                queryResultTypeName = unaryExpression.getExpressionType().getName();
                 analyzeExpression(expression);
                 break;
             default:

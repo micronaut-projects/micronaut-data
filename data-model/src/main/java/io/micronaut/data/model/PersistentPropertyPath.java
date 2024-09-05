@@ -54,7 +54,7 @@ public class PersistentPropertyPath {
      * @param associations The associations
      * @param property     The property
      */
-    public PersistentPropertyPath(List<Association> associations, @NonNull PersistentProperty property) {
+    public PersistentPropertyPath(@NonNull List<Association> associations, @NonNull PersistentProperty property) {
         this(associations, property, null);
     }
 
@@ -65,7 +65,9 @@ public class PersistentPropertyPath {
      * @param property     The property
      * @param path         The path
      */
-    public PersistentPropertyPath(List<Association> associations, @NonNull PersistentProperty property, @Nullable String path) {
+    public PersistentPropertyPath(@NonNull List<Association> associations, @NonNull PersistentProperty property, @Nullable String path) {
+        Objects.requireNonNull(associations);
+        Objects.requireNonNull(property);
         this.associations = associations;
         this.property = property;
         this.path = path;

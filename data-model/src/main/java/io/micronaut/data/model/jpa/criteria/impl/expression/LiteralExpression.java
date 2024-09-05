@@ -17,6 +17,7 @@ package io.micronaut.data.model.jpa.criteria.impl.expression;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
 
 /**
@@ -33,12 +34,12 @@ public final class LiteralExpression<T> extends AbstractExpression<T> {
     private final T value;
 
     public LiteralExpression(Class<T> clazz) {
-        super(clazz);
+        super(clazz == null ? (ExpressionType<T>) ExpressionType.OBJECT : new ClassExpressionType<>(clazz));
         this.value = null;
     }
 
     public LiteralExpression(@Nullable T object) {
-        super(object == null ? null : (Class<T>) object.getClass());
+        super(object == null ? (ExpressionType<T>) ExpressionType.OBJECT : (ExpressionType<T>) new ClassExpressionType<>(object.getClass()));
         this.value = object;
     }
 

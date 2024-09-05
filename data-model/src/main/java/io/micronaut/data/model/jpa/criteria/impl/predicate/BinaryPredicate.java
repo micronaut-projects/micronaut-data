@@ -16,30 +16,36 @@
 package io.micronaut.data.model.jpa.criteria.impl.predicate;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 
 /**
- * The property binary operation predicate implementation.
+ * The binary operation predicate implementation.
  *
- * @param <T> The property type
  * @author Denis Stepanov
  * @since 3.2
  */
 @Internal
-public final class PersistentPropertyBinaryPredicate<T> extends AbstractPersistentPropertyPredicate<T> {
+public final class BinaryPredicate extends AbstractPredicate {
 
-    private final Expression<?> expression;
+    private final Expression<?> leftExpression;
+    private final Expression<?> rightExpression;
     private final PredicateBinaryOp op;
 
-    public PersistentPropertyBinaryPredicate(PersistentPropertyPath<T> persistentPropertyPath,
-                                             Expression<?> expression,
-                                             PredicateBinaryOp op) {
-        super(persistentPropertyPath);
-        this.expression = expression;
+    public BinaryPredicate(Expression<?> leftExpression, Expression<?> rightExpression, PredicateBinaryOp op) {
+        this.leftExpression = leftExpression;
+        this.rightExpression = rightExpression;
         this.op = op;
+        op.validate(leftExpression, rightExpression);
+    }
+
+    public Expression<?> getLeftExpression() {
+        return leftExpression;
+    }
+
+    public Expression<?> getRightExpression() {
+        return rightExpression;
     }
 
     public PredicateBinaryOp getOp() {
@@ -50,13 +56,9 @@ public final class PersistentPropertyBinaryPredicate<T> extends AbstractPersiste
     public Predicate not() {
         PredicateBinaryOp negatedOp = op.negate();
         if (negatedOp != null) {
-            return new PersistentPropertyBinaryPredicate<>(getPropertyPath(), expression, negatedOp);
+            return new BinaryPredicate(leftExpression, rightExpression, negatedOp);
         }
         return super.not();
-    }
-
-    public Expression<?> getExpression() {
-        return expression;
     }
 
     @Override
@@ -66,10 +68,10 @@ public final class PersistentPropertyBinaryPredicate<T> extends AbstractPersiste
 
     @Override
     public String toString() {
-        return "PersistentPropertyBinaryPredicate{" +
-                "persistentPropertyPath=" + persistentPropertyPath +
-                ", expression=" + expression +
-                ", op=" + op +
-                '}';
+        return "BinaryPredicate{" +
+            "leftExpression=" + leftExpression +
+            ", rightExpression=" + rightExpression +
+            ", op=" + op +
+            '}';
     }
 }

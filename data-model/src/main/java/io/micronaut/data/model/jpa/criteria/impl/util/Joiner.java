@@ -35,13 +35,12 @@ import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.ExpressionBinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBetweenPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBinaryPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyUnaryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.UnaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
@@ -244,31 +243,27 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
     }
 
     @Override
-    public void visit(PersistentPropertyUnaryPredicate<?> propertyOp) {
-        joinIfNeeded(propertyOp.getPropertyPath(), true);
+    public void visit(UnaryPredicate propertyOp) {
+        visitPredicateExpression(propertyOp.getExpression());
     }
 
     @Override
-    public void visit(PersistentPropertyBetweenPredicate<?> propertyBetweenPredicate) {
-        joinIfNeeded(propertyBetweenPredicate.getPropertyPath(), true);
+    public void visit(BetweenPredicate propertyBetweenPredicate) {
+        visitPredicateExpression(propertyBetweenPredicate.getValue());
+        visitPredicateExpression(propertyBetweenPredicate.getFrom());
+        visitPredicateExpression(propertyBetweenPredicate.getTo());
     }
 
     @Override
-    public void visit(PersistentPropertyBinaryPredicate<?> propertyToExpressionOp) {
-        joinIfNeeded(propertyToExpressionOp.getPropertyPath(), true);
-        visitPredicateExpression(propertyToExpressionOp.getExpression());
+    public void visit(BinaryPredicate binaryPredicate) {
+        visitPredicateExpression(binaryPredicate.getLeftExpression());
+        visitPredicateExpression(binaryPredicate.getRightExpression());
     }
 
     @Override
-    public void visit(PersistentPropertyInPredicate<?> inValues) {
-        joinIfNeeded(inValues.getPropertyPath(), true);
-        inValues.getValues().forEach(this::visitPredicateExpression);
-    }
-
-    @Override
-    public void visit(ExpressionBinaryPredicate expressionBinaryPredicate) {
-        visitPredicateExpression(expressionBinaryPredicate.getLeft());
-        visitPredicateExpression(expressionBinaryPredicate.getRight());
+    public void visit(InPredicate<?> inPredicate) {
+        visitPredicateExpression(inPredicate.getExpression());
+        inPredicate.getValues().forEach(this::visitPredicateExpression);
     }
 
     @Override

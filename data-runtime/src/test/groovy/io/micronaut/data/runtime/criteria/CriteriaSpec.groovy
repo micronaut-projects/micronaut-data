@@ -144,6 +144,12 @@ class CriteriaSpec extends AbstractCriteriaSpec {
                         def pred2 = cb.or(pred1, cb.equal(root.get("amount"), 100))
                         def andPred = cb.and(cb.equal(root.get("budget"), 200), pred2)
                         andPred
+                    } as Specification,
+                    { root, query, cb ->
+                        cb.equal(cb.lower(cb.upper(root.get("name"))), "Denis")
+                    } as Specification,
+                    { root, query, cb ->
+                        cb.equal(cb.lower(cb.upper(root.get("name"))), cb.lower(cb.literal("Denis")))
                     } as Specification
             ]
             expectedWhereQuery << [
@@ -157,7 +163,9 @@ class CriteriaSpec extends AbstractCriteriaSpec {
                     '((test_."amount" >= ? AND test_."amount" <= ?))',
                     '(test_."enabled" = TRUE)',
                     '(test_."enabled" = TRUE) ORDER BY test_."amount" DESC,test_."budget" ASC',
-                    '(test_."budget" = ? AND (test_."enabled" = TRUE OR test_."enabled2" = TRUE OR test_."amount" = ?))'
+                    '(test_."budget" = ? AND (test_."enabled" = TRUE OR test_."enabled2" = TRUE OR test_."amount" = ?))',
+                    '(LOWER(UPPER(test_."name")) = ?)',
+                    '(LOWER(UPPER(test_."name")) = LOWER(?))'
             ]
     }
 

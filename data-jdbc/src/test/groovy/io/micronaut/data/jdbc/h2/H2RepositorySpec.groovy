@@ -248,7 +248,6 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
         return true
     }
 
-    @PendingFeature
     void "test criteria lower select" () {
         when:
             savePersons(["Jeff", "James"])
