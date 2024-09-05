@@ -144,7 +144,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 aggregateData = null;
                 findData = new FindData(BsonDocument.parse(query));
             } else if (query.startsWith("[")) {
-                aggregateData = new AggregateData(BsonArray.parse(query).stream().map(BsonValue::asDocument).collect(Collectors.toList()));
+                aggregateData = new AggregateData(parseAggregation(query, storedQuery.isCount()));
                 findData = null;
             } else {
                 aggregateData = null;
@@ -182,6 +182,17 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         } else {
             updateData = null;
         }
+    }
+
+    private List<Bson> parseAggregation(String query, boolean isCount) {
+        List<Bson> pipeline = BsonArray.parse(query).stream().<Bson>map(BsonValue::asDocument).toList();
+        if (isCount && pipeline.stream().noneMatch(p -> p.toBsonDocument().containsKey("$count"))) {
+            // We can probably remove sorting projection etc. or allow a user to specify a custom count pipeline
+            List<Bson> countPipeline = new ArrayList<>(pipeline);
+            countPipeline.add(BsonDocument.parse("{ $count: \"totalCount\" }"));
+            return countPipeline;
+        }
+        return pipeline;
     }
 
     @Override
