@@ -82,7 +82,7 @@ interface CoroutineJpaSpecificationExecutor<T> {
     fun findAll(spec: PredicateSpecification<T>?): Flow<T>
 
     /**
-     * Returns a single entity using build criteria query.
+     * Returns multiple entities using build criteria query.
      *
      * @param builder The criteria query builder
      * @param <R> the result type
