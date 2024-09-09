@@ -255,15 +255,14 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
             ));
         }
 
-        StringBuilder builder = new StringBuilder();
-//        if (query.contains("WHERE")) {
-//            int i = query.indexOf("WHERE") + "WHERE".length();
-//            query = query.substring(0, i) + "(" + query.substring(i) + ")";
-//            builder.append(" AND (");
-//        } else {
-//            builder.append("WHERE (");
-//        }
-        builder.append(" AND (");
+        StringBuilder builder = new StringBuilder(" ");
+        if (query.contains("WHERE")) {
+            int i = query.indexOf("WHERE") + "WHERE".length();
+            query = query.substring(0, i) + "(" + query.substring(i) + ")";
+            builder.append(" AND (");
+        } else {
+            builder.append("WHERE (");
+        }
         String positionalParameter = getQueryBuilder().positionalParameterFormat();
         int paramIndex = storedQuery.getQueryBindings().size() + 1;
         for (int i = 0; i < orders.size(); ++i) {
