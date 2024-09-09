@@ -387,12 +387,12 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
             findIterable = findIterable.collation(collation);
         }
         Integer skip = findOptions.getSkip();
-        if (skip != null) {
+        if (skip != null && skip > 0) {
             findIterable = findIterable.skip(skip);
         }
         Integer limit = findOptions.getLimit();
-        if (limit != null) {
-            findIterable = findIterable.limit(Math.max(limit, 0));
+        if (limit != null && limit > 0) {
+            findIterable = findIterable.limit(limit);
         }
         Bson sort = findOptions.getSort();
         if (sort != null) {
@@ -403,7 +403,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
             findIterable = findIterable.projection(projection);
         }
         Integer batchSize = findOptions.getBatchSize();
-        if (batchSize != null) {
+        if (batchSize != null && batchSize > 0) {
             findIterable = findIterable.batchSize(batchSize);
         }
         Boolean allowDiskUse = findOptions.getAllowDiskUse();

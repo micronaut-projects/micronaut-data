@@ -1969,4 +1969,27 @@ interface TestRepository extends GenericRepository<Book, Long> {
         findByTitleIlikeQuery.endsWith('FROM "book" book_ WHERE (LOWER(book_."title") LIKE LOWER(?))')
         findByTitleNotLikeQuery.endsWith('FROM "book" book_ WHERE (NOT(book_."title" LIKE ?))')
     }
+
+    void "test IN"() {
+        given:
+        def repository = buildRepository('test.TestRepository', """
+
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.Author;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+
+import java.util.List;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface TestRepository extends GenericRepository<Book, Long> {
+    List<Book> findByAuthorInList(List<Author> authors);
+}
+
+""")
+        def findByAuthorInListMethod = repository.findPossibleMethods("findByAuthorInList").findFirst().get()
+        expect:
+            getQuery(findByAuthorInListMethod) == "SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated` FROM `book` book_ WHERE (book_.`author_id` IN (?))"
+    }
 }

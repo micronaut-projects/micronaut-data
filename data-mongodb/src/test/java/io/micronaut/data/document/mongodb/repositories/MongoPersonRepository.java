@@ -2,6 +2,8 @@ package io.micronaut.data.document.mongodb.repositories;
 
 import io.micronaut.data.document.tck.entities.Person;
 import io.micronaut.data.document.tck.repositories.PersonRepository;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.mongodb.annotation.MongoAggregateOptions;
 import io.micronaut.data.mongodb.annotation.MongoAggregateQuery;
 import io.micronaut.data.mongodb.annotation.MongoDeleteOptions;
@@ -27,8 +29,14 @@ public interface MongoPersonRepository extends PersonRepository {
     @MongoFindQuery(filter = "{name:{$regex: :t}}", sort = "{ name : 1 }", project = "{ name: 1}")
     List<Person> customFind(String t);
 
+    @MongoFindQuery(filter = "{name:{$regex: :t}}", sort = "{ name : 1 }", project = "{ name: 1}")
+    Page<Person> customFindPage(String t, Pageable pageable);
+
     @MongoAggregateQuery("[{$match: {name:{$regex: :t}}}, {$sort: {name: 1}}, {$project: {name: 1}}]")
     List<Person> customAgg(String t);
+
+    @MongoAggregateQuery("[{$match: {name:{$regex: :t}}}, {$sort: {name: 1}}, {$project: {name: 1}}]")
+    Page<Person> customAggrPage(String t, Pageable pageable);
 
     @MongoUpdateQuery(update = "{$set:{name: :newName}}", filter = "{name:{$eq: :oldName}}")
     long updateNamesCustom(String newName, String oldName);

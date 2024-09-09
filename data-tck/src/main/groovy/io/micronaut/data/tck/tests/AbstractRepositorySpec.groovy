@@ -51,8 +51,6 @@ import io.micronaut.data.tck.entities.Meal
 import io.micronaut.data.tck.entities.Nose
 import io.micronaut.data.tck.entities.Page
 import io.micronaut.data.tck.entities.Person
-import io.micronaut.data.tck.entities.PersonDto
-import io.micronaut.data.tck.entities.PersonDto2
 import io.micronaut.data.tck.entities.Student
 import io.micronaut.data.tck.entities.TimezoneBasicTypes
 import io.micronaut.data.tck.jdbc.entities.Role
@@ -88,8 +86,6 @@ import static io.micronaut.data.tck.repositories.BookSpecifications.titleEqualsW
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.distinct
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.idsIn
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEquals
-import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEqualsCaseInsensitive
-import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.personWithOnlyNameAndAgeByName
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.setIncome
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.setName
 
@@ -2399,58 +2395,7 @@ abstract class AbstractRepositorySpec extends Specification {
             !existsNotPredicateSpec
             existsQuerySpec
             !existsNotQuerySpec
-    }
 
-    void "test criteria select" () {
-        when:
-            personRepository.save(new Person(name: "Denis", age: 123, income: 10000, enabled: false))
-            def person = personRepository.findOne(personWithOnlyNameAndAgeByName("Denis")).get()
-        then:
-            person.id == null
-            person.income == null
-            person.name == "Denis"
-            person.age == 123
-            !person.income
-            person.enabled
-    }
-
-    void "test criteria DTO projection"() {
-        when:
-            personRepository.deleteAll()
-            personRepository.save(new Person(name: "Fred1", age: 50))
-            personRepository.save(new Person(name: "Fred2", age: 18))
-        then:
-            def dto = personRepository.findOne(new CriteriaQueryBuilder<PersonDto>() {
-                @Override
-                CriteriaQuery<PersonDto> build(CriteriaBuilder criteriaBuilder) {
-                    def query = criteriaBuilder.createQuery(PersonDto)
-                    def root = query.from(Person)
-                    query.multiselect(root.<Integer>get("age"))
-                    query.where(criteriaBuilder.equal(root.<String>get("name"), "Fred1"))
-                    return query
-                }
-            })
-            dto.age == 50
-    }
-
-    void "test criteria DTO projection 2"() {
-        when:
-            personRepository.deleteAll()
-            personRepository.save(new Person(name: "Fred1", age: 50))
-            personRepository.save(new Person(name: "Fred2", age: 18))
-        then:
-            def dto = personRepository.findOne(new CriteriaQueryBuilder<PersonDto2>() {
-                @Override
-                CriteriaQuery<PersonDto2> build(CriteriaBuilder criteriaBuilder) {
-                    def query = criteriaBuilder.createQuery(PersonDto2)
-                    def root = query.from(Person)
-                    query.multiselect(root.<String>get("name"), root.<Integer>get("age"))
-                    query.where(criteriaBuilder.equal(root.<String>get("name"), "Fred1"))
-                    return query
-                }
-            })
-            dto.name() == "Fred1"
-            dto.age() == 50
     }
 
     void "test join/fetch"() {
@@ -3084,6 +3029,65 @@ abstract class AbstractRepositorySpec extends Specification {
             })
         then:
             ilikeNames.toSet() == ["Fr_dB1", "Fr_dB2"].toSet()
+    }
+
+    void "test data with datetime fields and custom time zone"() {
+        given:
+        def defaultTimeZone = TimeZone.getDefault()
+        TimeZone.setDefault(TimeZone.getTimeZone("Europe/Berlin"))
+        when: "we save a new entity"
+        def entity = basicTypeRepository.save(new BasicTypes())
+
+        then: "The ID is assigned"
+        entity.myId != null
+
+        when: "An entity is found"
+        def retrievedEntity = basicTypeRepository.findById(entity.myId).orElse(null)
+
+        then: "The found entity is correct"
+        retrievedEntity.uuid == entity.uuid
+        retrievedEntity.bigDecimal == entity.bigDecimal
+        retrievedEntity.byteArray == entity.byteArray
+        retrievedEntity.charSequence == entity.charSequence
+        retrievedEntity.charset == entity.charset
+        retrievedEntity.primitiveBoolean == entity.primitiveBoolean
+        retrievedEntity.primitiveByte == entity.primitiveByte
+        retrievedEntity.primitiveChar == entity.primitiveChar
+        retrievedEntity.primitiveDouble == entity.primitiveDouble
+        retrievedEntity.primitiveFloat == entity.primitiveFloat
+        retrievedEntity.primitiveInteger == entity.primitiveInteger
+        retrievedEntity.primitiveLong == entity.primitiveLong
+        retrievedEntity.primitiveShort == entity.primitiveShort
+        retrievedEntity.wrapperBoolean == entity.wrapperBoolean
+        retrievedEntity.wrapperByte == entity.wrapperByte
+        retrievedEntity.wrapperChar == entity.wrapperChar
+        retrievedEntity.wrapperDouble == entity.wrapperDouble
+        retrievedEntity.wrapperFloat == entity.wrapperFloat
+        retrievedEntity.wrapperInteger == entity.wrapperInteger
+        retrievedEntity.wrapperLong == entity.wrapperLong
+        retrievedEntity.uri == entity.uri
+        retrievedEntity.url == entity.url
+        retrievedEntity.instant == entity.instant
+        retrievedEntity.localDateTime == entity.localDateTime
+        retrievedEntity.zonedDateTime == entity.zonedDateTime
+        retrievedEntity.offsetDateTime == entity.offsetDateTime
+        retrievedEntity.dateCreated == entity.dateCreated
+        retrievedEntity.dateUpdated == entity.dateUpdated
+
+        cleanup:
+        basicTypeRepository.deleteById(entity.myId)
+        TimeZone.setDefault(defaultTimeZone)
+    }
+
+    void "find by joined entity in list"() {
+        given:
+        saveSampleBooks()
+
+        when:
+        def author = authorRepository.findByName("Stephen King")
+        def books = bookRepository.findByAuthorInList(List.of(author))
+        then:
+        books.size() > 0
     }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {
