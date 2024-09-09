@@ -41,7 +41,10 @@ import io.micronaut.data.tck.repositories.TimezoneBasicTypesRepository
 import io.micronaut.data.tck.repositories.UserRepository
 import io.micronaut.data.tck.repositories.UserRoleRepository
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
+import spock.lang.PendingFeature
 import spock.lang.Shared
+
+import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEqualsCaseInsensitive
 
 class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyProvider {
 

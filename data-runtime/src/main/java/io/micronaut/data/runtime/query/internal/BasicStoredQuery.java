@@ -75,6 +75,24 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
                             boolean isSingleResult,
                             boolean isCount,
                             OperationType operationType) {
+        this(name, annotationMetadata, query, expandableQueryParts, queryParameterBindings,
+            rootEntity, resultType, pageable, isSingleResult, isCount,
+            rootEntity != resultType && (DataType.forType(resultType) == DataType.OBJECT && BeanIntrospector.SHARED.findIntrospection(resultType).isPresent()),
+            operationType);
+    }
+
+    public BasicStoredQuery(String name,
+                            AnnotationMetadata annotationMetadata,
+                            String query,
+                            String[] expandableQueryParts,
+                            List<QueryParameterBinding> queryParameterBindings,
+                            Class<E> rootEntity,
+                            Class<R> resultType,
+                            boolean pageable,
+                            boolean isSingleResult,
+                            boolean isCount,
+                            boolean isDto,
+                            OperationType operationType) {
         this.name = name;
         this.annotationMetadata = annotationMetadata;
         this.query = query;
@@ -88,7 +106,7 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
         this.operationType = operationType;
         this.resultDataType = isCount ? DataType.forType(resultType) : (rootEntity == resultType) ? DataType.ENTITY : DataType.forType(resultType);
         this.rawQuery = annotationMetadata.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
-        this.isDto = resultDataType == DataType.OBJECT && BeanIntrospector.SHARED.findIntrospection(resultType).isPresent();
+        this.isDto = isDto;
     }
 
     @Override
