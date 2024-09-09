@@ -61,12 +61,17 @@ public final class AsyncUsingSyncTransactionOperations<C> implements AsyncTransa
             // Last step to complete the TX, we need to use `withState` to properly setup thread-locals for the TX manager
             result.whenComplete((o, throwable) -> {
                 if (throwable == null) {
-                    synchronousTransactionManager.commit(status);
+                    try {
+                        synchronousTransactionManager.commit(status);
+                    } catch (Throwable e) {
+                        newResult.completeExceptionally(e);
+                        return;
+                    }
                     newResult.complete(o);
                 } else {
                     try {
                         synchronousTransactionManager.rollback(status);
-                    } catch (Exception e) {
+                    } catch (Throwable e) {
                         // Ignore rethrow
                     }
                     newResult.completeExceptionally(throwable);
