@@ -116,6 +116,229 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
             people[1].age == 0
     }
 
+    void "test custom find paginated"() {
+        given:
+            savePersons(["Dennis", "Jeff", "James", "Dennis", "Josh", "Steven", "Jake", "Jim"])
+            def peopleToUpdate = personRepository.findAll().toList()
+            peopleToUpdate.forEach {it.age = 100 }
+            personRepository.updateAll(peopleToUpdate)
+        when:
+            def peoplePage = personRepository.customFindPage("J.*", Pageable.from(0, 2))
+            def people = peoplePage.getContent()
+        then:
+            peoplePage.hasTotalSize()
+            peoplePage.getTotalPages() == 3
+            peoplePage.pageNumber == 0
+            people.size() == 2
+            people[0].name == "Jake"
+            people[0].age == 0 // Projection works
+            people[1].name == "James"
+        when:
+            peoplePage = personRepository.customFindPage("J.*", peoplePage.nextPageable())
+            people = peoplePage.getContent()
+        then:
+            peoplePage.hasTotalSize()
+            peoplePage.getTotalPages() == 3
+            peoplePage.pageNumber == 1
+            people.size() == 2
+            people[0].name == "Jeff"
+            people[0].age == 0 // Projection works
+            people[1].name == "Jim"
+        when:
+            peoplePage = personRepository.customFindPage("J.*", peoplePage.nextPageable())
+            people = peoplePage.getContent()
+        then:
+            peoplePage.hasTotalSize()
+            peoplePage.getTotalPages() == 3
+            peoplePage.pageNumber == 2
+            people.size() == 1
+            people[0].name == "Josh"
+    }
+
+    void "test custom find paginated without count"() {
+        given:
+            savePersons(["Dennis", "Jeff", "James", "Dennis", "Josh", "Steven", "Jake", "Jim"])
+            def peopleToUpdate = personRepository.findAll().toList()
+            peopleToUpdate.forEach {it.age = 100 }
+            personRepository.updateAll(peopleToUpdate)
+        when:
+            def peoplePage = personRepository.customFindPage("J.*", Pageable.from(0, 2).withoutTotal())
+            def people = peoplePage.getContent()
+        then:
+            !peoplePage.hasTotalSize()
+            peoplePage.pageNumber == 0
+            people.size() == 2
+            people[0].name == "Jake"
+            people[0].age == 0 // Projection works
+            people[1].name == "James"
+        when:
+            peoplePage = personRepository.customFindPage("J.*", peoplePage.nextPageable())
+            people = peoplePage.getContent()
+        then:
+            !peoplePage.hasTotalSize()
+            peoplePage.pageNumber == 1
+            people.size() == 2
+            people[0].name == "Jeff"
+            people[0].age == 0 // Projection works
+            people[1].name == "Jim"
+        when:
+            peoplePage = personRepository.customFindPage("J.*", peoplePage.nextPageable())
+            people = peoplePage.getContent()
+        then:
+            !peoplePage.hasTotalSize()
+            peoplePage.pageNumber == 2
+            people.size() == 1
+            people[0].name == "Josh"
+    }
+
+    void "test custom find paginated without count backwards"() {
+        given:
+            savePersons(["Dennis", "Jeff", "James", "Dennis", "Josh", "Steven", "Jake", "Jim"])
+            def peopleToUpdate = personRepository.findAll().toList()
+            peopleToUpdate.forEach {it.age = 100 }
+            personRepository.updateAll(peopleToUpdate)
+        when:
+            def peoplePage = personRepository.customFindPage("J.*", Pageable.from(2, 2).withoutTotal())
+            def people = peoplePage.getContent()
+        then:
+            !peoplePage.hasTotalSize()
+            peoplePage.pageNumber == 2
+            people.size() == 1
+            people[0].name == "Josh"
+            people[0].age == 0 // Projection works
+
+        when:
+            peoplePage = personRepository.customFindPage("J.*", peoplePage.previousPageable())
+            people = peoplePage.getContent()
+        then:
+            !peoplePage.hasTotalSize()
+            peoplePage.pageNumber == 1
+            people.size() == 2
+            people[0].name == "Jeff"
+            people[0].age == 0 // Projection works
+            people[1].name == "Jim"
+        when:
+            peoplePage = personRepository.customFindPage("J.*", peoplePage.previousPageable())
+            people = peoplePage.getContent()
+        then:
+            !peoplePage.hasTotalSize()
+            peoplePage.pageNumber == 0
+            people.size() == 2
+            people[0].name == "Jake"
+            people[1].name == "James"
+    }
+
+    void "test custom aggr paginated"() {
+        given:
+            savePersons(["Dennis", "Jeff", "James", "Dennis", "Josh", "Steven", "Jake", "Jim"])
+            def peopleToUpdate = personRepository.findAll().toList()
+            peopleToUpdate.forEach {it.age = 100 }
+            personRepository.updateAll(peopleToUpdate)
+        when:
+            def peoplePage = personRepository.customAggrPage("J.*", Pageable.from(0, 2))
+            def people = peoplePage.getContent()
+        then:
+            peoplePage.hasTotalSize()
+            peoplePage.getTotalPages() == 3
+            peoplePage.pageNumber == 0
+            people.size() == 2
+            people[0].name == "Jake"
+            people[0].age == 0 // Projection works
+            people[1].name == "James"
+        when:
+            peoplePage = personRepository.customAggrPage("J.*", peoplePage.nextPageable())
+            people = peoplePage.getContent()
+        then:
+            peoplePage.hasTotalSize()
+            peoplePage.getTotalPages() == 3
+            peoplePage.pageNumber == 1
+            people.size() == 2
+            people[0].name == "Jeff"
+            people[0].age == 0 // Projection works
+            people[1].name == "Jim"
+        when:
+            peoplePage = personRepository.customAggrPage("J.*", peoplePage.nextPageable())
+            people = peoplePage.getContent()
+        then:
+            peoplePage.hasTotalSize()
+            peoplePage.getTotalPages() == 3
+            peoplePage.pageNumber == 2
+            people.size() == 1
+            people[0].name == "Josh"
+    }
+
+    void "test custom aggr paginated without count"() {
+        given:
+            savePersons(["Dennis", "Jeff", "James", "Dennis", "Josh", "Steven", "Jake", "Jim"])
+            def peopleToUpdate = personRepository.findAll().toList()
+            peopleToUpdate.forEach {it.age = 100 }
+            personRepository.updateAll(peopleToUpdate)
+        when:
+            def peoplePage = personRepository.customAggrPage("J.*", Pageable.from(0, 2).withoutTotal())
+            def people = peoplePage.getContent()
+        then:
+            !peoplePage.hasTotalSize()
+            peoplePage.pageNumber == 0
+            people.size() == 2
+            people[0].name == "Jake"
+            people[0].age == 0 // Projection works
+            people[1].name == "James"
+        when:
+            peoplePage = personRepository.customAggrPage("J.*", peoplePage.nextPageable())
+            people = peoplePage.getContent()
+        then:
+            !peoplePage.hasTotalSize()
+            peoplePage.pageNumber == 1
+            people.size() == 2
+            people[0].name == "Jeff"
+            people[0].age == 0 // Projection works
+            people[1].name == "Jim"
+        when:
+            peoplePage = personRepository.customAggrPage("J.*", peoplePage.nextPageable())
+            people = peoplePage.getContent()
+        then:
+            !peoplePage.hasTotalSize()
+            peoplePage.pageNumber == 2
+            people.size() == 1
+            people[0].name == "Josh"
+    }
+
+    void "test custom aggr paginated without count backwards"() {
+        given:
+            savePersons(["Dennis", "Jeff", "James", "Dennis", "Josh", "Steven", "Jake", "Jim"])
+            def peopleToUpdate = personRepository.findAll().toList()
+            peopleToUpdate.forEach {it.age = 100 }
+            personRepository.updateAll(peopleToUpdate)
+        when:
+            def peoplePage = personRepository.customAggrPage("J.*", Pageable.from(2, 2).withoutTotal())
+            def people = peoplePage.getContent()
+        then:
+            !peoplePage.hasTotalSize()
+            peoplePage.pageNumber == 2
+            people.size() == 1
+            people[0].name == "Josh"
+            people[0].age == 0 // Projection works
+        when:
+            peoplePage = personRepository.customAggrPage("J.*", peoplePage.previousPageable())
+            people = peoplePage.getContent()
+        then:
+            !peoplePage.hasTotalSize()
+            peoplePage.pageNumber == 1
+            people.size() == 2
+            people[0].name == "Jeff"
+            people[0].age == 0 // Projection works
+            people[1].name == "Jim"
+        when:
+            peoplePage = personRepository.customAggrPage("J.*", peoplePage.previousPageable())
+            people = peoplePage.getContent()
+        then:
+            !peoplePage.hasTotalSize()
+            peoplePage.pageNumber == 0
+            people.size() == 2
+            people[0].name == "Jake"
+            people[1].name == "James"
+    }
+
     void "test custom aggr"() {
         given:
             savePersons(["Dennis", "Jeff", "James", "Dennis"])

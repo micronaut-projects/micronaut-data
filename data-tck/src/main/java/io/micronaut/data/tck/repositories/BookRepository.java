@@ -178,4 +178,6 @@ public abstract class BookRepository implements PageableRepository<Book, Long>, 
 
     @Query("SELECT b FROM Book b WHERE b.author.id in :authorIds")
     public abstract List<Book> findByAuthorIds(List<Long> authorIds);
+
+    public abstract List<Book> findByAuthorInList(List<Author> authors);
 }
