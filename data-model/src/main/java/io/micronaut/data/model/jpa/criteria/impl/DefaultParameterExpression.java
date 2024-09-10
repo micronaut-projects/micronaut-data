@@ -31,7 +31,7 @@ import io.micronaut.data.model.query.builder.QueryParameterBinding;
  * @since 4.9.0
  */
 @Internal
-final class DefaultParameterExpression<T> extends ParameterExpressionImpl<T> {
+final class DefaultParameterExpression<T> extends IParameterExpression<T> {
 
     private final @NonNull Class<T> paramClass;
     private final @Nullable Object value;

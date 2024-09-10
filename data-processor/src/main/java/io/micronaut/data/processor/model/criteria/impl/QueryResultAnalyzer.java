@@ -18,7 +18,9 @@ package io.micronaut.data.processor.model.criteria.impl;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.IParameterExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
@@ -67,6 +69,11 @@ final class QueryResultAnalyzer implements SelectionVisitor {
     @Override
     public void visit(PersistentEntityRoot<?> entityRoot) {
         queryResultTypeName = ((SourcePersistentEntity) entityRoot.getPersistentEntity()).getType().getName();
+    }
+
+    @Override
+    public void visit(PersistentEntitySubquery<?> subquery) {
+
     }
 
     @Override
@@ -132,4 +139,5 @@ final class QueryResultAnalyzer implements SelectionVisitor {
     public void visit(FunctionExpression<?> functionExpression) {
         queryResultTypeName = functionExpression.getJavaType().getName();
     }
+
 }

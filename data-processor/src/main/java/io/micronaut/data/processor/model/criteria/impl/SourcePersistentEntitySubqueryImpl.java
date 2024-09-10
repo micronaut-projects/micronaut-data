@@ -19,31 +19,31 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
-import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
-import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
+import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntitySubquery;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
-import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaQuery;
+import io.micronaut.data.processor.model.criteria.SourcePersistentEntitySubquery;
 import io.micronaut.inject.ast.ClassElement;
+import jakarta.persistence.criteria.AbstractQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
 
 import java.util.function.Function;
 
 /**
- * The internal source implementation of {@link SourcePersistentEntityCriteriaQuery}.
+ * The source subquery.
  *
- * @param <T> The entity type
+ * @param <T> The result type
  * @author Denis Stepanov
- * @since 3.2
+ * @since 4.10
  */
 @Internal
-final class SourcePersistentEntityCriteriaQueryImpl<T> extends AbstractPersistentEntityCriteriaQuery<T>
-        implements SourcePersistentEntityCriteriaQuery<T> {
+final class SourcePersistentEntitySubqueryImpl<T> extends AbstractPersistentEntitySubquery<T> implements SourcePersistentEntitySubquery<T> {
 
     private final Function<ClassElement, SourcePersistentEntity> entityResolver;
 
-    public SourcePersistentEntityCriteriaQueryImpl(Function<ClassElement, SourcePersistentEntity> entityResolver,
-                                                   CriteriaBuilder criteriaBuilder) {
-        super((Class<T>) Object.class, criteriaBuilder);
+    SourcePersistentEntitySubqueryImpl(AbstractQuery<?> parentQuery,
+                                       Function<ClassElement, SourcePersistentEntity> entityResolver,
+                                       CriteriaBuilder criteriaBuilder) {
+        super(parentQuery, (Class<T>) Object.class, criteriaBuilder);
         this.entityResolver = entityResolver;
     }
 
@@ -77,8 +77,4 @@ final class SourcePersistentEntityCriteriaQueryImpl<T> extends AbstractPersisten
         return null;
     }
 
-    @Override
-    public <U> PersistentEntitySubquery<U> subquery(Class<U> type) {
-        return new SourcePersistentEntitySubqueryImpl<>(this, entityResolver, criteriaBuilder);
-    }
 }

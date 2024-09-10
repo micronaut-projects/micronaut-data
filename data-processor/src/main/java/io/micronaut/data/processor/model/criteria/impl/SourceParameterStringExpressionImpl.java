@@ -19,20 +19,20 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentProperty;
-import io.micronaut.data.model.jpa.criteria.impl.ParameterExpressionImpl;
+import io.micronaut.data.model.jpa.criteria.impl.IParameterExpression;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupportedOperation;
 
 /**
- * The internal source implementation of {@link ParameterExpressionImpl}.
+ * The internal source implementation of {@link IParameterExpression}.
  *
  * @author Denis Stepanov
  * @since 4.8.0
  */
 @Internal
-public final class SourceParameterStringExpressionImpl extends ParameterExpressionImpl<Object> implements BindingParameter {
+public final class SourceParameterStringExpressionImpl extends IParameterExpression<Object> implements BindingParameter {
 
     private final PersistentProperty persistentProperty;
     private final String expression;

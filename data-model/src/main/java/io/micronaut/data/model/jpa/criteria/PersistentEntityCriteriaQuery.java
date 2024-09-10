@@ -36,7 +36,7 @@ import java.util.List;
  * @since 3.2
  */
 @Experimental
-public interface PersistentEntityCriteriaQuery<T> extends CriteriaQuery<T> {
+public interface PersistentEntityCriteriaQuery<T> extends CriteriaQuery<T>, PersistentEntityCommonAbstractCriteria {
 
     @NonNull
     <X> PersistentEntityRoot<X> from(@NonNull PersistentEntity persistentEntity);
@@ -109,4 +109,6 @@ public interface PersistentEntityCriteriaQuery<T> extends CriteriaQuery<T> {
     @NonNull
     PersistentEntityCriteriaQuery<T> distinct(boolean distinct);
 
+    @Override
+    <U> PersistentEntitySubquery<U> subquery(Class<U> type);
 }

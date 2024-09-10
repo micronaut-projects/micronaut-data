@@ -28,6 +28,7 @@ import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate;
@@ -309,6 +310,11 @@ public final class QueryModelPredicateVisitor implements PredicateVisitor {
         } else {
             add(criterion);
         }
+    }
+
+    @Override
+    public void visit(ExistsSubqueryPredicate existsSubqueryPredicate) {
+        throw new UnsupportedOperationException("Exists subquery predicate not supported");
     }
 
     private Object asValue(Object value) {

@@ -26,22 +26,24 @@ import io.micronaut.data.model.jpa.criteria.IPredicate;
 import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
-import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
-import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
-import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.UnaryPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import jakarta.persistence.criteria.Expression;
@@ -64,7 +66,7 @@ import java.util.TreeMap;
 public class Joiner implements SelectionVisitor, PredicateVisitor {
 
     private final Map<String, Joined> joins = new TreeMap<>(
-            Comparator.comparingInt(String::length).thenComparing(String::compareTo)
+        Comparator.comparingInt(String::length).thenComparing(String::compareTo)
     );
 
     /**
@@ -125,7 +127,7 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
 
     private void join(PersistentAssociationPath<?, ?> associationPath) {
         Joined joined = joins.computeIfAbsent(associationPath.getPathAsString(),
-                s -> new Joined(associationPath, associationPath.getAssociationJoinType(), associationPath.getAlias()));
+            s -> new Joined(associationPath, associationPath.getAssociationJoinType(), associationPath.getAlias()));
 
         if (joined.association == associationPath) {
             return;
@@ -145,6 +147,10 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
     public void visit(PersistentEntityRoot<?> entityRoot) {
         Set<? extends jakarta.persistence.criteria.Join<?, ?>> joins = entityRoot.getJoins();
         visitJoins(joins);
+    }
+
+    @Override
+    public void visit(PersistentEntitySubquery<?> subquery) {
     }
 
     private void visitJoins(Set<? extends jakarta.persistence.criteria.Join<?, ?>> joins) {
@@ -269,6 +275,11 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
     @Override
     public void visit(LikePredicate likePredicate) {
         visitPredicateExpression(likePredicate.getExpression());
+    }
+
+    @Override
+    public void visit(ExistsSubqueryPredicate existsSubqueryPredicate) {
+
     }
 
     /**

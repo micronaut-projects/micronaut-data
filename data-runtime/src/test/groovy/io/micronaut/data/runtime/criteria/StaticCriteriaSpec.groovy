@@ -2,6 +2,7 @@ package io.micronaut.data.runtime.criteria
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.event.EntityEventListener
+import io.micronaut.data.model.entities.Book
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery
@@ -18,6 +19,7 @@ import jakarta.persistence.criteria.Expression
 import jakarta.persistence.criteria.JoinType
 import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Selection
+import jakarta.persistence.criteria.Subquery
 import spock.lang.Unroll
 
 class StaticCriteriaSpec extends AbstractCriteriaSpec {
@@ -61,6 +63,40 @@ class StaticCriteriaSpec extends AbstractCriteriaSpec {
         criteriaQuery = criteriaBuilder.createQuery()
         criteriaDelete = criteriaBuilder.createCriteriaDelete(Test)
         criteriaUpdate = criteriaBuilder.createCriteriaUpdate(Test)
+    }
+
+    void "test subquery IN"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(Book)
+            def bookRoot = criteriaQuery.from(Book)
+            def subquery = criteriaQuery.subquery(Long)
+            def subqueryBookRoot = subquery.from(Book)
+            subquery.select(subqueryBookRoot.get("id"))
+            subquery.where(criteriaBuilder.equal(subqueryBookRoot.get("id"), 123))
+            criteriaQuery.where(
+                    bookRoot.<Long>get("id").in(subquery)
+            )
+            String query = getSqlQuery(criteriaQuery)
+
+        expect:
+            query == '''SELECT book_."id",book_."author_id",book_."title",book_."pages",book_."publisher_id" FROM "book" book_ WHERE (book_."id" IN (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."id" = ?)))'''
+    }
+
+    void "test subquery EQ"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(Book)
+            def bookRoot = criteriaQuery.from(Book)
+            def subquery = criteriaQuery.subquery(Long)
+            def subqueryBookRoot = subquery.from(Book)
+            subquery.select(subqueryBookRoot.get("id"))
+            subquery.where(criteriaBuilder.equal(subqueryBookRoot.get("id"), 123))
+            criteriaQuery.where(
+                    criteriaBuilder.equal(bookRoot.<Long>get("id"), subquery)
+            )
+            String query = getSqlQuery(criteriaQuery)
+
+        expect:
+            query == '''SELECT book_."id",book_."author_id",book_."title",book_."pages",book_."publisher_id" FROM "book" book_ WHERE (book_."id" = (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."id" = ?)))'''
     }
 
     @Unroll
@@ -261,6 +297,10 @@ class StaticCriteriaSpec extends AbstractCriteriaSpec {
             ]
     }
 
+    @Override
+    PersistentEntityRoot createRoot(Subquery query) {
+        return query.from(Test)
+    }
 
     @Override
     PersistentEntityRoot createRoot(CriteriaQuery query) {

@@ -16,6 +16,7 @@
 package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.jpa.criteria.impl.expression.SubqueryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 
@@ -42,4 +43,14 @@ public interface SelectionVisitor extends ExpressionVisitor {
      */
     void visit(CompoundSelection<?> compoundSelection);
 
+    @Override
+    default void visit(IParameterExpression<?> parameterExpression) {
+        throw new IllegalStateException("Parameter expression not supported in selection");
+    }
+
+    @Override
+    default void visit(SubqueryExpression<?> subqueryExpression) {
+        throw new IllegalStateException("Subquery not supported in selection");
+    }
+    
 }

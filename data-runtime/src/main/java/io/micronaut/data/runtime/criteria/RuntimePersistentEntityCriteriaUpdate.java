@@ -59,7 +59,7 @@ final class RuntimePersistentEntityCriteriaUpdate<T> extends AbstractPersistentE
             throw new IllegalStateException("The root entity is already specified!");
         }
         staticMetamodelInitializer.initializeMetadata(runtimePersistentEntity);
-        RuntimePersistentEntityRoot<T> newEntityRoot = new RuntimePersistentEntityRoot<>(runtimePersistentEntity, criteriaBuilder);
+        RuntimePersistentEntityRoot<T> newEntityRoot = new RuntimePersistentEntityRoot<>(this, runtimePersistentEntity, criteriaBuilder);
         entityRoot = newEntityRoot;
         return newEntityRoot;
     }
