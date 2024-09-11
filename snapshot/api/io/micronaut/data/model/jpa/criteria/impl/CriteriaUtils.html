@@ -139,15 +139,18 @@ loadScripts(document, 'script');</script>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static &lt;T&gt;&nbsp;jakarta.persistence.criteria.ParameterExpression&lt;T&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#requireParameter(jakarta.persistence.criteria.Expression)" class="member-name-link">requireParameter</a><wbr>(jakarta.persistence.criteria.Expression&lt;T&gt;&nbsp;exp)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static &lt;T&gt;&nbsp;<a href="../PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#requireProperty(jakarta.persistence.criteria.Expression)" class="member-name-link">requireProperty</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends T&gt;&nbsp;exp)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static &lt;T&gt;&nbsp;<a href="../PersistentEntitySubquery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySubquery</a>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#requirePersistentEntitySubquery(jakarta.persistence.criteria.Subquery)" class="member-name-link">requirePersistentEntitySubquery</a><wbr>(jakarta.persistence.criteria.Subquery&lt;T&gt;&nbsp;subquery)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static &lt;T&gt;&nbsp;<a href="../IExpression.html" title="interface in io.micronaut.data.model.jpa.criteria">IExpression</a>&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#requirePropertyOrRoot(jakarta.persistence.criteria.Expression)" class="member-name-link">requirePropertyOrRoot</a><wbr>(jakarta.persistence.criteria.Expression&lt;T&gt;&nbsp;exp)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static &lt;T&gt;&nbsp;<a href="../PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#requireProperty(jakarta.persistence.criteria.Expression)" class="member-name-link">requireProperty</a><wbr>(jakarta.persistence.criteria.Expression&lt;? extends T&gt;&nbsp;exp)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="../IExpression.html" title="interface in io.micronaut.data.model.jpa.criteria">IExpression</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#requireStringExpression(jakarta.persistence.criteria.Expression)" class="member-name-link">requireStringExpression</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;exp)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static &lt;T&gt;&nbsp;<a href="../IExpression.html" title="interface in io.micronaut.data.model.jpa.criteria">IExpression</a>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#requirePropertyOrRoot(jakarta.persistence.criteria.Expression)" class="member-name-link">requirePropertyOrRoot</a><wbr>(jakarta.persistence.criteria.Expression&lt;T&gt;&nbsp;exp)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="../IExpression.html" title="interface in io.micronaut.data.model.jpa.criteria">IExpression</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#requireStringExpression(jakarta.persistence.criteria.Expression)" class="member-name-link">requireStringExpression</a><wbr>(jakarta.persistence.criteria.Expression&lt;?&gt;&nbsp;exp)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -203,6 +206,12 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="requireIExpression(jakarta.persistence.criteria.Expression)">
 <h3>requireIExpression</h3>
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type"><a href="../IExpression.html" title="interface in io.micronaut.data.model.jpa.criteria">IExpression</a>&lt;T&gt;</span>&nbsp;<span class="element-name">requireIExpression</span><wbr><span class="parameters">(jakarta.persistence.criteria.Expression&lt;T&gt;&nbsp;exp)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="requirePersistentEntitySubquery(jakarta.persistence.criteria.Subquery)">
+<h3>requirePersistentEntitySubquery</h3>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type"><a href="../PersistentEntitySubquery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySubquery</a>&lt;T&gt;</span>&nbsp;<span class="element-name">requirePersistentEntitySubquery</span><wbr><span class="parameters">(jakarta.persistence.criteria.Subquery&lt;T&gt;&nbsp;subquery)</span></div>
 </section>
 </li>
 <li>

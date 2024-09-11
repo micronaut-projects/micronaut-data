@@ -246,13 +246,14 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.data.model.jpa.criteria.impl.expression.<a href="io/micronaut/data/model/jpa/criteria/impl/expression/BinaryExpression.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl.expression">BinaryExpression</a>&lt;E&gt;</li>
 <li class="circle">io.micronaut.data.model.jpa.criteria.impl.expression.<a href="io/micronaut/data/model/jpa/criteria/impl/expression/FunctionExpression.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl.expression">FunctionExpression</a>&lt;E&gt;</li>
 <li class="circle">io.micronaut.data.model.jpa.criteria.impl.expression.<a href="io/micronaut/data/model/jpa/criteria/impl/expression/IdExpression.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl.expression">IdExpression</a>&lt;E,<wbr>T&gt;</li>
-<li class="circle">io.micronaut.data.model.jpa.criteria.impl.expression.<a href="io/micronaut/data/model/jpa/criteria/impl/expression/LiteralExpression.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl.expression">LiteralExpression</a>&lt;T&gt;</li>
-<li class="circle">io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/ParameterExpressionImpl.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl">ParameterExpressionImpl</a>&lt;T&gt; (implements io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/BindingParameter.html" title="interface in io.micronaut.data.model.query">BindingParameter</a>, io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/IExpression.html" title="interface in io.micronaut.data.model.jpa.criteria">IExpression</a>&lt;T&gt;, jakarta.persistence.criteria.ParameterExpression&lt;T&gt;)
+<li class="circle">io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/IParameterExpression.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl">IParameterExpression</a>&lt;T&gt; (implements io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/BindingParameter.html" title="interface in io.micronaut.data.model.query">BindingParameter</a>, io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/IExpression.html" title="interface in io.micronaut.data.model.jpa.criteria">IExpression</a>&lt;T&gt;, jakarta.persistence.criteria.ParameterExpression&lt;T&gt;)
 <ul>
 <li class="circle">io.micronaut.data.processor.model.criteria.impl.<a href="io/micronaut/data/processor/model/criteria/impl/SourceParameterExpressionImpl.html" class="type-name-link" title="class in io.micronaut.data.processor.model.criteria.impl">SourceParameterExpressionImpl</a> (implements io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/BindingParameter.html" title="interface in io.micronaut.data.model.query">BindingParameter</a>)</li>
 <li class="circle">io.micronaut.data.processor.model.criteria.impl.<a href="io/micronaut/data/processor/model/criteria/impl/SourceParameterStringExpressionImpl.html" class="type-name-link" title="class in io.micronaut.data.processor.model.criteria.impl">SourceParameterStringExpressionImpl</a> (implements io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/BindingParameter.html" title="interface in io.micronaut.data.model.query">BindingParameter</a>)</li>
 </ul>
 </li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.impl.expression.<a href="io/micronaut/data/model/jpa/criteria/impl/expression/LiteralExpression.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl.expression">LiteralExpression</a>&lt;T&gt;</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.impl.expression.<a href="io/micronaut/data/model/jpa/criteria/impl/expression/SubqueryExpression.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl.expression">SubqueryExpression</a>&lt;T&gt;</li>
 <li class="circle">io.micronaut.data.model.jpa.criteria.impl.expression.<a href="io/micronaut/data/model/jpa/criteria/impl/expression/UnaryExpression.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl.expression">UnaryExpression</a>&lt;E&gt;</li>
 </ul>
 </li>
@@ -287,9 +288,14 @@ loadScripts(document, 'script');</script>
 </ul>
 </li>
 <li class="circle">io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaDelete.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaDelete</a>&lt;T&gt; (implements io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a>&lt;T&gt;, io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/QueryResultPersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">QueryResultPersistentEntityCriteriaQuery</a>)</li>
-<li class="circle">io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaQuery.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaQuery</a>&lt;T&gt; (implements io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;T&gt;, io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/QueryResultPersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">QueryResultPersistentEntityCriteriaQuery</a>)</li>
 <li class="circle">io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaUpdate.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaUpdate</a>&lt;T&gt; (implements io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaUpdate.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaUpdate</a>&lt;T&gt;, io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/QueryResultPersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">QueryResultPersistentEntityCriteriaQuery</a>)</li>
 <li class="circle">io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityJoinSupport.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityJoinSupport</a>&lt;J,<wbr>E&gt; (implements io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityFrom.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityFrom</a>&lt;OwnerType,<wbr>AssociatedEntityType&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityQuery.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityQuery</a>&lt;T,<wbr>Self&gt; (implements jakarta.persistence.criteria.AbstractQuery&lt;T&gt;, io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/QueryResultPersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">QueryResultPersistentEntityCriteriaQuery</a>)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaQuery.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaQuery</a>&lt;T&gt; (implements io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;T&gt;)</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntitySubquery.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntitySubquery</a>&lt;T&gt; (implements io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/IExpression.html" title="interface in io.micronaut.data.model.jpa.criteria">IExpression</a>&lt;T&gt;, io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySubquery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySubquery</a>&lt;T&gt;)</li>
+</ul>
+</li>
 <li class="circle">io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/AbstractPredicate.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">AbstractPredicate</a> (implements io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/IPredicate.html" title="interface in io.micronaut.data.model.jpa.criteria">IPredicate</a>)
 <ul>
 <li class="circle">io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/AbstractPersistentPropertyPredicate.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">AbstractPersistentPropertyPredicate</a>&lt;T&gt;</li>
@@ -297,6 +303,7 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/BinaryPredicate.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">BinaryPredicate</a></li>
 <li class="circle">io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/ConjunctionPredicate.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">ConjunctionPredicate</a></li>
 <li class="circle">io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/DisjunctionPredicate.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">DisjunctionPredicate</a></li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/ExistsSubqueryPredicate.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">ExistsSubqueryPredicate</a></li>
 <li class="circle">io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/InPredicate.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">InPredicate</a>&lt;T&gt; (implements jakarta.persistence.criteria.CriteriaBuilder.In&lt;T&gt;)</li>
 <li class="circle">io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/LikePredicate.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">LikePredicate</a></li>
 <li class="circle">io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/NegatedPredicate.html" class="type-name-link" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">NegatedPredicate</a></li>
@@ -1512,9 +1519,18 @@ loadScripts(document, 'script');</script>
 <ul>
 <li class="circle">jakarta.persistence.criteria.CriteriaQuery&lt;T&gt;
 <ul>
-<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaQuery.html" class="type-name-link" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;T&gt;
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaQuery.html" class="type-name-link" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;T&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCommonAbstractCriteria.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCommonAbstractCriteria</a>)
 <ul>
 <li class="circle">io.micronaut.data.processor.model.criteria.<a href="io/micronaut/data/processor/model/criteria/SourcePersistentEntityCriteriaQuery.html" class="type-name-link" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaQuery</a>&lt;T&gt;</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="circle">jakarta.persistence.criteria.Subquery&lt;T&gt; (also extends jakarta.persistence.criteria.Expression&lt;T&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySubquery.html" class="type-name-link" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySubquery</a>&lt;T&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCommonAbstractCriteria.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCommonAbstractCriteria</a>)
+<ul>
+<li class="circle">io.micronaut.data.processor.model.criteria.<a href="io/micronaut/data/processor/model/criteria/SourcePersistentEntitySubquery.html" class="type-name-link" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntitySubquery</a>&lt;T&gt;</li>
 </ul>
 </li>
 </ul>
@@ -1523,7 +1539,7 @@ loadScripts(document, 'script');</script>
 </li>
 <li class="circle">jakarta.persistence.criteria.CriteriaDelete&lt;T&gt;
 <ul>
-<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaDelete.html" class="type-name-link" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a>&lt;T&gt;
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaDelete.html" class="type-name-link" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a>&lt;T&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCommonAbstractCriteria.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCommonAbstractCriteria</a>)
 <ul>
 <li class="circle">io.micronaut.data.processor.model.criteria.<a href="io/micronaut/data/processor/model/criteria/SourcePersistentEntityCriteriaDelete.html" class="type-name-link" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaDelete</a>&lt;T&gt;</li>
 </ul>
@@ -1532,9 +1548,33 @@ loadScripts(document, 'script');</script>
 </li>
 <li class="circle">jakarta.persistence.criteria.CriteriaUpdate&lt;T&gt;
 <ul>
-<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaUpdate.html" class="type-name-link" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaUpdate</a>&lt;T&gt;
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaUpdate.html" class="type-name-link" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaUpdate</a>&lt;T&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCommonAbstractCriteria.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCommonAbstractCriteria</a>)
 <ul>
 <li class="circle">io.micronaut.data.processor.model.criteria.<a href="io/micronaut/data/processor/model/criteria/SourcePersistentEntityCriteriaUpdate.html" class="type-name-link" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaUpdate</a>&lt;T&gt;</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCommonAbstractCriteria.html" class="type-name-link" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCommonAbstractCriteria</a>
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaDelete.html" class="type-name-link" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a>&lt;T&gt; (also extends jakarta.persistence.criteria.CriteriaDelete&lt;T&gt;)
+<ul>
+<li class="circle">io.micronaut.data.processor.model.criteria.<a href="io/micronaut/data/processor/model/criteria/SourcePersistentEntityCriteriaDelete.html" class="type-name-link" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaDelete</a>&lt;T&gt;</li>
+</ul>
+</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaQuery.html" class="type-name-link" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;T&gt; (also extends jakarta.persistence.criteria.CriteriaQuery&lt;T&gt;)
+<ul>
+<li class="circle">io.micronaut.data.processor.model.criteria.<a href="io/micronaut/data/processor/model/criteria/SourcePersistentEntityCriteriaQuery.html" class="type-name-link" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaQuery</a>&lt;T&gt;</li>
+</ul>
+</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaUpdate.html" class="type-name-link" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaUpdate</a>&lt;T&gt; (also extends jakarta.persistence.criteria.CriteriaUpdate&lt;T&gt;)
+<ul>
+<li class="circle">io.micronaut.data.processor.model.criteria.<a href="io/micronaut/data/processor/model/criteria/SourcePersistentEntityCriteriaUpdate.html" class="type-name-link" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaUpdate</a>&lt;T&gt;</li>
+</ul>
+</li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySubquery.html" class="type-name-link" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySubquery</a>&lt;T&gt; (also extends jakarta.persistence.criteria.Subquery&lt;T&gt;)
+<ul>
+<li class="circle">io.micronaut.data.processor.model.criteria.<a href="io/micronaut/data/processor/model/criteria/SourcePersistentEntitySubquery.html" class="type-name-link" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntitySubquery</a>&lt;T&gt;</li>
 </ul>
 </li>
 </ul>
@@ -2477,6 +2517,15 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/IPredicate.html" class="type-name-link" title="interface in io.micronaut.data.model.jpa.criteria">IPredicate</a> (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/IExpression.html" title="interface in io.micronaut.data.model.jpa.criteria">IExpression</a>&lt;T&gt;)</li>
 </ul>
 </li>
+<li class="circle">jakarta.persistence.criteria.Subquery&lt;T&gt; (also extends jakarta.persistence.criteria.AbstractQuery&lt;T&gt;)
+<ul>
+<li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySubquery.html" class="type-name-link" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySubquery</a>&lt;T&gt; (also extends io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCommonAbstractCriteria.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCommonAbstractCriteria</a>)
+<ul>
+<li class="circle">io.micronaut.data.processor.model.criteria.<a href="io/micronaut/data/processor/model/criteria/SourcePersistentEntitySubquery.html" class="type-name-link" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntitySubquery</a>&lt;T&gt;</li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="circle">io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/ISelection.html" class="type-name-link" title="interface in io.micronaut.data.model.jpa.criteria">ISelection</a>&lt;T&gt;
@@ -2701,6 +2750,7 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.data.model.<a href="io/micronaut/data/model/Sort.Order.Direction.html" class="type-name-link" title="enum class in io.micronaut.data.model">Sort.Order.Direction</a></li>
 <li class="circle">io.micronaut.data.cosmos.config.<a href="io/micronaut/data/cosmos/config/StorageUpdatePolicy.html" class="type-name-link" title="enum class in io.micronaut.data.cosmos.config">StorageUpdatePolicy</a></li>
 <li class="circle">io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/StoredQuery.OperationType.html" class="type-name-link" title="enum class in io.micronaut.data.model.runtime">StoredQuery.OperationType</a></li>
+<li class="circle">io.micronaut.data.model.jpa.criteria.impl.expression.<a href="io/micronaut/data/model/jpa/criteria/impl/expression/SubqueryExpression.Type.html" class="type-name-link" title="enum class in io.micronaut.data.model.jpa.criteria.impl.expression">SubqueryExpression.Type</a></li>
 <li class="circle">io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/TransactionalEventListener.TransactionPhase.html" class="type-name-link" title="enum class in io.micronaut.transaction.annotation">TransactionalEventListener.TransactionPhase</a></li>
 <li class="circle">io.micronaut.transaction.<a href="io/micronaut/transaction/TransactionDefinition.Isolation.html" class="type-name-link" title="enum class in io.micronaut.transaction">TransactionDefinition.Isolation</a></li>
 <li class="circle">io.micronaut.transaction.<a href="io/micronaut/transaction/TransactionDefinition.Propagation.html" class="type-name-link" title="enum class in io.micronaut.transaction">TransactionDefinition.Propagation</a></li>
