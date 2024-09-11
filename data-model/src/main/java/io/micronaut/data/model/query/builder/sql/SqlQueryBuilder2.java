@@ -1094,7 +1094,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 implements Sq
                 case SQL_SERVER:
                     // SQL server requires OFFSET always
                     if (from == 0) {
-                        builder.append("OFFSET ").append(0).append(" ROWS ");
+                        builder.append("OFFSET 0 ROWS ");
                     }
                     // intentional fall through
                 case ANSI:

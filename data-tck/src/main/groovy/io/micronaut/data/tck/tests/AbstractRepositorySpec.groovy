@@ -204,6 +204,23 @@ abstract class AbstractRepositorySpec extends Specification {
         return false
     }
 
+    void "test query with limit and offset" () {
+        given:
+            saveSampleBooks()
+        when:
+            def allBooks = bookRepository.findAll(Pageable.UNPAGED.order("title", Sort.Order.Direction.ASC))
+        then:
+            allBooks.totalSize == 6
+        when:
+            def books = bookRepository.findBooks(2, 2)
+        then:
+            books.collect { it.id } == allBooks.toList().subList(2, 4).collect { it.id }
+        when:
+            books = bookRepository.findBooks(Integer.MAX_VALUE, 0)
+        then:
+            books.collect { it.id } == allBooks.toList().collect { it.id }
+    }
+
     void "test save and retrieve basic types"() {
         when: "we save a new book"
         def book = basicTypeRepository.save(new BasicTypes())
