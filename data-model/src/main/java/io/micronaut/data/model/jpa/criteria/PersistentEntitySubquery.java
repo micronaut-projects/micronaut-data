@@ -35,15 +35,28 @@ import java.util.List;
 @Experimental
 public interface PersistentEntitySubquery<T> extends Subquery<T>, PersistentEntityCommonAbstractCriteria {
 
+    /**
+     * Sets the max rows value.
+     * @param max The max value
+     * @return This instance
+     */
     @NonNull
     PersistentEntitySubquery<T> max(int max);
 
+    /**
+     * Sets the offset rows value.
+     * @param offset The offset value
+     * @return This instance
+     */
     @NonNull
     PersistentEntitySubquery<T> offset(int offset);
 
-    @Override
-    PersistentEntitySubquery<T> select(@NonNull Expression<T> expression);
-
+    /**
+     * Create a root using {@link PersistentEntity}.
+     * @param persistentEntity The persistent entity
+     * @param <X> The root type
+     * @return The root
+     */
     @NonNull
     <X> PersistentEntityRoot<X> from(@NonNull PersistentEntity persistentEntity);
 
@@ -54,6 +67,9 @@ public interface PersistentEntitySubquery<T> extends Subquery<T>, PersistentEnti
     @Override
     @NonNull
     <X> PersistentEntityRoot<X> from(@NonNull EntityType<X> entity);
+
+    @Override
+    PersistentEntitySubquery<T> select(@NonNull Expression<T> expression);
 
     @Override
     @NonNull
