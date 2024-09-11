@@ -18,6 +18,7 @@ package io.micronaut.data.model.jpa.criteria.impl;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate;
@@ -89,5 +90,12 @@ public interface PredicateVisitor {
      * @param likePredicate The like predicate
      */
     void visit(LikePredicate likePredicate);
+
+    /**
+     * Visit {@link ExistsSubqueryPredicate}.
+     *
+     * @param existsSubqueryPredicate The exists subquery predicate
+     */
+    void visit(ExistsSubqueryPredicate existsSubqueryPredicate);
 
 }

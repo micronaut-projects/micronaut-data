@@ -30,18 +30,18 @@ import jakarta.persistence.criteria.ParameterExpression;
  * @since 3.2
  */
 @Internal
-public abstract class ParameterExpressionImpl<T> extends AbstractExpression<T> implements ParameterExpression<T>, IExpression<T>, BindingParameter {
+public abstract class IParameterExpression<T> extends AbstractExpression<T> implements ParameterExpression<T>, IExpression<T>, BindingParameter {
 
     private final String name;
 
-    public ParameterExpressionImpl(ExpressionType<T> type, String name) {
+    public IParameterExpression(ExpressionType<T> type, String name) {
         super(type);
         this.name = name;
     }
 
     @Override
     public void visitExpression(ExpressionVisitor expressionVisitor) {
-        throw new UnsupportedOperationException();
+        expressionVisitor.visit(this);
     }
 
     @Override

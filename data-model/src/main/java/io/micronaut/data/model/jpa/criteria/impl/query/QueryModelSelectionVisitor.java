@@ -20,13 +20,14 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
+import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
-import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
@@ -101,7 +102,8 @@ public final class QueryModelSelectionVisitor implements SelectionVisitor {
                     throw new IllegalStateException("Illegal expression: " + expression + " for count distinct selection!");
                 }
             }
-            default -> throw new IllegalStateException("Unknown aggregation: " + unaryExpression.getExpression());
+            default ->
+                throw new IllegalStateException("Unknown aggregation: " + unaryExpression.getExpression());
         }
     }
 
@@ -128,6 +130,11 @@ public final class QueryModelSelectionVisitor implements SelectionVisitor {
         } else {
             addProjection(Projections.rootEntity());
         }
+    }
+
+    @Override
+    public void visit(PersistentEntitySubquery<?> subquery) {
+        throw new IllegalStateException("Subquery is not supported!");
     }
 
     @Override

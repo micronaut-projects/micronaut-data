@@ -37,6 +37,7 @@ import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
 import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
@@ -46,6 +47,7 @@ import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
@@ -1051,6 +1053,11 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
         }
 
         @Override
+        public void visit(ExistsSubqueryPredicate existsSubqueryPredicate) {
+            throw new UnsupportedOperationException("ExistsSubquery is not supported by this implementation.");
+        }
+
+        @Override
         public void visitEquals(Expression<?> leftExpression, Expression<?> rightExpression, boolean ignoreCase) {
             if (ignoreCase) {
                 handleRegexExpression(leftExpression, true, false, true, true, rightExpression);
@@ -1286,6 +1293,11 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
         @Override
         public void visit(PersistentEntityRoot<?> entityRoot) {
             // The default is the entity projection
+        }
+
+        @Override
+        public void visit(PersistentEntitySubquery<?> subquery) {
+            throw new IllegalStateException("Subquery not supported by MongoDB");
         }
 
         @Override

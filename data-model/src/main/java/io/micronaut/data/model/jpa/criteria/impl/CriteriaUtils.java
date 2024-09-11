@@ -21,6 +21,7 @@ import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
@@ -29,6 +30,7 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.ParameterExpression;
+import jakarta.persistence.criteria.Subquery;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -75,6 +77,13 @@ public final class CriteriaUtils {
             return expression;
         }
         throw new IllegalStateException("Expected an IExpression! Got: " + exp);
+    }
+
+    public static <T> PersistentEntitySubquery<T> requirePersistentEntitySubquery(Subquery<T> subquery) {
+        if (subquery instanceof PersistentEntitySubquery<T> persistentEntitySubquery) {
+            return persistentEntitySubquery;
+        }
+        throw new IllegalStateException("Expected an PersistentEntitySubquery! Got: " + subquery);
     }
 
     public static IExpression<String> requireNumericExpression(Expression<?> exp) {

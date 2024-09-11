@@ -36,11 +36,73 @@ abstract class AbstractCriteriaSpec extends Specification {
 
     abstract PersistentEntityCriteriaUpdate getCriteriaUpdate()
 
+    abstract PersistentEntityRoot createRoot(Subquery query);
+
     abstract PersistentEntityRoot createRoot(CriteriaQuery query);
 
     abstract PersistentEntityRoot createRoot(CriteriaDelete query);
 
     abstract PersistentEntityRoot createRoot(CriteriaUpdate query);
+
+    void "test EXISTS subquery"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            def subquery = criteriaQuery.subquery(Long)
+            def subqueryBookRoot = createRoot(subquery)
+            subquery.select(subqueryBookRoot.get("id"))
+            criteriaQuery.where(
+                    criteriaBuilder.exists(subquery)
+            )
+            String query = getSqlQuery(criteriaQuery)
+
+        expect:
+            query == '''SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget" FROM "test" test_ WHERE (EXISTS(SELECT test_test_."id" FROM "test" test_test_))'''
+    }
+
+    void "test SOME subquery"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            def subquery = criteriaQuery.subquery(Long)
+            def subqueryBookRoot = createRoot(subquery)
+            subquery.select(subqueryBookRoot.get("id"))
+            criteriaQuery.where(
+                    criteriaBuilder.greaterThan(entityRoot.get("id"), criteriaBuilder.some(subquery))
+            )
+            String query = getSqlQuery(criteriaQuery)
+
+        expect:
+            query == '''SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget" FROM "test" test_ WHERE (test_."id" > SOME(SELECT test_test_."id" FROM "test" test_test_))'''
+    }
+
+    void "test ANY subquery"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            def subquery = criteriaQuery.subquery(Long)
+            def subqueryBookRoot = createRoot(subquery)
+            subquery.select(subqueryBookRoot.get("id"))
+            criteriaQuery.where(
+                    criteriaBuilder.greaterThan(entityRoot.get("id"), criteriaBuilder.any(subquery))
+            )
+            String query = getSqlQuery(criteriaQuery)
+
+        expect:
+            query == '''SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget" FROM "test" test_ WHERE (test_."id" > ANY(SELECT test_test_."id" FROM "test" test_test_))'''
+    }
+
+    void "test ALL subquery"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            def subquery = criteriaQuery.subquery(Long)
+            def subqueryBookRoot = createRoot(subquery)
+            subquery.select(subqueryBookRoot.get("id"))
+            criteriaQuery.where(
+                    criteriaBuilder.greaterThan(entityRoot.get("id"), criteriaBuilder.all(subquery))
+            )
+            String query = getSqlQuery(criteriaQuery)
+
+        expect:
+            query == '''SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget" FROM "test" test_ WHERE (test_."id" > ALL(SELECT test_test_."id" FROM "test" test_test_))'''
+    }
 
     void "test join"() {
         given:

@@ -18,32 +18,33 @@ package io.micronaut.data.runtime.criteria;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
-import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractCriteriaBuilder;
-import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
+import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntitySubquery;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.runtime.criteria.metamodel.StaticMetamodelInitializer;
+import jakarta.persistence.criteria.AbstractQuery;
 
 /**
- * The runtime query.
+ * The runtime subquery.
  *
  * @param <T> The result type
  * @author Denis Stepanov
  * @since 4.10
  */
 @Internal
-final class RuntimePersistentEntityCriteriaQuery<T> extends AbstractPersistentEntityCriteriaQuery<T> {
+final class RuntimePersistentEntitySubquery<T> extends AbstractPersistentEntitySubquery<T> {
 
     private final AbstractCriteriaBuilder criteriaBuilder;
     private final RuntimeEntityRegistry runtimeEntityRegistry;
     private final StaticMetamodelInitializer staticMetamodelInitializer;
 
-    public RuntimePersistentEntityCriteriaQuery(AbstractCriteriaBuilder criteriaBuilder,
-                                                StaticMetamodelInitializer staticMetamodelInitializer,
-                                                Class<T> resultType,
-                                                RuntimeEntityRegistry runtimeEntityRegistry) {
-        super(resultType, criteriaBuilder);
+    public RuntimePersistentEntitySubquery(AbstractQuery<?> parent,
+                                           AbstractCriteriaBuilder criteriaBuilder,
+                                           StaticMetamodelInitializer staticMetamodelInitializer,
+                                           Class<T> resultType,
+                                           RuntimeEntityRegistry runtimeEntityRegistry) {
+        super(parent, resultType, criteriaBuilder);
         this.criteriaBuilder = criteriaBuilder;
         this.runtimeEntityRegistry = runtimeEntityRegistry;
         this.staticMetamodelInitializer = staticMetamodelInitializer;
@@ -66,8 +67,4 @@ final class RuntimePersistentEntityCriteriaQuery<T> extends AbstractPersistentEn
         return newEntityRoot;
     }
 
-    @Override
-    public <U> PersistentEntitySubquery<U> subquery(Class<U> type) {
-        return new RuntimePersistentEntitySubquery<>(this, criteriaBuilder, staticMetamodelInitializer, type, runtimeEntityRegistry);
-    }
 }
