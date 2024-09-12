@@ -100,42 +100,24 @@ public interface ResultReader<RS, IDX> {
             @NonNull RS resultSet,
             @NonNull IDX index,
             @NonNull DataType dataType) {
-        switch (dataType) {
-            case STRING:
-            case JSON:
-                return readString(resultSet, index);
-            case UUID:
-                return readUUID(resultSet, index);
-            case LONG:
-                return readLong(resultSet, index);
-            case INTEGER:
-                return readInt(resultSet, index);
-            case BOOLEAN:
-                return readBoolean(resultSet, index);
-            case BYTE:
-                return readByte(resultSet, index);
-            case TIMESTAMP:
-                return readTimestamp(resultSet, index);
-            case TIME:
-                return readTime(resultSet, index);
-            case DATE:
-                return readDate(resultSet, index);
-            case CHARACTER:
-                return readChar(resultSet, index);
-            case FLOAT:
-                return readFloat(resultSet, index);
-            case SHORT:
-                return readShort(resultSet, index);
-            case DOUBLE:
-                return readDouble(resultSet, index);
-            case BYTE_ARRAY:
-                return readBytes(resultSet, index);
-            case BIGDECIMAL:
-                return readBigDecimal(resultSet, index);
-            case OBJECT:
-            default:
-                return getRequiredValue(resultSet, index, Object.class);
-        }
+        return switch (dataType) {
+            case STRING, JSON -> readString(resultSet, index);
+            case UUID -> readUUID(resultSet, index);
+            case LONG -> readLong(resultSet, index);
+            case INTEGER -> readInt(resultSet, index);
+            case BOOLEAN -> readBoolean(resultSet, index);
+            case BYTE -> readByte(resultSet, index);
+            case TIMESTAMP -> readTimestamp(resultSet, index);
+            case TIME -> readTime(resultSet, index);
+            case DATE -> readDate(resultSet, index);
+            case CHARACTER -> readChar(resultSet, index);
+            case FLOAT -> readFloat(resultSet, index);
+            case SHORT -> readShort(resultSet, index);
+            case DOUBLE -> readDouble(resultSet, index);
+            case BYTE_ARRAY -> readBytes(resultSet, index);
+            case BIGDECIMAL -> readBigDecimal(resultSet, index);
+            default -> getRequiredValue(resultSet, index, Object.class);
+        };
     }
 
     /**
@@ -209,7 +191,7 @@ public interface ResultReader<RS, IDX> {
     }
 
     /**
-     * Read a int value for the given name.
+     * Read an int value for the given name.
      * @param resultSet The result set
      * @param name The name (such as the column name)
      * @return The int value

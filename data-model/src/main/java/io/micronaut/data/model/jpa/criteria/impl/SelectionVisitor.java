@@ -16,12 +16,9 @@
 package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
-import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
-import io.micronaut.data.model.jpa.criteria.impl.selection.AggregateExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.SubqueryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
-import jakarta.persistence.criteria.Predicate;
 
 /**
  * The selection visitor.
@@ -30,21 +27,7 @@ import jakarta.persistence.criteria.Predicate;
  * @since 3.2
  */
 @Internal
-public interface SelectionVisitor {
-
-    /**
-     * Visit {@link Predicate}.
-     *
-     * @param predicate The predicate
-     */
-    void visit(Predicate predicate);
-
-    /**
-     * Visit {@link PersistentPropertyPath}.
-     *
-     * @param persistentPropertyPath The persistentPropertyPath
-     */
-    void visit(PersistentPropertyPath<?> persistentPropertyPath);
+public interface SelectionVisitor extends ExpressionVisitor {
 
     /**
      * Visit {@link AliasedSelection}.
@@ -54,38 +37,20 @@ public interface SelectionVisitor {
     void visit(AliasedSelection<?> aliasedSelection);
 
     /**
-     * Visit {@link PersistentEntityRoot}.
-     *
-     * @param entityRoot The entityRoot
-     */
-    void visit(PersistentEntityRoot<?> entityRoot);
-
-    /**
      * Visit {@link CompoundSelection}.
      *
      * @param compoundSelection The compoundSelection
      */
     void visit(CompoundSelection<?> compoundSelection);
 
-    /**
-     * Visit {@link LiteralExpression}.
-     *
-     * @param literalExpression The literalExpression
-     */
-    void visit(LiteralExpression<?> literalExpression);
+    @Override
+    default void visit(IParameterExpression<?> parameterExpression) {
+        throw new IllegalStateException("Parameter expression not supported in selection");
+    }
 
-    /**
-     * Visit {@link AggregateExpression}.
-     *
-     * @param aggregateExpression The aggregateExpression
-     */
-    void visit(AggregateExpression<?, ?> aggregateExpression);
-
-    /**
-     * Visit {@link IdExpression}.
-     *
-     * @param idExpression The idExpression
-     */
-    void visit(IdExpression<?, ?> idExpression);
-
+    @Override
+    default void visit(SubqueryExpression<?> subqueryExpression) {
+        throw new IllegalStateException("Subquery not supported in selection");
+    }
+    
 }

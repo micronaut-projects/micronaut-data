@@ -44,7 +44,7 @@ import java.util.function.Function;
 public interface NamingStrategy {
 
     /**
-     * Constant for the default under score separated lower case strategy.
+     * Constant for the default underscore separated lower case strategy.
      */
     NamingStrategy DEFAULT = new NamingStrategies.UnderScoreSeparatedLowerCase();
 
@@ -94,8 +94,8 @@ public interface NamingStrategy {
      */
     default @NonNull String mappedName(@NonNull PersistentProperty property) {
         ArgumentUtils.requireNonNull("property", property);
-        if (property instanceof Association) {
-            return mappedName((Association) property);
+        if (property instanceof Association association) {
+            return mappedName(association);
         } else {
             return property.getAnnotationMetadata()
                     .stringValue(MappedProperty.class)

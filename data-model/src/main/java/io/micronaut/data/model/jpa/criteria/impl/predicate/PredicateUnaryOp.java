@@ -16,7 +16,10 @@
 package io.micronaut.data.model.jpa.criteria.impl.predicate;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
+import jakarta.persistence.criteria.Expression;
 
 /**
  * Predicate unary operations.
@@ -31,26 +34,32 @@ public enum PredicateUnaryOp {
     IS_TRUE,
     IS_FALSE,
     IS_EMPTY,
-    IS_NOT_EMPTY
-    ;
+    IS_NOT_EMPTY;
+
+    void validate(@NonNull Expression<?> expression) {
+        switch (this) {
+            case IS_EMPTY, IS_NOT_EMPTY -> {
+                CriteriaUtils.requireStringExpression(expression);
+            }
+            case IS_TRUE, IS_FALSE -> {
+                // Boolean?
+            }
+            case IS_NULL, IS_NON_NULL -> {
+                // Any type
+            }
+            default -> throw new IllegalStateException("Unsupported predicate: " + this);
+        }
+    }
 
     @Nullable
     public PredicateUnaryOp negate() {
-        switch (this) {
-            case IS_NULL:
-                return IS_NON_NULL;
-            case IS_NON_NULL:
-                return IS_NULL;
-            case IS_TRUE:
-                return IS_FALSE;
-            case IS_FALSE:
-                return IS_TRUE;
-            case IS_EMPTY:
-                return IS_NOT_EMPTY;
-            case IS_NOT_EMPTY:
-                return IS_EMPTY;
-            default:
-                return null;
-        }
+        return switch (this) {
+            case IS_NULL -> IS_NON_NULL;
+            case IS_NON_NULL -> IS_NULL;
+            case IS_TRUE -> IS_FALSE;
+            case IS_FALSE -> IS_TRUE;
+            case IS_EMPTY -> IS_NOT_EMPTY;
+            case IS_NOT_EMPTY -> IS_EMPTY;
+        };
     }
 }

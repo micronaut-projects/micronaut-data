@@ -16,6 +16,8 @@
 package io.micronaut.data.processor.model.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractCriteriaBuilder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -25,6 +27,7 @@ import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteria
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaUpdate;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ParameterElement;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.ParameterExpression;
 
 import java.util.function.Function;
@@ -41,38 +44,46 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupport
 public final class SourcePersistentEntityCriteriaBuilderImpl extends AbstractCriteriaBuilder implements SourcePersistentEntityCriteriaBuilder {
 
     private final Function<ClassElement, SourcePersistentEntity> entityResolver;
+    private final CriteriaBuilder criteriaBuilder;
 
-    public SourcePersistentEntityCriteriaBuilderImpl(Function<ClassElement, SourcePersistentEntity> entityResolver) {
+    public SourcePersistentEntityCriteriaBuilderImpl(Function<ClassElement, SourcePersistentEntity> entityResolver,
+                                                     CriteriaBuilder criteriaBuilder) {
         this.entityResolver = entityResolver;
+        this.criteriaBuilder = criteriaBuilder;
     }
 
     @Override
     public SourcePersistentEntityCriteriaQuery<Object> createQuery() {
-        return new SourcePersistentEntityCriteriaQueryImpl<>(entityResolver);
+        return new SourcePersistentEntityCriteriaQueryImpl<>(entityResolver, this);
     }
 
     @Override
     public <T> PersistentEntityCriteriaQuery<T> createQuery(Class<T> resultClass) {
-        return new SourcePersistentEntityCriteriaQueryImpl<>(entityResolver);
+        return new SourcePersistentEntityCriteriaQueryImpl<>(entityResolver, this);
     }
 
     @Override
     public <T> SourcePersistentEntityCriteriaDelete<T> createCriteriaDelete(Class<T> targetEntity) {
-        return new SourcePersistentEntityCriteriaDeleteImpl<>(entityResolver, targetEntity);
+        return new SourcePersistentEntityCriteriaDeleteImpl<>(entityResolver, targetEntity, criteriaBuilder);
     }
 
     @Override
     public <T> SourcePersistentEntityCriteriaUpdate<T> createCriteriaUpdate(Class<T> targetEntity) {
-        return new SourcePersistentEntityCriteriaUpdateImpl<>(entityResolver, targetEntity);
+        return new SourcePersistentEntityCriteriaUpdateImpl<>(entityResolver, targetEntity, criteriaBuilder);
     }
 
     @Override
-    public <T> ParameterExpression<T> parameter(ParameterElement parameterElement) {
+    public <T> ParameterExpression<T> expression(PersistentProperty property, String expression) {
         throw notSupportedOperation();
     }
 
     @Override
-    public <T> ParameterExpression<T> entityPropertyParameter(ParameterElement entityParameter) {
+    public <T> ParameterExpression<T> parameter(ParameterElement parameterElement, PersistentPropertyPath propertyPath) {
+        throw notSupportedOperation();
+    }
+
+    @Override
+    public <T> ParameterExpression<T> entityPropertyParameter(ParameterElement entityParameter, PersistentPropertyPath propertyPath) {
         throw notSupportedOperation();
     }
 }

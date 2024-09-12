@@ -90,7 +90,7 @@ public class TypeUtils {
     }
 
     /**
-     * Is the element an iterable of an dto.
+     * Is the element an iterable of a DTO.
      *
      * @param type The type
      * @return True if is
@@ -110,7 +110,7 @@ public class TypeUtils {
     }
 
     /**
-     * Does the given type have an {@link MappedEntity} or {@link io.micronaut.core.annotation.Introspected}.
+     * Does the given type have an {@link MappedEntity} or {@link Introspected}.
      * @param type The type
      * @return True if it does
      */
@@ -131,7 +131,7 @@ public class TypeUtils {
     }
 
     /**
-     * Does the given type have an {@link io.micronaut.core.annotation.Introspected}.
+     * Does the given type have an {@link Introspected}.
      * @param type The type
      * @return True if it does
      */
@@ -279,6 +279,18 @@ public class TypeUtils {
     }
 
     /**
+     * Is the type a string.
+     * @param type The type
+     * @return True if is a number
+     */
+    public static boolean isTextual(@Nullable ClassElement type) {
+        if (type == null) {
+            return false;
+        }
+        return type.isAssignable(CharSequence.class);
+    }
+
+    /**
      * Is the type void.
      * @param type The type
      * @return True if is void
@@ -341,6 +353,27 @@ public class TypeUtils {
             returnType = TypeUtils.getKotlinCoroutineProducedType(methodElement);
         }
         return TypeUtils.isIterableOfEntity(returnType) || TypeUtils.isIterableOfDto(returnType);
+    }
+
+    /**
+     * Checks whether the return type is supported.
+     *
+     * @param methodElement The method
+     * @return True if it is supported
+     */
+    public static boolean doesMethodProducesIterable(MethodElement methodElement) {
+        ClassElement returnType = methodElement.getGenericReturnType();
+        if (TypeUtils.isReactiveType(returnType)) {
+            return true;
+        }
+        if (TypeUtils.isFutureType(returnType)) {
+            returnType = returnType.getFirstTypeArgument().orElse(null);
+            return returnType != null && returnType.isAssignable(Iterable.class);
+        }
+        if (methodElement.isSuspend()) {
+            returnType = TypeUtils.getKotlinCoroutineProducedType(methodElement);
+        }
+        return returnType.isAssignable(Iterable.class);
     }
 
     /**

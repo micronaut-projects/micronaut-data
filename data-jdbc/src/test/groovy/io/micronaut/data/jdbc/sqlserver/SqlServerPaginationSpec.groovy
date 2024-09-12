@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.jdbc.sqlserver
 
+import groovy.transform.Memoized
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.PersonRepository
@@ -26,11 +27,13 @@ class SqlServerPaginationSpec extends AbstractPageSpec implements MSSQLTestPrope
 
     @Shared @AutoCleanup ApplicationContext context
 
+    @Memoized
     @Override
     PersonRepository getPersonRepository() {
         return context.getBean(MSSQLPersonRepository)
     }
 
+    @Memoized
     @Override
     BookRepository getBookRepository() {
         return context.getBean(MSBookRepository)

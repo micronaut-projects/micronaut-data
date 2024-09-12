@@ -42,8 +42,7 @@ public final class CountSpecificationInterceptor extends io.micronaut.data.jpa.r
     @Override
     protected io.micronaut.data.jpa.repository.criteria.Specification getSpecification(MethodInvocationContext<?, ?> context, boolean nullable) {
         final Object parameterValue = context.getParameterValues()[0];
-        if (parameterValue instanceof Specification) {
-            Specification springSpecification = (Specification) parameterValue;
+        if (parameterValue instanceof Specification springSpecification) {
             return (root, query, criteriaBuilder) -> springSpecification.toPredicate(root, query, criteriaBuilder);
         }
         return super.getSpecification(context, false);

@@ -32,6 +32,7 @@ public interface ProductRepository extends CrudRepository<Product, Long>, JpaSpe
     // end::join[]
 
     // tag::entitygraph[]
+    @Override
     @EntityGraph(attributePaths = {"manufacturer", "title"}) // <1>
     List<Product> findAll();
     // end::entitygraph[]

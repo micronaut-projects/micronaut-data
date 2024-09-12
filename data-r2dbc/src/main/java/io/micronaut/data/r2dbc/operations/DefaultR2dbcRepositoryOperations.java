@@ -30,6 +30,7 @@ import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.core.type.Argument;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -61,12 +62,14 @@ import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.r2dbc.config.DataR2dbcConfiguration;
 import io.micronaut.data.r2dbc.convert.R2dbcConversionContext;
 import io.micronaut.data.r2dbc.mapper.ColumnIndexR2dbcResultReader;
+import io.micronaut.data.r2dbc.mapper.ColumnNameExistenceAwareR2dbcResultSetReader;
 import io.micronaut.data.r2dbc.mapper.ColumnNameR2dbcResultReader;
 import io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement;
 import io.micronaut.data.r2dbc.transaction.R2dbcReactorTransactionOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.convert.RuntimePersistentPropertyConversionContext;
 import io.micronaut.data.runtime.date.DateTimeProvider;
+import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlTypeMapper;
 import io.micronaut.data.runtime.multitenancy.SchemaTenantResolver;
@@ -88,6 +91,7 @@ import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.Parameters;
+import io.r2dbc.spi.R2dbcException;
 import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.Readable;
 import io.r2dbc.spi.Result;
@@ -103,11 +107,13 @@ import reactor.util.context.Context;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -115,7 +121,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -130,7 +135,9 @@ import java.util.stream.Stream;
 final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperations<Row, Statement, RuntimeException>
     implements BlockingExecutorReactorRepositoryOperations, R2dbcRepositoryOperations, R2dbcOperations,
     ReactiveCascadeOperations.ReactiveCascadeOperationsHelper<DefaultR2dbcRepositoryOperations.R2dbcOperationContext> {
+
     private static final Logger LOG = LoggerFactory.getLogger(DefaultR2dbcRepositoryOperations.class);
+
     private final ConnectionFactory connectionFactory;
     private final ReactorReactiveRepositoryOperations reactiveOperations;
     private final String dataSourceName;
@@ -143,6 +150,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     private final SchemaTenantResolver schemaTenantResolver;
     private final R2dbcSchemaHandler schemaHandler;
     private final DataR2dbcConfiguration configuration;
+    private final Map<Dialect, List<R2dbcExceptionMapper>> r2dbcExceptionMappers = new EnumMap<>(Dialect.class);
 
     /**
      * Default constructor.
@@ -160,10 +168,12 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
      * @param configuration               The configuration
      * @param jsonMapper                  The JSON mapper
      * @param sqlJsonColumnMapperProvider The SQL JSON column mapper provider
+     * @param r2dbcExceptionMapperList    The R2dbc exception mapper list
      * @param transactionOperations       The transaction operations
      * @param connectionOperations        The connection operations
      */
     @Internal
+    @SuppressWarnings("ParameterNumber")
     DefaultR2dbcRepositoryOperations(
         @Parameter String dataSourceName,
         ConnectionFactory connectionFactory,
@@ -178,6 +188,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         @Parameter DataR2dbcConfiguration configuration,
         @Nullable JsonMapper jsonMapper,
         SqlJsonColumnMapperProvider<Row> sqlJsonColumnMapperProvider,
+        List<R2dbcExceptionMapper> r2dbcExceptionMapperList,
         @Parameter R2dbcReactorTransactionOperations transactionOperations,
         @Parameter ReactorConnectionOperations<Connection> connectionOperations) {
         super(
@@ -206,6 +217,22 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         if (name == null) {
             name = "default";
         }
+        if (CollectionUtils.isNotEmpty(r2dbcExceptionMapperList)) {
+            for (R2dbcExceptionMapper r2dbcExceptionMapper : r2dbcExceptionMapperList) {
+                Dialect dialect = r2dbcExceptionMapper.getDialect();
+                List<R2dbcExceptionMapper> dialectR2dbcExceptionMapperList = r2dbcExceptionMappers.get(dialect);
+                if (dialectR2dbcExceptionMapperList == null) {
+                    dialectR2dbcExceptionMapperList = new ArrayList<>();
+                }
+                dialectR2dbcExceptionMapperList.add(r2dbcExceptionMapper);
+                r2dbcExceptionMappers.put(dialect, dialectR2dbcExceptionMapperList);
+            }
+        }
+    }
+
+    @Override
+    protected ResultReader<Row, String> createColumnNameResultSetReaderWithColumnExistenceAware() {
+        return new ColumnNameExistenceAwareR2dbcResultSetReader();
     }
 
     @Override
@@ -298,7 +325,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     }
 
     private <T> Flux<T> concatMono(Stream<Mono<T>> stream) {
-        return Flux.concat(stream.collect(Collectors.toList()));
+        return Flux.concat(stream.toList());
     }
 
     @NonNull
@@ -388,6 +415,30 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         return isSupportsBatchInsert(persistentEntity, context.dialect);
     }
 
+    /**
+     * Maps R2dbc exception, used in context of update but could be used elsewhere.
+     * It will return custom {@DataAccessException} based on the {@link R2dbcException} or null
+     * if it cannot be mapped to the custom {@link DataAccessException}.
+     *
+     * @param r2dbcException the R2dbc exception
+     * @param dialect the SQL dialect
+     * @return custom {@link DataAccessException} exception based on {@link R2dbcException} that was thrown or null
+     * if exception is not mappable to {@link DataAccessException} in given dialect {@link R2dbcExceptionMapper}
+     */
+    @Nullable
+    private DataAccessException mapR2dbcException(R2dbcException r2dbcException, Dialect dialect) {
+        List<R2dbcExceptionMapper> dialectR2dbcExceptionMapperList = r2dbcExceptionMappers.getOrDefault(dialect, List.of());
+        if (CollectionUtils.isNotEmpty(dialectR2dbcExceptionMapperList)) {
+            for (R2dbcExceptionMapper dialectR2dbcExceptionMapper : dialectR2dbcExceptionMapperList) {
+                DataAccessException dataAccessException = dialectR2dbcExceptionMapper.mapR2dbcException(r2dbcException);
+                if (dataAccessException != null) {
+                    return dataAccessException;
+                }
+            }
+        }
+        return null;
+    }
+
     private static <T> Flux<T> executeAndMapEachRow(Statement statement, Function<Row, T> mapper) {
         return Flux.from(statement.execute())
             .flatMap(result -> Flux.from(result.map((row, rowMetadata) -> mapper.apply(row))));
@@ -403,15 +454,11 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             .flatMap(result -> Flux.from(result.map((row, metadata) -> Mono.justOrEmpty(mapper.apply(row)))).flatMap(t -> t));
     }
 
-    private static <T> Mono<T> executeAndMapEachRowSingle(Statement statement, Dialect dialect, Function<Row, T> mapper) {
-        return executeAndMapEachRow(statement, mapper).onErrorResume(errorHandler(dialect)).as(DefaultR2dbcRepositoryOperations::toSingleResult);
-    }
-
-    private static <T> Flux<T> executeAndMapEachReadable(Statement statement, Dialect dialect, Function<Readable, T> mapper) {
+    private <T> Flux<T> executeAndMapEachReadable(Statement statement, Dialect dialect, Function<Readable, T> mapper) {
         return executeAndMapEachReadable(statement, mapper).onErrorResume(errorHandler(dialect));
     }
 
-    private static Mono<Number> executeAndGetRowsUpdatedSingle(Statement statement, Dialect dialect) {
+    private Mono<Number> executeAndGetRowsUpdatedSingle(Statement statement, Dialect dialect) {
         return executeAndGetRowsUpdated(statement)
             .onErrorResume(errorHandler(dialect))
             .as(DefaultR2dbcRepositoryOperations::toSingleResult);
@@ -423,11 +470,13 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             .map((Number n) -> n.longValue());
     }
 
-    private static <T> Function<? super Throwable, ? extends Publisher<? extends T>> errorHandler(Dialect dialect) {
+    private <T> Function<? super Throwable, ? extends Publisher<? extends T>> errorHandler(Dialect dialect) {
         return throwable -> {
-            if (throwable.getCause() instanceof SQLException sqlException) {
-                Throwable newThrowable = handleSqlException(sqlException, dialect);
-                return Mono.error(newThrowable);
+            if (throwable instanceof R2dbcException r2dbcException) {
+                DataAccessException dataAccessException = mapR2dbcException(r2dbcException, dialect);
+                if (dataAccessException != null) {
+                    return Mono.error(dataAccessException);
+                }
             }
             return Mono.error(throwable);
         };
@@ -459,11 +508,11 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
                 SqlTypeMapper<Row, R> mapper = createMapper(preparedQuery, Row.class);
                 if (mapper instanceof SqlResultEntityTypeMapper<Row, R> entityTypeMapper) {
-                    final boolean hasJoins = !preparedQuery.getJoinFetchPaths().isEmpty();
+                    final boolean hasJoins = !preparedQuery.getJoinPaths().isEmpty();
                     if (!hasJoins) {
                         return executeAndMapEachRow(statement, entityTypeMapper::readEntity);
                     }
-                    SqlResultEntityTypeMapper.PushingMapper<Row, R> rowsMapper = entityTypeMapper.readOneWithJoins();
+                    SqlResultEntityTypeMapper.PushingMapper<Row, R> rowsMapper = entityTypeMapper.readOneMapper();
                     return executeAndMapEachRow(statement, row -> {
                         rowsMapper.processRow(row);
                         return "";
@@ -483,7 +532,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
                 SqlTypeMapper<Row, R> mapper = createMapper(preparedQuery, Row.class);
                 if (mapper instanceof SqlResultEntityTypeMapper<Row, R> entityTypeMapper) {
-                    SqlResultEntityTypeMapper.PushingMapper<Row, List<R>> rowsMapper = entityTypeMapper.readAllWithJoins();
+                    SqlResultEntityTypeMapper.PushingMapper<Row, List<R>> rowsMapper = entityTypeMapper.readManyMapper();
                     return executeAndMapEachRow(statement, row -> {
                         rowsMapper.processRow(row);
                         return "";
@@ -646,14 +695,22 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     .getParameterInRole(R2dbcRepository.PARAMETER_TX_STATUS_ROLE, ReactiveTransactionStatus.class).orElse(null);
             if (tx != null) {
                 try {
-                    return Flux.from(callback.apply(tx.getConnection()));
+                    return Flux.deferContextual(contextView -> {
+                        try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate()) {
+                            return callback.apply(tx.getConnection());
+                        }
+                    });
                 } catch (Exception e) {
                     return Flux.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
                 }
             }
             return connectionOperations.withConnectionFlux(
                 isWrite ? ConnectionDefinition.DEFAULT : ConnectionDefinition.READ_ONLY,
-                status -> callback.apply(status.getConnection())
+                status -> Flux.deferContextual(contextView -> {
+                    try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate()) {
+                        return callback.apply(status.getConnection());
+                    }
+                })
             );
         }
 
@@ -665,14 +722,22 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     .getParameterInRole(R2dbcRepository.PARAMETER_TX_STATUS_ROLE, ReactiveTransactionStatus.class).orElse(null);
             if (tx != null) {
                 try {
-                    return Mono.fromDirect(callback.apply(tx.getConnection()));
+                    return Mono.deferContextual(contextView -> {
+                        try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate()) {
+                            return callback.apply(tx.getConnection());
+                        }
+                    });
                 } catch (Exception e) {
                     return Mono.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
                 }
             }
             return connectionOperations.withConnectionMono(
                 isWrite ? ConnectionDefinition.DEFAULT : ConnectionDefinition.READ_ONLY,
-                status -> callback.apply(status.getConnection())
+                status -> Mono.deferContextual(contextView -> {
+                    try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate()) {
+                        return callback.apply(status.getConnection());
+                    }
+                })
             );
         }
 
@@ -893,13 +958,21 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         }
 
         private void setParameters(Statement stmt, SqlStoredQuery<T, ?> storedQuery) {
-            data = data.map(d -> {
+            data = data.flatMap(d -> {
                 if (d.vetoed) {
-                    return d;
+                    return Mono.just(d);
                 }
-                storedQuery.bindParameters(new R2dbcParameterBinder(ctx, stmt, storedQuery), ctx.invocationContext, d.entity, d.previousValues);
-                return d;
+                return Mono.deferContextual(contextView -> {
+                    try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate()) {
+                        storedQuery.bindParameters(new R2dbcParameterBinder(ctx, stmt, storedQuery), ctx.invocationContext, d.entity, d.previousValues);
+                    }
+                    return Mono.just(d);
+                });
             });
+        }
+
+        private <T> Mono<T> executeAndMapEachRowSingle(Statement statement, Dialect dialect, Function<Row, T> mapper) {
+            return executeAndMapEachRow(statement, mapper).onErrorResume(errorHandler(dialect)).as(DefaultR2dbcRepositoryOperations::toSingleResult);
         }
 
         @Override
@@ -1017,7 +1090,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             if (hasGeneratedId) {
                 entities = entities
                     .flatMap(list -> {
-                        List<Data> notVetoedEntities = list.stream().filter(this::notVetoed).collect(Collectors.toList());
+                        List<Data> notVetoedEntities = list.stream().filter(this::notVetoed).toList();
                         if (notVetoedEntities.isEmpty()) {
                             return Mono.just(notVetoedEntities);
                         }
@@ -1053,6 +1126,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             return Mono.just(Tuples.of(list, 0L));
                         }
                         return executeAndGetRowsUpdated(statement)
+                            .onErrorResume(errorHandler(ctx.dialect))
                             .map(Number::longValue)
                             .reduce(0L, Long::sum)
                             .map(rowsUpdated -> {

@@ -30,7 +30,7 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.operations.JdbcSchemaHandler;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.config.SchemaGenerate;
@@ -38,6 +38,9 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 
 import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.sql.DataSource;
 import java.lang.reflect.Modifier;
 import java.sql.Connection;
@@ -53,6 +56,8 @@ import java.util.List;
 @Context
 @Internal
 public class SchemaGenerator {
+
+    private static final Logger LOG = LoggerFactory.getLogger(SchemaGenerator.class);
 
     private final List<DataJdbcConfiguration> configurations;
     private final JdbcSchemaHandler schemaHandler;
@@ -77,8 +82,12 @@ public class SchemaGenerator {
     public void createSchema(BeanLocator beanLocator) {
         RuntimeEntityRegistry runtimeEntityRegistry = beanLocator.getBean(RuntimeEntityRegistry.class);
         for (DataJdbcConfiguration configuration : configurations) {
+            boolean enabled = configuration.isEnabled();
             SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
-            if (schemaGenerate == null || schemaGenerate == SchemaGenerate.NONE) {
+            if (!enabled || schemaGenerate == null || schemaGenerate == SchemaGenerate.NONE) {
+                if (!enabled && LOG.isDebugEnabled()) {
+                    LOG.debug("The datasource [{}] is disabled, skipping schema generator.", configuration.getName());
+                }
                 continue;
             }
             Dialect dialect = configuration.getDialect();
@@ -129,7 +138,7 @@ public class SchemaGenerator {
                                  DataJdbcConfiguration configuration,
                                  PersistentEntity[] entities) throws SQLException {
         Dialect dialect = configuration.getDialect();
-        SqlQueryBuilder builder = new SqlQueryBuilder(dialect);
+        SqlQueryBuilder2 builder = new SqlQueryBuilder2(dialect);
         if (dialect.allowBatch() && configuration.isBatchGenerate()) {
             switch (configuration.getSchemaGenerate()) {
                 case CREATE_DROP:

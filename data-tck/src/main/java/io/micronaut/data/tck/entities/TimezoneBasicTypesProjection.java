@@ -43,9 +43,6 @@ public class TimezoneBasicTypesProjection {
 
     private Time time;
 
-    public TimezoneBasicTypesProjection() {
-    }
-
     public Long getMyId() {
         return myId;
     }

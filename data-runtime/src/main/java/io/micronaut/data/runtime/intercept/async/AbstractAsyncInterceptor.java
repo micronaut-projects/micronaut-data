@@ -49,13 +49,14 @@ public abstract class AbstractAsyncInterceptor<T, R> extends AbstractQueryInterc
      */
     protected AbstractAsyncInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
-        if (datastore instanceof AsyncCapableRepository) {
-            this.asyncDatastoreOperations = ((AsyncCapableRepository) datastore).async();
+        if (datastore instanceof AsyncCapableRepository asyncCapableRepository) {
+            this.asyncDatastoreOperations = asyncCapableRepository.async();
         } else {
             throw new DataAccessException("Datastore of type [" + datastore.getClass() + "] does not support asynchronous operations");
         }
     }
 
+    @Override
     protected final Argument<?> getReturnType(MethodInvocationContext<?, ?> context) {
         return findReturnType(context, Argument.OBJECT_ARGUMENT);
     }

@@ -57,8 +57,8 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
      */
     protected Specification getSpecification(MethodInvocationContext<?, ?> context, boolean nullable) {
         final Object parameterValue = context.getParameterValues()[0];
-        if (parameterValue instanceof Specification) {
-            return (Specification) parameterValue;
+        if (parameterValue instanceof Specification specification) {
+            return specification;
         }
         if (parameterValue == null) {
             if (nullable) {

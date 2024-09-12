@@ -18,20 +18,22 @@ package io.micronaut.data.model.jpa.criteria.impl.query;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
-import io.micronaut.data.model.jpa.criteria.impl.IdExpression;
-import io.micronaut.data.model.jpa.criteria.impl.LiteralExpression;
-import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitable;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
-import io.micronaut.data.model.jpa.criteria.impl.selection.AggregateExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.factory.Projections;
 import jakarta.persistence.criteria.Expression;
-import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Selection;
 
 /**
@@ -54,11 +56,6 @@ public final class QueryModelSelectionVisitor implements SelectionVisitor {
     }
 
     @Override
-    public void visit(Predicate predicate) {
-        throw new IllegalStateException("Predicate is not allowed as a selection!");
-    }
-
-    @Override
     public void visit(PersistentPropertyPath<?> persistentPropertyPath) {
         if (distinct && !hasDistinctProjection()) {
             addProjection(Projections.distinct());
@@ -67,13 +64,13 @@ public final class QueryModelSelectionVisitor implements SelectionVisitor {
     }
 
     @Override
-    public void visit(AggregateExpression<?, ?> aggregateExpression) {
-        addProjection(getProjection(aggregateExpression));
+    public void visit(UnaryExpression<?> unaryExpression) {
+        addProjection(getProjection(unaryExpression));
     }
 
-    private QueryModel.Projection getProjection(AggregateExpression<?, ?> aggregateExpression) {
-        Expression<?> expression = aggregateExpression.getExpression();
-        switch (aggregateExpression.getType()) {
+    private QueryModel.Projection getProjection(UnaryExpression<?> unaryExpression) {
+        Expression<?> expression = unaryExpression.getExpression();
+        switch (unaryExpression.getType()) {
             case SUM -> {
                 return Projections.sum(CriteriaUtils.requireProperty(expression).getPathAsString());
             }
@@ -99,13 +96,14 @@ public final class QueryModelSelectionVisitor implements SelectionVisitor {
             case COUNT_DISTINCT -> {
                 if (expression instanceof PersistentEntityRoot) {
                     return Projections.countDistinctRoot();
-                } else if (expression instanceof PersistentPropertyPath) {
-                    return Projections.countDistinct(((PersistentPropertyPath<?>) expression).getPathAsString());
+                } else if (expression instanceof PersistentPropertyPath<?> persistentPropertyPath) {
+                    return Projections.countDistinct(persistentPropertyPath.getPathAsString());
                 } else {
                     throw new IllegalStateException("Illegal expression: " + expression + " for count distinct selection!");
                 }
             }
-            default -> throw new IllegalStateException("Unknown aggregation: " + aggregateExpression.getExpression());
+            default ->
+                throw new IllegalStateException("Unknown aggregation: " + unaryExpression.getExpression());
         }
     }
 
@@ -113,8 +111,8 @@ public final class QueryModelSelectionVisitor implements SelectionVisitor {
     public void visit(CompoundSelection<?> compoundSelection) {
         isCompound = true;
         for (Selection<?> selection : compoundSelection.getCompoundSelectionItems()) {
-            if (selection instanceof SelectionVisitable selectionVisitable) {
-                selectionVisitable.accept(this);
+            if (selection instanceof ISelection<?> selectionVisitable) {
+                selectionVisitable.visitSelection(this);
             } else {
                 throw new IllegalStateException("Unknown selection object: " + selection);
             }
@@ -132,6 +130,11 @@ public final class QueryModelSelectionVisitor implements SelectionVisitor {
         } else {
             addProjection(Projections.rootEntity());
         }
+    }
+
+    @Override
+    public void visit(PersistentEntitySubquery<?> subquery) {
+        throw new IllegalStateException("Subquery is not supported!");
     }
 
     @Override
@@ -162,13 +165,23 @@ public final class QueryModelSelectionVisitor implements SelectionVisitor {
     @Override
     public void visit(AliasedSelection<?> aliasedSelection) {
         alias = aliasedSelection.getAlias();
-        ((SelectionVisitable) aliasedSelection.getSelection()).accept(this);
+        aliasedSelection.getSelection().visitSelection(this);
         alias = null;
     }
 
+    @Override
+    public void visit(FunctionExpression<?> functionExpression) {
+        throw new IllegalStateException("Not supported expression: " + functionExpression);
+    }
+
+    @Override
+    public void visit(BinaryExpression<?> binaryExpression) {
+        throw new IllegalStateException("Not supported expression: " + binaryExpression);
+    }
+
     private void addProjection(QueryModel.Projection projection) {
-        if (projection instanceof QueryModel.PropertyProjection && alias != null) {
-            ((QueryModel.PropertyProjection) projection).setAlias(alias);
+        if (projection instanceof QueryModel.PropertyProjection propertyProjection && alias != null) {
+            propertyProjection.setAlias(alias);
         }
         queryModel.projections().add(projection);
     }

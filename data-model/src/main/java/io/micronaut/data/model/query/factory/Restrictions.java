@@ -22,7 +22,9 @@ import io.micronaut.data.model.query.QueryModel;
  *
  * @author graemerocher
  * @since 1.0
+ * @deprecated Replaced by JPA criteria
  */
+@Deprecated(forRemoval = true, since = "4.9")
 public class Restrictions {
 
     /**
@@ -158,7 +160,7 @@ public class Restrictions {
     }
 
     /**
-     * Case insensitive like.
+     * Case-insensitive like.
      *
      * @param property The property
      * @param expression The expression

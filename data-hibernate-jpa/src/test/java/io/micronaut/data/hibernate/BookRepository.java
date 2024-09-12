@@ -18,6 +18,7 @@ package io.micronaut.data.hibernate;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.Where;
@@ -43,6 +44,7 @@ public abstract class BookRepository extends io.micronaut.data.tck.repositories.
     /**
      * @deprecated Order by 'author.name' case without a join. Hibernate will do the cross join if the association property is accessed by the property path without join.
      */
+    @Override
     @Query(value = "SELECT book_ FROM Book book_", countQuery = "SELECT count(book_) FROM Book book_ ")
     @Join(value = "author", type = Join.Type.FETCH)
     @Deprecated
@@ -92,16 +94,22 @@ public abstract class BookRepository extends io.micronaut.data.tck.repositories.
     @Query("UPDATE Book SET author = :author WHERE id = :id")
     public abstract long updateAuthorCustomQuery(Long id, Author author);
 
+    @Override
     public abstract long updateAuthor(@Id Long id, Author author);
 
     @Query("SELECT b FROM Book b WHERE b.author = :author")
     public abstract List<Book> findByAuthor(Author author);
 
-    @Query("INSERT INTO Book(title, pages, author) VALUES (:title, :pages, :author)")
+    @Query("INSERT INTO Book(title, totalPages) VALUES (:title, :totalPages)")
     public abstract void saveCustom(Collection<Book> books);
 
-    @Query("INSERT INTO Book(title, pages, author) VALUES (:title, :pages, :author)")
+    @Query("INSERT INTO Book(title, totalPages) VALUES (:title, :totalPages)")
     public abstract void saveCustomSingle(Book book);
+
+    @Query("INSERT INTO Book(title, totalPages) VALUES (:title, :totalPages)")
+    @ParameterExpression(name = "title", expression = "#{book.title + 'XYZ'}")
+    @ParameterExpression(name = "totalPages", expression = "#{book.totalPages}")
+    public abstract void saveCustomSingleExpressions(Book book);
 
     @Query("DELETE FROM Book WHERE title = :title")
     public abstract int deleteCustom(Collection<Book> books);

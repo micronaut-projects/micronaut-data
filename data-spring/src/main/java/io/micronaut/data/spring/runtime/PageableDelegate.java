@@ -20,6 +20,8 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 
+import java.util.Optional;
+
 /**
  * Supports representing a Spring Pageable as a Micronaut {@link Pageable}.
  *
@@ -50,6 +52,21 @@ class PageableDelegate implements Pageable {
     }
 
     @Override
+    public Mode getMode() {
+        return Mode.OFFSET;
+    }
+
+    @Override
+    public Optional<Cursor> cursor() {
+        return Optional.empty();
+    }
+
+    @Override
+    public boolean requestTotal() {
+        return true;
+    }
+
+    @Override
     public long getOffset() {
         return target.getOffset();
     }
@@ -58,5 +75,15 @@ class PageableDelegate implements Pageable {
     @Override
     public Sort getSort() {
         return new SortDelegate(target.getSort());
+    }
+
+    @Override
+    public Pageable withTotal() {
+        return this;
+    }
+
+    @Override
+    public Pageable withoutTotal() {
+        throw new IllegalStateException("Disabling requesting total is not supported for current Pageable");
     }
 }

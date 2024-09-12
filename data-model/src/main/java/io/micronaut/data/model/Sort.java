@@ -179,6 +179,19 @@ public interface Sort {
         }
 
         /**
+         * Create an order that is reversed to current.
+         *
+         * @return A new instance of order that is reversed.
+         */
+        public Order reverse() {
+            return new Order(
+                property,
+                direction == Direction.ASC ? Direction.DESC : Direction.ASC,
+                ignoreCase
+            );
+        }
+
+        /**
          * Creates a new order for the given property in descending order.
          *
          * @param property The property
@@ -232,6 +245,14 @@ public interface Sort {
          */
         public enum Direction {
             ASC, DESC
+        }
+
+        @Override
+        public String toString() {
+            return "SORT{" + property
+                + (direction == Direction.ASC ? ", ASC" : ", DESC")
+                + (ignoreCase ? ", ignoreCase" : "")
+                + ")";
         }
 
         @Override

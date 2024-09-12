@@ -60,6 +60,7 @@ final class DefaultSort implements Sort {
      * @param order The order object
      * @return The Query instance
      */
+    @Override
     public @NonNull DefaultSort order(@NonNull Order order) {
         ArgumentUtils.requireNonNull("order", order);
         List<Order> newOrderBy = new ArrayList<>(orderBy);
@@ -93,6 +94,11 @@ final class DefaultSort implements Sort {
     @Override
     public DefaultSort order(@NonNull String propertyName, @NonNull Order.Direction direction) {
         return order(new Order(propertyName, direction, false));
+    }
+
+    @Override
+    public String toString() {
+        return "DefaultSort{orderBy=" + orderBy + '}';
     }
 
     @Override

@@ -27,7 +27,6 @@ import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.document.mongo.MongoAnnotations;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
-import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
@@ -67,7 +66,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 import static java.util.Arrays.asList;
@@ -108,7 +106,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
                     return;
                 }
                 if (criterion instanceof QueryModel.PropertyCriterion || criterion instanceof QueryModel.PropertyComparisonCriterion) {
-                    Map<String, Object> neg = new LinkedHashMap<>();
+                    var neg = new LinkedHashMap<String, Object>();
                     handleCriterion(ctx, neg, criterion);
                     if (neg.size() != 1) {
                         throw new IllegalStateException("Expected size of 1");
@@ -174,9 +172,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
             PersistentPropertyPath propertyPath = context.getRequiredProperty(criterion);
             Object value = criterion.getValue();
             String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
-            if (value instanceof Iterable) {
-                List<?> values = CollectionUtils.iterableToList((Iterable) value);
-                obj.put(criterionPropertyName, singletonMap("$in", values.stream().map(val -> valueRepresentation(context, propertyPath, val)).collect(Collectors.toList())));
+            if (value instanceof Iterable<?> iterable) {
+                List<?> values = CollectionUtils.iterableToList(iterable);
+                obj.put(criterionPropertyName, singletonMap("$in", values.stream().map(val -> valueRepresentation(context, propertyPath, val)).toList()));
             } else {
                 obj.put(criterionPropertyName, singletonMap("$in", singletonList(valueRepresentation(context, propertyPath, value))));
             }
@@ -185,9 +183,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
             PersistentPropertyPath propertyPath = context.getRequiredProperty(criterion);
             Object value = criterion.getValue();
             String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
-            if (value instanceof Iterable) {
-                List<?> values = CollectionUtils.iterableToList((Iterable) value);
-                obj.put(criterionPropertyName, singletonMap("$nin", values.stream().map(val -> valueRepresentation(context, propertyPath, val)).collect(Collectors.toList())));
+            if (value instanceof Iterable<?> iterable) {
+                List<?> values = CollectionUtils.iterableToList(iterable);
+                obj.put(criterionPropertyName, singletonMap("$nin", values.stream().map(val -> valueRepresentation(context, propertyPath, val)).toList()));
             } else {
                 obj.put(criterionPropertyName, singletonMap("$nin", singletonList(valueRepresentation(context, propertyPath, value))));
             }
@@ -223,9 +221,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
             Object value = criterion.getValue();
             String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
             Object criteriaValue;
-            if (value instanceof Iterable) {
-                List<?> values = CollectionUtils.iterableToList((Iterable) value);
-                criteriaValue = values.stream().map(val -> valueRepresentation(context, propertyPath, val)).collect(Collectors.toList());
+            if (value instanceof Iterable<?> iterable) {
+                List<?> values = CollectionUtils.iterableToList(iterable);
+                criteriaValue = values.stream().map(val -> valueRepresentation(context, propertyPath, val)).toList();
             } else {
                 criteriaValue = singletonList(valueRepresentation(context, propertyPath, value));
             }
@@ -275,9 +273,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
         Map<String, Object> regexCriteria = new HashMap<>(2);
         regexCriteria.put(OPTIONS, ignoreCase ? "i" : "");
         String regexValue;
-        if (value instanceof BindingParameter) {
+        if (value instanceof BindingParameter bindingParameter) {
             int index = context.pushParameter(
-                (BindingParameter) value,
+                bindingParameter,
                 newBindingContext(propertyPath, propertyPath)
             );
             regexValue = QUERY_PARAMETER_PLACEHOLDER + ":" + index;
@@ -336,15 +334,15 @@ public final class MongoQueryBuilder implements QueryBuilder {
                                        PersistentPropertyPath inPropertyPath,
                                        PersistentPropertyPath outPropertyPath,
                                        Object value) {
-        if (value instanceof LocalDate) {
-            return singletonMap(MONGO_DATE_IDENTIFIER, formatDate((LocalDate) value));
+        if (value instanceof LocalDate localDate) {
+            return singletonMap(MONGO_DATE_IDENTIFIER, formatDate(localDate));
         }
-        if (value instanceof LocalDateTime) {
-            return singletonMap(MONGO_DATE_IDENTIFIER, formatDate((LocalDateTime) value));
+        if (value instanceof LocalDateTime localDateTime) {
+            return singletonMap(MONGO_DATE_IDENTIFIER, formatDate(localDateTime));
         }
-        if (value instanceof BindingParameter) {
+        if (value instanceof BindingParameter bindingParameter) {
             int index = context.pushParameter(
-                    (BindingParameter) value,
+                    bindingParameter,
                     newBindingContext(inPropertyPath, outPropertyPath)
             );
             return singletonMap(QUERY_PARAMETER_PLACEHOLDER, index);
@@ -378,8 +376,8 @@ public final class MongoQueryBuilder implements QueryBuilder {
     }
 
     private Object asLiteral(@Nullable Object value) {
-        if (value instanceof RegexPattern) {
-            return "'" + Pattern.quote(((RegexPattern) value).value) + "'";
+        if (value instanceof RegexPattern regexPattern) {
+            return "'" + Pattern.quote(regexPattern.value) + "'";
         }
         return value;
     }
@@ -481,11 +479,6 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 return queryState.getParameterBindings();
             }
 
-            @Override
-            public Map<String, String> getAdditionalRequiredParameters() {
-                return Collections.emptyMap();
-            }
-
         };
     }
 
@@ -495,7 +488,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         }
         List<String> joined = joins.stream().map(JoinPath::getPath)
                 .sorted((o1, o2) -> Comparator.comparingInt(String::length).thenComparing(String::compareTo).compare(o1, o2))
-                .collect(Collectors.toList());
+                .toList();
         for (String join : joined) {
             StringJoiner rootPath = new StringJoiner(".");
             StringJoiner currentEntityPath = new StringJoiner(".");
@@ -576,19 +569,19 @@ public final class MongoQueryBuilder implements QueryBuilder {
                         if (mappedByPath == null) {
                             throw new IllegalStateException("Cannot find mapped path: " + mappedBy);
                         }
-                        if (!(mappedByPath.getProperty() instanceof Association)) {
+                        if (!(mappedByPath.getProperty() instanceof Association associationProperty)) {
                             throw new IllegalStateException("Expected association as a mapped path: " + mappedBy);
                         }
 
-                        List<String> localMatchFields = new ArrayList<>();
-                        List<String> foreignMatchFields = new ArrayList<>();
+                        var localMatchFields = new ArrayList<String>();
+                        var foreignMatchFields = new ArrayList<String>();
                         traversePersistentProperties(currentLookup.persistentEntity.getIdentity(), (associations, p) -> {
                             String fieldPath = asPath(associations, p);
                             localMatchFields.add(fieldPath);
                         });
 
-                        List<Association> mappedAssociations = new ArrayList<>(mappedByPath.getAssociations());
-                        mappedAssociations.add((Association) mappedByPath.getProperty());
+                        var mappedAssociations = new ArrayList<>(mappedByPath.getAssociations());
+                        mappedAssociations.add(associationProperty);
 
                         traversePersistentProperties(mappedAssociations, currentLookup.persistentEntity.getIdentity(), (associations, p) -> {
                             String fieldPath = asPath(associations, p);
@@ -603,11 +596,11 @@ public final class MongoQueryBuilder implements QueryBuilder {
                                 currentPath)
                         );
                     } else {
-                        List<Association> mappedAssociations = new ArrayList<>(propertyPath.getAssociations());
+                        var mappedAssociations = new ArrayList<>(propertyPath.getAssociations());
                         mappedAssociations.add((Association) propertyPath.getProperty());
 
-                        List<String> localMatchFields = new ArrayList<>();
-                        List<String> foreignMatchFields = new ArrayList<>();
+                        var localMatchFields = new ArrayList<String>();
+                        var foreignMatchFields = new ArrayList<String>();
                         PersistentProperty identity = lookupStage.persistentEntity.getIdentity();
                         if (identity == null) {
                             throw new IllegalStateException("Null identity of persistent entity: " + lookupStage.persistentEntity);
@@ -645,7 +638,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         if (!joinColumns.isEmpty()) {
             return joinColumns;
         }
-        List<String> fields = new ArrayList<>();
+        var fields = new ArrayList<String>();
         traversePersistentProperties(entity.getIdentity(), (associations, property) -> {
             fields.add(asPath(associations, property));
         });
@@ -662,7 +655,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         if (identity == null) {
             throw new MappingException("Cannot have a foreign key association without an ID on entity: " + entity.getName());
         }
-        List<String> fields = new ArrayList<>();
+        var fields = new ArrayList<String>();
         traversePersistentProperties(identity, (associations, property) -> {
             fields.add(asPath(associations, property));
         });
@@ -679,7 +672,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         if (associations.isEmpty()) {
             return getPropertyPersistName(property);
         }
-        StringJoiner joiner = new StringJoiner(".");
+        var joiner = new StringJoiner(".");
         for (Association association : associations) {
             joiner.add(getPropertyPersistName(association));
         }
@@ -840,7 +833,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
             StringJoiner joinPathJoiner = new StringJoiner(".");
             for (Association association : propertyPath.getAssociations()) {
                 joinPathJoiner.add(association.getName());
-                if (association instanceof Embedded) {
+                if (association.isEmbedded()) {
                     continue;
                 }
                 if (joinAssociation == null) {
@@ -934,9 +927,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
         for (Map.Entry<String, Object> e : propertiesToUpdate.entrySet()) {
             PersistentPropertyPath propertyPath = findProperty(queryState, e.getKey(), null);
             String propertyPersistName = getPropertyPersistName(propertyPath.getProperty());
-            if (e.getValue() instanceof BindingParameter) {
+            if (e.getValue() instanceof BindingParameter bindingParameter) {
                 int index = queryState.pushParameter(
-                        (BindingParameter) e.getValue(),
+                        bindingParameter,
                         newBindingContext(propertyPath)
                 );
                 sets.put(propertyPersistName, singletonMap(QUERY_PARAMETER_PLACEHOLDER, index));
@@ -1043,11 +1036,11 @@ public final class MongoQueryBuilder implements QueryBuilder {
     }
 
     private boolean skipValue(Object obj) {
-        if (obj instanceof Map) {
-            return ((Map<?, ?>) obj).isEmpty();
+        if (obj instanceof Map<?, ?> map) {
+            return map.isEmpty();
         }
-        if (obj instanceof Collection) {
-            return ((Collection<?>) obj).isEmpty();
+        if (obj instanceof Collection<?> collection) {
+            return collection.isEmpty();
         }
         return false;
     }
@@ -1065,12 +1058,12 @@ public final class MongoQueryBuilder implements QueryBuilder {
     }
 
     private void append(StringBuilder sb, Object obj) {
-        if (obj instanceof Map) {
-            appendMap(sb, (Map) obj);
-        } else if (obj instanceof Collection) {
-            appendArray(sb, (Collection<Object>) obj);
-        } else if (obj instanceof RawJsonValue) {
-            sb.append(((RawJsonValue) obj).value);
+        if (obj instanceof Map map) {
+            appendMap(sb, map);
+        } else if (obj instanceof Collection collection) {
+            appendArray(sb, collection);
+        } else if (obj instanceof RawJsonValue rawJsonValue) {
+            sb.append(rawJsonValue.value);
         } else if (obj == null) {
             sb.append("null");
         } else if (obj instanceof Boolean) {
@@ -1078,9 +1071,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         } else if (obj instanceof Number) {
             sb.append(obj);
         } else {
-            sb.append("'");
-            sb.append(obj);
-            sb.append("'");
+            sb.append('\'').append(obj).append('\'');
         }
     }
 
@@ -1167,6 +1158,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
         PersistentPropertyPath getRequiredProperty(String name, Class<?> criterionClazz);
 
+        @Override
         default int pushParameter(@NonNull BindingParameter bindingParameter, @NonNull BindingParameter.BindingContext bindingContext) {
             return getQueryState().pushParameter(bindingParameter, bindingContext);
         }

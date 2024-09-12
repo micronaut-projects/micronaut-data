@@ -60,8 +60,7 @@ public interface ReactiveTransactionOperations<C> {
          * Invokes the given code passing the {@link ReactiveTransactionStatus}.
          * @param status The status
          * @return A publisher that emits the return type
-         * @throws Exception If an error occurs, though generally these should be emitted through the returned {@link Publisher}
          */
-        Publisher<T> doInTransaction(ReactiveTransactionStatus<C> status) throws Exception;
+        Publisher<T> doInTransaction(ReactiveTransactionStatus<C> status);
     }
 }

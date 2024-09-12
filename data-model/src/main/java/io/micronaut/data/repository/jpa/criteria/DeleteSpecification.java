@@ -39,7 +39,7 @@ public interface DeleteSpecification<T> {
     /**
      * Negates the given {@link DeleteSpecification}.
      *
-     * @param <T>  the type of the {@link jakarta.persistence.criteria.Root} the resulting {@literal Specification} operates on.
+     * @param <T>  the type of the {@link Root} the resulting {@literal Specification} operates on.
      * @param spec The specification.
      * @return negated specification.
      */
@@ -54,7 +54,7 @@ public interface DeleteSpecification<T> {
     /**
      * Simple static factory method to add some syntactic sugar around a {@link DeleteSpecification}.
      *
-     * @param <T>  the type of the {@link jakarta.persistence.criteria.Root} the resulting {@literal Specification} operates on.
+     * @param <T>  the type of the {@link Root} the resulting {@literal Specification} operates on.
      * @param spec The specification.
      * @return delete specification.
      */
@@ -69,7 +69,7 @@ public interface DeleteSpecification<T> {
     /**
      * Simple static factory method to add some syntactic sugar around a {@link PredicateSpecification}.
      *
-     * @param <T>  the type of the {@link jakarta.persistence.criteria.Root} the resulting {@literal Specification} operates on.
+     * @param <T>  the type of the {@link Root} the resulting {@literal Specification} operates on.
      * @param spec The specification.
      * @return delete specification.
      */

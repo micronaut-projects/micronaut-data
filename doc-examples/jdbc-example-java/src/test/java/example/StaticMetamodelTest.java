@@ -3,10 +3,12 @@ package example;
 import example.metamodel.Category_;
 import example.metamodel.Client;
 import example.metamodel.Client_;
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
@@ -54,7 +56,7 @@ class StaticMetamodelTest {
         entityRoot.join(Client_.categoriesCollection, JoinType.LEFT);
 
         QueryResultPersistentEntityCriteriaQuery criteriaQuery = (QueryResultPersistentEntityCriteriaQuery) query;
-        String q = criteriaQuery.buildQuery(new SqlQueryBuilder()).getQuery();
+        String q = criteriaQuery.buildQuery(AnnotationMetadata.EMPTY_METADATA, new SqlQueryBuilder2()).getQuery();
 
         Assertions.assertEquals(q, "SELECT client_.\"id\",client_.\"name\",client_.\"main_category_id\" FROM \"client\" client_ LEFT JOIN \"client_category\" client_categories_collection_client_category_ ON client_.\"id\"=client_categories_collection_client_category_.\"client_id\"  LEFT JOIN \"category\" client_categories_collection_ ON client_categories_collection_client_category_.\"category_id\"=client_categories_collection_.\"id\"");
     }

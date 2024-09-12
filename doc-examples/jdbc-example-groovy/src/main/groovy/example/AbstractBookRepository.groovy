@@ -26,7 +26,7 @@ abstract class AbstractBookRepository implements CrudRepository<Book, Long> {
             statement.setString(1, title)
             ResultSet resultSet = statement.executeQuery()
             return jdbcOperations.entityStream(resultSet, Book.class)
-                    .collect(Collectors.toList())
+                    .toList()
         })
     }
 }

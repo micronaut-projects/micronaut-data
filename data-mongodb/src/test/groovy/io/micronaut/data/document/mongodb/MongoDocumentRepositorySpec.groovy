@@ -8,9 +8,13 @@ import com.mongodb.client.model.Sorts
 import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.model.Updates
 import groovy.transform.Memoized
+import io.micronaut.data.document.mongodb.entities.ComplexEntity
+import io.micronaut.data.document.mongodb.entities.ComplexValue
 import io.micronaut.data.document.mongodb.entities.ElementRow
+import io.micronaut.data.document.mongodb.repositories.ComplexEntityRepository
 import io.micronaut.data.document.mongodb.repositories.ElementRowRepository
 import io.micronaut.data.document.mongodb.repositories.MongoAuthorRepository
+import io.micronaut.data.document.mongodb.repositories.MongoCriteriaPersonRepository
 import io.micronaut.data.document.mongodb.repositories.MongoDocumentRepository
 import io.micronaut.data.document.mongodb.repositories.MongoExecutorPersonRepository
 import io.micronaut.data.document.mongodb.repositories.MongoBasicTypesRepository
@@ -35,9 +39,12 @@ import io.micronaut.data.document.tck.repositories.StudentRepository
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.mongodb.operations.options.MongoAggregationOptions
 import io.micronaut.data.mongodb.operations.options.MongoFindOptions
+import io.micronaut.data.repository.jpa.criteria.QuerySpecification
+import jakarta.persistence.criteria.CriteriaBuilder
+import jakarta.persistence.criteria.CriteriaQuery
+import jakarta.persistence.criteria.Predicate
+import jakarta.persistence.criteria.Root
 import org.bson.BsonDocument
-
-import java.util.stream.Collectors
 
 import static io.micronaut.data.document.tck.repositories.DocumentRepository.Specifications.tagsArrayContains
 
@@ -107,6 +114,229 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
             people[0].age == 0
             people[1].name == "Jeff"
             people[1].age == 0
+    }
+
+    void "test custom find paginated"() {
+        given:
+            savePersons(["Dennis", "Jeff", "James", "Dennis", "Josh", "Steven", "Jake", "Jim"])
+            def peopleToUpdate = personRepository.findAll().toList()
+            peopleToUpdate.forEach {it.age = 100 }
+            personRepository.updateAll(peopleToUpdate)
+        when:
+            def peoplePage = personRepository.customFindPage("J.*", Pageable.from(0, 2))
+            def people = peoplePage.getContent()
+        then:
+            peoplePage.hasTotalSize()
+            peoplePage.getTotalPages() == 3
+            peoplePage.pageNumber == 0
+            people.size() == 2
+            people[0].name == "Jake"
+            people[0].age == 0 // Projection works
+            people[1].name == "James"
+        when:
+            peoplePage = personRepository.customFindPage("J.*", peoplePage.nextPageable())
+            people = peoplePage.getContent()
+        then:
+            peoplePage.hasTotalSize()
+            peoplePage.getTotalPages() == 3
+            peoplePage.pageNumber == 1
+            people.size() == 2
+            people[0].name == "Jeff"
+            people[0].age == 0 // Projection works
+            people[1].name == "Jim"
+        when:
+            peoplePage = personRepository.customFindPage("J.*", peoplePage.nextPageable())
+            people = peoplePage.getContent()
+        then:
+            peoplePage.hasTotalSize()
+            peoplePage.getTotalPages() == 3
+            peoplePage.pageNumber == 2
+            people.size() == 1
+            people[0].name == "Josh"
+    }
+
+    void "test custom find paginated without count"() {
+        given:
+            savePersons(["Dennis", "Jeff", "James", "Dennis", "Josh", "Steven", "Jake", "Jim"])
+            def peopleToUpdate = personRepository.findAll().toList()
+            peopleToUpdate.forEach {it.age = 100 }
+            personRepository.updateAll(peopleToUpdate)
+        when:
+            def peoplePage = personRepository.customFindPage("J.*", Pageable.from(0, 2).withoutTotal())
+            def people = peoplePage.getContent()
+        then:
+            !peoplePage.hasTotalSize()
+            peoplePage.pageNumber == 0
+            people.size() == 2
+            people[0].name == "Jake"
+            people[0].age == 0 // Projection works
+            people[1].name == "James"
+        when:
+            peoplePage = personRepository.customFindPage("J.*", peoplePage.nextPageable())
+            people = peoplePage.getContent()
+        then:
+            !peoplePage.hasTotalSize()
+            peoplePage.pageNumber == 1
+            people.size() == 2
+            people[0].name == "Jeff"
+            people[0].age == 0 // Projection works
+            people[1].name == "Jim"
+        when:
+            peoplePage = personRepository.customFindPage("J.*", peoplePage.nextPageable())
+            people = peoplePage.getContent()
+        then:
+            !peoplePage.hasTotalSize()
+            peoplePage.pageNumber == 2
+            people.size() == 1
+            people[0].name == "Josh"
+    }
+
+    void "test custom find paginated without count backwards"() {
+        given:
+            savePersons(["Dennis", "Jeff", "James", "Dennis", "Josh", "Steven", "Jake", "Jim"])
+            def peopleToUpdate = personRepository.findAll().toList()
+            peopleToUpdate.forEach {it.age = 100 }
+            personRepository.updateAll(peopleToUpdate)
+        when:
+            def peoplePage = personRepository.customFindPage("J.*", Pageable.from(2, 2).withoutTotal())
+            def people = peoplePage.getContent()
+        then:
+            !peoplePage.hasTotalSize()
+            peoplePage.pageNumber == 2
+            people.size() == 1
+            people[0].name == "Josh"
+            people[0].age == 0 // Projection works
+
+        when:
+            peoplePage = personRepository.customFindPage("J.*", peoplePage.previousPageable())
+            people = peoplePage.getContent()
+        then:
+            !peoplePage.hasTotalSize()
+            peoplePage.pageNumber == 1
+            people.size() == 2
+            people[0].name == "Jeff"
+            people[0].age == 0 // Projection works
+            people[1].name == "Jim"
+        when:
+            peoplePage = personRepository.customFindPage("J.*", peoplePage.previousPageable())
+            people = peoplePage.getContent()
+        then:
+            !peoplePage.hasTotalSize()
+            peoplePage.pageNumber == 0
+            people.size() == 2
+            people[0].name == "Jake"
+            people[1].name == "James"
+    }
+
+    void "test custom aggr paginated"() {
+        given:
+            savePersons(["Dennis", "Jeff", "James", "Dennis", "Josh", "Steven", "Jake", "Jim"])
+            def peopleToUpdate = personRepository.findAll().toList()
+            peopleToUpdate.forEach {it.age = 100 }
+            personRepository.updateAll(peopleToUpdate)
+        when:
+            def peoplePage = personRepository.customAggrPage("J.*", Pageable.from(0, 2))
+            def people = peoplePage.getContent()
+        then:
+            peoplePage.hasTotalSize()
+            peoplePage.getTotalPages() == 3
+            peoplePage.pageNumber == 0
+            people.size() == 2
+            people[0].name == "Jake"
+            people[0].age == 0 // Projection works
+            people[1].name == "James"
+        when:
+            peoplePage = personRepository.customAggrPage("J.*", peoplePage.nextPageable())
+            people = peoplePage.getContent()
+        then:
+            peoplePage.hasTotalSize()
+            peoplePage.getTotalPages() == 3
+            peoplePage.pageNumber == 1
+            people.size() == 2
+            people[0].name == "Jeff"
+            people[0].age == 0 // Projection works
+            people[1].name == "Jim"
+        when:
+            peoplePage = personRepository.customAggrPage("J.*", peoplePage.nextPageable())
+            people = peoplePage.getContent()
+        then:
+            peoplePage.hasTotalSize()
+            peoplePage.getTotalPages() == 3
+            peoplePage.pageNumber == 2
+            people.size() == 1
+            people[0].name == "Josh"
+    }
+
+    void "test custom aggr paginated without count"() {
+        given:
+            savePersons(["Dennis", "Jeff", "James", "Dennis", "Josh", "Steven", "Jake", "Jim"])
+            def peopleToUpdate = personRepository.findAll().toList()
+            peopleToUpdate.forEach {it.age = 100 }
+            personRepository.updateAll(peopleToUpdate)
+        when:
+            def peoplePage = personRepository.customAggrPage("J.*", Pageable.from(0, 2).withoutTotal())
+            def people = peoplePage.getContent()
+        then:
+            !peoplePage.hasTotalSize()
+            peoplePage.pageNumber == 0
+            people.size() == 2
+            people[0].name == "Jake"
+            people[0].age == 0 // Projection works
+            people[1].name == "James"
+        when:
+            peoplePage = personRepository.customAggrPage("J.*", peoplePage.nextPageable())
+            people = peoplePage.getContent()
+        then:
+            !peoplePage.hasTotalSize()
+            peoplePage.pageNumber == 1
+            people.size() == 2
+            people[0].name == "Jeff"
+            people[0].age == 0 // Projection works
+            people[1].name == "Jim"
+        when:
+            peoplePage = personRepository.customAggrPage("J.*", peoplePage.nextPageable())
+            people = peoplePage.getContent()
+        then:
+            !peoplePage.hasTotalSize()
+            peoplePage.pageNumber == 2
+            people.size() == 1
+            people[0].name == "Josh"
+    }
+
+    void "test custom aggr paginated without count backwards"() {
+        given:
+            savePersons(["Dennis", "Jeff", "James", "Dennis", "Josh", "Steven", "Jake", "Jim"])
+            def peopleToUpdate = personRepository.findAll().toList()
+            peopleToUpdate.forEach {it.age = 100 }
+            personRepository.updateAll(peopleToUpdate)
+        when:
+            def peoplePage = personRepository.customAggrPage("J.*", Pageable.from(2, 2).withoutTotal())
+            def people = peoplePage.getContent()
+        then:
+            !peoplePage.hasTotalSize()
+            peoplePage.pageNumber == 2
+            people.size() == 1
+            people[0].name == "Josh"
+            people[0].age == 0 // Projection works
+        when:
+            peoplePage = personRepository.customAggrPage("J.*", peoplePage.previousPageable())
+            people = peoplePage.getContent()
+        then:
+            !peoplePage.hasTotalSize()
+            peoplePage.pageNumber == 1
+            people.size() == 2
+            people[0].name == "Jeff"
+            people[0].age == 0 // Projection works
+            people[1].name == "Jim"
+        when:
+            peoplePage = personRepository.customAggrPage("J.*", peoplePage.previousPageable())
+            people = peoplePage.getContent()
+        then:
+            !peoplePage.hasTotalSize()
+            peoplePage.pageNumber == 0
+            people.size() == 2
+            people[0].name == "Jake"
+            people[1].name == "James"
     }
 
     void "test custom aggr"() {
@@ -437,7 +667,7 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
             assert person != null
             def optPerson = personRepository.findById(person.id)
             def personsByIdIn = personRepository.findByIdIn(Arrays.asList(person.id))
-            def personsByIdNotInIds = personRepository.findByIdNotIn(Arrays.asList(person.id)).stream().map(p -> p.id).collect(Collectors.toList())
+            def personsByIdNotInIds = personRepository.findByIdNotIn(Arrays.asList(person.id)).stream().map(p -> p.id).toList()
         then:
             optPerson.present
             optPerson.get().id == person.id
@@ -572,9 +802,104 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
         elementRowRepository.deleteAll()
     }
 
+    void 'test aggregate with collection expressions'() {
+        given:
+        def eventId1 = 1L
+        def eventId2 = 2L
+        elementRowRepository.saveAll(List.of(new ElementRow(eventId: eventId1, rowState: "ACTIVE", subType: "VCP"),
+                new ElementRow(eventId: eventId1, rowState: "ACTIVE", subType: "VCP"),
+                new ElementRow(eventId: eventId2, rowState: "INACTIVE", subType: "VCP"),
+                new ElementRow(eventId: eventId1, rowState: "ACTIVE", subType: "TP"),
+                new ElementRow(eventId: eventId2, rowState: "ACTIVE", subType: "TP")))
+        when:
+        def result = elementRowRepository.customAggregateCountExpression(new ElementRowRepository.CustomDto(eventId1, "ACTIVE"))
+        then:
+        result
+        result.totalCount == 3
+        result.segregatedCount["VCP"] == 2
+        result.segregatedCount["TP"] == 1
+        when:
+        def arrayResult = elementRowRepository.customAggregateEventIds("VCP")
+        then:
+        arrayResult
+        def eventIds = arrayResult.eventIds
+        eventIds.size() == 3
+        eventIds[0] == eventId1
+        eventIds[1] == eventId1
+        eventIds[2] == eventId2
+        cleanup:
+        elementRowRepository.deleteAll()
+    }
+
+    void 'test complex value projection'() {
+        when:
+        def complexValue = new ComplexValue("a", "1")
+        def complexEntity = new ComplexEntity("test1", complexValue)
+        def savedComplexEntity = complexEntityRepository.save(complexEntity)
+        def opt = complexEntityRepository.findById(savedComplexEntity.id)
+        then:
+        opt.present
+        opt.get() == savedComplexEntity
+        opt.get().complexValue == complexValue
+        when:
+        def allComplexValues = complexEntityRepository.findAllComplexValue()
+        then:
+        allComplexValues.size() == 1
+        allComplexValues[0] == complexValue
+        when:
+        def optCv = complexEntityRepository.findComplexValueById(savedComplexEntity.id)
+        then:
+        optCv.present
+        optCv.get() == complexValue
+        when:
+        def optSimpleValue = complexEntityRepository.findSimpleValueById(savedComplexEntity.id)
+        then:
+        optSimpleValue.present
+        optSimpleValue.get() == savedComplexEntity.simpleValue
+        cleanup:
+        complexEntityRepository.deleteAll()
+    }
+
+    void "test criteria find IN"() {
+        given:
+            savePersons(["Dennis", "Jeff", "James", "Dennis"])
+        when:
+            def people = mongoCriteriaPersonRepository.findAll()
+        then:
+            people.size() == 4
+        when:
+            def limitedPeople1 = mongoCriteriaPersonRepository.findAll(new QuerySpecification<Person>() {
+                @Override
+                Predicate toPredicate(Root<Person> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+                    return root.get("id").in(people.get(0).getId(), people.get(1).getId(), people.get(2).getId())
+                }
+            })
+        then:
+            limitedPeople1.size() == 3
+            people.collect{ it.id }.containsAll(limitedPeople1.collect{ it.id })
+        when:
+            def limitedPeople2 = mongoCriteriaPersonRepository.findAll(new QuerySpecification<Person>() {
+                @Override
+                Predicate toPredicate(Root<Person> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+                    return criteriaBuilder.in(root.get("id"))
+                            .value(people.get(0).getId())
+                            .value(people.get(1).getId())
+                            .value(people.get(2).getId())
+                }
+            })
+        then:
+            limitedPeople2.size() == 3
+            people.collect{ it.id }.containsAll(limitedPeople2.collect{ it.id })
+    }
+
     @Memoized
     MongoExecutorPersonRepository getMongoExecutorPersonRepository() {
         return context.getBean(MongoExecutorPersonRepository)
+    }
+
+    @Memoized
+    MongoCriteriaPersonRepository getMongoCriteriaPersonRepository() {
+        return context.getBean(MongoCriteriaPersonRepository)
     }
 
     @Memoized
@@ -628,5 +953,10 @@ class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec impleme
     @Memoized
     ElementRowRepository getElementRowRepository() {
         return context.getBean(ElementRowRepository)
+    }
+
+    @Memoized
+    ComplexEntityRepository getComplexEntityRepository() {
+        return context.getBean(ComplexEntityRepository)
     }
 }

@@ -39,6 +39,7 @@ public interface PersistentProperty extends PersistentElement {
      * The name of the property.
      * @return The property name
      */
+    @Override
     @NonNull String getName();
 
     /**
@@ -121,7 +122,7 @@ public interface PersistentProperty extends PersistentElement {
     }
 
     /**
-     * @return True if the property is autopopulated
+     * @return True if the property is auto-populated
      */
     default boolean isAutoPopulated() {
         return !isGenerated() && getAnnotationMetadata().hasStereotype(AutoPopulated.class);
@@ -212,5 +213,15 @@ public interface PersistentProperty extends PersistentElement {
     @Nullable
     default String getAlias() {
         return getAnnotationMetadata().stringValue(MappedProperty.class, MappedProperty.ALIAS).orElse(null);
+    }
+
+    /**
+     * Is embedded property?
+     *
+     * @return True if the property is an embedded association.
+     * @since 4.9
+     */
+    default boolean isEmbedded() {
+        return false;
     }
 }

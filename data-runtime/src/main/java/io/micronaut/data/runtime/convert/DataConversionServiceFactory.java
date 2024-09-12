@@ -29,6 +29,7 @@ import io.micronaut.data.exceptions.DataAccessException;
 import jakarta.inject.Singleton;
 
 import java.math.BigDecimal;
+import java.sql.Array;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -358,7 +359,7 @@ final class DataConversionServiceFactory {
             return booleans;
         });
         // java.sql.Array arrays (needed for Postgres PgArray)
-        conversionService.addConverter(java.sql.Array.class, String[].class, sqlArray -> {
+        conversionService.addConverter(Array.class, String[].class, sqlArray -> {
             Object[] array;
             try {
                 array = (Object[]) sqlArray.getArray();
@@ -372,7 +373,7 @@ final class DataConversionServiceFactory {
             }
             return strings;
         });
-        conversionService.addConverter(java.sql.Array.class, Integer[].class, sqlArray -> {
+        conversionService.addConverter(Array.class, Integer[].class, sqlArray -> {
             Object[] array;
             try {
                 array = (Object[]) sqlArray.getArray();
@@ -386,7 +387,7 @@ final class DataConversionServiceFactory {
             }
             return integers;
         });
-        conversionService.addConverter(java.sql.Array.class, int[].class, sqlArray -> {
+        conversionService.addConverter(Array.class, int[].class, sqlArray -> {
             Object[] array;
             try {
                 array = (Object[]) sqlArray.getArray();
@@ -400,7 +401,7 @@ final class DataConversionServiceFactory {
             }
             return ints;
         });
-        conversionService.addConverter(java.sql.Array.class, Short[].class, sqlArray -> {
+        conversionService.addConverter(Array.class, Short[].class, sqlArray -> {
             Object[] array;
             try {
                 array = (Object[]) sqlArray.getArray();
@@ -414,7 +415,7 @@ final class DataConversionServiceFactory {
             }
             return shorts;
         });
-        conversionService.addConverter(java.sql.Array.class, short[].class, sqlArray -> {
+        conversionService.addConverter(Array.class, short[].class, sqlArray -> {
             Object[] array;
             try {
                 array = (Object[]) sqlArray.getArray();
@@ -428,7 +429,7 @@ final class DataConversionServiceFactory {
             }
             return shorts;
         });
-        conversionService.addConverter(java.sql.Array.class, Long[].class, sqlArray -> {
+        conversionService.addConverter(Array.class, Long[].class, sqlArray -> {
             Object[] array;
             try {
                 array = (Object[]) sqlArray.getArray();
@@ -442,7 +443,7 @@ final class DataConversionServiceFactory {
             }
             return longs;
         });
-        conversionService.addConverter(java.sql.Array.class, long[].class, sqlArray -> {
+        conversionService.addConverter(Array.class, long[].class, sqlArray -> {
             Object[] array;
             try {
                 array = (Object[]) sqlArray.getArray();
@@ -456,7 +457,7 @@ final class DataConversionServiceFactory {
             }
             return longs;
         });
-        conversionService.addConverter(java.sql.Array.class, Float[].class, sqlArray -> {
+        conversionService.addConverter(Array.class, Float[].class, sqlArray -> {
             Object[] array;
             try {
                 array = (Object[]) sqlArray.getArray();
@@ -470,7 +471,7 @@ final class DataConversionServiceFactory {
             }
             return floats;
         });
-        conversionService.addConverter(java.sql.Array.class, float[].class, sqlArray -> {
+        conversionService.addConverter(Array.class, float[].class, sqlArray -> {
             Object[] array;
             try {
                 array = (Object[]) sqlArray.getArray();
@@ -484,7 +485,7 @@ final class DataConversionServiceFactory {
             }
             return floats;
         });
-        conversionService.addConverter(java.sql.Array.class, Double[].class, sqlArray -> {
+        conversionService.addConverter(Array.class, Double[].class, sqlArray -> {
             Object[] array;
             try {
                 array = (Object[]) sqlArray.getArray();
@@ -498,7 +499,7 @@ final class DataConversionServiceFactory {
             }
             return doubles;
         });
-        conversionService.addConverter(java.sql.Array.class, double[].class, sqlArray -> {
+        conversionService.addConverter(Array.class, double[].class, sqlArray -> {
             Object[] array;
             try {
                 array = (Object[]) sqlArray.getArray();
@@ -512,7 +513,7 @@ final class DataConversionServiceFactory {
             }
             return doubles;
         });
-        conversionService.addConverter(java.sql.Array.class, Boolean[].class, sqlArray -> {
+        conversionService.addConverter(Array.class, Boolean[].class, sqlArray -> {
             Object[] array;
             try {
                 array = (Object[]) sqlArray.getArray();
@@ -526,7 +527,7 @@ final class DataConversionServiceFactory {
             }
             return booleans;
         });
-        conversionService.addConverter(java.sql.Array.class, boolean[].class, sqlArray -> {
+        conversionService.addConverter(Array.class, boolean[].class, sqlArray -> {
             Object[] array;
             try {
                 array = (Object[]) sqlArray.getArray();
@@ -540,7 +541,7 @@ final class DataConversionServiceFactory {
             }
             return booleans;
         });
-        conversionService.addConverter(java.sql.Array.class, Character[].class, sqlArray -> {
+        conversionService.addConverter(Array.class, Character[].class, sqlArray -> {
             Object[] array;
             try {
                 array = (Object[]) sqlArray.getArray();
@@ -554,7 +555,7 @@ final class DataConversionServiceFactory {
             }
             return characters;
         });
-        conversionService.addConverter(java.sql.Array.class, char[].class, sqlArray -> {
+        conversionService.addConverter(Array.class, char[].class, sqlArray -> {
             Object[] array;
             try {
                 array = (Object[]) sqlArray.getArray();
@@ -568,7 +569,7 @@ final class DataConversionServiceFactory {
             }
             return chars;
         });
-        // Conversions needed for r2dbc since arrays are returned as Object[] and not converted to expected types
+        // Conversions needed for R2DBC since arrays are returned as Object[] and not converted to expected types
         conversionService.addConverter(Object[].class, short[].class, array -> {
            short[] shorts = new short[array.length];
             int i = 0;
@@ -701,65 +702,65 @@ final class DataConversionServiceFactory {
     }
 
     private Integer asInteger(Object value, DataConversionService dataConversionService) {
-        if (value instanceof Integer) {
-            return (Integer) value;
+        if (value instanceof Integer intValue) {
+            return intValue;
         }
-        if (value instanceof Number) {
-            return ((Number) value).intValue();
+        if (value instanceof Number number) {
+            return number.intValue();
         }
         return dataConversionService.convertRequired(value, Integer.class);
     }
 
     private Long asLong(Object value, DataConversionService dataConversionService) {
-        if (value instanceof Long) {
-            return (Long) value;
+        if (value instanceof Long longValue) {
+            return longValue;
         }
-        if (value instanceof Number) {
-            return ((Number) value).longValue();
+        if (value instanceof Number number) {
+            return number.longValue();
         }
         return dataConversionService.convertRequired(value, Long.class);
     }
 
     private Double asDouble(Object value, DataConversionService dataConversionService) {
-        if (value instanceof Double) {
-            return (Double) value;
+        if (value instanceof Double doubleValue) {
+            return doubleValue;
         }
-        if (value instanceof Number) {
-            return ((Number) value).doubleValue();
+        if (value instanceof Number number) {
+            return number.doubleValue();
         }
         return dataConversionService.convertRequired(value, Double.class);
     }
 
     private Boolean asBoolean(Object value, DataConversionService dataConversionService) {
-        if (value instanceof Boolean) {
-            return (Boolean) value;
+        if (value instanceof Boolean boolValue) {
+            return boolValue;
         }
         return dataConversionService.convertRequired(value, Boolean.class);
     }
 
     private Float asFloat(Object value, DataConversionService dataConversionService) {
-        if (value instanceof Float) {
-            return (Float) value;
+        if (value instanceof Float floatValue) {
+            return floatValue;
         }
-        if (value instanceof Number) {
-            return ((Number) value).floatValue();
+        if (value instanceof Number number) {
+            return number.floatValue();
         }
         return dataConversionService.convertRequired(value, Float.class);
     }
 
     private Short asShort(Object value, DataConversionService dataConversionService) {
-        if (value instanceof Short) {
-            return (Short) value;
+        if (value instanceof Short shortValue) {
+            return shortValue;
         }
-        if (value instanceof Number) {
-            return ((Number) value).shortValue();
+        if (value instanceof Number number) {
+            return number.shortValue();
         }
         return dataConversionService.convertRequired(value, Short.class);
     }
 
     private Character asCharacter(Object value, DataConversionService dataConversionService) {
-        if (value instanceof Character) {
-            return (Character) value;
+        if (value instanceof Character charValue) {
+            return charValue;
         }
         return dataConversionService.convertRequired(value, Character.class);
     }

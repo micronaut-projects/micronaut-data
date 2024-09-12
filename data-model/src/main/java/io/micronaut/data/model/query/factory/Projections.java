@@ -22,7 +22,9 @@ import io.micronaut.data.model.query.QueryModel;
  *
  * @author Graeme Rocher
  * @since 1.0
+ * @deprecated Replaced by JPA criteria
  */
+@Deprecated(forRemoval = true, since = "4.9")
 public class Projections {
     public static final QueryModel.IdProjection ID_PROJECTION = new QueryModel.IdProjection();
     public static final QueryModel.CountProjection COUNT_PROJECTION = new QueryModel.CountProjection();

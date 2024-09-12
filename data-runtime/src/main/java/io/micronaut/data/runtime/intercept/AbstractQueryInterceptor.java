@@ -113,14 +113,14 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         ArgumentUtils.requireNonNull("operations", operations);
         this.conversionService = operations.getConversionService();
         this.operations = operations;
-        this.storedQueryResolver = operations instanceof StoredQueryResolver ? (StoredQueryResolver) operations : new DefaultStoredQueryResolver() {
+        this.storedQueryResolver = operations instanceof StoredQueryResolver sQueryResolver ? sQueryResolver : new DefaultStoredQueryResolver() {
             @Override
             protected HintsCapableRepository getHintsCapableRepository() {
                 return operations;
             }
         };
-        if (operations instanceof MethodContextAwareStoredQueryDecorator) {
-            storedQueryDecorator = (MethodContextAwareStoredQueryDecorator) operations;
+        if (operations instanceof MethodContextAwareStoredQueryDecorator methodDecorator) {
+            storedQueryDecorator = methodDecorator;
         } else if (operations instanceof StoredQueryDecorator decorator) {
             storedQueryDecorator = new MethodContextAwareStoredQueryDecorator() {
                 @Override
@@ -136,19 +136,19 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                 }
             };
         }
-        this.preparedQueryResolver = operations instanceof PreparedQueryResolver ? (PreparedQueryResolver) operations : new DefaultPreparedQueryResolver() {
+        this.preparedQueryResolver = operations instanceof PreparedQueryResolver resolver ? resolver : new DefaultPreparedQueryResolver() {
             @Override
             protected ConversionService getConversionService() {
                 return operations.getConversionService();
             }
         };
-        this.preparedQueryDecorator = operations instanceof PreparedQueryDecorator ? (PreparedQueryDecorator) operations : new PreparedQueryDecorator() {
+        this.preparedQueryDecorator = operations instanceof PreparedQueryDecorator decorator ? decorator : new PreparedQueryDecorator() {
             @Override
             public <E, K> PreparedQuery<E, K> decorate(PreparedQuery<E, K> preparedQuery) {
                 return preparedQuery;
             }
         };
-        this.pagedQueryResolver = operations instanceof PagedQueryResolver ? (PagedQueryResolver) operations : new DefaultPagedQueryResolver();
+        this.pagedQueryResolver = operations instanceof PagedQueryResolver resolver ? resolver : new DefaultPagedQueryResolver();
     }
 
     /**
@@ -309,7 +309,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     }
 
     /**
-     * Obtains the root entity or throws an exception if it not available.
+     * Obtains the root entity or throws an exception if it is not available.
      *
      * @param context The context
      * @param <E>     The entity type
@@ -392,7 +392,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @param <RT>    The generic type
      * @return An result
      */
-    private <RT> RT getRequiredParameterInRole(MethodInvocationContext<?, ?> context, @NonNull String role, @NonNull Class<RT> type) {
+    protected <RT> RT getRequiredParameterInRole(MethodInvocationContext<?, ?> context, @NonNull String role, @NonNull Class<RT> type) {
         return getParameterInRole(context, role, type).orElseThrow(() -> new IllegalStateException("Cannot find parameter with role: " + role));
     }
 
@@ -405,7 +405,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @param <RT>    The generic type
      * @return An optional result
      */
-    private <RT> Optional<RT> getParameterInRole(MethodInvocationContext<?, ?> context, @NonNull String role, @NonNull Class<RT> type) {
+    protected <RT> Optional<RT> getParameterInRole(MethodInvocationContext<?, ?> context, @NonNull String role, @NonNull Class<RT> type) {
         return context.stringValue(DataMethod.NAME, role).flatMap(name -> {
             RT parameterValue = null;
             Map<String, MutableArgumentValue<?>> params = context.getParameters();
@@ -758,8 +758,8 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @return the size
      */
     protected int count(Iterable<?> iterable) {
-        if (iterable instanceof Collection) {
-            return ((Collection<?>) iterable).size();
+        if (iterable instanceof Collection<?> collection) {
+            return collection.size();
         }
         Iterator<?> iterator = iterable.iterator();
         int i = 0;
@@ -1022,6 +1022,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             super(method, rootEntity, iterable);
         }
 
+        @Override
         public List<DeleteOperation<E>> split() {
             List<DeleteOperation<E>> deletes = new ArrayList<>(10);
             for (E e : iterable) {
@@ -1043,6 +1044,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             super(method, rootEntity, iterable);
         }
 
+        @Override
         public List<UpdateOperation<E>> split() {
             List<UpdateOperation<E>> updates = new ArrayList<>(10);
             for (E e : iterable) {

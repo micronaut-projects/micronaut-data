@@ -20,11 +20,18 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.FindPageReactiveInterceptor;
+import io.micronaut.data.model.CursoredPage;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.operations.RepositoryOperations;
+import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
+
+import java.util.List;
 
 /**
  * Default implementation of {@link FindPageReactiveInterceptor}.
@@ -52,8 +59,27 @@ public class DefaultFindPageReactiveInterceptor extends AbstractPublisherInterce
             return Flux.from(reactiveOperations.findOne(countQuery))
                 .flatMap(total -> {
                     Flux<Object> resultList = Flux.from(reactiveOperations.findAll(preparedQuery));
-                    return resultList.collectList().map(list ->
-                        Page.of(list, preparedQuery.getPageable(), total.longValue())
+                    return resultList.collectList().map(list -> {
+                            Pageable pageable = preparedQuery.getPageable();
+                            Page page;
+                            if (pageable.getMode() == Pageable.Mode.OFFSET) {
+                                page = Page.of(list, pageable, total.longValue());
+                            } else if (preparedQuery instanceof DefaultSqlPreparedQuery<?, ?> sqlPreparedQuery) {
+                                List<Pageable.Cursor> cursors;
+                                if (preparedQuery.getResultDataType() == DataType.ENTITY) {
+                                    cursors = sqlPreparedQuery.createCursors(list, pageable);
+                                } else if (sqlPreparedQuery.isDtoProjection()) {
+                                    RuntimePersistentEntity<?> runtimePersistentEntity = operations.getEntity(sqlPreparedQuery.getResultType());
+                                    cursors = sqlPreparedQuery.createCursors(list, pageable, runtimePersistentEntity);
+                                } else {
+                                    throw new IllegalStateException("CursoredPage cannot produce projection result");
+                                }
+                                page = CursoredPage.of(list, pageable, cursors, total.longValue());
+                            } else {
+                                throw new UnsupportedOperationException("Only offset pageable mode is supported by this query implementation");
+                            }
+                            return page;
+                        }
                     );
                 });
         }

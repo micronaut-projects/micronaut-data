@@ -65,7 +65,7 @@ public class EventIntegrator implements Integrator {
                 serviceRegistry.getService(EventListenerRegistry.class);
         final EntityEventListener<Object> entityEventListener = entityRegistry.getEntityEventListener();
         eventListenerRegistry.getEventListenerGroup(EventType.PRE_INSERT)
-                .appendListener((PreInsertEventListener) event -> {
+                .appendListener(event -> {
                     Class mappedClass = event.getPersister().getMappedClass();
                     if (isNotSupportedMappedClass(mappedClass)) {
                         return false;
@@ -101,7 +101,7 @@ public class EventIntegrator implements Integrator {
                 });
 
         eventListenerRegistry.getEventListenerGroup(EventType.PRE_DELETE)
-                .appendListener((PreDeleteEventListener) event -> {
+                .appendListener(event -> {
                     Class mappedClass = event.getPersister().getMappedClass();
                     if (isNotSupportedMappedClass(mappedClass)) {
                         return false;
@@ -137,7 +137,7 @@ public class EventIntegrator implements Integrator {
                 });
 
         eventListenerRegistry.getEventListenerGroup(EventType.PRE_UPDATE)
-                .appendListener((PreUpdateEventListener) event -> {
+                .appendListener(event -> {
                     Class mappedClass = event.getPersister().getMappedClass();
                     if (isNotSupportedMappedClass(mappedClass)) {
                         return false;
@@ -173,7 +173,7 @@ public class EventIntegrator implements Integrator {
                 });
 
         eventListenerRegistry.getEventListenerGroup(EventType.POST_LOAD)
-                .appendListener((PostLoadEventListener) event -> {
+                .appendListener(event -> {
                     Class mappedClass = event.getPersister().getMappedClass();
                     if (isNotSupportedMappedClass(mappedClass)) {
                         return;
@@ -221,7 +221,7 @@ public class EventIntegrator implements Integrator {
 
     private static class SimpleHibernateEventContext<T> extends DefaultEntityEventContext<T> {
         public SimpleHibernateEventContext(RuntimePersistentEntity<T> entity, T object) {
-            super(entity, (T) object);
+            super(entity, object);
         }
 
         @Override

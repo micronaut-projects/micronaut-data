@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.r2dbc.oraclexe;
 
+import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
@@ -26,15 +27,26 @@ import java.util.List;
 @R2dbcRepository(dialect = Dialect.ORACLE)
 public interface OracleXEPersonRepository extends PersonRepository {
 
+    @Override
     Person save(String name, int age);
 
+    @Override
     @Query("INSERT INTO person(id, name, age, enabled) VALUES (\"PERSON_SEQ\".nextval, :name, :age, 1)")
     int saveCustom(String name, int age);
 
+    @Override
     @Query("INSERT INTO person(id, name, age, enabled) VALUES (\"PERSON_SEQ\".nextval, :name, :age, 1)")
     int saveCustom(List<Person> people);
 
+    @Override
     @Query("INSERT INTO person(id, name, age, enabled) VALUES (\"PERSON_SEQ\".nextval, :name, :age, 1)")
     int saveCustomSingle(Person people);
 
+    @Override
+    @Query("INSERT INTO person(id, name, age, enabled) VALUES (\"PERSON_SEQ\".nextval, :name, :age, 1)")
+    int saveCustomSingleExpression(Person person);
+
+    @Query("INSERT INTO person(id, name, age, enabled) VALUES (\"PERSON_SEQ\".nextval, :name, :age, 1)")
+    @Override
+    int saveCustomSingleExpression2(String name, String age);
 }

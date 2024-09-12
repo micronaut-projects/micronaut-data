@@ -86,7 +86,13 @@ public final class MethodNameParser {
             matchSteps.add((input, chain) -> {
                 Matcher matcher = pattern.matcher(input);
                 if (matcher.matches()) {
-                    chain.matched(matchId, matcher.group(1), matcher.group(2));
+                    String next = matcher.group(2);
+                    // Allow to skip the last part of the method if prefixed `$`
+                    int ignoreLastPart = next.lastIndexOf("$");
+                    if (ignoreLastPart > 0) {
+                        next = next.substring(0, ignoreLastPart);
+                    }
+                    chain.matched(matchId, matcher.group(1), next);
                 }
             });
             return this;

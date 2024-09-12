@@ -144,7 +144,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 aggregateData = null;
                 findData = new FindData(BsonDocument.parse(query));
             } else if (query.startsWith("[")) {
-                aggregateData = new AggregateData(BsonArray.parse(query).stream().map(BsonValue::asDocument).collect(Collectors.toList()));
+                aggregateData = new AggregateData(parseAggregation(query, storedQuery.isCount()));
                 findData = null;
             } else {
                 aggregateData = null;
@@ -184,6 +184,17 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         }
     }
 
+    private List<Bson> parseAggregation(String query, boolean isCount) {
+        List<Bson> pipeline = BsonArray.parse(query).stream().<Bson>map(BsonValue::asDocument).toList();
+        if (isCount && pipeline.stream().noneMatch(p -> p.toBsonDocument().containsKey("$count"))) {
+            // We can probably remove sorting projection etc. or allow a user to specify a custom count pipeline
+            List<Bson> countPipeline = new ArrayList<>(pipeline);
+            countPipeline.add(BsonDocument.parse("{ $count: \"totalCount\" }"));
+            return countPipeline;
+        }
+        return pipeline;
+    }
+
     @Override
     public boolean isCount() {
         return isCount;
@@ -202,8 +213,8 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         if (name == null) {
             return -1;
         }
-        if (storedQuery instanceof DefaultStoredQuery) {
-            String[] argumentNames = ((DefaultStoredQuery<E, R>) storedQuery).getMethod().getArgumentNames();
+        if (storedQuery instanceof DefaultStoredQuery<?, ?> defaultStoredQuery) {
+            String[] argumentNames = defaultStoredQuery.getMethod().getArgumentNames();
             for (int i = 0; i < argumentNames.length; i++) {
                 String argumentName = argumentNames[i];
                 if (argumentName.equals(name)) {
@@ -331,8 +342,8 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
     }
 
     private Bson replaceQueryParameters(Bson value, @Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
-        if (value instanceof BsonDocument) {
-            return (BsonDocument) replaceQueryParametersInBsonValue(((BsonDocument) value).clone(), invocationContext, entity);
+        if (value instanceof BsonDocument bsonDocument) {
+            return (BsonDocument) replaceQueryParametersInBsonValue(bsonDocument.clone(), invocationContext, entity);
         }
         throw new IllegalStateException("Unrecognized value: " + value);
     }
@@ -482,28 +493,27 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         if (isIdentity && value instanceof String) {
             return new BsonObjectId(new ObjectId((String) value));
         }
-        if (value instanceof Object[]) {
-            List<Object> valueList = Arrays.asList((Object[]) value);
+        if (value instanceof Object[] objects) {
+            List<Object> valueList = Arrays.asList(objects);
             if (isIdentity) {
                 for (ListIterator<Object> iterator = valueList.listIterator(); iterator.hasNext(); ) {
                     Object item = iterator.next();
-                    if (item instanceof String) {
-                        item = new BsonObjectId(new ObjectId((String) item));
+                    if (item instanceof String string) {
+                        item = new BsonObjectId(new ObjectId(string));
                     }
                     iterator.set(item);
                 }
             }
             value = valueList;
         }
-        if (value instanceof Collection) {
+        if (value instanceof Collection<?> values) {
             final boolean isIdentityField = isIdentity;
-            Collection<?> values = (Collection) value;
             return new BsonArray(values.stream().map(val -> {
-                if (isIdentityField && val instanceof String) {
-                    return new BsonObjectId(new ObjectId((String) val));
+                if (isIdentityField && val instanceof String string) {
+                    return new BsonObjectId(new ObjectId(string));
                 }
                 return MongoUtils.toBsonValue(conversionService, val, codecRegistry.get());
-            }).collect(Collectors.toList()));
+            }).toList());
         }
         return MongoUtils.toBsonValue(conversionService, value, codecRegistry.get());
     }

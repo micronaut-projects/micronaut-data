@@ -18,17 +18,14 @@ package io.micronaut.data.processor.visitors.finders.criteria;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
-import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
-import io.micronaut.data.model.jpa.criteria.impl.QueryModelPersistentEntityCriteriaQuery;
-import io.micronaut.data.model.query.JoinPath;
-import io.micronaut.data.model.query.QueryModel;
+import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
@@ -45,11 +42,14 @@ import io.micronaut.data.processor.visitors.finders.QueryMatchId;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
 import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
 import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.inject.ast.ParameterElement;
 import jakarta.persistence.criteria.Order;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Selection;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -91,7 +91,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                 applyProjections(matchContext, match.part(), root, query, cb);
                 projectionApplied = true;
             } else if (match.id() == QueryMatchId.PREDICATE) {
-                applyPredicates(match.part(), matchContext.getParameters(), root, query, cb);
+                applyPredicates(matchContext, match.part(), matchContext.getParameters(), root, query, cb);
                 predicatedApplied = true;
             } else if (match.id() == QueryMatchId.ORDER) {
                 applyOrderBy(match.part(), root, query, cb);
@@ -114,7 +114,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             }
         }
         if (!predicatedApplied) {
-            applyPredicates(matchContext.getParametersNotInRole(), root, query, cb);
+            applyPredicates(matchContext, matchContext.getParametersNotInRole(), root, query, cb);
         }
         if (!projectionApplied) {
             applyProjections(matchContext, "", root, query, cb);
@@ -123,8 +123,33 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         applyJoinSpecs(root, joinSpecsAtMatchContext(matchContext, true));
     }
 
+    private <T> void applyPredicates(MethodMatchContext matchContext,
+                                     String querySequence,
+                                     ParameterElement[] parameters,
+                                     PersistentEntityRoot<T> root,
+                                     PersistentEntityCriteriaQuery<T> query,
+                                     SourcePersistentEntityCriteriaBuilder cb) {
+        Predicate predicate = extractPredicates(querySequence, Arrays.asList(parameters).iterator(), root, cb);
+        predicate = interceptPredicate(matchContext, List.of(), root, cb, predicate);
+        if (predicate != null) {
+            query.where(predicate);
+        }
+    }
+
+    private <T> void applyPredicates(MethodMatchContext matchContext,
+                                     List<ParameterElement> parameters,
+                                     PersistentEntityRoot<T> root,
+                                     PersistentEntityCriteriaQuery<T> query,
+                                     SourcePersistentEntityCriteriaBuilder cb) {
+        Predicate predicate = extractPredicates(parameters, root, cb);
+        predicate = interceptPredicate(matchContext, List.of(), root, cb, predicate);
+        if (predicate != null) {
+            query.where(predicate);
+        }
+    }
+
     /**
-     * Apply the distinct valu.
+     * Apply the distinct value.
      *
      * @param query The query
      * @param <T>   The query type
@@ -183,51 +208,15 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                 matchContext.getAnnotationMetadata()
         );
         QueryBuilder queryBuilder = matchContext.getQueryBuilder();
-        QueryModel queryModel = ((QueryModelPersistentEntityCriteriaQuery) criteriaQuery).getQueryModel();
-        QueryResult queryResult = queryBuilder.buildQuery(annotationMetadataHierarchy, queryModel);
+        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(annotationMetadataHierarchy, queryBuilder);
 
         ClassElement genericReturnType = matchContext.getReturnType();
         if (TypeUtils.isReactiveOrFuture(genericReturnType)) {
             genericReturnType = genericReturnType.getFirstTypeArgument().orElse(matchContext.getRootEntity().getType());
         }
         QueryResult countQueryResult = null;
-        if (matchContext.isTypeInRole(genericReturnType, TypeRole.PAGE)) {
-//                SourcePersistentEntityCriteriaQuery<Object> count = cb.createQuery();
-//                count.select(cb.count(query.getRoots().iterator().next()));
-//                CommonAbstractCriteria countQueryCriteria = defineQuery(matchContext, matchContext.getRootEntity(), cb);
-
-            QueryModel countQuery = QueryModel.from(queryModel.getPersistentEntity());
-            countQuery.projections().count();
-            QueryModel.Junction junction = queryModel.getCriteria();
-            for (QueryModel.Criterion criterion : junction.getCriteria()) {
-                countQuery.add(criterion);
-            }
-            // Joins are skipped for count query for OneToMany, ManyToMany
-            // however skipping joins from criteria could cause issues (in many to many?)
-            for (JoinPath joinPath : queryModel.getJoinPaths()) {
-                Association association = joinPath.getAssociation();
-                if (association != null && !association.getKind().isSingleEnded()) {
-                    // skip OneToMany and ManyToMany
-                    continue;
-                }
-                Join.Type joinType = joinPath.getJoinType();
-                switch (joinType) {
-                    case INNER:
-                    case FETCH:
-                        joinType = Join.Type.DEFAULT;
-                        break;
-                    case LEFT_FETCH:
-                        joinType = Join.Type.LEFT;
-                        break;
-                    case RIGHT_FETCH:
-                        joinType = Join.Type.RIGHT;
-                        break;
-                    default:
-                        // no-op
-                }
-                countQuery.join(joinPath.getPath(), joinType, null);
-            }
-            countQueryResult = queryBuilder.buildQuery(annotationMetadataHierarchy, countQuery);
+        if (matchContext.isTypeInRole(genericReturnType, TypeRole.PAGE) || matchContext.isTypeInRole(genericReturnType, TypeRole.CURSORED_PAGE)) {
+            countQueryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildCountQuery(annotationMetadataHierarchy, queryBuilder);
         }
 
         return new MethodMatchInfo(
@@ -264,12 +253,12 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         }
     }
 
-    private <T> io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> findOrderProperty(PersistentEntityRoot<T> root, String propertyName) {
+    private <T> PersistentPropertyPath<?> findOrderProperty(PersistentEntityRoot<T> root, String propertyName) {
         if (root.getPersistentEntity().getPropertyByName(propertyName) != null) {
             return root.get(propertyName);
         }
         // Look at association paths
-        io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> property = findProperty(root, propertyName);
+        PersistentPropertyPath<?> property = findProperty(root, propertyName);
         if (property != null) {
             return property;
         }

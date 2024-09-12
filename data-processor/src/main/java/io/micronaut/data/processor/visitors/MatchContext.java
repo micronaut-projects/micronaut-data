@@ -137,7 +137,6 @@ public class MatchContext implements AnnotationMetadataProvider {
     /**
      * @return The parameters
      */
-    @NonNull
     public ParameterElement[] getParameters() {
         return parameters;
     }
@@ -195,7 +194,7 @@ public class MatchContext implements AnnotationMetadataProvider {
     }
 
     /**
-     * Whether or not implicit queries such as lookup by id and counting is supported without an explicit query.
+     * Whether implicit queries such as lookup by id and counting is supported without an explicit query.
      * @return True if it is
      */
     public boolean supportsImplicitQueries() {

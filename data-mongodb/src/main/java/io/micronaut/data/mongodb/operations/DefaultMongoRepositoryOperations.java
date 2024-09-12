@@ -46,6 +46,7 @@ import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
@@ -189,7 +190,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
         if (preparedQuery.isAggregate()) {
             MongoAggregation aggregation = preparedQuery.getAggregation();
             if (QUERY_LOG.isDebugEnabled()) {
-                QUERY_LOG.debug("Executing Mongo 'aggregate' with pipeline: {}", aggregation.getPipeline().stream().map(e -> e.toBsonDocument().toJson()).collect(Collectors.toList()));
+                QUERY_LOG.debug("Executing Mongo 'aggregate' with pipeline: {}", aggregation.getPipeline().stream().map(e -> e.toBsonDocument().toJson()).toList());
             }
             R result = aggregate(clientSession, preparedQuery, BsonDocument.class)
                     .map(bsonDocument -> convertResult(database.getCodecRegistry(), resultType, bsonDocument, false))
@@ -217,11 +218,13 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
         return withClientSession(clientSession -> {
             MongoPreparedQuery<T, Boolean> mongoPreparedQuery = getMongoPreparedQuery(preparedQuery);
             if (mongoPreparedQuery.isAggregate()) {
-                return aggregate(clientSession, mongoPreparedQuery, BsonDocument.class).iterator().hasNext();
+                try (MongoCursor<BsonDocument> iterator = aggregate(clientSession, mongoPreparedQuery, BsonDocument.class).iterator()) {
+                    return iterator.hasNext();
+                }
             } else {
-                return find(clientSession, mongoPreparedQuery)
-                        .limit(1)
-                        .iterator().hasNext();
+                try (MongoCursor<Boolean> iterator = find(clientSession, mongoPreparedQuery).limit(1).iterator()) {
+                    return iterator.hasNext();
+                }
             }
         });
     }
@@ -256,7 +259,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
         return withClientSession(clientSession -> {
             MongoIterable<R> iterable = (MongoIterable<R>) findAll(clientSession, getMongoPreparedQuery(preparedQuery), true);
             MongoCursor<R> iterator = iterable.iterator();
-            Spliterators.AbstractSpliterator<R> spliterator = new Spliterators.AbstractSpliterator<R>(Long.MAX_VALUE,
+            Spliterators.AbstractSpliterator<R> spliterator = new Spliterators.AbstractSpliterator<>(Long.MAX_VALUE,
                     Spliterator.ORDERED | Spliterator.IMMUTABLE) {
                 @Override
                 public boolean tryAdvance(Consumer<? super R> action) {
@@ -316,6 +319,9 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                                                  MongoPreparedQuery<T, R> preparedQuery,
                                                  boolean stream) {
         Pageable pageable = preparedQuery.getPageable();
+        if (pageable.getMode() != Mode.OFFSET) {
+            throw new UnsupportedOperationException("Mode " + pageable.getMode() + " is not supported by the MongoDB implementation");
+        }
         int limit = pageable == Pageable.UNPAGED ? -1 : pageable.getSize();
         Class<T> type = preparedQuery.getRootEntity();
         Class<R> resultType = preparedQuery.getResultType();
@@ -334,6 +340,9 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                                                MongoPreparedQuery<T, R> preparedQuery,
                                                boolean stream) {
         Pageable pageable = preparedQuery.getPageable();
+        if (pageable.getMode() != Mode.OFFSET) {
+            throw new UnsupportedOperationException("Mode " + pageable.getMode() + " is not supported by the MongoDB implementation");
+        }
         int limit = pageable == Pageable.UNPAGED ? -1 : pageable.getSize();
         Class<T> type = preparedQuery.getRootEntity();
         Class<R> resultType = preparedQuery.getResultType();
@@ -378,12 +387,12 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
             findIterable = findIterable.collation(collation);
         }
         Integer skip = findOptions.getSkip();
-        if (skip != null) {
+        if (skip != null && skip > 0) {
             findIterable = findIterable.skip(skip);
         }
         Integer limit = findOptions.getLimit();
-        if (limit != null) {
-            findIterable = findIterable.limit(Math.max(limit, 0));
+        if (limit != null && limit > 0) {
+            findIterable = findIterable.limit(limit);
         }
         Bson sort = findOptions.getSort();
         if (sort != null) {
@@ -394,7 +403,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
             findIterable = findIterable.projection(projection);
         }
         Integer batchSize = findOptions.getBatchSize();
-        if (batchSize != null) {
+        if (batchSize != null && batchSize > 0) {
             findIterable = findIterable.batchSize(batchSize);
         }
         Boolean allowDiskUse = findOptions.getAllowDiskUse();
@@ -649,8 +658,8 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                 switch (runtimeAssociation.getKind()) {
                     case MANY_TO_MANY:
                     case ONE_TO_MANY:
-                        if (o instanceof Iterable) {
-                            for (Object value : ((Iterable) o)) {
+                        if (o instanceof Iterable<?> iterable) {
+                            for (Object value : iterable) {
                                 triggerPostLoad(value, associatedEntity, annotationMetadata);
                             }
                         }
@@ -770,7 +779,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
     }
 
     private <T> MongoEntityOperation<T> createMongoReplaceOneOperation(MongoOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, T entity) {
-        return new MongoEntityOperation<T>(ctx, persistentEntity, entity, false) {
+        return new MongoEntityOperation<>(ctx, persistentEntity, entity, false) {
 
             final MongoDatabase mongoDatabase = getDatabase(persistentEntity, ctx.repositoryType);
             final MongoCollection<BsonDocument> collection = getCollection(mongoDatabase, persistentEntity, BsonDocument.class);
@@ -802,7 +811,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                                                                               RuntimePersistentEntity<T> persistentEntity,
                                                                               Iterable<T> entities,
                                                                               MongoStoredQuery<T, ?> storedQuery) {
-        return new MongoEntitiesOperation<T>(ctx, persistentEntity, entities, false) {
+        return new MongoEntitiesOperation<>(ctx, persistentEntity, entities, false) {
 
             @Override
             protected void collectAutoPopulatedPreviousValues() {
@@ -831,7 +840,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
     }
 
     private <T> MongoEntitiesOperation<T> createMongoReplaceOneInBulkOperation(MongoOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, Iterable<T> entities) {
-        return new MongoEntitiesOperation<T>(ctx, persistentEntity, entities, false) {
+        return new MongoEntitiesOperation<>(ctx, persistentEntity, entities, false) {
 
             final MongoDatabase mongoDatabase = getDatabase(persistentEntity, ctx.repositoryType);
             final MongoCollection<BsonDocument> collection = getCollection(mongoDatabase, persistentEntity, BsonDocument.class);
@@ -868,7 +877,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
     }
 
     private <T> MongoEntityOperation<T> createMongoDeleteOneOperation(MongoOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, T entity) {
-        return new MongoEntityOperation<T>(ctx, persistentEntity, entity, false) {
+        return new MongoEntityOperation<>(ctx, persistentEntity, entity, false) {
 
             final MongoDatabase mongoDatabase = getDatabase(persistentEntity, ctx.repositoryType);
             final MongoCollection<T> collection = getCollection(mongoDatabase, persistentEntity, persistentEntity.getIntrospection().getBeanType());
@@ -894,7 +903,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
     }
 
     private <T> MongoEntitiesOperation<T> createMongoDeleteManyOperation(MongoOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, Iterable<T> entities) {
-        return new MongoEntitiesOperation<T>(ctx, persistentEntity, entities, false) {
+        return new MongoEntitiesOperation<>(ctx, persistentEntity, entities, false) {
 
             final MongoDatabase mongoDatabase = getDatabase(persistentEntity, ctx.repositoryType);
             final MongoCollection<T> collection = getCollection(mongoDatabase, persistentEntity, persistentEntity.getIntrospection().getBeanType());
@@ -907,7 +916,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
 
             @Override
             protected void execute() throws RuntimeException {
-                List<Bson> filters = entities.stream().filter(d -> !d.vetoed).map(d -> this.filters.get(d)).collect(Collectors.toList());
+                List<Bson> filters = entities.stream().filter(d -> !d.vetoed).map(d -> this.filters.get(d)).toList();
                 if (!filters.isEmpty()) {
                     Bson filter = Filters.or(filters);
                     if (QUERY_LOG.isDebugEnabled()) {
@@ -928,7 +937,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                                                                               RuntimePersistentEntity<T> persistentEntity,
                                                                               Iterable<T> entities,
                                                                               MongoStoredQuery<T, ?> storedQuery) {
-        return new MongoEntitiesOperation<T>(ctx, persistentEntity, entities, false) {
+        return new MongoEntitiesOperation<>(ctx, persistentEntity, entities, false) {
 
             @Override
             protected void execute() throws RuntimeException {
@@ -953,11 +962,11 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
     }
 
     private <T> MongoEntitiesOperation<T> createMongoInsertManyOperation(MongoOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, Iterable<T> entities) {
-        return new MongoEntitiesOperation<T>(ctx, persistentEntity, entities, true) {
+        return new MongoEntitiesOperation<>(ctx, persistentEntity, entities, true) {
 
             @Override
             protected void execute() throws RuntimeException {
-                List<T> toInsert = entities.stream().filter(d -> !d.vetoed).map(d -> d.entity).collect(Collectors.toList());
+                List<T> toInsert = entities.stream().filter(d -> !d.vetoed).map(d -> d.entity).toList();
                 if (toInsert.isEmpty()) {
                     return;
                 }

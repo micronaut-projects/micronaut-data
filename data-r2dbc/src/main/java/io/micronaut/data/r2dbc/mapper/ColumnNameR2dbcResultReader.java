@@ -86,8 +86,8 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
                 if (o instanceof Integer) {
                     return o;
                 }
-                if (o instanceof Number) {
-                    return ((Number) o).intValue();
+                if (o instanceof Number number) {
+                    return number.intValue();
                 }
                 return convertRequired(o, Integer.class);
             case BOOLEAN:
@@ -132,11 +132,11 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
         if (o instanceof byte[]) {
             return null;
         }
-        if (o instanceof ByteBuffer) {
-            return ((ByteBuffer) o).array();
+        if (o instanceof ByteBuffer byteBuffer) {
+            return byteBuffer.array();
         }
-        if (o instanceof Blob) {
-            ByteBuffer byteBuffer = Mono.from(((Blob) o).stream()).block();
+        if (o instanceof Blob blob) {
+            ByteBuffer byteBuffer = Mono.from(blob.stream()).block();
             if (byteBuffer == null) {
                 return new byte[0];
             }
@@ -200,8 +200,8 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
         if (o == null) {
             return null;
         }
-        if (o instanceof String) {
-            return (String) o;
+        if (o instanceof String string) {
+            return string;
         }
         if (o instanceof Clob clob) {
             CharSequence charSequence = Mono.from(clob.stream()).block();

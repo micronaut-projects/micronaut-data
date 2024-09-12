@@ -28,6 +28,8 @@ import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 
+import java.util.List;
+
 /**
  * Default implementation of {@link FindSliceInterceptor}.
  *
@@ -53,7 +55,8 @@ public class DefaultFindSliceInterceptor<T, R> extends AbstractQueryInterceptor<
             PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context);
             Pageable pageable = preparedQuery.getPageable();
             Iterable<R> iterable = (Iterable<R>) operations.findAll(preparedQuery);
-            Slice<R> slice = Slice.of(CollectionUtils.iterableToList(iterable), pageable);
+            List<R> results = CollectionUtils.iterableToList(iterable);
+            Slice<R> slice = Slice.of(results, pageable);
             return convertOrFail(context, slice);
         } else {
             PagedQuery<Object> pagedQuery = getPagedQuery(context);

@@ -16,6 +16,7 @@
 package io.micronaut.data.tck.tests
 
 import groovy.transform.CompileStatic
+import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.data.model.jpa.criteria.*
 import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery
@@ -35,11 +36,110 @@ abstract class AbstractCriteriaSpec extends Specification {
 
     abstract PersistentEntityCriteriaUpdate getCriteriaUpdate()
 
+    abstract PersistentEntityRoot createRoot(Subquery query);
+
     abstract PersistentEntityRoot createRoot(CriteriaQuery query);
 
     abstract PersistentEntityRoot createRoot(CriteriaDelete query);
 
     abstract PersistentEntityRoot createRoot(CriteriaUpdate query);
+
+    void "test EXISTS subquery"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            def subquery = criteriaQuery.subquery(Long)
+            def subqueryBookRoot = createRoot(subquery)
+            subquery.select(subqueryBookRoot.get("id"))
+            criteriaQuery.where(
+                    criteriaBuilder.exists(subquery)
+            )
+            String query = getSqlQuery(criteriaQuery)
+
+        expect:
+            query == '''SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget" FROM "test" test_ WHERE (EXISTS(SELECT test_test_."id" FROM "test" test_test_))'''
+    }
+
+    void "test SOME subquery"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            def subquery = criteriaQuery.subquery(Long)
+            def subqueryBookRoot = createRoot(subquery)
+            subquery.select(subqueryBookRoot.get("id"))
+            criteriaQuery.where(
+                    criteriaBuilder.greaterThan(entityRoot.get("id"), criteriaBuilder.some(subquery))
+            )
+            String query = getSqlQuery(criteriaQuery)
+
+        expect:
+            query == '''SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget" FROM "test" test_ WHERE (test_."id" > SOME(SELECT test_test_."id" FROM "test" test_test_))'''
+    }
+
+    void "test ANY subquery"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            def subquery = criteriaQuery.subquery(Long)
+            def subqueryBookRoot = createRoot(subquery)
+            subquery.select(subqueryBookRoot.get("id"))
+            criteriaQuery.where(
+                    criteriaBuilder.greaterThan(entityRoot.get("id"), criteriaBuilder.any(subquery))
+            )
+            String query = getSqlQuery(criteriaQuery)
+
+        expect:
+            query == '''SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget" FROM "test" test_ WHERE (test_."id" > ANY(SELECT test_test_."id" FROM "test" test_test_))'''
+    }
+
+    void "test ALL subquery"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            def subquery = criteriaQuery.subquery(Long)
+            def subqueryBookRoot = createRoot(subquery)
+            subquery.select(subqueryBookRoot.get("id"))
+            criteriaQuery.where(
+                    criteriaBuilder.greaterThan(entityRoot.get("id"), criteriaBuilder.all(subquery))
+            )
+            String query = getSqlQuery(criteriaQuery)
+
+        expect:
+            query == '''SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget" FROM "test" test_ WHERE (test_."id" > ALL(SELECT test_test_."id" FROM "test" test_test_))'''
+    }
+
+    void "test join"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            def specification = { root, query, cb ->
+                def othersJoin = root.join("others")
+                def simpleJoin = othersJoin.join("simple")
+                cb.and(
+                        cb.equal(root.get("amount"), othersJoin.get("amount")),
+                        cb.equal(root.get("amount"), simpleJoin.get("amount")),
+                )
+                root.joins.size() == 1
+                root.joins[0] == othersJoin
+                def persistentRoot = root as PersistentEntityRoot
+                persistentRoot.persistentJoins.size() == 1
+                persistentRoot.persistentJoins.joins[0] == othersJoin
+                root.joins[0] == othersJoin
+                othersJoin.joins.size() == 1
+                othersJoin.joins[0] == simpleJoin
+                simpleJoin.parent == othersJoin
+                cb.and(
+                        cb.equal(root.get("amount"), othersJoin.get("amount")),
+                        cb.equal(root.get("amount"), simpleJoin.get("amount")),
+                )
+            } as Specification
+            def predicate = specification.toPredicate(entityRoot, criteriaQuery, criteriaBuilder)
+            if (predicate) {
+                criteriaQuery.where(predicate)
+            }
+            String sqlQuery = getSqlQuery(criteriaQuery)
+
+        expect:
+            sqlQuery ==  'SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget" ' +
+                    'FROM "test" test_ INNER JOIN "other_entity" test_others_ ON test_."id"=test_others_."test_id" ' +
+                    'INNER JOIN "simple_entity" test_others_simple_ ON test_others_."simple_id"=test_others_simple_."id" ' +
+                    'WHERE (test_."amount" = test_others_."amount" AND test_."amount" = test_others_simple_."amount")'
+    }
 
     @Unroll
     void "test joins"(Specification specification) {
@@ -78,12 +178,12 @@ abstract class AbstractCriteriaSpec extends Specification {
                     'SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget" ' +
                             'FROM "test" test_ ' +
                             'INNER JOIN "other_entity" test_others_ ON test_."id"=test_others_."test_id"' +
-                            ' WHERE (test_."amount"=test_others_."amount")',
+                            ' WHERE (test_."amount" = test_others_."amount")',
 
                     'SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget" ' +
                             'FROM "test" test_ INNER JOIN "other_entity" test_others_ ON test_."id"=test_others_."test_id" ' +
                             'INNER JOIN "simple_entity" test_others_simple_ ON test_others_."simple_id"=test_others_simple_."id" ' +
-                            'WHERE (test_."amount"=test_others_."amount" AND test_."amount"=test_others_simple_."amount")',
+                            'WHERE (test_."amount" = test_others_."amount" AND test_."amount" = test_others_simple_."amount")',
                     'SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget" FROM "test" test_ INNER JOIN "other_entity" test_others_ ON test_."id"=test_others_."test_id"'
             ]
     }
@@ -146,16 +246,16 @@ abstract class AbstractCriteriaSpec extends Specification {
 
         where:
             property1 | property2  | predicate              | expectedWhereQuery
-            "enabled" | "enabled2" | "equal"                | '(test_."enabled"=test_."enabled2")'
-            "enabled" | "enabled2" | "notEqual"             | '(test_."enabled"!=test_."enabled2")'
-            "enabled" | "enabled2" | "greaterThan"          | '(test_."enabled">test_."enabled2")'
-            "enabled" | "enabled2" | "greaterThanOrEqualTo" | '(test_."enabled">=test_."enabled2")'
-            "enabled" | "enabled2" | "lessThan"             | '(test_."enabled"<test_."enabled2")'
-            "enabled" | "enabled2" | "lessThanOrEqualTo"    | '(test_."enabled"<=test_."enabled2")'
-            "amount"  | "budget"   | "gt"                   | '(test_."amount">test_."budget")'
-            "amount"  | "budget"   | "ge"                   | '(test_."amount">=test_."budget")'
-            "amount"  | "budget"   | "lt"                   | '(test_."amount"<test_."budget")'
-            "amount"  | "budget"   | "le"                   | '(test_."amount"<=test_."budget")'
+            "enabled" | "enabled2" | "equal"                | '(test_."enabled" = test_."enabled2")'
+            "enabled" | "enabled2" | "notEqual"             | '(test_."enabled" != test_."enabled2")'
+            "enabled" | "enabled2" | "greaterThan"          | '(test_."enabled" > test_."enabled2")'
+            "enabled" | "enabled2" | "greaterThanOrEqualTo" | '(test_."enabled" >= test_."enabled2")'
+            "enabled" | "enabled2" | "lessThan"             | '(test_."enabled" < test_."enabled2")'
+            "enabled" | "enabled2" | "lessThanOrEqualTo"    | '(test_."enabled" <= test_."enabled2")'
+            "amount"  | "budget"   | "gt"                   | '(test_."amount" > test_."budget")'
+            "amount"  | "budget"   | "ge"                   | '(test_."amount" >= test_."budget")'
+            "amount"  | "budget"   | "lt"                   | '(test_."amount" < test_."budget")'
+            "amount"  | "budget"   | "le"                   | '(test_."amount" <= test_."budget")'
     }
 
     @Unroll
@@ -170,16 +270,45 @@ abstract class AbstractCriteriaSpec extends Specification {
 
         where:
             property1 | property2  | predicate              | expectedWhereQuery
-            "enabled" | "enabled2" | "equal"                | '(test_."enabled"!=test_."enabled2")'
-            "enabled" | "enabled2" | "notEqual"             | '(test_."enabled"=test_."enabled2")'
-            "enabled" | "enabled2" | "greaterThan"          | '(NOT(test_."enabled">test_."enabled2"))'
-            "enabled" | "enabled2" | "greaterThanOrEqualTo" | '(NOT(test_."enabled">=test_."enabled2"))'
-            "enabled" | "enabled2" | "lessThan"             | '(NOT(test_."enabled"<test_."enabled2"))'
-            "enabled" | "enabled2" | "lessThanOrEqualTo"    | '(NOT(test_."enabled"<=test_."enabled2"))'
-            "amount"  | "budget"   | "gt"                   | '(NOT(test_."amount">test_."budget"))'
-            "amount"  | "budget"   | "ge"                   | '(NOT(test_."amount">=test_."budget"))'
-            "amount"  | "budget"   | "lt"                   | '(NOT(test_."amount"<test_."budget"))'
-            "amount"  | "budget"   | "le"                   | '(NOT(test_."amount"<=test_."budget"))'
+            "enabled" | "enabled2" | "equal"                | '(test_."enabled" != test_."enabled2")'
+            "enabled" | "enabled2" | "notEqual"             | '(test_."enabled" = test_."enabled2")'
+            "enabled" | "enabled2" | "greaterThan"          | '(NOT(test_."enabled" > test_."enabled2"))'
+            "enabled" | "enabled2" | "greaterThanOrEqualTo" | '(NOT(test_."enabled" >= test_."enabled2"))'
+            "enabled" | "enabled2" | "lessThan"             | '(NOT(test_."enabled" < test_."enabled2"))'
+            "enabled" | "enabled2" | "lessThanOrEqualTo"    | '(NOT(test_."enabled" <= test_."enabled2"))'
+            "amount"  | "budget"   | "gt"                   | '(NOT(test_."amount" > test_."budget"))'
+            "amount"  | "budget"   | "ge"                   | '(NOT(test_."amount" >= test_."budget"))'
+            "amount"  | "budget"   | "lt"                   | '(NOT(test_."amount" < test_."budget"))'
+            "amount"  | "budget"   | "le"                   | '(NOT(test_."amount" <= test_."budget"))'
+    }
+
+    void "test function projection 1"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            criteriaQuery.select(
+                    criteriaBuilder.function(
+                            "MYFUNC1",
+                            String,
+                            criteriaBuilder.parameter(String),
+                            criteriaBuilder.parameter(String)
+                    )
+            )
+            String query = getSqlQuery(criteriaQuery)
+
+        expect:
+            query == '''SELECT MYFUNC1(?,?) FROM "test" test_'''
+    }
+
+    void "test function projection 2"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            criteriaQuery.select(
+                    criteriaBuilder.function("MYFUNC2", String)
+            )
+            String query = getSqlQuery(criteriaQuery)
+
+        expect:
+            query == '''SELECT MYFUNC2() FROM "test" test_'''
     }
 
     @Unroll
@@ -198,8 +327,128 @@ abstract class AbstractCriteriaSpec extends Specification {
             "age"    | "avg"           | 'AVG(test_."age")'
             "age"    | "max"           | 'MAX(test_."age")'
             "age"    | "min"           | 'MIN(test_."age")'
-// TODO:            "age"    | "count"    | 'COUNT(test_."age")'
+            "age"    | "count"         | 'COUNT(test_."age")'
             "age"    | "countDistinct" | 'COUNT(DISTINCT(test_."age"))'
+            "name"    | "lower"         | 'LOWER(test_."name")'
+            "name"    | "upper"         | 'UPPER(test_."name")'
+    }
+
+    @Unroll
+    void "test unary expression #projection produces selection: #expectedSelectQuery"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            criteriaQuery.select(project(projection, entityRoot, property))
+            String selectSqlQuery = getSelectQueryPart(criteriaQuery)
+
+        expect:
+            selectSqlQuery == expectedSelectQuery
+
+        where:
+            property | projection      | expectedSelectQuery
+            "age"    | "sum"           | 'SUM(test_."age")'
+            "age"    | "avg"           | 'AVG(test_."age")'
+            "age"    | "max"           | 'MAX(test_."age")'
+            "age"    | "min"           | 'MIN(test_."age")'
+            "age"    | "count"         | 'COUNT(test_."age")'
+            "age"    | "countDistinct" | 'COUNT(DISTINCT(test_."age"))'
+            "name"    | "lower"         | 'LOWER(test_."name")'
+            "name"    | "upper"         | 'UPPER(test_."name")'
+    }
+
+    void "test binary sum 1"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+
+        when:
+            criteriaQuery.select(criteriaBuilder.sum(
+                    criteriaBuilder.parameter(Long),
+                    criteriaBuilder.parameter(Long)
+            ))
+        then:
+            getSelectQueryPart(criteriaQuery) == '? + ?'
+    }
+
+    void "test binary sum 2"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+
+        when:
+            criteriaQuery.select(criteriaBuilder.sum(
+                    entityRoot.<Long>get("age"),
+                    criteriaBuilder.parameter(Long)
+            ))
+        then:
+            getSelectQueryPart(criteriaQuery) == 'test_."age" + ?'
+    }
+
+    void "test binary concat 1"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+
+        when:
+            criteriaQuery.select(criteriaBuilder.concat(
+                    criteriaBuilder.parameter(String),
+                    entityRoot.<String>get("name")
+            ))
+        then:
+            getSelectQueryPart(criteriaQuery) == 'CONCAT(?,test_."name")'
+    }
+
+    void "test binary concat 2"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+
+        when:
+            criteriaQuery.select(criteriaBuilder.concat(
+                    entityRoot.<String>get("name"),
+                    criteriaBuilder.parameter(String)
+            ))
+        then:
+            getSelectQueryPart(criteriaQuery) == 'CONCAT(test_."name",?)'
+    }
+
+    void "test binary concat 3"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+
+        when:
+            criteriaQuery.select(criteriaBuilder.concat(
+                    criteriaBuilder.parameter(String),
+                    criteriaBuilder.parameter(String)
+            ))
+        then:
+            getSelectQueryPart(criteriaQuery) == 'CONCAT(?,?)'
+    }
+
+    void "test like"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+
+        when:
+            criteriaQuery.where(
+                    criteriaBuilder.like(
+                            criteriaBuilder.parameter(String),
+                            criteriaBuilder.parameter(String),
+                            criteriaBuilder.parameter(Character),
+                    )
+            )
+        then:
+            getWhereQueryPart(criteriaQuery) == '(? LIKE ? ESCAPE ?)'
+    }
+
+    void "test like case insensitive"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+
+        when:
+            criteriaQuery.where(
+                    criteriaBuilder.ilike(
+                            criteriaBuilder.parameter(String),
+                            criteriaBuilder.parameter(String),
+                    )
+            )
+        then:
+            getWhereQueryPart(criteriaQuery) == '(LOWER(?) LIKE LOWER(?))'
     }
 
     @Unroll
@@ -216,7 +465,7 @@ abstract class AbstractCriteriaSpec extends Specification {
         properties     | distinct        | expectedSelectQuery
         ["age","name"] | true            | 'DISTINCT test_."age",test_."name"'
         ["age"]        | true            | 'DISTINCT test_."age"'
-        []             | true            | 'DISTINCT test_.*'
+        []             | true            | 'DISTINCT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget"'
         ["age","name"] | false           | 'test_."age",test_."name"'
         ["age"]        | false           | 'test_."age"'
         []             | false           | 'test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget"'
@@ -259,22 +508,22 @@ abstract class AbstractCriteriaSpec extends Specification {
         criteriaBuilder."$predicate"(root.get(property1), root.get(property2))
     }
 
-    private static String getSelectQueryPart(PersistentEntityCriteriaQuery<Object> query) {
+    protected String getSelectQueryPart(PersistentEntityCriteriaQuery<Object> query) {
         def sqlQuery = getSqlQuery(query)
         return sqlQuery.substring("SELECT ".length(), sqlQuery.indexOf(" FROM"))
     }
 
-    private static String getWhereQueryPart(PersistentEntityCriteriaQuery<Object> query) {
+    protected String getWhereQueryPart(PersistentEntityCriteriaQuery<Object> query) {
         def sqlQuery = getSqlQuery(query)
         return sqlQuery.substring(sqlQuery.indexOf("WHERE ") + 6)
     }
 
-    private static String getSqlQuery(def query) {
+    protected String getSqlQuery(def query) {
         return getSqlQuery(query, Dialect.ANSI)
     }
 
-    private static String getSqlQuery(def query, Dialect dialect) {
-        return ((QueryResultPersistentEntityCriteriaQuery) query).buildQuery(new SqlQueryBuilder(dialect)).getQuery()
+    protected String getSqlQuery(def query, Dialect dialect) {
+        return ((QueryResultPersistentEntityCriteriaQuery) query).buildQuery(AnnotationMetadata.EMPTY_METADATA, new SqlQueryBuilder(dialect)).getQuery()
     }
 
     @CompileStatic

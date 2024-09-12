@@ -66,9 +66,9 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
 
     @Override
     public <E, R> StoredQuery<E, R> resolveCountQuery(MethodInvocationContext<?, ?> context, Class<E> entityClass, Class<R> resultType) {
-        String query = context.stringValue(Query.class, DataMethod.META_MEMBER_COUNT_QUERY).orElseThrow(() ->
-                new IllegalStateException("No query present in method")
-        );
+        String query = context.stringValue(Query.class, DataMethod.META_MEMBER_COUNT_QUERY)
+            .orElseGet(() -> context.stringValue(Query.class)
+                .orElseThrow(() -> new IllegalStateException("No query present in method")));
         return new DefaultStoredQuery<>(
                 context.getExecutableMethod(),
                 resultType,
@@ -95,6 +95,8 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
             queryParts = new String[0];
         }
         String[] finalQueryParts = queryParts;
+        Class<QR> resultType = annotationMetadata.classValue(DataMethod.class, DataMethod.META_MEMBER_RESULT_DATA_TYPE).orElse(rootEntity);
+        DataType resultDataType = annotationMetadata.enumValue(DataMethod.class, DataMethod.META_MEMBER_RESULT_DATA_TYPE, DataType.class).orElse(DataType.ENTITY);
         boolean rawQuery = annotationMetadata.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
         boolean jsonEntity = DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(annotationMetadata);
         return new StoredQuery<>() {
@@ -131,7 +133,7 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
 
             @Override
             public Class<QR> getResultType() {
-                return (Class<QR>) rootEntity;
+                return resultType;
             }
 
             @Override
@@ -141,7 +143,7 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
 
             @Override
             public DataType getResultDataType() {
-                return DataType.ENTITY;
+                return resultDataType;
             }
 
             @Override

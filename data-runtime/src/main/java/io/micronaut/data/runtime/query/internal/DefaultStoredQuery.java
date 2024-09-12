@@ -44,6 +44,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_PAGE_SIZE;
 
@@ -74,11 +75,13 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     private final boolean isCount;
     private final boolean hasResultConsumer;
     private Map<String, Object> queryHints;
+    private Set<JoinPath> joinPaths = null;
     private Set<JoinPath> joinFetchPaths = null;
     private final List<QueryParameterBinding> queryParameters;
     private final boolean rawQuery;
     private final boolean jsonEntity;
     private final OperationType operationType;
+    private final Map<String, AnnotationValue<?>> parameterExpressions;
 
     /**
      * The default constructor.
@@ -162,6 +165,10 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
             List<QueryParameterBinding> queryParameters = new ArrayList<>(params.size());
             for (AnnotationValue<DataMethodQueryParameter> av : params) {
                 String[] propertyPath = av.stringValues(DataMethodQueryParameter.META_MEMBER_PROPERTY_PATH);
+                Object value = null;
+                if (av.getValues().containsKey(AnnotationMetadata.VALUE_MEMBER)) {
+                    value = av;
+                }
                 if (propertyPath.length == 0) {
                     propertyPath = av.stringValue(DataMethodQueryParameter.META_MEMBER_PROPERTY)
                             .map(property -> new String[]{property})
@@ -185,6 +192,8 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
                                 av.booleanValue(DataMethodQueryParameter.META_MEMBER_REQUIRES_PREVIOUS_POPULATED_VALUES).orElse(false),
                                 av.classValue(DataMethodQueryParameter.META_MEMBER_CONVERTER).orElse(null),
                                 av.booleanValue(DataMethodQueryParameter.META_MEMBER_EXPANDABLE).orElse(false),
+                                av.booleanValue(DataMethodQueryParameter.META_MEMBER_EXPRESSION).orElse(false),
+                                value,
                                 queryParameters
                         ));
             }
@@ -194,6 +203,8 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
         this.operationType = method.enumValue(DataMethod.NAME, DataMethod.META_MEMBER_OPERATION_TYPE, DataMethod.OperationType.class)
             .map(op -> OperationType.valueOf(op.name()))
             .orElse(OperationType.QUERY);
+        this.parameterExpressions = annotationMetadata.getAnnotationValuesByType(ParameterExpression.class).stream()
+            .collect(Collectors.toMap(av -> av.stringValue("name").orElseThrow(), av -> av));
     }
 
     @Override
@@ -205,10 +216,17 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     @Override
     public Set<JoinPath> getJoinFetchPaths() {
         if (joinFetchPaths == null) {
-            Set<JoinPath> set = AssociationUtils.getJoinFetchPaths(method);
-            this.joinFetchPaths = set.isEmpty() ? Collections.emptySet() : Collections.unmodifiableSet(set);
+            this.joinFetchPaths = Collections.unmodifiableSet(AssociationUtils.getJoinFetchPaths(method));
         }
         return joinFetchPaths;
+    }
+
+    @Override
+    public Set<JoinPath> getJoinPaths() {
+        if (joinPaths == null) {
+            joinPaths = Collections.unmodifiableSet(AssociationUtils.getJoinPaths(method));
+        }
+        return joinPaths;
     }
 
     /**
@@ -354,6 +372,11 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     @Override
     public boolean isJsonEntity() {
         return jsonEntity;
+    }
+
+    @Override
+    public Map<String, AnnotationValue<?>> getParameterExpressions() {
+        return parameterExpressions;
     }
 
     @Override

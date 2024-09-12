@@ -473,30 +473,59 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
     }
 
     void "test custom insert"() {
+        given:
+            def book1 = new Book(title: "Abc", totalPages: 12)
+            def book2 = new Book(title: "Xyz", totalPages: 22)
+
         when:
-            def author = authorRepository.searchByName("Stephen King").block()
+            def books = bookRepository.findAll().collectList().block()
         then:
-            author.books.size() == 2
+            books.size() == 8
+
         when:
-            bookRepository.saveCustom([new Book(title: "Abc", totalPages: 12, author: author), new Book(title: "Xyz", totalPages: 22, author: author)]).block()
-            def authorAfter = authorRepository.searchByName("Stephen King").block()
+            // Hibernate doesn't support updating other tables
+            bookRepository.saveCustom([book1, book2]).block()
+            def booksAfter = bookRepository.findAll().collectList().block()
         then:
-            authorAfter.books.size() == 4
-            authorAfter.books.find { it.title == "Abc" }
-            authorAfter.books.find { it.title == "Xyz" }
+            !book1.id // Ids cannot be updated by a custom query
+            !book2.id
+            booksAfter.size() == 10
+            booksAfter.find { it.title == "Abc" }
+            booksAfter.find { it.title == "Xyz" }
     }
 
     void "test custom single insert"() {
+        given:
+            def book = new Book(title: "Abc", totalPages: 12)
         when:
-            def author = authorRepository.searchByName("Stephen King").block()
+            def books = bookRepository.findAll().collectList().block()
         then:
-            author.books.size() == 2
+            books.size() == 8
         when:
-            bookRepository.saveCustomSingle(new Book(title: "Abc", totalPages: 12, author: author)).block()
-            def authorAfter = authorRepository.searchByName("Stephen King").block()
+            // Hibernate doesn't support updating other tables
+            bookRepository.saveCustomSingle(book).block()
+            def booksAfter = bookRepository.findAll().collectList().block()
         then:
-            authorAfter.books.size() == 3
-            authorAfter.books.find { it.title == "Abc" }
+            !book.id // Ids cannot be updated by a custom query
+            booksAfter.size() == 9
+            booksAfter.find { it.title == "Abc" }
+    }
+
+    void "test custom single insert expressions"() {
+        given:
+            def book = new Book(title: "Abc", totalPages: 12)
+        when:
+            def books = bookRepository.findAll().collectList().block()
+        then:
+            books.size() == 8
+        when:
+            // Hibernate doesn't support updating other tables
+            bookRepository.saveCustomSingleExpressions(book).block()
+            def booksAfter = bookRepository.findAll().collectList().block()
+        then:
+            !book.id // Ids cannot be updated by a custom query
+            booksAfter.size() == 9
+            booksAfter.find { it.title == "AbcXYZ" }
     }
 
     void "test custom update"() {

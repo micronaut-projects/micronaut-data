@@ -6,15 +6,19 @@ import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.data.runtime.criteria.get
 import io.micronaut.data.runtime.criteria.joinMany
+import io.micronaut.data.runtime.criteria.joinOne
 import io.micronaut.data.runtime.criteria.query
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import jakarta.inject.Inject
+import jakarta.persistence.criteria.Join
 import jakarta.persistence.criteria.JoinType
 import jakarta.persistence.criteria.ListJoin
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.hibernate.query.sqm.tree.domain.SqmListJoin
+import org.hibernate.query.sqm.tree.domain.SqmSingularJoin
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.MethodOrderer
@@ -23,6 +27,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.assertThrows
+import java.time.LocalDate
 import java.util.*
 
 @MicronautTest(transactional = false, rollback = false)
@@ -37,9 +42,12 @@ class HibernateTxTest {
     private lateinit var repositoryForCustomDb: ParentRepositoryForCustomDb
     @Inject
     private lateinit var service: PersonSuspendRepositoryService
+    @Inject
+    private lateinit var childRepository: ChildSuspendRepository
 
     @BeforeEach
     fun cleanup() {
+        childRepository.deleteAll()
         repository.deleteAll()
         repositoryForCustomDb.deleteAll()
     }
@@ -284,4 +292,80 @@ class HibernateTxTest {
         }
     }
 
+    @Test
+    fun `coroutineCriteria5`() {
+        runBlocking {
+            val parent1 = Parent("abc", mutableListOf()).apply { children.add(Child("cde", parent = this)) }
+            val parent2 = Parent("cde", mutableListOf()).apply { children.add(Child("abc", parent = this)) }
+            repositorySuspended.save(parent1)
+            repositorySuspended.save(parent2)
+
+            val query = query<Child> {
+                val parent: Join<Child, Parent?> = if (query.resultType.kotlin != Long::class) {
+                    root.fetch<Child, Parent?>("parent") as SqmSingularJoin<Child, Parent?>
+                }  else {
+                    root.joinOne(Child::parent)
+                }
+
+                where {
+                    or {
+                        root[Child::name] inList listOf("abc", "cde")
+                        parent[Parent::name] inList listOf("abc", "cde")
+                    }
+                }
+            }
+
+            val resultAsc = childRepository.findAll(query, Sort.of(Sort.Order("parent.name", Sort.Order.Direction.ASC, false))).toList()
+            assertEquals(parent1.name, resultAsc.first().parent?.name)
+            assertEquals(parent2.name, resultAsc.last().parent?.name)
+
+            val resultDesc = childRepository.findAll(query, Sort.of(Sort.Order("parent.name", Sort.Order.Direction.DESC, false))).toList()
+            assertEquals(parent2.name, resultDesc.first().parent?.name)
+            assertEquals(parent1.name, resultDesc.last().parent?.name)
+        }
+    }
+
+    @Test
+    fun coroutineCriteria6() = runBlocking {
+        Parent("abc", mutableListOf()).apply {
+            children.add(Child("c1", LocalDate.of(2020, 12 ,8),this))
+            children.add(Child("c2", LocalDate.of(2020, 9 ,7),this))
+            repositorySuspended.save(this)
+        }
+        Parent("cde", mutableListOf()).apply {
+            children.add(Child("c3", LocalDate.of(2020, 10 ,8),this))
+            children.add(Child("c4", LocalDate.of(2020, 11 ,7),this))
+            repositorySuspended.save(this)
+        }
+
+        val query = query<Child> {
+            val parent: Join<Child, Parent?> = if (query.resultType.kotlin != Long::class) {
+                root.fetch<Child, Parent?>("parent") as SqmSingularJoin<Child, Parent?>
+            }  else {
+                root.joinOne(Child::parent)
+            }
+
+            where {
+                parent[Parent::name] inList listOf("abc", "cde")
+            }
+        }
+
+        val resultAsc = childRepository.findAll(
+            query,
+            Sort.of(
+                Sort.Order("parent.name", Sort.Order.Direction.ASC, false),
+                Sort.Order("dateOfBirth", Sort.Order.Direction.ASC, false)
+            )
+        ).toList()
+        assertEquals(listOf("c2", "c1", "c3", "c4"), resultAsc.map { it.name })
+
+        val resultDesc = childRepository.findAll(
+            query,
+            Sort.of(
+                Sort.Order("parent.name", Sort.Order.Direction.DESC, false),
+                Sort.Order("dateOfBirth", Sort.Order.Direction.DESC, false)
+            )
+        ).toList()
+        assertEquals(listOf("c4", "c3", "c1", "c2"), resultDesc.map { it.name })
+    }
 }

@@ -367,4 +367,66 @@ interface BookRepository extends GenericRepository<Book, Long> {
             getResultDataType(deleteReturningMethod) == DataType.ENTITY
     }
 
+    void "POSTGRES test build delete with tenant id"() {
+        given:
+            def repository = buildRepository('test.AccountRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Account;
+
+@JdbcRepository(dialect= Dialect.POSTGRES)
+interface AccountRepository extends CrudRepository<Account, Long> {
+
+    List<Account> deleteReturning(Long id);
+
+}
+""")
+        when:
+            def deleteReturningCustomMethod = repository.findPossibleMethods("deleteReturning").findFirst().get()
+        then:
+            getQuery(deleteReturningCustomMethod) == 'DELETE  FROM "account"  WHERE ("id" = ? AND "tenancy" = ?) RETURNING "id","name","tenancy"'
+            getParameterPropertyPaths(deleteReturningCustomMethod) == ["id", "tenancy"] as String[]
+            getDataResultType(deleteReturningCustomMethod) == "io.micronaut.data.tck.entities.Account"
+            getDataInterceptor(deleteReturningCustomMethod) == "io.micronaut.data.intercept.DeleteReturningManyInterceptor"
+            getResultDataType(deleteReturningCustomMethod) == DataType.ENTITY
+
+        when:
+            def deleteOne = repository.findPossibleMethods("delete").findFirst().get()
+        then:
+            getQuery(deleteOne) == 'DELETE  FROM "account"  WHERE ("id" = ? AND "tenancy" = ?)'
+            getParameterPropertyPaths(deleteOne) == ["id", "tenancy"] as String[]
+            getDataResultType(deleteOne) == "void"
+            getDataInterceptor(deleteOne) == "io.micronaut.data.intercept.DeleteOneInterceptor"
+            getResultDataType(deleteOne) == null
+
+        when:
+            def deleteAll = repository.findPossibleMethods("deleteAll").findFirst().get()
+        then:
+            getQuery(deleteAll) == 'DELETE  FROM "account"  WHERE ("tenancy" = ?)'
+            getParameterPropertyPaths(deleteAll) == ["tenancy"] as String[]
+            getDataResultType(deleteAll) == "void"
+            getDataInterceptor(deleteAll) == "io.micronaut.data.intercept.DeleteAllInterceptor"
+            getResultDataType(deleteAll) == null
+
+        when:
+            def deleteEntities = repository.findMethod("deleteAll", Iterable).get()
+        then:
+            getQuery(deleteEntities) == 'DELETE  FROM "account"  WHERE ("id" IN (?) AND "tenancy" = ?)'
+            getParameterPropertyPaths(deleteEntities) == ["id", "tenancy"] as String[]
+            getDataResultType(deleteEntities) == "void"
+            getDataInterceptor(deleteEntities) == "io.micronaut.data.intercept.DeleteAllInterceptor"
+            getResultDataType(deleteEntities) == null
+
+        when:
+            def deleteById = repository.findPossibleMethods("deleteById").findFirst().get()
+        then:
+            getQuery(deleteById) == 'DELETE  FROM "account"  WHERE ("id" = ? AND "tenancy" = ?)'
+            getParameterPropertyPaths(deleteById) == ["id", "tenancy"] as String[]
+            getDataResultType(deleteById) == "void"
+            getDataInterceptor(deleteById) == "io.micronaut.data.intercept.DeleteAllInterceptor"
+            getResultDataType(deleteById) == null
+    }
+
 }

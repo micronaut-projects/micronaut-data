@@ -41,7 +41,7 @@ public final class ConjunctionPredicate extends AbstractPredicate {
     }
 
     @Override
-    public void accept(PredicateVisitor predicateVisitor) {
+    public void visitPredicate(PredicateVisitor predicateVisitor) {
         predicateVisitor.visit(this);
     }
 

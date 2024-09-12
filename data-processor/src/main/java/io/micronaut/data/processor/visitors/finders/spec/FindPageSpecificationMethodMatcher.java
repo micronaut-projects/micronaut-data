@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.processor.visitors.finders.spec;
 
+import java.util.regex.Matcher;
+
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.intercept.annotation.DataMethod;
@@ -49,7 +51,7 @@ public class FindPageSpecificationMethodMatcher extends AbstractSpecificationMet
     }
 
     @Override
-    protected MethodMatch match(MethodMatchContext matchContext, java.util.regex.Matcher matcher) {
+    protected MethodMatch match(MethodMatchContext matchContext, Matcher matcher) {
         ClassElement returnType = TypeUtils.getMethodProducingItemType(matchContext.getMethodElement());
         if (returnType != null && (returnType.isAssignable("org.springframework.data.domain.Page") || returnType.isAssignable("io.micronaut.data.model.Page"))
                 && areParametersValid(matchContext.getMethodElement())) {

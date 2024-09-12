@@ -37,54 +37,68 @@ import reactor.core.publisher.Mono;
  */
 public interface ReactorReactiveRepositoryOperations extends ReactiveRepositoryOperations {
 
+    @Override
     @NonNull
     @SingleResult
     <T> Mono<T> findOne(@NonNull Class<T> type, @NonNull Object id);
 
+    @Override
     @NonNull
     @SingleResult
     <T> Mono<Boolean> exists(@NonNull PreparedQuery<T, Boolean> preparedQuery);
 
+    @Override
     @NonNull
     @SingleResult
     <T, R> Mono<R> findOne(@NonNull PreparedQuery<T, R> preparedQuery);
 
+    @Override
     @NonNull
     @SingleResult
     <T> Mono<T> findOptional(@NonNull Class<T> type, @NonNull Object id);
 
+    @Override
     @NonNull
     @SingleResult
     <T, R> Mono<R> findOptional(@NonNull PreparedQuery<T, R> preparedQuery);
 
+    @Override
     @NonNull
     <T> Flux<T> findAll(PagedQuery<T> pagedQuery);
 
+    @Override
     @NonNull
     @SingleResult
     <T> Mono<Long> count(PagedQuery<T> pagedQuery);
 
+    @Override
     @NonNull
     <T, R> Flux<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery);
 
+    @Override
     @NonNull
     @SingleResult
     <T> Mono<T> persist(@NonNull InsertOperation<T> operation);
 
+    @Override
     @NonNull
     @SingleResult
     <T> Mono<T> update(@NonNull UpdateOperation<T> operation);
 
+    @Override
     @NonNull
     <T> Flux<T> updateAll(@NonNull UpdateBatchOperation<T> operation);
 
+    @Override
     @NonNull
     <T> Flux<T> persistAll(@NonNull InsertBatchOperation<T> operation);
 
+    @Override
     @NonNull
     @SingleResult
     Mono<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery);
 
+    @Override
     @NonNull
     @SingleResult
     Mono<Number> executeDelete(@NonNull PreparedQuery<?, Number> preparedQuery);
@@ -95,14 +109,17 @@ public interface ReactorReactiveRepositoryOperations extends ReactiveRepositoryO
         return Flux.from(ReactiveRepositoryOperations.super.execute(preparedQuery));
     }
 
+    @Override
     @NonNull
     @SingleResult
     <T> Mono<Number> delete(@NonNull DeleteOperation<T> operation);
 
+    @Override
     @NonNull
     @SingleResult
     <T> Mono<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation);
 
+    @Override
     @NonNull
     @SingleResult
     <R> Mono<Page<R>> findPage(@NonNull PagedQuery<R> pagedQuery);

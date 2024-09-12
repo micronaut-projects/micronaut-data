@@ -34,7 +34,7 @@ import java.util.Objects;
 @Serdeable
 class DefaultPage<T> extends DefaultSlice<T> implements Page<T> {
 
-    private final long totalSize;
+    private final Long totalSize;
 
     /**
      * Default constructor.
@@ -51,14 +51,23 @@ class DefaultPage<T> extends DefaultSlice<T> implements Page<T> {
             @JsonProperty("pageable")
             Pageable pageable,
             @JsonProperty("totalSize")
-            long totalSize) {
+            Long totalSize) {
         super(content, pageable);
         this.totalSize = totalSize;
     }
 
     @Override
+    public boolean hasTotalSize() {
+        return totalSize != null;
+    }
+
+    @Override
     @ReflectiveAccess
     public long getTotalSize() {
+        if (totalSize == null) {
+            throw new IllegalStateException("Page does not contain total count. " +
+                "It is likely that the Pageable needs to be modified to request this information.");
+        }
         return totalSize;
     }
 

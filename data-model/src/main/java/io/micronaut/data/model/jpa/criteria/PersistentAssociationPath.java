@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Association;
+import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.Join;
@@ -50,6 +51,11 @@ public interface PersistentAssociationPath<OwnerType, AssociatedEntityType> exte
 
     @NonNull
     Association getAssociation();
+
+    @Override
+    default io.micronaut.data.model.PersistentAssociationPath getPropertyPath() {
+        return new io.micronaut.data.model.PersistentAssociationPath(getAssociations(), getProperty());
+    }
 
     /**
      * @return The join type
@@ -122,4 +128,8 @@ public interface PersistentAssociationPath<OwnerType, AssociatedEntityType> exte
         throw notSupportedOperation();
     }
 
+    @Override
+    default void visitExpression(ExpressionVisitor expressionVisitor) {
+        expressionVisitor.visit(this);
+    }
 }

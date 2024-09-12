@@ -1,53 +1,52 @@
 [versions]
-micronaut = "4.3.4"
-micronaut-platform = "4.2.1"
+micronaut = "4.6.5"
+micronaut-platform = "4.4.2"
 micronaut-docs = "2.0.0"
-micronaut-gradle-plugin = "4.3.2"
-micronaut-testresources = "2.3.3"
+micronaut-gradle-plugin = "4.4.2"
+micronaut-testresources = "2.5.4"
 
-micronaut-azure = "5.3.0"
-micronaut-reactor = "3.2.1"
-micronaut-rxjava2 = "2.2.1"
-micronaut-r2dbc = "5.3.0"
-micronaut-serde = "2.8.1"
-micronaut-sql = "5.5.0"
-micronaut-spring = "5.4.0"
-micronaut-test = "4.1.1"
-micronaut-mongo = "5.2.0"
-micronaut-kotlin = "4.2.0"
-micronaut-multitenancy = "5.2.1"
-micronaut-validation = "4.4.0"
-micronaut-logging = "1.2.3"
-micronaut-flyway = "7.1.0"
+micronaut-azure = "5.7.1"
+micronaut-reactor = "3.5.0"
+micronaut-rxjava2 = "2.5.0"
+micronaut-r2dbc = "5.6.1"
+micronaut-sql = "5.8.1"
+micronaut-serde = "2.11.0"
+micronaut-spring = "5.8.0"
+micronaut-test = "4.4.0"
+micronaut-mongo = "5.4.0"
+micronaut-kotlin = "4.4.0"
+micronaut-multitenancy = "5.4.0"
+micronaut-validation = "4.7.0"
+micronaut-logging = "1.4.0"
+micronaut-flyway = "7.4.0"
 
-groovy = "4.0.18"
+groovy = "4.0.22"
 
 managed-javax-persistence = "2.2"
 managed-jakarta-persistence-api = "3.1.0"
 managed-jakarta-transaction-api = "2.0.1"
 
-spring-data = "3.2.2"
+spring-data = "3.3.3"
 
 # Testing and benchmarking
 
-benchmark-spring-data = "2023.1.2"
+benchmark-spring-data = "2024.0.3"
 spock = "2.2-groovy-4.0"
 testcontainers = "1.19.4"
 jmh = "1.37"
 
 # Gradle plugins
 
-ksp-gradle-plugin = "1.9.22-1.0.17"
-kotlin-gradle-plugin = "1.9.22"
+ksp-gradle-plugin = "1.9.25-1.0.20"
+kotlin-gradle-plugin = "1.9.25"
 jmh-gradle-plugin = "0.7.2"
-spring-boot-gradle-plugin = "3.2.2"
-spring-dependency-management-gradle-plugin = "1.1.4"
+spring-boot-gradle-plugin = "3.3.3"
+spring-dependency-management-gradle-plugin = "1.1.6"
 shadow-gradle-plugin = "8.0.0"
 
 # Dependency versions which are found in the platform BOM
 # meaning that they should be extracted into their own BOM
-kotlin-coroutines = "1.7.3"
-
+kotlin-coroutines = "1.8.1"
 
 [libraries]
 micronaut-core = { module = 'io.micronaut:micronaut-core-bom', version.ref = 'micronaut' }
@@ -95,6 +94,9 @@ spring-data-commons = { module = "org.springframework.data:spring-data-commons",
 # AZURE COSMOS
 
 micronaut-azure-cosmos = { module = "io.micronaut.azure:micronaut-azure-cosmos", version.ref = "micronaut-azure" }
+
+# Reactor Netty Dependencies
+reactor-netty-core = { module = "io.projectreactor.netty:reactor-netty-core" }
 
 # Test
 

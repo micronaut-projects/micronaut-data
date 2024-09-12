@@ -51,9 +51,8 @@ public interface AsyncRepositoryOperations {
     @NonNull
     <T> CompletionStage<T> findOne(@NonNull Class<T> type, @NonNull Object id);
 
-
     /**
-     * Check with an record exists for the given query.
+     * Check with a record exists for the given query.
      * @param preparedQuery The query
      * @param <T> The declaring type
      * @return True if it exists

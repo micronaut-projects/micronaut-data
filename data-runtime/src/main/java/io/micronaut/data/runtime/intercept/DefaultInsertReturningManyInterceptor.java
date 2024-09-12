@@ -24,7 +24,7 @@ import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 
 /**
- * Default implementation of {@link io.micronaut.data.intercept.InsertReturningManyInterceptor}.
+ * Default implementation of {@link InsertReturningManyInterceptor}.
  * @param <T> The declaring type
  * @param <R> The return type
  * @author Denis Stepanov

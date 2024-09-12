@@ -45,7 +45,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static io.micronaut.data.processor.visitors.Utils.getConfiguredDataConverters;
 import static io.micronaut.data.processor.visitors.Utils.getConfiguredDataTypes;
@@ -62,8 +61,15 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
      */
     public static final int POSITION = 100;
 
+    private static final String JSON_VIEW_ANNOTATION = "io.micronaut.data.annotation.JsonView";
+    private static final String JSON_PROPERTY_ANNOTATION = "com.fasterxml.jackson.annotation.JsonProperty";
+    private static final String SERDE_CONFIG_ANNOTATION = "io.micronaut.serde.config.annotation.SerdeConfig";
+    private static final String JSON_VIEW_ID = "_id";
+    private static final String VALUE = "value";
+    private static final String PROPERTY = "property";
+
     private final Map<String, SourcePersistentEntity> entityMap = new HashMap<>(50);
-    private final Function<ClassElement, SourcePersistentEntity> entityResolver = new Function<ClassElement, SourcePersistentEntity>() {
+    private final Function<ClassElement, SourcePersistentEntity> entityResolver = new Function<>() {
         @Override
         public SourcePersistentEntity apply(ClassElement classElement) {
             return entityMap.computeIfAbsent(classElement.getName(), s -> new SourcePersistentEntity(classElement, this));
@@ -107,7 +113,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
 
         final List<AnnotationValue<Index>> indexes = properties.stream()
                 .flatMap(prop -> prop.findAnnotation(Index.class).stream())
-                .collect(Collectors.toList());
+                .toList();
 
         if (!indexes.isEmpty()) {
            element.annotate(Indexes.class, builder -> builder.values(indexes.toArray(new AnnotationValue[]{})));
@@ -119,6 +125,9 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         SourcePersistentProperty identity = entity.getIdentity();
         if (identity != null) {
             computeMappingDefaults(identity, dataTypes, dataConverters, context);
+            if (entity.hasAnnotation(JSON_VIEW_ANNOTATION)) {
+                handleJsonViewIdentity(identity);
+            }
         }
         SourcePersistentProperty[] compositeIdentities = entity.getCompositeIdentity();
         if (compositeIdentities != null) {
@@ -286,6 +295,31 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         String joinColumnName = joinColumnAnnotationValue.stringValue("name").orElse(null);
         if (joinColumnName != null) {
             propertyElement.annotate(MappedProperty.class, builder -> builder.member(AnnotationMetadata.VALUE_MEMBER, joinColumnName));
+        }
+    }
+
+    /**
+     * An identity field for Oracle duality Json View has to be '_id' so we are verifying and configuring it here.
+     *
+     * @param identity the identity field
+     */
+    private void handleJsonViewIdentity(SourcePersistentProperty identity) {
+        PropertyElement identityPropertyElement = identity.getPropertyElement();
+        String mappedPropertyIdName = identity.stringValue(MappedProperty.class).orElse(null);
+        if (mappedPropertyIdName == null) {
+            identityPropertyElement.annotate(MappedProperty.class, builder -> builder.member(VALUE, JSON_VIEW_ID));
+        } else if (!mappedPropertyIdName.equals(JSON_VIEW_ID)) {
+            throw new ProcessingException(identity, "@JsonView identity @MappedProperty value cannot be set to value different than '" + JSON_VIEW_ID + "'");
+        }
+        String jsonPropertyIdName = identity.stringValue(JSON_PROPERTY_ANNOTATION).orElse(null);
+        if (jsonPropertyIdName != null && !jsonPropertyIdName.equals(JSON_VIEW_ID)) {
+            throw new ProcessingException(identity, "@JsonView identity @JsonProperty value cannot be set to value different than '" + JSON_VIEW_ID + "'");
+        }
+        String serdeConfigPropertyIdName = identity.stringValue(SERDE_CONFIG_ANNOTATION, PROPERTY).orElse(null);
+        if (serdeConfigPropertyIdName == null) {
+            identityPropertyElement.annotate(SERDE_CONFIG_ANNOTATION, builder -> builder.member(PROPERTY, JSON_VIEW_ID));
+        } else if (!serdeConfigPropertyIdName.equals(JSON_VIEW_ID)) {
+            throw new ProcessingException(identity, "@JsonView identity @SerdeConfig property cannot be set to value different than '" + JSON_VIEW_ID + "'");
         }
     }
 }

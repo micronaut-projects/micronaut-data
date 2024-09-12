@@ -16,6 +16,7 @@
 package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
+import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
 import jakarta.persistence.criteria.Predicate;
 
 /**
@@ -28,17 +29,14 @@ import jakarta.persistence.criteria.Predicate;
 public interface IPredicate extends Predicate, IExpression<Boolean> {
 
     @Override
-    default boolean isBoolean() {
-        return true;
+    default ExpressionType<Boolean> getExpressionType() {
+        return ExpressionType.BOOLEAN;
     }
 
-    @Override
-    default boolean isNumeric() {
-        return false;
-    }
-
-    @Override
-    default boolean isComparable() {
-        return true;
-    }
+    /**
+     * Visit predicate.
+     *
+     * @param predicateVisitor The visitor
+     */
+    void visitPredicate(PredicateVisitor predicateVisitor);
 }

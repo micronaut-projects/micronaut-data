@@ -13,10 +13,9 @@ Micronaut Criteria API currently implements only a subset of the API. Most of it
 Currently, not supported JPA Criteria API features:
 
 - Joins with custom `ON` expressions and typed join methods like `joinSet` etc
-- Sub-queries
 - Collection operations: `isMember` etc
-- Custom or tuple result type
-- Transformation expressions like concat, substring etc.
-- Cases and functions
+- Tuple result type
+- Transformation expressions like toString, substring etc.
+- Cases
 
 More information about Jakarta Persistence Criteria API 3.0 you can find at the https://jakarta.ee/specifications/persistence/3.0/jakarta-persistence-spec-3.0.html#a6925[official API specification]

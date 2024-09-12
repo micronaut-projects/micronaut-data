@@ -173,6 +173,50 @@ interface MyRepository {
 
     }
 
+    void "test h2 crud"() {
+        given:
+        def annotationMetadata = buildTypeAnnotationMetadata('''
+package test;
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.model.query.builder.sql.*;
+import java.lang.annotation.*;
+import io.micronaut.data.jdbc.annotation.*;
+import io.micronaut.context.annotation.*;
+
+@MyAnnotation(dialect = Dialect.H2)
+interface MyRepository {
+}
+
+@RepositoryConfiguration(
+        queryBuilder = SqlQueryBuilder.class
+)
+@SqlQueryConfiguration(
+    @SqlQueryConfiguration.DialectConfiguration(
+        dialect = Dialect.H2,
+        positionalParameterFormat = "$%s",
+        escapeQueries = false
+    )
+)
+@Retention(RetentionPolicy.RUNTIME)
+@Repository
+@interface MyAnnotation {
+    @AliasFor(annotation = Repository.class, member = "dialect")
+    Dialect dialect() default Dialect.ANSI;
+}
+''')
+
+        PersistentEntity entity = PersistentEntity.of(Sale)
+        QueryBuilder builder = new SqlQueryBuilder(Dialect.H2)
+        def queryModel = QueryModel.from(entity).eq("name", QueryParameter.of("name"))
+
+        expect:
+        builder.dialect == Dialect.H2
+        builder.buildQuery(annotationMetadata, queryModel).query == 'SELECT sale_.`id`,sale_.`name`,sale_.`data`,sale_.`quantities`,sale_.`extra_data`,sale_.`data_list` FROM `sale` sale_ WHERE (sale_.`name` = ?)'
+        builder.buildDelete(queryModel).query == 'DELETE  FROM `sale`  WHERE (`name` = ?)'
+        builder.buildUpdate(queryModel, Arrays.asList("name")).query == 'UPDATE `sale` SET `name`=? WHERE (`name` = ?)'
+        builder.buildInsert(annotationMetadata, entity).query == 'INSERT INTO `sale` (`name`,`data`,`quantities`,`extra_data`,`data_list`) VALUES (?,? FORMAT JSON,? FORMAT JSON,? FORMAT JSON,? FORMAT JSON)'
+    }
+
     void "test encode to-one join - single level"() {
         given:
         PersistentEntity entity = PersistentEntity.of(Book)

@@ -1,5 +1,10 @@
 package example
 
+import io.micronaut.data.model.CursoredPage
+import io.micronaut.data.model.CursoredPageable
+import io.micronaut.data.model.Page
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Sort
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Shared
 import spock.lang.Specification
@@ -51,6 +56,37 @@ class BookRepositorySpec extends Specification {
         // end::delete[]
         then:"It is gone"
         bookRepository.count() == 0
+    }
+
+    void "test cursored pageable"() {
+        given:
+        bookRepository.saveAll(Arrays.asList(
+                new Book("The Stand", 1000),
+                new Book("The Shining", 600),
+                new Book("The Power of the Dog", 500),
+                new Book("The Border", 700),
+                new Book("Along Came a Spider", 300),
+                new Book("Pet Cemetery", 400),
+                new Book("A Game of Thrones", 900),
+                new Book("A Clash of Kings", 1100)
+        ))
+
+        when:
+        // tag::cursored-pageable[]
+        CursoredPage<Book> page =  // <1>
+                bookRepository.find(CursoredPageable.from(5, Sort.of(Sort.Order.asc("title"))))
+        CursoredPage<Book> page2 = bookRepository.find(page.nextPageable()) // <2>
+        CursoredPage<Book> pageByPagesBetween = // <3>
+                bookRepository.findByPagesBetween(400, 700, Pageable.from(0, 3))
+        Page<Book> pageByTitleStarts = // <4>
+                bookRepository.findByTitleStartingWith("The", CursoredPageable.from( 3, Sort.unsorted()))
+        // end::cursored-pageable[]
+
+        then:
+        page.getNumberOfElements() == 5
+        page2.getNumberOfElements() == 3
+        pageByPagesBetween.getNumberOfElements() == 3
+        pageByTitleStarts.getNumberOfElements() == 3
     }
 
 

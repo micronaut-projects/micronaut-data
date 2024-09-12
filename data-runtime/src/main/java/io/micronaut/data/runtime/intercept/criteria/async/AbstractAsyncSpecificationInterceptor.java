@@ -101,7 +101,7 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
     protected final CompletionStage<Number> countAsync(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
         Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
         if (asyncCriteriaOperations != null) {
-            return asyncCriteriaOperations.findOne(buildCountQuery(context)).thenApply(n -> n);
+            return asyncCriteriaOperations.findOne(buildCountQuery(context, methodJoinPaths)).thenApply(n -> n);
         }
         return asyncOperations.findOne(preparedQueryForCriteria(methodKey, context, Type.COUNT, methodJoinPaths));
     }
@@ -131,6 +131,7 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
         return asyncOperations.executeUpdate(preparedQueryForCriteria(methodKey, context, Type.UPDATE_ALL, methodJoinPaths));
     }
 
+    @Override
     protected final Argument<?> getReturnType(MethodInvocationContext<?, ?> context) {
         return findReturnType(context, Argument.OBJECT_ARGUMENT);
     }

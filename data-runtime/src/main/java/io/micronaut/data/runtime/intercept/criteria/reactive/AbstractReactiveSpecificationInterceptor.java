@@ -20,7 +20,9 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.query.JoinPath;
+import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveCriteriaCapableRepository;
@@ -53,8 +55,8 @@ public abstract class AbstractReactiveSpecificationInterceptor<T, R> extends Abs
      */
     protected AbstractReactiveSpecificationInterceptor(RepositoryOperations operations) {
         super(operations);
-        if (operations instanceof ReactiveCapableRepository) {
-            this.reactiveOperations = ((ReactiveCapableRepository) operations).reactive();
+        if (operations instanceof ReactiveCapableRepository reactiveCapableRepository) {
+            this.reactiveOperations = reactiveCapableRepository.reactive();
         } else {
             throw new DataAccessException("Datastore of type [" + operations.getClass() + "] does not support reactive operations");
         }
@@ -76,11 +78,16 @@ public abstract class AbstractReactiveSpecificationInterceptor<T, R> extends Abs
             CriteriaQuery<Object> criteriaQuery = buildQuery(context, type, methodJoinPaths);
             Pageable pageable = getPageable(context);
             if (pageable != null) {
+                if (pageable.getMode() != Mode.OFFSET) {
+                    throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported by hibernate operations");
+                }
                 return reactiveCriteriaOperations.findAll(criteriaQuery, (int) pageable.getOffset(), pageable.getSize());
             }
             return reactiveCriteriaOperations.findAll(criteriaQuery);
         }
-        return reactiveOperations.findAll(preparedQueryForCriteria(methodKey, context, type, methodJoinPaths));
+        PreparedQuery<?, ?> preparedQuery = preparedQueryForCriteria(methodKey, context, type, methodJoinPaths);
+        context.setAttribute(PREPARED_QUERY_KEY, preparedQuery);
+        return (Publisher<Object>) reactiveOperations.findAll(preparedQuery);
     }
 
     @NonNull
@@ -96,7 +103,7 @@ public abstract class AbstractReactiveSpecificationInterceptor<T, R> extends Abs
     protected final Publisher<Long> countReactive(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
         Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
         if (reactiveCriteriaOperations != null) {
-            return reactiveCriteriaOperations.findOne(buildCountQuery(context));
+            return reactiveCriteriaOperations.findOne(buildCountQuery(context, methodJoinPaths));
         }
         return reactiveOperations.findOne(preparedQueryForCriteria(methodKey, context, Type.COUNT, methodJoinPaths));
     }

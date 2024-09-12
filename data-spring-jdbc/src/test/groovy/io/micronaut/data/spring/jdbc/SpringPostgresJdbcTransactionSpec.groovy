@@ -72,6 +72,11 @@ class SpringPostgresJdbcTransactionSpec extends AbstractTransactionSpec implemen
     }
 
     @Override
+    boolean failsInsertInReadOnlyTx() {
+        return true;
+    }
+
+    @Override
     boolean cannotInsertInReadOnlyTx(Exception e) {
         assert e.cause.message == "ERROR: cannot execute INSERT in a read-only transaction"
         return true

@@ -50,7 +50,7 @@ import io.micronaut.data.cosmos.common.CosmosAccessException;
 import io.micronaut.data.cosmos.common.CosmosEntity;
 import io.micronaut.data.cosmos.common.CosmosUtils;
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration;
-import io.micronaut.data.document.model.query.builder.CosmosSqlQueryBuilder;
+import io.micronaut.data.document.model.query.builder.CosmosSqlQueryBuilder2;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
@@ -136,7 +136,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
 
     private final CosmosSerde cosmosSerde;
     private final CosmosAsyncDatabase cosmosAsyncDatabase;
-    private CosmosSqlQueryBuilder defaultCosmosSqlQueryBuilder;
+    private CosmosSqlQueryBuilder2 defaultCosmosSqlQueryBuilder;
     private final CosmosDiagnosticsProcessor cosmosDiagnosticsProcessor;
     private final boolean queryMetricsEnabled;
 
@@ -176,11 +176,11 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     @Override
     public <E, R> StoredQuery<E, R> decorate(MethodInvocationContext<?, ?> context, StoredQuery<E, R> storedQuery) {
         if (defaultCosmosSqlQueryBuilder == null) {
-            defaultCosmosSqlQueryBuilder = new CosmosSqlQueryBuilder(context.getAnnotationMetadata());
+            defaultCosmosSqlQueryBuilder = new CosmosSqlQueryBuilder2(context.getAnnotationMetadata());
         }
         String update = null;
-        if (storedQuery instanceof QueryResultStoredQuery) {
-            update = ((QueryResultStoredQuery<E, R>) storedQuery).getQueryResult().getUpdate();
+        if (storedQuery instanceof QueryResultStoredQuery<E, R> queryResultStoredQuery) {
+            update = queryResultStoredQuery.getQueryResult().getUpdate();
         }
         RuntimePersistentEntity<E> runtimePersistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
         return new CosmosSqlStoredQuery<>(storedQuery, runtimePersistentEntity, defaultCosmosSqlQueryBuilder, update);
@@ -294,7 +294,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             return result.byPage().flatMap(response -> {
                 CosmosUtils.processDiagnostics(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS, response.getCosmosDiagnostics(),
                     response.getActivityId(), response.getRequestCharge());
-                return Flux.fromIterable(response.getResults().stream().map(item -> cosmosSerde.deserialize(item, argument)).collect(Collectors.toList()));
+                return Flux.fromIterable(response.getResults().stream().map(item -> cosmosSerde.deserialize(item, argument)).toList());
             }).onErrorMap(e ->  CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS,
                 FAILED_TO_QUERY_ITEMS, e));
         }
@@ -312,7 +312,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                     return conversionService.convertRequired(item, resultType);
                 }
                 return null;
-            }).collect(Collectors.toList()));
+            }).toList());
         }).onErrorMap(e ->  CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS,
             FAILED_TO_QUERY_ITEMS, e));
     }
@@ -561,15 +561,15 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     }
 
     private <E, R> SqlPreparedQuery<E, R> getSqlPreparedQuery(PreparedQuery<E, R> preparedQuery) {
-        if (preparedQuery instanceof SqlPreparedQuery) {
-            return (SqlPreparedQuery<E, R>) preparedQuery;
+        if (preparedQuery instanceof SqlPreparedQuery<E, R> sqlPreparedQuery) {
+            return sqlPreparedQuery;
         }
         throw new IllegalStateException("Expected for prepared query to be of type: SqlPreparedQuery got: " + preparedQuery.getClass().getName());
     }
 
     private <E, R> CosmosSqlPreparedQuery<E, R> getCosmosSqlPreparedQuery(PreparedQuery<E, R> preparedQuery) {
-        if (preparedQuery instanceof CosmosSqlPreparedQuery) {
-            return (CosmosSqlPreparedQuery<E, R>) preparedQuery;
+        if (preparedQuery instanceof CosmosSqlPreparedQuery<E, R> cosmosSqlPreparedQuery) {
+            return cosmosSqlPreparedQuery;
         }
         throw new IllegalStateException("Expected for prepared query to be of type: CosmosSqlPreparedQuery got: " + preparedQuery.getClass().getName());
     }
@@ -688,38 +688,22 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
      * @return java class for the data type
      */
     private Class<?> getDataTypeClass(DataType dataType) {
-        switch (dataType) {
-            case STRING:
-            case JSON:
-                return String.class;
-            case UUID:
-                return UUID.class;
-            case LONG:
-                return Long.class;
-            case INTEGER:
-                return Integer.class;
-            case BOOLEAN:
-                return Boolean.class;
-            case BYTE:
-                return Byte.class;
-            case TIMESTAMP:
-            case DATE:
-                return Date.class;
-            case CHARACTER:
-                return Character.class;
-            case FLOAT:
-                return Float.class;
-            case SHORT:
-                return Short.class;
-            case DOUBLE:
-                return Double.class;
-            case BIGDECIMAL:
-                return BigDecimal.class;
-            case TIME:
-                return Time.class;
-            default:
-                return Object.class;
-        }
+        return switch (dataType) {
+            case STRING, JSON -> String.class;
+            case UUID -> UUID.class;
+            case LONG -> Long.class;
+            case INTEGER -> Integer.class;
+            case BOOLEAN -> Boolean.class;
+            case BYTE -> Byte.class;
+            case TIMESTAMP, DATE -> Date.class;
+            case CHARACTER -> Character.class;
+            case FLOAT -> Float.class;
+            case SHORT -> Short.class;
+            case DOUBLE -> Double.class;
+            case BIGDECIMAL -> BigDecimal.class;
+            case TIME -> Time.class;
+            default -> Object.class;
+        };
     }
 
     // Create, update, delete
@@ -882,7 +866,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     }
 
     private <T> CosmosReactiveEntityOperation<T> createCosmosInsertOneOperation(CosmosReactiveOperationContext<T> ctx, T entity) {
-        return new CosmosReactiveEntityOperation<T>(entityEventRegistry, conversionService, ctx, ctx.getPersistentEntity(), entity, true) {
+        return new CosmosReactiveEntityOperation<>(entityEventRegistry, conversionService, ctx, ctx.getPersistentEntity(), entity, true) {
 
             @Override
             protected void execute() throws RuntimeException {
@@ -895,7 +879,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                     PartitionKey partitionKey = getPartitionKey(persistentEntity, item);
                     return Mono.from(container.createItem(item, partitionKey, new CosmosItemRequestOptions())).map(response -> {
                         CosmosUtils.processDiagnostics(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.CREATE_ITEM, response.getDiagnostics(), response.getActivityId(),
-                            response.getRequestCharge());
+                                response.getRequestCharge());
                         setETagVersionIfApplicable(response, persistentEntity, d.entity);
                         return d;
                     }).onErrorMap(e -> CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.CREATE_ITEM, "Failed to insert item", e));
@@ -912,8 +896,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     }
 
     private Throwable handleCosmosOperationException(String message, Throwable e, String operationName, RuntimePersistentEntity<?> persistentEntity) {
-        if (e instanceof CosmosException) {
-            CosmosException cosmosException = (CosmosException) e;
+        if (e instanceof CosmosException cosmosException) {
             if (cosmosException.getStatusCode() == HttpResponseStatus.PRECONDITION_FAILED.code()) {
                 CosmosEntity cosmosEntity = CosmosEntity.get(persistentEntity);
                 if (cosmosEntity.getVersionField() != null) {
@@ -940,7 +923,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     }
 
     private <T> CosmosReactiveEntityOperation<T> createCosmosReactiveReplaceItemOperation(CosmosReactiveOperationContext<T> ctx, T entity) {
-        return new CosmosReactiveEntityOperation<T>(entityEventRegistry, conversionService, ctx, ctx.getPersistentEntity(), entity, false) {
+        return new CosmosReactiveEntityOperation<>(entityEventRegistry, conversionService, ctx, ctx.getPersistentEntity(), entity, false) {
 
             @Override
             protected void execute() throws RuntimeException {
@@ -954,7 +937,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                     Mono<CosmosItemResponse<ObjectNode>> replaceItemResponse = container.replaceItem(item, id, partitionKey, requestOptions);
                     return Mono.from(replaceItemResponse).map(response -> {
                         CosmosUtils.processDiagnostics(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.REPLACE_ITEM, response.getDiagnostics(), response.getActivityId(),
-                            response.getRequestCharge());
+                                response.getRequestCharge());
                         if (response.getStatusCode() != HttpResponseStatus.OK.code()) {
                             if (LOG.isWarnEnabled()) {
                                 LOG.warn("Failed to update entity with id {} in container {}", id, container.getId());
@@ -973,7 +956,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     }
 
     private <T> CosmosReactiveEntityOperation<T> createCosmosReactiveDeleteOneOperation(CosmosReactiveOperationContext<T> ctx, T entity) {
-        return new CosmosReactiveEntityOperation<T>(entityEventRegistry, conversionService, ctx, ctx.getPersistentEntity(), entity, false) {
+        return new CosmosReactiveEntityOperation<>(entityEventRegistry, conversionService, ctx, ctx.getPersistentEntity(), entity, false) {
 
             @Override
             protected void execute() throws RuntimeException {
@@ -987,7 +970,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                     Mono<CosmosItemResponse<Object>> deleteItemResponse = container.deleteItem(id, partitionKey, options);
                     return Mono.from(deleteItemResponse).map(response -> {
                         CosmosUtils.processDiagnostics(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.DELETE_ITEM, response.getDiagnostics(), response.getActivityId(),
-                            response.getRequestCharge());
+                                response.getRequestCharge());
                         if (response.getStatusCode() == HttpResponseStatus.NO_CONTENT.code()) {
                             d.rowsUpdated = 1;
                         } else {

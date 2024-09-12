@@ -76,6 +76,11 @@ public @interface TypeRole {
     String PAGE = "page";
 
     /**
+     * The parameter that is used to represent a {@link io.micronaut.data.model.CursoredPage}.
+     */
+    String CURSORED_PAGE = "cursoredPage";
+
+    /**
      * The name of the role.
      * @return The role name
      */

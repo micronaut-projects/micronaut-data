@@ -18,8 +18,13 @@ package io.micronaut.data.hibernate
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.hibernate.entities.RelPerson
 import io.micronaut.data.hibernate.entities.UserWithWhere
+import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder
+import io.micronaut.data.tck.entities.Book
+import io.micronaut.data.tck.repositories.BookSpecifications
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import jakarta.persistence.criteria.CriteriaBuilder
+import jakarta.persistence.criteria.CriteriaQuery
 
 @MicronautTest(packages = "io.micronaut.data.tck.entities", rollback = false, transactional = false)
 @Property(name = "datasources.default.name", value = "mydb")

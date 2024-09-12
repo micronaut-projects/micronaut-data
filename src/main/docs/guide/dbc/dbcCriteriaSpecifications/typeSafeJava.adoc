@@ -15,13 +15,14 @@ q.select(customer.get(Customer_.name))
 .where(cb.equal(item.get(Item_.product).get(Product_.productType), "printer"));
 ----
 
-Note that as of this writing you cannot use Micronaut Data annotations (those found in the io.micronaut.data.annotation package) to generate static JPA metadata, the only supported way is to use Jakarta Persistence annotations (located in the jakarta.persistence package) in combination with Hibernate JPA Static Metamodel Generator which will generate the metamodel even if at runtime you do not actually use Hibernate, but instead use Micronaut Data JDBC.
+Note that as of this writing you cannot use Micronaut Data annotations (those found in the io.micronaut.data.annotation package) to generate static JPA metadata, the only supported way is to use Jakarta Persistence annotations (located in the `jakarta.persistence` package) in combination with Hibernate JPA Static Metamodel Generator which will generate the metamodel even if at runtime you do not actually use Hibernate, but instead use Micronaut Data JDBC.
 
 To configure the metamodel generator simply add the following dependency to the annotation processor classpath:
 
-dependency:hibernate-jpamodelgen-jakarta[groupId="org.hibernate", scope="annotationProcessor"]
+dependency:hibernate-jpamodelgen[groupId="org.hibernate.orm", scope="annotationProcessor"]
 
-NOTE: The Hibernate 6 version of `hibernate-jpamodelgen-jakarta` is required because prior versions of Hibernate are still using the `javax.persistence` package
+NOTE: The Hibernate 6 version of `hibernate-jpamodelgen-jakarta` is required because prior versions of Hibernate are still using the `javax.persistence` package.
+For Kotlin, add the dependency in https://docs.micronaut.io/4.4.3/guide/#kaptOrKsp[kapt or ksp scope], and for Groovy add it in compileOnly scope.
 
 And we need to include the generated classes on the Java classpath to have them accessible:
 

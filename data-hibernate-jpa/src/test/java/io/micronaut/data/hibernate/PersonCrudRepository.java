@@ -43,6 +43,7 @@ public interface PersonCrudRepository extends JpaRepository<Person, Long>, Perso
     @Transactional
     List<Person> listPeople(String n);
 
+    @Override
     @Query(value = "from Person p where p.name like :n",
             countQuery = "select count(p) from Person p where p.name like :n")
     @Transactional

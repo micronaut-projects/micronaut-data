@@ -75,8 +75,8 @@ public interface QueryStatement<PS, IDX> {
                 }
                 return setString(statement, index, str);
             case INTEGER:
-                if (value instanceof Number) {
-                    return setInt(statement, index, ((Number) value).intValue());
+                if (value instanceof Number number) {
+                    return setInt(statement, index, number.intValue());
                 } else {
                     Integer integer = convertRequired(value, Integer.class);
                     if (integer != null) {
@@ -86,8 +86,8 @@ public interface QueryStatement<PS, IDX> {
                     }
                 }
             case BOOLEAN:
-                if (value instanceof Boolean) {
-                    return setBoolean(statement, index, ((Boolean) value));
+                if (value instanceof Boolean bool) {
+                    return setBoolean(statement, index, bool);
                 } else {
                     Boolean b = convertRequired(value, Boolean.class);
                     if (b != null) {
@@ -97,8 +97,8 @@ public interface QueryStatement<PS, IDX> {
                     }
                 }
             case DATE:
-                if (value instanceof Date) {
-                    return setDate(statement, index, ((Date) value));
+                if (value instanceof Date date) {
+                    return setDate(statement, index, date);
                 } else {
                     return setDate(statement, index, convertRequired(value, Date.class));
                 }
@@ -106,17 +106,17 @@ public interface QueryStatement<PS, IDX> {
                 Instant instant;
                 if (value == null) {
                     instant = null;
-                } else if (value instanceof ZonedDateTime) {
-                    instant = ((ZonedDateTime) value).toInstant();
-                } else if (value instanceof Instant) {
-                    instant = ((Instant) value);
+                } else if (value instanceof ZonedDateTime zonedDateTime) {
+                    instant = zonedDateTime.toInstant();
+                } else if (value instanceof Instant instantVal) {
+                    instant = instantVal;
                 } else {
                     instant = convertRequired(value, Instant.class);
                 }
                 return setTimestamp(statement, index, instant);
             case TIME:
-                if (value instanceof Time) {
-                    return setTime(statement, index, (Time) value);
+                if (value instanceof Time time) {
+                    return setTime(statement, index, time);
                 } else {
                     throw new DataAccessException("Invalid time: " + value);
                 }
@@ -130,8 +130,8 @@ public interface QueryStatement<PS, IDX> {
                     throw new DataAccessException("Invalid UUID: " + value);
                 }
             case DOUBLE:
-                if (value instanceof Number) {
-                    return setDouble(statement, index, ((Number) value).doubleValue());
+                if (value instanceof Number number) {
+                    return setDouble(statement, index, number.doubleValue());
                 } else {
                     Double d = convertRequired(value, Double.class);
                     if (d != null) {
@@ -141,22 +141,22 @@ public interface QueryStatement<PS, IDX> {
                     }
                 }
             case BYTE_ARRAY:
-                if (value instanceof byte[]) {
-                    return setBytes(statement, index, ((byte[]) value));
+                if (value instanceof byte[] byteArray) {
+                    return setBytes(statement, index, byteArray);
                 } else {
                     return setBytes(statement, index, convertRequired(value, byte[].class));
                 }
             case BIGDECIMAL:
-                if (value instanceof BigDecimal) {
-                    return setBigDecimal(statement, index, (BigDecimal) value);
-                } else if (value instanceof Number) {
-                    return setBigDecimal(statement, index, BigDecimal.valueOf(((Number) value).doubleValue()));
+                if (value instanceof BigDecimal decimal) {
+                    return setBigDecimal(statement, index, decimal);
+                } else if (value instanceof Number number) {
+                    return setBigDecimal(statement, index, BigDecimal.valueOf(number.doubleValue()));
                 } else {
                     return setBigDecimal(statement, index, convertRequired(value, BigDecimal.class));
                 }
             case LONG:
-                if (value instanceof Number) {
-                    return setLong(statement, index, ((Number) value).longValue());
+                if (value instanceof Number number) {
+                    return setLong(statement, index, number.longValue());
                 } else {
                     Long l = convertRequired(value, Long.class);
                     if (l != null) {
@@ -166,8 +166,8 @@ public interface QueryStatement<PS, IDX> {
                     }
                 }
             case CHARACTER:
-                if (value instanceof Character) {
-                    return setChar(statement, index, (Character) value);
+                if (value instanceof Character character) {
+                    return setChar(statement, index, character);
                 } else {
                     Character c = convertRequired(value, Character.class);
                     if (c != null) {
@@ -177,8 +177,8 @@ public interface QueryStatement<PS, IDX> {
                     }
                 }
             case FLOAT:
-                if (value instanceof Number) {
-                    return setFloat(statement, index, ((Number) value).floatValue());
+                if (value instanceof Number number) {
+                    return setFloat(statement, index, number.floatValue());
                 } else {
                     Float f = convertRequired(value, Float.class);
                     if (f != null) {
@@ -188,8 +188,8 @@ public interface QueryStatement<PS, IDX> {
                     }
                 }
             case SHORT:
-                if (value instanceof Number) {
-                    return setShort(statement, index, ((Number) value).shortValue());
+                if (value instanceof Number number) {
+                    return setShort(statement, index, number.shortValue());
                 } else {
                     Short s = convertRequired(value, Short.class);
                     if (s != null) {
@@ -199,8 +199,8 @@ public interface QueryStatement<PS, IDX> {
                     }
                 }
             case BYTE:
-                if (value instanceof Number) {
-                    return setByte(statement, index, ((Number) value).byteValue());
+                if (value instanceof Number number) {
+                    return setByte(statement, index, number.byteValue());
                 } else {
                     Byte n = convertRequired(value, Byte.class);
                     if (n != null) {
@@ -350,7 +350,7 @@ public interface QueryStatement<PS, IDX> {
     }
 
     /**
-     * Write a int value for the given name.
+     * Write an int value for the given name.
      * @param statement The statement
      * @param name The name (such as the column name)
      * @param integer The integer

@@ -51,10 +51,11 @@ public class ReactiveFindPageSpecificationInterceptor extends AbstractSpecificat
         super(operations);
     }
 
+    @Override
     protected final Pageable getPageable(MethodInvocationContext<?, ?> context) {
         final Object parameterValue = context.getParameterValues()[1];
-        if (parameterValue instanceof Pageable) {
-            return (Pageable) parameterValue;
+        if (parameterValue instanceof Pageable pageable) {
+            return pageable;
         }
         return Pageable.UNPAGED;
     }
@@ -83,7 +84,7 @@ public class ReactiveFindPageSpecificationInterceptor extends AbstractSpecificat
         return operations.withSession(session -> {
             if (pageable.isUnpaged()) {
                 return Mono.fromCompletionStage(() -> session.createQuery(query).getResultList())
-                    .map(resultList -> Page.of(resultList, pageable, resultList.size()));
+                    .map(resultList -> Page.of(resultList, pageable, (long) resultList.size()));
             }
             return Mono.fromCompletionStage(() -> {
                 Stage.SelectionQuery<Object> q = session.createQuery(query);
@@ -91,6 +92,10 @@ public class ReactiveFindPageSpecificationInterceptor extends AbstractSpecificat
                 q.setMaxResults(pageable.getSize());
                 return q.getResultList();
             }).flatMap(results -> {
+                if (!pageable.requestTotal()) {
+                    return Mono.just(Page.of(results, pageable, null));
+                }
+
                 final CriteriaQuery<Long> countQuery = criteriaBuilder.createQuery(Long.class);
                 final Root<Object> countRoot = countQuery.from(rootEntity);
                 final Predicate countPredicate = specification != null ? specification.toPredicate(countRoot, countQuery, criteriaBuilder) : null;

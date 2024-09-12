@@ -29,7 +29,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * A match context for finding a matching method.
@@ -110,7 +109,7 @@ public class MethodMatchContext extends MatchContext {
     public @NonNull List<ParameterElement> getParametersNotInRole() {
         return Arrays.stream(getParameters()).filter(p ->
             !this.parametersInRole.containsValue(p)
-        ).collect(Collectors.toList());
+        ).toList();
     }
 
     /**

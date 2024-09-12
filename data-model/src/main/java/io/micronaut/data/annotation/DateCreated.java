@@ -27,7 +27,7 @@ import java.time.temporal.ChronoUnit;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.FIELD})
 @Documented
-@AutoPopulated(updateable = false)
+@AutoPopulated(updatable = false)
 public @interface DateCreated {
     /**
      * The annotation name.

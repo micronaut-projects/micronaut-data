@@ -99,21 +99,21 @@ public @interface DataMethod {
     String META_MEMBER_PARAMETER_BINDING_PATHS = META_MEMBER_PARAMETER_BINDING + "Paths";
 
     /**
-     * The member name that holds parameter auto populated property paths.
+     * The member name that holds parameter auto-populated property paths.
      * @deprecated No longer used
      */
     @Deprecated(forRemoval = true)
     String META_MEMBER_PARAMETER_AUTO_POPULATED_PROPERTY_PATHS = META_MEMBER_PARAMETER_BINDING + "AutoPopulatedPaths";
 
     /**
-     * The member name that holds parameter auto populated property paths.
+     * The member name that holds parameter auto-populated property paths.
      * @deprecated No longer used
      */
     @Deprecated(forRemoval = true)
     String META_MEMBER_PARAMETER_AUTO_POPULATED_PREVIOUS_PROPERTY_PATHS = META_MEMBER_PARAMETER_BINDING + "AutoPopulatedPreviousPaths";
 
     /**
-     * The member name that holds parameter auto populated property paths.
+     * The member name that holds parameter auto-populated property paths.
      * @deprecated No longer used
      */
     @Deprecated(forRemoval = true)
@@ -292,7 +292,7 @@ public @interface DataMethod {
          */
         COUNT,
         /**
-         * A exists operation.
+         * An exists operation.
          */
         EXISTS,
         /**

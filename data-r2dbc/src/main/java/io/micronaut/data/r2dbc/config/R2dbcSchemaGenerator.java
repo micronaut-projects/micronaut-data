@@ -41,7 +41,6 @@ import jakarta.annotation.PostConstruct;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Schema generation for R2DBC.
@@ -122,7 +121,7 @@ public class R2dbcSchemaGenerator {
     private Mono<Void> generate(Connection connection, SchemaGenerate schemaGenerate, PersistentEntity[] entities, SqlQueryBuilder builder) {
         List<String> createStatements = Arrays.stream(entities)
                 .flatMap(entity -> Arrays.stream(builder.buildCreateTableStatements(entity)))
-                .collect(Collectors.toList());
+                .toList();
         Flux<Void> createTablesFlow = Flux.fromIterable(createStatements)
                 .concatMap(sql -> {
                     if (DataSettings.QUERY_LOG.isDebugEnabled()) {
@@ -136,25 +135,24 @@ public class R2dbcSchemaGenerator {
                                 return Mono.empty();
                             }));
                 });
-        switch (schemaGenerate) {
-            case CREATE_DROP:
+        return switch (schemaGenerate) {
+            case CREATE_DROP -> {
                 List<String> dropStatements = Arrays.stream(entities).flatMap(entity -> Arrays.stream(builder.buildDropTableStatements(entity)))
-                                                    .collect(Collectors.toList());
-                return Flux.fromIterable(dropStatements)
-                    .concatMap(sql -> {
-                        if (DataSettings.QUERY_LOG.isDebugEnabled()) {
-                            DataSettings.QUERY_LOG.debug("Dropping Table: \n{}", sql);
-                        }
-                        return execute(connection, sql)
-                            .onErrorResume((throwable -> Mono.empty()));
-                    })
-                    .thenMany(createTablesFlow)
+                        .toList();
+                yield Flux.fromIterable(dropStatements)
+                        .concatMap(sql -> {
+                            if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                                DataSettings.QUERY_LOG.debug("Dropping Table: \n{}", sql);
+                            }
+                            return execute(connection, sql)
+                                    .onErrorResume((throwable -> Mono.empty()));
+                        })
+                        .thenMany(createTablesFlow)
+                        .then();
+            }
+            default -> createTablesFlow
                     .then();
-            case CREATE:
-            default:
-                return createTablesFlow
-                    .then();
-        }
+        };
     }
 
     private Mono<Void> execute(Connection connection, String sql) {

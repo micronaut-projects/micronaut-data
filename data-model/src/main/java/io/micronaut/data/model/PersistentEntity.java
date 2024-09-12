@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.model;
 
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.ArgumentUtils;
@@ -24,11 +26,13 @@ import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
-
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
 
 import static io.micronaut.data.model.AssociationUtils.CAMEL_CASE_SPLIT_PATTERN;
 
@@ -39,7 +43,6 @@ import static io.micronaut.data.model.AssociationUtils.CAMEL_CASE_SPLIT_PATTERN;
  * @author Graeme Rocher
  * @since 1.0
  */
-@SuppressWarnings("rawtypes")
 public interface PersistentEntity extends PersistentElement {
 
     /**
@@ -47,6 +50,7 @@ public interface PersistentEntity extends PersistentElement {
      *
      * @return The entity name
      */
+    @Override
     @NonNull String getName();
 
     /**
@@ -88,6 +92,24 @@ public interface PersistentEntity extends PersistentElement {
     @Nullable PersistentProperty getIdentity();
 
     /**
+     * Returns all identity properties.
+     *
+     * @return The identity properties
+     */
+    @NonNull
+    default List<PersistentProperty> getIdentityProperties() {
+        if (getIdentity() != null) {
+            return List.of(getIdentity());
+        } else {
+            PersistentProperty[] compositeIdentity = getCompositeIdentity();
+            if (compositeIdentity != null) {
+                return List.of(compositeIdentity);
+            }
+        }
+        return List.of();
+    }
+
+    /**
      * Returns the version property.
      *
      * @return the property
@@ -121,7 +143,7 @@ public interface PersistentEntity extends PersistentElement {
                 .stream()
                 .filter(bp -> bp instanceof Association)
                 .map(bp -> (Association) bp)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -132,9 +154,9 @@ public interface PersistentEntity extends PersistentElement {
      */
     default @NonNull Collection<Embedded> getEmbedded() {
         return getPersistentProperties().stream()
-                .filter(p -> p instanceof Embedded)
+                .filter(PersistentProperty::isEmbedded)
                 .map(p -> (Embedded) p)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -218,7 +240,7 @@ public interface PersistentEntity extends PersistentElement {
     default Optional<String> getPath(String camelCasePath) {
         List<String> path = Arrays.stream(CAMEL_CASE_SPLIT_PATTERN.split(camelCasePath))
                                   .map(NameUtils::decapitalize)
-                                  .collect(Collectors.toList());
+                                  .toList();
 
         if (CollectionUtils.isNotEmpty(path)) {
             Iterator<String> i = path.iterator();
@@ -233,19 +255,19 @@ public interface PersistentEntity extends PersistentElement {
                     if (identity != null) {
                         if (identity.getName().equals(name)) {
                             sp = identity;
-                        } else if (identity instanceof Association) {
-                            PersistentEntity idEntity = ((Association) identity).getAssociatedEntity();
+                        } else if (identity instanceof Association association) {
+                            PersistentEntity idEntity = association.getAssociatedEntity();
                             sp = idEntity.getPropertyByName(name);
                         }
                     }
                 }
                 if (sp != null) {
-                    if (sp instanceof Association) {
+                    if (sp instanceof Association association) {
                         b.append(name);
                         if (i.hasNext()) {
                             b.append('.');
                         }
-                        currentEntity = ((Association) sp).getAssociatedEntity();
+                        currentEntity = association.getAssociatedEntity();
                         name = null;
                     } else if (!i.hasNext()) {
                         b.append(name);
@@ -253,7 +275,7 @@ public interface PersistentEntity extends PersistentElement {
                 }
             }
 
-            return b.length() == 0 || b.charAt(b.length() - 1) == '.' ? Optional.empty() : Optional.of(b.toString());
+            return b.isEmpty() || b.charAt(b.length() - 1) == '.' ? Optional.empty() : Optional.of(b.toString());
 
         }
         return Optional.empty();
@@ -289,8 +311,8 @@ public interface PersistentEntity extends PersistentElement {
                 if (identity != null) {
                     if (identity.getName().equals(path)) {
                         pp = identity;
-                    } else if (identity instanceof Embedded) {
-                        PersistentEntity idEntity = ((Embedded) identity).getAssociatedEntity();
+                    } else if (identity instanceof Embedded embedded) {
+                        PersistentEntity idEntity = embedded.getAssociatedEntity();
                         pp = idEntity.getPropertyByName(path);
                     }
                 }
@@ -310,8 +332,8 @@ public interface PersistentEntity extends PersistentElement {
                         return Optional.empty();
                     }
                 }
-                if (prop instanceof Association) {
-                    startingEntity = ((Association) prop).getAssociatedEntity();
+                if (prop instanceof Association association) {
+                    startingEntity = association.getAssociatedEntity();
                 }
             }
             return Optional.ofNullable(prop);
@@ -351,8 +373,8 @@ public interface PersistentEntity extends PersistentElement {
                 if (identity != null) {
                     if (identity.getName().equals(propertyName)) {
                         pp = identity;
-                    } else if (identity instanceof Embedded) {
-                        PersistentEntity idEntity = ((Embedded) identity).getAssociatedEntity();
+                    } else if (identity instanceof Embedded embedded) {
+                        PersistentEntity idEntity = embedded.getAssociatedEntity();
                         pp = idEntity.getPropertyByName(propertyName);
                         if (pp != null) {
                             return PersistentPropertyPath.of(Collections.singletonList((Embedded) identity), pp, identity.getName() + "." + pp.getName());
@@ -437,6 +459,6 @@ public interface PersistentEntity extends PersistentElement {
      */
     static @NonNull <T> RuntimePersistentEntity<T> of(@NonNull BeanIntrospection<T> introspection) {
         ArgumentUtils.requireNonNull("introspection", introspection);
-        return new RuntimePersistentEntity<T>(introspection);
+        return new RuntimePersistentEntity<>(introspection);
     }
 }

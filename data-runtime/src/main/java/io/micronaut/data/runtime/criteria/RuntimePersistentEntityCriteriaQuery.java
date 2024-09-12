@@ -17,15 +17,21 @@ package io.micronaut.data.runtime.criteria;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
-import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
-import io.micronaut.data.model.jpa.criteria.impl.query.QueryModelPredicateVisitor;
-import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.runtime.criteria.metamodel.StaticMetamodelInitializer;
 
+/**
+ * The runtime query.
+ *
+ * @param <T> The result type
+ * @author Denis Stepanov
+ * @since 4.10
+ */
 @Internal
 final class RuntimePersistentEntityCriteriaQuery<T> extends AbstractPersistentEntityCriteriaQuery<T> {
 
@@ -37,7 +43,7 @@ final class RuntimePersistentEntityCriteriaQuery<T> extends AbstractPersistentEn
                                                 StaticMetamodelInitializer staticMetamodelInitializer,
                                                 Class<T> resultType,
                                                 RuntimeEntityRegistry runtimeEntityRegistry) {
-        super(resultType);
+        super(resultType, criteriaBuilder);
         this.criteriaBuilder = criteriaBuilder;
         this.runtimeEntityRegistry = runtimeEntityRegistry;
         this.staticMetamodelInitializer = staticMetamodelInitializer;
@@ -48,19 +54,20 @@ final class RuntimePersistentEntityCriteriaQuery<T> extends AbstractPersistentEn
         return from(runtimeEntityRegistry.getEntity(entityClass));
     }
 
+    @Override
     public <X> PersistentEntityRoot<X> from(PersistentEntity persistentEntity) {
         if (entityRoot != null) {
             throw new IllegalStateException("The root entity is already specified!");
         }
         RuntimePersistentEntity<X> runtimePersistentEntity = (RuntimePersistentEntity<X>) persistentEntity;
         staticMetamodelInitializer.initializeMetadata(runtimePersistentEntity);
-        RuntimePersistentEntityRoot<X> newEntityRoot = new RuntimePersistentEntityRoot<X>(runtimePersistentEntity);
+        RuntimePersistentEntityRoot<X> newEntityRoot = new RuntimePersistentEntityRoot<>(this, runtimePersistentEntity, criteriaBuilder);
         entityRoot = newEntityRoot;
         return newEntityRoot;
     }
 
     @Override
-    protected QueryModelPredicateVisitor createPredicateVisitor(QueryModel queryModel) {
-        return new LiteralsAsParametersQueryModelPredicateVisitor(criteriaBuilder, queryModel);
+    public <U> PersistentEntitySubquery<U> subquery(Class<U> type) {
+        return new RuntimePersistentEntitySubquery<>(this, criteriaBuilder, staticMetamodelInitializer, type, runtimeEntityRegistry);
     }
 }

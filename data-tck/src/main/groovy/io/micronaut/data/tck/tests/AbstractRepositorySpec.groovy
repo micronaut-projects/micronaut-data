@@ -19,8 +19,11 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.core.util.CollectionUtils
 import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.exceptions.OptimisticLockException
+import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder
+import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder
 import io.micronaut.data.repository.jpa.criteria.DeleteSpecification
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
@@ -38,6 +41,9 @@ import io.micronaut.data.tck.entities.Company
 import io.micronaut.data.tck.entities.Country
 import io.micronaut.data.tck.entities.CountryRegion
 import io.micronaut.data.tck.entities.CountryRegionCity
+import io.micronaut.data.tck.entities.EntityIdClass
+import io.micronaut.data.tck.entities.EntityWithIdClass
+import io.micronaut.data.tck.entities.EntityWithIdClass2
 import io.micronaut.data.tck.entities.Face
 import io.micronaut.data.tck.entities.Food
 import io.micronaut.data.tck.entities.Genre
@@ -45,6 +51,8 @@ import io.micronaut.data.tck.entities.Meal
 import io.micronaut.data.tck.entities.Nose
 import io.micronaut.data.tck.entities.Page
 import io.micronaut.data.tck.entities.Person
+import io.micronaut.data.tck.entities.PersonDto
+import io.micronaut.data.tck.entities.PersonDto2
 import io.micronaut.data.tck.entities.Student
 import io.micronaut.data.tck.entities.TimezoneBasicTypes
 import io.micronaut.data.tck.jdbc.entities.Role
@@ -54,11 +62,15 @@ import io.micronaut.transaction.SynchronousTransactionManager
 import io.micronaut.transaction.TransactionCallback
 import io.micronaut.transaction.TransactionStatus
 import jakarta.persistence.criteria.CriteriaBuilder
+import jakarta.persistence.criteria.CriteriaQuery
 import jakarta.persistence.criteria.CriteriaUpdate
+import jakarta.persistence.criteria.Path
 import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Root
 import spock.lang.AutoCleanup
 import spock.lang.IgnoreIf
+import spock.lang.Issue
+import spock.lang.PendingFeature
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -68,14 +80,16 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import java.util.stream.Collectors
 
 import static io.micronaut.data.tck.repositories.BookSpecifications.hasChapter
+import static io.micronaut.data.tck.repositories.BookSpecifications.titleContains
 import static io.micronaut.data.tck.repositories.BookSpecifications.titleEquals
 import static io.micronaut.data.tck.repositories.BookSpecifications.titleEqualsWithJoin
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.distinct
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.idsIn
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEquals
+import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEqualsCaseInsensitive
+import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.personWithOnlyNameAndAgeByName
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.setIncome
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.setName
 
@@ -103,6 +117,8 @@ abstract class AbstractRepositorySpec extends Specification {
     abstract BasicTypesRepository getBasicTypeRepository()
     abstract TimezoneBasicTypesRepository getTimezoneBasicTypeRepository()
     abstract PageRepository getPageRepository()
+    abstract EntityWithIdClassRepository getEntityWithIdClassRepository()
+    abstract EntityWithIdClass2Repository getEntityWithIdClass2Repository()
 
     abstract Map<String, String> getProperties()
 
@@ -186,6 +202,23 @@ abstract class AbstractRepositorySpec extends Specification {
 
     protected boolean skipQueryByDataArray() {
         return false
+    }
+
+    void "test query with limit and offset" () {
+        given:
+            saveSampleBooks()
+        when:
+            def allBooks = bookRepository.findAll(Pageable.UNPAGED.order("title", Sort.Order.Direction.ASC))
+        then:
+            allBooks.totalSize == 6
+        when:
+            def books = bookRepository.findBooks(2, 2)
+        then:
+            books.collect { it.id } == allBooks.toList().subList(2, 4).collect { it.id }
+        when:
+            books = bookRepository.findBooks(Integer.MAX_VALUE, 0)
+        then:
+            books.collect { it.id } == allBooks.toList().collect { it.id }
     }
 
     void "test save and retrieve basic types"() {
@@ -517,10 +550,24 @@ abstract class AbstractRepositorySpec extends Specification {
 
         when:
         def book = bookDtoRepository.findByTitleWithQuery("The Stand")
-
         then:
         book.isPresent()
         book.get().title == "The Stand"
+
+        when:"Find projection cursored"
+        bookDtoRepository.findTitle(CursoredPageable.from(10, null))
+        then:"Exception is thrown"
+        thrown(IllegalStateException)
+
+        when:"Find dto without id property that is needed for cursors"
+        bookDtoRepository.findAll(CursoredPageable.from(10, null))
+        then:"Exception is thrown"
+        thrown(IllegalStateException)
+
+        when:"Find DTOs cursored"
+        def bookDtos = bookDtoRepository.findAllByTitle("The Stand", CursoredPageable.from(10, null))
+        then:"Successfully returned cursored page with DTOs as a result"
+        !bookDtos.empty
 
         cleanup:
         cleanupData()
@@ -736,6 +783,30 @@ abstract class AbstractRepositorySpec extends Specification {
         people.get(0).name == "Abc"
     }
 
+    void "test custom single insert expression"() {
+        given:
+        personRepository.saveCustomSingleExpression(new Person(name: "Abc", age: 12))
+
+        when:
+        def people = personRepository.findAll()
+
+        then:
+        people.size() == 1
+        people.get(0).name == "AbcXYZ"
+    }
+
+    void "test custom single insert expression 2"() {
+        given:
+        personRepository.saveCustomSingleExpression2("Abc", "12")
+
+        when:
+        def people = personRepository.findAll()
+
+        then:
+        people.size() == 1
+        people.get(0).name == "AbcXYZ"
+    }
+
     void "test custom update"() {
         given:
         savePersons(["Dennis", "Jeff", "James", "Dennis"])
@@ -810,6 +881,31 @@ abstract class AbstractRepositorySpec extends Specification {
         def james = people.find {it.name == "James"}
         james.name = "DoNotDelete"
         deleted = personRepository.deleteCustomSingle(james)
+        people = personRepository.findAll()
+
+        then:
+        deleted == 0
+        people.size() == 3
+    }
+
+    void "test custom delete single expression"() {
+        given:
+        savePersons(["Dennis", "Jeff", "James", "Dennis"])
+
+        when:
+        def people = personRepository.findAll()
+        def jeff = people.find {it.name == "Jeff"}
+        def deleted = personRepository.deleteCustomSingleExpression(jeff)
+        people = personRepository.findAll()
+
+        then:
+        deleted == 1
+        people.size() == 3
+
+        when:
+        def james = people.find {it.name == "James"}
+        james.name = "DoNotDelete"
+        deleted = personRepository.deleteCustomSingleExpression(james)
         people = personRepository.findAll()
 
         then:
@@ -1062,7 +1158,7 @@ abstract class AbstractRepositorySpec extends Specification {
         List<Author> authors = transactionManager.get().executeRead(new TransactionCallback<Connection, List<Author>>() {
             @Override
             List<Author> call(TransactionStatus<Connection> status) throws Exception {
-                authorRepository.queryByNameContains("e").collect(Collectors.toList())
+                authorRepository.queryByNameContains("e").toList()
             }
         })
 
@@ -1073,7 +1169,7 @@ abstract class AbstractRepositorySpec extends Specification {
         List<Author> emptyAuthors = transactionManager.get().executeRead(new TransactionCallback<Connection, List<Author>>() {
             @Override
             List<Author> call(TransactionStatus<Connection> status) throws Exception {
-                authorRepository.queryByNameContains("x").collect(Collectors.toList())
+                authorRepository.queryByNameContains("x").toList()
             }
         })
 
@@ -1361,7 +1457,7 @@ abstract class AbstractRepositorySpec extends Specification {
             def authors = transactionManager.get().executeRead(new TransactionCallback<Connection, List<Author>>() {
                 @Override
                 List<Author> call(TransactionStatus<Connection> status) throws Exception {
-                    authorRepository.queryByIdIsNotNull().collect(Collectors.toList())
+                    authorRepository.queryByIdIsNotNull().toList()
                 }
             })
 
@@ -2340,7 +2436,58 @@ abstract class AbstractRepositorySpec extends Specification {
             !existsNotPredicateSpec
             existsQuerySpec
             !existsNotQuerySpec
+    }
 
+    void "test criteria select" () {
+        when:
+            personRepository.save(new Person(name: "Denis", age: 123, income: 10000, enabled: false))
+            def person = personRepository.findOne(personWithOnlyNameAndAgeByName("Denis")).get()
+        then:
+            person.id == null
+            person.income == null
+            person.name == "Denis"
+            person.age == 123
+            !person.income
+            person.enabled
+    }
+
+    void "test criteria DTO projection"() {
+        when:
+            personRepository.deleteAll()
+            personRepository.save(new Person(name: "Fred1", age: 50))
+            personRepository.save(new Person(name: "Fred2", age: 18))
+        then:
+            def dto = personRepository.findOne(new CriteriaQueryBuilder<PersonDto>() {
+                @Override
+                CriteriaQuery<PersonDto> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(PersonDto)
+                    def root = query.from(Person)
+                    query.multiselect(root.<Integer>get("age"))
+                    query.where(criteriaBuilder.equal(root.<String>get("name"), "Fred1"))
+                    return query
+                }
+            })
+            dto.age == 50
+    }
+
+    void "test criteria DTO projection 2"() {
+        when:
+            personRepository.deleteAll()
+            personRepository.save(new Person(name: "Fred1", age: 50))
+            personRepository.save(new Person(name: "Fred2", age: 18))
+        then:
+            def dto = personRepository.findOne(new CriteriaQueryBuilder<PersonDto2>() {
+                @Override
+                CriteriaQuery<PersonDto2> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(PersonDto2)
+                    def root = query.from(Person)
+                    query.multiselect(root.<String>get("name"), root.<Integer>get("age"))
+                    query.where(criteriaBuilder.equal(root.<String>get("name"), "Fred1"))
+                    return query
+                }
+            })
+            dto.name() == "Fred1"
+            dto.age() == 50
     }
 
     void "test join/fetch"() {
@@ -2365,6 +2512,7 @@ abstract class AbstractRepositorySpec extends Specification {
         when:
         def bookLoadedUsingFindAllByGenre = bookRepository.findAllByGenre(genre).get(0)
         def bookLoadedUsingFindOneWithCriteriaApi = bookRepository.findOne(titleEquals(book.title)).get()
+        def bookLoadedUsingFindOneWithContainsCriteriaApi = bookRepository.findOne(titleContains(book.title)).orElse(null)
         def bookNotFoundUsingFindOneWithCriteriaApi = bookRepository.findOne(titleEquals("non_existing_book_" + System.currentTimeMillis()))
         def bookLoadedUsingFindAllWithCriteriaApi = bookRepository.findAll(titleEquals(book.title)).get(0)
         def bookLoadedUsingFindAllByCriteriaWithoutAnnotationJoin = bookRepository.findAllByCriteria(titleEqualsWithJoin(book.title)).get(0)
@@ -2378,6 +2526,8 @@ abstract class AbstractRepositorySpec extends Specification {
         bookLoadedUsingFindAllByGenre.genre.genreName != null
         bookLoadedUsingFindOneWithCriteriaApi != null
         bookLoadedUsingFindOneWithCriteriaApi.genre.genreName == genre.genreName
+        bookLoadedUsingFindOneWithContainsCriteriaApi != null
+        bookLoadedUsingFindOneWithContainsCriteriaApi.title == bookLoadedUsingFindOneWithCriteriaApi.title
         bookNotFoundUsingFindOneWithCriteriaApi.present == false
         bookLoadedUsingFindAllWithCriteriaApi != null
         bookLoadedUsingFindAllWithCriteriaApi.genre.genreName == genre.genreName
@@ -2504,6 +2654,12 @@ abstract class AbstractRepositorySpec extends Specification {
         book2.getStudents().add(student)
         bookRepository.save(book1)
         bookRepository.save(book2)
+        def otherStudent = new Student("Ioana")
+        studentRepository.save(otherStudent)
+        when:
+        def students = studentRepository.queryByName(otherStudent.name, Pageable.from(0, 2))
+        then:
+        students.size() == 1
         when:
         def loadedStudent = studentRepository.findByName(student.name).get()
         def loadedBook1 = bookRepository.findById(book1.id).get()
@@ -2519,6 +2675,10 @@ abstract class AbstractRepositorySpec extends Specification {
         loadedBook2
         loadedBook2.title == book2.title
         loadedBook2.id == book2.id
+        when:
+        students = studentRepository.queryByName(student.name, Pageable.from(0, 2))
+        then:
+        students.size() == 1
         cleanup:
         studentRepository.delete(student)
         bookRepository.delete(book1)
@@ -2566,6 +2726,8 @@ abstract class AbstractRepositorySpec extends Specification {
         mealRepository.deleteById(meal.mid)
     }
 
+    @PendingFeature(reason = "Until fixed issue with count and joins")
+    @Issue("https://github.com/micronaut-projects/micronaut-data/issues/1882")
     void "test author page total size"() {
         given:
         def author = new Author()
@@ -2587,6 +2749,31 @@ abstract class AbstractRepositorySpec extends Specification {
         authorPage.content.size() == 1
         authorPage.content[0].books.size() == 2
         bookPage.totalSize == 2
+    }
+
+    void "test pageable with join criteria"() {
+        given:
+        def author = new Author()
+        author.name = "author1"
+        authorRepository.save(author)
+        def book1 = new Book()
+        book1.title = "book1"
+        book1.totalPages = 120
+        book1.author = author
+        def book2 = new Book()
+        book2.title = "book2"
+        book2.author = author
+        book2.totalPages = 120
+        bookRepository.save(book1)
+        bookRepository.save(book2)
+        when:
+        def authorPage = authorRepository.findByBooksTotalPages(120, CursoredPageable.from(10, null))
+        then:
+        !authorPage.empty
+        // TODO: Currently does not return correct total counts due to https://github.com/micronaut-projects/micronaut-data/issues/1882
+        // so once it is fixed check totalCount == 1
+        authorPage.cursors.size() == 1
+        authorPage.content.size() == 1
     }
 
     void 'test @Where and count'() {
@@ -2632,6 +2819,367 @@ abstract class AbstractRepositorySpec extends Specification {
         cnt == 2
         cleanup:
         cleanupData()
+    }
+
+     void "entity with id class"() {
+        given:
+        entityWithIdClassRepository.deleteAll()
+        EntityWithIdClass e = new EntityWithIdClass()
+        e.id1 = 11
+        e.id2 = 22
+        e.name = "Xyz"
+        EntityWithIdClass f = new EntityWithIdClass()
+        f.id1 = 33
+        f.id2 = e.id2
+        f.name = "Xyz"
+        EntityWithIdClass g = new EntityWithIdClass()
+        g.id1 = e.id1
+        g.id2 = 44
+        g.name = "Xyz"
+        EntityIdClass k = new EntityIdClass()
+        k.id1 = 11
+        k.id2 = 22
+
+        when:
+        entityWithIdClassRepository.save(e)
+        e = entityWithIdClassRepository.findById(k).get()
+
+        then:
+        e.id1 == 11
+        e.id2 == 22
+        e.name == "Xyz"
+
+        when:
+        entityWithIdClassRepository.save(f)
+        List<EntityWithIdClass> ef = entityWithIdClassRepository.findById2(e.id2)
+
+        then:
+        ef.size() == 2
+
+        when:
+        entityWithIdClassRepository.save(g)
+        List<EntityWithIdClass> eg = entityWithIdClassRepository.findById1(e.id1)
+
+        then:
+        eg.size() == 2
+
+        when:
+        e.name = "abc"
+        entityWithIdClassRepository.update(e)
+        e = entityWithIdClassRepository.findById(k).get()
+
+        then:
+        e.id1 == 11
+        e.id2 == 22
+        e.name == "abc"
+
+        when:
+        def cnt = entityWithIdClassRepository.count()
+        def cntDistinct = entityWithIdClassRepository.countDistinct()
+        def cntDistinctName = entityWithIdClassRepository.countDistinctName()
+
+        then:
+        cnt == 3
+        cntDistinct <= cnt
+        cntDistinctName <= cntDistinctName
+
+        when:
+        entityWithIdClassRepository.delete(e)
+        def result = entityWithIdClassRepository.findById(k)
+
+        then:
+        !result.isPresent()
+
+         cleanup:
+         entityWithIdClassRepository.deleteAll()
+    }
+
+     void "entity with id class 2"() {
+        given:
+        entityWithIdClass2Repository.deleteAll()
+        EntityWithIdClass2 e = new EntityWithIdClass2(11, 22, "Xyz")
+        EntityWithIdClass2 f = new EntityWithIdClass2(33, e.id2(), "Xyz")
+        EntityWithIdClass2 g = new EntityWithIdClass2(e.id1(), 44, "Xyz")
+        EntityIdClass k = new EntityIdClass()
+        k.id1 = 11
+        k.id2 = 22
+
+        when:
+        entityWithIdClass2Repository.save(e)
+        e = entityWithIdClass2Repository.findById(k).get()
+
+        then:
+        e.id1() == 11
+        e.id2() == 22
+        e.name() == "Xyz"
+
+        when:
+        entityWithIdClass2Repository.save(f)
+        List<EntityWithIdClass2> ef = entityWithIdClass2Repository.findById2(e.id2())
+
+        then:
+        ef.size() == 2
+
+        when:
+        entityWithIdClass2Repository.save(g)
+        List<EntityWithIdClass2> eg = entityWithIdClass2Repository.findById1(e.id1())
+
+        then:
+        eg.size() == 2
+
+        when:
+        entityWithIdClass2Repository.update(new EntityWithIdClass2(e.id1(), e.id2(), "abc"))
+        e = entityWithIdClass2Repository.findById(k).get()
+
+        then:
+        e.id1() == 11
+        e.id2() == 22
+        e.name() == "abc"
+
+        when:
+        def cnt = entityWithIdClass2Repository.count()
+        def cntDistinct = entityWithIdClass2Repository.countDistinct()
+        def cntDistinctName = entityWithIdClass2Repository.countDistinctName()
+
+        then:
+        cnt == 3
+        cntDistinct <= cnt
+        cntDistinctName <= cntDistinctName
+
+        when:
+        entityWithIdClass2Repository.delete(e)
+        def result = entityWithIdClass2Repository.findById(k)
+
+        then:
+        !result.isPresent()
+
+         cleanup:
+         entityWithIdClass2Repository.deleteAll()
+    }
+
+    void "test criteria functions"() {
+        when:
+            personRepository.deleteAll()
+            personRepository.save(new Person(name: "Fred1", age: 50))
+            personRepository.save(new Person(name: "Fred2", age: 18))
+        then:
+            def count = personRepository.findOne(new CriteriaQueryBuilder<Long>() {
+                @Override
+                CriteriaQuery<Long> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(Long)
+                    def root = query.from(Person)
+                    query.select(criteriaBuilder.function("MAX", Long, root.get("age")))
+                    return query
+                }
+            })
+            count == 50
+    }
+
+    void "test sum function"() {
+        when:
+            personRepository.deleteAll()
+            personRepository.save(new Person(name: "Fred1", age: 50))
+            personRepository.save(new Person(name: "Fred2", age: 18))
+        then:
+            def count = personRepository.findOne(new CriteriaQueryBuilder<Long>() {
+                @Override
+                CriteriaQuery<Long> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(Long)
+                    def root = query.from(Person)
+                    query.select(criteriaBuilder.sum(root.<Integer>get("age"), 100))
+                    query.where(criteriaBuilder.equal(root.<String>get("name"), "Fred1"))
+                    return query
+                }
+            })
+            count == 150
+    }
+
+    void "test concat function"() {
+        when:
+            personRepository.deleteAll()
+            personRepository.save(new Person(name: "Fred1", age: 50))
+            personRepository.save(new Person(name: "Fred2", age: 18))
+        then:
+            def name = personRepository.findOne(new CriteriaQueryBuilder<String>() {
+                @Override
+                CriteriaQuery<String> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(String)
+                    def root = query.from(Person)
+                    query.select(criteriaBuilder.concat(root.<String>get("name"), "Xyz"))
+                    query.where(criteriaBuilder.equal(root.<String>get("name"), "Fred1"))
+                    return query
+                }
+            })
+            name == "Fred1Xyz"
+    }
+
+    void "test like function"() {
+        when:
+            personRepository.deleteAll()
+            personRepository.save(new Person(name: "Fr_dA1", age: 50))
+            personRepository.save(new Person(name: "Fr_dA2", age: 18))
+            personRepository.save(new Person(name: "Fr_dB1", age: 18))
+            personRepository.save(new Person(name: "Fr_dB2", age: 18))
+        then:
+            def names = personRepository.findAll(new CriteriaQueryBuilder<String>() {
+                @Override
+                CriteriaQuery<String> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(String)
+                    def root = query.from(Person)
+                    def name = root.<String> get("name")
+                    query.select(name)
+                    query.where(criteriaBuilder.like(
+                            name,
+                            "%r\\_dA%",
+                            '\\' as char
+                    ))
+                    return query
+                }
+            })
+            names.toSet() == ["Fr_dA1", "Fr_dA2"].toSet()
+
+        when:
+            def negatedNames = personRepository.findAll(new CriteriaQueryBuilder<String>() {
+                @Override
+                CriteriaQuery<String> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(String)
+                    def root = query.from(Person)
+                    def name = root.<String> get("name")
+                    query.select(name)
+                    query.where(criteriaBuilder.notLike(
+                            name,
+                            "%r\\_dA%",
+                            '\\' as char
+                    ))
+                    return query
+                }
+            })
+        then:
+            negatedNames.toSet() == ["Fr_dB1", "Fr_dB2"].toSet()
+
+        when:
+            negatedNames = personRepository.findAll(new CriteriaQueryBuilder<String>() {
+                @Override
+                CriteriaQuery<String> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(String)
+                    def root = query.from(Person)
+                    def name = root.<String> get("name")
+                    query.select(name)
+                    query.where(criteriaBuilder.like(
+                            name,
+                            "%r\\_dA%",
+                            '\\' as char
+                    ).not())
+                    return query
+                }
+            })
+        then:
+            negatedNames.toSet() == ["Fr_dB1", "Fr_dB2"].toSet()
+
+        if (personRepository.getClass().getSimpleName().contains("MS")) {
+            // SQL server case sensitivity is based on the column configuration
+            return
+        }
+        if (personRepository.getClass().getSimpleName().contains("MySql")) {
+            // MySQL Like is case insensitive by default
+            return
+        }
+
+        when:
+            def caseSensitiveNames = personRepository.findAll(new CriteriaQueryBuilder<String>() {
+                @Override
+                CriteriaQuery<String> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(String)
+                    def root = query.from(Person)
+                    def name = root.<String> get("name")
+                    query.select(name)
+                    query.where(criteriaBuilder.like(
+                            name,
+                            "%db%",
+                    ))
+                    return query
+                }
+            })
+        then:
+            caseSensitiveNames.isEmpty()
+
+        when:
+            def ilikeNames = personRepository.findAll(new CriteriaQueryBuilder<String>() {
+                @Override
+                CriteriaQuery<String> build(CriteriaBuilder criteriaBuilder) {
+                    PersistentEntityCriteriaBuilder cb = criteriaBuilder
+                    def query = criteriaBuilder.createQuery(String)
+                    def root = query.from(Person)
+                    def name = root.<String> get("name")
+                    query.select(name)
+                    query.where(cb.ilike(
+                            name,
+                            "%db%",
+                    ))
+                    return query
+                }
+            })
+        then:
+            ilikeNames.toSet() == ["Fr_dB1", "Fr_dB2"].toSet()
+    }
+
+    void "test data with datetime fields and custom time zone"() {
+        given:
+        def defaultTimeZone = TimeZone.getDefault()
+        TimeZone.setDefault(TimeZone.getTimeZone("Europe/Berlin"))
+        when: "we save a new entity"
+        def entity = basicTypeRepository.save(new BasicTypes())
+
+        then: "The ID is assigned"
+        entity.myId != null
+
+        when: "An entity is found"
+        def retrievedEntity = basicTypeRepository.findById(entity.myId).orElse(null)
+
+        then: "The found entity is correct"
+        retrievedEntity.uuid == entity.uuid
+        retrievedEntity.bigDecimal == entity.bigDecimal
+        retrievedEntity.byteArray == entity.byteArray
+        retrievedEntity.charSequence == entity.charSequence
+        retrievedEntity.charset == entity.charset
+        retrievedEntity.primitiveBoolean == entity.primitiveBoolean
+        retrievedEntity.primitiveByte == entity.primitiveByte
+        retrievedEntity.primitiveChar == entity.primitiveChar
+        retrievedEntity.primitiveDouble == entity.primitiveDouble
+        retrievedEntity.primitiveFloat == entity.primitiveFloat
+        retrievedEntity.primitiveInteger == entity.primitiveInteger
+        retrievedEntity.primitiveLong == entity.primitiveLong
+        retrievedEntity.primitiveShort == entity.primitiveShort
+        retrievedEntity.wrapperBoolean == entity.wrapperBoolean
+        retrievedEntity.wrapperByte == entity.wrapperByte
+        retrievedEntity.wrapperChar == entity.wrapperChar
+        retrievedEntity.wrapperDouble == entity.wrapperDouble
+        retrievedEntity.wrapperFloat == entity.wrapperFloat
+        retrievedEntity.wrapperInteger == entity.wrapperInteger
+        retrievedEntity.wrapperLong == entity.wrapperLong
+        retrievedEntity.uri == entity.uri
+        retrievedEntity.url == entity.url
+        retrievedEntity.instant == entity.instant
+        retrievedEntity.localDateTime == entity.localDateTime
+        retrievedEntity.zonedDateTime == entity.zonedDateTime
+        retrievedEntity.offsetDateTime == entity.offsetDateTime
+        retrievedEntity.dateCreated == entity.dateCreated
+        retrievedEntity.dateUpdated == entity.dateUpdated
+
+        cleanup:
+        basicTypeRepository.deleteById(entity.myId)
+        TimeZone.setDefault(defaultTimeZone)
+    }
+
+    void "find by joined entity in list"() {
+        given:
+        saveSampleBooks()
+
+        when:
+        def author = authorRepository.findByName("Stephen King")
+        def books = bookRepository.findByAuthorInList(List.of(author))
+        then:
+        books.size() > 0
     }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {

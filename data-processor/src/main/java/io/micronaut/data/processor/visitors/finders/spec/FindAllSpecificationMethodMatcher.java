@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.processor.visitors.finders.spec;
 
+import java.util.regex.Matcher;
+
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.intercept.annotation.DataMethod;
@@ -49,8 +51,8 @@ public class FindAllSpecificationMethodMatcher extends AbstractSpecificationMeth
     }
 
     @Override
-    protected MethodMatch match(MethodMatchContext matchContext, java.util.regex.Matcher matcher) {
-        if (TypeUtils.doesMethodProducesIterableOfAnEntityOrDto(matchContext.getMethodElement()) && isCorrectParameters(matchContext.getMethodElement())) {
+    protected MethodMatch match(MethodMatchContext matchContext, Matcher matcher) {
+        if (TypeUtils.doesMethodProducesIterable(matchContext.getMethodElement()) && isCorrectParameters(matchContext.getMethodElement())) {
             if (isFirstParameterMicronautDataQuerySpecification(matchContext.getMethodElement())) {
                 FindersUtils.InterceptorMatch e = FindersUtils.pickFindAllSpecInterceptor(matchContext, matchContext.getReturnType());
                 return mc -> new MethodMatchInfo(DataMethod.OperationType.QUERY, e.returnType(), e.interceptor());
@@ -76,15 +78,12 @@ public class FindAllSpecificationMethodMatcher extends AbstractSpecificationMeth
     private boolean isCorrectParameters(@NonNull MethodElement methodElement) {
         final ParameterElement[] parameters = methodElement.getParameters();
         final int len = parameters.length;
-        switch (len) {
-            case 1:
-                return true;
-            case 2:
-                return parameters[1].getType().isAssignable("org.springframework.data.domain.Sort") ||
-                        parameters[1].getType().isAssignable("io.micronaut.data.model.Sort");
-            default:
-                return false;
-        }
+        return switch (len) {
+            case 1 -> true;
+            case 2 -> parameters[1].getType().isAssignable("org.springframework.data.domain.Sort")
+                    || parameters[1].getType().isAssignable("io.micronaut.data.model.Sort");
+            default -> false;
+        };
     }
 
     @Override

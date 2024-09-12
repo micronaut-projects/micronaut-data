@@ -66,7 +66,7 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
     /**
      * Saves all given entities, possibly returning new instances representing the saved state.
      *
-     * @param entities The entities to saved. Must not be {@literal null}.
+     * @param entities The entities to save. Must not be {@literal null}.
      * @param <S> The generic type
      * @return The saved entities objects. will never be {@literal null}.
      */

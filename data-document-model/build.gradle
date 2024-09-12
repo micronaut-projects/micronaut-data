@@ -9,4 +9,6 @@ dependencies {
     api mn.micronaut.aop
     api projects.micronautDataModel
     api mnSerde.micronaut.serde.api
+
+    compileOnly(libs.managed.jakarta.persistence.api)
 }

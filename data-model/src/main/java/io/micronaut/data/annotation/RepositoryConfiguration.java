@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.annotation;
 
+import io.micronaut.data.model.CursoredPage;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Slice;
@@ -59,7 +60,8 @@ public @interface RepositoryConfiguration {
             @TypeRole(role = TypeRole.PAGEABLE, type = Pageable.class),
             @TypeRole(role = TypeRole.SORT, type = Sort.class),
             @TypeRole(role = TypeRole.SLICE, type = Slice.class),
-            @TypeRole(role = TypeRole.PAGE, type = Page.class)
+            @TypeRole(role = TypeRole.PAGE, type = Page.class),
+            @TypeRole(role = TypeRole.CURSORED_PAGE, type = CursoredPage.class)
     };
 
     /**

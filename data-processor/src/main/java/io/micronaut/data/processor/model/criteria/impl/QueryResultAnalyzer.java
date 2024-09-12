@@ -16,13 +16,17 @@
 package io.micronaut.data.processor.model.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
-import io.micronaut.data.model.jpa.criteria.impl.IdExpression;
-import io.micronaut.data.model.jpa.criteria.impl.LiteralExpression;
-import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitable;
+import io.micronaut.data.model.jpa.criteria.impl.IParameterExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
-import io.micronaut.data.model.jpa.criteria.impl.selection.AggregateExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.processor.model.SourceAssociation;
@@ -30,7 +34,7 @@ import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
 import io.micronaut.inject.ast.ClassElement;
-import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Expression;
 
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requireProperty;
 
@@ -49,21 +53,17 @@ final class QueryResultAnalyzer implements SelectionVisitor {
     }
 
     @Override
-    public void visit(Predicate predicate) {
-    }
-
-    @Override
     public void visit(PersistentPropertyPath<?> persistentPropertyPath) {
         if (persistentPropertyPath.getProperty() instanceof SourceAssociation sourceAssociation) {
             queryResultTypeName = sourceAssociation.getAssociatedEntity().getType().getName();
         } else {
-            queryResultTypeName = ((SourcePersistentPropertyPath) persistentPropertyPath).getProperty().getType().getName();
+            queryResultTypeName = ((SourcePersistentPropertyPath<?>) persistentPropertyPath).getProperty().getType().getName();
         }
     }
 
     @Override
     public void visit(AliasedSelection<?> aliasedSelection) {
-        ((SelectionVisitable) aliasedSelection.getSelection()).accept(this);
+        aliasedSelection.getSelection().visitSelection(this);
     }
 
     @Override
@@ -72,29 +72,39 @@ final class QueryResultAnalyzer implements SelectionVisitor {
     }
 
     @Override
-    public void visit(AggregateExpression<?, ?> aggregateExpression) {
-        switch (aggregateExpression.getType()) {
+    public void visit(PersistentEntitySubquery<?> subquery) {
+
+    }
+
+    @Override
+    public void visit(UnaryExpression<?> unaryExpression) {
+        switch (unaryExpression.getType()) {
             case COUNT:
             case COUNT_DISTINCT:
                 queryResultTypeName = Long.class.getName();
                 break;
             case MAX:
             case MIN:
-                queryResultTypeName = requireProperty(aggregateExpression.getExpression()).getProperty().getTypeName();
+            case LOWER:
+            case UPPER:
+                queryResultTypeName = requireProperty(unaryExpression.getExpression()).getProperty().getTypeName();
                 break;
             case SUM:
             case AVG:
-                ClassElement type = ((SourcePersistentProperty) requireProperty(aggregateExpression.getExpression()).getProperty()).getType();
-                if (aggregateExpression.getExpressionType() != null) {
-                    queryResultTypeName = aggregateExpression.getExpressionType().getName();
-                }
-                if (TypeUtils.isNumber(type)) {
-                    queryResultTypeName = Number.class.getName();
-                } else {
-                    queryResultTypeName = type.getName();
-                }
+                Expression<?> expression = unaryExpression.getExpression();
+                queryResultTypeName = unaryExpression.getExpressionType().getName();
+                analyzeExpression(expression);
                 break;
             default:
+        }
+    }
+
+    private void analyzeExpression(Expression<?> expression) {
+        ClassElement type = ((SourcePersistentProperty) requireProperty(expression).getProperty()).getType();
+        if (TypeUtils.isNumber(type)) {
+            queryResultTypeName = Number.class.getName();
+        } else {
+            queryResultTypeName = type.getName();
         }
     }
 
@@ -102,7 +112,7 @@ final class QueryResultAnalyzer implements SelectionVisitor {
     public void visit(CompoundSelection<?> compoundSelection) {
         if (compoundSelection.getCompoundSelectionItems().size() == 1) {
             // Multiple selection shouldn't result in one type
-            compoundSelection.getCompoundSelectionItems().forEach(s -> ((SelectionVisitable) s).accept(this));
+            compoundSelection.getCompoundSelectionItems().forEach(s -> ((ISelection<?>) s).visitSelection(this));
         }
     }
 
@@ -119,4 +129,15 @@ final class QueryResultAnalyzer implements SelectionVisitor {
         }
         queryResultTypeName = persistentEntity.getIdentity().getType().getName();
     }
+
+    @Override
+    public void visit(BinaryExpression<?> binaryExpression) {
+        queryResultTypeName = binaryExpression.getJavaType().getName();
+    }
+
+    @Override
+    public void visit(FunctionExpression<?> functionExpression) {
+        queryResultTypeName = functionExpression.getJavaType().getName();
+    }
+
 }

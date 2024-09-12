@@ -94,7 +94,7 @@ final class ReactiveHibernateHelper {
         return monoFromCompletionStage(query::getSingleResult);
     }
 
-    Mono<Integer> executeUpdate(Stage.Query<Object> query) {
+    Mono<Integer> executeUpdate(Stage.MutationQuery query) {
         return monoFromCompletionStage(query::executeUpdate);
     }
 

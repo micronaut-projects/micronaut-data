@@ -38,7 +38,7 @@ class HibernateTransactionSpec extends AbstractTransactionSpec implements TestRe
     @Override
     Map<String, String> getProperties() {
         return TestResourcesDatabaseTestPropertyProvider.super.getProperties() + [
-                "datasources.default.name"                     : "mydb",
+                "datasources.default.name"                     : "mypgdb",
                 'jpa.default.properties.hibernate.hbm2ddl.auto': 'create-drop',
                 'jpa.default.properties.hibernate.dialect'     : 'org.hibernate.dialect.PostgreSQLDialect'
         ]

@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.hibernate.reactive.operations;
 
+import io.micronaut.aop.InvocationContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
@@ -34,7 +35,6 @@ import io.micronaut.data.model.runtime.InsertBatchOperation;
 import io.micronaut.data.model.runtime.InsertOperation;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
-import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.StoredQuery;
@@ -273,8 +273,15 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     @Override
     public <T> Mono<T> persist(InsertOperation<T> operation) {
         return operation(session -> {
+            StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
             T entity = operation.getEntity();
-            Mono<T> result = helper.persist(session, entity);
+            Mono<T> result;
+            if (storedQuery != null) {
+                result = executeEntityUpdate(session, storedQuery, operation.getInvocationContext(), entity)
+                    .thenReturn(entity);
+            } else {
+                result = helper.persist(session, entity);
+            }
             return flushIfNecessary(result, session, operation.getAnnotationMetadata());
         });
     }
@@ -286,7 +293,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
             T entity = operation.getEntity();
             Mono<T> result;
             if (storedQuery != null) {
-                result = executeEntityUpdate(session, storedQuery, entity)
+                result = executeEntityUpdate(session, storedQuery, operation.getInvocationContext(), entity)
                         .thenReturn(entity);
             } else {
                 result = helper.merge(session, entity);
@@ -295,11 +302,12 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
         });
     }
 
-    private Mono<Integer> executeEntityUpdate(Stage.Session session, StoredQuery<?, ?> storedQuery, Object entity) {
-        Stage.Query<Object> query = session.createQuery(storedQuery.getQuery());
-        for (QueryParameterBinding queryParameterBinding : storedQuery.getQueryBindings()) {
-            query.setParameter(queryParameterBinding.getRequiredName(), getParameterValue(queryParameterBinding.getRequiredPropertyPath(), entity));
-        }
+    private <T> Mono<Integer> executeEntityUpdate(Stage.Session session,
+                                                  StoredQuery<T, ?> storedQuery,
+                                                  InvocationContext<?, ?> invocationContext,
+                                                  T entity) {
+        Stage.MutationQuery query = session.createMutationQuery(storedQuery.getQuery());
+        bindParameters(query, storedQuery, invocationContext, true, entity);
         return helper.executeUpdate(query);
     }
 
@@ -310,7 +318,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
             Flux<T> result;
             if (storedQuery != null) {
                 result = Flux.fromIterable(operation)
-                        .concatMap(t -> executeEntityUpdate(session, storedQuery, t).thenReturn(t));
+                        .concatMap(t -> executeEntityUpdate(session, storedQuery, operation.getInvocationContext(), t).thenReturn(t));
             } else {
                 result = helper.mergeAll(session, operation);
             }
@@ -321,7 +329,14 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     @Override
     public <T> Flux<T> persistAll(InsertBatchOperation<T> operation) {
         return operationFlux(session -> {
-            Flux<T> result = helper.persistAll(session, operation);
+            StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
+            Flux<T> result;
+            if (storedQuery != null) {
+                result = Flux.fromIterable(operation)
+                    .concatMap(t -> executeEntityUpdate(session, storedQuery, operation.getInvocationContext(), t).thenReturn(t));
+            } else {
+                result = helper.persistAll(session, operation);
+            }
             return flushIfNecessaryFlux(result, session, operation.getAnnotationMetadata());
         });
     }
@@ -330,7 +345,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     public Mono<Number> executeUpdate(PreparedQuery<?, Number> preparedQuery) {
         return operation(session -> {
             String query = preparedQuery.getQuery();
-            Stage.Query<Object> q = session.createQuery(query);
+            Stage.MutationQuery q = session.createMutationQuery(query);
             bindParameters(q, preparedQuery, true);
             Mono<Number> result = helper.executeUpdate(q).cast(Number.class);
             return flushIfNecessary(result, session, preparedQuery.getAnnotationMetadata());
@@ -348,7 +363,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
             StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
             Mono<Number> result;
             if (storedQuery != null) {
-                result = executeEntityUpdate(session, storedQuery, operation.getEntity()).cast(Number.class);
+                result = executeEntityUpdate(session, storedQuery, operation.getInvocationContext(), operation.getEntity()).cast(Number.class);
             } else {
                 result = helper.remove(session, operation.getEntity()).thenReturn(1);
             }
@@ -363,7 +378,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
             Mono<Number> result;
             if (storedQuery != null) {
                 result = Flux.fromIterable(operation)
-                        .concatMap(entity -> executeEntityUpdate(session, storedQuery, entity))
+                        .concatMap(entity -> executeEntityUpdate(session, storedQuery, operation.getInvocationContext(), entity))
                         .reduce(0, (i1, i2) -> i1 + i2)
                         .cast(Number.class);
             } else {

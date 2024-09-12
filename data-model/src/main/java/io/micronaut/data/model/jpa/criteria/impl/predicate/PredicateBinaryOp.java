@@ -17,6 +17,8 @@ package io.micronaut.data.model.jpa.criteria.impl.predicate;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
+import jakarta.persistence.criteria.Expression;
 
 /**
  * Predicate binary operations.
@@ -34,9 +36,6 @@ public enum PredicateBinaryOp {
     GREATER_THAN_OR_EQUALS,
     LESS_THAN,
     LESS_THAN_OR_EQUALS,
-    RLIKE,
-    ILIKE,
-    LIKE,
     REGEX,
     CONTAINS,
     CONTAINS_IGNORE_CASE,
@@ -47,15 +46,35 @@ public enum PredicateBinaryOp {
     ARRAY_CONTAINS,
     ;
 
+    void validate(@Nullable Expression<?> left, @Nullable Expression<?> right) {
+        switch (this) {
+            case EQUALS, NOT_EQUALS, EQUALS_IGNORE_CASE, NOT_EQUALS_IGNORE_CASE -> {
+                // Any type
+            }
+            case GREATER_THAN, GREATER_THAN_OR_EQUALS, LESS_THAN, LESS_THAN_OR_EQUALS -> {
+                CriteriaUtils.requireComparableExpression(left);
+                CriteriaUtils.requireComparableExpression(right);
+            }
+            case REGEX, CONTAINS, CONTAINS_IGNORE_CASE, STARTS_WITH, ENDS_WITH, STARTS_WITH_IGNORE_CASE, ENDS_WITH_IGNORE_CASE -> {
+                CriteriaUtils.requireStringExpression(left);
+                CriteriaUtils.requireStringExpression(right);
+            }
+
+            case ARRAY_CONTAINS -> {
+                // Is array?
+            }
+            default -> {
+                throw new IllegalStateException("Unsupported predicate: " + this);
+            }
+        }
+    }
+
     @Nullable
     public PredicateBinaryOp negate() {
-        switch (this) {
-            case EQUALS:
-                return NOT_EQUALS;
-            case NOT_EQUALS:
-                return EQUALS;
-            default:
-                return null;
-        }
+        return switch (this) {
+            case EQUALS -> NOT_EQUALS;
+            case NOT_EQUALS -> EQUALS;
+            default -> null;
+        };
     }
 }

@@ -22,7 +22,7 @@ class AbstractInheritanceSpec extends AbstractDataSpec {
 
     void "test compile repository that uses abstract inheritance"() {
         given:
-        def repository = buildRepository('test.CustomerRepository', """
+        def repository = buildRepository('test.CustomerRepository', """import io.micronaut.data.repository.CrudRepository;
 
 @javax.persistence.MappedSuperclass
 abstract class BaseEntity {
@@ -57,7 +57,7 @@ class Customer extends BaseEntity {
 }
 
 @Repository
-interface CustomerRepository extends io.micronaut.data.repository.CrudRepository<Customer, Long> {
+interface CustomerRepository extends CrudRepository<Customer, Long> {
 }
 """)
         expect:"The repository compiles"

@@ -26,7 +26,6 @@ import io.micronaut.data.document.serde.IdDeserializer;
 import io.micronaut.data.document.serde.IdPropertyNamingStrategy;
 import io.micronaut.data.document.serde.OneRelationDeserializer;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
-import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.mongodb.conf.MongoDataConfiguration;
 import io.micronaut.serde.Decoder;
@@ -49,7 +48,7 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * The Micronaut Data's Serde's {@link io.micronaut.serde.Deserializer.DecoderContext}.
+ * The Micronaut Data's Serde's {@link Deserializer.DecoderContext}.
  *
  * @author Denis Stepanov
  * @since 3.3
@@ -61,8 +60,6 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
 
     private final MongoDataConfiguration mongoDataConfiguration;
     private final AttributeConverterRegistry attributeConverterRegistry;
-    private final Argument argument;
-    private final RuntimePersistentEntity<Object> runtimePersistentEntity;
     private final Deserializer.DecoderContext parent;
     private final CodecRegistry codecRegistry;
 
@@ -71,21 +68,15 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
      *
      * @param mongoDataConfiguration     The Mongo data configuration
      * @param attributeConverterRegistry The attributeConverterRegistry
-     * @param argument                   The argument
-     * @param runtimePersistentEntity    The runtime persistent entity
      * @param parent                     The parent context
      * @param codecRegistry              The codec registry
      */
     DataDecoderContext(MongoDataConfiguration mongoDataConfiguration,
                        AttributeConverterRegistry attributeConverterRegistry,
-                       Argument argument,
-                       RuntimePersistentEntity<Object> runtimePersistentEntity,
                        Deserializer.DecoderContext parent,
                        CodecRegistry codecRegistry) {
         this.mongoDataConfiguration = mongoDataConfiguration;
         this.attributeConverterRegistry = attributeConverterRegistry;
-        this.argument = argument;
-        this.runtimePersistentEntity = runtimePersistentEntity;
         this.parent = parent;
         this.codecRegistry = codecRegistry;
     }
@@ -103,7 +94,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
                 @Override
                 public Deserializer<Object> createSpecific(DecoderContext decoderContext, Argument<? super Object> type) throws SerdeException {
                     Deserializer<?> relationDeser = findDeserializer(type);
-                    return new Deserializer<Object>() {
+                    return new Deserializer<>() {
                         @Override
                         public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) throws IOException {
                             if (decoder.decodeNull()) {
@@ -120,7 +111,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
                 }
 
                 @Override
-                public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) throws IOException {
+                public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) {
                     throw new IllegalStateException("Create specific call is required!");
                 }
             };
@@ -143,7 +134,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
                 }
 
                 @Override
-                public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) throws IOException {
+                public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) {
                     throw new IllegalStateException("Create specific call is required!");
                 }
             };
@@ -161,7 +152,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
                     Argument<Object> convertedType = Argument.of(converterPersistedType);
                     AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
                     Deserializer<?> deserializer = findDeserializer(convertedType);
-                    return new Deserializer<Object>() {
+                    return new Deserializer<>() {
                         @Override
                         public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) throws IOException {
                             if (decoder.decodeNull()) {
@@ -174,7 +165,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
                 }
 
                 @Override
-                public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) throws IOException {
+                public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) {
                     throw new IllegalStateException("Create specific call is required!");
                 }
             };
@@ -186,11 +177,14 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
     @Override
     public <T> Deserializer<? extends T> findDeserializer(Argument<? extends T> type) throws SerdeException {
         Codec<? extends T> codec = codecRegistry.get(type.getType(), codecRegistry);
-        if (codec instanceof MappedCodec) {
-            return ((MappedCodec<? extends T>) codec).deserializer;
+        if (codec instanceof MappedCodec<? extends T> mappedCodec) {
+            return mappedCodec.deserializer;
         }
-        if (codec != null && !(codec instanceof IterableCodec) && !(Map.class.isAssignableFrom(codec.getEncoderClass())) && !(Collection.class.isAssignableFrom(codec.getEncoderClass()))) {
-            return new CodecBsonDecoder<T>((Codec<T>) codec);
+        if (codec != null
+            && !(codec instanceof IterableCodec)
+            && !(Map.class.isAssignableFrom(codec.getEncoderClass()))
+            && !(Collection.class.isAssignableFrom(codec.getEncoderClass()))) {
+            return new CodecBsonDecoder<>((Codec<T>) codec);
         }
         return parent.findDeserializer(type);
     }

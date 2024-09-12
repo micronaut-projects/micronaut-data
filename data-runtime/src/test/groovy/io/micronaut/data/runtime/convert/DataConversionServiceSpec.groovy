@@ -17,8 +17,10 @@ package io.micronaut.data.runtime.convert
 
 import io.micronaut.context.BeanContext
 import io.micronaut.context.DefaultBeanContext
+import io.micronaut.core.annotation.NonNull
 import io.micronaut.core.convert.DefaultMutableConversionService
 import io.micronaut.core.convert.MutableConversionService
+import io.micronaut.inject.BeanDefinitionReference
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -39,7 +41,17 @@ class DataConversionServiceSpec extends Specification {
                 MutableConversionService getConversionService() {
                     return new DefaultMutableConversionService()
                 }
-            }
+
+                @Override
+                protected List<BeanDefinitionReference> resolveBeanDefinitionReferences() {
+                    return []
+                }
+
+                @Override
+                void publishEvent(@NonNull Object event) {
+
+                }
+            }.start()
             DataConversionService conversionService = new DataConversionServiceFactory().build(mockBeanContext)
         when:
             def expectedValue = conversionService.convert(obj, targetType)

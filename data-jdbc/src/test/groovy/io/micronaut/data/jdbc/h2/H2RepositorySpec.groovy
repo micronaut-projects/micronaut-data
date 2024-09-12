@@ -25,6 +25,8 @@ import io.micronaut.data.tck.repositories.CityRepository
 import io.micronaut.data.tck.repositories.CompanyRepository
 import io.micronaut.data.tck.repositories.CountryRegionCityRepository
 import io.micronaut.data.tck.repositories.CountryRepository
+import io.micronaut.data.tck.repositories.EntityWithIdClass2Repository
+import io.micronaut.data.tck.repositories.EntityWithIdClassRepository
 import io.micronaut.data.tck.repositories.FaceRepository
 import io.micronaut.data.tck.repositories.FoodRepository
 import io.micronaut.data.tck.repositories.GenreRepository
@@ -41,7 +43,14 @@ import io.micronaut.data.tck.repositories.UserRoleRepository
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 import spock.lang.Shared
 
+import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.findNameSubqueryEq
+import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.findNameSubqueryIn
+import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEqualsCaseInsensitive
+import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.subqueriesWithJoinReferencingOuter
+
 class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyProvider {
+
+
 
     @Shared
     H2PersonRepository pr = context.getBean(H2PersonRepository)
@@ -102,6 +111,22 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
 
     @Shared
     H2PageRepository pageRepo = context.getBean(H2PageRepository)
+
+    @Shared
+    H2EntityWithIdClassRepository entityWithIdClassRepo = context.getBean(H2EntityWithIdClassRepository)
+
+    @Shared
+    H2EntityWithIdClass2Repository entityWithIdClass2Repo = context.getBean(H2EntityWithIdClass2Repository)
+
+    @Override
+    EntityWithIdClassRepository getEntityWithIdClassRepository() {
+        return entityWithIdClassRepo
+    }
+
+    @Override
+    EntityWithIdClass2Repository getEntityWithIdClass2Repository() {
+        return entityWithIdClass2Repo
+    }
 
     @Override
     NoseRepository getNoseRepository() {
@@ -223,6 +248,39 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
     @Override
     protected boolean skipQueryByDataArray() {
         return true
+    }
+
+    void "test subquery with JOIN" () {
+        given:
+            saveSampleBooks()
+        when:
+            def books = bookRepository.findAll(subqueriesWithJoinReferencingOuter())
+        then:
+            books.size() == 6
+    }
+
+    void "test subquery IN" () {
+        when:
+            savePersons(["Jeff", "James"])
+            def person = personRepository.findOne(findNameSubqueryIn("James"))
+        then:
+            person
+    }
+
+    void "test subquery EQ" () {
+        when:
+            savePersons(["Jeff", "James"])
+            def person = personRepository.findOne(findNameSubqueryEq("James"))
+        then:
+            person
+    }
+
+    void "test criteria lower select" () {
+        when:
+            savePersons(["Jeff", "James"])
+            def person = personRepository.findOne(nameEqualsCaseInsensitive("james"))
+        then:
+            person.isPresent()
     }
 
     void "test manual joining on many ended association"() {

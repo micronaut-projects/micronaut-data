@@ -1,5 +1,6 @@
 package io.micronaut.data.model.jpa.criteria
 
+import io.micronaut.annotation.processing.visitor.JavaClassElement
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.processor.model.SourcePersistentEntity
 import io.micronaut.data.processor.model.criteria.impl.SourcePersistentEntityCriteriaBuilderImpl
@@ -7,6 +8,7 @@ import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteria
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaQuery
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaUpdate
 import io.micronaut.data.processor.visitors.AbstractDataSpec
+import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.tests.AbstractCriteriaSpec
 import io.micronaut.inject.ast.ClassElement
 import jakarta.persistence.criteria.CriteriaDelete
@@ -14,6 +16,7 @@ import jakarta.persistence.criteria.CriteriaQuery
 import jakarta.persistence.criteria.CriteriaUpdate
 import jakarta.persistence.criteria.Expression
 import jakarta.persistence.criteria.Path
+import jakarta.persistence.criteria.Subquery
 import spock.lang.Unroll
 
 import java.util.function.Function
@@ -44,10 +47,15 @@ class CriteriaSpec extends AbstractCriteriaSpec {
 
     void setup() {
         testEntityElement = buildCustomElement()
-        criteriaBuilder = new SourcePersistentEntityCriteriaBuilderImpl(entityResolver)
+        criteriaBuilder = new SourcePersistentEntityCriteriaBuilderImpl(entityResolver, criteriaBuilder)
         criteriaQuery = criteriaBuilder.createQuery()
         criteriaDelete = criteriaBuilder.createCriteriaDelete(null)
         criteriaUpdate = criteriaBuilder.createCriteriaUpdate(null)
+    }
+
+    @Override
+    PersistentEntityRoot createRoot(Subquery query) {
+        return query.from(testEntityElement)
     }
 
     @Override
@@ -63,6 +71,63 @@ class CriteriaSpec extends AbstractCriteriaSpec {
     @Override
     PersistentEntityRoot createRoot(CriteriaUpdate query) {
         return query.from(testEntityElement)
+    }
+
+    ClassElement getClassElement(Class<?> clazz) {
+        return new CustomAbstractDataSpec().buildClassElement("""class Test {}""", { JavaClassElement el -> el.@visitorContext.getClassElement(clazz).get()})
+    }
+
+    void "test subquery IN"() {
+        given:
+            def bookClassElement = buildBookElement()
+            def criteriaQuery = criteriaBuilder.createQuery(Book)
+            def bookRoot = criteriaQuery.from(bookClassElement)
+            def subquery = criteriaQuery.subquery(Long)
+            def subqueryBookRoot = subquery.from(bookClassElement)
+            subquery.select(subqueryBookRoot.get("id"))
+            subquery.where(criteriaBuilder.equal(subqueryBookRoot.get("id"), 123))
+            criteriaQuery.where(
+                    bookRoot.<Long>get("id").in(subquery)
+            )
+            String query = getSqlQuery(criteriaQuery)
+
+        expect:
+            query == '''SELECT book_."id",book_."author_id",book_."title",book_."total_pages",book_."last_updated" FROM "book" book_ WHERE (book_."id" IN (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."id" = 123)))'''
+    }
+
+    void "test subquery EQ"() {
+        given:
+            def bookClassElement = buildBookElement()
+            def criteriaQuery = criteriaBuilder.createQuery(Book)
+            def bookRoot = criteriaQuery.from(bookClassElement)
+            def subquery = criteriaQuery.subquery(Long)
+            def subqueryBookRoot = subquery.from(bookClassElement)
+            subquery.select(subqueryBookRoot.get("id"))
+            subquery.where(criteriaBuilder.equal(subqueryBookRoot.get("id"), 123))
+            criteriaQuery.where(
+                    criteriaBuilder.equal(bookRoot.<Long>get("id"), subquery)
+            )
+            String query = getSqlQuery(criteriaQuery)
+
+        expect:
+            query == '''SELECT book_."id",book_."author_id",book_."title",book_."total_pages",book_."last_updated" FROM "book" book_ WHERE (book_."id" = (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."id" = 123)))'''
+    }
+
+    void "test function projection 3"() {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            criteriaQuery.select(
+                    criteriaBuilder.function(
+                            "MYFUNC3",
+                            String,
+                            criteriaBuilder.parameter(String),
+                            criteriaBuilder.literal("abc")
+                    )
+            )
+            String query = getSqlQuery(criteriaQuery)
+
+        expect:
+            query == '''SELECT MYFUNC3(?,'abc') FROM "test" test_'''
     }
 
     @Unroll
@@ -121,6 +186,12 @@ class CriteriaSpec extends AbstractCriteriaSpec {
                         def pred2 = cb.or(pred1, cb.equal(root.get("amount"), 100))
                         def andPred = cb.and(cb.equal(root.get("budget"), 200), pred2)
                         andPred
+                    } as Specification,
+                    { root, query, cb ->
+                        cb.equal(cb.lower(cb.upper(root.get("name"))), "Denis")
+                    } as Specification,
+                    { root, query, cb ->
+                        cb.equal(cb.lower(cb.upper(root.get("name"))), cb.lower(cb.literal("Denis")))
                     } as Specification
             ]
             expectedWhereQuery << [
@@ -134,10 +205,11 @@ class CriteriaSpec extends AbstractCriteriaSpec {
                     '((test_."amount" >= ? AND test_."amount" <= ?))',
                     '(test_."enabled" = TRUE)',
                     '(test_."enabled" = TRUE) ORDER BY test_."amount" DESC,test_."budget" ASC',
-                    '(test_."budget" = 200 AND ((test_."enabled" = TRUE OR test_."enabled2" = TRUE) OR test_."amount" = 100))'
+                    '(test_."budget" = 200 AND (test_."enabled" = TRUE OR test_."enabled2" = TRUE OR test_."amount" = 100))',
+                    '''(LOWER(UPPER(test_."name")) = 'Denis')''',
+                    '''(LOWER(UPPER(test_."name")) = LOWER('Denis'))'''
             ]
     }
-
 
     @Unroll
     void "test delete"(DeleteSpecification specification) {
@@ -536,6 +608,117 @@ class SimpleEntity {
         this.budget = budget;
     }
 
+}
+
+""")
+    }
+
+    private ClassElement buildBookElement() {
+        new CustomAbstractDataSpec().buildClassElement("""
+package test;
+
+import io.micronaut.data.annotation.DateUpdated;
+
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+@Entity
+class Book {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String title;
+    private int totalPages;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Author author;
+
+    @DateUpdated
+    private LocalDateTime lastUpdated;
+
+
+    public Author getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(Author author) {
+        this.author = author;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public int getTotalPages() {
+        return totalPages;
+    }
+
+    public void setTotalPages(int totalPages) {
+        this.totalPages = totalPages;
+    }
+
+    public LocalDateTime getLastUpdated() {
+        return lastUpdated;
+    }
+
+    public void setLastUpdated(LocalDateTime lastUpdated) {
+        this.lastUpdated = lastUpdated;
+    }
+
+}
+
+@Entity
+class Author {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String name;
+
+
+    @OneToMany(cascade = CascadeType.ALL)
+    private Set<Book> books = new HashSet<>();
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Set<Book> getBooks() {
+        return books;
+    }
+
+    public void setBooks(Set<Book> books) {
+        this.books = books;
+    }
 }
 
 """)

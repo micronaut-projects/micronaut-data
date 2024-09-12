@@ -24,6 +24,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.StringJoiner;
 
@@ -41,10 +42,19 @@ public class PersistentPropertyPath {
     /**
      * Default constructor.
      *
+     * @param property     The property
+     */
+    public PersistentPropertyPath(@NonNull PersistentProperty property) {
+        this(List.of(), property, null);
+    }
+
+    /**
+     * Default constructor.
+     *
      * @param associations The associations
      * @param property     The property
      */
-    public PersistentPropertyPath(List<Association> associations, @NonNull PersistentProperty property) {
+    public PersistentPropertyPath(@NonNull List<Association> associations, @NonNull PersistentProperty property) {
         this(associations, property, null);
     }
 
@@ -55,7 +65,9 @@ public class PersistentPropertyPath {
      * @param property     The property
      * @param path         The path
      */
-    public PersistentPropertyPath(List<Association> associations, @NonNull PersistentProperty property, @Nullable String path) {
+    public PersistentPropertyPath(@NonNull List<Association> associations, @NonNull PersistentProperty property, @Nullable String path) {
+        Objects.requireNonNull(associations);
+        Objects.requireNonNull(property);
         this.associations = associations;
         this.property = property;
         this.path = path;
@@ -81,8 +93,8 @@ public class PersistentPropertyPath {
      * @return new instance of {@link PersistentPropertyPath} or {@link PersistentAssociationPath}
      */
     public static PersistentPropertyPath of(List<Association> associations, @NonNull PersistentProperty property, @Nullable String path) {
-        if (property instanceof Association) {
-            return new PersistentAssociationPath(associations, (Association) property, path);
+        if (property instanceof Association association) {
+            return new PersistentAssociationPath(associations, association, path);
         }
         return new PersistentPropertyPath(associations, property, path);
     }
@@ -96,13 +108,13 @@ public class PersistentPropertyPath {
      * @return The root bean - possibly modified
      */
     public Object setPropertyValue(Object bean, Object value) {
-        if (!(property instanceof RuntimePersistentProperty)) {
+        if (!(property instanceof RuntimePersistentProperty<?> runtimeProperty)) {
             throw new IllegalStateException("Expected runtime property!");
         }
-        return setProperty(associations, (RuntimePersistentProperty) property, bean, value);
+        return setProperty(associations, runtimeProperty, bean, value);
     }
 
-    private Object setProperty(List<Association> associations, RuntimePersistentProperty property, Object bean, Object value) {
+    private Object setProperty(List<Association> associations, RuntimePersistentProperty<?> property, Object bean, Object value) {
         if (associations.isEmpty()) {
             BeanProperty beanProperty = property.getProperty();
             return setProperty(beanProperty, bean, value);
@@ -134,7 +146,7 @@ public class PersistentPropertyPath {
      * @return The value
      */
     public Object getPropertyValue(Object bean) {
-        if (!(property instanceof RuntimePersistentProperty)) {
+        if (!(property instanceof RuntimePersistentProperty p)) {
             throw new IllegalStateException("Expected runtime property!");
         }
         Object value = bean;
@@ -146,7 +158,6 @@ public class PersistentPropertyPath {
                 return null;
             }
         }
-        RuntimePersistentProperty<Object> p = (RuntimePersistentProperty<Object>) property;
         if (value != null) {
             BeanProperty<Object, Object> beanProperty = p.getProperty();
             value = beanProperty.get(value);
@@ -194,18 +205,15 @@ public class PersistentPropertyPath {
      */
     @NonNull
     public String[] getArrayPath() {
-        if (path == null) {
-            if (associations.isEmpty()) {
-                return new String[]{property.getName()};
-            }
-            List<String> strings = new ArrayList<>(associations.size() + 1);
-            for (Association association : associations) {
-                strings.add(association.getName());
-            }
-            strings.add(property.getName());
-            return strings.toArray(new String[0]);
+        if (associations.isEmpty()) {
+            return new String[]{property.getName()};
         }
-        return new String[0];
+        List<String> strings = new ArrayList<>(associations.size() + 1);
+        for (Association association : associations) {
+            strings.add(association.getName());
+        }
+        strings.add(property.getName());
+        return strings.toArray(new String[0]);
     }
 
     /**
@@ -282,5 +290,27 @@ public class PersistentPropertyPath {
             }
         }
         return owner.findNamingStrategy();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        PersistentPropertyPath that = (PersistentPropertyPath) o;
+        return Objects.equals(associations, that.associations) && Objects.equals(property, that.property);
+    }
+
+    @Override
+    public int hashCode() {
+        return property.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "PersistentPropertyPath{associations=" + associations + ", property=" + property + '}';
     }
 }

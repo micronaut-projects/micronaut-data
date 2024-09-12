@@ -114,6 +114,7 @@ public interface ReactorReactiveTransactionOperations<C> extends ReactiveTransac
     @Override
     <T> Flux<T> withTransaction(@NonNull TransactionDefinition definition, @NonNull TransactionalCallback<C, T> handler);
 
+    @Override
     @NonNull
     default <T> Flux<T> withTransaction(@NonNull TransactionalCallback<C, T> handler) {
         return withTransaction(TransactionDefinition.DEFAULT, handler);

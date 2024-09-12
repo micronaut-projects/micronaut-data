@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.model.runtime;
 
+import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.naming.Named;
 import io.micronaut.core.reflect.ReflectionUtils;
@@ -88,6 +90,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      *
      * @return The query result type
      */
+    @Override
     @NonNull
     Argument<R> getResultArgument();
 
@@ -181,8 +184,20 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
 
     /**
      * @return The join paths that require a fetch
+     * @deprecated Use {@link #getJoinPaths()} and filter the paths
      */
-    default @NonNull Set<JoinPath> getJoinFetchPaths() {
+    @Deprecated(forRemoval = true, since = "4.8.1")
+    @NonNull
+    default Set<JoinPath> getJoinFetchPaths() {
+        return Collections.emptySet();
+    }
+
+    /**
+     * @return The all join paths
+     * @since 4.8.1
+     */
+    @NonNull
+    default Set<JoinPath> getJoinPaths() {
         return Collections.emptySet();
     }
 
@@ -224,6 +239,16 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
     }
 
     /**
+     * Parameter expressions.
+     * @return Parameter expressions.
+     * @since 4.5.0
+     */
+    @Experimental
+    default Map<String, AnnotationValue<?>> getParameterExpressions() {
+        return Map.of();
+    }
+
+    /**
      * Describes the operation type.
      */
     enum OperationType {
@@ -236,7 +261,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
          */
         COUNT,
         /**
-         * A exists operation.
+         * An exists operation.
          */
         EXISTS,
         /**

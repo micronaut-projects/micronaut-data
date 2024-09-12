@@ -36,6 +36,7 @@ import io.micronaut.transaction.support.AbstractDefaultTransactionOperations;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -55,6 +56,9 @@ import java.util.Objects;
 @Requires(condition = JdbcTransactionManagerCondition.class)
 @TypeHint(DataSourceTransactionManager.class)
 public final class DataSourceTransactionManager extends AbstractDefaultTransactionOperations<Connection> {
+
+    // Error with this message is thrown from SQL server when operation is not supported (like Connection.releaseSavepoint)
+    private static final String OPERATION_NOT_SUPPORTED = "This operation is not supported.";
 
     private final DataSource dataSource;
 
@@ -86,7 +90,7 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
 
     /**
      * Specify whether to enforce the read-only nature of a transaction
-     * (as indicated by {@link TransactionDefinition#isReadOnly()}
+     * (as indicated by {@link TransactionDefinition#isReadOnly()})
      * through an explicit statement on the transactional connection:
      * "SET TRANSACTION READ ONLY" as understood by Oracle, MySQL and Postgres.
      * <p>The exact treatment, including any SQL statement executed on the connection,
@@ -176,7 +180,7 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
     protected void doNestedBegin(DefaultTransactionStatus<Connection> status) {
         try {
             Connection connection = status.getConnection();
-            Savepoint savepoint = connection.setSavepoint(status.getTransactionDefinition().getName());
+            Savepoint savepoint = connection.setSavepoint();
             status.setSavepoint(savepoint);
         } catch (SQLException e) {
             throw new CannotCreateTransactionException("Could not create JDBC savepoint", e);
@@ -193,7 +197,13 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
             try {
                 connection.releaseSavepoint((Savepoint) status.getSavepoint());
             } catch (Exception e) {
-                throw new TransactionSystemException("Could release JDBC savepoint", e);
+                if (isUnsupportedOperation(e)) {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("JDBC SavePoint release not supported by the Connection [{}]", connection, e);
+                    }
+                } else {
+                    throw new TransactionSystemException("Could not release JDBC savepoint", e);
+                }
             }
         } else {
             throw new TransactionSystemException("Missing a JDBC savepoint");
@@ -246,5 +256,22 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
     @Override
     public Connection getConnection() {
         return connectionOperations.getConnectionStatus().getConnection();
+    }
+
+    /**
+     * Checks if thrown exception is from the JDBC driver telling that feature is not supported.
+     * For example, some drivers don't support {@link Connection#releaseSavepoint(Savepoint)}
+     * and we want to handle that case and continue execution.
+     *
+     * @param exception The thrown exception
+     * @return true if exception is thrown for unsupported operation
+     */
+    private static boolean isUnsupportedOperation(Exception exception) {
+        if (exception instanceof SQLFeatureNotSupportedException) {
+            return true;
+        } else if (exception instanceof SQLException sqlException) {
+            return OPERATION_NOT_SUPPORTED.equals(sqlException.getMessage());
+        }
+        return false;
     }
 }

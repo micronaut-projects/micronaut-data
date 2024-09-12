@@ -46,14 +46,14 @@ public final class NegatedPredicate extends AbstractPredicate {
 
     @Override
     public Predicate not() {
-        if (negated instanceof Predicate) {
-            return ((Predicate) negated).not();
+        if (negated instanceof Predicate predicate) {
+            return predicate.not();
         }
         throw new IllegalStateException("Cannot negate predicate: " + negated);
     }
 
     @Override
-    public void accept(PredicateVisitor predicateVisitor) {
+    public void visitPredicate(PredicateVisitor predicateVisitor) {
         predicateVisitor.visit(this);
     }
 

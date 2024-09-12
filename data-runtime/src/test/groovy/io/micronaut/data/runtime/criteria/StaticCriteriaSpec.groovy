@@ -2,6 +2,7 @@ package io.micronaut.data.runtime.criteria
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.event.EntityEventListener
+import io.micronaut.data.model.entities.Book
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery
@@ -18,6 +19,7 @@ import jakarta.persistence.criteria.Expression
 import jakarta.persistence.criteria.JoinType
 import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Selection
+import jakarta.persistence.criteria.Subquery
 import spock.lang.Unroll
 
 class StaticCriteriaSpec extends AbstractCriteriaSpec {
@@ -61,6 +63,40 @@ class StaticCriteriaSpec extends AbstractCriteriaSpec {
         criteriaQuery = criteriaBuilder.createQuery()
         criteriaDelete = criteriaBuilder.createCriteriaDelete(Test)
         criteriaUpdate = criteriaBuilder.createCriteriaUpdate(Test)
+    }
+
+    void "test subquery IN"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(Book)
+            def bookRoot = criteriaQuery.from(Book)
+            def subquery = criteriaQuery.subquery(Long)
+            def subqueryBookRoot = subquery.from(Book)
+            subquery.select(subqueryBookRoot.get("id"))
+            subquery.where(criteriaBuilder.equal(subqueryBookRoot.get("id"), 123))
+            criteriaQuery.where(
+                    bookRoot.<Long>get("id").in(subquery)
+            )
+            String query = getSqlQuery(criteriaQuery)
+
+        expect:
+            query == '''SELECT book_."id",book_."author_id",book_."title",book_."pages",book_."publisher_id" FROM "book" book_ WHERE (book_."id" IN (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."id" = ?)))'''
+    }
+
+    void "test subquery EQ"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(Book)
+            def bookRoot = criteriaQuery.from(Book)
+            def subquery = criteriaQuery.subquery(Long)
+            def subqueryBookRoot = subquery.from(Book)
+            subquery.select(subqueryBookRoot.get("id"))
+            subquery.where(criteriaBuilder.equal(subqueryBookRoot.get("id"), 123))
+            criteriaQuery.where(
+                    criteriaBuilder.equal(bookRoot.<Long>get("id"), subquery)
+            )
+            String query = getSqlQuery(criteriaQuery)
+
+        expect:
+            query == '''SELECT book_."id",book_."author_id",book_."title",book_."pages",book_."publisher_id" FROM "book" book_ WHERE (book_."id" = (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."id" = ?)))'''
     }
 
     @Unroll
@@ -122,17 +158,17 @@ class StaticCriteriaSpec extends AbstractCriteriaSpec {
                     } as Specification
             ]
             expectedWhereQuery << [
-                    '(test_."amount" IN (?))',
-                    '(test_."amount" NOT IN (?))',
-                    '(test_."amount" IN (?))',
-                    '(test_."amount" NOT IN (?))',
+                    '(test_."amount" IN (?,?))',
+                    '(test_."amount" NOT IN (?,?))',
+                    '(test_."amount" IN (?,?))',
+                    '(test_."amount" NOT IN (?,?))',
                     '(test_."amount" IN (?))',
                     '(test_."amount" NOT IN (?))',
                     '((test_."enabled" >= ? AND test_."enabled" <= ?))',
                     '((test_."amount" >= ? AND test_."amount" <= ?))',
                     '(test_."enabled" = TRUE)',
                     '(test_."enabled" = TRUE) ORDER BY test_."amount" DESC,test_."budget" ASC',
-                    '(test_."budget" = ? AND ((test_."enabled" = TRUE OR test_."enabled2" = TRUE) OR test_."amount" = ?))'
+                    '(test_."budget" = ? AND (test_."enabled" = TRUE OR test_."enabled2" = TRUE OR test_."amount" = ?))'
             ]
     }
 
@@ -186,12 +222,12 @@ class StaticCriteriaSpec extends AbstractCriteriaSpec {
                     'SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget" ' +
                             'FROM "test" test_ ' +
                             'INNER JOIN "other_entity" test_others_ ON test_."id"=test_others_."test_id"' +
-                            ' WHERE (test_."amount"=test_others_."amount")',
+                            ' WHERE (test_."amount" = test_others_."amount")',
 
                     'SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget" ' +
                             'FROM "test" test_ INNER JOIN "other_entity" test_others_ ON test_."id"=test_others_."test_id" ' +
                             'INNER JOIN "simple_entity" test_others_simple_ ON test_others_."simple_id"=test_others_simple_."id" ' +
-                            'WHERE (test_."amount"=test_others_."amount" AND test_."amount"=test_others_simple_."amount")',
+                            'WHERE (test_."amount" = test_others_."amount" AND test_."amount" = test_others_simple_."amount")',
                     'SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget" FROM "test" test_ INNER JOIN "other_entity" test_others_ ON test_."id"=test_others_."test_id"',
                     'SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget" FROM "test" test_ INNER JOIN "other_entity" test_others_ ON test_."id"=test_others_."test_id"',
                     'SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget" FROM "test" test_ INNER JOIN "other_entity" test_others_ ON test_."id"=test_others_."test_id"',
@@ -261,6 +297,10 @@ class StaticCriteriaSpec extends AbstractCriteriaSpec {
             ]
     }
 
+    @Override
+    PersistentEntityRoot createRoot(Subquery query) {
+        return query.from(Test)
+    }
 
     @Override
     PersistentEntityRoot createRoot(CriteriaQuery query) {

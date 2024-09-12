@@ -26,7 +26,6 @@ import spock.lang.Shared
 
 import static io.micronaut.data.processor.visitors.TestUtils.*
 
-//@IgnoreIf({ !jvm.isJava8() })
 class CompositePrimaryKeySpec extends AbstractDataSpec {
 
     @Shared SourcePersistentEntity entity
@@ -163,7 +162,7 @@ import io.micronaut.data.repository.CrudRepository;
 interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, EntityIdClass> {
     List<EntityWithIdClass> findById1(Long id1);
     List<EntityWithIdClass> findById2(Long id2);
-    long count();
+    @Override long count();
     long countDistinct();
     long countDistinctName();
 }

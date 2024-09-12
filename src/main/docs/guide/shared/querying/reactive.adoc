@@ -2,7 +2,7 @@ Micronaut Data supports reactive query execution by defining methods that return
 
 In the case of reactive execution and if the backing implementation is blocking, Micronaut Data will use the https://docs.micronaut.io/latest/guide/index.html#reactiveServer[Configured I/O thread pool] to schedule the query execution on a different thread.
 
-If the backing implementation natively supports reactive types at the driver level then the I/O thread pool is not used and instead it is assumed the driver will handle the query in a non-blocking manner.
+If the backing implementation natively supports reactive types at the driver level then the I/O thread pool is not used, and instead it is assumed the driver will handle the query in a non-blocking manner.
 
 The following is an example of a couple of reactive methods:
 
@@ -14,4 +14,4 @@ snippet::example.ProductRepositorySpec[project-base="doc-examples/hibernate-exam
 
 In the case of JPA each operation will run with its own transaction and session, hence care needs to be taken to fetch the correct data and avoid detached objects.
 
-In addition for more complex operations it may be more efficient to write custom code that uses a single session.
+In addition, for more complex operations it may be more efficient to write custom code that uses a single session.

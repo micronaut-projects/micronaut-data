@@ -22,6 +22,7 @@ import io.micronaut.data.hibernate.entities.UserWithWhere
 import io.micronaut.data.jpa.repository.criteria.Specification
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Book
@@ -29,8 +30,11 @@ import io.micronaut.data.tck.entities.EntityIdClass
 import io.micronaut.data.tck.entities.EntityWithIdClass
 import io.micronaut.data.tck.entities.Product
 import io.micronaut.data.tck.entities.Student
+import io.micronaut.data.tck.repositories.BookSpecifications
 import io.micronaut.data.tck.tests.AbstractQuerySpec
 import jakarta.inject.Inject
+import jakarta.persistence.criteria.CriteriaBuilder
+import jakarta.persistence.criteria.CriteriaQuery
 import org.hibernate.LazyInitializationException
 import spock.lang.Issue
 import spock.lang.Shared
@@ -70,6 +74,30 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
     @Shared
     @Inject
     RelPersonRepository relPersonRepo
+
+    void "test where in empty list of entities"() {
+        when:
+        def found = bookRepository.findByAuthors(List.of())
+        then:
+        found.empty
+        when:
+        def author = authorRepository.findByName("Stephen King")
+        found = bookRepository.findByAuthors(List.of(author))
+        then:
+        !found.empty
+    }
+
+    void "test where in empty list of basic type"() {
+        when:
+        def found = bookRepository.findByAuthorIds(List.of())
+        then:
+        found.empty
+        when:
+        def author = authorRepository.findByName("Stephen King")
+        found = bookRepository.findByAuthorIds(List.of(author.id))
+        then:
+        !found.empty
+    }
 
     void "test @where with nullable property values"() {
         when:
@@ -548,30 +576,59 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
     }
 
     void "test custom insert"() {
+        given:
+            def book1 = new Book(title: "Abc", totalPages: 12)
+            def book2 = new Book(title: "Xyz", totalPages: 22)
+
         when:
-            def author = authorRepository.searchByName("Stephen King")
+            def books = bookRepository.findAll()
         then:
-            author.books.size() == 2
+            books.size() == 8
+
         when:
-            bookRepository.saveCustom([new Book(title: "Abc", totalPages: 12, author: author), new Book(title: "Xyz", totalPages: 22, author: author)])
-            def authorAfter = authorRepository.searchByName("Stephen King")
+            // Hibernate doesn't support updating other tables
+            bookRepository.saveCustom([book1, book2])
+            def booksAfter = bookRepository.findAll()
         then:
-            authorAfter.books.size() == 4
-            authorAfter.books.find { it.title == "Abc" }
-            authorAfter.books.find { it.title == "Xyz" }
+            !book1.id // Ids cannot be updated by a custom query
+            !book2.id
+            booksAfter.size() == 10
+            booksAfter.find { it.title == "Abc" }
+            booksAfter.find { it.title == "Xyz" }
     }
 
     void "test custom single insert"() {
+        given:
+            def book = new Book(title: "Abc", totalPages: 12)
         when:
-            def author = authorRepository.searchByName("Stephen King")
+            def books = bookRepository.findAll()
         then:
-            author.books.size() == 2
+            books.size() == 8
         when:
-            bookRepository.saveCustomSingle(new Book(title: "Abc", totalPages: 12, author: author))
-            def authorAfter = authorRepository.searchByName("Stephen King")
+            // Hibernate doesn't support updating other tables
+            bookRepository.saveCustomSingle(book)
+            def booksAfter = bookRepository.findAll()
         then:
-            authorAfter.books.size() == 3
-            authorAfter.books.find { it.title == "Abc" }
+            !book.id // Ids cannot be updated by a custom query
+            booksAfter.size() == 9
+            booksAfter.find { it.title == "Abc" }
+    }
+
+    void "test custom single insert expressions"() {
+        given:
+            def book = new Book(title: "Abc", totalPages: 12)
+        when:
+            def books = bookRepository.findAll()
+        then:
+            books.size() == 8
+        when:
+            // Hibernate doesn't support updating other tables
+            bookRepository.saveCustomSingleExpressions(book)
+            def booksAfter = bookRepository.findAll()
+        then:
+            !book.id // Ids cannot be updated by a custom query
+            booksAfter.size() == 9
+            booksAfter.find { it.title == "AbcXYZ" }
     }
 
     void "test custom update"() {
@@ -823,6 +880,13 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
         then:
         books.size() == 2
         cnt == 2
+    }
+
+    void "test subquery criteria"() {
+        when:
+            def book = bookRepository.findOne(BookSpecifications.findUsingASubquery("The Stand"))
+        then:
+            book.title == "The Stand"
     }
 
     private static Specification<Book> testJoin(String value) {

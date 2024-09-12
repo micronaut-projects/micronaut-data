@@ -18,6 +18,7 @@ package io.micronaut.data.azure
 import groovy.transform.CompileStatic
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.context.ApplicationContext
+import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.data.azure.entities.CosmosBook
 import io.micronaut.data.azure.entities.Family
@@ -151,8 +152,8 @@ interface MyRepository {
                 'SELECT DISTINCT VALUE family_ FROM family family_ WHERE (family_.registered = TRUE) ORDER BY family_.registeredDate DESC,family_.lastName ASC',
                 'SELECT DISTINCT VALUE family_ FROM family family_ WHERE (family_.registered = TRUE)',
                 'SELECT DISTINCT VALUE family_ FROM family family_ WHERE (family_.registered = TRUE AND family_.registered = TRUE)',
-                'SELECT DISTINCT VALUE family_ FROM family family_ WHERE (family_.lastName IN (@p1))',
-                'SELECT DISTINCT VALUE family_ FROM family family_ WHERE (family_.lastName NOT IN (@p1))',
+                'SELECT DISTINCT VALUE family_ FROM family family_ WHERE (family_.lastName IN (@p1,@p2,@p3))',
+                'SELECT DISTINCT VALUE family_ FROM family family_ WHERE (family_.lastName NOT IN (@p1,@p2,@p3))',
                 'SELECT DISTINCT VALUE family_ FROM family family_ WHERE (ARRAY_CONTAINS(family_.tags,@p1,true))'
             ]
     }
@@ -303,7 +304,7 @@ interface MyRepository {
     }
 
     private static String getQuery(PersistentEntityCriteriaQuery<Object> query) {
-        return ((QueryResultPersistentEntityCriteriaQuery) query).buildQuery(queryBuilder).getQuery()
+        return ((QueryResultPersistentEntityCriteriaQuery) query).buildQuery(AnnotationMetadata.EMPTY_METADATA, queryBuilder).getQuery()
     }
 
     @CompileStatic

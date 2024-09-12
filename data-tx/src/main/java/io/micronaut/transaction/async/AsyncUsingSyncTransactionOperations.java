@@ -47,13 +47,12 @@ public final class AsyncUsingSyncTransactionOperations<C> implements AsyncTransa
                                                   Function<AsyncTransactionStatus<C>, CompletionStage<T>> handler) {
         CompletableFuture<T> newResult = new CompletableFuture<>();
         PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
-        try (PropagatedContext.Scope scope = propagatedContext.propagate()) { // Propagate to cleanup the scope
+        try (PropagatedContext.Scope ignore = propagatedContext.propagate()) { // Propagate to clean up the scope
             TransactionStatus<C> status = synchronousTransactionManager.getTransaction(definition);
-            PropagatedContext txPropagatedContext = PropagatedContext.get();
             CompletionStage<T> result;
             try {
                 result = handler.apply(new DefaultAsyncTransactionStatus<>(status));
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 CompletableFuture<T> r = new CompletableFuture<>();
                 r.completeExceptionally(e);
                 result = r;
@@ -62,12 +61,17 @@ public final class AsyncUsingSyncTransactionOperations<C> implements AsyncTransa
             // Last step to complete the TX, we need to use `withState` to properly setup thread-locals for the TX manager
             result.whenComplete((o, throwable) -> {
                 if (throwable == null) {
-                    synchronousTransactionManager.commit(status);
+                    try {
+                        synchronousTransactionManager.commit(status);
+                    } catch (Throwable e) {
+                        newResult.completeExceptionally(e);
+                        return;
+                    }
                     newResult.complete(o);
                 } else {
                     try {
                         synchronousTransactionManager.rollback(status);
-                    } catch (Exception e) {
+                    } catch (Throwable e) {
                         // Ignore rethrow
                     }
                     newResult.completeExceptionally(throwable);
