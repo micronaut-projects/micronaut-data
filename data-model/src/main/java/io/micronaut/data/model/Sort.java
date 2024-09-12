@@ -72,6 +72,21 @@ public interface Sort {
     @NonNull Sort order(@NonNull Sort.Order order);
 
     /**
+     * Adds an orders.
+     *
+     * @param orders The orders
+     * @return A new sort with the order applied
+     * @since 4.10
+     */
+    @NonNull
+    default Sort order(@NonNull List<Sort.Order> orders) {
+        for (Order order : orders) {
+            order(order);
+        }
+        return this;
+    }
+
+    /**
      * Orders by the specified property name and direction.
      *
      * @param propertyName The property name to order by

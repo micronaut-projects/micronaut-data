@@ -654,10 +654,10 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     public <T> List<T> findAll(CriteriaQuery<T> query, int offset, int limit) {
         return executeRead(session -> {
             Query<T> sessionQuery = session.createQuery(query);
-            if (offset != -1) {
+            if (offset > 0) {
                 sessionQuery = sessionQuery.setFirstResult(offset);
             }
-            if (limit != -1) {
+            if (limit > 0) {
                 sessionQuery = sessionQuery.setMaxResults(limit);
             }
             return sessionQuery.getResultList();

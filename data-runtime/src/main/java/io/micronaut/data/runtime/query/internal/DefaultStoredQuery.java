@@ -46,6 +46,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_LIMIT;
 import static io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_PAGE_SIZE;
 
 /**
@@ -113,6 +114,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
                 .map(c -> c == SqlQueryBuilder.class).orElse(false);
         this.hasPageable = method.stringValue(DATA_METHOD_ANN_NAME, TypeRole.PAGEABLE).isPresent() ||
                 method.stringValue(DATA_METHOD_ANN_NAME, TypeRole.SORT).isPresent() ||
+                method.intValue(DATA_METHOD_ANN_NAME, META_MEMBER_LIMIT).orElse(-1) > -1 ||
                 method.intValue(DATA_METHOD_ANN_NAME, META_MEMBER_PAGE_SIZE).orElse(-1) > -1;
 
         if (isCount) {

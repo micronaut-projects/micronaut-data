@@ -451,35 +451,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         } else {
             q = toJsonString(pipeline);
         }
-        return new QueryResult() {
-
-            @NonNull
-            @Override
-            public String getQuery() {
-                return q;
-            }
-
-            @Override
-            public int getMax() {
-                return query.getMax();
-            }
-
-            @Override
-            public long getOffset() {
-                return query.getOffset();
-            }
-
-            @Override
-            public List<String> getQueryParts() {
-                return Collections.emptyList();
-            }
-
-            @Override
-            public List<QueryParameterBinding> getParameterBindings() {
-                return queryState.getParameterBindings();
-            }
-
-        };
+        return QueryResult.of(q, queryState.getParameterBindings());
     }
 
     private void addLookups(Collection<JoinPath> joins, QueryState queryState) {
@@ -991,9 +963,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 predicateQuery,
                 Collections.emptyList(),
                 queryState.getParameterBindings(),
-                queryState.getAdditionalRequiredParameters(),
-                query.getMax(),
-                query.getOffset()
+                queryState.getAdditionalRequiredParameters()
         );
     }
 

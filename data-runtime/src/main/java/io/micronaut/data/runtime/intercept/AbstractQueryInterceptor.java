@@ -83,6 +83,8 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import static io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_LIMIT;
+import static io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_OFFSET;
 import static io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_PAGE_SIZE;
 
 /**
@@ -434,22 +436,53 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      */
     @NonNull
     protected Pageable getPageable(MethodInvocationContext<?, ?> context) {
-        Pageable pageable = getParameterInRole(context, TypeRole.PAGEABLE, Pageable.class).orElse(null);
+        Pageable pageable = getPageableInRole(context);
         if (pageable == null) {
+            pageable = Pageable.UNPAGED;
+            int limit = context.intValue(DataMethod.NAME, META_MEMBER_PAGE_SIZE)
+                .orElseGet(() -> context.intValue(DataMethod.NAME, META_MEMBER_LIMIT).orElse(-1));
+            if (limit > 0) {
+                pageable = Pageable.from(0, limit);
+            }
             Sort sort = getParameterInRole(context, TypeRole.SORT, Sort.class).orElse(null);
-            int max = context.intValue(DataMethod.NAME, META_MEMBER_PAGE_SIZE).orElse(-1);
             if (sort != null) {
-                int pageIndex = context.intValue(DataMethod.NAME, DataMethod.META_MEMBER_PAGE_INDEX).orElse(0);
-                if (max > 0) {
-                    pageable = Pageable.from(pageIndex, max, sort);
-                } else {
-                    pageable = Pageable.from(sort);
-                }
-            } else if (max > -1) {
-                return Pageable.from(0, max);
+                return pageable.order(sort.getOrderBy());
             }
         }
-        return pageable != null ? pageable : Pageable.UNPAGED;
+        return pageable;
+    }
+
+    /**
+     * Resolves the {@link Pageable} for the given context.
+     *
+     * @param context The context
+     * @return The pageable or null
+     */
+    @Nullable
+    protected Pageable getPageableInRole(MethodInvocationContext<?, ?> context) {
+        return getParameterInRole(context, TypeRole.PAGEABLE, Pageable.class).orElse(null);
+    }
+
+    /**
+     * Resolves the offset.
+     *
+     * @param context The context
+     * @return The offset or -1
+     * @since 4.10
+     */
+    protected int getOffset(MethodInvocationContext<?, ?> context) {
+        return context.intValue(DataMethod.class, META_MEMBER_OFFSET).orElse(-1);
+    }
+
+    /**
+     * Resolves the limit.
+     *
+     * @param context The context
+     * @return The limit or -1
+     * @since 4.10
+     */
+    protected int getLimit(MethodInvocationContext<?, ?> context) {
+        return context.intValue(DataMethod.class, META_MEMBER_LIMIT).orElse(-1);
     }
 
     /**
@@ -457,7 +490,9 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      *
      * @param metadata The metadata
      * @return True if it is nullable
+     * @deprecated Not used
      */
+    @Deprecated(forRemoval = true, since = "4.10")
     protected boolean isNullable(@NonNull AnnotationMetadata metadata) {
         return metadata
                 .getDeclaredAnnotationNames()

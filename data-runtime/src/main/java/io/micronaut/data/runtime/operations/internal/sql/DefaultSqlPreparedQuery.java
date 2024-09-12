@@ -188,16 +188,16 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
                 added.append(buildCursorPagination(cursored.cursor().orElse(null), sort));
             }
             if (sort.isSorted()) {
-                added.append(queryBuilder.buildOrderBy("", persistentEntity, sqlStoredQuery.getAnnotationMetadata(), sort, isNative()).getQuery());
+                added.append(queryBuilder.buildOrderBy("", persistentEntity, sqlStoredQuery.getAnnotationMetadata(), sort, isNative()));
             } else if (isSqlServerWithoutOrderBy(query, sqlStoredQuery.getDialect())) {
                 // SQL server requires order by
                 sort = sortById(persistentEntity);
-                added.append(queryBuilder.buildOrderBy("", persistentEntity, sqlStoredQuery.getAnnotationMetadata(), sort, isNative()).getQuery());
+                added.append(queryBuilder.buildOrderBy("", persistentEntity, sqlStoredQuery.getAnnotationMetadata(), sort, isNative()));
             }
             if (isSingleResult && pageable.getOffset() > 0) {
                 pageable = Pageable.from(pageable.getNumber(), 1);
             }
-            added.append(queryBuilder.buildPagination(pageable).getQuery());
+            added.append(queryBuilder.buildPagination(pageable));
             int forUpdateIndex = query.lastIndexOf(SqlQueryBuilder.STANDARD_FOR_UPDATE_CLAUSE);
             if (forUpdateIndex == -1) {
                 forUpdateIndex = query.lastIndexOf(SqlQueryBuilder.SQL_SERVER_FOR_UPDATE_CLAUSE);

@@ -87,7 +87,7 @@ public interface QueryBuilder2 {
      * @return The encoded query
      */
     @NonNull
-    QueryResult buildPagination(@NonNull Pageable pageable);
+    String buildPagination(@NonNull Pageable pageable);
 
     /**
      * The select query definition.
@@ -117,6 +117,13 @@ public interface QueryBuilder2 {
          * @return Is the selection marked as distinct.
          */
         default boolean isDistinct() {
+            return false;
+        }
+
+        /**
+         * @return If the query is supposted to
+         */
+        default boolean hasDynamicSort() {
             return false;
         }
 

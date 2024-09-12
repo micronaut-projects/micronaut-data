@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.processor.visitors.finders.criteria;
 
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.StringUtils;
@@ -40,7 +41,6 @@ import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.data.processor.visitors.finders.MethodNameParser;
 import io.micronaut.data.processor.visitors.finders.QueryMatchId;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
-import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ParameterElement;
 import jakarta.persistence.criteria.Order;
@@ -203,12 +203,9 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             }
         }
 
-        final AnnotationMetadataHierarchy annotationMetadataHierarchy = new AnnotationMetadataHierarchy(
-                matchContext.getRepositoryClass().getAnnotationMetadata(),
-                matchContext.getAnnotationMetadata()
-        );
+        final AnnotationMetadata annotationMetadata = matchContext.getMethodElement();
         QueryBuilder queryBuilder = matchContext.getQueryBuilder();
-        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(annotationMetadataHierarchy, queryBuilder);
+        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(annotationMetadata, queryBuilder);
 
         ClassElement genericReturnType = matchContext.getReturnType();
         if (TypeUtils.isReactiveOrFuture(genericReturnType)) {
@@ -216,7 +213,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         }
         QueryResult countQueryResult = null;
         if (matchContext.isTypeInRole(genericReturnType, TypeRole.PAGE) || matchContext.isTypeInRole(genericReturnType, TypeRole.CURSORED_PAGE)) {
-            countQueryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildCountQuery(annotationMetadataHierarchy, queryBuilder);
+            countQueryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildCountQuery(annotationMetadata, queryBuilder);
         }
 
         return new MethodMatchInfo(

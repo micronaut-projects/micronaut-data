@@ -51,8 +51,10 @@ public interface QueryResult {
 
     /**
      * @return A string representation of the aggregate part.
+     * @deprecated Not used
      */
     @Nullable
+    @Deprecated(forRemoval = true, since = "4.10")
     default String getAggregate() {
         return null;
     }
@@ -114,6 +116,19 @@ public interface QueryResult {
     @NonNull
     default Collection<JoinPath> getJoinPaths() {
         return Collections.emptyList();
+    }
+
+    /**
+     * Creates a new encoded query.
+     *
+     * @param query                        The query
+     * @param parameterBindings            The parameters binding
+     * @return The query
+     * @since 4.10
+     */
+    @NonNull
+    static QueryResult of(@NonNull String query, @NonNull List<QueryParameterBinding> parameterBindings) {
+        return of(query, List.of(), parameterBindings);
     }
 
     /**
@@ -317,6 +332,50 @@ public interface QueryResult {
             public long getOffset() {
                 return offset;
             }
+
+            @NonNull
+            @Override
+            public String getQuery() {
+                return query;
+            }
+
+            @Override
+            public List<String> getQueryParts() {
+                return queryParts;
+            }
+
+            @Override
+            public List<QueryParameterBinding> getParameterBindings() {
+                return parameterBindings;
+            }
+
+            @Override
+            public Collection<JoinPath> getJoinPaths() {
+                return joinPaths;
+            }
+        };
+    }
+
+    /**
+     * Creates a new encoded query.
+     *
+     * @param query                        The query
+     * @param queryParts                   The queryParts
+     * @param parameterBindings            The parameters binding
+     * @param joinPaths                    The join paths
+     * @return The query
+     */
+    @NonNull
+    static QueryResult of(
+            @NonNull String query,
+            @NonNull List<String> queryParts,
+            @NonNull List<QueryParameterBinding> parameterBindings,
+            @Nullable
+            Collection<JoinPath> joinPaths) {
+        ArgumentUtils.requireNonNull("query", query);
+        ArgumentUtils.requireNonNull("parameterBindings", parameterBindings);
+
+        return new QueryResult() {
 
             @NonNull
             @Override

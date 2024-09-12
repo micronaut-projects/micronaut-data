@@ -126,13 +126,27 @@ public @interface DataMethod {
 
     /**
      * The parameter that holds the pageSize value.
+     * @deprecated Replaced with {@link #META_MEMBER_LIMIT}
      */
+    @Deprecated(forRemoval = true, since = "4.10")
     String META_MEMBER_PAGE_SIZE = "pageSize";
 
     /**
      * The parameter that holds the offset value.
+     * @deprecated Replaced with {@link #META_MEMBER_OFFSET}
      */
+    @Deprecated(forRemoval = true, since = "4.10")
     String META_MEMBER_PAGE_INDEX = "pageIndex";
+
+    /**
+     * The parameter that holds the offset value.
+     */
+    String META_MEMBER_OFFSET = "offset";
+
+    /**
+     * The parameter that holds the limit value.
+     */
+    String META_MEMBER_LIMIT = "limit";
 
     /**
      * The parameter that references the entity.
@@ -258,14 +272,18 @@ public @interface DataMethod {
     /**
      * An explicit pageSize (in absence of a pageable).
      * @return The pageSize
+     * @deprecated Not used
      */
+    @Deprecated(forRemoval = true, since = "4.10")
     int pageSize() default -1;
 
     /**
      * An explicit offset (in absence of a pageable).
      *
      * @return The offset
+     * @deprecated Not used
      */
+    @Deprecated(forRemoval = true, since = "4.10")
     long pageIndex() default 0;
 
     /**

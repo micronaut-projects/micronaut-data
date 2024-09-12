@@ -112,6 +112,10 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends AbstractQuer
         return queryBuilder.buildSelect(annotationMetadata, definition);
     }
 
+    protected boolean hasDynamicSort() {
+        return false;
+    }
+
     /**
      * @return Build {@link io.micronaut.data.model.query.builder.QueryBuilder2.SelectQueryDefinition}.
      */
@@ -125,7 +129,8 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends AbstractQuer
             distinct,
             orders == null ? List.of() : orders,
             max,
-            offset
+            offset,
+            hasDynamicSort()
         );
     }
 
@@ -140,7 +145,8 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends AbstractQuer
             distinct,
             List.of(),
             -1,
-            -1
+            -1,
+            false
         );
         return queryBuilder.buildSelect(annotationMetadata, definition);
     }
@@ -423,6 +429,7 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends AbstractQuer
         private final List<Order> order;
         private final int limit;
         private final int offset;
+        private final boolean hasDynamicSort;
 
         public SelectQueryDefinitionImpl(PersistentEntity persistentEntity,
                                          Predicate predicate,
@@ -432,7 +439,8 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends AbstractQuer
                                          boolean isDistinct,
                                          List<Order> order,
                                          int limit,
-                                         int offset) {
+                                         int offset,
+                                         boolean hasDynamicSort) {
             super(persistentEntity, predicate, joinPaths);
             this.selection = selection;
             this.isForUpdate = isForUpdate;
@@ -440,6 +448,12 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends AbstractQuer
             this.order = order;
             this.limit = limit;
             this.offset = offset;
+            this.hasDynamicSort = hasDynamicSort;
+        }
+
+        @Override
+        public boolean hasDynamicSort() {
+            return hasDynamicSort;
         }
 
         @Override

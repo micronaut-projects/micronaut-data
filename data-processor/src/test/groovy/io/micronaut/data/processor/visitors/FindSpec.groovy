@@ -411,8 +411,55 @@ interface TestRepository extends CrudRepository<Book, Long> {
         when:
             def method = repository.findPossibleMethods("findTop30OrderByTitle").findFirst().get()
         then:
+            method.stringValue(Query).get() == 'SELECT book_."id",book_."author_id",book_."genre_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated" FROM "book" book_ ORDER BY book_."title" ASC LIMIT 30'
+            method.intValue(DataMethod, DataMethod.META_MEMBER_PAGE_SIZE).isEmpty()
+            method.intValue(DataMethod, DataMethod.META_MEMBER_LIMIT).isEmpty()
+    }
+
+    void "test top with sort"() {
+        given:
+            def repository = buildRepository('test.TestRepository', """
+import io.micronaut.context.annotation.Executable;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect= Dialect.POSTGRES)
+@Executable
+interface TestRepository extends CrudRepository<Book, Long> {
+
+    List<Book> findTop30OrderByTitle(Sort sort);
+
+}
+""")
+        when:
+            def method = repository.findPossibleMethods("findTop30OrderByTitle").findFirst().get()
+        then:
             method.stringValue(Query).get() == 'SELECT book_."id",book_."author_id",book_."genre_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated" FROM "book" book_ ORDER BY book_."title" ASC'
-            method.intValue(DataMethod, DataMethod.META_MEMBER_PAGE_SIZE).getAsInt() == 30
+            method.intValue(DataMethod, DataMethod.META_MEMBER_LIMIT).isPresent()
+    }
+
+    void "test top JPA"() {
+        given:
+            def repository = buildRepository('test.TestRepository', """
+import io.micronaut.context.annotation.Executable;
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Book;
+
+@Repository
+interface TestRepository extends CrudRepository<Book, Long> {
+
+    List<Book> findTop30OrderByTitle();
+
+}
+""")
+        when:
+            def method = repository.findPossibleMethods("findTop30OrderByTitle").findFirst().get()
+        then:
+            method.stringValue(Query).get() == 'SELECT book_ FROM io.micronaut.data.tck.entities.Book AS book_ ORDER BY book_.title ASC'
+            method.intValue(DataMethod, DataMethod.META_MEMBER_LIMIT).getAsInt() == 30
     }
 
     void "test project association"() {

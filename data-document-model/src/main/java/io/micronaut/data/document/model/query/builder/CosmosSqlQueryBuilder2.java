@@ -377,7 +377,7 @@ public final class CosmosSqlQueryBuilder2 extends SqlQueryBuilder2 {
 
     @NonNull
     @Override
-    public QueryResult buildPagination(@NonNull Pageable pageable) {
+    public String buildPagination(@NonNull Pageable pageable) {
         if (pageable.getMode() != Mode.OFFSET) {
             throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported by cosmos operations");
         }
@@ -386,19 +386,9 @@ public final class CosmosSqlQueryBuilder2 extends SqlQueryBuilder2 {
             StringBuilder builder = new StringBuilder(" ");
             long from = pageable.getOffset();
             builder.append("OFFSET ").append(from).append(" LIMIT ").append(size).append(" ");
-            return QueryResult.of(
-                builder.toString(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyMap()
-            );
+            return builder.toString();
         }
-        return QueryResult.of(
-            "",
-            Collections.emptyList(),
-            Collections.emptyList(),
-            Collections.emptyMap()
-        );
+        return "";
     }
 
 }
