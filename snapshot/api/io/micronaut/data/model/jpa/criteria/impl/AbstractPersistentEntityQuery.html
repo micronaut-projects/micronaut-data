@@ -233,46 +233,49 @@ implements jakarta.persistence.criteria.AbstractQuery&lt;T&gt;, <a href="QueryRe
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="AbstractPersistentEntityQuery.html" title="type parameter in AbstractPersistentEntityQuery">Self</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#groupBy(java.util.List)" class="member-name-link">groupBy</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;jakarta.persistence.criteria.Expression&lt;?&gt;&gt;&nbsp;grouping)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hasOnlyIdRestriction()" class="member-name-link">hasOnlyIdRestriction</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hasDynamicSort()" class="member-name-link">hasDynamicSort</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hasVersionRestriction()" class="member-name-link">hasVersionRestriction</a>()</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hasOnlyIdRestriction()" class="member-name-link">hasOnlyIdRestriction</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hasVersionRestriction()" class="member-name-link">hasVersionRestriction</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="AbstractPersistentEntityQuery.html" title="type parameter in AbstractPersistentEntityQuery">Self</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#having(jakarta.persistence.criteria.Expression)" class="member-name-link">having</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;&nbsp;restriction)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="AbstractPersistentEntityQuery.html" title="type parameter in AbstractPersistentEntityQuery">Self</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#having(jakarta.persistence.criteria.Expression)" class="member-name-link">having</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;&nbsp;restriction)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#having(jakarta.persistence.criteria.Predicate...)" class="member-name-link">having</a><wbr>(jakarta.persistence.criteria.Predicate...&nbsp;restrictions)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="AbstractPersistentEntityQuery.html" title="type parameter in AbstractPersistentEntityQuery">Self</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#having(jakarta.persistence.criteria.Predicate...)" class="member-name-link">having</a><wbr>(jakarta.persistence.criteria.Predicate...&nbsp;restrictions)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isDistinct()" class="member-name-link">isDistinct</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isDistinct()" class="member-name-link">isDistinct</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="AbstractPersistentEntityQuery.html" title="type parameter in AbstractPersistentEntityQuery">Self</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#max(int)" class="member-name-link">max</a><wbr>(int&nbsp;max)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="AbstractPersistentEntityQuery.html" title="type parameter in AbstractPersistentEntityQuery">Self</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#max(int)" class="member-name-link">max</a><wbr>(int&nbsp;max)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Sets the max rows.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="AbstractPersistentEntityQuery.html" title="type parameter in AbstractPersistentEntityQuery">Self</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#offset(int)" class="member-name-link">offset</a><wbr>(int&nbsp;offset)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="AbstractPersistentEntityQuery.html" title="type parameter in AbstractPersistentEntityQuery">Self</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#offset(int)" class="member-name-link">offset</a><wbr>(int&nbsp;offset)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Sets the offset.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="AbstractPersistentEntityQuery.html" title="type parameter in AbstractPersistentEntityQuery">Self</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#self()" class="member-name-link">self</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;U&gt;&nbsp;<a href="../PersistentEntitySubquery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySubquery</a>&lt;U&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#subquery(java.lang.Class)" class="member-name-link">subquery</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;U&gt;&nbsp;type)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../query/builder/QueryBuilder2.SelectQueryDefinition.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder2.SelectQueryDefinition</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toSelectQueryDefinition()" class="member-name-link">toSelectQueryDefinition</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="AbstractPersistentEntityQuery.html" title="type parameter in AbstractPersistentEntityQuery">Self</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#self()" class="member-name-link">self</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;U&gt;&nbsp;<a href="../PersistentEntitySubquery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySubquery</a>&lt;U&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#subquery(java.lang.Class)" class="member-name-link">subquery</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;U&gt;&nbsp;type)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="AbstractPersistentEntityQuery.html" title="type parameter in AbstractPersistentEntityQuery">Self</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#where(jakarta.persistence.criteria.Expression)" class="member-name-link">where</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;&nbsp;restriction)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../query/builder/QueryBuilder2.SelectQueryDefinition.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder2.SelectQueryDefinition</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toSelectQueryDefinition()" class="member-name-link">toSelectQueryDefinition</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="AbstractPersistentEntityQuery.html" title="type parameter in AbstractPersistentEntityQuery">Self</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#where(jakarta.persistence.criteria.Predicate...)" class="member-name-link">where</a><wbr>(jakarta.persistence.criteria.Predicate...&nbsp;restrictions)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#where(jakarta.persistence.criteria.Expression)" class="member-name-link">where</a><wbr>(jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;&nbsp;restriction)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="AbstractPersistentEntityQuery.html" title="type parameter in AbstractPersistentEntityQuery">Self</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#where(jakarta.persistence.criteria.Predicate...)" class="member-name-link">where</a><wbr>(jakarta.persistence.criteria.Predicate...&nbsp;restrictions)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -406,6 +409,12 @@ implements jakarta.persistence.criteria.AbstractQuery&lt;T&gt;, <a href="QueryRe
 <dt>Specified by:</dt>
 <dd><code><a href="QueryResultPersistentEntityCriteriaQuery.html#buildQuery(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryBuilder2)">buildQuery</a></code>&nbsp;in interface&nbsp;<code><a href="QueryResultPersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">QueryResultPersistentEntityCriteriaQuery</a></code></dd>
 </dl>
+</section>
+</li>
+<li>
+<section class="detail" id="hasDynamicSort()">
+<h3>hasDynamicSort</h3>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">hasDynamicSort</span>()</div>
 </section>
 </li>
 <li>
