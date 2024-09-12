@@ -29,7 +29,6 @@ configurations.configureEach {
 
 graalvmNative {
     toolchainDetection = false
-    testSupport = true
     metadataRepository {
         enabled = true
     }
