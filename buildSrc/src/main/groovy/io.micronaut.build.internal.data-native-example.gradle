@@ -32,5 +32,14 @@ graalvmNative {
     metadataRepository {
         enabled = true
     }
+    binaries {
+        all {
+            logger.quiet("GRAALVM_HOME:  {}", System.getenv("GRAALVM_HOME"))
+            if (System.getenv("GRAALVM_HOME")?.contains("graal") && System.getenv("GRAALVM_HOME")?.contains("21")) {
+                logger.quiet("Enabling strict image heap!")
+                buildArgs.add("--strict-image-heap")
+            }
+        }
+    }
 }
 
