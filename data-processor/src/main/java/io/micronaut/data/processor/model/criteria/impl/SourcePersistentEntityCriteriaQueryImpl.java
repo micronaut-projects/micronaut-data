@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaQuery;
@@ -76,4 +77,8 @@ final class SourcePersistentEntityCriteriaQueryImpl<T> extends AbstractPersisten
         return null;
     }
 
+    @Override
+    public <U> PersistentEntitySubquery<U> subquery(Class<U> type) {
+        return new SourcePersistentEntitySubqueryImpl<>(this, entityResolver, criteriaBuilder);
+    }
 }

@@ -37,6 +37,7 @@ import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
 import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
@@ -46,9 +47,10 @@ import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.naming.NamingStrategy;
@@ -893,7 +895,12 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
             persistentEntity = queryState.getEntity();
         }
 
-        private void appendOperatorExpression(PersistentPropertyPath propertyPath, String op, Object value) {
+        private void appendOperatorExpression(Expression<?> leftExpression, String op, Object value) {
+            PersistentPropertyPath propertyPath = CriteriaUtils.requireProperty(leftExpression).getPropertyPath();
+            appendOperatorExpression(op, value, propertyPath);
+        }
+
+        private void appendOperatorExpression(String op, Object value, PersistentPropertyPath propertyPath) {
             if (value instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
                 PersistentPropertyPath p2 = getRequiredProperty(persistentPropertyPath);
                 query.put("$expr", Map.of(
@@ -913,8 +920,8 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
         private void visitPredicate(IExpression<Boolean> expression) {
             if (expression instanceof IPredicate predicateVisitable) {
                 predicateVisitable.visitPredicate(this);
-            } else if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath) {
-                visitIsTrue(getRequiredProperty(propertyPath));
+            } else if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?>) {
+                visitIsTrue(expression);
             } else {
                 throw new IllegalStateException("Unknown boolean expression: " + expression);
             }
@@ -981,8 +988,8 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
         @Override
         public void visit(NegatedPredicate negate) {
             IExpression<Boolean> negated = negate.getNegated();
-            if (negated instanceof PersistentPropertyInPredicate<?> p) {
-                visitIn(getRequiredProperty(p.getPropertyPath()), p.getValues(), true);
+            if (negated instanceof InPredicate<?> p) {
+                visitIn(p.getExpression(), p.getValues(), true);
                 return;
             }
             Map<String, Object> preQuery = query;
@@ -1003,35 +1010,35 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
         }
 
         @Override
-        public void visitIn(PersistentPropertyPath propertyPath, Collection<?> values, boolean negated) {
+        public void visitIn(Expression<?> expression, Collection<?> values, boolean negated) {
             query.put(
-                getPropertyPersistName(propertyPath),
-                Map.of(negated ? "$nin" : "$in", values.stream().map(val -> valueRepresentation(queryState, propertyPath, val)).toList())
+                getPropertyPersistName(CriteriaUtils.requireProperty(expression).getPropertyPath()),
+                Map.of(negated ? "$nin" : "$in", values.stream().map(val -> valueRepresentation(queryState, expression, val)).toList())
             );
         }
 
         @Override
-        public void visitRegexp(PersistentPropertyPath leftProperty, Expression<?> expression) {
+        public void visitRegexp(Expression<?> leftExpression, Expression<?> expression) {
             Object value = expression;
             if (expression instanceof LiteralExpression<?> literalExpression) {
                 value = new RegexPattern((String) literalExpression.getValue());
             }
-            appendOperatorExpression(leftProperty, REGEX, value);
+            appendOperatorExpression(leftExpression, REGEX, value);
         }
 
         @Override
-        public void visitContains(PersistentPropertyPath leftProperty, Expression<?> expression, boolean ignoreCase) {
-            handleRegexPropertyExpression(leftProperty, ignoreCase, false, false, false, expression);
+        public void visitContains(Expression<?> leftExpression, Expression<?> rightExpression, boolean ignoreCase) {
+            handleRegexExpression(leftExpression, ignoreCase, false, false, false, rightExpression);
         }
 
         @Override
-        public void visitEndsWith(PersistentPropertyPath leftProperty, Expression<?> expression, boolean ignoreCase) {
-            handleRegexPropertyExpression(leftProperty, ignoreCase, false, false, true, expression);
+        public void visitEndsWith(Expression<?> leftExpression, Expression<?> rightExpression, boolean ignoreCase) {
+            handleRegexExpression(leftExpression, ignoreCase, false, false, true, rightExpression);
         }
 
         @Override
-        public void visitStartsWith(PersistentPropertyPath leftProperty, Expression<?> expression, boolean ignoreCase) {
-            handleRegexPropertyExpression(leftProperty, ignoreCase, false, true, false, expression);
+        public void visitStartsWith(Expression<?> leftExpression, Expression<?> rightExpression, boolean ignoreCase) {
+            handleRegexExpression(leftExpression, ignoreCase, false, true, false, rightExpression);
         }
 
         @Override
@@ -1039,90 +1046,96 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
             if (likePredicate.isCaseInsensitive()) {
                 throw new UnsupportedOperationException("ILike is not supported by this implementation.");
             }
-            handleRegexPropertyExpression(
-                CriteriaUtils.requireProperty(likePredicate.getExpression()).getPropertyPath(),
+            handleRegexExpression(
+                likePredicate.getExpression(),
                 false, false, false, false,
                 likePredicate.getPattern());
         }
 
         @Override
-        public void visitEquals(PersistentPropertyPath leftProperty, Expression<?> expression, boolean ignoreCase) {
+        public void visit(ExistsSubqueryPredicate existsSubqueryPredicate) {
+            throw new UnsupportedOperationException("ExistsSubquery is not supported by this implementation.");
+        }
+
+        @Override
+        public void visitEquals(Expression<?> leftExpression, Expression<?> rightExpression, boolean ignoreCase) {
             if (ignoreCase) {
-                handleRegexPropertyExpression(leftProperty, true, false, true, true, expression);
+                handleRegexExpression(leftExpression, true, false, true, true, rightExpression);
                 return;
             }
-            appendPropertyEquals(leftProperty, expression);
+            appendEquals(leftExpression, rightExpression);
         }
 
-        private void appendPropertyEquals(PersistentPropertyPath leftProperty, Object value) {
-            appendOperatorExpression(leftProperty, "$eq", value);
+        private void appendEquals(Expression<?> leftExpression, Object value) {
+            appendOperatorExpression(leftExpression, "$eq", value);
         }
 
         @Override
-        public void visitNotEquals(PersistentPropertyPath leftProperty, Expression<?> expression, boolean ignoreCase) {
+        public void visitNotEquals(Expression<?> leftExpression, Expression<?> rightExpression, boolean ignoreCase) {
             if (ignoreCase) {
-                handleRegexPropertyExpression(leftProperty, true, true, true, true, expression);
+                handleRegexExpression(leftExpression, true, true, true, true, rightExpression);
                 return;
             }
-            appendPropertyNotEquals(leftProperty, expression);
+            appendPropertyNotEquals(leftExpression, rightExpression);
         }
 
-        private void appendPropertyNotEquals(PersistentPropertyPath leftProperty, Object value) {
-            appendOperatorExpression(leftProperty, "$ne", value);
-        }
-
-        @Override
-        public void visitGreaterThan(PersistentPropertyPath leftProperty, Expression<?> expression) {
-            appendOperatorExpression(leftProperty, "$gt", expression);
+        private void appendPropertyNotEquals(Expression<?> leftExpression, Object value) {
+            appendOperatorExpression(leftExpression, "$ne", value);
         }
 
         @Override
-        public void visitGreaterThanOrEquals(PersistentPropertyPath leftProperty, Expression<?> expression) {
-            appendOperatorExpression(leftProperty, "$gte", expression);
+        public void visitGreaterThan(Expression<?> leftExpression, Expression<?> rightExpression) {
+            appendOperatorExpression(leftExpression, "$gt", rightExpression);
         }
 
         @Override
-        public void visitLessThan(PersistentPropertyPath leftProperty, Expression<?> expression) {
-            appendOperatorExpression(leftProperty, "$lt", expression);
+        public void visitGreaterThanOrEquals(Expression<?> leftExpression, Expression<?> rightExpression) {
+            appendOperatorExpression(leftExpression, "$gte", rightExpression);
         }
 
         @Override
-        public void visitLessThanOrEquals(PersistentPropertyPath leftProperty, Expression<?> expression) {
-            appendOperatorExpression(leftProperty, "$lte", expression);
+        public void visitLessThan(Expression<?> leftExpression, Expression<?> rightExpression) {
+            appendOperatorExpression(leftExpression, "$lt", rightExpression);
         }
 
         @Override
-        public void visitInBetween(PersistentPropertyPath property, Expression<?> from, Expression<?> to) {
-            String propertyName = getPropertyPersistName(property);
+        public void visitLessThanOrEquals(Expression<?> leftExpression, Expression<?> rightExpression) {
+            appendOperatorExpression(leftExpression, "$lte", rightExpression);
+        }
+
+        @Override
+        public void visitInBetween(Expression<?> value, Expression<?> from, Expression<?> to) {
+            PersistentPropertyPath propertyPath = requireProperty(value).getPropertyPath();
+            String propertyName = getPropertyPersistName(propertyPath);
             query.put("$and", asList(
-                Map.of(propertyName, Map.of("$gte", valueRepresentation(queryState, property, from))),
-                Map.of(propertyName, Map.of("$lte", valueRepresentation(queryState, property, to)))
+                Map.of(propertyName, Map.of("$gte", valueRepresentation(queryState, propertyPath, from))),
+                Map.of(propertyName, Map.of("$lte", valueRepresentation(queryState, propertyPath, to)))
             ));
         }
 
         @Override
-        public void visitIsFalse(PersistentPropertyPath property) {
-            appendPropertyEquals(property, false);
+        public void visitIsFalse(Expression<?> expression) {
+            appendEquals(expression, false);
         }
 
         @Override
-        public void visitIsNotNull(PersistentPropertyPath property) {
-            appendPropertyNotEquals(property, null);
+        public void visitIsNotNull(Expression<?> expression) {
+            appendPropertyNotEquals(expression, null);
         }
 
         @Override
-        public void visitIsNull(PersistentPropertyPath property) {
-            appendPropertyEquals(property, null);
+        public void visitIsNull(Expression<?> expression) {
+            appendEquals(expression, null);
         }
 
         @Override
-        public void visitIsTrue(PersistentPropertyPath property) {
-            appendPropertyEquals(property, true);
+        public void visitIsTrue(Expression<?> expression) {
+            appendEquals(expression, true);
         }
 
         @Override
-        public void visitIsEmpty(PersistentPropertyPath property) {
-            String propertyName = getPropertyPersistName(property);
+        public void visitIsEmpty(Expression<?> expression) {
+            String propertyName = getPropertyPersistName(CriteriaUtils.requireProperty(expression).getPropertyPath());
             query.put("$or", asList(
                 Map.of(propertyName, Map.of("$eq", "")),
                 Map.of(propertyName, Map.of("$exists", false))
@@ -1130,8 +1143,8 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
         }
 
         @Override
-        public void visitIsNotEmpty(PersistentPropertyPath property) {
-            String propertyName = getPropertyPersistName(property);
+        public void visitIsNotEmpty(Expression<?> expression) {
+            String propertyName = getPropertyPersistName(CriteriaUtils.requireProperty(expression).getPropertyPath());
             query.put("$and", asList(
                 Map.of(propertyName, Map.of("$ne", "")),
                 Map.of(propertyName, Map.of("$exists", true))
@@ -1139,7 +1152,7 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
         }
 
         @Override
-        public void visitArrayContains(PersistentPropertyPath leftProperty, Expression<?> expression) {
+        public void visitArrayContains(Expression<?> leftExpression, Expression<?> expression) {
             Object value = expression;
             if (expression instanceof LiteralExpression<?> literalExpression) {
                 value = literalExpression.getValue();
@@ -1147,11 +1160,12 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
             Object criteriaValue;
             if (value instanceof Iterable<?> iterable) {
                 List<?> values = CollectionUtils.iterableToList(iterable);
-                criteriaValue = values.stream().map(val -> valueRepresentation(queryState, leftProperty, val)).toList();
+                criteriaValue = values.stream().map(val -> valueRepresentation(queryState, leftExpression, val)).toList();
             } else {
-                criteriaValue = List.of(valueRepresentation(queryState, leftProperty, value));
+                criteriaValue = List.of(valueRepresentation(queryState, leftExpression, value));
             }
-            query.put(getPropertyPersistName(leftProperty), Map.of("$all", criteriaValue));
+            PersistentPropertyPath propertyPath = requireProperty(leftExpression).getPropertyPath();
+            query.put(getPropertyPersistName(propertyPath), Map.of("$all", criteriaValue));
         }
 
         @Override
@@ -1168,12 +1182,13 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
             }
         }
 
-        private void handleRegexPropertyExpression(PersistentPropertyPath propertyPath,
-                                                   boolean ignoreCase,
-                                                   boolean negate,
-                                                   boolean startsWith,
-                                                   boolean endsWith,
-                                                   Object value) {
+        private void handleRegexExpression(Expression<?> leftExpression,
+                                           boolean ignoreCase,
+                                           boolean negate,
+                                           boolean startsWith,
+                                           boolean endsWith,
+                                           Object value) {
+            PersistentPropertyPath propertyPath = CriteriaUtils.requireProperty(leftExpression).getPropertyPath();
             Object filterValue;
             Map<String, Object> regexCriteria = new LinkedHashMap<>(2);
             regexCriteria.put(OPTIONS, ignoreCase ? "i" : "");
@@ -1202,6 +1217,11 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
                 filterValue = regexCriteria;
             }
             query.put(getPropertyPersistName(propertyPath), filterValue);
+        }
+
+        private Object valueRepresentation(PropertyParameterCreator parameterCreator, Expression<?> leftExpression, Object value) {
+            PersistentPropertyPath propertyPath = requireProperty(leftExpression).getPropertyPath();
+            return valueRepresentation(parameterCreator, propertyPath, propertyPath, value);
         }
 
         private Object valueRepresentation(PropertyParameterCreator parameterCreator, PersistentPropertyPath propertyPath, Object value) {
@@ -1273,6 +1293,11 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
         @Override
         public void visit(PersistentEntityRoot<?> entityRoot) {
             // The default is the entity projection
+        }
+
+        @Override
+        public void visit(PersistentEntitySubquery<?> subquery) {
+            throw new IllegalStateException("Subquery not supported by MongoDB");
         }
 
         @Override

@@ -6,7 +6,7 @@ pluginManagement {
 }
 
 plugins {
-    id 'io.micronaut.build.shared.settings' version '7.1.4'
+    id 'io.micronaut.build.shared.settings' version '7.2.1'
 }
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
@@ -105,6 +105,7 @@ include 'doc-examples:jdbc-and-r2dbc-example-java'
 include 'doc-examples:r2dbc-example-java'
 include 'doc-examples:r2dbc-example-groovy'
 include 'doc-examples:r2dbc-example-kotlin'
+include 'doc-examples:r2dbc-micrometer-example-java'
 
 include 'doc-examples:r2dbc-multitenancy-datasource-example-java'
 include 'doc-examples:r2dbc-multitenancy-schema-example-java'

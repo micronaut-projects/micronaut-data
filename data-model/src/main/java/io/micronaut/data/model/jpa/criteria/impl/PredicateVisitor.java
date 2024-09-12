@@ -18,13 +18,13 @@ package io.micronaut.data.model.jpa.criteria.impl;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.ExpressionBinaryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBetweenPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBinaryPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyUnaryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.UnaryPredicate;
 
 /**
  * The predicate visitor.
@@ -52,44 +52,37 @@ public interface PredicateVisitor {
     /**
      * Visit {@link NegatedPredicate}.
      *
-     * @param negate The negate
+     * @param negate The negated predicate
      */
     void visit(NegatedPredicate negate);
 
     /**
-     * Visit {@link PersistentPropertyInPredicate}.
+     * Visit {@link InPredicate}.
      *
-     * @param propertyIn The propertyIn
+     * @param inPredicate The IN predicate
      */
-    void visit(PersistentPropertyInPredicate<?> propertyIn);
+    void visit(InPredicate<?> inPredicate);
 
     /**
-     * Visit {@link PersistentPropertyUnaryPredicate}.
+     * Visit {@link UnaryPredicate}.
      *
-     * @param propertyOp The propertyOp
+     * @param unaryPredicate The unary predicate
      */
-    void visit(PersistentPropertyUnaryPredicate<?> propertyOp);
+    void visit(UnaryPredicate unaryPredicate);
 
     /**
-     * Visit {@link PersistentPropertyBetweenPredicate}.
+     * Visit {@link BetweenPredicate}.
      *
-     * @param propertyBetweenPredicate The propertyBetweenPredicate
+     * @param betweenPredicate The between predicate
      */
-    void visit(PersistentPropertyBetweenPredicate<?> propertyBetweenPredicate);
+    void visit(BetweenPredicate betweenPredicate);
 
     /**
-     * Visit {@link PersistentPropertyBinaryPredicate}.
+     * Visit {@link BinaryPredicate}.
      *
-     * @param propertyToExpressionOp The propertyToExpressionOp
+     * @param binaryPredicate The binary predicate
      */
-    void visit(PersistentPropertyBinaryPredicate<?> propertyToExpressionOp);
-
-    /**
-     * Visit {@link ExpressionBinaryPredicate}.
-     *
-     * @param expressionBinaryPredicate The expressionBinaryPredicate
-     */
-    void visit(ExpressionBinaryPredicate expressionBinaryPredicate);
+    void visit(BinaryPredicate binaryPredicate);
 
     /**
      * Visit {@link LikePredicate}.
@@ -97,5 +90,12 @@ public interface PredicateVisitor {
      * @param likePredicate The like predicate
      */
     void visit(LikePredicate likePredicate);
+
+    /**
+     * Visit {@link ExistsSubqueryPredicate}.
+     *
+     * @param existsSubqueryPredicate The exists subquery predicate
+     */
+    void visit(ExistsSubqueryPredicate existsSubqueryPredicate);
 
 }

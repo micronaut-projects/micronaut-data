@@ -22,19 +22,19 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.AbstractPersistentPropertyPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.ExpressionBinaryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBetweenPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyBinaryPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyInPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.PersistentPropertyUnaryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.UnaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateBinaryOp;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.factory.Restrictions;
@@ -126,10 +126,14 @@ public final class QueryModelPredicateVisitor implements PredicateVisitor {
     }
 
     @Override
-    public void visit(PersistentPropertyBinaryPredicate<?> propertyToExpressionOp) {
-        PersistentPropertyPath<?> propertyPath = propertyToExpressionOp.getPropertyPath();
-        PredicateBinaryOp op = propertyToExpressionOp.getOp();
-        Expression<?> expression = propertyToExpressionOp.getExpression();
+    public void visit(BinaryPredicate binaryPredicate) {
+        PredicateBinaryOp op = binaryPredicate.getOp();
+        if (op == PredicateBinaryOp.EQUALS && binaryPredicate.getLeftExpression() instanceof IdExpression<?, ?>) {
+            add(Restrictions.idEq(asValue(binaryPredicate.getRightExpression())));
+            return;
+        }
+        PersistentPropertyPath<?> propertyPath = CriteriaUtils.requireProperty(binaryPredicate.getLeftExpression());
+        Expression<?> expression = binaryPredicate.getRightExpression();
         visitPropertyPathPredicate(propertyPath, expression, op);
     }
 
@@ -148,25 +152,6 @@ public final class QueryModelPredicateVisitor implements PredicateVisitor {
                     literalExpression.getValue()));
         } else {
             throw new IllegalStateException("Unsupported expression: " + expression);
-        }
-    }
-
-    @Override
-    public void visit(ExpressionBinaryPredicate expressionBinaryPredicate) {
-        Expression<?> left = expressionBinaryPredicate.getLeft();
-        PredicateBinaryOp op = expressionBinaryPredicate.getOp();
-        if (left instanceof PersistentPropertyPath<?> persistentPropertyPath) {
-            visitPropertyPathPredicate(persistentPropertyPath,
-                    expressionBinaryPredicate.getRight(),
-                    op);
-        } else if (left instanceof IdExpression) {
-            if (op == PredicateBinaryOp.EQUALS) {
-                add(Restrictions.idEq(asValue(expressionBinaryPredicate.getRight())));
-            } else {
-                throw new IllegalStateException("Unsupported ID expression OP: " + op);
-            }
-        } else {
-            throw new IllegalStateException("Unsupported expression: " + left);
         }
     }
 
@@ -240,9 +225,9 @@ public final class QueryModelPredicateVisitor implements PredicateVisitor {
     }
 
     @Override
-    public void visit(PersistentPropertyUnaryPredicate<?> propertyOp) {
-        String propertyPath = getPropertyPath(propertyOp);
-        switch (propertyOp.getOp()) {
+    public void visit(UnaryPredicate unaryPredicate) {
+        String propertyPath = getPropertyPath(CriteriaUtils.requireProperty(unaryPredicate));
+        switch (unaryPredicate.getOp()) {
             case IS_NULL:
                 add(Restrictions.isNull(propertyPath));
                 break;
@@ -262,22 +247,23 @@ public final class QueryModelPredicateVisitor implements PredicateVisitor {
                 add(Restrictions.isNotEmpty(propertyPath));
                 break;
             default:
-                throw new IllegalStateException("Unknown op: " + propertyOp.getOp());
+                throw new IllegalStateException("Unknown op: " + unaryPredicate.getOp());
         }
     }
 
     @Override
-    public void visit(PersistentPropertyBetweenPredicate<?> propertyBetweenPredicate) {
+    public void visit(BetweenPredicate betweenPredicate) {
         add(Restrictions.between(
-                getPropertyPath(propertyBetweenPredicate),
-                asValue(propertyBetweenPredicate.getFrom()),
-                asValue(propertyBetweenPredicate.getTo())
+                getPropertyPath(CriteriaUtils.requireProperty(betweenPredicate)),
+                asValue(betweenPredicate.getFrom()),
+                asValue(betweenPredicate.getTo())
         ));
     }
 
     @Override
-    public void visit(PersistentPropertyInPredicate<?> inValues) {
-        Collection<?> values = inValues.getValues();
+    public void visit(InPredicate<?> inPredicate) {
+        Collection<?> values = inPredicate.getValues();
+        PersistentPropertyPath<?> persistentPropertyPath = CriteriaUtils.requireProperty(inPredicate.getExpression());
         if (!values.isEmpty()) {
             Iterator<?> iterator = values.iterator();
             Object first = iterator.next();
@@ -287,9 +273,9 @@ public final class QueryModelPredicateVisitor implements PredicateVisitor {
                 }
                 if (state.negated) {
                     state.negated = false;
-                    add(Restrictions.notIn(getPropertyPath(inValues), asValue(first)));
+                    add(Restrictions.notIn(getPropertyPath(persistentPropertyPath), asValue(first)));
                 } else {
-                    add(Restrictions.in(getPropertyPath(inValues), asValue(first)));
+                    add(Restrictions.in(getPropertyPath(persistentPropertyPath), asValue(first)));
                 }
                 return;
             }
@@ -297,12 +283,12 @@ public final class QueryModelPredicateVisitor implements PredicateVisitor {
         if (state.negated) {
             state.negated = false;
             add(Restrictions.notIn(
-                    getPropertyPath(inValues),
+                    getPropertyPath(persistentPropertyPath),
                     values.stream().map(this::asValue).toList()
             ));
         } else {
             add(Restrictions.in(
-                    getPropertyPath(inValues),
+                    getPropertyPath(persistentPropertyPath),
                     values.stream().map(this::asValue).toList()
             ));
         }
@@ -310,6 +296,25 @@ public final class QueryModelPredicateVisitor implements PredicateVisitor {
 
     @Override
     public void visit(LikePredicate likePredicate) {
+        PersistentPropertyPath<?> propertyPath = CriteriaUtils.requireProperty(likePredicate.getExpression());
+        QueryModel.PropertyCriterion criterion;
+        if (likePredicate.isCaseInsensitive()) {
+            criterion = Restrictions.ilike(getPropertyPath(propertyPath), likePredicate.getPattern());
+        } else {
+            criterion = Restrictions.like(getPropertyPath(propertyPath), likePredicate.getPattern());
+        }
+        if (likePredicate.isNegated()) {
+            QueryModel.Negation negation = new QueryModel.Negation();
+            negation.add(criterion);
+            add(negation);
+        } else {
+            add(criterion);
+        }
+    }
+
+    @Override
+    public void visit(ExistsSubqueryPredicate existsSubqueryPredicate) {
+        throw new UnsupportedOperationException("Exists subquery predicate not supported");
     }
 
     private Object asValue(Object value) {
@@ -317,11 +322,6 @@ public final class QueryModelPredicateVisitor implements PredicateVisitor {
             return literalExpression.getValue();
         }
         return value;
-    }
-
-    private String getPropertyPath(AbstractPersistentPropertyPredicate<?> propertyPredicate) {
-        PersistentPropertyPath<?> propertyPath = propertyPredicate.getPropertyPath();
-        return getPropertyPath(propertyPath);
     }
 
     private String getPropertyPath(PersistentPropertyPath<?> propertyPath) {

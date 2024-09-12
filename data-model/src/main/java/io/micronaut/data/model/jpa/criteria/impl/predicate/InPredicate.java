@@ -17,7 +17,6 @@ package io.micronaut.data.model.jpa.criteria.impl.predicate;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
@@ -28,24 +27,25 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * The property IN value predicate implementation.
+ * The IN predicate implementation.
  *
- * @param <T> The property type
+ * @param <T> The expression type
  * @author Denis Stepanov
  * @since 3.2
  */
 @Internal
-public final class PersistentPropertyInPredicate<T> extends AbstractPersistentPropertyPredicate<T> implements CriteriaBuilder.In<T> {
+public final class InPredicate<T> extends AbstractPredicate implements CriteriaBuilder.In<T> {
 
+    private final Expression<T> expression;
     private final List<Expression<?>> values;
     private final CriteriaBuilder criteriaBuilder;
 
-    public PersistentPropertyInPredicate(PersistentPropertyPath<T> propertyPath, CriteriaBuilder criteriaBuilder) {
-        this(propertyPath, Collections.emptyList(), criteriaBuilder);
+    public InPredicate(Expression<T> expression, CriteriaBuilder criteriaBuilder) {
+        this(expression, Collections.emptyList(), criteriaBuilder);
     }
 
-    public PersistentPropertyInPredicate(PersistentPropertyPath<T> propertyPath, Collection<Expression<?>> values, CriteriaBuilder criteriaBuilder) {
-        super(propertyPath);
+    public InPredicate(Expression<T> expression, Collection<Expression<?>> values, CriteriaBuilder criteriaBuilder) {
+        this.expression = expression;
         this.values = new ArrayList<>(values);
         this.criteriaBuilder = criteriaBuilder;
     }
@@ -57,17 +57,17 @@ public final class PersistentPropertyInPredicate<T> extends AbstractPersistentPr
 
     @Override
     public Expression<T> getExpression() {
-        return getPropertyPath();
+        return expression;
     }
 
     @Override
-    public PersistentPropertyInPredicate<T> value(T value) {
+    public InPredicate<T> value(T value) {
         values.add(criteriaBuilder.literal(value));
         return this;
     }
 
     @Override
-    public PersistentPropertyInPredicate<T> value(Expression<? extends T> value) {
+    public InPredicate<T> value(Expression<? extends T> value) {
         values.add(value);
         return this;
     }
@@ -79,9 +79,10 @@ public final class PersistentPropertyInPredicate<T> extends AbstractPersistentPr
 
     @Override
     public String toString() {
-        return "PersistentPropertyInPredicate{" +
-                "persistentPropertyPath=" + persistentPropertyPath +
-                ", values=" + values +
-                '}';
+        return "InPredicate{" +
+            "value=" + expression +
+            ", values=" + values +
+            ", criteriaBuilder=" + criteriaBuilder +
+            '}';
     }
 }

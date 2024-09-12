@@ -22,6 +22,7 @@ import io.micronaut.data.hibernate.entities.UserWithWhere
 import io.micronaut.data.jpa.repository.criteria.Specification
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Book
@@ -29,8 +30,11 @@ import io.micronaut.data.tck.entities.EntityIdClass
 import io.micronaut.data.tck.entities.EntityWithIdClass
 import io.micronaut.data.tck.entities.Product
 import io.micronaut.data.tck.entities.Student
+import io.micronaut.data.tck.repositories.BookSpecifications
 import io.micronaut.data.tck.tests.AbstractQuerySpec
 import jakarta.inject.Inject
+import jakarta.persistence.criteria.CriteriaBuilder
+import jakarta.persistence.criteria.CriteriaQuery
 import org.hibernate.LazyInitializationException
 import spock.lang.Issue
 import spock.lang.Shared
@@ -70,6 +74,30 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
     @Shared
     @Inject
     RelPersonRepository relPersonRepo
+
+    void "test where in empty list of entities"() {
+        when:
+        def found = bookRepository.findByAuthors(List.of())
+        then:
+        found.empty
+        when:
+        def author = authorRepository.findByName("Stephen King")
+        found = bookRepository.findByAuthors(List.of(author))
+        then:
+        !found.empty
+    }
+
+    void "test where in empty list of basic type"() {
+        when:
+        def found = bookRepository.findByAuthorIds(List.of())
+        then:
+        found.empty
+        when:
+        def author = authorRepository.findByName("Stephen King")
+        found = bookRepository.findByAuthorIds(List.of(author.id))
+        then:
+        !found.empty
+    }
 
     void "test @where with nullable property values"() {
         when:
@@ -852,6 +880,13 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
         then:
         books.size() == 2
         cnt == 2
+    }
+
+    void "test subquery criteria"() {
+        when:
+            def book = bookRepository.findOne(BookSpecifications.findUsingASubquery("The Stand"))
+        then:
+            book.title == "The Stand"
     }
 
     private static Specification<Book> testJoin(String value) {

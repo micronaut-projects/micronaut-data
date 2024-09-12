@@ -43,6 +43,11 @@ import io.micronaut.data.tck.repositories.UserRoleRepository
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 import spock.lang.Shared
 
+import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.findNameSubqueryEq
+import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.findNameSubqueryIn
+import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEqualsCaseInsensitive
+import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.subqueriesWithJoinReferencingOuter
+
 class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyProvider {
 
 
@@ -243,6 +248,39 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
     @Override
     protected boolean skipQueryByDataArray() {
         return true
+    }
+
+    void "test subquery with JOIN" () {
+        given:
+            saveSampleBooks()
+        when:
+            def books = bookRepository.findAll(subqueriesWithJoinReferencingOuter())
+        then:
+            books.size() == 6
+    }
+
+    void "test subquery IN" () {
+        when:
+            savePersons(["Jeff", "James"])
+            def person = personRepository.findOne(findNameSubqueryIn("James"))
+        then:
+            person
+    }
+
+    void "test subquery EQ" () {
+        when:
+            savePersons(["Jeff", "James"])
+            def person = personRepository.findOne(findNameSubqueryEq("James"))
+        then:
+            person
+    }
+
+    void "test criteria lower select" () {
+        when:
+            savePersons(["Jeff", "James"])
+            def person = personRepository.findOne(nameEqualsCaseInsensitive("james"))
+        then:
+            person.isPresent()
     }
 
     void "test manual joining on many ended association"() {

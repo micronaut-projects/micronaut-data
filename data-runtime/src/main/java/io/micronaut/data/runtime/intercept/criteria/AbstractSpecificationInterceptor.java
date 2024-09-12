@@ -31,6 +31,7 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
+import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryBuilder;
@@ -62,6 +63,7 @@ import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Selection;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -175,7 +177,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
         Long count;
         if (criteriaRepositoryOperations != null) {
-            count = criteriaRepositoryOperations.findOne(buildCountQuery(context));
+            count = criteriaRepositoryOperations.findOne(buildCountQuery(context, methodJoinPaths));
         } else {
             count = operations.findOne(preparedQueryForCriteria(methodKey, context, Type.COUNT, methodJoinPaths));
         }
@@ -217,7 +219,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         QueryBuilder sqlQueryBuilder = getQueryBuilder(methodKey, context);
         StoredQuery<E, ?> storedQuery = switch (type) {
             case FIND_ALL, FIND_ONE, FIND_PAGE -> buildFind(methodKey, context, type, methodJoinPaths);
-            case COUNT -> buildCount(methodKey, context);
+            case COUNT -> buildCount(methodKey, context, methodJoinPaths);
             case DELETE_ALL -> buildDeleteAll(context, sqlQueryBuilder);
             case UPDATE_ALL -> buildUpdateAll(context, sqlQueryBuilder);
             case EXISTS -> buildExists(context, sqlQueryBuilder, methodJoinPaths);
@@ -290,30 +292,18 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     }
 
     private <E> StoredQuery<E, ?> buildCount(RepositoryMethodKey methodKey,
-                                             MethodInvocationContext<T, R> context) {
-        CriteriaQuery<Long> criteriaQuery = buildCountQuery(context);
+                                             MethodInvocationContext<T, R> context,
+                                             Set<JoinPath> methodJoinPaths) {
+        CriteriaQuery<Long> criteriaQuery = buildCountQuery(context, methodJoinPaths);
         QueryBuilder sqlQueryBuilder = getQueryBuilder(methodKey, context);
         QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(context, sqlQueryBuilder);
         return QueryResultStoredQuery.count(context.getName(), context.getAnnotationMetadata(), queryResult, getRequiredRootEntity(context));
     }
 
     @NonNull
-    protected final <E> CriteriaQuery<Long> buildCountQuery(MethodInvocationContext<T, R> context) {
-        Class<E> rootEntity = getRequiredRootEntity(context);
-        QuerySpecification<E> specification = getQuerySpecification(context);
-        CriteriaQuery<Long> criteriaQuery = criteriaBuilder.createQuery(Long.class);
-        Root<E> root = criteriaQuery.from(rootEntity);
-        if (specification != null) {
-            Predicate predicate = specification.toPredicate(root, criteriaQuery, criteriaBuilder);
-            if (predicate != null) {
-                criteriaQuery.where(predicate);
-            }
-        }
-        if (criteriaQuery.isDistinct()) {
-            return criteriaQuery.select(criteriaBuilder.countDistinct(root));
-        } else {
-            return criteriaQuery.select(criteriaBuilder.count(root));
-        }
+    protected final CriteriaQuery<Long> buildCountQuery(MethodInvocationContext<T, R> context, Set<JoinPath> methodJoinPaths) {
+        CriteriaQueryBuilder<Long> criteriaQueryBuilder = getCountCriteriaQueryBuilder(context, methodJoinPaths);
+        return criteriaQueryBuilder.build(criteriaBuilder);
     }
 
     private <E> StoredQuery<E, Object> buildFind(RepositoryMethodKey methodKey,
@@ -326,13 +316,15 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(context, sqlQueryBuilder);
         Set<JoinPath> joinPaths = mergeJoinPaths(methodJoinPaths, queryResult.getJoinPaths());
         Class<E> rootEntity = getRequiredRootEntity(context);
+        Selection<?> selection = ((AbstractPersistentEntityCriteriaQuery<?>) criteriaQuery).getSelection();
+        boolean isCompoundSelection = selection != null && selection.isCompoundSelection();
         if (type == Type.FIND_ONE) {
             return QueryResultStoredQuery.single(OperationType.QUERY, context.getName(), context.getAnnotationMetadata(),
-                queryResult, rootEntity, criteriaQuery.getResultType(), joinPaths);
+                queryResult, rootEntity, criteriaQuery.getResultType(), isCompoundSelection, joinPaths);
         }
         Pageable pageable = findPageable(context);
         return QueryResultStoredQuery.many(context.getName(), context.getAnnotationMetadata(), queryResult, rootEntity,
-            criteriaQuery.getResultType(), !pageable.isUnpaged(), joinPaths);
+            criteriaQuery.getResultType(), !pageable.isUnpaged(), isCompoundSelection, joinPaths);
     }
 
     private <N> CriteriaQuery<N> buildInternalQuery(MethodInvocationContext<T, R> context, Type type, Set<JoinPath> methodJoinPaths) {
@@ -425,6 +417,54 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                 }
             }
             return criteriaQuery;
+        };
+    }
+
+    /**
+     * Find {@link io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder}
+     * or {@link io.micronaut.data.repository.jpa.criteria.QuerySpecification} in context.
+     *
+     * @param context   The context
+     * @param joinPaths The join fetch paths
+     * @param <E>       the entity type
+     * @return found specification
+     */
+    @NonNull
+    private <E> CriteriaQueryBuilder<Long> getCountCriteriaQueryBuilder(MethodInvocationContext<?, ?> context, Set<JoinPath> joinPaths) {
+        final Object parameterValue = context.getParameterValues()[0];
+        if (parameterValue instanceof CriteriaQueryBuilder providedCriteriaQueryBuilder) {
+            return new CriteriaQueryBuilder<Long>() {
+
+                @Override
+                public CriteriaQuery<Long> build(CriteriaBuilder criteriaBuilder) {
+                    CriteriaQuery<?> criteriaQuery = providedCriteriaQueryBuilder.build(criteriaBuilder);
+                    Root<?> root = criteriaQuery.getRoots().iterator().next();
+                    if (criteriaQuery.isDistinct()) {
+                        Expression longExpression = criteriaBuilder.countDistinct(root);
+                        return criteriaQuery.select(longExpression);
+                    } else {
+                        Expression count = criteriaBuilder.count(root);
+                        return criteriaQuery.select(count);
+                    }
+                }
+            };
+        }
+        return criteriaBuilder -> {
+            Class<E> rootEntity = getRequiredRootEntity(context);
+            QuerySpecification<E> specification = getQuerySpecification(context);
+            CriteriaQuery<Long> criteriaQuery = criteriaBuilder.createQuery(Long.class);
+            Root<E> root = criteriaQuery.from(rootEntity);
+            if (specification != null) {
+                Predicate predicate = specification.toPredicate(root, criteriaQuery, criteriaBuilder);
+                if (predicate != null) {
+                    criteriaQuery.where(predicate);
+                }
+            }
+            if (criteriaQuery.isDistinct()) {
+                return criteriaQuery.select(criteriaBuilder.countDistinct(root));
+            } else {
+                return criteriaQuery.select(criteriaBuilder.count(root));
+            }
         };
     }
 

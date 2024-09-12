@@ -17,6 +17,7 @@ package io.micronaut.data.model.jpa.criteria.impl.predicate;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
@@ -46,6 +47,8 @@ public final class LikePredicate extends AbstractPredicate {
     }
 
     public LikePredicate(Expression<String> expression, Expression<String> pattern, Expression<Character> escapeChar, boolean negated, boolean caseInsensitive) {
+        CriteriaUtils.requireStringExpression(expression);
+        CriteriaUtils.requireStringExpression(pattern);
         this.expression = expression;
         this.pattern = pattern;
         this.escapeChar = escapeChar;

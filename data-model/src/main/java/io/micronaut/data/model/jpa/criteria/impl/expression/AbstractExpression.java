@@ -16,9 +16,10 @@
 package io.micronaut.data.model.jpa.criteria.impl.expression;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.IExpression;
-import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 
 /**
  * The abstract expression.
@@ -28,46 +29,22 @@ import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
  * @since 4.9
  */
 @Internal
-abstract class AbstractExpression<E> implements IExpression<E> {
+public abstract class AbstractExpression<E> implements IExpression<E> {
 
     @Nullable
-    private final Class<E> expressionType;
+    private final ExpressionType<E> expressionType;
 
-    public AbstractExpression(@Nullable Class<E> expressionType) {
+    public AbstractExpression(@Nullable ExpressionType<E> expressionType) {
         this.expressionType = expressionType;
     }
 
     @Override
-    public boolean isBoolean() {
-        if (expressionType != null) {
-            return CriteriaUtils.isBoolean(expressionType);
-        }
-        return false;
+    public Class<? extends E> getJavaType() {
+        return expressionType.getJavaType();
     }
 
-    @Override
-    public boolean isNumeric() {
-        if (expressionType != null) {
-            return CriteriaUtils.isNumeric(expressionType);
-        }
-        return true;
-    }
-
-    @Override
-    public boolean isComparable() {
-        if (expressionType != null) {
-            return CriteriaUtils.isComparable(expressionType);
-        }
-        return false;
-    }
-
-    @Override
-    public Class<E> getJavaType() {
-        return expressionType;
-    }
-
-    @Nullable
-    public Class<E> getExpressionType() {
+    @NonNull
+    public final ExpressionType<E> getExpressionType() {
         return expressionType;
     }
 }

@@ -11,7 +11,10 @@ import io.micronaut.data.repository.jpa.criteria.DeleteSpecification
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
+import io.micronaut.data.runtime.criteria.delete
 import io.micronaut.data.runtime.criteria.get
+import io.micronaut.data.runtime.criteria.query
+import io.micronaut.data.runtime.criteria.update
 import io.micronaut.data.runtime.criteria.where
 import java.util.*
 
@@ -106,6 +109,33 @@ interface PersonRepository : CrudRepository<Person, Long>, JpaSpecificationExecu
 
         fun nameInList(names: List<String>) = where<Person> {
             root[Person::name] inList names
+        }
+
+        fun nameOrAgeMatches(name: String, age: Int) = query<Person, Person> {
+            where {
+                or {
+                   root[Person::name] eq name
+                   root[Person::age] eq age
+                }
+            }
+        }
+
+        fun nameMatches(name: String) = query<Person, Person> {
+            where {
+                or {
+                   root[Person::name] eq name
+                }
+            }
+        }
+
+        fun updateName(newName: String, existingName: String) = update<Person> {
+            set(Person::name, newName)
+            where {
+                root[Person::name] eq existingName
+            }
+        }
+        fun deleteByName(name: String) = delete<Person> {
+            root[Person::name] eq name
         }
         // tag::specifications[]
     }

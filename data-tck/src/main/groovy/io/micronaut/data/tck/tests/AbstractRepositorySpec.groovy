@@ -19,6 +19,7 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.core.util.CollectionUtils
 import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.exceptions.OptimisticLockException
+import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder
@@ -50,6 +51,8 @@ import io.micronaut.data.tck.entities.Meal
 import io.micronaut.data.tck.entities.Nose
 import io.micronaut.data.tck.entities.Page
 import io.micronaut.data.tck.entities.Person
+import io.micronaut.data.tck.entities.PersonDto
+import io.micronaut.data.tck.entities.PersonDto2
 import io.micronaut.data.tck.entities.Student
 import io.micronaut.data.tck.entities.TimezoneBasicTypes
 import io.micronaut.data.tck.jdbc.entities.Role
@@ -64,9 +67,10 @@ import jakarta.persistence.criteria.CriteriaUpdate
 import jakarta.persistence.criteria.Path
 import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Root
-import reactor.core.publisher.Mono
 import spock.lang.AutoCleanup
 import spock.lang.IgnoreIf
+import spock.lang.Issue
+import spock.lang.PendingFeature
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -76,14 +80,16 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import java.util.stream.Collectors
 
 import static io.micronaut.data.tck.repositories.BookSpecifications.hasChapter
+import static io.micronaut.data.tck.repositories.BookSpecifications.titleContains
 import static io.micronaut.data.tck.repositories.BookSpecifications.titleEquals
 import static io.micronaut.data.tck.repositories.BookSpecifications.titleEqualsWithJoin
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.distinct
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.idsIn
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEquals
+import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEqualsCaseInsensitive
+import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.personWithOnlyNameAndAgeByName
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.setIncome
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.setName
 
@@ -196,6 +202,23 @@ abstract class AbstractRepositorySpec extends Specification {
 
     protected boolean skipQueryByDataArray() {
         return false
+    }
+
+    void "test query with limit and offset" () {
+        given:
+            saveSampleBooks()
+        when:
+            def allBooks = bookRepository.findAll(Pageable.UNPAGED.order("title", Sort.Order.Direction.ASC))
+        then:
+            allBooks.totalSize == 6
+        when:
+            def books = bookRepository.findBooks(2, 2)
+        then:
+            books.collect { it.id } == allBooks.toList().subList(2, 4).collect { it.id }
+        when:
+            books = bookRepository.findBooks(Integer.MAX_VALUE, 0)
+        then:
+            books.collect { it.id } == allBooks.toList().collect { it.id }
     }
 
     void "test save and retrieve basic types"() {
@@ -527,10 +550,24 @@ abstract class AbstractRepositorySpec extends Specification {
 
         when:
         def book = bookDtoRepository.findByTitleWithQuery("The Stand")
-
         then:
         book.isPresent()
         book.get().title == "The Stand"
+
+        when:"Find projection cursored"
+        bookDtoRepository.findTitle(CursoredPageable.from(10, null))
+        then:"Exception is thrown"
+        thrown(IllegalStateException)
+
+        when:"Find dto without id property that is needed for cursors"
+        bookDtoRepository.findAll(CursoredPageable.from(10, null))
+        then:"Exception is thrown"
+        thrown(IllegalStateException)
+
+        when:"Find DTOs cursored"
+        def bookDtos = bookDtoRepository.findAllByTitle("The Stand", CursoredPageable.from(10, null))
+        then:"Successfully returned cursored page with DTOs as a result"
+        !bookDtos.empty
 
         cleanup:
         cleanupData()
@@ -2379,7 +2416,58 @@ abstract class AbstractRepositorySpec extends Specification {
             !existsNotPredicateSpec
             existsQuerySpec
             !existsNotQuerySpec
+    }
 
+    void "test criteria select" () {
+        when:
+            personRepository.save(new Person(name: "Denis", age: 123, income: 10000, enabled: false))
+            def person = personRepository.findOne(personWithOnlyNameAndAgeByName("Denis")).get()
+        then:
+            person.id == null
+            person.income == null
+            person.name == "Denis"
+            person.age == 123
+            !person.income
+            person.enabled
+    }
+
+    void "test criteria DTO projection"() {
+        when:
+            personRepository.deleteAll()
+            personRepository.save(new Person(name: "Fred1", age: 50))
+            personRepository.save(new Person(name: "Fred2", age: 18))
+        then:
+            def dto = personRepository.findOne(new CriteriaQueryBuilder<PersonDto>() {
+                @Override
+                CriteriaQuery<PersonDto> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(PersonDto)
+                    def root = query.from(Person)
+                    query.multiselect(root.<Integer>get("age"))
+                    query.where(criteriaBuilder.equal(root.<String>get("name"), "Fred1"))
+                    return query
+                }
+            })
+            dto.age == 50
+    }
+
+    void "test criteria DTO projection 2"() {
+        when:
+            personRepository.deleteAll()
+            personRepository.save(new Person(name: "Fred1", age: 50))
+            personRepository.save(new Person(name: "Fred2", age: 18))
+        then:
+            def dto = personRepository.findOne(new CriteriaQueryBuilder<PersonDto2>() {
+                @Override
+                CriteriaQuery<PersonDto2> build(CriteriaBuilder criteriaBuilder) {
+                    def query = criteriaBuilder.createQuery(PersonDto2)
+                    def root = query.from(Person)
+                    query.multiselect(root.<String>get("name"), root.<Integer>get("age"))
+                    query.where(criteriaBuilder.equal(root.<String>get("name"), "Fred1"))
+                    return query
+                }
+            })
+            dto.name() == "Fred1"
+            dto.age() == 50
     }
 
     void "test join/fetch"() {
@@ -2404,6 +2492,7 @@ abstract class AbstractRepositorySpec extends Specification {
         when:
         def bookLoadedUsingFindAllByGenre = bookRepository.findAllByGenre(genre).get(0)
         def bookLoadedUsingFindOneWithCriteriaApi = bookRepository.findOne(titleEquals(book.title)).get()
+        def bookLoadedUsingFindOneWithContainsCriteriaApi = bookRepository.findOne(titleContains(book.title)).orElse(null)
         def bookNotFoundUsingFindOneWithCriteriaApi = bookRepository.findOne(titleEquals("non_existing_book_" + System.currentTimeMillis()))
         def bookLoadedUsingFindAllWithCriteriaApi = bookRepository.findAll(titleEquals(book.title)).get(0)
         def bookLoadedUsingFindAllByCriteriaWithoutAnnotationJoin = bookRepository.findAllByCriteria(titleEqualsWithJoin(book.title)).get(0)
@@ -2417,6 +2506,8 @@ abstract class AbstractRepositorySpec extends Specification {
         bookLoadedUsingFindAllByGenre.genre.genreName != null
         bookLoadedUsingFindOneWithCriteriaApi != null
         bookLoadedUsingFindOneWithCriteriaApi.genre.genreName == genre.genreName
+        bookLoadedUsingFindOneWithContainsCriteriaApi != null
+        bookLoadedUsingFindOneWithContainsCriteriaApi.title == bookLoadedUsingFindOneWithCriteriaApi.title
         bookNotFoundUsingFindOneWithCriteriaApi.present == false
         bookLoadedUsingFindAllWithCriteriaApi != null
         bookLoadedUsingFindAllWithCriteriaApi.genre.genreName == genre.genreName
@@ -2615,6 +2706,8 @@ abstract class AbstractRepositorySpec extends Specification {
         mealRepository.deleteById(meal.mid)
     }
 
+    @PendingFeature(reason = "Until fixed issue with count and joins")
+    @Issue("https://github.com/micronaut-projects/micronaut-data/issues/1882")
     void "test author page total size"() {
         given:
         def author = new Author()
@@ -2636,6 +2729,31 @@ abstract class AbstractRepositorySpec extends Specification {
         authorPage.content.size() == 1
         authorPage.content[0].books.size() == 2
         bookPage.totalSize == 2
+    }
+
+    void "test pageable with join criteria"() {
+        given:
+        def author = new Author()
+        author.name = "author1"
+        authorRepository.save(author)
+        def book1 = new Book()
+        book1.title = "book1"
+        book1.totalPages = 120
+        book1.author = author
+        def book2 = new Book()
+        book2.title = "book2"
+        book2.author = author
+        book2.totalPages = 120
+        bookRepository.save(book1)
+        bookRepository.save(book2)
+        when:
+        def authorPage = authorRepository.findByBooksTotalPages(120, CursoredPageable.from(10, null))
+        then:
+        !authorPage.empty
+        // TODO: Currently does not return correct total counts due to https://github.com/micronaut-projects/micronaut-data/issues/1882
+        // so once it is fixed check totalCount == 1
+        authorPage.cursors.size() == 1
+        authorPage.content.size() == 1
     }
 
     void 'test @Where and count'() {
@@ -2983,6 +3101,65 @@ abstract class AbstractRepositorySpec extends Specification {
             })
         then:
             ilikeNames.toSet() == ["Fr_dB1", "Fr_dB2"].toSet()
+    }
+
+    void "test data with datetime fields and custom time zone"() {
+        given:
+        def defaultTimeZone = TimeZone.getDefault()
+        TimeZone.setDefault(TimeZone.getTimeZone("Europe/Berlin"))
+        when: "we save a new entity"
+        def entity = basicTypeRepository.save(new BasicTypes())
+
+        then: "The ID is assigned"
+        entity.myId != null
+
+        when: "An entity is found"
+        def retrievedEntity = basicTypeRepository.findById(entity.myId).orElse(null)
+
+        then: "The found entity is correct"
+        retrievedEntity.uuid == entity.uuid
+        retrievedEntity.bigDecimal == entity.bigDecimal
+        retrievedEntity.byteArray == entity.byteArray
+        retrievedEntity.charSequence == entity.charSequence
+        retrievedEntity.charset == entity.charset
+        retrievedEntity.primitiveBoolean == entity.primitiveBoolean
+        retrievedEntity.primitiveByte == entity.primitiveByte
+        retrievedEntity.primitiveChar == entity.primitiveChar
+        retrievedEntity.primitiveDouble == entity.primitiveDouble
+        retrievedEntity.primitiveFloat == entity.primitiveFloat
+        retrievedEntity.primitiveInteger == entity.primitiveInteger
+        retrievedEntity.primitiveLong == entity.primitiveLong
+        retrievedEntity.primitiveShort == entity.primitiveShort
+        retrievedEntity.wrapperBoolean == entity.wrapperBoolean
+        retrievedEntity.wrapperByte == entity.wrapperByte
+        retrievedEntity.wrapperChar == entity.wrapperChar
+        retrievedEntity.wrapperDouble == entity.wrapperDouble
+        retrievedEntity.wrapperFloat == entity.wrapperFloat
+        retrievedEntity.wrapperInteger == entity.wrapperInteger
+        retrievedEntity.wrapperLong == entity.wrapperLong
+        retrievedEntity.uri == entity.uri
+        retrievedEntity.url == entity.url
+        retrievedEntity.instant == entity.instant
+        retrievedEntity.localDateTime == entity.localDateTime
+        retrievedEntity.zonedDateTime == entity.zonedDateTime
+        retrievedEntity.offsetDateTime == entity.offsetDateTime
+        retrievedEntity.dateCreated == entity.dateCreated
+        retrievedEntity.dateUpdated == entity.dateUpdated
+
+        cleanup:
+        basicTypeRepository.deleteById(entity.myId)
+        TimeZone.setDefault(defaultTimeZone)
+    }
+
+    void "find by joined entity in list"() {
+        given:
+        saveSampleBooks()
+
+        when:
+        def author = authorRepository.findByName("Stephen King")
+        def books = bookRepository.findByAuthorInList(List.of(author))
+        then:
+        books.size() > 0
     }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {

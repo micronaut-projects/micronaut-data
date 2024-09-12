@@ -18,6 +18,7 @@ package io.micronaut.data.model.jpa.criteria.impl.expression;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
 import jakarta.persistence.criteria.Expression;
 
@@ -36,19 +37,10 @@ public final class BinaryExpression<E> extends AbstractExpression<E> {
     private final Expression<?> right;
 
     public BinaryExpression(Expression<?> left, Expression<?> right, BinaryExpressionType type, @Nullable Class<E> expressionType) {
-        super(expressionType);
+        super(expressionType == null ? (ExpressionType<E>) ExpressionType.OBJECT : new ClassExpressionType<>(expressionType));
         this.left = left;
         this.right = right;
         this.type = type;
-    }
-
-    @Override
-    public Class<E> getJavaType() {
-        Class<E> javaType = super.getJavaType();
-        if (javaType == null) {
-            return (Class<E>) left.getJavaType();
-        }
-        return javaType;
     }
 
     @NonNull

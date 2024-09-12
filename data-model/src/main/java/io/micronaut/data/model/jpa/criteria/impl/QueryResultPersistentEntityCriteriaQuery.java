@@ -18,7 +18,6 @@ package io.micronaut.data.model.jpa.criteria.impl;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.Join;
-import io.micronaut.data.model.Association;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.builder.QueryBuilder;
@@ -97,14 +96,8 @@ public interface QueryResultPersistentEntityCriteriaQuery {
         for (QueryModel.Criterion criterion : junction.getCriteria()) {
             countQuery.add(criterion);
         }
-        // Joins are skipped for count query for OneToMany, ManyToMany
-        // however skipping joins from criteria could cause issues (in many to many?)
+
         for (JoinPath joinPath : queryModel.getJoinPaths()) {
-            Association association = joinPath.getAssociation();
-            if (association != null && !association.getKind().isSingleEnded()) {
-                // skip OneToMany and ManyToMany
-                continue;
-            }
             Join.Type joinType = joinPath.getJoinType();
             switch (joinType) {
                 case INNER:

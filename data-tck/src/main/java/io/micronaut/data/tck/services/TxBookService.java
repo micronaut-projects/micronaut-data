@@ -69,7 +69,7 @@ public class TxBookService extends AbstractBookService {
         transactionManager.commit(transaction);
     }
 
-    @Transactional
+    @Transactional(propagation = TransactionDefinition.Propagation.NESTED)
     public void bookAddedInAnotherNestedTransaction() {
         bookAddedInNestedTransaction();
     }

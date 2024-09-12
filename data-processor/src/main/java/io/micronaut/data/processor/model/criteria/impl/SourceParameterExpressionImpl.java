@@ -26,7 +26,7 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
-import io.micronaut.data.model.jpa.criteria.impl.ParameterExpressionImpl;
+import io.micronaut.data.model.jpa.criteria.impl.IParameterExpression;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
@@ -43,13 +43,13 @@ import java.util.Objects;
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupportedOperation;
 
 /**
- * The internal source implementation of {@link ParameterExpressionImpl}.
+ * The internal source implementation of {@link IParameterExpression}.
  *
  * @author Denis Stepanov
  * @since 3.2
  */
 @Internal
-public final class SourceParameterExpressionImpl extends ParameterExpressionImpl<Object> implements BindingParameter {
+public final class SourceParameterExpressionImpl extends IParameterExpression<Object> implements BindingParameter {
 
     private final Map<String, DataType> dataTypes;
     private final ClassElement expressionType;
@@ -84,7 +84,7 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
                                           boolean isEntityParameter,
                                           boolean isUpdate,
                                           PersistentPropertyPath parameterPropertyPath) {
-        super(null, name);
+        super(new ClassElementExpressionType<>(getSourceExpressionType(expressionType, parameterElement, parameterPropertyPath)), name);
         this.dataTypes = dataTypes;
         this.expressionType = expressionType;
         this.parameters = parameters;
@@ -92,6 +92,22 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
         this.isEntityParameter = isEntityParameter;
         this.isUpdate = isUpdate;
         this.parameterPropertyPath = parameterPropertyPath;
+    }
+
+    public static ClassElement getSourceExpressionType(ClassElement expressionType,
+                                                       ParameterElement parameterElement,
+                                                       PersistentPropertyPath parameterPropertyPath) {
+        if (expressionType != null) {
+            return expressionType;
+        }
+        if (parameterPropertyPath != null) {
+            SourcePersistentProperty property = (SourcePersistentProperty) parameterPropertyPath.getProperty();
+            return property.getType();
+        }
+        if (parameterElement != null) {
+            return parameterElement.getType();
+        }
+        return null;
     }
 
     @Override

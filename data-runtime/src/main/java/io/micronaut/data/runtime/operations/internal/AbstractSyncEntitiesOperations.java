@@ -32,6 +32,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -156,8 +157,9 @@ public abstract class AbstractSyncEntitiesOperations<Ctx extends OperationContex
     }
 
     @Override
+    @SuppressWarnings({"java:S6204"})
     public List<T> getEntities() {
-        return entities.stream().map(d -> d.entity).toList();
+        return entities.stream().map(d -> d.entity).collect(Collectors.toList());
     }
 
     @SuppressWarnings("VisibilityModifier")

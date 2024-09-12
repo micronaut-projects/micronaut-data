@@ -172,11 +172,11 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         if (entityParameter != null) {
             if (rootEntity.getVersion() != null) {
                 predicate = cb.and(
-                    cb.equal(root.id(), cb.entityPropertyParameter(entityParameter, new PersistentPropertyPath(rootEntity.getIdentity()))),
-                    cb.equal(root.version(), cb.entityPropertyParameter(entityParameter, new PersistentPropertyPath(rootEntity.getVersion())))
+                    cb.equal(root.id(), cb.entityPropertyParameter(entityParameter, null)),
+                    cb.equal(root.version(), cb.entityPropertyParameter(entityParameter, null))
                 );
             } else {
-                predicate = cb.equal(root.id(), cb.entityPropertyParameter(entityParameter, new PersistentPropertyPath(rootEntity.getIdentity())));
+                predicate = cb.equal(root.id(), cb.entityPropertyParameter(entityParameter, null));
             }
         } else {
             ParameterElement idParameter = notConsumedParameters.stream()

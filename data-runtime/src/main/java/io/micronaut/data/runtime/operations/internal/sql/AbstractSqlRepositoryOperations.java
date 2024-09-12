@@ -166,6 +166,13 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         }
     }
 
+    /**
+     * @return The result reader that will check for the column existence and return null for {@link ResultReader#readDynamic(Object, Object, DataType)}
+     */
+    protected ResultReader<RS, String> createColumnNameResultSetReaderWithColumnExistenceAware() {
+        return columnNameResultSetReader;
+    }
+
     @Override
     public <E, R> PreparedQuery<E, R> decorate(PreparedQuery<E, R> preparedQuery) {
         return new DefaultSqlPreparedQuery<>(preparedQuery);
@@ -677,9 +684,11 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             return createQueryResultMapper(preparedQuery, column, jsonDataType, rsType, persistentEntity, loadListener);
         }
         if (isEntityResult) {
+            ResultReader<RS, String> resultReader =
+                preparedQuery.isDtoProjection() ? createColumnNameResultSetReaderWithColumnExistenceAware() : columnNameResultSetReader;
             return new SqlResultEntityTypeMapper<>(
                 getEntity(preparedQuery.getResultType()),
-                columnNameResultSetReader,
+                resultReader,
                 preparedQuery.getJoinPaths(),
                 sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, rsType),
                 loadListener,

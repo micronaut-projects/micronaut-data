@@ -115,37 +115,36 @@ public interface Pageable extends Sort {
     /**
      * @return The next pageable.
      */
-    default @NonNull Pageable next() {
-        int size = getSize();
-        if (size < 0) {
-            // unpaged
-            return Pageable.from(0, size, getSort());
-        }
-        int newNumber = getNumber() + 1;
-        // handle overflow
-        if (newNumber < 0) {
-            return Pageable.from(0, size, getSort());
-        } else {
-            return Pageable.from(newNumber, size, getSort());
-        }
+    @NonNull
+    default Pageable next() {
+        return getPageable(getNumber() + 1);
     }
 
     /**
      * @return The previous pageable
      */
-    default @NonNull Pageable previous() {
+    @NonNull
+    default Pageable previous() {
+        return getPageable(getNumber() - 1);
+    }
+
+    private Pageable getPageable(int newNumber) {
         int size = getSize();
         if (size < 0) {
             // unpaged
             return Pageable.from(0, size, getSort());
         }
-        int newNumber = getNumber() - 1;
+        Pageable newPageable;
         // handle overflow
         if (newNumber < 0) {
-            return Pageable.from(0, size, getSort());
+            newPageable = Pageable.from(0, size, getSort());
         } else {
-            return Pageable.from(newNumber, size, getSort());
+            newPageable = Pageable.from(newNumber, size, getSort());
         }
+        if (!requestTotal()) {
+            newPageable = newPageable.withoutTotal();
+        }
+        return newPageable;
     }
 
     /**

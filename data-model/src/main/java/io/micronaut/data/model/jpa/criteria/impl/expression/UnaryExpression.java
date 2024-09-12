@@ -17,6 +17,8 @@ package io.micronaut.data.model.jpa.criteria.impl.expression;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.model.jpa.criteria.ExpressionType;
+import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.criteria.Expression;
@@ -32,25 +34,17 @@ import jakarta.persistence.criteria.Expression;
 public final class UnaryExpression<E> extends AbstractExpression<E> {
 
     private final UnaryExpressionType type;
-    private final Expression<?> expression;
+    private final IExpression<?> expression;
 
     public UnaryExpression(Expression<?> expression, UnaryExpressionType type) {
         this(expression, type, null);
     }
 
     public UnaryExpression(Expression<?> expression, UnaryExpressionType type, @Nullable Class<E> expressionType) {
-        super(expressionType);
-        this.expression = expression;
+        super(expressionType == null ? (ExpressionType<E>) ((IExpression<?>) expression).getExpressionType() : new ClassExpressionType<>(expressionType));
+        this.expression = (IExpression<?>) expression;
         this.type = type;
-    }
-
-    @Override
-    public Class<E> getJavaType() {
-        Class<E> javaType = super.getJavaType();
-        if (javaType == null) {
-            return (Class<E>) expression.getJavaType();
-        }
-        return javaType;
+        type.validate(expression);
     }
 
     @NonNull
@@ -66,5 +60,13 @@ public final class UnaryExpression<E> extends AbstractExpression<E> {
     @Override
     public void visitExpression(ExpressionVisitor expressionVisitor) {
         expressionVisitor.visit(this);
+    }
+
+    @Override
+    public String toString() {
+        return "UnaryExpression{" +
+            "type=" + type +
+            ", expression=" + expression +
+            '}';
     }
 }

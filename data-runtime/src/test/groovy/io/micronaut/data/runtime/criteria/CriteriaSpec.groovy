@@ -1,7 +1,9 @@
 package io.micronaut.data.runtime.criteria
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.data.annotation.Join
 import io.micronaut.data.event.EntityEventListener
+import io.micronaut.data.model.entities.Book
 import io.micronaut.data.model.jpa.criteria.*
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
@@ -11,6 +13,9 @@ import jakarta.persistence.criteria.CriteriaDelete
 import jakarta.persistence.criteria.CriteriaQuery
 import jakarta.persistence.criteria.CriteriaUpdate
 import jakarta.persistence.criteria.Expression
+import jakarta.persistence.criteria.Order
+import jakarta.persistence.criteria.Subquery
+import org.intellij.lang.annotations.Language
 import spock.lang.Unroll
 
 class CriteriaSpec extends AbstractCriteriaSpec {
@@ -57,6 +62,11 @@ class CriteriaSpec extends AbstractCriteriaSpec {
     }
 
     @Override
+    PersistentEntityRoot createRoot(Subquery query) {
+        return query.from(Test)
+    }
+
+    @Override
     PersistentEntityRoot createRoot(CriteriaQuery query) {
         return query.from(Test)
     }
@@ -69,6 +79,78 @@ class CriteriaSpec extends AbstractCriteriaSpec {
     @Override
     PersistentEntityRoot createRoot(CriteriaUpdate query) {
         return query.from(Test)
+    }
+
+    void "test subquery with referenced outer"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(Book)
+            def bookRoot = criteriaQuery.from(Book)
+            def subquery = criteriaQuery.subquery(Long)
+            def subqueryBookRoot = subquery.from(Book)
+            subquery.select(subqueryBookRoot.get("id"))
+            subquery.where(criteriaBuilder.equal(subqueryBookRoot.join("author").get("id"), bookRoot.join("author").get("id")))
+            criteriaQuery.where(
+                    bookRoot.<Long>get("id").in(subquery)
+            )
+            criteriaQuery.orderBy(criteriaBuilder.asc(bookRoot.get("title")))
+            String query = getSqlQuery(criteriaQuery)
+
+        expect:
+            query == '''SELECT book_."id",book_."author_id",book_."title",book_."pages",book_."publisher_id" FROM "book" book_ WHERE (book_."id" IN (SELECT book_book_."id" FROM "book" book_book_ INNER JOIN "author" book_book_author_ ON book_book_."author_id"=book_book_author_."id" WHERE (book_book_author_."id" = book_book_author_."id"))) ORDER BY book_."title" ASC'''
+    }
+
+    void "test subquery IN with JOIN"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(Book)
+            def bookRoot = criteriaQuery.from(Book)
+            def subquery = criteriaQuery.subquery(Long)
+            def subqueryBookRoot = subquery.from(Book)
+            subquery.select(subqueryBookRoot.get("id"))
+            subquery.where(criteriaBuilder.equal(subqueryBookRoot.get("id"), 123))
+            bookRoot.join("author", Join.Type.FETCH)
+            criteriaQuery.where(
+                    bookRoot.<Long>get("id").in(subquery)
+            )
+            criteriaQuery.orderBy(criteriaBuilder.asc(bookRoot.get("title")))
+            String query = getSqlQuery(criteriaQuery)
+
+        expect:
+            // language=SQL
+            query == '''SELECT book_."id",book_."author_id",book_."title",book_."pages",book_."publisher_id",book_author_."name" AS author_name FROM "book" book_ INNER JOIN "author" book_author_ ON book_."author_id"=book_author_."id" WHERE (book_."id" IN (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."id" = ?))) ORDER BY book_."title" ASC'''
+    }
+
+    void "test subquery IN"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(Book)
+            def bookRoot = criteriaQuery.from(Book)
+            def subquery = criteriaQuery.subquery(Long)
+            def subqueryBookRoot = subquery.from(Book)
+            subquery.select(subqueryBookRoot.get("id"))
+            subquery.where(criteriaBuilder.equal(subqueryBookRoot.get("id"), 123))
+            criteriaQuery.where(
+                    bookRoot.<Long>get("id").in(subquery)
+            )
+            String query = getSqlQuery(criteriaQuery)
+
+        expect:
+            query == '''SELECT book_."id",book_."author_id",book_."title",book_."pages",book_."publisher_id" FROM "book" book_ WHERE (book_."id" IN (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."id" = ?)))'''
+    }
+
+    void "test subquery EQ"() {
+        given:
+            def criteriaQuery = criteriaBuilder.createQuery(Book)
+            def bookRoot = criteriaQuery.from(Book)
+            def subquery = criteriaQuery.subquery(Long)
+            def subqueryBookRoot = subquery.from(Book)
+            subquery.select(subqueryBookRoot.get("id"))
+            subquery.where(criteriaBuilder.equal(subqueryBookRoot.get("id"), 123))
+            criteriaQuery.where(
+                    criteriaBuilder.equal(bookRoot.<Long>get("id"), subquery)
+            )
+            String query = getSqlQuery(criteriaQuery)
+
+        expect:
+            query == '''SELECT book_."id",book_."author_id",book_."title",book_."pages",book_."publisher_id" FROM "book" book_ WHERE (book_."id" = (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."id" = ?)))'''
     }
 
     void "test function projection 3"() {
@@ -144,6 +226,12 @@ class CriteriaSpec extends AbstractCriteriaSpec {
                         def pred2 = cb.or(pred1, cb.equal(root.get("amount"), 100))
                         def andPred = cb.and(cb.equal(root.get("budget"), 200), pred2)
                         andPred
+                    } as Specification,
+                    { root, query, cb ->
+                        cb.equal(cb.lower(cb.upper(root.get("name"))), "Denis")
+                    } as Specification,
+                    { root, query, cb ->
+                        cb.equal(cb.lower(cb.upper(root.get("name"))), cb.lower(cb.literal("Denis")))
                     } as Specification
             ]
             expectedWhereQuery << [
@@ -157,7 +245,9 @@ class CriteriaSpec extends AbstractCriteriaSpec {
                     '((test_."amount" >= ? AND test_."amount" <= ?))',
                     '(test_."enabled" = TRUE)',
                     '(test_."enabled" = TRUE) ORDER BY test_."amount" DESC,test_."budget" ASC',
-                    '(test_."budget" = ? AND (test_."enabled" = TRUE OR test_."enabled2" = TRUE OR test_."amount" = ?))'
+                    '(test_."budget" = ? AND (test_."enabled" = TRUE OR test_."enabled2" = TRUE OR test_."amount" = ?))',
+                    '(LOWER(UPPER(test_."name")) = ?)',
+                    '(LOWER(UPPER(test_."name")) = LOWER(?))'
             ]
     }
 

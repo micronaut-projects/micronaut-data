@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 
 /**
@@ -30,13 +31,13 @@ import io.micronaut.data.model.query.builder.QueryParameterBinding;
  * @since 4.9.0
  */
 @Internal
-final class DefaultParameterExpression<T> extends ParameterExpressionImpl<T> {
+final class DefaultParameterExpression<T> extends IParameterExpression<T> {
 
     private final @NonNull Class<T> paramClass;
     private final @Nullable Object value;
 
     public DefaultParameterExpression(@NonNull Class<T> paramClass, @Nullable String name, @Nullable Object value) {
-        super(paramClass, name);
+        super(new ClassExpressionType<>(paramClass), name);
         this.paramClass = paramClass;
         this.value = value;
     }

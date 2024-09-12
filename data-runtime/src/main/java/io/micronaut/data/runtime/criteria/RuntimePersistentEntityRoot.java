@@ -17,7 +17,10 @@ package io.micronaut.data.runtime.criteria;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Association;
+import io.micronaut.data.model.jpa.criteria.ExpressionType;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCommonAbstractCriteria;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.metamodel.EntityType;
@@ -38,36 +41,25 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupport
 final class RuntimePersistentEntityRoot<T> extends AbstractRuntimePersistentEntityJoinSupport<T, T>
     implements RuntimePersistentEntityPath<T>, PersistentEntityRoot<T> {
 
+    private final PersistentEntityCommonAbstractCriteria commonAbstractCriteria;
     private final RuntimePersistentEntity<T> runtimePersistentEntity;
 
-    public RuntimePersistentEntityRoot(RuntimePersistentEntity<T> runtimePersistentEntity, CriteriaBuilder criteriaBuilder) {
+    public RuntimePersistentEntityRoot(PersistentEntityCommonAbstractCriteria commonAbstractCriteria,
+                                       RuntimePersistentEntity<T> runtimePersistentEntity,
+                                       CriteriaBuilder criteriaBuilder) {
         super(criteriaBuilder);
+        this.commonAbstractCriteria = commonAbstractCriteria;
         this.runtimePersistentEntity = runtimePersistentEntity;
+    }
+
+    @Override
+    public ExpressionType<T> getExpressionType() {
+        return new ClassExpressionType<>(runtimePersistentEntity.getIntrospection().getBeanType());
     }
 
     @Override
     public RuntimePersistentEntity<T> getPersistentEntity() {
         return runtimePersistentEntity;
-    }
-
-    @Override
-    public Class<? extends T> getJavaType() {
-        return runtimePersistentEntity.getIntrospection().getBeanType();
-    }
-
-    @Override
-    public boolean isBoolean() {
-        return false;
-    }
-
-    @Override
-    public boolean isNumeric() {
-        return false;
-    }
-
-    @Override
-    public boolean isComparable() {
-        return false;
     }
 
     @Override
