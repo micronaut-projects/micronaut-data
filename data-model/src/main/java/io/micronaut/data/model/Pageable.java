@@ -184,6 +184,16 @@ public interface Pageable extends Sort {
 
     @NonNull
     @Override
+    default Pageable order(@NonNull List<Order> orders) {
+        Sort newSort = getSort();
+        for (Order order : orders) {
+            newSort = newSort.order(order);
+        }
+        return Pageable.from(getNumber(), getSize(), newSort);
+    }
+
+    @NonNull
+    @Override
     @JsonIgnore
     default List<Order> getOrderBy() {
         return getSort().getOrderBy();

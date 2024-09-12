@@ -221,27 +221,7 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
         }
         List<QueryParameterBinding> parameterBindings = new ArrayList<>(parameters.size());
         String filterQuery = processCustomQuery(matchContext, filterQueryString, parameters, entityParam, persistentEntity, parameterBindings);
-        return new QueryResult() {
-            @Override
-            public String getQuery() {
-                return filterQuery;
-            }
-
-            @Override
-            public List<String> getQueryParts() {
-                return Collections.emptyList();
-            }
-
-            @Override
-            public List<QueryParameterBinding> getParameterBindings() {
-                return parameterBindings;
-            }
-
-            @Override
-            public Map<String, String> getAdditionalRequiredParameters() {
-                return Collections.emptyMap();
-            }
-        };
+        return QueryResult.of(filterQuery, parameterBindings);
     }
 
     private QueryResult getUpdateQueryResult(MethodMatchContext matchContext,
@@ -278,10 +258,6 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
                 return parameterBindings;
             }
 
-            @Override
-            public Map<String, String> getAdditionalRequiredParameters() {
-                return Collections.emptyMap();
-            }
         };
     }
 

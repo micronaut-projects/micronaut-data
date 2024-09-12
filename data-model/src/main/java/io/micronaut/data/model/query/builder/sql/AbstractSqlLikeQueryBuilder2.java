@@ -37,6 +37,7 @@ import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.JsonDataType;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentAssociationPath;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
@@ -189,28 +190,12 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         return PersistentPropertyPath.of(Collections.emptyList(), persistentProperty, persistentProperty.getName());
     }
 
-    @Override
-    public QueryResult buildSelect(@NonNull AnnotationMetadata annotationMetadata, @NonNull SelectQueryDefinition definition) {
-        ArgumentUtils.requireNonNull("annotationMetadata", annotationMetadata);
-        ArgumentUtils.requireNonNull("definition", definition);
-        QueryBuilder queryBuilder = new QueryBuilder();
-        QueryState queryState = buildQuery(annotationMetadata, definition, queryBuilder, null);
-
-        return QueryResult.of(
-            queryState.getFinalQuery(),
-            queryState.getQueryParts(),
-            queryState.getParameterBindings(),
-            definition.limit(),
-            definition.offset(),
-            queryState.getJoinPaths()
-        );
-    }
-
     @NonNull
-    private QueryState buildQuery(AnnotationMetadata annotationMetadata,
-                                  SelectQueryDefinition definition,
-                                  QueryBuilder queryBuilder,
-                                  @Nullable String tableAliasPrefix) {
+    protected final QueryState buildQuery(AnnotationMetadata annotationMetadata,
+                                          SelectQueryDefinition definition,
+                                          QueryBuilder queryBuilder,
+                                          boolean appendLimitOffset,
+                                          @Nullable String tableAliasPrefix) {
         QueryState queryState = new QueryState(queryBuilder, definition, true, true, tableAliasPrefix);
 
         Predicate predicate = definition.predicate();
@@ -235,6 +220,9 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         }
 
         appendOrder(annotationMetadata, definition, queryState);
+        if (appendLimitOffset) {
+            appendLimitAndOffset(getDialect(), definition.limit(), definition.offset(), queryState.getQuery());
+        }
         appendForUpdate(QueryPosition.END_OF_QUERY, definition, queryState.getQuery());
         return queryState;
     }
@@ -971,7 +959,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
      * @return The encoded query
      */
     @NonNull
-    public QueryResult buildOrderBy(String query, @NonNull PersistentEntity entity, @NonNull AnnotationMetadata annotationMetadata, @NonNull Sort sort,
+    public String buildOrderBy(String query, @NonNull PersistentEntity entity, @NonNull AnnotationMetadata annotationMetadata, @NonNull Sort sort,
                                     boolean nativeQuery) {
         ArgumentUtils.requireNonNull("entity", entity);
         ArgumentUtils.requireNonNull("sort", sort);
@@ -1000,12 +988,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
             }
         }
 
-        return QueryResult.of(
-            buff.toString(),
-            Collections.emptyList(),
-            Collections.emptyList(),
-            Collections.emptyMap()
-        );
+        return buff.toString();
     }
 
     /**
@@ -1324,12 +1307,74 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         }
     }
 
-    private record QueryBuilder(AtomicInteger position,
-                                List<QueryParameterBinding> parameterBindings,
-                                StringBuilder query,
-                                List<String> queryParts) {
+    @NonNull
+    @Override
+    public String buildPagination(@NonNull Pageable pageable) {
+        int limit = pageable.getSize();
+        long offset = pageable.getMode() == Pageable.Mode.OFFSET ? pageable.getOffset() : 0;
+        StringBuilder builder = new StringBuilder();
+        appendLimitAndOffset(getDialect(), limit, offset, builder);
+        return builder.toString();
+    }
 
-        private QueryBuilder() {
+    /**
+     * Append limit and offset.
+     *
+     * @param dialect The dialect
+     * @param limit   The limit
+     * @param offset  The offset
+     * @param builder The builder
+     */
+    protected void appendLimitAndOffset(Dialect dialect, int limit, long offset, StringBuilder builder) {
+        boolean hasLimit = limit > 0;
+        boolean hasOffset = offset > 0;
+        if (!hasLimit && !hasOffset) {
+            return;
+        }
+        builder.append(' ');
+        switch (dialect) {
+            case SQL_SERVER -> {
+                // SQL server requires OFFSET always
+                if (hasOffset) {
+                    builder.append("OFFSET ").append(offset).append(" ROWS ");
+                } else {
+                    builder.append("OFFSET 0 ROWS ");
+                }
+                if (hasLimit) {
+                    builder.append("FETCH NEXT ").append(limit).append(" ROWS ONLY");
+                }
+            }
+            case ORACLE -> {
+                if (hasOffset) {
+                    builder.append("OFFSET ").append(offset).append(" ROWS");
+                }
+                if (hasLimit) {
+                    if (hasOffset) {
+                        builder.append(" ");
+                    }
+                    builder.append("FETCH NEXT ").append(limit).append(" ROWS ONLY");
+                }
+            }
+            default -> {
+                if (hasLimit) {
+                    builder.append("LIMIT ").append(limit);
+                }
+                if (hasOffset) {
+                    if (hasLimit) {
+                        builder.append(" ");
+                    }
+                    builder.append("OFFSET ").append(offset);
+                }
+            }
+        }
+    }
+
+    protected record QueryBuilder(AtomicInteger position,
+                                  List<QueryParameterBinding> parameterBindings,
+                                  StringBuilder query,
+                                  List<String> queryParts) {
+
+        public QueryBuilder() {
             this(new AtomicInteger(0), new ArrayList<>(), new StringBuilder(), new ArrayList<>());
         }
     }
@@ -2220,7 +2265,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
                     if (requiresBrackets) {
                         query.append("(");
                     }
-                    buildQuery(AnnotationMetadata.EMPTY_METADATA, selectQueryDefinition, queryState.queryBuilder, outerAlias);
+                    buildQuery(AnnotationMetadata.EMPTY_METADATA, selectQueryDefinition, queryState.queryBuilder, false, outerAlias);
                     if (requiresBrackets) {
                         query.append(")");
                     }

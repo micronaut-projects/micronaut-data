@@ -143,15 +143,20 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     protected final Iterable<?> findAll(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context, Type type) {
         Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
         if (criteriaRepositoryOperations != null) {
-            CriteriaQuery<Object> query = buildQuery(context, type, methodJoinPaths);
-            Pageable pageable = getPageable(context);
+            CriteriaQuery<Object> criteriaQuery = buildQuery(context, type, methodJoinPaths);
+            Pageable pageable = getPageableInRole(context);
             if (pageable != null) {
                 if (pageable.getMode() != Mode.OFFSET) {
-                    throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported with specifications");
+                    throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported by hibernate operations");
                 }
-                return criteriaRepositoryOperations.findAll(query, (int) pageable.getOffset(), pageable.getSize());
+                return criteriaRepositoryOperations.findAll(criteriaQuery, (int) pageable.getOffset(), pageable.getSize());
             }
-            return criteriaRepositoryOperations.findAll(query);
+            int offset = getOffset(context);
+            int limit = getLimit(context);
+            if (offset > 0 || limit > 0) {
+                return criteriaRepositoryOperations.findAll(criteriaQuery, offset, limit);
+            }
+            return criteriaRepositoryOperations.findAll(criteriaQuery);
         }
         PreparedQuery<?, ?> preparedQuery = preparedQueryForCriteria(methodKey, context, type, methodJoinPaths);
         context.setAttribute(PREPARED_QUERY_KEY, preparedQuery);

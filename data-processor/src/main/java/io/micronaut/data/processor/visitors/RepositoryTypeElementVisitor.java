@@ -463,11 +463,11 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
                 int max = queryResult.getMax();
                 if (max > -1) {
-                    annotationBuilder.member(DataMethod.META_MEMBER_PAGE_SIZE, max);
+                    annotationBuilder.member(DataMethod.META_MEMBER_LIMIT, max);
                 }
                 long offset = queryResult.getOffset();
                 if (offset > 0) {
-                    annotationBuilder.member(DataMethod.META_MEMBER_PAGE_INDEX, offset);
+                    annotationBuilder.member(DataMethod.META_MEMBER_OFFSET, offset);
                 }
             }
 

@@ -15,7 +15,9 @@
  */
 package io.micronaut.data.processor.model.criteria.impl;
 
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
@@ -80,5 +82,13 @@ final class SourcePersistentEntityCriteriaQueryImpl<T> extends AbstractPersisten
     @Override
     public <U> PersistentEntitySubquery<U> subquery(Class<U> type) {
         return new SourcePersistentEntitySubqueryImpl<>(this, entityResolver, criteriaBuilder);
+    }
+
+    @Override
+    protected boolean hasDynamicSort() {
+        if (criteriaBuilder instanceof MethodMatchSourcePersistentEntityCriteriaBuilderImpl mmcb) {
+            return mmcb.getMethodMatchContext().hasParameterInRole(TypeRole.SORT);
+        }
+        return false;
     }
 }

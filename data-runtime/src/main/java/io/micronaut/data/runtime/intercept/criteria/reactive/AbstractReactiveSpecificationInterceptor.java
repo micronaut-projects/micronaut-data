@@ -76,12 +76,17 @@ public abstract class AbstractReactiveSpecificationInterceptor<T, R> extends Abs
         Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
         if (reactiveCriteriaOperations != null) {
             CriteriaQuery<Object> criteriaQuery = buildQuery(context, type, methodJoinPaths);
-            Pageable pageable = getPageable(context);
+            Pageable pageable = getPageableInRole(context);
             if (pageable != null) {
                 if (pageable.getMode() != Mode.OFFSET) {
                     throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported by hibernate operations");
                 }
                 return reactiveCriteriaOperations.findAll(criteriaQuery, (int) pageable.getOffset(), pageable.getSize());
+            }
+            int offset = getOffset(context);
+            int limit = getLimit(context);
+            if (offset > 0 || limit > 0) {
+                return reactiveCriteriaOperations.findAll(criteriaQuery, offset, limit);
             }
             return reactiveCriteriaOperations.findAll(criteriaQuery);
         }

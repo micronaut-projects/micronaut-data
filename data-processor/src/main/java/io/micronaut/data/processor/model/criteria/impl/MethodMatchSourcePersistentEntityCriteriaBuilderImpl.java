@@ -50,6 +50,10 @@ public final class MethodMatchSourcePersistentEntityCriteriaBuilderImpl extends 
         this.dataTypes = Utils.getConfiguredDataTypes(matchContext.getRepositoryClass());
     }
 
+    public MethodMatchContext getMethodMatchContext() {
+        return methodMatchContext;
+    }
+
     @Override
     public SourcePersistentEntityCriteriaQuery<Object> createQuery() {
         return new SourcePersistentEntityCriteriaQueryImpl<>(methodMatchContext::getEntity, this);
