@@ -20,7 +20,7 @@ micronaut-validation = "4.7.0"
 micronaut-logging = "1.4.0"
 micronaut-flyway = "7.4.0"
 
-groovy = "4.0.22"
+groovy = "4.0.23"
 
 managed-javax-persistence = "2.2"
 managed-jakarta-persistence-api = "3.1.0"
