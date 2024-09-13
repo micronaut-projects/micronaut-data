@@ -54,6 +54,7 @@ import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
+import io.micronaut.data.model.runtime.QueryOutParameterBinding;
 
 import java.lang.annotation.Annotation;
 import java.text.MessageFormat;
@@ -973,6 +974,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
         String builder;
         List<QueryParameterBinding> parameterBindings = new ArrayList<>();
+        List<QueryOutParameterBinding> outParameterBindings = new ArrayList<>();
 
         if (isJsonEntity(repositoryMetadata, entity)) {
             AnnotationValue<EntityRepresentation> entityRepresentationAnnotationValue = entity.getAnnotationMetadata().getAnnotation(EntityRepresentation.class);
@@ -983,6 +985,25 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 if (identity.isGenerated()) {
                     String identityName = identity.getPersistedName();
                     builder = "BEGIN " + builder + " RETURNING JSON_VALUE(" + columnName + ",'$." + identityName + "') INTO " + formatParameter(key + 1) + "; END;";
+                    if (isReturning) {
+                        outParameterBindings.add(new QueryOutParameterBinding() {
+                            @Override
+                            public String getName() {
+                                return identityName;
+                            }
+
+                            @Override
+                            public DataType getDataType() {
+                                return identity.getDataType();
+                            }
+
+                            @Override
+                            public @Nullable String[] getPropertyPath() {
+                                // TODO: Can identity have associations?
+                                return asStringPath(List.of(), identity);
+                            }
+                        });
+                    }
                 }
                 parameterBindings.add(new QueryParameterBinding() {
 
@@ -1029,6 +1050,26 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                             columnName = quote(columnName);
                         }
                         resultColumns.add(columnName);
+                        if (isReturning) {
+                            String[] path = asStringPath(associations, property);
+                            final String outName = columnName;
+                            outParameterBindings.add(new QueryOutParameterBinding() {
+                                @Override
+                                public String getName() {
+                                    return outName;
+                                }
+
+                                @Override
+                                public DataType getDataType() {
+                                    return property.getDataType();
+                                }
+
+                                @Override
+                                public @Nullable String[] getPropertyPath() {
+                                    return path;
+                                }
+                            });
+                        }
                         return;
                     }
 

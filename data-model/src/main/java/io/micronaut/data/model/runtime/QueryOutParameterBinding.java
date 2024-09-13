@@ -1,0 +1,96 @@
+/*
+ * Copyright 2017-2024 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.data.model.runtime;
+
+import io.micronaut.core.annotation.Experimental;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.model.DataType;
+
+/**
+ * The out parameter binding for out parameters to be retrieved from the query execution.
+ *
+ * @author radovanradic
+ * @since 4.10
+ */
+@Experimental
+public interface QueryOutParameterBinding {
+
+    /**
+     * @return The name of the parameter
+     */
+    @Nullable
+    default String getName() {
+        return null;
+    }
+
+    /**
+     * @return The required name of the parameter or throws exception
+     */
+    @NonNull
+    default String getRequiredName() {
+        String name = getName();
+        if (name == null) {
+            throw new IllegalStateException("Parameter name cannot be null for a query out parameter: " + this);
+        }
+        return name;
+    }
+
+    /**
+     * @return The data type
+     */
+    @Nullable
+    default DataType getDataType() {
+        return null;
+    }
+
+    /**
+     * @return The parameter converter class
+     */
+    @Nullable
+    default Class<?> getParameterConverterClass() {
+        return null;
+    }
+
+    /**
+     * @return The parameter binding property path.
+     */
+    @Nullable
+    default String[] getParameterBindingPath() {
+        return null;
+    }
+
+    /**
+     * @return The property path.
+     */
+    @Nullable
+    default String[] getPropertyPath() {
+        return null;
+    }
+
+    /**
+     * @return The required property path or throws and exception.
+     */
+    @NonNull
+    default String[] getRequiredPropertyPath() {
+        String[] propertyPath = getPropertyPath();
+        if (propertyPath == null) {
+            throw new IllegalStateException("Property path cannot be null for a query out parameter: " + this);
+        }
+        return propertyPath;
+    }
+
+}

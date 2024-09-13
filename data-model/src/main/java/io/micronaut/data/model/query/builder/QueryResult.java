@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.JoinPath;
+import io.micronaut.data.model.runtime.QueryOutParameterBinding;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -90,6 +91,15 @@ public interface QueryResult {
     List<QueryParameterBinding> getParameterBindings();
 
     /**
+     * Returns the out parameters binding for this query.
+     *
+     * @return the out parameters binding
+     */
+    @NonNull default List<QueryOutParameterBinding> getOutParameterBindings() {
+        return List.of();
+    }
+
+    /**
      * Returns additional required parameters.
      *
      * @return the additional required parameters
@@ -114,6 +124,56 @@ public interface QueryResult {
     @NonNull
     default Collection<JoinPath> getJoinPaths() {
         return Collections.emptyList();
+    }
+
+    /**
+     * Creates a new encoded query.
+     *
+     * @param query                        The query
+     * @param queryParts                   The queryParts
+     * @param parameterBindings            The parameters binding
+     * @param outParameterBindings         The out parameter binding
+     * @param additionalRequiredParameters Additional required parameters to execute the query
+     * @return The query
+     */
+    @NonNull
+    static QueryResult of(
+        @NonNull String query,
+        @NonNull List<String> queryParts,
+        @NonNull List<QueryParameterBinding> parameterBindings,
+        @NonNull List<QueryOutParameterBinding> outParameterBindings,
+        @NonNull Map<String, String> additionalRequiredParameters) {
+        ArgumentUtils.requireNonNull("query", query);
+        ArgumentUtils.requireNonNull("parameterBindings", parameterBindings);
+        ArgumentUtils.requireNonNull("additionalRequiredParameters", additionalRequiredParameters);
+
+        return new QueryResult() {
+            @NonNull
+            @Override
+            public String getQuery() {
+                return query;
+            }
+
+            @Override
+            public List<String> getQueryParts() {
+                return queryParts;
+            }
+
+            @Override
+            public List<QueryParameterBinding> getParameterBindings() {
+                return parameterBindings;
+            }
+
+            @Override
+            public Map<String, String> getAdditionalRequiredParameters() {
+                return additionalRequiredParameters;
+            }
+
+            @Override
+            public List<QueryOutParameterBinding> getOutParameterBindings() {
+                return outParameterBindings;
+            }
+        };
     }
 
     /**
