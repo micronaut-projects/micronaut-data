@@ -23,6 +23,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Path;
 import jakarta.persistence.metamodel.EntityType;
 
 import java.util.Collections;
@@ -50,6 +51,11 @@ final class RuntimePersistentEntityRoot<T> extends AbstractRuntimePersistentEnti
         super(criteriaBuilder);
         this.commonAbstractCriteria = commonAbstractCriteria;
         this.runtimePersistentEntity = runtimePersistentEntity;
+    }
+
+    @Override
+    public Path<?> getParentPath() {
+        return null;
     }
 
     @Override

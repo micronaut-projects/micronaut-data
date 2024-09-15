@@ -41,7 +41,6 @@ import jakarta.persistence.criteria.Predicate;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -290,7 +289,7 @@ public final class CosmosSqlQueryBuilder2 extends SqlQueryBuilder2 {
             buildWhereClause(annotationMetadata, predicate, queryState);
         }
 
-        appendOrder(annotationMetadata, definition, queryState);
+        appendOrder(annotationMetadata, definition.order(), queryState);
         appendForUpdate(QueryPosition.END_OF_QUERY, definition, queryState.getQuery());
 
         return QueryResult.of(

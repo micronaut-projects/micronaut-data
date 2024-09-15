@@ -56,15 +56,20 @@ public class FindPageAsyncSpecificationInterceptor extends AbstractAsyncSpecific
 
         Pageable pageable = getPageable(context);
         if (pageable.isUnpaged()) {
-            return findAllAsync(methodKey, context, Type.FIND_PAGE).thenApply(iterable -> {
+            return findAllAsync(methodKey, context).thenApply(iterable -> {
                 List<?> resultList = CollectionUtils.iterableToList(iterable);
                 return Page.of(resultList, pageable, (long) resultList.size());
             });
         }
-        return findAllAsync(methodKey, context, Type.FIND_PAGE).thenCompose(iterable ->
-            pageable.requestTotal()
-                ? countAsync(methodKey, context).thenApply(count -> Page.of(CollectionUtils.iterableToList(iterable), pageable, count.longValue()))
-                : CompletableFuture.completedFuture(Page.of(CollectionUtils.iterableToList(iterable), pageable, null))
+        return findAllAsync(methodKey, context).thenCompose(iterable -> {
+                if (pageable.requestTotal()) {
+                    return getAsyncCriteriaRepositoryOperations(methodKey, context, null)
+                        .findOne(buildCountQuery(methodKey, context)).<Number>thenApply(n -> n)
+                        .thenApply(count -> Page.of(CollectionUtils.iterableToList(iterable), pageable, count.longValue()));
+                } else {
+                    return CompletableFuture.completedFuture(Page.of(CollectionUtils.iterableToList(iterable), pageable, null));
+                }
+            }
         );
 
     }

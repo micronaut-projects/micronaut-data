@@ -22,7 +22,7 @@ import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.query.JoinPath;
-import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveCriteriaCapableRepository;
@@ -31,7 +31,6 @@ import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor;
 import jakarta.persistence.criteria.CriteriaQuery;
 import org.reactivestreams.Publisher;
-import reactor.core.publisher.Mono;
 
 import java.util.Set;
 
@@ -71,13 +70,34 @@ public abstract class AbstractReactiveSpecificationInterceptor<T, R> extends Abs
         }
     }
 
-    @NonNull
-    protected final Publisher<Object> findAllReactive(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context, Type type) {
-        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
+    final ReactiveCriteriaRepositoryOperations getReactiveCriteriaOperations(RepositoryMethodKey methodKey,
+                                                                       MethodInvocationContext<T, R> context,
+                                                                       Pageable pageable) {
         if (reactiveCriteriaOperations != null) {
-            CriteriaQuery<Object> criteriaQuery = buildQuery(context, type, methodJoinPaths);
-            Pageable pageable = getPageableInRole(context);
-            if (pageable != null) {
+            return reactiveCriteriaOperations;
+        }
+        QueryBuilder sqlQueryBuilder = getQueryBuilder(methodKey, context);
+        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
+        return new PreparedQueryReactiveCriteriaRepositoryOperations(
+            criteriaBuilder,
+            reactiveOperations,
+            storedQueryDecorator,
+            preparedQueryDecorator,
+            preparedQueryResolver,
+            context,
+            sqlQueryBuilder,
+            methodJoinPaths,
+            getRequiredRootEntity(context),
+            pageable
+        );
+    }
+
+    @NonNull
+    protected final Publisher<Object> findAllReactive(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
+        CriteriaQuery<Object> criteriaQuery = buildQuery(methodKey, context);
+        Pageable pageable = applyPaginationAndSort(getPageable(context), criteriaQuery, false);
+        if (reactiveCriteriaOperations != null) {
+            if (pageable != null && !pageable.isUnpaged()) {
                 if (pageable.getMode() != Mode.OFFSET) {
                     throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported by hibernate operations");
                 }
@@ -90,51 +110,7 @@ public abstract class AbstractReactiveSpecificationInterceptor<T, R> extends Abs
             }
             return reactiveCriteriaOperations.findAll(criteriaQuery);
         }
-        PreparedQuery<?, ?> preparedQuery = preparedQueryForCriteria(methodKey, context, type, methodJoinPaths);
-        context.setAttribute(PREPARED_QUERY_KEY, preparedQuery);
-        return (Publisher<Object>) reactiveOperations.findAll(preparedQuery);
+        return getReactiveCriteriaOperations(methodKey, context, pageable).findAll(criteriaQuery);
     }
 
-    @NonNull
-    protected final Publisher<Object> findOneReactive(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context, Type type) {
-        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
-        if (reactiveCriteriaOperations != null) {
-            return reactiveCriteriaOperations.findOne(buildQuery(context, type, methodJoinPaths));
-        }
-        return reactiveOperations.findOne(preparedQueryForCriteria(methodKey, context, type, methodJoinPaths));
-    }
-
-    @NonNull
-    protected final Publisher<Long> countReactive(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
-        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
-        if (reactiveCriteriaOperations != null) {
-            return reactiveCriteriaOperations.findOne(buildCountQuery(context, methodJoinPaths));
-        }
-        return reactiveOperations.findOne(preparedQueryForCriteria(methodKey, context, Type.COUNT, methodJoinPaths));
-    }
-
-    protected final Publisher<Boolean> existsReactive(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
-        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
-        if (reactiveCriteriaOperations != null) {
-            return reactiveCriteriaOperations.findOne(buildExistsQuery(context, methodJoinPaths));
-        }
-        return Mono.from(reactiveOperations.findOne(preparedQueryForCriteria(methodKey, context, Type.EXISTS, methodJoinPaths)))
-            .map(one -> one instanceof Boolean aBoolean ? aBoolean : one != null);
-    }
-
-    protected final Publisher<Number> deleteAllReactive(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
-        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
-        if (reactiveCriteriaOperations != null) {
-            return reactiveCriteriaOperations.deleteAll(buildDeleteQuery(context));
-        }
-        return reactiveOperations.executeDelete(preparedQueryForCriteria(methodKey, context, Type.DELETE_ALL, methodJoinPaths));
-    }
-
-    protected final Publisher<Number> updateAllReactive(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
-        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
-        if (reactiveCriteriaOperations != null) {
-            return reactiveCriteriaOperations.updateAll(buildUpdateQuery(context));
-        }
-        return reactiveOperations.executeUpdate(preparedQueryForCriteria(methodKey, context, Type.UPDATE_ALL, methodJoinPaths));
-    }
 }

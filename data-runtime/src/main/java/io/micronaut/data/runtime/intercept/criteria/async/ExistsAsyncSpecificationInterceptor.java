@@ -41,6 +41,7 @@ public class ExistsAsyncSpecificationInterceptor extends AbstractAsyncSpecificat
 
     @Override
     public CompletionStage<Boolean> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, CompletionStage<Boolean>> context) {
-        return existsAsync(methodKey, context);
+        return getAsyncCriteriaRepositoryOperations(methodKey, context, null)
+            .exists(buildExistsQuery(methodKey, context));
     }
 }

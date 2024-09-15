@@ -40,7 +40,9 @@ public class UpdateAllAsyncSpecificationInterceptor extends AbstractAsyncSpecifi
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        return updateAllAsync(methodKey, context).thenApply(n -> convertNumberToReturnType(context, n));
+        return getAsyncCriteriaRepositoryOperations(methodKey, context, null)
+            .updateAll(buildUpdateQuery(context))
+            .thenApply(n -> convertNumberToReturnType(context, n));
     }
 
 }

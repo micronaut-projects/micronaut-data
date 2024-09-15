@@ -24,6 +24,7 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.JoinPath;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.async.AsyncCriteriaCapableRepository;
@@ -74,61 +75,39 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
         }
     }
 
-    @NonNull
-    protected final CompletionStage<Iterable<Object>> findAllAsync(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context, Type type) {
-        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
+    final AsyncCriteriaRepositoryOperations getAsyncCriteriaRepositoryOperations(RepositoryMethodKey methodKey,
+                                                                           MethodInvocationContext<T, R> context,
+                                                                           Pageable pageable) {
         if (asyncCriteriaOperations != null) {
-            CriteriaQuery<Object> criteriaQuery = buildQuery(context, type, methodJoinPaths);
-            Pageable pageable = getPageable(context);
-            if (pageable != null) {
+            return asyncCriteriaOperations;
+        }
+        QueryBuilder sqlQueryBuilder = getQueryBuilder(methodKey, context);
+        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
+        return new PreparedQueryAsyncCriteriaRepositoryOperations(
+            criteriaBuilder,
+            asyncOperations,
+            storedQueryDecorator,
+            preparedQueryDecorator,
+            preparedQueryResolver,
+            context,
+            sqlQueryBuilder,
+            methodJoinPaths,
+            getRequiredRootEntity(context),
+            pageable
+        );
+    }
+
+    @NonNull
+    protected final CompletionStage<Iterable<Object>> findAllAsync(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
+        CriteriaQuery<Object> criteriaQuery = buildQuery(methodKey, context);
+        Pageable pageable = applyPaginationAndSort(getPageable(context), criteriaQuery, true);
+        if (asyncCriteriaOperations != null) {
+            if (pageable != null && !pageable.isUnpaged()) {
                 return asyncCriteriaOperations.findAll(criteriaQuery, (int) pageable.getOffset(), pageable.getSize()).thenApply(m -> m);
             }
             return asyncCriteriaOperations.findAll(criteriaQuery).thenApply(m -> m);
         }
-        return asyncOperations.findAll(preparedQueryForCriteria(methodKey, context, type, methodJoinPaths));
-    }
-
-    @NonNull
-    protected final CompletionStage<Object> findOneAsync(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context, Type type) {
-        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
-        if (asyncCriteriaOperations != null) {
-            return asyncCriteriaOperations.findOne(buildQuery(context, type, methodJoinPaths));
-        }
-        return asyncOperations.findOne(preparedQueryForCriteria(methodKey, context, type, methodJoinPaths));
-    }
-
-    @NonNull
-    protected final CompletionStage<Number> countAsync(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
-        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
-        if (asyncCriteriaOperations != null) {
-            return asyncCriteriaOperations.findOne(buildCountQuery(context, methodJoinPaths)).thenApply(n -> n);
-        }
-        return asyncOperations.findOne(preparedQueryForCriteria(methodKey, context, Type.COUNT, methodJoinPaths));
-    }
-
-    protected final CompletionStage<Boolean> existsAsync(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
-        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
-        if (asyncCriteriaOperations != null) {
-            return asyncCriteriaOperations.findOne(buildExistsQuery(context, methodJoinPaths));
-        }
-        return asyncOperations.findOne(preparedQueryForCriteria(methodKey, context, Type.EXISTS, methodJoinPaths))
-            .thenApply(one -> one instanceof Boolean aBoolean ? aBoolean : one != null);
-    }
-
-    protected final CompletionStage<Number> deleteAllAsync(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
-        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
-        if (asyncCriteriaOperations != null) {
-            return asyncCriteriaOperations.deleteAll(buildDeleteQuery(context));
-        }
-        return asyncOperations.executeDelete(preparedQueryForCriteria(methodKey, context, Type.DELETE_ALL, methodJoinPaths));
-    }
-
-    protected final CompletionStage<Number> updateAllAsync(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
-        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
-        if (asyncCriteriaOperations != null) {
-            return asyncCriteriaOperations.updateAll(buildUpdateQuery(context));
-        }
-        return asyncOperations.executeUpdate(preparedQueryForCriteria(methodKey, context, Type.UPDATE_ALL, methodJoinPaths));
+        return getAsyncCriteriaRepositoryOperations(methodKey, context, pageable).findAll(criteriaQuery).thenApply(m -> m);
     }
 
     @Override

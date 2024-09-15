@@ -68,6 +68,7 @@ import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.json.JsonMapper;
+import jakarta.persistence.Tuple;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -652,6 +653,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      */
     protected abstract Integer getFirstResultSetIndex();
 
+    protected abstract SqlTypeMapper<RS, Tuple> createTupleMapper();
+
     /**
      * Creates a result mapper.
      *
@@ -663,6 +666,9 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @since 4.2.0
      */
     protected <E, R> SqlTypeMapper<RS, R> createMapper(SqlStoredQuery<E, R> preparedQuery, Class<RS> rsType) {
+        if (preparedQuery.getResultType().equals(Tuple.class)) {
+            return (SqlTypeMapper<RS, R>) createTupleMapper();
+        }
         BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener;
         RuntimePersistentEntity<E> persistentEntity = preparedQuery.getPersistentEntity();
         boolean isEntityResult = preparedQuery.getResultDataType() == DataType.ENTITY;

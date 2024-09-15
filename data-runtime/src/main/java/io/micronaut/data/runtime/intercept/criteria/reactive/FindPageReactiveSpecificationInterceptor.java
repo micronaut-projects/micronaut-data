@@ -59,26 +59,32 @@ public class FindPageReactiveSpecificationInterceptor extends AbstractReactiveSp
 
         Pageable pageable = getPageable(context);
         if (pageable.isUnpaged()) {
-            Flux<?> results = Flux.from(findAllReactive(methodKey, context, Type.FIND_PAGE));
+            Flux<?> results = Flux.from(findAllReactive(methodKey, context));
             result = results.collectList().map(resultList -> Page.of(resultList, pageable, (long) resultList.size()));
         } else {
-            result = Flux.from(findAllReactive(methodKey, context, Type.FIND_PAGE))
+            result = Flux.from(findAllReactive(methodKey, context))
                 .collectList()
                 .flatMap(
-                    list -> pageable.requestTotal()
-                        ? Mono.from(countReactive(methodKey, context)).map(count -> getPage(list, pageable, count, context))
-                        : Mono.just(getPage(list, pageable, null, context))
+                    list -> {
+                        if (pageable.requestTotal()) {
+                            return Mono.from(getReactiveCriteriaOperations(methodKey, context, null)
+                                    .findOne(buildCountQuery(methodKey, context)))
+                                .map(count -> getPage(list, pageable, count, context));
+                        } else {
+                            return Mono.just(getPage(list, pageable, null, context));
+                        }
+                    }
                 );
         }
         return Publishers.convertPublisher(conversionService, result, context.getReturnType().getType());
     }
 
-    private Page getPage(List<Object> list, Pageable pageable, Long count, MethodInvocationContext<Object, Object> context) {
-        Page page;
+    private Page<?> getPage(List<Object> list, Pageable pageable, Long count, MethodInvocationContext<Object, Object> context) {
+        Page<?> page;
         if (pageable.getMode() == Pageable.Mode.OFFSET) {
             page = Page.of(list, pageable, count);
         } else {
-            PreparedQuery preparedQuery = (PreparedQuery) context.getAttribute(PREPARED_QUERY_KEY).orElse(null);
+            PreparedQuery<?, ?> preparedQuery = (PreparedQuery<?, ?>) context.getAttribute(PREPARED_QUERY_KEY).orElse(null);
             if (preparedQuery instanceof DefaultSqlPreparedQuery<?, ?> sqlPreparedQuery) {
                 List<Pageable.Cursor> cursors = sqlPreparedQuery.createCursors(list, pageable);
                 page = CursoredPage.of(list, pageable, cursors, count);

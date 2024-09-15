@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.processor.model.criteria.impl;
 
-import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.model.PersistentEntity;
@@ -43,9 +42,10 @@ final class SourcePersistentEntityCriteriaQueryImpl<T> extends AbstractPersisten
 
     private final Function<ClassElement, SourcePersistentEntity> entityResolver;
 
-    public SourcePersistentEntityCriteriaQueryImpl(Function<ClassElement, SourcePersistentEntity> entityResolver,
+    public SourcePersistentEntityCriteriaQueryImpl(Class<T> result,
+                                                   Function<ClassElement, SourcePersistentEntity> entityResolver,
                                                    CriteriaBuilder criteriaBuilder) {
-        super((Class<T>) Object.class, criteriaBuilder);
+        super(result, criteriaBuilder);
         this.entityResolver = entityResolver;
     }
 

@@ -65,6 +65,9 @@ public final class SubqueryExpression<T> extends AbstractExpression<T> {
             '}';
     }
 
+    /**
+     * The type of the expression.
+     */
     public enum Type {
         ALL, SOME, ANY
     }

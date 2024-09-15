@@ -33,6 +33,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Where;
 import io.micronaut.data.annotation.repeatable.WhereSpecifications;
+import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Embedded;
@@ -54,6 +55,7 @@ import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.model.jpa.criteria.impl.DefaultPersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.IParameterExpression;
+import io.micronaut.data.model.jpa.criteria.impl.PersistentPropertyOrder;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
@@ -218,8 +220,16 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         if (predicate != null || annotationMetadata.hasStereotype(WhereSpecifications.class) || queryState.getEntity().getAnnotationMetadata().hasStereotype(WhereSpecifications.class)) {
             buildWhereClause(annotationMetadata, predicate, queryState);
         }
-
-        appendOrder(annotationMetadata, definition, queryState);
+        List<Order> orders = definition.order();
+        if (appendLimitOffset && getDialect() == Dialect.SQL_SERVER && orders.isEmpty() && (definition.limit() > 0 || definition.offset() > 0)) {
+            PersistentEntity persistentEntity = definition.persistentEntity();
+            PersistentProperty identity = persistentEntity.getIdentity();
+            if (identity == null) {
+                throw new DataAccessException("Pagination requires an entity ID on SQL Server");
+            }
+            orders = List.of(new PersistentPropertyOrder<>(new DefaultPersistentPropertyPath<>(identity, List.of(), null), true));
+        }
+        appendOrder(annotationMetadata, orders, queryState);
         if (appendLimitOffset) {
             appendLimitAndOffset(getDialect(), definition.limit(), definition.offset(), queryState.getQuery());
         }
@@ -614,11 +624,10 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
      * Appends order to the query.
      *
      * @param annotationMetadata the annotation metadata
-     * @param definition         the query model
+     * @param orders             the orders
      * @param queryState         the query state
      */
-    protected void appendOrder(AnnotationMetadata annotationMetadata, SelectQueryDefinition definition, QueryState queryState) {
-        List<Order> orders = definition.order();
+    protected void appendOrder(AnnotationMetadata annotationMetadata, List<Order> orders, QueryState queryState) {
         if (!orders.isEmpty()) {
             StringBuilder buff = queryState.getQuery();
             buff.append(ORDER_BY_CLAUSE);

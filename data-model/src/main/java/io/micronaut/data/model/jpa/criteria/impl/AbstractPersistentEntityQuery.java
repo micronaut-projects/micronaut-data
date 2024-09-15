@@ -112,6 +112,9 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends AbstractQuer
         return queryBuilder.buildSelect(annotationMetadata, definition);
     }
 
+    /**
+     * @return Is the query with a dynamic sort?
+     */
     protected boolean hasDynamicSort() {
         return false;
     }

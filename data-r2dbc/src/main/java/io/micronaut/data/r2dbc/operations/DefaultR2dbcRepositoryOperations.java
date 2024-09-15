@@ -65,6 +65,7 @@ import io.micronaut.data.r2dbc.mapper.ColumnIndexR2dbcResultReader;
 import io.micronaut.data.r2dbc.mapper.ColumnNameExistenceAwareR2dbcResultSetReader;
 import io.micronaut.data.r2dbc.mapper.ColumnNameR2dbcResultReader;
 import io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement;
+import io.micronaut.data.r2dbc.mapper.RowTupleMapper;
 import io.micronaut.data.r2dbc.transaction.R2dbcReactorTransactionOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.convert.RuntimePersistentPropertyConversionContext;
@@ -98,6 +99,7 @@ import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.Statement;
 import jakarta.inject.Named;
+import jakarta.persistence.Tuple;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -233,6 +235,11 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     @Override
     protected ResultReader<Row, String> createColumnNameResultSetReaderWithColumnExistenceAware() {
         return new ColumnNameExistenceAwareR2dbcResultSetReader();
+    }
+
+    @Override
+    protected SqlTypeMapper<Row, Tuple> createTupleMapper() {
+        return new RowTupleMapper(conversionService);
     }
 
     @Override

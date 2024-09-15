@@ -45,6 +45,11 @@ public class ExecutorReactiveOperationsSupportingCriteria extends ExecutorReacti
     }
 
     @Override
+    public Publisher<Boolean> exists(CriteriaQuery<?> query) {
+        return fromCompletableFuture(() -> asyncOperations.exists(query).toCompletableFuture());
+    }
+
+    @Override
     public <R> Publisher<R> findOne(CriteriaQuery<R> query) {
         return fromCompletableFuture(() -> asyncOperations.findOne(query).toCompletableFuture());
     }

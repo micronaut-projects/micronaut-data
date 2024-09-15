@@ -42,7 +42,7 @@ public class DeleteAllSpecificationInterceptor extends AbstractSpecificationInte
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         ReturnType<Object> rt = context.getReturnType();
-        Number result = deleteAll(methodKey, context).orElse(0);
+        Number result = getCriteriaRepositoryOperations(methodKey, context, null).deleteAll(buildDeleteQuery(context)).orElse(0);
         if (rt.isVoid()) {
             return null;
         }

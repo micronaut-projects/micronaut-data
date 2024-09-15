@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.ReturnType;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.operations.RepositoryOperations;
+import jakarta.persistence.criteria.CriteriaQuery;
 
 /**
  * Interceptor that supports count specifications.
@@ -42,7 +43,8 @@ public class CountSpecificationInterceptor extends AbstractSpecificationIntercep
 
     @Override
     public Number intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Number> context) {
-        Long result = count(methodKey, context);
+        CriteriaQuery<Long> query = buildCountQuery(methodKey, context);
+        Long result = getCriteriaRepositoryOperations(methodKey, context, null).findOne(query);
         final ReturnType<Number> rt = context.getReturnType();
         final Class<Number> returnType = rt.getType();
         if (returnType.isInstance(result)) {
