@@ -18,9 +18,12 @@ package io.micronaut.data.model.jpa.criteria.impl;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.beans.BeanWrapper;
+import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 
 /**
  * The default parameter expression implementation.
@@ -48,6 +51,13 @@ final class DefaultParameterExpression<T> extends ParameterExpressionImpl<T> {
         if (outgoingQueryParameterProperty == null) {
             return new SimpleParameterBinding(name, DataType.forType(paramClass), bindingContext.isExpandable(), value);
         }
-        return new PropertyPathParameterBinding(name, outgoingQueryParameterProperty, bindingContext.isExpandable(), value);
+        Object parameterValue = value;
+        if (value != null && outgoingQueryParameterProperty.getProperty().getOwner().isEmbeddable()) {
+            RuntimePersistentEntity runtimePersistentEntity = (RuntimePersistentEntity) outgoingQueryParameterProperty.getProperty().getOwner();
+            if (runtimePersistentEntity.getIntrospection().getBeanType().isAssignableFrom(value.getClass())) {
+                parameterValue = BeanWrapper.getWrapper(parameterValue).getRequiredProperty(outgoingQueryParameterProperty.getProperty().getName(), Argument.OBJECT_ARGUMENT);
+            }
+        }
+        return new PropertyPathParameterBinding(name, outgoingQueryParameterProperty, bindingContext.isExpandable(), parameterValue);
     }
 }
