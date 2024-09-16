@@ -81,10 +81,6 @@ public abstract class AbstractPreparedQueryCriteriaRepositoryOperations {
         return toPreparedQuery(buildExists(query));
     }
 
-    protected final PreparedQuery<?, Number> createCount(CriteriaQuery<Long> query) {
-        return toPreparedQuery(buildCount(query));
-    }
-
     protected final <K> PreparedQuery<Object, K> createFindOne(CriteriaQuery<K> query) {
         return toPreparedQuery(buildFind(query, true));
     }
@@ -141,11 +137,6 @@ public abstract class AbstractPreparedQueryCriteriaRepositoryOperations {
         QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaDelete).buildQuery(context, queryBuilder);
         return QueryResultStoredQuery.single(StoredQuery.OperationType.DELETE, context.getName(),
             context.getAnnotationMetadata(), queryResult, (Class<E>) criteriaDelete.getRoot().getJavaType());
-    }
-
-    private <E> StoredQuery<E, ?> buildCount(CriteriaQuery<?> criteriaQuery) {
-        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(context, queryBuilder);
-        return QueryResultStoredQuery.count(context.getName(), context.getAnnotationMetadata(), queryResult, (Class<E>) entityRoot);
     }
 
     private Set<JoinPath> mergeJoinPaths(Collection<JoinPath> joinPaths, Collection<JoinPath> additionalJoinPaths) {

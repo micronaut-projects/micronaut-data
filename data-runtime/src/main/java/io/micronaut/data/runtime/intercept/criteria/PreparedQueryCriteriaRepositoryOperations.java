@@ -89,7 +89,7 @@ final class PreparedQueryCriteriaRepositoryOperations extends AbstractPreparedQu
 
     @Override
     public Optional<Number> updateAll(CriteriaUpdate<Number> query) {
-        return operations.executeDelete(createUpdateAll(query));
+        return operations.executeUpdate(createUpdateAll(query));
     }
 
     @Override

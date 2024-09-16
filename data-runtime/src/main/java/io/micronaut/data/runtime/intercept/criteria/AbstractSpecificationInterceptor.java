@@ -438,21 +438,30 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     private CriteriaQueryBuilder<Long> getCountCriteriaQueryBuilder(MethodInvocationContext<?, ?> context, Set<JoinPath> joinPaths) {
         final Object parameterValue = context.getParameterValues()[0];
         if (parameterValue instanceof CriteriaQueryBuilder<?> providedCriteriaQueryBuilder) {
-            return criteriaBuilder -> {
-                CriteriaQuery<?> criteriaQuery = providedCriteriaQueryBuilder.build(criteriaBuilder);
-                Root<?> root = criteriaQuery.getRoots().iterator().next();
-                Expression idExpression = criteriaBuilder.countDistinct(getIdExpression(root));
-                return criteriaQuery.select(
-                    idExpression);
+            return new CriteriaQueryBuilder<Long>() {
+                @Override
+                public CriteriaQuery<Long> build(CriteriaBuilder criteriaBuilder) {
+                    CriteriaQuery<?> criteriaQuery = providedCriteriaQueryBuilder.build(criteriaBuilder);
+                    Root<?> root = criteriaQuery.getRoots().iterator().next();
+                    Expression countExpression;
+                    if (!root.getJoins().isEmpty() || !joinPaths.isEmpty()) {
+                        countExpression = criteriaBuilder.countDistinct(getIdExpression(root));
+                    } else {
+                        countExpression = criteriaBuilder.count(getIdExpression(root));
+                    }
+                    return criteriaQuery.select(countExpression);
+                }
             };
         }
-        return criteriaBuilder -> createPageCountCriteriaQuery(context, criteriaBuilder);
+        return criteriaBuilder -> createPageCountCriteriaQuery(context, criteriaBuilder, joinPaths);
     }
 
-    private  <E> CriteriaQuery<Long> createPageCountCriteriaQuery(MethodInvocationContext<?, ?> context, CriteriaBuilder criteriaBuilder) {
+    private <E> CriteriaQuery createPageCountCriteriaQuery(MethodInvocationContext<?, ?> context,
+                                                           CriteriaBuilder criteriaBuilder,
+                                                           Set<JoinPath> joinPaths) {
         Class<E> rootEntity = getRequiredRootEntity(context);
         QuerySpecification<E> specification = getQuerySpecification(context);
-        CriteriaQuery<Long> criteriaQuery = criteriaBuilder.createQuery(Long.class);
+        CriteriaQuery criteriaQuery = criteriaBuilder.createQuery(Long.class);
         Root<E> root = criteriaQuery.from(rootEntity);
         if (specification != null) {
             Predicate predicate = specification.toPredicate(root, criteriaQuery, criteriaBuilder);
@@ -460,7 +469,13 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                 criteriaQuery.where(predicate);
             }
         }
-        return criteriaQuery.select(criteriaBuilder.countDistinct(getIdExpression(root)));
+        Expression countExpression;
+        if (!root.getJoins().isEmpty() || !joinPaths.isEmpty()) {
+            countExpression = criteriaBuilder.countDistinct(getIdExpression(root));
+        } else {
+            countExpression = criteriaBuilder.count(getIdExpression(root));
+        }
+        return criteriaQuery.select(countExpression);
     }
 
     final Expression<?> getIdExpression(Root<?> root) {
