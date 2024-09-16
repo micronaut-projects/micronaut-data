@@ -23,7 +23,6 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
@@ -34,7 +33,6 @@ import io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterce
 import jakarta.persistence.criteria.CriteriaQuery;
 
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -76,20 +74,18 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
     }
 
     final AsyncCriteriaRepositoryOperations getAsyncCriteriaRepositoryOperations(RepositoryMethodKey methodKey,
-                                                                           MethodInvocationContext<T, R> context,
-                                                                           Pageable pageable) {
+                                                                                 MethodInvocationContext<T, R> context,
+                                                                                 Pageable pageable) {
         if (asyncCriteriaOperations != null) {
             return asyncCriteriaOperations;
         }
         QueryBuilder sqlQueryBuilder = getQueryBuilder(methodKey, context);
-        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
         return new PreparedQueryAsyncCriteriaRepositoryOperations(
             criteriaBuilder,
             asyncOperations,
             operations,
             context,
             sqlQueryBuilder,
-            methodJoinPaths,
             getRequiredRootEntity(context),
             pageable
         );

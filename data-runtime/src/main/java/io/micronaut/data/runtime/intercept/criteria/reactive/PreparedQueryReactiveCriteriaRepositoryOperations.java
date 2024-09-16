@@ -18,7 +18,6 @@ package io.micronaut.data.runtime.intercept.criteria.reactive;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveCriteriaRepositoryOperations;
@@ -29,8 +28,6 @@ import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.CriteriaUpdate;
 import org.reactivestreams.Publisher;
-
-import java.util.Set;
 
 /**
  * The reactive criteria operation.
@@ -49,10 +46,9 @@ final class PreparedQueryReactiveCriteriaRepositoryOperations extends AbstractPr
                                                              RepositoryOperations operations,
                                                              MethodInvocationContext<?, ?> context,
                                                              QueryBuilder queryBuilder,
-                                                             Set<JoinPath> methodJoinPaths,
                                                              Class<?> entityRoot,
                                                              Pageable pageable) {
-        super(operations, context, queryBuilder, methodJoinPaths, entityRoot, pageable);
+        super(operations, context, queryBuilder, entityRoot, pageable);
         this.criteriaBuilder = criteriaBuilder;
         this.operations = reactiveRepositoryOperations;
     }

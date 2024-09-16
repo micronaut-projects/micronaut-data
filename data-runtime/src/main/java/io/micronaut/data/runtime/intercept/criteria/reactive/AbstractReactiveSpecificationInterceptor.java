@@ -21,7 +21,6 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Pageable.Mode;
-import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
@@ -31,8 +30,6 @@ import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor;
 import jakarta.persistence.criteria.CriteriaQuery;
 import org.reactivestreams.Publisher;
-
-import java.util.Set;
 
 /**
  * Abstract reactive specification interceptor.
@@ -71,20 +68,18 @@ public abstract class AbstractReactiveSpecificationInterceptor<T, R> extends Abs
     }
 
     final ReactiveCriteriaRepositoryOperations getReactiveCriteriaOperations(RepositoryMethodKey methodKey,
-                                                                       MethodInvocationContext<T, R> context,
-                                                                       Pageable pageable) {
+                                                                             MethodInvocationContext<T, R> context,
+                                                                             Pageable pageable) {
         if (reactiveCriteriaOperations != null) {
             return reactiveCriteriaOperations;
         }
         QueryBuilder sqlQueryBuilder = getQueryBuilder(methodKey, context);
-        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
         return new PreparedQueryReactiveCriteriaRepositoryOperations(
             criteriaBuilder,
             reactiveOperations,
             operations,
             context,
             sqlQueryBuilder,
-            methodJoinPaths,
             getRequiredRootEntity(context),
             pageable
         );

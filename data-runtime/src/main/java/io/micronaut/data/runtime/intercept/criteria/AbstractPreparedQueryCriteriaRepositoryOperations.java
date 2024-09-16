@@ -59,19 +59,16 @@ public abstract class AbstractPreparedQueryCriteriaRepositoryOperations {
     private final PreparedQueryResolver preparedQueryResolver;
     private final MethodInvocationContext<?, ?> context;
     private final QueryBuilder queryBuilder;
-    private final Set<JoinPath> methodJoinPaths;
     private final Class<?> entityRoot;
     private final Pageable pageable;
 
     protected AbstractPreparedQueryCriteriaRepositoryOperations(RepositoryOperations operations,
                                                                 MethodInvocationContext<?, ?> context,
                                                                 QueryBuilder queryBuilder,
-                                                                Set<JoinPath> methodJoinPaths,
                                                                 Class<?> entityRoot,
                                                                 Pageable pageable) {
         this.context = context;
         this.queryBuilder = queryBuilder;
-        this.methodJoinPaths = methodJoinPaths;
         this.entityRoot = entityRoot;
         this.pageable = pageable == null ? Pageable.unpaged() : pageable;
         if (operations instanceof MethodContextAwareStoredQueryDecorator) {
@@ -137,7 +134,7 @@ public abstract class AbstractPreparedQueryCriteriaRepositoryOperations {
                                                boolean isSingle) {
 
         QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(context, queryBuilder);
-        Set<JoinPath> joinPaths = mergeJoinPaths(methodJoinPaths, queryResult.getJoinPaths());
+        Collection<JoinPath> joinPaths = queryResult.getJoinPaths();
         Selection<?> selection = ((AbstractPersistentEntityCriteriaQuery<?>) criteriaQuery).getSelection();
         boolean isCompoundSelection = selection != null && selection.isCompoundSelection();
         if (isSingle) {

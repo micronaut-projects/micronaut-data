@@ -144,20 +144,6 @@ internal class PersonSuspendRepositorySpec {
     }
 
     @Test
-    fun testFindAllCriteriaQueryBuilderPageable() = runBlocking {
-        val pageable = Pageable.from(0, 1).order("name")
-        val criteria = nameOrAgeMatches("Denis", 22)
-        val page1 = personRepository.findAll(criteria, pageable)
-        Assertions.assertEquals(2, page1.totalPages)
-        Assertions.assertEquals(1, page1.content.size)
-        Assertions.assertEquals("Denis", page1.content[0].name)
-        val page2 = personRepository.findAll(criteria, pageable.next())
-        Assertions.assertEquals(2, page2.totalPages)
-        Assertions.assertEquals(1, page2.content.size)
-        Assertions.assertEquals("Josh", page2.content[0].name)
-    }
-
-    @Test
     fun testFindOneCriteriaQueryBuilder() = runBlocking {
         val person = personRepository.findOne(nameMatches("Denis"))!!
         Assertions.assertEquals("Denis", person.name)

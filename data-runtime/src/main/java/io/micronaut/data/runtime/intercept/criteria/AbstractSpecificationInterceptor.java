@@ -109,13 +109,11 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
             return criteriaRepositoryOperations;
         }
         QueryBuilder sqlQueryBuilder = getQueryBuilder(methodKey, context);
-        Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
         return new PreparedQueryCriteriaRepositoryOperations(
             criteriaBuilder,
             operations,
             context,
             sqlQueryBuilder,
-            methodJoinPaths,
             getRequiredRootEntity(context),
             pageable
         );

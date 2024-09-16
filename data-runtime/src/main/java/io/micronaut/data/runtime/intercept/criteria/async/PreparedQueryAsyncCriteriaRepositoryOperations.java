@@ -19,7 +19,6 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.async.AsyncCriteriaRepositoryOperations;
@@ -31,7 +30,6 @@ import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.CriteriaUpdate;
 
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -51,10 +49,9 @@ final class PreparedQueryAsyncCriteriaRepositoryOperations extends AbstractPrepa
                                                           RepositoryOperations operations,
                                                           MethodInvocationContext<?, ?> context,
                                                           QueryBuilder queryBuilder,
-                                                          Set<JoinPath> methodJoinPaths,
                                                           Class<?> entityRoot,
                                                           Pageable pageable) {
-        super(operations, context, queryBuilder, methodJoinPaths, entityRoot, pageable);
+        super(operations, context, queryBuilder, entityRoot, pageable);
         this.criteriaBuilder = criteriaBuilder;
         this.operations = asyncRepositoryOperations;
     }
