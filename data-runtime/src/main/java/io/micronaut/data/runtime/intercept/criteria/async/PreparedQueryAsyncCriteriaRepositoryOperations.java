@@ -21,12 +21,10 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryBuilder;
+import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.async.AsyncCriteriaRepositoryOperations;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import io.micronaut.data.runtime.intercept.criteria.AbstractPreparedQueryCriteriaRepositoryOperations;
-import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
-import io.micronaut.data.runtime.query.PreparedQueryDecorator;
-import io.micronaut.data.runtime.query.PreparedQueryResolver;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -49,18 +47,16 @@ final class PreparedQueryAsyncCriteriaRepositoryOperations extends AbstractPrepa
     private final AsyncRepositoryOperations operations;
 
     public PreparedQueryAsyncCriteriaRepositoryOperations(CriteriaBuilder criteriaBuilder,
-                                                          AsyncRepositoryOperations operations,
-                                                          MethodContextAwareStoredQueryDecorator storedQueryDecorator,
-                                                          PreparedQueryDecorator preparedQueryDecorator,
-                                                          PreparedQueryResolver preparedQueryResolver,
+                                                          AsyncRepositoryOperations asyncRepositoryOperations,
+                                                          RepositoryOperations operations,
                                                           MethodInvocationContext<?, ?> context,
                                                           QueryBuilder queryBuilder,
                                                           Set<JoinPath> methodJoinPaths,
                                                           Class<?> entityRoot,
                                                           Pageable pageable) {
-        super(storedQueryDecorator, preparedQueryDecorator, preparedQueryResolver, context, queryBuilder, methodJoinPaths, entityRoot, pageable);
+        super(operations, context, queryBuilder, methodJoinPaths, entityRoot, pageable);
         this.criteriaBuilder = criteriaBuilder;
-        this.operations = operations;
+        this.operations = asyncRepositoryOperations;
     }
 
     @Override

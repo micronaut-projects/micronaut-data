@@ -86,9 +86,7 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
         return new PreparedQueryAsyncCriteriaRepositoryOperations(
             criteriaBuilder,
             asyncOperations,
-            storedQueryDecorator,
-            preparedQueryDecorator,
-            preparedQueryResolver,
+            operations,
             context,
             sqlQueryBuilder,
             methodJoinPaths,

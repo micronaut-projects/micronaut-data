@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.intercept.criteria;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
@@ -26,9 +27,12 @@ import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.StoredQuery;
+import io.micronaut.data.operations.RepositoryOperations;
+import io.micronaut.data.runtime.query.DefaultPreparedQueryResolver;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryResolver;
+import io.micronaut.data.runtime.query.StoredQueryDecorator;
 import io.micronaut.data.runtime.query.internal.QueryResultStoredQuery;
 import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -59,22 +63,46 @@ public abstract class AbstractPreparedQueryCriteriaRepositoryOperations {
     private final Class<?> entityRoot;
     private final Pageable pageable;
 
-    protected AbstractPreparedQueryCriteriaRepositoryOperations(MethodContextAwareStoredQueryDecorator storedQueryDecorator,
-                                                                PreparedQueryDecorator preparedQueryDecorator,
-                                                                PreparedQueryResolver preparedQueryResolver,
+    protected AbstractPreparedQueryCriteriaRepositoryOperations(RepositoryOperations operations,
                                                                 MethodInvocationContext<?, ?> context,
                                                                 QueryBuilder queryBuilder,
                                                                 Set<JoinPath> methodJoinPaths,
                                                                 Class<?> entityRoot,
                                                                 Pageable pageable) {
-        this.storedQueryDecorator = storedQueryDecorator;
-        this.preparedQueryDecorator = preparedQueryDecorator;
-        this.preparedQueryResolver = preparedQueryResolver;
         this.context = context;
         this.queryBuilder = queryBuilder;
         this.methodJoinPaths = methodJoinPaths;
         this.entityRoot = entityRoot;
         this.pageable = pageable == null ? Pageable.unpaged() : pageable;
+        if (operations instanceof MethodContextAwareStoredQueryDecorator) {
+            storedQueryDecorator = (MethodContextAwareStoredQueryDecorator) operations;
+        } else if (operations instanceof StoredQueryDecorator decorator) {
+            storedQueryDecorator = new MethodContextAwareStoredQueryDecorator() {
+                @Override
+                public <E, K> StoredQuery<E, K> decorate(MethodInvocationContext<?, ?> context, StoredQuery<E, K> storedQuery) {
+                    return decorator.decorate(storedQuery);
+                }
+            };
+        } else {
+            storedQueryDecorator = new MethodContextAwareStoredQueryDecorator() {
+                @Override
+                public <E, K> StoredQuery<E, K> decorate(MethodInvocationContext<?, ?> context, StoredQuery<E, K> storedQuery) {
+                    return storedQuery;
+                }
+            };
+        }
+        preparedQueryDecorator = operations instanceof PreparedQueryDecorator decorator ? decorator : new PreparedQueryDecorator() {
+            @Override
+            public <E, K> PreparedQuery<E, K> decorate(PreparedQuery<E, K> preparedQuery) {
+                return preparedQuery;
+            }
+        };
+        this.preparedQueryResolver = operations instanceof PreparedQueryResolver resolver ? resolver : new DefaultPreparedQueryResolver() {
+            @Override
+            protected ConversionService getConversionService() {
+                return operations.getConversionService();
+            }
+        };
     }
 
     protected final PreparedQuery<Object, Boolean> createExists(CriteriaQuery<?> query) {

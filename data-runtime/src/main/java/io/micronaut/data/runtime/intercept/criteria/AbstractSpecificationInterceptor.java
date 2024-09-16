@@ -37,8 +37,6 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryBuilder;
-import io.micronaut.data.model.runtime.PreparedQuery;
-import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.operations.CriteriaRepositoryOperations;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.repository.jpa.criteria.CriteriaDeleteBuilder;
@@ -51,9 +49,6 @@ import io.micronaut.data.repository.jpa.criteria.UpdateSpecification;
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder;
 import io.micronaut.data.runtime.intercept.AbstractQueryInterceptor;
 import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
-import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
-import io.micronaut.data.runtime.query.PreparedQueryDecorator;
-import io.micronaut.data.runtime.query.StoredQueryDecorator;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaDelete;
@@ -88,8 +83,6 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
 
     protected final CriteriaRepositoryOperations criteriaRepositoryOperations;
     protected final CriteriaBuilder criteriaBuilder;
-    protected final MethodContextAwareStoredQueryDecorator storedQueryDecorator;
-    protected final PreparedQueryDecorator preparedQueryDecorator;
     private final Map<RepositoryMethodKey, QueryBuilder> sqlQueryBuilderForRepositories = new ConcurrentHashMap<>();
     private final Map<RepositoryMethodKey, Set<JoinPath>> methodsJoinPaths = new ConcurrentHashMap<>();
 
@@ -107,29 +100,6 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
             criteriaRepositoryOperations = null;
             criteriaBuilder = operations.getApplicationContext().getBean(RuntimeCriteriaBuilder.class);
         }
-        if (operations instanceof MethodContextAwareStoredQueryDecorator) {
-            storedQueryDecorator = (MethodContextAwareStoredQueryDecorator) operations;
-        } else if (operations instanceof StoredQueryDecorator decorator) {
-            storedQueryDecorator = new MethodContextAwareStoredQueryDecorator() {
-                @Override
-                public <E, K> StoredQuery<E, K> decorate(MethodInvocationContext<?, ?> context, StoredQuery<E, K> storedQuery) {
-                    return decorator.decorate(storedQuery);
-                }
-            };
-        } else {
-            storedQueryDecorator = new MethodContextAwareStoredQueryDecorator() {
-                @Override
-                public <E, K> StoredQuery<E, K> decorate(MethodInvocationContext<?, ?> context, StoredQuery<E, K> storedQuery) {
-                    return storedQuery;
-                }
-            };
-        }
-        preparedQueryDecorator = operations instanceof PreparedQueryDecorator decorator ? decorator : new PreparedQueryDecorator() {
-            @Override
-            public <E, K> PreparedQuery<E, K> decorate(PreparedQuery<E, K> preparedQuery) {
-                return preparedQuery;
-            }
-        };
     }
 
     final CriteriaRepositoryOperations getCriteriaRepositoryOperations(RepositoryMethodKey methodKey,
@@ -142,9 +112,6 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         Set<JoinPath> methodJoinPaths = getMethodJoinPaths(methodKey, context);
         return new PreparedQueryCriteriaRepositoryOperations(
             criteriaBuilder,
-            storedQueryDecorator,
-            preparedQueryDecorator,
-            preparedQueryResolver,
             operations,
             context,
             sqlQueryBuilder,

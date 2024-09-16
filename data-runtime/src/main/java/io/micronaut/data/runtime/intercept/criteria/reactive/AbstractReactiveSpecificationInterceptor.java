@@ -81,9 +81,7 @@ public abstract class AbstractReactiveSpecificationInterceptor<T, R> extends Abs
         return new PreparedQueryReactiveCriteriaRepositoryOperations(
             criteriaBuilder,
             reactiveOperations,
-            storedQueryDecorator,
-            preparedQueryDecorator,
-            preparedQueryResolver,
+            operations,
             context,
             sqlQueryBuilder,
             methodJoinPaths,
