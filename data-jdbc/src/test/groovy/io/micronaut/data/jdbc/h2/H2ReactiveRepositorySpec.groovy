@@ -38,6 +38,6 @@ class H2ReactiveRepositorySpec extends AbstractReactiveRepositorySpec implements
     @Memoized
     @Override
     BookReactiveRepository getBookRepository() {
-        return context.getBean(H2ReactiveBookRepository.class)
+        return context.getBean(H2ReactiveBookRepository)
     }
 }
