@@ -78,7 +78,7 @@ public abstract class DefaultAbstractFindPageInterceptor<T, R> extends AbstractQ
                 if (preparedQuery.getResultDataType() == DataType.ENTITY) {
                     cursors = sqlPreparedQuery.createCursors(resultList, pageable);
                 } else if (sqlPreparedQuery.isDtoProjection()) {
-                    RuntimePersistentEntity<?> runtimePersistentEntity = operations.getEntity(sqlPreparedQuery.getResultType());
+                    RuntimePersistentEntity<Object> runtimePersistentEntity = (RuntimePersistentEntity<Object>) operations.getEntity(sqlPreparedQuery.getResultType());
                     cursors = sqlPreparedQuery.createCursors(resultList, pageable, runtimePersistentEntity);
                 } else {
                     throw new IllegalStateException("CursoredPage cannot produce projection result");

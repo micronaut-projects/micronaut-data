@@ -57,6 +57,11 @@ public final class ExecutorAsyncOperationsSupportingCriteria extends ExecutorAsy
     }
 
     @Override
+    public CompletionStage<Boolean> exists(CriteriaQuery<?> query) {
+        return supplyAsync(() -> criteriaRepositoryOperations.exists(query));
+    }
+
+    @Override
     public <R> CompletionStage<R> findOne(CriteriaQuery<R> query) {
         return supplyAsync(() -> criteriaRepositoryOperations.findOne(query));
     }

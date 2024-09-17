@@ -641,6 +641,15 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     }
 
     @Override
+    public boolean exists(CriteriaQuery<?> query) {
+        return executeRead(session -> {
+            try (Stream<?> stream = session.createQuery(query).stream()) {
+                return stream.findAny().isPresent();
+            }
+        });
+    }
+
+    @Override
     public <R> R findOne(CriteriaQuery<R> query) {
         return executeRead(session -> session.createQuery(query).uniqueResult());
     }

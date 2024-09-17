@@ -43,6 +43,10 @@ import java.util.stream.Stream;
 
 public abstract class BookRepository implements PageableRepository<Book, Long>, JpaSpecificationExecutor<Book>, SimpleBookRepository {
 
+//    @Join("students")
+    @Override
+    public abstract Page<Book> findAll(PredicateSpecification<Book> spec, Pageable pageable);
+
     @Override
     public abstract @NonNull Book save(@NonNull Book book);
 

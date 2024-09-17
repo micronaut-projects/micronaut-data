@@ -20,7 +20,6 @@ import io.micronaut.core.annotation.NextMajorVersion;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
-import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpressionType;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
@@ -107,17 +106,6 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @NotNull
     private Predicate comparable(Expression<?> x, Object y, PredicateBinaryOp op) {
         return new BinaryPredicate(x, literal(Objects.requireNonNull(y)), op);
-    }
-
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
-    @Override
-    @NonNull
-    public PersistentEntityCriteriaQuery<Tuple> createTupleQuery() {
-        throw notSupportedOperation();
     }
 
     /**

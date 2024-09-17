@@ -3,6 +3,7 @@ package io.micronaut.data.r2dbc.h2
 import groovy.transform.Memoized
 import io.micronaut.data.r2dbc.operations.R2dbcOperations
 import io.micronaut.data.tck.entities.Person
+import io.micronaut.data.tck.repositories.BookReactiveRepository
 import io.micronaut.data.tck.repositories.StudentReactiveRepository
 import io.micronaut.data.tck.tests.AbstractReactiveRepositorySpec
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus
@@ -22,6 +23,12 @@ class H2ReactiveRepositorySpec extends AbstractReactiveRepositorySpec implements
     @Override
     StudentReactiveRepository getStudentRepository() {
         return context.getBean(H2StudentReactiveRepository)
+    }
+
+    @Memoized
+    @Override
+    BookReactiveRepository getBookRepository() {
+        return context.getBean(H2ReactiveBookRepository)
     }
 
     void 'test with transactional connection'() {

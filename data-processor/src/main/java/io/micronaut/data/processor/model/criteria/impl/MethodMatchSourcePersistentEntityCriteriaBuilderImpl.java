@@ -29,6 +29,7 @@ import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteria
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.Utils;
 import io.micronaut.inject.ast.ParameterElement;
+import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.ParameterExpression;
 
 import java.util.Map;
@@ -55,13 +56,18 @@ public final class MethodMatchSourcePersistentEntityCriteriaBuilderImpl extends 
     }
 
     @Override
+    public PersistentEntityCriteriaQuery<Tuple> createTupleQuery() {
+        return new SourcePersistentEntityCriteriaQueryImpl<>(Tuple.class, methodMatchContext::getEntity, this);
+    }
+
+    @Override
     public SourcePersistentEntityCriteriaQuery<Object> createQuery() {
-        return new SourcePersistentEntityCriteriaQueryImpl<>(methodMatchContext::getEntity, this);
+        return new SourcePersistentEntityCriteriaQueryImpl<>(Object.class, methodMatchContext::getEntity, this);
     }
 
     @Override
     public <T> PersistentEntityCriteriaQuery<T> createQuery(Class<T> resultClass) {
-        return new SourcePersistentEntityCriteriaQueryImpl<>(methodMatchContext::getEntity, this);
+        return new SourcePersistentEntityCriteriaQueryImpl<>(resultClass, methodMatchContext::getEntity, this);
     }
 
     @Override

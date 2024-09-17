@@ -58,6 +58,8 @@ class StaticMetamodelTest {
         QueryResultPersistentEntityCriteriaQuery criteriaQuery = (QueryResultPersistentEntityCriteriaQuery) query;
         String q = criteriaQuery.buildQuery(AnnotationMetadata.EMPTY_METADATA, new SqlQueryBuilder2()).getQuery();
 
-        Assertions.assertEquals(q, "SELECT client_.\"id\",client_.\"name\",client_.\"main_category_id\" FROM \"client\" client_ LEFT JOIN \"client_category\" client_categories_collection_client_category_ ON client_.\"id\"=client_categories_collection_client_category_.\"client_id\"  LEFT JOIN \"category\" client_categories_collection_ ON client_categories_collection_client_category_.\"category_id\"=client_categories_collection_.\"id\"");
+        Assertions.assertEquals("""
+            SELECT client_."id",client_."name",client_."main_category_id",client_categories_collection_."id" AS categories_collection_id,client_categories_collection_."name" AS categories_collection_name FROM "client" client_ LEFT JOIN "client_category" client_categories_collection_client_category_ ON client_."id"=client_categories_collection_client_category_."client_id"  LEFT JOIN "category" client_categories_collection_ ON client_categories_collection_client_category_."category_id"=client_categories_collection_."id\"""",
+            q);
     }
 }

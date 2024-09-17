@@ -79,7 +79,7 @@ public interface Sort {
      * @since 4.10
      */
     @NonNull
-    default Sort order(@NonNull List<Sort.Order> orders) {
+    default Sort orders(@NonNull List<Sort.Order> orders) {
         for (Order order : orders) {
             order(order);
         }

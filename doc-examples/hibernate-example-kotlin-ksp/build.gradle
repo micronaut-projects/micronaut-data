@@ -25,4 +25,6 @@ dependencies {
     runtimeOnly mnLogging.logback.classic
 
     runtimeOnly libs.kotlin.reflect
+
+    testImplementation mnTest.micronaut.test.kotest5
 }

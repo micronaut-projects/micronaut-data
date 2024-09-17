@@ -52,11 +52,13 @@ import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.CriteriaUpdate;
 import org.hibernate.SessionFactory;
 import org.hibernate.reactive.stage.Stage;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Collection;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 /**
  * Hibernate reactive implementation of {@link io.micronaut.data.operations.reactive.ReactiveRepositoryOperations}
@@ -428,6 +430,11 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     @Override
     public <R> Mono<R> findOne(CriteriaQuery<R> query) {
         return withSession(session -> helper.monoFromCompletionStage(() -> session.createQuery(query).getSingleResult()));
+    }
+
+    @Override
+    public Publisher<Boolean> exists(CriteriaQuery<?> query) {
+        return withSession(session -> helper.monoFromCompletionStage(() -> session.createQuery(query).setMaxResults(1).getResultList().thenApply(l -> !l.isEmpty())));
     }
 
     @Override

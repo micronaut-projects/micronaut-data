@@ -69,7 +69,7 @@ public class DefaultFindPageReactiveInterceptor extends AbstractPublisherInterce
                                 if (preparedQuery.getResultDataType() == DataType.ENTITY) {
                                     cursors = sqlPreparedQuery.createCursors(list, pageable);
                                 } else if (sqlPreparedQuery.isDtoProjection()) {
-                                    RuntimePersistentEntity<?> runtimePersistentEntity = operations.getEntity(sqlPreparedQuery.getResultType());
+                                    RuntimePersistentEntity<Object> runtimePersistentEntity = (RuntimePersistentEntity<Object>) operations.getEntity(sqlPreparedQuery.getResultType());
                                     cursors = sqlPreparedQuery.createCursors(list, pageable, runtimePersistentEntity);
                                 } else {
                                     throw new IllegalStateException("CursoredPage cannot produce projection result");
