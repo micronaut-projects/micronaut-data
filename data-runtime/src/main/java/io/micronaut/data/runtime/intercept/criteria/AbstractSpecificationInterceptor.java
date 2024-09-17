@@ -443,7 +443,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         return criteriaQuery.select(countExpression);
     }
 
-    final Expression<?> getIdExpression(Root<?> root) {
+    protected final Expression<?> getIdExpression(Root<?> root) {
         if (root instanceof PersistentEntityRoot<?> persistentEntityRoot) {
             return persistentEntityRoot.id();
         } else {

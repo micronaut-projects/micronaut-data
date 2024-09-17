@@ -16,6 +16,7 @@
 package io.micronaut.data.jdbc.h2
 
 import groovy.transform.Memoized
+import io.micronaut.data.tck.repositories.BookReactiveRepository
 import io.micronaut.data.tck.repositories.PersonReactiveRepository
 import io.micronaut.data.tck.repositories.StudentReactiveRepository
 import io.micronaut.data.tck.tests.AbstractReactiveRepositorySpec
@@ -34,4 +35,8 @@ class H2ReactiveRepositorySpec extends AbstractReactiveRepositorySpec implements
         return context.getBean(H2StudentReactiveRepository)
     }
 
+    @Override
+    BookReactiveRepository getBookRepository() {
+        return context.getBean(H2ReactiveBookRepository)
+    }
 }

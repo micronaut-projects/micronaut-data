@@ -16,6 +16,8 @@
 package io.micronaut.data.r2dbc.oraclexe
 
 import groovy.transform.Memoized
+import io.micronaut.data.r2dbc.mysql.MySqlReactiveBookRepository
+import io.micronaut.data.tck.repositories.BookReactiveRepository
 import io.micronaut.data.tck.repositories.PersonReactiveRepository
 import io.micronaut.data.tck.repositories.StudentReactiveRepository
 import io.micronaut.data.tck.tests.AbstractReactiveRepositorySpec
@@ -33,6 +35,12 @@ class OracleXEReactiveRepositorySpec extends AbstractReactiveRepositorySpec impl
     @Override
     StudentReactiveRepository getStudentRepository() {
         return context.getBean(OracleXEStudentReactiveRepository)
+    }
+
+    @Memoized
+    @Override
+    BookReactiveRepository getBookRepository() {
+        return context.getBean(OracleReactiveBookRepository)
     }
 
     void "test procedure"() {

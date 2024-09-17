@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.r2dbc.mysql
 
+import groovy.transform.Memoized
+import io.micronaut.data.tck.repositories.BookAsyncRepository
 import io.micronaut.data.tck.repositories.PersonAsyncRepository
 import io.micronaut.data.tck.tests.AbstractAsyncRepositorySpec
 
@@ -23,5 +25,11 @@ class MySqlAsyncRepositorySpec extends AbstractAsyncRepositorySpec implements My
     @Override
     PersonAsyncRepository getPersonRepository() {
         return context.getBean(MySqlPersonAsyncRepository)
+    }
+
+    @Memoized
+    @Override
+    BookAsyncRepository getBookRepository() {
+        return context.getBean(MySqlBookAsyncRepository)
     }
 }

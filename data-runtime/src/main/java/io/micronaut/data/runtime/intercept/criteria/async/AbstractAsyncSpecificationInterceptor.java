@@ -74,7 +74,7 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
     }
 
     final AsyncCriteriaRepositoryOperations getAsyncCriteriaRepositoryOperations(RepositoryMethodKey methodKey,
-                                                                                 MethodInvocationContext<T, R> context,
+                                                                                 MethodInvocationContext<?, ?> context,
                                                                                  Pageable pageable) {
         if (asyncCriteriaOperations != null) {
             return asyncCriteriaOperations;

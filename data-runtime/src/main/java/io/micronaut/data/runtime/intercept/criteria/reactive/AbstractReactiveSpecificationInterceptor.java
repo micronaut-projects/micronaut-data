@@ -68,7 +68,7 @@ public abstract class AbstractReactiveSpecificationInterceptor<T, R> extends Abs
     }
 
     final ReactiveCriteriaRepositoryOperations getReactiveCriteriaOperations(RepositoryMethodKey methodKey,
-                                                                             MethodInvocationContext<T, R> context,
+                                                                             MethodInvocationContext<?, ?> context,
                                                                              Pageable pageable) {
         if (reactiveCriteriaOperations != null) {
             return reactiveCriteriaOperations;

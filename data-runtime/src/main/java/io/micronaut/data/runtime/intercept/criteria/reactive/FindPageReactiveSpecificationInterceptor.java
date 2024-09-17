@@ -25,10 +25,15 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
+import jakarta.persistence.Tuple;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -62,19 +67,39 @@ public class FindPageReactiveSpecificationInterceptor extends AbstractReactiveSp
             Flux<?> results = Flux.from(findAllReactive(methodKey, context));
             result = results.collectList().map(resultList -> Page.of(resultList, pageable, (long) resultList.size()));
         } else {
-            result = Flux.from(findAllReactive(methodKey, context))
-                .collectList()
-                .flatMap(
-                    list -> {
-                        if (pageable.requestTotal()) {
-                            return Mono.from(getReactiveCriteriaOperations(methodKey, context, null)
-                                    .findOne(buildCountQuery(methodKey, context)))
-                                .map(count -> getPage(list, pageable, count, context));
+            CriteriaQuery<Object> criteriaQuery = buildQuery(methodKey, context);
+            Root<?> root = criteriaQuery.getRoots().iterator().next();
+            Flux<Object> content;
+            if (root.getJoins().isEmpty()) {
+                content = findAllReactive(methodKey, context, pageable, criteriaQuery);
+            } else {
+                CriteriaQuery<Tuple> criteriaIdsQuery = buildIdsQuery(methodKey, context, pageable);
+                content = findAllReactive(methodKey, context, pageable, criteriaIdsQuery)
+                    .collectList().flatMapMany(tupleResult -> {
+                        if (tupleResult.isEmpty()) {
+                            return Flux.empty();
                         } else {
-                            return Mono.just(getPage(list, pageable, null, context));
+                            List<Object> ids = new ArrayList<>(tupleResult.size());
+                            for (Tuple tuple : tupleResult) {
+                                ids.add(tuple.get(0));
+                            }
+                            Predicate inPredicate = getIdExpression(root).in(ids);
+                            criteriaQuery.where(inPredicate);
+                            return findAllReactive(methodKey, context, pageable.withoutPaging(), criteriaQuery);
                         }
+                    });
+            }
+
+            result = content.collectList().flatMap(list -> {
+                    if (pageable.requestTotal()) {
+                        return Mono.from(getReactiveCriteriaOperations(methodKey, context, null)
+                                .findOne(buildCountQuery(methodKey, context)))
+                            .map(count -> getPage(list, pageable, count, context));
+                    } else {
+                        return Mono.just(getPage(list, pageable, null, context));
                     }
-                );
+                }
+            );
         }
         return Publishers.convertPublisher(conversionService, result, context.getReturnType().getType());
     }
@@ -93,5 +118,26 @@ public class FindPageReactiveSpecificationInterceptor extends AbstractReactiveSp
             }
         }
         return page;
+    }
+
+    private <T> Flux<T> findAllReactive(RepositoryMethodKey methodKey,
+                                                      MethodInvocationContext<?, ?> context,
+                                                      Pageable pageable, CriteriaQuery<T> criteriaQuery) {
+        pageable = applyPaginationAndSort(pageable, criteriaQuery, false);
+        if (reactiveCriteriaOperations != null) {
+            if (pageable != null) {
+                if (pageable.getMode() != Pageable.Mode.OFFSET) {
+                    throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported by hibernate operations");
+                }
+                return Flux.from(reactiveCriteriaOperations.findAll(criteriaQuery, (int) pageable.getOffset(), pageable.getSize()));
+            }
+            int offset = getOffset(context);
+            int limit = getLimit(context);
+            if (offset > 0 || limit > 0) {
+                return Flux.from(reactiveCriteriaOperations.findAll(criteriaQuery, offset, limit));
+            }
+            return Flux.from(reactiveCriteriaOperations.findAll(criteriaQuery));
+        }
+        return Flux.from(getReactiveCriteriaOperations(methodKey, context, pageable).findAll(criteriaQuery));
     }
 }

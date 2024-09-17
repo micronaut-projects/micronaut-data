@@ -24,11 +24,15 @@ import io.micronaut.data.repository.jpa.criteria.DeleteSpecification
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
+import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.data.tck.entities.PersonDto
+import io.micronaut.data.tck.entities.Student
+import io.micronaut.data.tck.repositories.BookAsyncRepository
 import io.micronaut.data.tck.repositories.PersonAsyncRepository
 import jakarta.persistence.criteria.CriteriaBuilder
 import jakarta.persistence.criteria.CriteriaUpdate
+import jakarta.persistence.criteria.JoinType
 import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Root
 import spock.lang.AutoCleanup
@@ -47,6 +51,8 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
     ApplicationContext context = ApplicationContext.run(properties)
 
     abstract PersonAsyncRepository getPersonRepository()
+
+    abstract BookAsyncRepository getBookRepository()
 
     ApplicationContext getApplicationContext() {
         return context
@@ -71,6 +77,76 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
 
     def cleanup() {
         personRepository.deleteAll().get()
+    }
+
+    void "test criteria pagination"() {
+        given:
+            Student denis = new Student("Denis")
+            Student josh = new Student("Josh")
+            Student kevin = new Student("Kevin")
+            def book1 = new Book(title: "The Stand", students: [denis, josh])
+            def book2 = new Book(title: "Pet Cemetery", students: [kevin])
+            def book3 = new Book(title: "Along Came a Spider", students: [kevin, josh])
+            bookRepository.save(book1).get()
+            bookRepository.save(book2).get()
+            bookRepository.save(book3).get()
+            PredicateSpecification<Book> criteria = new PredicateSpecification() {
+                @Override
+                Predicate toPredicate(Root root, CriteriaBuilder criteriaBuilder) {
+                    def students = root.joinSet("students", JoinType.LEFT)
+                    return criteriaBuilder.or(
+                            criteriaBuilder.equal(students.get("name"), "Denis"),
+                            criteriaBuilder.equal(students.get("name"), "Josh")
+                    )
+                }
+            }
+        when:
+            Page<Book> page = bookRepository.findAll(criteria, Pageable.from(0, 10, Sort.of(Sort.Order.asc("title")))).get()
+
+        then:
+            page.totalSize == page.content.size()
+            page.totalSize == 2
+            page.content.collect { it.title }.sort() == ["Along Came a Spider", "The Stand"]
+            page.content[0].students.collect { it.name }.sort() == ["Josh", "Kevin"]
+            page.content[1].students.collect { it.name }.sort() == ["Denis", "Josh"]
+
+        when:
+            Pageable pageable = Pageable.from(0, 1, Sort.of(Sort.Order.asc("title")))
+            page = bookRepository.findAll(criteria, pageable).get()
+
+        then:
+            page.totalSize == 2
+            page.content.size() == 1
+            page.content[0].title == "Along Came a Spider"
+            page.content[0].students.collect { it.name }.sort() == ["Josh", "Kevin"]
+
+        when:
+            pageable = pageable.next()
+            page = bookRepository.findAll(criteria, pageable).get()
+
+        then:
+            page.totalSize == 2
+            page.content.size() == 1
+            page.content[0].title == "The Stand"
+            page.content[0].students.collect { it.name }.sort() == ["Denis", "Josh"]
+
+        when:
+            pageable = pageable.next()
+            page = bookRepository.findAll(criteria, pageable).get()
+
+        then:
+            page.totalSize == 2
+            page.content.size() == 0
+
+        when:
+            pageable = pageable.previous()
+            page = bookRepository.findAll(criteria, pageable).get()
+
+        then:
+            page.totalSize == 2
+            page.content.size() == 1
+            page.content[0].title == "The Stand"
+            page.content[0].students.collect { it.name }.sort() == ["Denis", "Josh"]
     }
 
     void "test no value"() {

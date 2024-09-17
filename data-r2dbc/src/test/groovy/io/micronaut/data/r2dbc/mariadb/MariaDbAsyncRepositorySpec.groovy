@@ -16,7 +16,9 @@
 package io.micronaut.data.r2dbc.mariadb
 
 import groovy.transform.Memoized
+import io.micronaut.data.r2dbc.mysql.MySqlBookAsyncRepository
 import io.micronaut.data.r2dbc.mysql.MySqlPersonAsyncRepository
+import io.micronaut.data.tck.repositories.BookAsyncRepository
 import io.micronaut.data.tck.repositories.PersonAsyncRepository
 import io.micronaut.data.tck.tests.AbstractAsyncRepositorySpec
 
@@ -26,6 +28,12 @@ class MariaDbAsyncRepositorySpec extends AbstractAsyncRepositorySpec implements 
     @Override
     PersonAsyncRepository getPersonRepository() {
         return context.getBean(MySqlPersonAsyncRepository)
+    }
+
+    @Memoized
+    @Override
+    BookAsyncRepository getBookRepository() {
+        return context.getBean(MySqlBookAsyncRepository)
     }
 
 }

@@ -16,6 +16,7 @@
 package io.micronaut.data.r2dbc.mysql
 
 import groovy.transform.Memoized
+import io.micronaut.data.tck.repositories.BookReactiveRepository
 import io.micronaut.data.tck.repositories.PersonReactiveRepository
 import io.micronaut.data.tck.repositories.StudentReactiveRepository
 import io.micronaut.data.tck.tests.AbstractReactiveRepositorySpec
@@ -32,5 +33,11 @@ class MySqlReactiveRepositorySpec extends AbstractReactiveRepositorySpec impleme
     @Override
     StudentReactiveRepository getStudentRepository() {
         return context.getBean(MySqlStudentReactiveRepository)
+    }
+
+    @Memoized
+    @Override
+    BookReactiveRepository getBookRepository() {
+        return context.getBean(MySqlReactiveBookRepository)
     }
 }
