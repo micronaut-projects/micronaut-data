@@ -6,19 +6,19 @@ Micronaut Data includes different variations of specification executor interface
 |*Interface*
 |*Description*
 
-|api:data.repository.JpaSpecificationExecutor[]
+|api:data.repository.jpa.JpaSpecificationExecutor[]
 |The default interface for querying, deleting and updating data
 
-|api:data.repository.async.AsyncJpaSpecificationExecutor[]
+|api:data.repository.jpa.async.AsyncJpaSpecificationExecutor[]
 |The async version of the specifications repository
 
-|api:data.repository.reactive.ReactiveStreamsJpaSpecificationExecutor[]
+|api:data.repository.jpa.reactive.ReactiveStreamsJpaSpecificationExecutor[]
 |The reactive streams - `Publisher<>` version of the specifications repository
 
-|api:data.repository.reactive.ReactorJpaSpecificationExecutor[]
+|api:data.repository.jpa.reactive.ReactorJpaSpecificationExecutor[]
 |The Reactor version of the specifications repository
 
-|api:data.repository.kotlin.CoroutineJpaSpecificationExecutor[]
+|api:data.repository.jpa.kotlin.CoroutineJpaSpecificationExecutor[]
 |The Kotlin version of the interface that is using coroutines
 
 |===
