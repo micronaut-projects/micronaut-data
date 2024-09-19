@@ -263,15 +263,23 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             return new PushingMapper<>() {
 
                 final MappingContext<R> ctx = MappingContext.of(entity, startingPrefix);
+                Object entityId;
                 R entityInstance;
 
                 @Override
                 public void processRow(RS row) {
-                    if (entityInstance == null) {
-                        entityInstance = readEntity(row, ctx, null, null);
-                    } else {
-                        readChildren(row, entityInstance, null, ctx);
+                    Object id = readEntityId(row, ctx);
+                    if (id == null) {
+                        throw new IllegalStateException("Entity needs to have an ID when JOINs are used!");
                     }
+                    if (entityId == null) {
+                        entityId = id;
+                        entityInstance = readEntity(row, ctx, null, null);
+                    } else if (entityId != id) {
+                        // We want only one entity, every thing else should be skipped
+                        return;
+                    }
+                    readChildren(row, entityInstance, null, ctx);
                 }
 
                 @Override
