@@ -21,33 +21,18 @@ dependencies {
 
     testImplementation mnReactor.micronaut.reactor
 
-    testImplementation(mnTestResources.testcontainers.mysql)
-    testImplementation(mnTestResources.testcontainers.mariadb)
     testImplementation(mnTestResources.testcontainers.postgres)
-    testImplementation(mnTestResources.testcontainers.mssql)
-    testImplementation(mnTestResources.testcontainers.oracle.xe)
 
     testCompileOnly mn.micronaut.inject.groovy
 
     testImplementation mn.micronaut.http.netty
     testRuntimeOnly mnSql.micronaut.jdbc.tomcat
     testRuntimeOnly mnSql.h2
-    testRuntimeOnly mnSql.mariadb.java.client
-    testRuntimeOnly mnSql.ojdbc11
-    testRuntimeOnly mnSql.mysql.connector.java
     testRuntimeOnly mnSql.postgresql
-    testRuntimeOnly mnSql.mssql.jdbc
     testRuntimeOnly mn.snakeyaml
 
-    testResourcesService mnSql.mariadb.java.client
-    testResourcesService mnSql.ojdbc11
-    testResourcesService mnSql.mysql.connector.java
     testResourcesService mnSql.postgresql
-    testResourcesService mnSql.mssql.jdbc
-
     testImplementation libs.micronaut.testresources.client
-
-    testRuntimeOnly mnSerde.micronaut.serde.oracle.jdbc.json
 }
 
 micronaut {
