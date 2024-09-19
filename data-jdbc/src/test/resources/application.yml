@@ -3,6 +3,7 @@ test-resources:
     mssql:
       accept-license: true
       startup-timeout: 300s
+      image-name: mcr.microsoft.com/mssql/server:2022-latest
     mariadb:
       startup-timeout: 300s
     mysql:
