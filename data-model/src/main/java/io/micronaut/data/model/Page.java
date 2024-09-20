@@ -50,7 +50,7 @@ import java.util.function.Function;
 @DefaultImplementation(DefaultPage.class)
 public interface Page<T> extends Slice<T> {
 
-    Page<?> EMPTY = new DefaultPage<>(Collections.emptyList(), Pageable.unpaged(), null);
+    Page<?> EMPTY = new DefaultPage<>(Collections.emptyList(), Pageable.unpaged(), -1L);
 
     /**
      * @return Whether this {@link Page} contains the total count of the records
