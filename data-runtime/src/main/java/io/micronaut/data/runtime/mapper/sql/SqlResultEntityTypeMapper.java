@@ -275,7 +275,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                     if (entityId == null) {
                         entityId = id;
                         entityInstance = readEntity(row, ctx, null, null);
-                    } else if (entityId != id) {
+                    } else if (!entityId.equals(id)) {
                         // We want only one entity, every thing else should be skipped
                         return;
                     }
@@ -336,15 +336,14 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                     Object id = readEntityId(row, ctx);
                     if (id == null) {
                         throw new IllegalStateException("Entity needs to have an ID when JOINs are used!");
+                    }
+                    MappingContext<R> prevCtx = idEntities.get(id);
+                    if (prevCtx != null) {
+                        readChildren(row, prevCtx.entity, null, prevCtx);
                     } else {
-                        MappingContext<R> prevCtx = idEntities.get(id);
-                        if (prevCtx != null) {
-                            readChildren(row, prevCtx.entity, null, prevCtx);
-                        } else {
-                            ctx.entity = readEntity(row, ctx, null, id);
-                            idEntities.put(id, ctx);
-                            allProcessed.add(ctx);
-                        }
+                        ctx.entity = readEntity(row, ctx, null, id);
+                        idEntities.put(id, ctx);
+                        allProcessed.add(ctx);
                     }
                 }
 
