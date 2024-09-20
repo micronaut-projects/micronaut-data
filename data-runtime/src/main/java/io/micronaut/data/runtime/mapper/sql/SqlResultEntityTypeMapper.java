@@ -275,11 +275,10 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                     if (entityId == null) {
                         entityId = id;
                         entityInstance = readEntity(row, ctx, null, null);
-                    } else if (!entityId.equals(id)) {
-                        // We want only one entity, every thing else should be skipped
-                        return;
+                    } else if (entityId.equals(id)) {
+                        // We want only one entity, everything else should be skipped
+                        readChildren(row, entityInstance, null, ctx);
                     }
-                    readChildren(row, entityInstance, null, ctx);
                 }
 
                 @Override
