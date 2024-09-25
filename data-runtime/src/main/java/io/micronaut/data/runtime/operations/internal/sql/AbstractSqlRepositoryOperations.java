@@ -18,6 +18,7 @@ package io.micronaut.data.runtime.operations.internal.sql;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.ApplicationContextProvider;
 import io.micronaut.context.BeanContext;
+import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
@@ -26,6 +27,7 @@ import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
@@ -400,6 +402,16 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 }
 
                 @Override
+                public Class<?> getParameterConverterClass() {
+                    return property.getKey()
+                        .getAnnotationMetadata()
+                        .getAnnotation(TypeDef.class)
+                        .annotationClassValue("converter")
+                        .flatMap(AnnotationClassValue::getType)
+                        .orElse(null);
+                }
+
+                @Override
                 public Object getValue() {
                     return property.getValue();
                 }
@@ -426,6 +438,16 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 @Override
                 public String[] getPropertyPath() {
                     return pp.getArrayPath();
+                }
+
+                @Override
+                public Class<?> getParameterConverterClass() {
+                    return pp.getProperty()
+                        .getAnnotationMetadata()
+                        .getAnnotation(TypeDef.class)
+                        .annotationClassValue("converter")
+                        .flatMap(AnnotationClassValue::getType)
+                        .orElse(null);
                 }
             });
         }
