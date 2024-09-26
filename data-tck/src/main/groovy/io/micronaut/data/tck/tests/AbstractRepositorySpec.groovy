@@ -1118,6 +1118,17 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
         personRepository.findByName("Jack") == null
         personRepository.findByName("Jeffrey").age == 30
+
+        when:"Update by using entity with null id"
+        def jeffrey = personRepository.findByName("Jeffrey")
+        def initialAge = jeffrey.age
+        jeffrey.id = null
+        jeffrey.age = 31
+        personRepository.updateByName("Jeffrey", jeffrey)
+        def updatedJeffrey = personRepository.findByName("Jeffrey")
+        then:"Entity is updated"
+        initialAge == 30
+        updatedJeffrey.age == 31
     }
 
     void "test update by multiple fields"() {

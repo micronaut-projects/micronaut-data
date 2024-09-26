@@ -86,9 +86,16 @@ class PageSpec extends Specification {
         def json = mapper.writeValueAsString(page)
 
         then:
-        def deserializedPage = mapper.readValue(json, mapper.typeFactory.constructParametricType(Page, Dummy))
+        def deserializedPage = (Page<Dummy>) mapper.readValue(json, mapper.typeFactory.constructParametricType(Page, Dummy))
         deserializedPage.content.every { it instanceof Dummy }
         deserializedPage == page
+
+        when:"Serialize and deserialize empty page"
+        json = mapper.writeValueAsString(Page.empty())
+
+        then:"It is done without errors"
+        def deserializedEmptyPage = (Page<Dummy>) mapper.readValue(json, mapper.typeFactory.constructParametricType(Page, Dummy))
+        !deserializedEmptyPage.hasTotalSize()
     }
 
     void "test serialization and deserialization of a page - serde"() {
@@ -113,6 +120,13 @@ class PageSpec extends Specification {
         def deserializedPage = serdeMapper.readValue(json, Argument.of(Page, Dummy))
         deserializedPage.content.every { it instanceof Dummy }
         deserializedPage == page
+
+        when:"Serialize and deserialize empty page"
+        json = serdeMapper.writeValueAsString(Page.empty())
+
+        then:"It is done without errors"
+        def deserializedEmptyPage = serdeMapper.readValue(json, Argument.of(Page, Dummy))
+        !deserializedEmptyPage.hasTotalSize()
     }
 
     void "test serialization and deserialization of a pageable - serde"() {
