@@ -21,6 +21,7 @@ import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Transient;
@@ -376,6 +377,23 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
     @Nullable
     @Override
     public PersistentEntity getParentEntity() {
+        return null;
+    }
+
+    @Override
+    public RuntimePersistentProperty<T> getIdOrVersionPropertyByName(String name) {
+        if (ArrayUtils.isNotEmpty(identity)) {
+            for (RuntimePersistentProperty<T> identityProperty : identity) {
+                if (identityProperty.getName().equals(name)) {
+                    return identityProperty;
+                }
+            }
+        }
+
+        if (version != null && version.getName().equals(name)) {
+            return version;
+        }
+
         return null;
     }
 

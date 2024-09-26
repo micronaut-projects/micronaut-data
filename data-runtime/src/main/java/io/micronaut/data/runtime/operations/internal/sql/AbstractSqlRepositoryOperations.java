@@ -698,7 +698,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 preparedQuery.getJoinPaths(),
                 sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, rsType),
                 loadListener,
-                conversionService);
+                conversionService,
+                false);
         }
         if (preparedQuery.isDtoProjection()) {
             RuntimePersistentEntity<R> resultPersistentEntity = getEntity(preparedQuery.getResultType());
@@ -710,7 +711,14 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                         return p;
                     }
                     RuntimePersistentProperty<E> entityProperty = persistentEntity.getPropertyByName(p.getName());
-                    if (entityProperty == null || !ReflectionUtils.getWrapperType(entityProperty.getType()).equals(ReflectionUtils.getWrapperType(p.getType()))) {
+                    if (entityProperty == null) {
+                        return p;
+                    }
+                    Class<?> dtoPropertyType = ReflectionUtils.getWrapperType(p.getType());
+                    Class<?> entityPropertyType = ReflectionUtils.getWrapperType(entityProperty.getType());
+                    if (!dtoPropertyType.equals(entityPropertyType)
+                        && !TypeUtils.areTypesCompatible(dtoPropertyType, entityPropertyType)
+                        && !TypeUtils.isDtoCompatibleWithEntity(dtoPropertyType, entityPropertyType)) {
                         return p;
                     }
                     return new BeanPropertyWithAnnotationMetadata<>(
@@ -725,7 +733,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 preparedQuery.getJoinPaths(),
                 sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, rsType),
                 null,
-                conversionService);
+                conversionService,
+                false);
         }
         return new SqlTypeMapper<>() {
             @Override

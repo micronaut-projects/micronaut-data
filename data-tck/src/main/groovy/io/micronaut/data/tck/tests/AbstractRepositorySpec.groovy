@@ -1516,6 +1516,26 @@ abstract class AbstractRepositorySpec extends Specification {
             authors.forEach { assert it.books.size() == 0 }
     }
 
+    void "test DTO with nested DTO"() {
+        given:
+        saveSampleBooks()
+
+        when:
+        def optBook = bookRepository.queryByTitleContains("Stand")
+
+        then:
+        optBook.present
+        optBook.get().author
+
+        when:
+        optBook = bookRepository.findByTitleStartingWith("The Stand")
+
+        then:
+        optBook.present
+        // author not joined, should be null in DTO
+        !optBook.get().author
+    }
+
     void "stream joined"() {
         if (!transactionManager.isPresent()) {
             return

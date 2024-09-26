@@ -428,6 +428,15 @@ public interface PersistentEntity extends PersistentElement {
     Optional<NamingStrategy> findNamingStrategy();
 
     /**
+     * Obtains a PersistentProperty representing id or version property by name.
+     *
+     * @param name The name of the id or version property
+     * @return The PersistentProperty used as id or version or null if it doesn't exist
+     * @since 4.7.0
+     */
+    PersistentProperty getIdOrVersionPropertyByName(String name);
+
+    /**
      * Creates a new persistent entity representation of the given type. The type
      * must be annotated with {@link io.micronaut.core.annotation.Introspected}. This method will create a new instance on demand and does not cache.
      *

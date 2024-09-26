@@ -575,8 +575,6 @@ public class TypeUtils {
         String rightTypeName = rightType.getName();
         if (leftType.getName().equals(rightTypeName)) {
             return true;
-        } else if (leftType.isAssignable(rightTypeName)) {
-            return true;
         } else {
             if (isNumber(leftType) && isNumber(rightType)) {
                 return true;
