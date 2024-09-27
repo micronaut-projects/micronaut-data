@@ -15,15 +15,14 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
-import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.criteria.QueryCriteriaMethodMatch;
-import jakarta.persistence.criteria.Expression;
 
 import java.util.List;
 
@@ -50,27 +49,11 @@ public final class CountMethodMatcher extends AbstractMethodMatcher {
         if (TypeUtils.isValidCountReturnType(matchContext)) {
             return new QueryCriteriaMethodMatch(matches) {
 
-                boolean distinct = false;
-
                 @Override
-                protected <T> void applyDistinct(PersistentEntityCriteriaQuery<T> query) {
-                    distinct = true;
-                }
-
-                @Override
-                protected <T> void applyProjections(String projectionPart,
-                                                    PersistentEntityRoot<T> root,
-                                                    PersistentEntityCriteriaQuery<T> query,
-                                                    PersistentEntityCriteriaBuilder cb,
-                                                    String returnTypeName) {
-                    if (StringUtils.isNotEmpty(projectionPart)) {
-                        Expression<?> propertyPath = getProperty(root, projectionPart);
-                        Expression<Long> count = distinct ? cb.countDistinct(propertyPath) : cb.count(propertyPath);
-                        query.multiselect(count);
-                    } else {
-                        Expression<Long> count = distinct ? cb.countDistinct(root) : cb.count(root);
-                        query.multiselect(count);
-                    }
+                protected PersistentEntityCriteriaQuery<Object> createQuery(MethodMatchContext matchContext,
+                                                                            PersistentEntityCriteriaBuilder cb,
+                                                                            List<AnnotationValue<Join>> joinSpecs) {
+                    return super.createCountQuery(matchContext, cb, joinSpecs);
                 }
 
                 @Override

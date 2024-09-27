@@ -42,7 +42,7 @@ public class DefaultExistsByAsyncInterceptor<T> extends AbstractAsyncInterceptor
 
     @Override
     public CompletionStage<Boolean> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Boolean>> context) {
-        PreparedQuery<?, Boolean> preparedQuery = prepareQuery(methodKey, context, null);
+        PreparedQuery<?, Boolean> preparedQuery = prepareQuery(methodKey, context);
         return asyncDatastoreOperations.exists(preparedQuery);
     }
 }

@@ -121,10 +121,10 @@ public interface QueryBuilder2 {
         }
 
         /**
-         * @return If the query is supposted to
+         * @return The index of {@link Pageable} or {@link io.micronaut.data.model.Sort}.
          */
-        default boolean hasDynamicSort() {
-            return false;
+        default int getParameterPageableOrSortIndex() {
+            return -1;
         }
 
     }

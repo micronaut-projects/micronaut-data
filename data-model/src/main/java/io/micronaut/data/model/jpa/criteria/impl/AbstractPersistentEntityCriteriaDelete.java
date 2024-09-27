@@ -20,11 +20,13 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
 import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.query.QueryModelPredicateVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.query.QueryModelSelectionVisitor;
@@ -37,7 +39,6 @@ import io.micronaut.data.model.query.builder.QueryResult;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Selection;
-import jakarta.persistence.criteria.Subquery;
 import jakarta.persistence.metamodel.EntityType;
 
 import java.util.Arrays;
@@ -46,6 +47,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+
+import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupportedOperation;
 
 /**
  * The abstract implementation of {@link PersistentEntityCriteriaDelete}.
@@ -153,8 +156,8 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
     }
 
     @Override
-    public <U> Subquery<U> subquery(Class<U> type) {
-        throw new IllegalStateException("Unsupported!");
+    public <U> PersistentEntitySubquery<U> subquery(ExpressionType<U> type) {
+        throw notSupportedOperation();
     }
 
     public final boolean hasVersionRestriction() {

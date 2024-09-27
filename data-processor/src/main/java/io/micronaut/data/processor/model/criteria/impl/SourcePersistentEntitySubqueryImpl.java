@@ -17,8 +17,10 @@ package io.micronaut.data.processor.model.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntitySubquery;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntitySubquery;
@@ -41,9 +43,10 @@ final class SourcePersistentEntitySubqueryImpl<T> extends AbstractPersistentEnti
     private final Function<ClassElement, SourcePersistentEntity> entityResolver;
 
     SourcePersistentEntitySubqueryImpl(AbstractQuery<?> parentQuery,
+                                       ExpressionType<T> resultType,
                                        Function<ClassElement, SourcePersistentEntity> entityResolver,
                                        CriteriaBuilder criteriaBuilder) {
-        super(parentQuery, (Class<T>) Object.class, criteriaBuilder);
+        super(parentQuery, resultType, criteriaBuilder);
         this.entityResolver = entityResolver;
     }
 
@@ -77,4 +80,8 @@ final class SourcePersistentEntitySubqueryImpl<T> extends AbstractPersistentEnti
         return null;
     }
 
+    @Override
+    public <U> PersistentEntitySubquery<U> subquery(ExpressionType<U> type) {
+        return new SourcePersistentEntitySubqueryImpl<>(this, type, entityResolver, criteriaBuilder);
+    }
 }

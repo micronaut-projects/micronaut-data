@@ -228,7 +228,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                 persistentEntityCriteriaQuery.offset((int) offset);
             }
             if (limit > 0) {
-                persistentEntityCriteriaQuery.max((int) limit);
+                persistentEntityCriteriaQuery.limit((int) limit);
             }
             return Pageable.UNPAGED;
         }

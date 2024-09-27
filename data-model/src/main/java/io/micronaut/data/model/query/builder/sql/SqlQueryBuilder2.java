@@ -1499,18 +1499,11 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 implements Sq
     public QueryResult buildSelect(@NonNull AnnotationMetadata annotationMetadata, @NonNull SelectQueryDefinition definition) {
         QueryBuilder queryBuilder = new QueryBuilder();
 
-        if (definition.hasDynamicSort()) {
-            QueryState queryState = buildQuery(annotationMetadata, definition, queryBuilder, false, null);
-
-            return QueryResult.of(
-                queryState.getFinalQuery(),
-                queryState.getQueryParts(),
-                queryState.getParameterBindings(),
-                definition.limit(),
-                definition.offset(),
-                queryState.getJoinPaths()
-            );
+        int parameterPageableOrSortIndex = definition.getParameterPageableOrSortIndex();
+        if (parameterPageableOrSortIndex != -1) {
+            return super.buildSelect(annotationMetadata, definition);
         }
+
         QueryState queryState = buildQuery(annotationMetadata, definition, queryBuilder, true, null);
 
         return QueryResult.of(

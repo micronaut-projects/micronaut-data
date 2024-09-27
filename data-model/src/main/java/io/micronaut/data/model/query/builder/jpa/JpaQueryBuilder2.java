@@ -237,21 +237,6 @@ public final class JpaQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
     }
 
     @Override
-    public QueryResult buildSelect(@NonNull AnnotationMetadata annotationMetadata, @NonNull SelectQueryDefinition definition) {
-        QueryBuilder queryBuilder = new QueryBuilder();
-        QueryState queryState = buildQuery(annotationMetadata, definition, queryBuilder, false, null);
-
-        return QueryResult.of(
-            queryState.getFinalQuery(),
-            queryState.getQueryParts(),
-            queryState.getParameterBindings(),
-            definition.limit(),
-            definition.offset(),
-            queryState.getJoinPaths()
-        );
-    }
-
-    @Override
     protected void appendLimitAndOffset(Dialect dialect, int limit, long offset, StringBuilder builder) {
         // JPA doesn't support limit and offset in JPQL
     }

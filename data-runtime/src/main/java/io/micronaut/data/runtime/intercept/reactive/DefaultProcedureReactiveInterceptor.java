@@ -43,7 +43,7 @@ public class DefaultProcedureReactiveInterceptor extends AbstractPublisherInterc
 
     @Override
     protected Publisher<?> interceptPublisher(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        PreparedQuery<?, Object> preparedQuery = prepareQuery(methodKey, context, null);
+        PreparedQuery<?, Object> preparedQuery = prepareQuery(methodKey, context);
         return reactiveOperations.execute(preparedQuery);
     }
 

@@ -49,7 +49,9 @@ public interface QueryParameterBinding {
      * @return The json representation data type if getDataType is {@link DataType#JSON} and is annotated with {@link JsonRepresentation}
      * annotation
      */
-    JsonDataType getJsonDataType();
+    default JsonDataType getJsonDataType() {
+        return JsonDataType.DEFAULT;
+    }
 
     /**
      * @return The converter class name

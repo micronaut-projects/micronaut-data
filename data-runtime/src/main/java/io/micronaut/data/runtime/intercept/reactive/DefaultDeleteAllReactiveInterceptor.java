@@ -45,8 +45,8 @@ public class DefaultDeleteAllReactiveInterceptor extends AbstractCountOrEntityPu
     public Publisher<?> interceptPublisher(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         Optional<Iterable<Object>> deleteEntities = findEntitiesParameter(context, Object.class);
         Optional<Object> deleteEntity = findEntityParameter(context, Object.class);
-        if (!deleteEntity.isPresent() && !deleteEntities.isPresent()) {
-            PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
+        if (deleteEntity.isEmpty() && deleteEntities.isEmpty()) {
+            PreparedQuery<?, Number> preparedQuery = prepareQuery(methodKey, context);
             return reactiveOperations.executeDelete(preparedQuery);
         } else if (deleteEntity.isPresent()) {
             return reactiveOperations.delete(getDeleteOperation(context, deleteEntity.get()));

@@ -25,6 +25,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.runtime.DelegatingQueryParameterBinding;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
@@ -199,7 +200,15 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
             }
         }
 
-        List<Object> values = binding.isExpandable() ? expandValue(value, binding.getDataType()) : null;
+        List<Object> values;
+        if (binding.isExpandable()) {
+            if (value instanceof Pageable) {
+                return; // Skip
+            }
+            values = expandValue(value, binding.getDataType());
+        } else {
+            values = null;
+        }
         if (values != null && values.isEmpty()) {
             // Empty collections / array should always set at least one value
             value = null;
