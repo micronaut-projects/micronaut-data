@@ -19,6 +19,7 @@ micronaut-multitenancy = "5.4.0"
 micronaut-validation = "4.7.0"
 micronaut-logging = "1.4.0"
 micronaut-flyway = "7.4.0"
+micronaut-coherence = "5.0.3"
 
 groovy = "4.0.23"
 
@@ -69,6 +70,7 @@ micronaut-sql = { module = "io.micronaut.sql:micronaut-sql-bom", version.ref = "
 micronaut-r2dbc = { module = "io.micronaut.r2dbc:micronaut-r2dbc-bom", version.ref = "micronaut-r2dbc" }
 micronaut-flyway = { module = "io.micronaut.flyway:micronaut-flyway-bom", version.ref = "micronaut-flyway" }
 micronaut-serde = { module = "io.micronaut.serde:micronaut-serde-bom", version.ref = "micronaut-serde" }
+micronaut-coherence = { module = "io.micronaut.coherence:micronaut-coherence-bom", version.ref = "micronaut-coherence" }
 
 micronaut-docs = { module = "io.micronaut.docs:micronaut-docs-asciidoc-config-props", version.ref = "micronaut-docs" }
 
