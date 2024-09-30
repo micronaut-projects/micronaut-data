@@ -1992,4 +1992,5 @@ interface TestRepository extends GenericRepository<Book, Long> {
         expect:
             getQuery(findByAuthorInListMethod) == "SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated` FROM `book` book_ WHERE (book_.`author_id` IN (?))"
     }
+
 }

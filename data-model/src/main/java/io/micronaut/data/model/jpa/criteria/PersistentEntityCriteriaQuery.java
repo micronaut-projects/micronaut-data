@@ -36,7 +36,7 @@ import java.util.List;
  * @since 3.2
  */
 @Experimental
-public interface PersistentEntityCriteriaQuery<T> extends CriteriaQuery<T>, PersistentEntityCommonAbstractCriteria {
+public interface PersistentEntityCriteriaQuery<T> extends CriteriaQuery<T>, PersistentEntityQuery<T> {
 
     @NonNull
     <X> PersistentEntityRoot<X> from(@NonNull PersistentEntity persistentEntity);
@@ -49,9 +49,11 @@ public interface PersistentEntityCriteriaQuery<T> extends CriteriaQuery<T>, Pers
     @NonNull
     <X> PersistentEntityRoot<X> from(@NonNull EntityType<X> entity);
 
+    @Override
     @NonNull
-    PersistentEntityCriteriaQuery<T> max(int max);
+    PersistentEntityCriteriaQuery<T> limit(int limit);
 
+    @Override
     @NonNull
     PersistentEntityCriteriaQuery<T> offset(int offset);
 
@@ -99,16 +101,14 @@ public interface PersistentEntityCriteriaQuery<T> extends CriteriaQuery<T>, Pers
 
     @Override
     @NonNull
-    PersistentEntityCriteriaQuery<T> orderBy(@NonNull Order... o);
+    PersistentEntityCriteriaQuery<T> orderBy(@NonNull Order... orders);
 
     @Override
     @NonNull
-    PersistentEntityCriteriaQuery<T> orderBy(@NonNull List<Order> o);
+    PersistentEntityCriteriaQuery<T> orderBy(@NonNull List<Order> orders);
 
     @Override
     @NonNull
     PersistentEntityCriteriaQuery<T> distinct(boolean distinct);
 
-    @Override
-    <U> PersistentEntitySubquery<U> subquery(Class<U> type);
 }

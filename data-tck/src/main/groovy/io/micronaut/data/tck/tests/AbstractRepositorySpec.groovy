@@ -66,7 +66,6 @@ import jakarta.persistence.criteria.CriteriaBuilder
 import jakarta.persistence.criteria.CriteriaQuery
 import jakarta.persistence.criteria.CriteriaUpdate
 import jakarta.persistence.criteria.JoinType
-import jakarta.persistence.criteria.Path
 import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Root
 import spock.lang.AutoCleanup
@@ -90,7 +89,6 @@ import static io.micronaut.data.tck.repositories.BookSpecifications.titleEqualsW
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.distinct
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.idsIn
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEquals
-import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEqualsCaseInsensitive
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.personWithOnlyNameAndAgeByName
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.setIncome
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.setName
@@ -229,7 +227,7 @@ abstract class AbstractRepositorySpec extends Specification {
                 }
             }
         when:
-            io.micronaut.data.model.Page<Book> page = bookRepository.findAll(criteria, Pageable.from(0, 10, Sort.of(Sort.Order.asc("title"))))
+            io.micronaut.data.model.Page<Book> page = bookRepository.findAll(criteria, Pageable.from(0, 10, Sort.of(Sort.Order.asc("title")))) as io.micronaut.data.model.Page<Book>
 
         then:
             page.totalSize == page.content.size()
@@ -303,7 +301,7 @@ abstract class AbstractRepositorySpec extends Specification {
                 CriteriaQuery<Book> build(CriteriaBuilder criteriaBuilder) {
                     PersistentEntityCriteriaQuery criteriaQuery = criteriaBuilder.createQuery(Book)
                     criteriaQuery.from(Book)
-                    criteriaQuery.max(1)
+                    criteriaQuery.limit(1)
                     return criteriaQuery
                 }
             })

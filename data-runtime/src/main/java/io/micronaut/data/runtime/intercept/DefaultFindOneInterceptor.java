@@ -39,7 +39,7 @@ public class DefaultFindOneInterceptor<T> extends AbstractQueryInterceptor<T, Ob
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Object> context) {
-        PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context, null);
+        PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context);
         return convertOne(
                 context,
                 operations.findOne(preparedQuery)

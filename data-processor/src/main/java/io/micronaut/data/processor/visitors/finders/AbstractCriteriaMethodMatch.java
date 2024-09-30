@@ -198,14 +198,14 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     @Nullable
     protected final Predicate extractPredicates(List<ParameterElement> queryParams,
                                                 PersistentEntityRoot<?> root,
-                                                SourcePersistentEntityCriteriaBuilder cb) {
+                                                PersistentEntityCriteriaBuilder cb) {
         if (CollectionUtils.isNotEmpty(queryParams)) {
             PersistentEntity rootEntity = root.getPersistentEntity();
             List<Predicate> predicates = new ArrayList<>(queryParams.size());
             for (ParameterElement queryParam : queryParams) {
                 String paramName = queryParam.getName();
                 PersistentPropertyPath propPath = rootEntity.getPropertyPath(rootEntity.getPath(paramName).orElse(paramName));
-                ParameterExpression<Object> param = cb.parameter(queryParam, propPath);
+                ParameterExpression<Object> param = ((SourcePersistentEntityCriteriaBuilder) cb).parameter(queryParam, propPath);
                 if (propPath == null) {
                     if (TypeRole.ID.equals(paramName) && (rootEntity.hasIdentity() || rootEntity.hasCompositeIdentity())) {
                         predicates.add(cb.equal(root.id(), param));
@@ -256,7 +256,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     protected <T> Predicate interceptPredicate(MethodMatchContext matchContext,
                                                List<ParameterElement> notConsumedParameters,
                                                PersistentEntityRoot<T> root,
-                                               SourcePersistentEntityCriteriaBuilder cb,
+                                               PersistentEntityCriteriaBuilder cb,
                                                @Nullable Predicate existingPredicate) {
         if (matchContext.getMethodElement().hasAnnotation(WithoutTenantId.class)) {
             return existingPredicate;
@@ -269,6 +269,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         if (tenantIdProperty != null) {
             AnnotationValue<WithTenantId> withTenantId = matchContext.getMethodElement().getAnnotation(WithTenantId.class);
             Predicate tenantIdEqual;
+            SourcePersistentEntityCriteriaBuilder scb = (SourcePersistentEntityCriteriaBuilder) cb;
             if (withTenantId != null) {
                 Object value = withTenantId.getValues().get(AnnotationMetadata.VALUE_MEMBER);
                 if (value instanceof String constant) {
@@ -279,7 +280,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                 } else if (value instanceof EvaluatedExpressionReference ref) {
                     tenantIdEqual = cb.equal(
                         root.get(tenantIdProperty),
-                        cb.expression(tenantIdProperty, (String) ref.annotationValue())
+                        scb.expression(tenantIdProperty, (String) ref.annotationValue())
                     );
                 } else {
                     throw new IllegalStateException("Unrecognized tenantId annotation: " + withTenantId);
@@ -287,7 +288,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             } else {
                 tenantIdEqual = cb.equal(
                     root.get(tenantIdProperty),
-                    cb.expression(tenantIdProperty, "#{ctx[T(io.micronaut.data.runtime.multitenancy.TenantResolver)].resolveTenantIdentifier()}")
+                    scb.expression(tenantIdProperty, "#{ctx[T(io.micronaut.data.runtime.multitenancy.TenantResolver)].resolveTenantIdentifier()}")
                 );
             }
             if (existingPredicate != null) {
@@ -302,7 +303,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     protected final <T> Predicate extractPredicates(String querySequence,
                                                     Iterator<ParameterElement> parametersIt,
                                                     PersistentEntityRoot<T> root,
-                                                    SourcePersistentEntityCriteriaBuilder cb) {
+                                                    PersistentEntityCriteriaBuilder cb) {
         Predicate predicate = null;
 
         // if it contains operator and split
@@ -352,7 +353,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
 
     private <T> Predicate findMethodPredicate(String expression,
                                               PersistentEntityRoot<T> root,
-                                              SourcePersistentEntityCriteriaBuilder cb,
+                                              PersistentEntityCriteriaBuilder cb,
                                               Iterator<ParameterElement> parameters) {
         Optional<String> optionalRestrictionName = PROPERTY_RESTRICTIONS.stream().filter(expression::endsWith).findFirst();
         if (optionalRestrictionName.isPresent()) {
@@ -410,7 +411,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
 
     private <T> Predicate getPropertyRestriction(String propertyName,
                                                  PersistentEntityRoot<T> root,
-                                                 SourcePersistentEntityCriteriaBuilder cb,
+                                                 PersistentEntityCriteriaBuilder cb,
                                                  Iterator<ParameterElement> parameters,
                                                  Restrictions.PropertyRestriction<Object> restriction) {
         boolean negation = false;
@@ -445,7 +446,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     }
 
     private <T> Predicate getRestriction(PersistentEntityRoot<T> root,
-                                         SourcePersistentEntityCriteriaBuilder cb,
+                                         PersistentEntityCriteriaBuilder cb,
                                          Iterator<ParameterElement> parameters,
                                          Restrictions.Restriction<Object> restriction) {
         Expression<?> property = null;
@@ -464,12 +465,13 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     private <T> List<ParameterExpression<T>> provideParams(Iterator<ParameterElement> parameters,
                                                            int requiredParameters,
                                                            String restrictionName,
-                                                           SourcePersistentEntityCriteriaBuilder cb,
+                                                           PersistentEntityCriteriaBuilder cb,
                                                            @Nullable
                                                            Expression<?> expression) {
         if (requiredParameters == 0) {
             return Collections.emptyList();
         }
+        SourcePersistentEntityCriteriaBuilder scb = (SourcePersistentEntityCriteriaBuilder) cb;
         List<ParameterExpression<T>> params = new ArrayList<>(requiredParameters);
         for (int i = 0; i < requiredParameters; i++) {
             if (!parameters.hasNext()) {
@@ -487,9 +489,9 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                     SourcePersistentProperty property = (SourcePersistentProperty) propertyPath.getProperty();
                     throw new IllegalArgumentException("Parameter [" + genericType.getType().getName() + " " + parameter.getName() + "] is not compatible with property [" + property.getType().getName() + " " + property.getName() + "] of entity: " + property.getOwner().getName());
                 }
-                params.add(cb.parameter(parameter, propertyPath));
+                params.add(scb.parameter(parameter, propertyPath));
             } else {
-                params.add(cb.parameter(parameter, null));
+                params.add(scb.parameter(parameter, null));
             }
         }
         return params;

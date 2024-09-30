@@ -121,7 +121,9 @@ public @interface DataMethod {
 
     /**
      * The ID type.
+     * @deprecated Not used
      */
+    @Deprecated(forRemoval = true, since = "4.10")
     String META_MEMBER_ID_TYPE = "idType";
 
     /**
@@ -150,12 +152,16 @@ public @interface DataMethod {
 
     /**
      * The parameter that references the entity.
+     * @deprecated Not used
      */
+    @Deprecated(forRemoval = true, since = "4.10")
     String META_MEMBER_ENTITY = "entity";
 
     /**
      * The parameter that references the ID.
+     * @deprecated Not used
      */
+    @Deprecated(forRemoval = true, since = "4.10")
     String META_MEMBER_ID = "id";
 
     /**
@@ -235,7 +241,9 @@ public @interface DataMethod {
      * The identifier type for the method being executed.
      *
      * @return The ID type
+     * @deprecated Not used
      */
+    @Deprecated(forRemoval = true, since = "4.10")
     Class<?> idType() default Serializable.class;
 
     /**
@@ -253,20 +261,26 @@ public @interface DataMethod {
      * The argument that defines the pageable object.
      *
      * @return The pageable.
+     * @deprecated Not used
      */
+    @Deprecated(forRemoval = true, since = "4.10")
     String pageable() default "";
 
     /**
      * The argument that represents the entity for save, update, query by example operations etc.
      *
      * @return The entity argument
+     * @deprecated Not used
      */
+    @Deprecated(forRemoval = true, since = "4.10")
     String entity() default "";
 
     /**
      * The member that defines the ID for lookup, delete, update by ID.
      * @return The ID
+     * @deprecated Not used
      */
+    @Deprecated(forRemoval = true, since = "4.10")
     String id() default "";
 
     /**

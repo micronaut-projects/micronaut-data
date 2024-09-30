@@ -134,7 +134,8 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
                 if (!parameter.isExpandable()) {
                     q.append(String.format(positionalParameterFormat, inx++));
                 } else {
-                    int size = Math.max(1, getQueryParameterValueSize(parameter));
+                    Object parameterValue = getParameterValue(parameter);
+                    int size = Math.max(1, sizeOf(parameterValue));
                     for (int k = 0; k < size; k++) {
                         q.append(String.format(positionalParameterFormat, inx++));
                         if (k + 1 != size) {
@@ -155,6 +156,11 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
      * @return number of parameter values in query parameter binding
      */
     protected int getQueryParameterValueSize(QueryParameterBinding parameter) {
+        Object value = getParameterValue(parameter);
+        return sizeOf(value);
+    }
+
+    private Object getParameterValue(QueryParameterBinding parameter) {
         int parameterIndex = parameter.getParameterIndex();
         Object value;
         if (parameterIndex == -1) {
@@ -162,7 +168,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         } else {
             value = preparedQuery.getParameterArray()[parameterIndex];
         }
-        return sizeOf(value);
+        return value;
     }
 
     public static Sort enhanceCursoredSort(Sort sort, boolean isBackwards, PersistentEntity persistentEntity) {
@@ -196,10 +202,10 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         if (pageable instanceof CursoredPageable cursored) {
             cursored = enhancePageable(cursored, getPersistentEntity());
             query.append(buildCursorPagination(cursored));
-            appendSort(cursored.getSort(), query, queryBuilder);
+            appendSort(cursored.getSort(), query, queryBuilder, null);
             query.append(queryBuilder.buildPagination(cursored)); // Append limit
         } else {
-            appendSort(pageable.getSort(), query, queryBuilder);
+            appendSort(pageable.getSort(), query, queryBuilder, null);
             if (isSingleResult && pageable.getOffset() > 0) {
                 pageable = Pageable.from(pageable.getNumber(), 1);
             }
@@ -217,14 +223,14 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         }
     }
 
-    private void appendSort(Sort sort, StringBuilder added, SqlQueryBuilder2 queryBuilder) {
+    private void appendSort(Sort sort, StringBuilder added, SqlQueryBuilder2 queryBuilder, String tableAlias) {
         RuntimePersistentEntity<E> persistentEntity = getPersistentEntity();
         if (sort.isSorted()) {
-            added.append(queryBuilder.buildOrderBy("", persistentEntity, sqlStoredQuery.getAnnotationMetadata(), sort, isNative()));
+            added.append(queryBuilder.buildOrderBy("", persistentEntity, sqlStoredQuery.getAnnotationMetadata(), sort, isNative(), tableAlias));
         } else if (isSqlServerWithoutOrderBy(query, sqlStoredQuery.getDialect())) {
             // SQL server requires order by
             sort = sortById(persistentEntity);
-            added.append(queryBuilder.buildOrderBy("", persistentEntity, sqlStoredQuery.getAnnotationMetadata(), sort, isNative()));
+            added.append(queryBuilder.buildOrderBy("", persistentEntity, sqlStoredQuery.getAnnotationMetadata(), sort, isNative(), tableAlias));
         }
     }
 
@@ -286,7 +292,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
             builder.append("(");
             for (int j = 0; j <= i; ++j) {
                 String propertyName = orders.get(j).getProperty();
-                builder.append(sqlStoredQuery.getQueryBuilder().buildPropertyByName(propertyName, query, persistentEntity, getAnnotationMetadata(), isNative()));
+                builder.append(sqlStoredQuery.getQueryBuilder().buildPropertyByName(propertyName, query, persistentEntity, getAnnotationMetadata(), isNative(), null));
                 if (orders.get(i).isAscending()) {
                     builder.append(i == j ? " > " : " = ");
                 } else {

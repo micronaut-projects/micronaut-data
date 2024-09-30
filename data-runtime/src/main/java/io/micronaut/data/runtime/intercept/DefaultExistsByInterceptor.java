@@ -40,7 +40,7 @@ public class DefaultExistsByInterceptor<T> extends AbstractQueryInterceptor<T, B
 
     @Override
     public Boolean intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Boolean> context) {
-        PreparedQuery<?, Boolean> preparedQuery = prepareQuery(methodKey, context, null);
+        PreparedQuery<?, Boolean> preparedQuery = prepareQuery(methodKey, context);
         return operations.exists(preparedQuery);
     }
 }

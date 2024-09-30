@@ -28,9 +28,13 @@ import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.ListJoin;
 import jakarta.persistence.criteria.MapJoin;
+import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.SetJoin;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -46,9 +50,21 @@ public abstract class AbstractPersistentEntitySubquery<T> extends AbstractPersis
 
     private final AbstractQuery<?> parentQuery;
 
-    protected AbstractPersistentEntitySubquery(AbstractQuery<?> parentQuery, Class<T> resultType, CriteriaBuilder criteriaBuilder) {
+    protected AbstractPersistentEntitySubquery(AbstractQuery<?> parentQuery, ExpressionType<T> resultType, CriteriaBuilder criteriaBuilder) {
         super(resultType, criteriaBuilder);
         this.parentQuery = parentQuery;
+    }
+
+    @Override
+    public PersistentEntitySubquery<T> orderBy(Order... orders) {
+        this.orders = Arrays.asList(Objects.requireNonNull(orders));
+        return this;
+    }
+
+    @Override
+    public PersistentEntitySubquery<T> orderBy(List<Order> orders) {
+        this.orders = Objects.requireNonNull(orders);
+        return this;
     }
 
     @Override

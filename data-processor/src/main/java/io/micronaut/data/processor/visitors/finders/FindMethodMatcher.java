@@ -15,18 +15,19 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.intercept.FindByIdInterceptor;
 import io.micronaut.data.intercept.FindOneInterceptor;
 import io.micronaut.data.intercept.async.FindByIdAsyncInterceptor;
 import io.micronaut.data.intercept.async.FindOneAsyncInterceptor;
 import io.micronaut.data.intercept.reactive.FindByIdReactiveInterceptor;
 import io.micronaut.data.intercept.reactive.FindOneReactiveInterceptor;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
-import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
-import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.criteria.QueryCriteriaMethodMatch;
 import io.micronaut.inject.ast.ClassElement;
@@ -63,14 +64,14 @@ public final class FindMethodMatcher extends AbstractMethodMatcher {
             boolean hasIdMatch;
 
             @Override
-            protected <T> void apply(MethodMatchContext matchContext,
-                                     PersistentEntityRoot<T> root,
-                                     PersistentEntityCriteriaQuery<T> query,
-                                     SourcePersistentEntityCriteriaBuilder cb) {
-                super.apply(matchContext, root, query, cb);
-                if (query instanceof AbstractPersistentEntityCriteriaQuery<T> criteriaQuery) {
+            protected PersistentEntityCriteriaQuery<Object> createQuery(MethodMatchContext matchContext,
+                                                                        PersistentEntityCriteriaBuilder cb,
+                                                                        List<AnnotationValue<Join>> joinSpecs) {
+                PersistentEntityCriteriaQuery<Object> query = super.createQuery(matchContext, cb, joinSpecs);
+                if (query instanceof AbstractPersistentEntityCriteriaQuery<?> criteriaQuery) {
                     hasIdMatch = criteriaQuery.hasOnlyIdRestriction();
                 }
+                return query;
             }
 
             @Override

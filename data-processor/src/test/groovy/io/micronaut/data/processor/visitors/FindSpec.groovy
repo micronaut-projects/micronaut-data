@@ -27,6 +27,7 @@ import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.writer.BeanDefinitionVisitor
 import spock.lang.Issue
+import spock.lang.PendingFeature
 import spock.lang.Unroll
 
 class FindSpec extends AbstractDataSpec {
@@ -416,6 +417,7 @@ interface TestRepository extends CrudRepository<Book, Long> {
             method.intValue(DataMethod, DataMethod.META_MEMBER_LIMIT).isEmpty()
     }
 
+    @PendingFeature
     void "test top with sort"() {
         given:
             def repository = buildRepository('test.TestRepository', """

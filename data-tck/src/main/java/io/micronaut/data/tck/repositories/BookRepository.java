@@ -47,6 +47,9 @@ public abstract class BookRepository implements PageableRepository<Book, Long>, 
     @Override
     public abstract Page<Book> findAll(PredicateSpecification<Book> spec, Pageable pageable);
 
+    @Join(value = "students", type = Join.Type.LEFT_FETCH)
+    public abstract Page<Book> findAllByStudentsNameIn(List<String> names, Pageable pageable);
+
     @Override
     public abstract @NonNull Book save(@NonNull Book book);
 

@@ -36,6 +36,7 @@ import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.operations.HintsCapableRepository;
 import io.micronaut.inject.ExecutableMethod;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -88,23 +89,15 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
      * The default constructor.
      *
      * @param method               The target method
-     * @param resultType           The result type of the query
-     * @param rootEntity           The root entity of the query
-     * @param query                The query itself
      * @param isCount              Is the query a count query
      * @param repositoryOperations The repositoryOperations
      */
     public DefaultStoredQuery(
             @NonNull ExecutableMethod<?, ?> method,
-            @NonNull Class<RT> resultType,
-            @NonNull Class<E> rootEntity,
-            @NonNull String query,
             boolean isCount,
             HintsCapableRepository repositoryOperations) {
         super(method);
-        //noinspection unchecked
-        this.resultType = (Class<RT>) ReflectionUtils.getWrapperType(resultType);
-        this.rootEntity = rootEntity;
+        this.rootEntity = getRequiredRootEntity(method);
         this.annotationMetadata = method.getAnnotationMetadata();
         this.isNative = method.isTrue(Query.class, "nativeQuery");
         this.isProcedure = method.isTrue(DataMethod.class, DataMethod.META_MEMBER_PROCEDURE);
@@ -116,8 +109,11 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
                 method.stringValue(DATA_METHOD_ANN_NAME, TypeRole.SORT).isPresent() ||
                 method.intValue(DATA_METHOD_ANN_NAME, META_MEMBER_LIMIT).orElse(-1) > -1 ||
                 method.intValue(DATA_METHOD_ANN_NAME, META_MEMBER_PAGE_SIZE).orElse(-1) > -1;
-
+        String query;
         if (isCount) {
+            query = method.stringValue(Query.class, DataMethod.META_MEMBER_COUNT_QUERY)
+                .orElseGet(() -> method.stringValue(Query.class)
+                    .orElseThrow(() -> new IllegalStateException("No query present in method")));
             Optional<String> rawCountQueryString = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_COUNT_QUERY);
             this.rawQuery = rawCountQueryString.isPresent();
             this.query = rawCountQueryString.orElse(query);
@@ -128,11 +124,20 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
             } else {
                 this.queryParts = method.stringValues(DataMethod.class, DataMethod.META_MEMBER_EXPANDABLE_QUERY);
             }
+            //noinspection unchecked
+            this.resultType = (Class<RT>) Long.class;
         } else {
+            query = method.stringValue(Query.class).orElseThrow(() ->
+                new IllegalStateException("No query present in method")
+            );
             Optional<String> rawQueryString = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY);
             this.rawQuery = rawQueryString.isPresent();
             this.query = rawQueryString.orElse(query);
             this.queryParts = method.stringValues(DataMethod.class, DataMethod.META_MEMBER_EXPANDABLE_QUERY);
+            //noinspection unchecked
+            this.resultType = method.classValue(DataMethod.NAME, DataMethod.META_MEMBER_RESULT_TYPE)
+                .map(type -> (Class<RT>) ReflectionUtils.getWrapperType(type))
+                .orElse((Class<RT>) rootEntity);
         }
         this.method = method;
         this.isDto = method.isTrue(DATA_METHOD_ANN_NAME, DataMethod.META_MEMBER_DTO);
@@ -163,43 +168,10 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
         if (annotation == null) {
             queryParameters = Collections.emptyList();
         } else {
-            List<AnnotationValue<DataMethodQueryParameter>> params = annotation.getAnnotations(DataMethod.META_MEMBER_PARAMETERS, DataMethodQueryParameter.class);
-            List<QueryParameterBinding> queryParameters = new ArrayList<>(params.size());
-            for (AnnotationValue<DataMethodQueryParameter> av : params) {
-                String[] propertyPath = av.stringValues(DataMethodQueryParameter.META_MEMBER_PROPERTY_PATH);
-                Object value = null;
-                if (av.getValues().containsKey(AnnotationMetadata.VALUE_MEMBER)) {
-                    value = av;
-                }
-                if (propertyPath.length == 0) {
-                    propertyPath = av.stringValue(DataMethodQueryParameter.META_MEMBER_PROPERTY)
-                            .map(property -> new String[]{property})
-                            .orElse(null);
-                }
-                String[] parameterBindingPath = av.stringValues(DataMethodQueryParameter.META_MEMBER_PARAMETER_BINDING_PATH);
-                if (parameterBindingPath.length == 0) {
-                    parameterBindingPath = null;
-                }
-                DataType dataType = isNumericPlaceHolder ? av.enumValue(DataMethodQueryParameter.META_MEMBER_DATA_TYPE, DataType.class).orElse(DataType.OBJECT) : null;
-                JsonDataType jsonDataType = dataType != null ? av.enumValue(DataMethodQueryParameter.META_MEMBER_JSON_DATA_TYPE, JsonDataType.class).orElse(JsonDataType.DEFAULT) : null;
-                queryParameters.add(
-                        new StoredQueryParameter(
-                                av.stringValue(DataMethodQueryParameter.META_MEMBER_NAME).orElse(null),
-                                dataType,
-                                jsonDataType,
-                                av.intValue(DataMethodQueryParameter.META_MEMBER_PARAMETER_INDEX).orElse(-1),
-                                parameterBindingPath,
-                                propertyPath,
-                                av.booleanValue(DataMethodQueryParameter.META_MEMBER_AUTO_POPULATED).orElse(false),
-                                av.booleanValue(DataMethodQueryParameter.META_MEMBER_REQUIRES_PREVIOUS_POPULATED_VALUES).orElse(false),
-                                av.classValue(DataMethodQueryParameter.META_MEMBER_CONVERTER).orElse(null),
-                                av.booleanValue(DataMethodQueryParameter.META_MEMBER_EXPANDABLE).orElse(false),
-                                av.booleanValue(DataMethodQueryParameter.META_MEMBER_EXPRESSION).orElse(false),
-                                value,
-                                queryParameters
-                        ));
-            }
-            this.queryParameters = queryParameters;
+            queryParameters = getQueryParameters(
+                annotation.getAnnotations(DataMethod.META_MEMBER_PARAMETERS, DataMethodQueryParameter.class),
+                isNumericPlaceHolder
+            );
         }
         this.jsonEntity = DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(annotationMetadata);
         this.operationType = method.enumValue(DataMethod.NAME, DataMethod.META_MEMBER_OPERATION_TYPE, DataMethod.OperationType.class)
@@ -207,6 +179,62 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
             .orElse(OperationType.QUERY);
         this.parameterExpressions = annotationMetadata.getAnnotationValuesByType(ParameterExpression.class).stream()
             .collect(Collectors.toMap(av -> av.stringValue("name").orElseThrow(), av -> av));
+    }
+
+    private static <E> Class<E> getRequiredRootEntity(ExecutableMethod<?, ?> context) {
+        Class aClass = context.classValue(DataMethod.NAME, DataMethod.META_MEMBER_ROOT_ENTITY).orElse(null);
+        if (aClass != null) {
+            return aClass;
+        } else {
+            final AnnotationValue<Annotation> ann = context.getDeclaredAnnotation(DataMethod.NAME);
+            if (ann != null) {
+                aClass = ann.classValue(DataMethod.META_MEMBER_ROOT_ENTITY).orElse(null);
+                if (aClass != null) {
+                    return aClass;
+                }
+            }
+            throw new IllegalStateException("No root entity present in method");
+        }
+    }
+
+    private static List<QueryParameterBinding> getQueryParameters(List<AnnotationValue<DataMethodQueryParameter>> params,
+                                                                  boolean isNumericPlaceHolder) {
+        List<QueryParameterBinding> queryParameters = new ArrayList<>(params.size());
+        for (AnnotationValue<DataMethodQueryParameter> av : params) {
+            String[] propertyPath = av.stringValues(DataMethodQueryParameter.META_MEMBER_PROPERTY_PATH);
+            Object value = null;
+            if (av.getValues().containsKey(AnnotationMetadata.VALUE_MEMBER)) {
+                value = av;
+            }
+            if (propertyPath.length == 0) {
+                propertyPath = av.stringValue(DataMethodQueryParameter.META_MEMBER_PROPERTY)
+                        .map(property -> new String[]{property})
+                        .orElse(null);
+            }
+            String[] parameterBindingPath = av.stringValues(DataMethodQueryParameter.META_MEMBER_PARAMETER_BINDING_PATH);
+            if (parameterBindingPath.length == 0) {
+                parameterBindingPath = null;
+            }
+            DataType dataType = isNumericPlaceHolder ? av.enumValue(DataMethodQueryParameter.META_MEMBER_DATA_TYPE, DataType.class).orElse(DataType.OBJECT) : null;
+            JsonDataType jsonDataType = dataType != null ? av.enumValue(DataMethodQueryParameter.META_MEMBER_JSON_DATA_TYPE, JsonDataType.class).orElse(JsonDataType.DEFAULT) : null;
+            queryParameters.add(
+                    new StoredQueryParameter(
+                            av.stringValue(DataMethodQueryParameter.META_MEMBER_NAME).orElse(null),
+                            dataType,
+                            jsonDataType,
+                            av.intValue(DataMethodQueryParameter.META_MEMBER_PARAMETER_INDEX).orElse(-1),
+                            parameterBindingPath,
+                            propertyPath,
+                            av.booleanValue(DataMethodQueryParameter.META_MEMBER_AUTO_POPULATED).orElse(false),
+                            av.booleanValue(DataMethodQueryParameter.META_MEMBER_REQUIRES_PREVIOUS_POPULATED_VALUES).orElse(false),
+                            av.classValue(DataMethodQueryParameter.META_MEMBER_CONVERTER).orElse(null),
+                            av.booleanValue(DataMethodQueryParameter.META_MEMBER_EXPANDABLE).orElse(false),
+                            av.booleanValue(DataMethodQueryParameter.META_MEMBER_EXPRESSION).orElse(false),
+                            value,
+                            queryParameters
+                    ));
+        }
+        return queryParameters;
     }
 
     @Override

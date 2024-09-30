@@ -150,7 +150,7 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                                      List<ParameterElement> parameters,
                                      PersistentEntityRoot<T> root,
                                      PersistentEntityCriteriaUpdate<T> query,
-                                     SourcePersistentEntityCriteriaBuilder cb) {
+                                     PersistentEntityCriteriaBuilder cb) {
         Predicate predicate = interceptPredicate(matchContext, parameters, root, cb, null);
         if (predicate != null) {
             query.where(predicate);
@@ -161,7 +161,7 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
     protected <T> Predicate interceptPredicate(MethodMatchContext matchContext,
                                                List<ParameterElement> notConsumedParameters,
                                                PersistentEntityRoot<T> root,
-                                               SourcePersistentEntityCriteriaBuilder cb,
+                                               PersistentEntityCriteriaBuilder cb,
                                                Predicate existingPredicate) {
         ParameterElement entityParameter = getEntityParameter();
         if (entityParameter == null) {
@@ -169,14 +169,15 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         }
         final SourcePersistentEntity rootEntity = (SourcePersistentEntity) root.getPersistentEntity();
         Predicate predicate = null;
+        SourcePersistentEntityCriteriaBuilder scb = (SourcePersistentEntityCriteriaBuilder) cb;
         if (entityParameter != null) {
             if (rootEntity.getVersion() != null && existingPredicate == null) {
                 predicate = cb.and(
-                    cb.equal(root.id(), cb.entityPropertyParameter(entityParameter, null)),
-                    cb.equal(root.version(), cb.entityPropertyParameter(entityParameter, null))
+                    cb.equal(root.id(), scb.entityPropertyParameter(entityParameter, null)),
+                    cb.equal(root.version(), scb.entityPropertyParameter(entityParameter, null))
                 );
             } else if (existingPredicate == null) {
-                predicate = cb.equal(root.id(), cb.entityPropertyParameter(entityParameter, null));
+                predicate = cb.equal(root.id(), scb.entityPropertyParameter(entityParameter, null));
             }
         } else {
             ParameterElement idParameter = notConsumedParameters.stream()
@@ -185,11 +186,11 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                 .filter(p -> p.hasAnnotation(Version.class)).findFirst().orElse(null);
             if (idParameter != null) {
                 notConsumedParameters.remove(idParameter);
-                predicate = cb.equal(root.id(), cb.parameter(idParameter, new PersistentPropertyPath(rootEntity.getIdentity())));
+                predicate = cb.equal(root.id(), scb.parameter(idParameter, new PersistentPropertyPath(rootEntity.getIdentity())));
             }
             if (versionParameter != null) {
                 notConsumedParameters.remove(versionParameter);
-                Predicate versionPredicate = cb.equal(root.version(), cb.parameter(versionParameter, new PersistentPropertyPath(rootEntity.getVersion())));
+                Predicate versionPredicate = cb.equal(root.version(), scb.parameter(versionParameter, new PersistentPropertyPath(rootEntity.getVersion())));
                 if (predicate != null) {
                     predicate = cb.and(predicate, versionPredicate);
                 } else {

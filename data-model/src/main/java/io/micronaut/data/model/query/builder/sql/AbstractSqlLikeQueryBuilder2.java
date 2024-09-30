@@ -192,6 +192,21 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         return PersistentPropertyPath.of(Collections.emptyList(), persistentProperty, persistentProperty.getName());
     }
 
+    @Override
+    public QueryResult buildSelect(AnnotationMetadata annotationMetadata, SelectQueryDefinition definition) {
+        QueryBuilder queryBuilder = new QueryBuilder();
+        QueryState queryState = buildQuery(annotationMetadata, definition, queryBuilder, false, null);
+
+        return QueryResult.of(
+            queryState.getFinalQuery(),
+            queryState.getQueryParts(),
+            queryState.getParameterBindings(),
+            definition.limit(),
+            definition.offset(),
+            queryState.getJoinPaths()
+        );
+    }
+
     @NonNull
     protected final QueryState buildQuery(AnnotationMetadata annotationMetadata,
                                           SelectQueryDefinition definition,
@@ -220,18 +235,21 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         if (predicate != null || annotationMetadata.hasStereotype(WhereSpecifications.class) || queryState.getEntity().getAnnotationMetadata().hasStereotype(WhereSpecifications.class)) {
             buildWhereClause(annotationMetadata, predicate, queryState);
         }
-        List<Order> orders = definition.order();
-        if (appendLimitOffset && getDialect() == Dialect.SQL_SERVER && orders.isEmpty() && (definition.limit() > 0 || definition.offset() > 0)) {
-            PersistentEntity persistentEntity = definition.persistentEntity();
-            PersistentProperty identity = persistentEntity.getIdentity();
-            if (identity == null) {
-                throw new DataAccessException("Pagination requires an entity ID on SQL Server");
+        int parameterPageableOrSortIndex = definition.getParameterPageableOrSortIndex();
+        if (parameterPageableOrSortIndex == -1) {
+            List<Order> orders = definition.order();
+            if (appendLimitOffset && getDialect() == Dialect.SQL_SERVER && orders.isEmpty() && (definition.limit() > 0 || definition.offset() > 0)) {
+                PersistentEntity persistentEntity = definition.persistentEntity();
+                PersistentProperty identity = persistentEntity.getIdentity();
+                if (identity == null) {
+                    throw new DataAccessException("Pagination requires an entity ID on SQL Server");
+                }
+                orders = List.of(new PersistentPropertyOrder<>(new DefaultPersistentPropertyPath<>(identity, List.of(), null), true));
             }
-            orders = List.of(new PersistentPropertyOrder<>(new DefaultPersistentPropertyPath<>(identity, List.of(), null), true));
-        }
-        appendOrder(annotationMetadata, orders, queryState);
-        if (appendLimitOffset) {
-            appendLimitAndOffset(getDialect(), definition.limit(), definition.offset(), queryState.getQuery());
+            appendOrder(annotationMetadata, orders, queryState);
+            if (appendLimitOffset) {
+                appendLimitAndOffset(getDialect(), definition.limit(), definition.offset(), queryState.getQuery());
+            }
         }
         appendForUpdate(QueryPosition.END_OF_QUERY, definition, queryState.getQuery());
         return queryState;
@@ -965,11 +983,17 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
      * @param annotationMetadata The annotation metadata
      * @param sort               The sort
      * @param nativeQuery        Whether the query is native query, in which case sort field names will be supplied by the user and not verified
+     * @param tableAlias         The table alias
      * @return The encoded query
      */
     @NonNull
-    public String buildOrderBy(String query, @NonNull PersistentEntity entity, @NonNull AnnotationMetadata annotationMetadata, @NonNull Sort sort,
-                                    boolean nativeQuery) {
+    public String buildOrderBy(String query,
+                               @NonNull PersistentEntity entity,
+                               @NonNull AnnotationMetadata annotationMetadata,
+                               @NonNull Sort sort,
+                               boolean nativeQuery,
+                               @Nullable
+                               String tableAlias) {
         ArgumentUtils.requireNonNull("entity", entity);
         ArgumentUtils.requireNonNull("sort", sort);
         List<Sort.Order> orders = sort.getOrderBy();
@@ -987,7 +1011,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
             if (ignoreCase) {
                 buff.append("LOWER(");
             }
-            buff.append(buildPropertyByName(property, query, entity, annotationMetadata, nativeQuery));
+            buff.append(buildPropertyByName(property, query, entity, annotationMetadata, nativeQuery, tableAlias));
             if (ignoreCase) {
                 buff.append(")");
             }
@@ -1010,13 +1034,16 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
      * @param entity             The root entity
      * @param annotationMetadata The annotation metadata
      * @param nativeQuery        Whether the query is native query, in which case the property name will be supplied by the user and not verified
+     * @param tableAlias         The table alias
      * @return The encoded query
      */
     public String buildPropertyByName(@NonNull String propertyName,
                                       @NonNull String query,
                                       @NonNull PersistentEntity entity,
                                       @NonNull AnnotationMetadata annotationMetadata,
-                                      boolean nativeQuery) {
+                                      boolean nativeQuery,
+                                      @Nullable
+                                      String tableAlias) {
         if (nativeQuery) {
             return propertyName;
         }
@@ -1034,8 +1061,9 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         }
 
         StringBuilder buff = new StringBuilder();
+        String aliasName = tableAlias == null ? getAliasName(entity) : tableAlias;
         if (associations.isEmpty()) {
-            buff.append(getAliasName(entity));
+            buff.append(aliasName);
         } else {
             StringJoiner joiner = new StringJoiner(".");
             for (Association association : associations) {
@@ -1046,7 +1074,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
                 if (!query.contains(" " + joinAlias + " ") && !query.endsWith(" " + joinAlias)) {
                     // Special hack case for JPA, Hibernate can join the relation with cross join automatically when referenced by the property path
                     // This probably should be removed in the future major version
-                    buff.append(getAliasName(entity)).append(DOT);
+                    buff.append(aliasName).append(DOT);
                     StringJoiner pathJoiner = new StringJoiner(".");
                     for (Association association : associations) {
                         pathJoiner.add(association.getName());
@@ -1435,7 +1463,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         }
 
         public String getFinalQuery() {
-            if (!queryBuilder.query.isEmpty()) {
+            if (!queryBuilder.query.isEmpty() || !queryBuilder.queryParts.isEmpty()) {
                 queryBuilder.queryParts.add(queryBuilder.query.toString());
                 queryBuilder.query.setLength(0);
             }

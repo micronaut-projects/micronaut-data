@@ -17,9 +17,12 @@ package io.micronaut.data.runtime.criteria;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntitySubquery;
+import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.runtime.criteria.metamodel.StaticMetamodelInitializer;
@@ -44,7 +47,7 @@ final class RuntimePersistentEntitySubquery<T> extends AbstractPersistentEntityS
                                            StaticMetamodelInitializer staticMetamodelInitializer,
                                            Class<T> resultType,
                                            RuntimeEntityRegistry runtimeEntityRegistry) {
-        super(parent, resultType, criteriaBuilder);
+        super(parent, new ClassExpressionType<>(resultType), criteriaBuilder);
         this.criteriaBuilder = criteriaBuilder;
         this.runtimeEntityRegistry = runtimeEntityRegistry;
         this.staticMetamodelInitializer = staticMetamodelInitializer;
@@ -67,4 +70,8 @@ final class RuntimePersistentEntitySubquery<T> extends AbstractPersistentEntityS
         return newEntityRoot;
     }
 
+    @Override
+    public <U> PersistentEntitySubquery<U> subquery(ExpressionType<U> type) {
+        return new RuntimePersistentEntitySubquery<>(this, criteriaBuilder, staticMetamodelInitializer, type.getJavaType(), runtimeEntityRegistry);
+    }
 }
