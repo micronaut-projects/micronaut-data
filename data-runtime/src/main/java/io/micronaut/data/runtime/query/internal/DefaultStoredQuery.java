@@ -19,7 +19,6 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.StringUtils;
@@ -90,19 +89,15 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
      * The default constructor.
      *
      * @param method               The target method
-     * @param resultType           The result type of the query
      * @param isCount              Is the query a count query
      * @param repositoryOperations The repositoryOperations
      */
     public DefaultStoredQuery(
             @NonNull ExecutableMethod<?, ?> method,
-            @Nullable Class<RT> resultType,
             boolean isCount,
             HintsCapableRepository repositoryOperations) {
         super(method);
         this.rootEntity = getRequiredRootEntity(method);
-        //noinspection unchecked
-        this.resultType = resultType == null ? (Class<RT>) rootEntity : (Class<RT>) ReflectionUtils.getWrapperType(resultType);
         this.annotationMetadata = method.getAnnotationMetadata();
         this.isNative = method.isTrue(Query.class, "nativeQuery");
         this.isProcedure = method.isTrue(DataMethod.class, DataMethod.META_MEMBER_PROCEDURE);
@@ -114,7 +109,6 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
                 method.stringValue(DATA_METHOD_ANN_NAME, TypeRole.SORT).isPresent() ||
                 method.intValue(DATA_METHOD_ANN_NAME, META_MEMBER_LIMIT).orElse(-1) > -1 ||
                 method.intValue(DATA_METHOD_ANN_NAME, META_MEMBER_PAGE_SIZE).orElse(-1) > -1;
-
         String query;
         if (isCount) {
             query = method.stringValue(Query.class, DataMethod.META_MEMBER_COUNT_QUERY)
@@ -130,6 +124,8 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
             } else {
                 this.queryParts = method.stringValues(DataMethod.class, DataMethod.META_MEMBER_EXPANDABLE_QUERY);
             }
+            //noinspection unchecked
+            this.resultType = (Class<RT>) Long.class;
         } else {
             query = method.stringValue(Query.class).orElseThrow(() ->
                 new IllegalStateException("No query present in method")
@@ -138,6 +134,10 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
             this.rawQuery = rawQueryString.isPresent();
             this.query = rawQueryString.orElse(query);
             this.queryParts = method.stringValues(DataMethod.class, DataMethod.META_MEMBER_EXPANDABLE_QUERY);
+            //noinspection unchecked
+            this.resultType = method.classValue(DataMethod.NAME, DataMethod.META_MEMBER_RESULT_TYPE)
+                .map(type -> (Class<RT>) ReflectionUtils.getWrapperType(type))
+                .orElse((Class<RT>) rootEntity);
         }
         this.method = method;
         this.isDto = method.isTrue(DATA_METHOD_ANN_NAME, DataMethod.META_MEMBER_DTO);

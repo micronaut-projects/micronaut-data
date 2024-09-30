@@ -58,7 +58,6 @@ import reactor.core.publisher.Mono;
 
 import java.util.Collection;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 /**
  * Hibernate reactive implementation of {@link io.micronaut.data.operations.reactive.ReactiveRepositoryOperations}

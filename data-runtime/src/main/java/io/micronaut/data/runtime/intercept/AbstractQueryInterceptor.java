@@ -215,26 +215,19 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         return operations.getConversionService().convertRequired(o, argumentType);
     }
 
-    @NonNull
-    protected final <RT> PreparedQuery<?, RT> prepareQuery(RepositoryMethodKey key, MethodInvocationContext<T, R> context) {
-        return prepareQuery(key, context, false);
-    }
-
     /**
      * Prepares a query for the given context.
      *
      * @param <RT>       The result generic type
      * @param methodKey  The method key
      * @param context    The context
-     * @param isCount    Is count query
      * @return The query
      */
     @NonNull
     protected final <RT> PreparedQuery<?, RT> prepareQuery(RepositoryMethodKey methodKey,
-                                                           MethodInvocationContext<T, R> context,
-                                                           boolean isCount) {
+                                                           MethodInvocationContext<T, R> context) {
         validateNullArguments(context);
-        StoredQuery<?, RT> storedQuery = findStoreQuery(methodKey, context, isCount);
+        StoredQuery<?, RT> storedQuery = findStoreQuery(methodKey, context);
         Pageable pageable = storedQuery.hasPageable() ? getPageable(context) : Pageable.UNPAGED;
         PreparedQuery<?, RT> preparedQuery = preparedQueryResolver.resolveQuery(context, storedQuery, pageable);
         return preparedQueryDecorator.decorate(preparedQuery);
@@ -242,13 +235,13 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     private <E, RT> StoredQuery<E, RT> findStoreQuery(MethodInvocationContext<?, ?> context) {
         RepositoryMethodKey key = new RepositoryMethodKey(context.getTarget(), context.getExecutableMethod());
-        return findStoreQuery(key, context, false);
+        return findStoreQuery(key, context);
     }
 
-    private <E, RT> StoredQuery<E, RT> findStoreQuery(RepositoryMethodKey methodKey, MethodInvocationContext<?, ?> context, boolean isCount) {
+    private <E, RT> StoredQuery<E, RT> findStoreQuery(RepositoryMethodKey methodKey, MethodInvocationContext<?, ?> context) {
         StoredQuery<E, RT> storedQuery = queries.get(methodKey);
         if (storedQuery == null) {
-            storedQuery = storedQueryResolver.resolveQuery(context, isCount);
+            storedQuery = storedQueryResolver.resolveQuery(context);
             storedQuery = storedQueryDecorator.decorate(context, storedQuery);
             queries.put(methodKey, storedQuery);
         }
@@ -266,7 +259,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     protected final PreparedQuery<?, Number> prepareCountQuery(RepositoryMethodKey methodKey, @NonNull MethodInvocationContext<T, R> context) {
         StoredQuery storedQuery = countQueries.get(methodKey);
         if (storedQuery == null) {
-            storedQuery = storedQueryResolver.resolveCountQuery(context, Long.class);
+            storedQuery = storedQueryResolver.resolveCountQuery(context);
             storedQuery = storedQueryDecorator.decorate(context, storedQuery);
             countQueries.put(methodKey, storedQuery);
         }

@@ -45,23 +45,18 @@ import static io.micronaut.data.model.runtime.StoredQuery.OperationType;
 public abstract class DefaultStoredQueryResolver implements StoredQueryResolver {
 
     @Override
-    public <E, R> StoredQuery<E, R> resolveQuery(MethodInvocationContext<?, ?> context, boolean isCount) {
-        //noinspection unchecked
-        Class<R> resultType = (Class<R>) context.classValue(DataMethod.NAME, DataMethod.META_MEMBER_RESULT_TYPE)
-            .orElse(null);
+    public <E, R> StoredQuery<E, R> resolveQuery(MethodInvocationContext<?, ?> context) {
         return new DefaultStoredQuery<>(
             context.getExecutableMethod(),
-            resultType,
-            isCount,
+            false,
             getHintsCapableRepository()
         );
     }
 
     @Override
-    public <E, R> StoredQuery<E, R> resolveCountQuery(MethodInvocationContext<?, ?> context, Class<R> resultType) {
+    public <E, R> StoredQuery<E, R> resolveCountQuery(MethodInvocationContext<?, ?> context) {
         return new DefaultStoredQuery<>(
             context.getExecutableMethod(),
-            resultType,
             true,
             getHintsCapableRepository()
         );
