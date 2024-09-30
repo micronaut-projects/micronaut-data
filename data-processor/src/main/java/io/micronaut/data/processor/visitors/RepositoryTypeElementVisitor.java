@@ -318,7 +318,6 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 context.fail(matchContext.getUnableToImplementMessage() + e.getMessage(), e.getElement() == null ? element : e.getElement());
                 this.failing = true;
             } catch (Exception e) {
-                e.printStackTrace();
                 matchContext.fail(e.getMessage());
                 this.failing = true;
             }
