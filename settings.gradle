@@ -34,6 +34,7 @@ micronautBuild {
     importMicronautCatalog("micronaut-validation")
     importMicronautCatalog("micronaut-mongo")
     importMicronautCatalog("micronaut-flyway")
+    importMicronautCatalog("micronaut-coherence")
 }
 
 include 'data-bom'
@@ -124,6 +125,8 @@ include 'doc-examples:mongo-multitenancy-discriminator-example-java'
 include 'doc-examples:azure-cosmos-example-java'
 include 'doc-examples:azure-cosmos-example-groovy'
 include 'doc-examples:azure-cosmos-example-kotlin'
+
+include 'doc-examples:coherence-example-java'
 
 include 'doc-examples:jdbc-spring-tx-example-java'
 include 'doc-examples:hibernate-spring-tx-example-java'
