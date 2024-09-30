@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit;
  */
 @MicronautTest(propertySources = {"classpath:sessions.yaml"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class EventsTest extends AbstractDataTest {
+class EventsTest extends AbstractDataTest {
     /**
      * A sync repo that extends {@link AbstractCoherenceRepository}.
      */
@@ -78,7 +78,7 @@ public class EventsTest extends AbstractDataTest {
      * Validate pre/post persist events are triggered for {@link #crudRepo}.
      */
     @Test
-    public void shouldTriggerPreAndPostPersistEventsSyncRepo() {
+    void shouldTriggerPreAndPostPersistEventsSyncRepo() {
         runPersistEventTest(crudRepo);
     }
 
@@ -86,7 +86,7 @@ public class EventsTest extends AbstractDataTest {
      * Validate pre/post persist events are triggered for {@link #crudRepoAsync}.
      */
     @Test
-    public void shouldTriggerPreAndPostPersistEventsAsyncRepo() throws Exception {
+    void shouldTriggerPreAndPostPersistEventsAsyncRepo() throws Exception {
         runPersistEventTest(crudRepoAsync);
     }
 
@@ -94,7 +94,7 @@ public class EventsTest extends AbstractDataTest {
      * Validate validate mutations made in pre persist event are saved against {@link #crudRepo}.
      */
     @Test
-    public void shouldValidatePrePersistMutationsSyncRepo() {
+    void shouldValidatePrePersistMutationsSyncRepo() {
         runPersistEventTestMutations(crudRepo);
     }
 
@@ -102,7 +102,7 @@ public class EventsTest extends AbstractDataTest {
      * Validate validate mutations made in pre persist event are saved against {@link #crudRepoAsync}.
      */
     @Test
-    public void shouldValidatePrePersistMutationsAsyncRepo() throws Exception {
+    void shouldValidatePrePersistMutationsAsyncRepo() throws Exception {
         runPersistEventTestMutations(crudRepoAsync);
     }
 
@@ -110,7 +110,7 @@ public class EventsTest extends AbstractDataTest {
      * Validate pre/post persist events are triggered for {@link #crudRepo}.
      */
     @Test
-    public void shouldTriggerPreAndPostUpdateEventsCrud() {
+    void shouldTriggerPreAndPostUpdateEventsCrud() {
         Book duneUpdate = new Book(DUNE);
         duneUpdate.setPages(1000);
 
@@ -126,7 +126,7 @@ public class EventsTest extends AbstractDataTest {
      * Validate pre/post remove events are triggered for {@link #crudRepo}.
      */
     @Test
-    public void shouldTriggerPreAndPostRemoveEventsSyncRepo() {
+    void shouldTriggerPreAndPostRemoveEventsSyncRepo() {
         runRemoveEventTest(crudRepo);
     }
 
@@ -134,7 +134,7 @@ public class EventsTest extends AbstractDataTest {
      * Validate pre/post remove events are triggered for {@link #crudRepoAsync}.
      */
     @Test
-    public void shouldTriggerPreAndPostRemoveEventsAsyncRepo() throws Exception {
+    void shouldTriggerPreAndPostRemoveEventsAsyncRepo() throws Exception {
         runRemoveEventTest(crudRepoAsync);
     }
 

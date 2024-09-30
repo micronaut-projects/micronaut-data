@@ -24,7 +24,7 @@ import java.util.concurrent.CompletableFuture;
  */
 @MicronautTest(propertySources = {"classpath:sessions.yaml"}, environments = "evict-remove")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class RemoveEvictionsTest extends AbstractDataTest {
+class RemoveEvictionsTest extends AbstractDataTest {
     /**
      * A sync repo that extends {@link AbstractCoherenceRepository}.
      */
@@ -61,7 +61,7 @@ public class RemoveEvictionsTest extends AbstractDataTest {
      * Validate event listener returning false results in the entity not being removed using {@link #crudRepo}.
      */
     @Test
-    public void shouldValidatePreRemoveEvictionSyncRepo() {
+    void shouldValidatePreRemoveEvictionSyncRepo() {
         runRemoveEventTestEviction(crudRepo);
     }
 
@@ -69,7 +69,7 @@ public class RemoveEvictionsTest extends AbstractDataTest {
      * Validate event listener returning false results in the entity not being removed using {@link #crudRepoAsync}.
      */
     @Test
-    public void shouldValidatePreRemoveEvictionAsyncRepo() {
+    void shouldValidatePreRemoveEvictionAsyncRepo() {
         runRemoveEventTestEviction(crudRepoAsync);
     }
 
@@ -96,7 +96,7 @@ public class RemoveEvictionsTest extends AbstractDataTest {
     private void runRemoveEventTestEviction(final AsyncCrudRepository<Book, UUID> repository) {
         CompletableFuture deleteFuture = repository.delete(DUNE);
         deleteFuture.thenCompose(unused -> repository.existsById(DUNE.getUuid()))
-                .thenAccept(exists -> Assertions.assertEquals(exists, true))
+                .thenAccept(exists -> Assertions.assertEquals(true, exists))
                 .thenAccept(unused -> Assertions.assertTrue(eventRecorder.getRecordedEvents().contains(
                         new EventRecord<>(EventType.PRE_REMOVE, DUNE)))).join();
     }

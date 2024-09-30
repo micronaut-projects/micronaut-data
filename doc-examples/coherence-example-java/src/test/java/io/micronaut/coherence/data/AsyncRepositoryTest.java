@@ -29,7 +29,7 @@ import org.junit.jupiter.api.TestInstance;
  */
 @MicronautTest(propertySources = {"classpath:sessions.yaml"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class AsyncRepositoryTest extends AbstractDataTest {
+class AsyncRepositoryTest extends AbstractDataTest {
 
     /**
      * The concrete {@link AbstractCoherenceAsyncRepository} implementation under test.
@@ -44,9 +44,9 @@ public class AsyncRepositoryTest extends AbstractDataTest {
      * {@link AbstractCoherenceAsyncRepository#getMap()} is invoked.
      */
     @Test
-    public void shouldReturnNamedMap() {
+    void shouldReturnNamedMap() {
         Assertions.assertNotNull(repo);
-        Assertions.assertTrue(repo.getMap() instanceof AsyncNamedMap);
+        Assertions.assertInstanceOf(AsyncNamedMap.class, repo.getMap());
         Assertions.assertEquals(4L, repo.count().join());
     }
 
@@ -55,7 +55,7 @@ public class AsyncRepositoryTest extends AbstractDataTest {
      * {@link AbstractCoherenceAsyncRepository#getId(Object)} is invoked.
      */
     @Test
-    public void shouldReturnId() {
+    void shouldReturnId() {
         Assertions.assertNotNull(repo);
         Assertions.assertEquals(DUNE.getUuid(), repo.getId(DUNE));
     }
@@ -65,7 +65,7 @@ public class AsyncRepositoryTest extends AbstractDataTest {
      * {@link AbstractCoherenceAsyncRepository#getEntityType()} is invoked.
      */
     @Test
-    public void shouldReturnEntityType() {
+    void shouldReturnEntityType() {
         Assertions.assertNotNull(repo);
         Assertions.assertEquals(Book.class, repo.getEntityType());
     }
@@ -74,7 +74,7 @@ public class AsyncRepositoryTest extends AbstractDataTest {
      * Ensure generated queries continue to work when extending {@code AbstractCoherenceAsyncRepository}.
      */
     @Test
-    public void shouldAllowGeneratedQueries() {
+    void shouldAllowGeneratedQueries() {
         repo.findByTitleStartingWith("Du")
                 .thenAccept(books1 -> Assertions.assertTrue(books1.containsAll(books.stream().filter(book -> book.getTitle().startsWith("Du")).toList())))
                 .join();

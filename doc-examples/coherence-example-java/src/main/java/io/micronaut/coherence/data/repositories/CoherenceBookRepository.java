@@ -15,12 +15,12 @@
  */
 package io.micronaut.coherence.data.repositories;
 
+import com.tangosol.util.UUID;
 import io.micronaut.coherence.data.AbstractCoherenceRepository;
 import io.micronaut.coherence.data.annotation.CoherenceRepository;
 import io.micronaut.coherence.data.model.Book;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * A {@code Repository} extending {@link AbstractCoherenceRepository} to ensure this integration point is functional.

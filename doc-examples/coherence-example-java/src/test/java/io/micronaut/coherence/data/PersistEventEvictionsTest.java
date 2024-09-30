@@ -22,7 +22,7 @@ import org.junit.jupiter.api.TestInstance;
  */
 @MicronautTest(propertySources = {"classpath:sessions.yaml"}, environments = "evict-persist")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class PersistEventEvictionsTest extends AbstractDataTest {
+class PersistEventEvictionsTest extends AbstractDataTest {
     /**
      * A sync repo that extends {@link AbstractCoherenceRepository}.
      */
@@ -59,7 +59,7 @@ public class PersistEventEvictionsTest extends AbstractDataTest {
      * Validate event listener returning false results in the entity not being persisted using {@link #crudRepo}.
      */
     @Test
-    public void shouldValidatePrePersistEvictionSyncRepo() {
+    void shouldValidatePrePersistEvictionSyncRepo() {
         runPersistEventTestEviction(crudRepo);
     }
 
@@ -67,7 +67,7 @@ public class PersistEventEvictionsTest extends AbstractDataTest {
      * Validate event listener returning false results in the entity not being persisted using {@link #crudRepoAsync}.
      */
     @Test
-    public void shouldValidatePrePersistEvictionAsyncRepo() {
+    void shouldValidatePrePersistEvictionAsyncRepo() {
         runPersistEventTestEviction(crudRepoAsync);
     }
 
@@ -94,11 +94,11 @@ public class PersistEventEvictionsTest extends AbstractDataTest {
      */
     private void runPersistEventTestEviction(AsyncCrudRepository<Book, UUID> repository) {
         repository.existsById(IT.getUuid())
-                .thenAccept(exists -> Assertions.assertFalse(exists))
+                .thenAccept(Assertions::assertFalse)
                 .thenCompose(unused -> repository.save(IT))
                 .thenAccept(book1 -> Assertions.assertEquals(IT, book1))
                 .thenCompose(unused -> repository.existsById(IT.getUuid()))
-                .thenAccept(exists -> Assertions.assertFalse(exists))
+                .thenAccept(Assertions::assertFalse)
                 .thenAccept(unused -> Assertions.assertTrue(eventRecorder.getRecordedEvents().contains(
                         new EventRecord<>(EventType.PRE_PERSIST, IT)))).join();
     }

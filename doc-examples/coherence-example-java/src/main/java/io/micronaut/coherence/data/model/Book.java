@@ -28,7 +28,7 @@ import java.util.Objects;
  * An entity for representing a {@code book}.
  */
 @MappedEntity
-public class Book implements Cloneable, Serializable {
+public class Book implements Serializable {
     /**
      * The unique id of this book.
      */

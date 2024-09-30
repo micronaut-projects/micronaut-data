@@ -22,7 +22,7 @@ import org.junit.jupiter.api.TestInstance;
  */
 @MicronautTest(propertySources = {"classpath:sessions.yaml"}, environments = "evict-update")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class UpdateEventEvictionsTest extends AbstractDataTest {
+class UpdateEventEvictionsTest extends AbstractDataTest {
     /**
      * A sync repo that extends {@link AbstractCoherenceRepository}.
      */
@@ -59,7 +59,7 @@ public class UpdateEventEvictionsTest extends AbstractDataTest {
      * Validate event listener returning false results in the entity not being updated using {@link #crudRepo}.
      */
     @Test
-    public void shouldValidatePreUpdateEvictionSyncRepo() {
+    void shouldValidatePreUpdateEvictionSyncRepo() {
         runUpdateEventTestEviction(crudRepo);
     }
 

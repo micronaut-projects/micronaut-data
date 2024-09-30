@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 
 @MicronautTest(propertySources = {"classpath:sessions.yaml"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class GeneratedStatementsTest extends AbstractDataTest {
+class GeneratedStatementsTest extends AbstractDataTest {
     /**
      * A {@code repository} for validating generated queries.
      */
@@ -51,7 +51,7 @@ public class GeneratedStatementsTest extends AbstractDataTest {
      * Validate it is possible to query books by id.
      */
     @Test
-    public void shouldGetBooksById() {
+    void shouldGetBooksById() {
         for (Book b : books) {
             Optional<Book> book = repo.findById(b.getUuid());
             Assertions.assertTrue(book.isPresent());
@@ -63,7 +63,7 @@ public class GeneratedStatementsTest extends AbstractDataTest {
      * Validate it is possible to obtain all books associated with a specific {@link Author author}.
      */
     @Test
-    public void shouldGetBooksByAuthor() {
+    void shouldGetBooksByAuthor() {
         Assertions.assertTrue(repo.findByAuthor(FRANK_HERBERT).containsAll(
             books.stream().filter(book -> book.getAuthor().equals(FRANK_HERBERT)).toList()));
     }
@@ -72,7 +72,7 @@ public class GeneratedStatementsTest extends AbstractDataTest {
      * Validate it is possible to find books with pages greater or equal to some value.
      */
     @Test
-    public void shouldGetBooksWithPagesGreaterOrEqualTo() {
+    void shouldGetBooksWithPagesGreaterOrEqualTo() {
         Assertions.assertTrue(repo.findByPagesGreaterThanEquals(468).containsAll(
             books.stream().filter(book -> book.getPages() >= 468).toList()));
     }
@@ -81,7 +81,7 @@ public class GeneratedStatementsTest extends AbstractDataTest {
      * Validate it is possible to find books with pages less or equal to some value.
      */
     @Test
-    public void shouldGetBooksWithPagesLessOrEqualTo() {
+    void shouldGetBooksWithPagesLessOrEqualTo() {
         Assertions.assertTrue(repo.findByPagesLessThanEquals(677).containsAll(
             books.stream().filter(book -> book.getPages() <= 677).toList()));
     }
@@ -90,7 +90,7 @@ public class GeneratedStatementsTest extends AbstractDataTest {
      * Validate it is possible to find books using {@code like}.
      */
     @Test
-    public void shouldGetBooksWithTitleLike() {
+    void shouldGetBooksWithTitleLike() {
         Assertions.assertTrue(repo.findByTitleLike("%Dune%").containsAll(
             books.stream().filter(book -> book.getTitle().contains("Dune")).toList()));
     }
@@ -99,7 +99,7 @@ public class GeneratedStatementsTest extends AbstractDataTest {
      * Validate returns {@code true} for {@link Book books} were authored by a known {@link Author author}.
      */
     @Test
-    public void shouldReturnTrueForValidAuthor() {
+    void shouldReturnTrueForValidAuthor() {
         Assertions.assertTrue(repo.existsByAuthor(FRANK_HERBERT));
     }
 
@@ -107,7 +107,7 @@ public class GeneratedStatementsTest extends AbstractDataTest {
      * Validate returns {@code false} for an {@link Author author}.
      */
     @Test
-    public void shouldReturnFalseForInvalidAuthor() {
+    void shouldReturnFalseForInvalidAuthor() {
         Assertions.assertFalse(repo.existsByAuthor(STEPHEN_KING));
     }
 
@@ -115,7 +115,7 @@ public class GeneratedStatementsTest extends AbstractDataTest {
      * Validate the expected result is returned when querying for {@link Book books} {@code before} a specific year.
      */
     @Test
-    public void shouldReturnExpectedResultsUsingBefore() {
+    void shouldReturnExpectedResultsUsingBefore() {
         Assertions.assertTrue(repo.findByPublicationYearBefore(1980).containsAll(
             books.stream().filter(book -> book.getPublicationYear() < 1980).toList()));
     }
@@ -124,7 +124,7 @@ public class GeneratedStatementsTest extends AbstractDataTest {
      * Validate the expected result is returned when querying for {@link Book books} {@code after} a specific year.
      */
     @Test
-    public void shouldReturnExpectedResultsUsingAfter() {
+    void shouldReturnExpectedResultsUsingAfter() {
         Assertions.assertTrue(repo.findByPublicationYearAfter(1980).containsAll(
             books.stream().filter(book -> book.getPublicationYear() > 1980).toList()));
     }
@@ -133,7 +133,7 @@ public class GeneratedStatementsTest extends AbstractDataTest {
      * Validate the expected result is returned when searching by a title containing the given string.
      */
     @Test
-    public void shouldFindBooksUsingContains() {
+    void shouldFindBooksUsingContains() {
         Assertions.assertTrue(repo.findByTitleContains("Dune").containsAll(
             books.stream().filter(book -> book.getTitle().contains("Dune")).toList()));
     }

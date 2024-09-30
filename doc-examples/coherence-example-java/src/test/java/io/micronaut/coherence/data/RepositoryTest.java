@@ -17,6 +17,7 @@ package io.micronaut.coherence.data;
 
 import com.tangosol.net.NamedMap;
 import com.tangosol.net.Session;
+import com.tangosol.util.UUID;
 import io.micronaut.coherence.data.model.Book;
 import io.micronaut.coherence.data.repositories.CoherenceBook2Repository;
 import io.micronaut.coherence.data.repositories.CoherenceBook3Repository;
@@ -32,7 +33,7 @@ import org.junit.jupiter.api.TestInstance;
  */
 @MicronautTest(propertySources = {"classpath:sessions.yaml"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class RepositoryTest extends AbstractDataTest {
+class RepositoryTest extends AbstractDataTest {
 
     /**
      * Defined in configuration and using the default Session.
@@ -65,9 +66,9 @@ public class RepositoryTest extends AbstractDataTest {
      * {@link AbstractCoherenceRepository#getMap()} is invoked.
      */
     @Test
-    public void shouldReturnNamedMap() {
+    void shouldReturnNamedMap() {
         Assertions.assertNotNull(repo);
-        Assertions.assertTrue(repo.getMap() instanceof NamedMap);
+        Assertions.assertInstanceOf(NamedMap.class, repo.getMap());
         Assertions.assertEquals(4L, repo.count());
     }
 
@@ -76,9 +77,10 @@ public class RepositoryTest extends AbstractDataTest {
      * {@link AbstractCoherenceRepository#getId(Object)} is invoked.
      */
     @Test
-    public void shouldReturnId() {
+    void shouldReturnId() {
         Assertions.assertNotNull(repo);
-        Assertions.assertEquals(DUNE.getUuid(), repo.getId(DUNE));
+        UUID id = repo.getId(DUNE);
+        Assertions.assertEquals(DUNE.getUuid(), id);
     }
 
     /**
@@ -86,7 +88,7 @@ public class RepositoryTest extends AbstractDataTest {
      * {@link AbstractCoherenceRepository#getEntityType()} is invoked.
      */
     @Test
-    public void shouldReturnEntityType() {
+    void shouldReturnEntityType() {
         Assertions.assertNotNull(repo);
         Assertions.assertEquals(Book.class, repo.getEntityType());
     }
@@ -95,7 +97,7 @@ public class RepositoryTest extends AbstractDataTest {
      * Ensure generated queries continue to work when extending {@code AbstractCoherenceRepository}.
      */
     @Test
-    public void shouldAllowGeneratedQueries() {
+    void shouldAllowGeneratedQueries() {
         Assertions.assertTrue(repo.findByTitleStartingWith("Du").containsAll(
                 books.stream().filter(book -> book.getTitle().startsWith("Du")).toList()));
     }
@@ -106,7 +108,7 @@ public class RepositoryTest extends AbstractDataTest {
      * @since 3.0.1
      */
     @Test
-    public void shouldUseCustomSession() {
+    void shouldUseCustomSession() {
         Assertions.assertNotNull(repo);
         Assertions.assertEquals(Book.class, repo2.getEntityType());
         Assertions.assertEquals(4L, custom.getMap("book2").size());
