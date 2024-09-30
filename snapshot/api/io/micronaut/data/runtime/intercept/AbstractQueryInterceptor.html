@@ -351,24 +351,9 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Prepares a query for the given context.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final @NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>?&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prepareQuery(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">prepareQuery</a><wbr>(<a href="../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;key,
- io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr><a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Prepares a query for the given context.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;RT&gt;&nbsp;@NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>RT&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prepareQuery(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,java.lang.Class)" class="member-name-link">prepareQuery</a><wbr>(<a href="../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
- io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr><a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;RT&gt;&nbsp;resultType)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Prepares a query for the given context.</div>
-</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;RT&gt;&nbsp;@NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>RT&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prepareQuery(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,java.lang.Class,boolean)" class="member-name-link">prepareQuery</a><wbr>(<a href="../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
- io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr><a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;RT&gt;&nbsp;resultType,
- boolean&nbsp;isCount)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#prepareQuery(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">prepareQuery</a><wbr>(<a href="../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+ io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr><a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Prepares a query for the given context.</div>
 </div>
@@ -490,55 +475,15 @@ K&gt;&nbsp;@NonNull <a href="../../model/runtime/DeleteReturningOperation.html" 
 <section class="detail" id="prepareQuery(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)">
 <h3>prepareQuery</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected final</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>?&gt;</span>&nbsp;<span class="element-name">prepareQuery</span><wbr><span class="parameters">(<a href="../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;key,
+</span><span class="modifiers">protected final</span>&nbsp;<span class="type-parameters">&lt;RT&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>RT&gt;</span>&nbsp;<span class="element-name">prepareQuery</span><wbr><span class="parameters">(<a href="../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
  io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr><a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context)</span></div>
 <div class="block">Prepares a query for the given context.</div>
 <dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>key</code> - The method key</dd>
-<dd><code>context</code> - The context</dd>
-<dt>Returns:</dt>
-<dd>The query</dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="prepareQuery(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,java.lang.Class)">
-<h3>prepareQuery</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected final</span>&nbsp;<span class="type-parameters">&lt;RT&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>RT&gt;</span>&nbsp;<span class="element-name">prepareQuery</span><wbr><span class="parameters">(<a href="../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
- io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr><a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;RT&gt;&nbsp;resultType)</span></div>
-<div class="block">Prepares a query for the given context.</div>
-<dl class="notes">
 <dt>Type Parameters:</dt>
 <dd><code>RT</code> - The result generic type</dd>
 <dt>Parameters:</dt>
 <dd><code>methodKey</code> - The method key</dd>
 <dd><code>context</code> - The context</dd>
-<dd><code>resultType</code> - The result type</dd>
-<dt>Returns:</dt>
-<dd>The query</dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="prepareQuery(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,java.lang.Class,boolean)">
-<h3>prepareQuery</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected final</span>&nbsp;<span class="type-parameters">&lt;RT&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>RT&gt;</span>&nbsp;<span class="element-name">prepareQuery</span><wbr><span class="parameters">(<a href="../../intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
- io.micronaut.aop.MethodInvocationContext&lt;<a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<wbr><a href="AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;RT&gt;&nbsp;resultType,
- boolean&nbsp;isCount)</span></div>
-<div class="block">Prepares a query for the given context.</div>
-<dl class="notes">
-<dt>Type Parameters:</dt>
-<dd><code>RT</code> - The result generic type</dd>
-<dt>Parameters:</dt>
-<dd><code>methodKey</code> - The method key</dd>
-<dd><code>context</code> - The context</dd>
-<dd><code>resultType</code> - The result type</dd>
-<dd><code>isCount</code> - Is count query</dd>
 <dt>Returns:</dt>
 <dd>The query</dd>
 </dl>

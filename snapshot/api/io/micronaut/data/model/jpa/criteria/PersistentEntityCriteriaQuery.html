@@ -78,7 +78,7 @@ loadScripts(document, 'script');</script>
 </dl>
 <dl class="notes">
 <dt>All Superinterfaces:</dt>
-<dd><code>jakarta.persistence.criteria.AbstractQuery&lt;T&gt;</code>, <code>jakarta.persistence.criteria.CommonAbstractCriteria</code>, <code>jakarta.persistence.criteria.CriteriaQuery&lt;T&gt;</code>, <code><a href="PersistentEntityCommonAbstractCriteria.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCommonAbstractCriteria</a></code></dd>
+<dd><code>jakarta.persistence.criteria.AbstractQuery&lt;T&gt;</code>, <code>jakarta.persistence.criteria.CommonAbstractCriteria</code>, <code>jakarta.persistence.criteria.CriteriaQuery&lt;T&gt;</code>, <code><a href="PersistentEntityCommonAbstractCriteria.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCommonAbstractCriteria</a></code>, <code><a href="PersistentEntityQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityQuery</a>&lt;T&gt;</code></dd>
 </dl>
 <dl class="notes">
 <dt>All Known Subinterfaces:</dt>
@@ -90,7 +90,7 @@ loadScripts(document, 'script');</script>
 </dl>
 <hr>
 <div class="type-signature"><span class="modifiers">public interface </span><span class="element-name type-name-label">PersistentEntityCriteriaQuery&lt;T&gt;</span><span class="extends-implements">
-extends jakarta.persistence.criteria.CriteriaQuery&lt;T&gt;, <a href="PersistentEntityCommonAbstractCriteria.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCommonAbstractCriteria</a></span></div>
+extends jakarta.persistence.criteria.CriteriaQuery&lt;T&gt;, <a href="PersistentEntityQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityQuery</a>&lt;T&gt;</span></div>
 <div class="block">The persistent entity <code>CriteriaQuery</code>.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -120,7 +120,9 @@ extends jakarta.persistence.criteria.CriteriaQuery&lt;T&gt;, <a href="Persistent
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;X&gt;&nbsp;@NonNull <a href="PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;X&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#from(io.micronaut.data.model.PersistentEntity)" class="member-name-link">from</a><wbr>(@NonNull <a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Create a root using <a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model"><code>PersistentEntity</code></a>.</div>
+</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;X&gt;&nbsp;@NonNull <a href="PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;X&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#from(jakarta.persistence.metamodel.EntityType)" class="member-name-link">from</a><wbr>(@NonNull jakarta.persistence.metamodel.EntityType&lt;X&gt;&nbsp;entity)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
@@ -140,8 +142,10 @@ extends jakarta.persistence.criteria.CriteriaQuery&lt;T&gt;, <a href="Persistent
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#having(jakarta.persistence.criteria.Predicate...)" class="member-name-link">having</a><wbr>(@NonNull jakarta.persistence.criteria.Predicate...&nbsp;restrictions)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;<a href="PersistentEntityCriteriaQuery.html" title="type parameter in PersistentEntityCriteriaQuery">T</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#max(int)" class="member-name-link">max</a><wbr>(int&nbsp;max)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#limit(int)" class="member-name-link">limit</a><wbr>(int&nbsp;limit)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Sets the limit to the query.</div>
+</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;<a href="PersistentEntityCriteriaQuery.html" title="type parameter in PersistentEntityCriteriaQuery">T</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#multiselect(jakarta.persistence.criteria.Selection...)" class="member-name-link">multiselect</a><wbr>(@NonNull jakarta.persistence.criteria.Selection&lt;?&gt;...&nbsp;selections)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
@@ -150,25 +154,28 @@ extends jakarta.persistence.criteria.CriteriaQuery&lt;T&gt;, <a href="Persistent
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;<a href="PersistentEntityCriteriaQuery.html" title="type parameter in PersistentEntityCriteriaQuery">T</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#offset(int)" class="member-name-link">offset</a><wbr>(int&nbsp;offset)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Sets the offset to the query.</div>
+</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;<a href="PersistentEntityCriteriaQuery.html" title="type parameter in PersistentEntityCriteriaQuery">T</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#orderBy(jakarta.persistence.criteria.Order...)" class="member-name-link">orderBy</a><wbr>(@NonNull jakarta.persistence.criteria.Order...&nbsp;o)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#orderBy(jakarta.persistence.criteria.Order...)" class="member-name-link">orderBy</a><wbr>(@NonNull jakarta.persistence.criteria.Order...&nbsp;orders)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Ordering of the query.</div>
+</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;<a href="PersistentEntityCriteriaQuery.html" title="type parameter in PersistentEntityCriteriaQuery">T</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#orderBy(java.util.List)" class="member-name-link">orderBy</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;jakarta.persistence.criteria.Order&gt;&nbsp;o)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#orderBy(java.util.List)" class="member-name-link">orderBy</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;jakarta.persistence.criteria.Order&gt;&nbsp;orders)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Ordering of the query.</div>
+</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;<a href="PersistentEntityCriteriaQuery.html" title="type parameter in PersistentEntityCriteriaQuery">T</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#select(jakarta.persistence.criteria.Selection)" class="member-name-link">select</a><wbr>(@NonNull jakarta.persistence.criteria.Selection&lt;? extends <a href="PersistentEntityCriteriaQuery.html" title="type parameter in PersistentEntityCriteriaQuery">T</a>&gt;&nbsp;selection)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;U&gt;&nbsp;<a href="PersistentEntitySubquery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySubquery</a>&lt;U&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#subquery(java.lang.Class)" class="member-name-link">subquery</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;U&gt;&nbsp;type)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;<a href="PersistentEntityCriteriaQuery.html" title="type parameter in PersistentEntityCriteriaQuery">T</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#where(jakarta.persistence.criteria.Expression)" class="member-name-link">where</a><wbr>(@NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;&nbsp;restriction)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;<a href="PersistentEntityCriteriaQuery.html" title="type parameter in PersistentEntityCriteriaQuery">T</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#where(jakarta.persistence.criteria.Expression)" class="member-name-link">where</a><wbr>(@NonNull jakarta.persistence.criteria.Expression&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&gt;&nbsp;restriction)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#where(jakarta.persistence.criteria.Predicate...)" class="member-name-link">where</a><wbr>(@NonNull jakarta.persistence.criteria.Predicate...&nbsp;restrictions)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;<a href="PersistentEntityCriteriaQuery.html" title="type parameter in PersistentEntityCriteriaQuery">T</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#where(jakarta.persistence.criteria.Predicate...)" class="member-name-link">where</a><wbr>(@NonNull jakarta.persistence.criteria.Predicate...&nbsp;restrictions)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -181,6 +188,9 @@ extends jakarta.persistence.criteria.CriteriaQuery&lt;T&gt;, <a href="Persistent
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-jakarta.persistence.criteria.CriteriaQuery">Methods inherited from interface&nbsp;jakarta.persistence.criteria.CriteriaQuery</h3>
 <code>getOrderList, getParameters</code></div>
+<div class="inherited-list">
+<h3 id="methods-inherited-from-class-io.micronaut.data.model.jpa.criteria.PersistentEntityCommonAbstractCriteria">Methods inherited from interface&nbsp;io.micronaut.data.model.jpa.criteria.<a href="PersistentEntityCommonAbstractCriteria.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCommonAbstractCriteria</a></h3>
+<code><a href="PersistentEntityCommonAbstractCriteria.html#subquery(io.micronaut.data.model.jpa.criteria.ExpressionType)">subquery</a>, <a href="PersistentEntityCommonAbstractCriteria.html#subquery(java.lang.Class)">subquery</a></code></div>
 </section>
 </li>
 </ul>
@@ -198,6 +208,18 @@ extends jakarta.persistence.criteria.CriteriaQuery&lt;T&gt;, <a href="Persistent
 <div class="member-signature"><span class="annotations">@NonNull
 </span><span class="type-parameters">&lt;X&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a>&lt;X&gt;</span>&nbsp;<span class="element-name">from</span><wbr><span class="parameters">(@NonNull
  @NonNull <a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="PersistentEntityQuery.html#from(io.micronaut.data.model.PersistentEntity)">PersistentEntityQuery</a></code></span></div>
+<div class="block">Create a root using <a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model"><code>PersistentEntity</code></a>.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="PersistentEntityQuery.html#from(io.micronaut.data.model.PersistentEntity)">from</a></code>&nbsp;in interface&nbsp;<code><a href="PersistentEntityQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityQuery</a>&lt;<a href="PersistentEntityCriteriaQuery.html" title="type parameter in PersistentEntityCriteriaQuery">T</a>&gt;</code></dd>
+<dt>Type Parameters:</dt>
+<dd><code>X</code> - The root type</dd>
+<dt>Parameters:</dt>
+<dd><code>persistentEntity</code> - The persistent entity</dd>
+<dt>Returns:</dt>
+<dd>The root</dd>
+</dl>
 </section>
 </li>
 <li>
@@ -225,10 +247,20 @@ extends jakarta.persistence.criteria.CriteriaQuery&lt;T&gt;, <a href="Persistent
 </section>
 </li>
 <li>
-<section class="detail" id="max(int)">
-<h3>max</h3>
+<section class="detail" id="limit(int)">
+<h3>limit</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type">@NonNull <a href="PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;<a href="PersistentEntityCriteriaQuery.html" title="type parameter in PersistentEntityCriteriaQuery">T</a>&gt;</span>&nbsp;<span class="element-name">max</span><wbr><span class="parameters">(int&nbsp;max)</span></div>
+</span><span class="return-type">@NonNull <a href="PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;<a href="PersistentEntityCriteriaQuery.html" title="type parameter in PersistentEntityCriteriaQuery">T</a>&gt;</span>&nbsp;<span class="element-name">limit</span><wbr><span class="parameters">(int&nbsp;limit)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="PersistentEntityQuery.html#limit(int)">PersistentEntityQuery</a></code></span></div>
+<div class="block">Sets the limit to the query.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="PersistentEntityQuery.html#limit(int)">limit</a></code>&nbsp;in interface&nbsp;<code><a href="PersistentEntityQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityQuery</a>&lt;<a href="PersistentEntityCriteriaQuery.html" title="type parameter in PersistentEntityCriteriaQuery">T</a>&gt;</code></dd>
+<dt>Parameters:</dt>
+<dd><code>limit</code> - The limit</dd>
+<dt>Returns:</dt>
+<dd>The query</dd>
+</dl>
 </section>
 </li>
 <li>
@@ -236,6 +268,16 @@ extends jakarta.persistence.criteria.CriteriaQuery&lt;T&gt;, <a href="Persistent
 <h3>offset</h3>
 <div class="member-signature"><span class="annotations">@NonNull
 </span><span class="return-type">@NonNull <a href="PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;<a href="PersistentEntityCriteriaQuery.html" title="type parameter in PersistentEntityCriteriaQuery">T</a>&gt;</span>&nbsp;<span class="element-name">offset</span><wbr><span class="parameters">(int&nbsp;offset)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="PersistentEntityQuery.html#offset(int)">PersistentEntityQuery</a></code></span></div>
+<div class="block">Sets the offset to the query.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="PersistentEntityQuery.html#offset(int)">offset</a></code>&nbsp;in interface&nbsp;<code><a href="PersistentEntityQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityQuery</a>&lt;<a href="PersistentEntityCriteriaQuery.html" title="type parameter in PersistentEntityCriteriaQuery">T</a>&gt;</code></dd>
+<dt>Parameters:</dt>
+<dd><code>offset</code> - The offset</dd>
+<dt>Returns:</dt>
+<dd>The query</dd>
+</dl>
 </section>
 </li>
 <li>
@@ -371,10 +413,18 @@ extends jakarta.persistence.criteria.CriteriaQuery&lt;T&gt;, <a href="Persistent
 <h3>orderBy</h3>
 <div class="member-signature"><span class="annotations">@NonNull
 </span><span class="return-type">@NonNull <a href="PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;<a href="PersistentEntityCriteriaQuery.html" title="type parameter in PersistentEntityCriteriaQuery">T</a>&gt;</span>&nbsp;<span class="element-name">orderBy</span><wbr><span class="parameters">(@NonNull
- @NonNull jakarta.persistence.criteria.Order...&nbsp;o)</span></div>
+ @NonNull jakarta.persistence.criteria.Order...&nbsp;orders)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="PersistentEntityQuery.html#orderBy(jakarta.persistence.criteria.Order...)">PersistentEntityQuery</a></code></span></div>
+<div class="block">Ordering of the query.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>orderBy</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaQuery&lt;<a href="PersistentEntityCriteriaQuery.html" title="type parameter in PersistentEntityCriteriaQuery">T</a>&gt;</code></dd>
+<dt>Specified by:</dt>
+<dd><code><a href="PersistentEntityQuery.html#orderBy(jakarta.persistence.criteria.Order...)">orderBy</a></code>&nbsp;in interface&nbsp;<code><a href="PersistentEntityQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityQuery</a>&lt;<a href="PersistentEntityCriteriaQuery.html" title="type parameter in PersistentEntityCriteriaQuery">T</a>&gt;</code></dd>
+<dt>Parameters:</dt>
+<dd><code>orders</code> - The order</dd>
+<dt>Returns:</dt>
+<dd>The query</dd>
 </dl>
 </section>
 </li>
@@ -383,10 +433,18 @@ extends jakarta.persistence.criteria.CriteriaQuery&lt;T&gt;, <a href="Persistent
 <h3>orderBy</h3>
 <div class="member-signature"><span class="annotations">@NonNull
 </span><span class="return-type">@NonNull <a href="PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a>&lt;<a href="PersistentEntityCriteriaQuery.html" title="type parameter in PersistentEntityCriteriaQuery">T</a>&gt;</span>&nbsp;<span class="element-name">orderBy</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;jakarta.persistence.criteria.Order&gt;&nbsp;o)</span></div>
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;jakarta.persistence.criteria.Order&gt;&nbsp;orders)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="PersistentEntityQuery.html#orderBy(java.util.List)">PersistentEntityQuery</a></code></span></div>
+<div class="block">Ordering of the query.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>orderBy</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaQuery&lt;<a href="PersistentEntityCriteriaQuery.html" title="type parameter in PersistentEntityCriteriaQuery">T</a>&gt;</code></dd>
+<dt>Specified by:</dt>
+<dd><code><a href="PersistentEntityQuery.html#orderBy(java.util.List)">orderBy</a></code>&nbsp;in interface&nbsp;<code><a href="PersistentEntityQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityQuery</a>&lt;<a href="PersistentEntityCriteriaQuery.html" title="type parameter in PersistentEntityCriteriaQuery">T</a>&gt;</code></dd>
+<dt>Parameters:</dt>
+<dd><code>orders</code> - The order</dd>
+<dt>Returns:</dt>
+<dd>The query</dd>
 </dl>
 </section>
 </li>
@@ -400,16 +458,6 @@ extends jakarta.persistence.criteria.CriteriaQuery&lt;T&gt;, <a href="Persistent
 <dd><code>distinct</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.AbstractQuery&lt;<a href="PersistentEntityCriteriaQuery.html" title="type parameter in PersistentEntityCriteriaQuery">T</a>&gt;</code></dd>
 <dt>Specified by:</dt>
 <dd><code>distinct</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaQuery&lt;<a href="PersistentEntityCriteriaQuery.html" title="type parameter in PersistentEntityCriteriaQuery">T</a>&gt;</code></dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="subquery(java.lang.Class)">
-<h3>subquery</h3>
-<div class="member-signature"><span class="type-parameters">&lt;U&gt;</span>&nbsp;<span class="return-type"><a href="PersistentEntitySubquery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySubquery</a>&lt;U&gt;</span>&nbsp;<span class="element-name">subquery</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;U&gt;&nbsp;type)</span></div>
-<dl class="notes">
-<dt>Specified by:</dt>
-<dd><code>subquery</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CommonAbstractCriteria</code></dd>
 </dl>
 </section>
 </li>
