@@ -51,12 +51,14 @@ import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.CriteriaUpdate;
 import org.hibernate.SessionFactory;
+import org.hibernate.query.Order;
 import org.hibernate.reactive.stage.Stage;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.function.Function;
 
 /**
@@ -148,6 +150,11 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     @Override
     protected void setOffset(Stage.SelectionQuery<?> query, int offset) {
         query.setFirstResult(offset);
+    }
+
+    @Override
+    protected void setOrder(Stage.SelectionQuery<?> query, List<Order<?>> orders) {
+        query.setOrder((List) orders);
     }
 
     @Override
@@ -308,7 +315,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
                                                   InvocationContext<?, ?> invocationContext,
                                                   T entity) {
         Stage.MutationQuery query = session.createMutationQuery(storedQuery.getQuery());
-        bindParameters(query, storedQuery, invocationContext, true, entity);
+        bindParameters(query, storedQuery, invocationContext, entity);
         return helper.executeUpdate(query);
     }
 
