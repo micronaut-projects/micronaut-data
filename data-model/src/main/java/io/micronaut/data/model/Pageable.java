@@ -200,7 +200,10 @@ public interface Pageable extends Sort {
      */
     @NonNull
     default Pageable withoutSort() {
-        return Pageable.from(getNumber(), getSize());
+        if (isSorted()) {
+            return Pageable.from(getNumber(), getSize());
+        }
+        return this;
     }
 
     /**
