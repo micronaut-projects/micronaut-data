@@ -18,6 +18,7 @@ package io.micronaut.data.runtime.operations.internal.sql;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.CursoredPageable;
 import io.micronaut.data.model.DataType;
@@ -65,6 +66,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
     protected List<RuntimePersistentProperty<Object>> cursorProperties;
     protected final SqlStoredQuery<E, R> sqlStoredQuery;
     protected String query;
+    private final boolean bindPageableOrSort;
 
     public DefaultSqlPreparedQuery(PreparedQuery<E, R> preparedQuery) {
         this(preparedQuery, (SqlStoredQuery<E, R>) ((DelegateStoredQuery<Object, Object>) preparedQuery).getStoredQueryDelegate());
@@ -74,12 +76,14 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         super(preparedQuery);
         this.sqlStoredQuery = sqlStoredQuery;
         this.query = sqlStoredQuery.getQuery();
+        bindPageableOrSort = getQueryBindings().stream().anyMatch(p -> TypeRole.PAGEABLE.equals(p.getRole()) || TypeRole.SORT.equals(p.getRole()));
     }
 
     public DefaultSqlPreparedQuery(SqlStoredQuery<E, R> sqlStoredQuery) {
         super(new DummyPreparedQuery<>(sqlStoredQuery), null, sqlStoredQuery);
         this.sqlStoredQuery = sqlStoredQuery;
         this.query = sqlStoredQuery.getQuery();
+        bindPageableOrSort = getQueryBindings().stream().anyMatch(p -> TypeRole.PAGEABLE.equals(p.getRole()) || TypeRole.SORT.equals(p.getRole()));
     }
 
     @Override
@@ -133,7 +137,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
             for (QueryParameterBinding parameter : sqlStoredQuery.getQueryBindings()) {
                 if (!parameter.isExpandable()) {
                     q.append(String.format(positionalParameterFormat, inx++));
-                } else {
+                } else if (parameter.getRole() == null) {
                     Object parameterValue = getParameterValue(parameter);
                     int size = Math.max(1, sizeOf(parameterValue));
                     for (int k = 0; k < size; k++) {
@@ -142,11 +146,51 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
                             q.append(",");
                         }
                     }
+                } else if (TypeRole.PAGEABLE_REQUIRED.equals(parameter.getRole())) {
+                    Pageable pageable = getPageableParameter(parameter);
+                    if (!pageable.isUnpaged()) {
+                        appendPaginationOrOrderQueryPart(q, pageable, false, parameter.getTableAlias(), inx);
+                    }
+                } else if (TypeRole.PAGEABLE.equals(parameter.getRole())) {
+                    Pageable pageable = getPageableParameter(parameter);
+                    appendPaginationOrOrderQueryPart(q, pageable, false, parameter.getTableAlias(), inx);
+                } else if (TypeRole.SORT.equals(parameter.getRole())) {
+                    Sort sort = getSortParameter(parameter);
+                    appendSort(sort, q, sqlStoredQuery.getQueryBuilder(), parameter.getTableAlias());
+                    int limit = sqlStoredQuery.getLimit();
+                    int offset = sqlStoredQuery.getOffset();
+                    if (limit != -1 || offset > 0) {
+                        // Limit defined by the method name
+                        q.append(queryBuilder.buildLimitAndOffset(limit, offset));
+                    }
                 }
                 q.append(sqlStoredQuery.getExpandableQueryParts()[queryParamIndex++]);
             }
             this.query = q.toString();
         }
+    }
+
+    private Pageable getPageableParameter(QueryParameterBinding parameter) {
+        Object value = getParameterValue(parameter);
+        if (value instanceof Pageable) {
+            // The pageable might be modified
+            return preparedQuery.getPageable();
+        }
+        if (value instanceof Sort sort) {
+            return Pageable.UNPAGED.withSort(sort);
+        }
+        throw new IllegalArgumentException("Unsupported parameter type " + parameter.getRole());
+    }
+
+    private Sort getSortParameter(QueryParameterBinding parameter) {
+        Object value = getParameterValue(parameter);
+        if (value instanceof Pageable pageable) {
+            return pageable.withoutPaging();
+        }
+        if (value instanceof Sort sort) {
+            return sort;
+        }
+        throw new IllegalArgumentException("Unsupported parameter type " + parameter.getRole());
     }
 
     /**
@@ -194,32 +238,36 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
 
     @Override
     public void attachPageable(Pageable pageable, boolean isSingleResult) {
-        if (pageable.isUnpaged() && !pageable.isSorted()) {
+        if (pageable.isUnpaged() && !pageable.isSorted() || bindPageableOrSort) {
             return;
         }
-        SqlQueryBuilder2 queryBuilder = sqlStoredQuery.getQueryBuilder();
-        StringBuilder query = new StringBuilder();
-        if (pageable instanceof CursoredPageable cursored) {
-            cursored = enhancePageable(cursored, getPersistentEntity());
-            query.append(buildCursorPagination(cursored));
-            appendSort(cursored.getSort(), query, queryBuilder, null);
-            query.append(queryBuilder.buildPagination(cursored)); // Append limit
-        } else {
-            appendSort(pageable.getSort(), query, queryBuilder, null);
-            if (isSingleResult && pageable.getOffset() > 0) {
-                pageable = Pageable.from(pageable.getNumber(), 1);
-            }
-            query.append(queryBuilder.buildPagination(pageable));
-        }
+        StringBuilder builder = new StringBuilder();
+        appendPaginationOrOrderQueryPart(builder, pageable, isSingleResult, null, storedQuery.getQueryBindings().size() + 1);
 
         int forUpdateIndex = this.query.lastIndexOf(SqlQueryBuilder.STANDARD_FOR_UPDATE_CLAUSE);
         if (forUpdateIndex == -1) {
             forUpdateIndex = this.query.lastIndexOf(SqlQueryBuilder.SQL_SERVER_FOR_UPDATE_CLAUSE);
         }
         if (forUpdateIndex > -1) {
-            this.query = this.query.substring(0, forUpdateIndex) + query + this.query.substring(forUpdateIndex);
+            this.query = this.query.substring(0, forUpdateIndex) + builder + this.query.substring(forUpdateIndex);
         } else {
-            this.query += query;
+            this.query += builder;
+        }
+    }
+
+    private void appendPaginationOrOrderQueryPart(StringBuilder query, Pageable pageable, boolean isSingleResult, String tableAlias, int paramIndex) {
+        SqlQueryBuilder2 queryBuilder = sqlStoredQuery.getQueryBuilder();
+        if (pageable instanceof CursoredPageable cursored) {
+            cursored = enhancePageable(cursored, getPersistentEntity());
+            query.append(buildCursorPagination(cursored, paramIndex));
+            appendSort(cursored.getSort(), query, queryBuilder, tableAlias);
+            query.append(queryBuilder.buildLimitAndOffset(cursored.getSize(), 0)); // Append limit
+        } else {
+            appendSort(pageable.getSort(), query, queryBuilder, tableAlias);
+            if (isSingleResult && pageable.getOffset() > 0) {
+                pageable = Pageable.from(pageable.getNumber(), 1);
+            }
+            query.append(queryBuilder.buildLimitAndOffset(pageable.getSize(), pageable.getOffset()));
         }
     }
 
@@ -254,7 +302,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
      * @return The additional query part
      */
     @NonNull
-    private String buildCursorPagination(@NonNull CursoredPageable cursoredPageable) {
+    private String buildCursorPagination(@NonNull CursoredPageable cursoredPageable, int paramIndex) {
         RuntimePersistentEntity<Object> persistentEntity = (RuntimePersistentEntity<Object>) getPersistentEntity();
         List<RuntimePersistentProperty<Object>> cursorProperties = getCursorProperties(cursoredPageable, persistentEntity);
         Optional<Cursor> optionalCursor = cursoredPageable.cursor();
@@ -287,7 +335,6 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
             builder.append("WHERE (");
         }
         String positionalParameter = getQueryBuilder().positionalParameterFormat();
-        int paramIndex = storedQuery.getQueryBindings().size() + 1;
         for (int i = 0; i < orders.size(); ++i) {
             builder.append("(");
             for (int j = 0; j <= i; ++j) {

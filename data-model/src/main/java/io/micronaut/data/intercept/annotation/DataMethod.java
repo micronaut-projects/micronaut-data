@@ -20,7 +20,6 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.model.DataType;
 
-import java.io.Serializable;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -90,34 +89,6 @@ public @interface DataMethod {
      */
     @Deprecated(forRemoval = true)
     String META_MEMBER_PARAMETER_BINDING = "parameterBinding";
-
-    /**
-     * The member name that holds parameter binding paths.
-     * @deprecated No longer used
-     */
-    @Deprecated(forRemoval = true)
-    String META_MEMBER_PARAMETER_BINDING_PATHS = META_MEMBER_PARAMETER_BINDING + "Paths";
-
-    /**
-     * The member name that holds parameter auto-populated property paths.
-     * @deprecated No longer used
-     */
-    @Deprecated(forRemoval = true)
-    String META_MEMBER_PARAMETER_AUTO_POPULATED_PROPERTY_PATHS = META_MEMBER_PARAMETER_BINDING + "AutoPopulatedPaths";
-
-    /**
-     * The member name that holds parameter auto-populated property paths.
-     * @deprecated No longer used
-     */
-    @Deprecated(forRemoval = true)
-    String META_MEMBER_PARAMETER_AUTO_POPULATED_PREVIOUS_PROPERTY_PATHS = META_MEMBER_PARAMETER_BINDING + "AutoPopulatedPreviousPaths";
-
-    /**
-     * The member name that holds parameter auto-populated property paths.
-     * @deprecated No longer used
-     */
-    @Deprecated(forRemoval = true)
-    String META_MEMBER_PARAMETER_AUTO_POPULATED_PREVIOUS_PROPERTY_INDEXES = META_MEMBER_PARAMETER_BINDING + "AutoPopulatedPrevious";
 
     /**
      * The ID type.
@@ -236,15 +207,6 @@ public @interface DataMethod {
      * @return The result data type.
      */
     DataType resultDataType() default DataType.OBJECT;
-
-    /**
-     * The identifier type for the method being executed.
-     *
-     * @return The ID type
-     * @deprecated Not used
-     */
-    @Deprecated(forRemoval = true, since = "4.10")
-    Class<?> idType() default Serializable.class;
 
     /**
      * The parameter binding defines which method arguments bind to which
