@@ -14,15 +14,15 @@ micronaut {
 
 dependencies {
     annotationProcessor projects.micronautDataProcessor
-    annotationProcessor mnValidation.micronaut.validation
     annotationProcessor mnCoherence.micronaut.coherence.data
+
     implementation projects.micronautDataModel
     implementation projects.micronautDataRuntime
     implementation mnCoherence.coherence
     implementation(mnCoherence.micronaut.coherence.data) {
         exclude group: 'io.micronaut.data'
     }
-    runtimeOnly mnSql.micronaut.jdbc.hikari
-    runtimeOnly mnLogging.logback.classic
-    runtimeOnly mnSql.h2
+
+    testRuntimeOnly mnLogging.logback.classic
+    testRuntimeOnly mn.snakeyaml
 }
