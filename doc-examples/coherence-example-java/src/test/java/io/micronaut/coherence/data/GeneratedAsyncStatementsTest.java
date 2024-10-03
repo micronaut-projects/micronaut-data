@@ -24,6 +24,8 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,6 +40,8 @@ import java.util.stream.Collectors;
 @MicronautTest(propertySources = {"classpath:sessions.yaml"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class GeneratedAsyncStatementsTest extends AbstractDataTest {
+
+    private static final Logger LOG = LoggerFactory.getLogger(GeneratedAsyncStatementsTest.class);
 
     /**
      * A {@code repository} for validating generated queries.
@@ -183,8 +187,11 @@ class GeneratedAsyncStatementsTest extends AbstractDataTest {
     @Test
     void shouldFindByTitleStartingWith() {
         repo.findByTitleStartingWith("Du")
-            .thenAccept(books1 -> Assertions.assertTrue(books1.containsAll(
-                books.stream().filter(book -> book.getTitle().startsWith("Du")).toList())))
+            .thenAccept(books1 -> {
+                List<Book> bookList = books.stream().filter(book -> book.getTitle().startsWith("Du")).toList();
+                LOG.info("books1.size={}, bookList.size={}", books1.size(), bookList.size());
+                Assertions.assertTrue(books1.containsAll(bookList));
+            })
             .join();
     }
 
