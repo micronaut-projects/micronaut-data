@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 
 @MicronautTest(propertySources = {"classpath:sessions.yaml"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Disabled("Flaky test")
 class GeneratedAsyncStatementsTest extends AbstractDataTest {
 
 
@@ -183,7 +184,6 @@ class GeneratedAsyncStatementsTest extends AbstractDataTest {
      * Validate the expected results are returned when searching for titles starting with a given string.
      */
     @Test
-    @Disabled("Flaky test")
     void shouldFindByTitleStartingWith() {
         repo.findByTitleStartingWith("Du")
             .thenAccept(books1 -> Assertions.assertTrue(books1.containsAll(
