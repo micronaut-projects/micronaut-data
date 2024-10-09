@@ -18,7 +18,6 @@ package io.micronaut.data.mongodb.serde;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.convert.ConversionContext;
-import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.MappedProperty;
@@ -39,14 +38,12 @@ import io.micronaut.serde.exceptions.SerdeException;
 import io.micronaut.serde.reference.PropertyReference;
 import org.bson.BsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
-import org.bson.codecs.ByteArrayCodec;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Map;
 
 /**
  * The Micronaut Data's Serde's {@link Deserializer.DecoderContext}.
@@ -183,16 +180,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
         }
         if (codec != null) {
             // Eliminate codecs for basic types (except byte array) and collections
-            boolean useCodec;
-            if (codec instanceof ByteArrayCodec) {
-                useCodec = true;
-            } else {
-                Class<? extends T> encoderClass = codec.getEncoderClass();
-                useCodec = !ClassUtils.isJavaLangType(encoderClass)
-                    && !Map.class.isAssignableFrom(encoderClass)
-                    && !Iterable.class.isAssignableFrom(encoderClass);
-            }
-            if (useCodec) {
+            if (CodecUtils.shouldUseCodec(codec)) {
                 return new CodecBsonDecoder<>((Codec<T>) codec);
             }
         }
