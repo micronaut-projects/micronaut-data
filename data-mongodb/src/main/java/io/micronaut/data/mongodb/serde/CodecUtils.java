@@ -17,7 +17,6 @@ package io.micronaut.data.mongodb.serde;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.reflect.ClassUtils;
-import io.micronaut.serde.bson.custom.CodecBsonDecoder;
 import org.bson.codecs.ByteArrayCodec;
 import org.bson.codecs.Codec;
 
