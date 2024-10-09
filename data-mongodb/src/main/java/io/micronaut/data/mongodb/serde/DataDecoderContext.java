@@ -178,11 +178,8 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
         if (codec instanceof MappedCodec<? extends T> mappedCodec) {
             return mappedCodec.deserializer;
         }
-        if (codec != null) {
-            // Eliminate codecs for basic types (except byte array) and collections
-            if (CodecUtils.shouldUseCodec(codec)) {
-                return new CodecBsonDecoder<>((Codec<T>) codec);
-            }
+        if (codec != null && CodecUtils.shouldUseCodec(codec)) {
+            return new CodecBsonDecoder<>((Codec<T>) codec);
         }
         return parent.findDeserializer(type);
     }

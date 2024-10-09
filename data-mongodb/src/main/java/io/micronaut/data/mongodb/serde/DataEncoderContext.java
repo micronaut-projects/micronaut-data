@@ -162,10 +162,8 @@ final class DataEncoderContext implements Serializer.EncoderContext {
         if (codec instanceof MappedCodec mappedCodec) {
             return mappedCodec.serializer;
         }
-        if (codec != null) {
-            if (CodecUtils.shouldUseCodec(codec)) {
-                return new CodecBsonDecoder<>((Codec<T>) codec);
-            }
+        if (codec != null && CodecUtils.shouldUseCodec(codec)) {
+            return new CodecBsonDecoder<>((Codec<T>) codec);
         }
         return parent.findSerializer(type);
     }
