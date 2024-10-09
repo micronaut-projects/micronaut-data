@@ -35,6 +35,7 @@ import io.micronaut.serde.config.naming.PropertyNamingStrategy;
 import io.micronaut.serde.exceptions.SerdeException;
 import io.micronaut.serde.reference.PropertyReference;
 import io.micronaut.serde.reference.SerializationReference;
+import org.bson.codecs.ByteArrayCodec;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
@@ -165,11 +166,17 @@ final class DataEncoderContext implements Serializer.EncoderContext {
             return mappedCodec.serializer;
         }
         if (codec != null) {
-            // Eliminate codecs for basic types and collections
-            Class<? extends T> encoderClass = codec.getEncoderClass();
-            if (!ClassUtils.isJavaLangType(encoderClass)
-                && !Map.class.isAssignableFrom(encoderClass)
-                && !Iterable.class.isAssignableFrom(encoderClass)) {
+            // Eliminate codecs for basic types (except byte array) and collections
+            boolean useCodec;
+            if (codec instanceof ByteArrayCodec) {
+                useCodec = true;
+            } else {
+                Class<? extends T> encoderClass = codec.getEncoderClass();
+                useCodec = !ClassUtils.isJavaLangType(encoderClass)
+                    && !Map.class.isAssignableFrom(encoderClass)
+                    && !Iterable.class.isAssignableFrom(encoderClass);
+            }
+            if (useCodec) {
                 return new CodecBsonDecoder<>((Codec<T>) codec);
             }
         }
