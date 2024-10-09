@@ -35,7 +35,9 @@ import org.reactivestreams.Publisher;
  * @param <T> The entity type
  * @author Denis Stepanov
  * @since 3.5.0
+ * @deprecated Replaced by {@link io.micronaut.data.repository.jpa.reactive.ReactiveStreamsJpaSpecificationExecutor}
  */
+@Deprecated(forRemoval = true, since = "4.10")
 public interface ReactiveStreamsJpaSpecificationExecutor<T> {
 
     /**

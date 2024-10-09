@@ -1,6 +1,6 @@
 introduction:
   title: Introduction
-  repository: Repository  
+  repository: Repository
   whatsNew: What's New?
   breaks: Breaking Changes
   releaseHistory: Release History
@@ -31,6 +31,13 @@ shared:
     deletes: Deleting
     timestamps: Entity Timestamps
     entityEvents: Entity Events
+  criteriaSpecifications:
+    title: Repositories with Jakarta Criteria API
+    criteriaExecuteQuery: Querying
+    criteriaExecuteUpdate: Updating
+    criteriaExecuteDelete: Deleting
+    otherRepositoryVariations: Different repository variations
+    typeSafeJava: Type-Safe Java queries
   transactions:
     title: Transactions
     programmaticTransactions: Programmatic Transactions
@@ -51,7 +58,6 @@ hibernate:
   hibernateExplicitQueries: Explicit queries
   hibernateNativeQueries: Native queries
   hibernateProcedures: Procedures
-  hibernateSpecifications: JPA specifications
 hibernateReactive: Micronaut Data Hibernate Reactive
 dbc:
   title: Micronaut Data JDBC and R2DBC
@@ -73,11 +79,6 @@ dbc:
     pessimisticLocking: Pessimistic Locking
   dbcCriteriaSpecifications:
     title: Repositories with Criteria API
-    criteriaExecuteQuery: Querying
-    criteriaExecuteUpdate: Updating
-    criteriaExecuteDelete: Deleting
-    otherRepositoryVariations: Other repository variations
-    typeSafeJava: Type-Safe Java queries
   sqlMapping:
     title: Mapping Entities
     sqlAnnotations: SQL Annotations

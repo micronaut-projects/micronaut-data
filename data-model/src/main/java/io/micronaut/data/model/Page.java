@@ -50,7 +50,7 @@ import java.util.function.Function;
 @DefaultImplementation(DefaultPage.class)
 public interface Page<T> extends Slice<T> {
 
-    Page<?> EMPTY = new DefaultPage<>(Collections.emptyList(), Pageable.unpaged(), null);
+    Page<?> EMPTY = new DefaultPage<>(Collections.emptyList(), Pageable.unpaged(), -1L);
 
     /**
      * @return Whether this {@link Page} contains the total count of the records
@@ -62,6 +62,7 @@ public interface Page<T> extends Slice<T> {
      * Get the total count of all the records that can be given by this query.
      * The method may produce a {@link IllegalStateException} if the {@link Pageable} request
      * did not ask for total size.
+     * For {@link #EMPTY} page the value is -1.
      *
      * @return The total size of the all records.
      */

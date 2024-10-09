@@ -46,7 +46,7 @@ public class DefaultCountInterceptor<T> extends AbstractQueryInterceptor<T, Numb
     public Number intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Number> context) {
         long result;
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, Long> preparedQuery = prepareQuery(methodKey, context, Long.class, true);
+            PreparedQuery<?, Long> preparedQuery = prepareQuery(methodKey, context);
             Iterable<Long> iterable = operations.findAll(preparedQuery);
             Iterator<Long> i = iterable.iterator();
             result = i.hasNext() ? i.next() : 0;

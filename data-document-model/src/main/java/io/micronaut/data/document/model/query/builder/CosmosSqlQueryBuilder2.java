@@ -41,7 +41,6 @@ import jakarta.persistence.criteria.Predicate;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -290,7 +289,7 @@ public final class CosmosSqlQueryBuilder2 extends SqlQueryBuilder2 {
             buildWhereClause(annotationMetadata, predicate, queryState);
         }
 
-        appendOrder(annotationMetadata, definition, queryState);
+        appendOrder(annotationMetadata, definition.order(), queryState);
         appendForUpdate(QueryPosition.END_OF_QUERY, definition, queryState.getQuery());
 
         return QueryResult.of(
@@ -377,7 +376,7 @@ public final class CosmosSqlQueryBuilder2 extends SqlQueryBuilder2 {
 
     @NonNull
     @Override
-    public QueryResult buildPagination(@NonNull Pageable pageable) {
+    public String buildPagination(@NonNull Pageable pageable) {
         if (pageable.getMode() != Mode.OFFSET) {
             throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported by cosmos operations");
         }
@@ -386,19 +385,9 @@ public final class CosmosSqlQueryBuilder2 extends SqlQueryBuilder2 {
             StringBuilder builder = new StringBuilder(" ");
             long from = pageable.getOffset();
             builder.append("OFFSET ").append(from).append(" LIMIT ").append(size).append(" ");
-            return QueryResult.of(
-                builder.toString(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyMap()
-            );
+            return builder.toString();
         }
-        return QueryResult.of(
-            "",
-            Collections.emptyList(),
-            Collections.emptyList(),
-            Collections.emptyMap()
-        );
+        return "";
     }
 
 }

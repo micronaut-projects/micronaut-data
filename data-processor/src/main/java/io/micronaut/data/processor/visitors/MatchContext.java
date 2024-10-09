@@ -49,7 +49,6 @@ public class MatchContext implements AnnotationMetadataProvider {
     private final ClassElement repositoryClass;
     private final QueryBuilder queryBuilder;
     private final List<String> possibleFailures = new ArrayList<>();
-    private boolean failing = false;
     private final Map<ClassElement, FindInterceptorDef> findInterceptors;
 
     /**
@@ -146,30 +145,7 @@ public class MatchContext implements AnnotationMetadataProvider {
      * @param message The message
      */
     public void fail(@NonNull String message) {
-        this.failing = true;
         getVisitorContext().fail(getUnableToImplementMessage() + message, getMethodElement());
-    }
-
-    /**
-     * Add a message that indicates a given finder failed. This should only be used
-     * if a finder matches a method, but some additional requirement is not met. This
-     * leaves the possibility that another finder may match the method and proceed
-     * successfully. Possible failures will only be logged if the method could not be
-     * implemented.
-     *
-     * @param message The message
-     */
-    public void possiblyFail(@NonNull String message) {
-        this.possibleFailures.add(message);
-    }
-
-    /**
-     * Is there a current error.
-     *
-     * @return True if there is an error
-     */
-    public boolean isFailing() {
-        return failing;
     }
 
     /**

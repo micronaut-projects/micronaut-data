@@ -34,6 +34,7 @@ import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder2;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 
 import java.util.HashSet;
 import java.util.List;
@@ -231,8 +232,13 @@ public final class JpaQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
 
     @NonNull
     @Override
-    public QueryResult buildPagination(@NonNull Pageable pageable) {
+    public String buildPagination(@NonNull Pageable pageable) {
         throw new UnsupportedOperationException("JPA-QL does not support pagination in query definitions");
+    }
+
+    @Override
+    protected void appendLimitAndOffset(Dialect dialect, int limit, long offset, StringBuilder builder) {
+        // JPA doesn't support limit and offset in JPQL
     }
 
     @Override

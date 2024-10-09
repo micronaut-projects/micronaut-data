@@ -48,7 +48,7 @@ public final class DefaultProcedureReturningOneInterceptor<T, R> extends Abstrac
 
     @Override
     public R intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
-        PreparedQuery<?, R> preparedQuery = prepareQuery(methodKey, context, null);
+        PreparedQuery<?, R> preparedQuery = prepareQuery(methodKey, context);
         List<R> results = operations.execute(preparedQuery);
         ReturnType<R> returnType = context.getReturnType();
         if (returnType.isVoid()) {

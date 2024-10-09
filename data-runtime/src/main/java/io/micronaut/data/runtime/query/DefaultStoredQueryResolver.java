@@ -33,7 +33,7 @@ import io.micronaut.inject.ExecutableMethod;
 
 import java.util.List;
 
-import static io.micronaut.data.model.runtime.StoredQuery.*;
+import static io.micronaut.data.model.runtime.StoredQuery.OperationType;
 
 /**
  * Default stored query resolver.
@@ -45,37 +45,20 @@ import static io.micronaut.data.model.runtime.StoredQuery.*;
 public abstract class DefaultStoredQueryResolver implements StoredQueryResolver {
 
     @Override
-    public <E, R> StoredQuery<E, R> resolveQuery(MethodInvocationContext<?, ?> context, Class<E> entityClass, Class<R> resultType, boolean isCount) {
-        if (resultType == null) {
-            //noinspection unchecked
-            resultType = (Class<R>) context.classValue(DataMethod.NAME, DataMethod.META_MEMBER_RESULT_TYPE)
-                    .orElse(entityClass);
-        }
-        String query = context.stringValue(Query.class).orElseThrow(() ->
-                new IllegalStateException("No query present in method")
-        );
+    public <E, R> StoredQuery<E, R> resolveQuery(MethodInvocationContext<?, ?> context) {
         return new DefaultStoredQuery<>(
-                context.getExecutableMethod(),
-                resultType,
-                entityClass,
-                query,
-                isCount,
-                getHintsCapableRepository()
+            context.getExecutableMethod(),
+            false,
+            getHintsCapableRepository()
         );
     }
 
     @Override
-    public <E, R> StoredQuery<E, R> resolveCountQuery(MethodInvocationContext<?, ?> context, Class<E> entityClass, Class<R> resultType) {
-        String query = context.stringValue(Query.class, DataMethod.META_MEMBER_COUNT_QUERY)
-            .orElseGet(() -> context.stringValue(Query.class)
-                .orElseThrow(() -> new IllegalStateException("No query present in method")));
+    public <E, R> StoredQuery<E, R> resolveCountQuery(MethodInvocationContext<?, ?> context) {
         return new DefaultStoredQuery<>(
-                context.getExecutableMethod(),
-                resultType,
-                entityClass,
-                query,
-                true,
-                getHintsCapableRepository()
+            context.getExecutableMethod(),
+            true,
+            getHintsCapableRepository()
         );
     }
 
@@ -149,7 +132,7 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
             @Override
             public boolean useNumericPlaceholders() {
                 return annotationMetadata.classValue(RepositoryConfiguration.class, "queryBuilder")
-                        .map(c -> c == SqlQueryBuilder.class).orElse(false);
+                    .map(c -> c == SqlQueryBuilder.class).orElse(false);
             }
 
             @Override
@@ -248,8 +231,8 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
             @Override
             public boolean useNumericPlaceholders() {
                 return annotationMetadata
-                        .classValue(RepositoryConfiguration.class, "queryBuilder")
-                        .map(c -> c == SqlQueryBuilder.class).orElse(false);
+                    .classValue(RepositoryConfiguration.class, "queryBuilder")
+                    .map(c -> c == SqlQueryBuilder.class).orElse(false);
             }
 
             @Override

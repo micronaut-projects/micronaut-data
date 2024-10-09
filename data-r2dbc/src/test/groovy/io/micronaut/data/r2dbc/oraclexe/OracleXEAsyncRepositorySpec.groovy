@@ -16,6 +16,8 @@
 package io.micronaut.data.r2dbc.oraclexe
 
 import groovy.transform.Memoized
+import io.micronaut.data.r2dbc.mysql.MySqlBookAsyncRepository
+import io.micronaut.data.tck.repositories.BookAsyncRepository
 import io.micronaut.data.tck.repositories.PersonAsyncRepository
 import io.micronaut.data.tck.tests.AbstractAsyncRepositorySpec
 import spock.lang.IgnoreIf
@@ -28,10 +30,15 @@ class OracleXEAsyncRepositorySpec extends AbstractAsyncRepositorySpec implements
         return context.getBean(OracleXEPersonAsyncRepository)
     }
 
+    @Memoized
+    @Override
+    BookAsyncRepository getBookRepository() {
+        return context.getBean(OracleBookAsyncRepository)
+    }
+
     void "test procedure"() {
         expect:
             personRepository.add1(123).get() == 124
             personRepository.add1Aliased(123).get() == 124
     }
-
 }

@@ -16,31 +16,14 @@
 package io.micronaut.data.jdbc.h2
 
 import groovy.transform.Memoized
-import io.micronaut.data.tck.repositories.AuthorRepository
-import io.micronaut.data.tck.repositories.BasicTypesRepository
-import io.micronaut.data.tck.repositories.BookDtoRepository
-import io.micronaut.data.tck.repositories.BookRepository
-import io.micronaut.data.tck.repositories.CarRepository
-import io.micronaut.data.tck.repositories.CityRepository
-import io.micronaut.data.tck.repositories.CompanyRepository
-import io.micronaut.data.tck.repositories.CountryRegionCityRepository
-import io.micronaut.data.tck.repositories.CountryRepository
-import io.micronaut.data.tck.repositories.EntityWithIdClass2Repository
-import io.micronaut.data.tck.repositories.EntityWithIdClassRepository
-import io.micronaut.data.tck.repositories.FaceRepository
-import io.micronaut.data.tck.repositories.FoodRepository
-import io.micronaut.data.tck.repositories.GenreRepository
-import io.micronaut.data.tck.repositories.MealRepository
-import io.micronaut.data.tck.repositories.NoseRepository
-import io.micronaut.data.tck.repositories.PageRepository
-import io.micronaut.data.tck.repositories.PersonRepository
-import io.micronaut.data.tck.repositories.RegionRepository
-import io.micronaut.data.tck.repositories.RoleRepository
-import io.micronaut.data.tck.repositories.StudentRepository
-import io.micronaut.data.tck.repositories.TimezoneBasicTypesRepository
-import io.micronaut.data.tck.repositories.UserRepository
-import io.micronaut.data.tck.repositories.UserRoleRepository
+import io.micronaut.data.model.Page
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Sort
+import io.micronaut.data.tck.entities.Book
+import io.micronaut.data.tck.entities.Student
+import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
+import spock.lang.PendingFeature
 import spock.lang.Shared
 
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.findNameSubqueryEq

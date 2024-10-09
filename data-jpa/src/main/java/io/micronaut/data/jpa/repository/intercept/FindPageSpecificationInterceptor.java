@@ -40,7 +40,9 @@ import java.util.List;
  * @author graemerocher
  * @author Denis Stepanov
  * @since 3.1
+ * @deprecated {@link Specification} is deprecated
  */
+@Deprecated(since = "4.10", forRemoval = true)
 @Internal
 public class FindPageSpecificationInterceptor extends AbstractSpecificationInterceptor<Object, Object> {
     private final JpaRepositoryOperations jpaOperations;

@@ -16,6 +16,7 @@
 package io.micronaut.data.r2dbc.postgres
 
 import groovy.transform.Memoized
+import io.micronaut.data.tck.repositories.BookReactiveRepository
 import io.micronaut.data.tck.repositories.PersonReactiveRepository
 import io.micronaut.data.tck.repositories.StudentReactiveRepository
 import io.micronaut.data.tck.tests.AbstractReactiveRepositorySpec
@@ -33,5 +34,12 @@ class PostgresReactiveRepositorySpec extends AbstractReactiveRepositorySpec impl
     StudentReactiveRepository getStudentRepository() {
         return context.getBean(PostgresStudentReactiveRepository)
     }
+
+    @Memoized
+    @Override
+    BookReactiveRepository getBookRepository() {
+        return context.getBean(PostgresReactiveBookRepository)
+    }
+
 
 }

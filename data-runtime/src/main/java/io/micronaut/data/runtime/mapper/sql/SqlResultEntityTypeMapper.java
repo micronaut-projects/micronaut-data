@@ -263,13 +263,20 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             return new PushingMapper<>() {
 
                 final MappingContext<R> ctx = MappingContext.of(entity, startingPrefix);
+                Object entityId;
                 R entityInstance;
 
                 @Override
                 public void processRow(RS row) {
-                    if (entityInstance == null) {
+                    Object id = readEntityId(row, ctx);
+                    if (id == null) {
+                        throw new IllegalStateException("Entity needs to have an ID when JOINs are used!");
+                    }
+                    if (entityId == null) {
+                        entityId = id;
                         entityInstance = readEntity(row, ctx, null, null);
-                    } else {
+                    } else if (entityId.equals(id)) {
+                        // We want only one entity, everything else should be skipped
                         readChildren(row, entityInstance, null, ctx);
                     }
                 }
@@ -328,15 +335,14 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                     Object id = readEntityId(row, ctx);
                     if (id == null) {
                         throw new IllegalStateException("Entity needs to have an ID when JOINs are used!");
+                    }
+                    MappingContext<R> prevCtx = idEntities.get(id);
+                    if (prevCtx != null) {
+                        readChildren(row, prevCtx.entity, null, prevCtx);
                     } else {
-                        MappingContext<R> prevCtx = idEntities.get(id);
-                        if (prevCtx != null) {
-                            readChildren(row, prevCtx.entity, null, prevCtx);
-                        } else {
-                            ctx.entity = readEntity(row, ctx, null, id);
-                            idEntities.put(id, ctx);
-                            allProcessed.add(ctx);
-                        }
+                        ctx.entity = readEntity(row, ctx, null, id);
+                        idEntities.put(id, ctx);
+                        allProcessed.add(ctx);
                     }
                 }
 

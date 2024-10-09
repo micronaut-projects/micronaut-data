@@ -41,8 +41,6 @@ import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.JsonDataType;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.PersistentAssociationPath;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
@@ -50,7 +48,6 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.JoinPath;
-import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import jakarta.persistence.criteria.Selection;
@@ -1068,60 +1065,6 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 implements Sq
             .orElseGet(() -> unescapedTableName + SEQ_SUFFIX);
     }
 
-    @NonNull
-    @Override
-    public QueryResult buildPagination(@NonNull Pageable pageable) {
-        int size = pageable.getSize();
-        if (size > 0) {
-            StringBuilder builder = new StringBuilder(" ");
-            long from = pageable.getMode() == Mode.OFFSET ? pageable.getOffset() : 0;
-            switch (dialect) {
-                case H2:
-                case MYSQL:
-                    if (from == 0) {
-                        builder.append("LIMIT ").append(size);
-                    } else {
-                        builder.append("LIMIT ").append(from).append(',').append(size);
-                    }
-                    break;
-                case POSTGRES:
-                    builder.append("LIMIT ").append(size).append(" ");
-                    if (from != 0) {
-                        builder.append("OFFSET ").append(from);
-                    }
-                    break;
-
-                case SQL_SERVER:
-                    // SQL server requires OFFSET always
-                    if (from == 0) {
-                        builder.append("OFFSET 0 ROWS ");
-                    }
-                    // intentional fall through
-                case ANSI:
-                case ORACLE:
-                default:
-                    if (from != 0) {
-                        builder.append("OFFSET ").append(from).append(" ROWS ");
-                    }
-                    builder.append("FETCH NEXT ").append(size).append(" ROWS ONLY ");
-                    break;
-            }
-            return QueryResult.of(
-                builder.toString(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyMap()
-            );
-        } else {
-            return QueryResult.of(
-                "",
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyMap()
-            );
-        }
-    }
-
     @Override
     protected String getAliasName(PersistentEntity entity) {
         return entity.getAliasName();
@@ -1550,6 +1493,25 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 implements Sq
     @Override
     public Class<? extends Annotation> annotationType() {
         return SqlQueryConfiguration.DialectConfiguration.class;
+    }
+
+    @Override
+    public QueryResult buildSelect(@NonNull AnnotationMetadata annotationMetadata, @NonNull SelectQueryDefinition definition) {
+        QueryBuilder queryBuilder = new QueryBuilder();
+
+        int parameterPageableOrSortIndex = definition.getParameterPageableOrSortIndex();
+        if (parameterPageableOrSortIndex != -1) {
+            return super.buildSelect(annotationMetadata, definition);
+        }
+
+        QueryState queryState = buildQuery(annotationMetadata, definition, queryBuilder, true, null);
+
+        return QueryResult.of(
+            queryState.getFinalQuery(),
+            queryState.getQueryParts(),
+            queryState.getParameterBindings(),
+            queryState.getJoinPaths()
+        );
     }
 
     private static class DialectConfig {

@@ -45,6 +45,15 @@ public interface AsyncCriteriaRepositoryOperations extends AsyncCriteriaCapableR
     CriteriaBuilder getCriteriaBuilder();
 
     /**
+     * Exists query.
+     *
+     * @param query The query
+     * @return True if query returns true or any row
+     * @since 4.10
+     */
+    CompletionStage<Boolean> exists(@NonNull CriteriaQuery<?> query);
+
+    /**
      * Find one by Query.
      *
      * @param query The query

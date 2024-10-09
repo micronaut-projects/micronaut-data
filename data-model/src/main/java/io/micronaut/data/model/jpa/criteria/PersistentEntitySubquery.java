@@ -17,7 +17,6 @@ package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.data.model.PersistentEntity;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Subquery;
@@ -33,32 +32,15 @@ import java.util.List;
  * @since 4.10
  */
 @Experimental
-public interface PersistentEntitySubquery<T> extends Subquery<T>, PersistentEntityCommonAbstractCriteria {
+public interface PersistentEntitySubquery<T> extends Subquery<T>, PersistentEntityQuery<T> {
 
-    /**
-     * Sets the max rows value.
-     * @param max The max value
-     * @return This instance
-     */
+    @Override
     @NonNull
-    PersistentEntitySubquery<T> max(int max);
+    PersistentEntitySubquery<T> limit(int limit);
 
-    /**
-     * Sets the offset rows value.
-     * @param offset The offset value
-     * @return This instance
-     */
+    @Override
     @NonNull
     PersistentEntitySubquery<T> offset(int offset);
-
-    /**
-     * Create a root using {@link PersistentEntity}.
-     * @param persistentEntity The persistent entity
-     * @param <X> The root type
-     * @return The root
-     */
-    @NonNull
-    <X> PersistentEntityRoot<X> from(@NonNull PersistentEntity persistentEntity);
 
     @Override
     @NonNull

@@ -101,11 +101,10 @@ record DefaultCursoredPageable(
     @Override
     public CursoredPageable previous() {
         throw new UnsupportedOperationException("To get next pageable results must be retrieved. Use page.nextPageable() to retrieve the next pageable.");
-
     }
 
     @Override
-    public Pageable withTotal() {
+    public CursoredPageable withTotal() {
         if (requestTotal) {
             return this;
         }
@@ -113,11 +112,41 @@ record DefaultCursoredPageable(
     }
 
     @Override
-    public Pageable withoutTotal() {
+    public CursoredPageable withoutTotal() {
         if (!requestTotal) {
             return this;
         }
-        return new DefaultCursoredPageable(size, currentCursor, mode, page, sort, true);
+        return new DefaultCursoredPageable(size, currentCursor, mode, page, sort, false);
+    }
+
+    @Override
+    public CursoredPageable withoutSort() {
+        return new DefaultCursoredPageable(size, currentCursor, mode, page, Sort.UNSORTED, requestTotal);
+    }
+
+    @Override
+    public CursoredPageable withoutPaging() {
+        return new DefaultCursoredPageable(-1, null, mode, 0, sort, requestTotal);
+    }
+
+    @Override
+    public CursoredPageable withSort(Sort sort) {
+        return new DefaultCursoredPageable(size, currentCursor, mode, page, sort, requestTotal);
+    }
+
+    @Override
+    public CursoredPageable order(Order order) {
+        return new DefaultCursoredPageable(size, currentCursor, mode, page, sort.order(order), requestTotal);
+    }
+
+    @Override
+    public CursoredPageable order(String propertyName, Order.Direction direction) {
+        return new DefaultCursoredPageable(size, currentCursor, mode, page, sort.order(propertyName, direction), requestTotal);
+    }
+
+    @Override
+    public CursoredPageable orders(List<Order> orders) {
+        return new DefaultCursoredPageable(size, currentCursor, mode, page, sort.orders(orders), requestTotal);
     }
 
     @Override

@@ -65,3 +65,7 @@ snippet::example.PersonRepositorySpec[project-base="doc-examples/jdbc-example",s
 NOTE: The examples use compile-known values, and in this case, it would be better to create custom repository methods which would come with compile-time generates queries and eliminate runtime overhead.
 It's recommended to use criteria only for dynamic queries where the query structure is not known at the build-time.
 
+Pagination with JOINS cannot be properly implemented with limiting the results for tabular SQL results, because of that Micronaut Data will execute two queries:
+
+- 1. Fetching a page of entity IDs
+- 2. Fetching a complete entity with JOINed associations

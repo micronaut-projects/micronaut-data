@@ -87,7 +87,7 @@ public interface QueryBuilder2 {
      * @return The encoded query
      */
     @NonNull
-    QueryResult buildPagination(@NonNull Pageable pageable);
+    String buildPagination(@NonNull Pageable pageable);
 
     /**
      * The select query definition.
@@ -118,6 +118,13 @@ public interface QueryBuilder2 {
          */
         default boolean isDistinct() {
             return false;
+        }
+
+        /**
+         * @return The index of {@link Pageable} or {@link io.micronaut.data.model.Sort}.
+         */
+        default int getParameterPageableOrSortIndex() {
+            return -1;
         }
 
     }

@@ -71,6 +71,7 @@ import org.hibernate.graph.RootGraph;
 import org.hibernate.procedure.ProcedureCall;
 import org.hibernate.query.CommonQueryContract;
 import org.hibernate.query.MutationQuery;
+import org.hibernate.query.Order;
 import org.hibernate.query.Query;
 
 import javax.sql.DataSource;
@@ -79,7 +80,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -231,14 +231,13 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     }
 
     @Override
-    protected void setMaxResults(Query<?> query, int max) {
-        query.setMaxResults(max);
+    protected void setOrder(Query<?> query, List<Order<?>> orders) {
+        query.setOrder((List) orders);
     }
 
-    @NonNull
     @Override
-    public Map<String, Object> getQueryHints(@NonNull StoredQuery<?, ?> storedQuery) {
-        return super.getQueryHints(storedQuery);
+    protected void setMaxResults(Query<?> query, int max) {
+        query.setMaxResults(max);
     }
 
     @Nullable
@@ -549,7 +548,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
 
     private <T> int executeUpdate(Session session, StoredQuery<T, ?> storedQuery, InvocationContext<?, ?> invocationContext, T entity) {
         MutationQuery query = session.createMutationQuery(storedQuery.getQuery());
-        bindParameters(query, storedQuery, invocationContext, true, entity);
+        bindParameters(query, storedQuery, invocationContext, entity);
         return query.executeUpdate();
     }
 
@@ -641,6 +640,15 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     }
 
     @Override
+    public boolean exists(CriteriaQuery<?> query) {
+        return executeRead(session -> {
+            try (Stream<?> stream = session.createQuery(query).stream()) {
+                return stream.findAny().isPresent();
+            }
+        });
+    }
+
+    @Override
     public <R> R findOne(CriteriaQuery<R> query) {
         return executeRead(session -> session.createQuery(query).uniqueResult());
     }
@@ -654,10 +662,10 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     public <T> List<T> findAll(CriteriaQuery<T> query, int offset, int limit) {
         return executeRead(session -> {
             Query<T> sessionQuery = session.createQuery(query);
-            if (offset != -1) {
+            if (offset > 0) {
                 sessionQuery = sessionQuery.setFirstResult(offset);
             }
-            if (limit != -1) {
+            if (limit > 0) {
                 sessionQuery = sessionQuery.setMaxResults(limit);
             }
             return sessionQuery.getResultList();

@@ -45,7 +45,7 @@ public class DefaultCountAsyncInterceptor<T> extends AbstractAsyncInterceptor<T,
     @Override
     public CompletionStage<Long> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Long>> context) {
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, Long> preparedQuery = prepareQuery(methodKey, context, Long.class);
+            PreparedQuery<?, Long> preparedQuery = prepareQuery(methodKey, context);
             return asyncDatastoreOperations.findAll(preparedQuery)
                     .thenApply(longs -> {
                         long result = 0L;

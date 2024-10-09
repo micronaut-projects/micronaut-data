@@ -16,8 +16,6 @@
 package io.micronaut.data.jdbc.sqlserver
 
 import groovy.transform.Memoized
-import io.micronaut.data.jdbc.postgres.PostgresEntityWithIdClass2Repository
-import io.micronaut.data.jdbc.postgres.PostgresEntityWithIdClassRepository
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 

@@ -1,0 +1,53 @@
+Micronaut Data includes different variations of specification executor interface intended to be used with async or reactive repositories.
+
+.Builtin Variations of `JpaSpecificationExecutor` repository interface
+[cols=2*]
+|===
+|*Interface*
+|*Description*
+
+|api:data.repository.jpa.JpaSpecificationExecutor[]
+|The default interface for querying, deleting and updating data
+
+|api:data.repository.jpa.async.AsyncJpaSpecificationExecutor[]
+|The async version of the specifications repository
+
+|api:data.repository.jpa.reactive.ReactiveStreamsJpaSpecificationExecutor[]
+|The reactive streams - `Publisher<>` version of the specifications repository
+
+|api:data.repository.jpa.reactive.ReactorJpaSpecificationExecutor[]
+|The Reactor version of the specifications repository
+
+|api:data.repository.jpa.kotlin.CoroutineJpaSpecificationExecutor[]
+|The Kotlin version of the interface that is using coroutines
+
+|===
+
+.Each variation supports different Criteria specifications
+[cols=2*]
+|===
+|*Interface*
+|*Description*
+
+|api:data.repository.jpa.criteria.PredicateSpecification[]
+|A simple interface that is producing `Predicate` using the `Root` and `CriteriaBuilder`
+
+|api:data.repository.jpa.criteria.QuerySpecification[]
+|The same as `PredicateSpecification` which also includes `CriteriaQuery`
+
+|api:data.repository.jpa.criteria.DeleteSpecification[]
+|The same as `PredicateSpecification` which also includes `CriteriaDelete`
+
+|api:data.repository.jpa.criteria.UpdateSpecification[]
+|The same as `PredicateSpecification` which also includes `CriteriaUpdate`
+
+|api:data.repository.jpa.criteria.CriteriaQueryBuilder[]
+|The builder of `CriteriaQuery` using `CriteriaBuilder`
+
+|api:data.repository.jpa.criteria.CriteriaUpdateBuilder[]
+|The builder of `CriteriaUpdate` using `CriteriaBuilder`
+
+|api:data.repository.jpa.criteria.CriteriaDeleteBuilder[]
+|The builder of `CriteriaDelete` using `CriteriaBuilder`
+
+|===

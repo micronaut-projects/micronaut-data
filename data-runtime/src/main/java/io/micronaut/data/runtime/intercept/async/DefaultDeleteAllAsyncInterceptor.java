@@ -48,8 +48,8 @@ public class DefaultDeleteAllAsyncInterceptor<T> extends AbstractCountConvertCom
     protected CompletionStage<?> interceptCompletionStage(RepositoryMethodKey methodKey, MethodInvocationContext<Object, CompletionStage<Object>> context) {
         Optional<Iterable<Object>> deleteEntities = findEntitiesParameter(context, Object.class);
         Optional<Object> deleteEntity = findEntityParameter(context, Object.class);
-        if (!deleteEntity.isPresent() && !deleteEntities.isPresent()) {
-            PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
+        if (deleteEntity.isEmpty() && deleteEntities.isEmpty()) {
+            PreparedQuery<?, Number> preparedQuery = prepareQuery(methodKey, context);
             return asyncDatastoreOperations.executeDelete(preparedQuery);
         } else if (deleteEntity.isPresent()) {
             return asyncDatastoreOperations.delete(getDeleteOperation(context, deleteEntity.get()));
