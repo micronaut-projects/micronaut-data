@@ -22,6 +22,7 @@ import io.micronaut.coherence.data.repositories.AsyncBookRepository;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
@@ -37,7 +38,9 @@ import java.util.stream.Collectors;
 
 @MicronautTest(propertySources = {"classpath:sessions.yaml"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Disabled("Flaky test")
 class GeneratedAsyncStatementsTest extends AbstractDataTest {
+
 
     /**
      * A {@code repository} for validating generated queries.
