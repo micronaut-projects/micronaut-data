@@ -313,7 +313,7 @@ public interface Pageable extends Sort {
     @Internal
     @JsonCreator
     static @NonNull Pageable from(
-            @JsonProperty("page") int page,
+            @JsonProperty("number") int page,
             @JsonProperty("size") int size,
             @JsonProperty("mode") @Nullable Mode mode,
             @JsonProperty("cursor") @Nullable Cursor cursor,

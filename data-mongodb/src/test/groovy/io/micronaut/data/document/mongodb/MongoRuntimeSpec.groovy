@@ -14,6 +14,8 @@ import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
+import java.nio.charset.Charset
+
 @MicronautTest
 class MongoRuntimeSpec extends Specification implements MongoTestPropertyProvider {
     @AutoCleanup
@@ -30,19 +32,26 @@ class MongoRuntimeSpec extends Specification implements MongoTestPropertyProvide
 
     void 'test runtime serialization'() {
         given:
+            def content = "test".getBytes(Charset.defaultCharset())
             TestContent testContent = new TestContent(
                     id: 'test',
                     category: [
                             one  : 'one',
                             two  : 2,
                             three: false
-                    ]
+                    ],
+                    content: content,
+                    number: BigDecimal.TEN
             )
 
         when:
             contentRepository.save(testContent)
+            def loadedTestContent = contentRepository.findById('test').orElse(null)
         then:
-            contentRepository.findById('test').get().category == testContent.category
+            loadedTestContent
+            loadedTestContent.category == testContent.category
+            loadedTestContent.content == testContent.content
+            loadedTestContent.number == testContent.number
     }
 
 }
@@ -68,4 +77,6 @@ class TestContent {
 
 
     Map category = null
+
+    byte[] content
 }
