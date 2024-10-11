@@ -18,7 +18,6 @@ package io.micronaut.data.mongodb.serde;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.convert.ConversionContext;
-import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.MappedProperty;
@@ -45,7 +44,6 @@ import org.bson.types.ObjectId;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Map;
 
 /**
  * The Micronaut Data's Serde's {@link Deserializer.DecoderContext}.
@@ -180,14 +178,8 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
         if (codec instanceof MappedCodec<? extends T> mappedCodec) {
             return mappedCodec.deserializer;
         }
-        if (codec != null) {
-            // Eliminate codecs for basic types and collections
-            Class<? extends T> encoderClass = codec.getEncoderClass();
-            if (!ClassUtils.isJavaLangType(encoderClass)
-                && !Map.class.isAssignableFrom(encoderClass)
-                && !Iterable.class.isAssignableFrom(encoderClass)) {
-                return new CodecBsonDecoder<>((Codec<T>) codec);
-            }
+        if (codec != null && CodecUtils.shouldUseCodec(codec)) {
+            return new CodecBsonDecoder<>((Codec<T>) codec);
         }
         return parent.findDeserializer(type);
     }
