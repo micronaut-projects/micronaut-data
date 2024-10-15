@@ -273,6 +273,73 @@ abstract class AbstractRepositorySpec extends Specification {
             page.content[0].students.collect { it.name }.sort() == ["Denis", "Josh"]
     }
 
+    void "test JOIN cursor pagination"() {
+        if (skipJoinPagination()) {
+            return
+        }
+        given:
+            Student denis = new Student("Denis")
+            Student josh = new Student("Josh")
+            Student kevin = new Student("Kevin")
+            def book1 = new Book(title: "The Stand", students: [denis, josh])
+            def book2 = new Book(title: "Pet Cemetery", students: [kevin])
+            def book3 = new Book(title: "Along Came a Spider", students: [kevin, josh])
+            bookRepository.save(book1)
+            bookRepository.save(book2)
+            bookRepository.save(book3
+            )
+            List<String> names = [denis.name, josh.name]
+        when:
+            io.micronaut.data.model.Page<Book> page = bookRepository.findAllByStudentsNameIn(names, CursoredPageable.from( 10, Sort.of(Sort.Order.asc("title"))))
+
+        then:
+            page.totalSize == page.content.size()
+            page.totalSize == 2
+            page.content.collect { it.title }.sort() == ["Along Came a Spider", "The Stand"]
+            page.content[0].students.collect { it.name }.sort() == ["Josh", "Kevin"]
+            page.content[1].students.collect { it.name }.sort() == ["Denis", "Josh"]
+
+        when:
+            def pageable = CursoredPageable.from(1, Sort.of(Sort.Order.asc("title")))
+            page = bookRepository.findAllByStudentsNameIn(names, pageable)
+
+        then:
+            page.totalSize == 2
+            page.content.size() == 1
+            page.content[0].title == "Along Came a Spider"
+            page.content[0].students.collect { it.name }.sort() == ["Josh", "Kevin"]
+
+        when:
+            pageable = page.nextPageable()
+            page = bookRepository.findAllByStudentsNameIn(names, pageable)
+
+        then:
+            page.totalSize == 2
+            page.content.size() == 1
+            page.content[0].title == "The Stand"
+            page.content[0].students.collect { it.name }.sort() == ["Denis", "Josh"]
+
+        when:
+            pageable = page.nextPageable()
+            page = bookRepository.findAllByStudentsNameIn(names, pageable)
+
+        then:
+            page.totalSize == 2
+            page.content.size() == 0
+
+// TODO: Can we support going back after page that doesn't return anything
+//
+//        when:
+//            pageable = page.previousPageable()
+//            page = bookRepository.findAllByStudentsNameIn(names, pageable)
+//
+//        then:
+//            page.totalSize == 2
+//            page.content.size() == 1
+//            page.content[0].title == "The Stand"
+//            page.content[0].students.collect { it.name }.sort() == ["Denis", "Josh"]
+    }
+
     void "test criteria pagination"() {
         given:
             Student denis = new Student("Denis")

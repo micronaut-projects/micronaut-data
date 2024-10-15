@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.operations.internal.sql;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -255,11 +256,14 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         }
     }
 
-    private void appendPaginationOrOrderQueryPart(StringBuilder query, Pageable pageable, boolean isSingleResult, String tableAlias, int paramIndex) {
+    private void appendPaginationOrOrderQueryPart(StringBuilder query, Pageable pageable,
+                                                  boolean isSingleResult,
+                                                  String tableAlias,
+                                                  int paramIndex) {
         SqlQueryBuilder2 queryBuilder = sqlStoredQuery.getQueryBuilder();
         if (pageable instanceof CursoredPageable cursored) {
             cursored = enhancePageable(cursored, getPersistentEntity());
-            query.append(buildCursorPagination(cursored, paramIndex));
+            query.append(buildCursorPagination(cursored, paramIndex, tableAlias));
             appendSort(cursored.getSort(), query, queryBuilder, tableAlias);
             query.append(queryBuilder.buildLimitAndOffset(cursored.getSize(), 0)); // Append limit
         } else {
@@ -295,14 +299,8 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         return Sort.of(sort.getOrderBy().stream().map(Order::reverse).toList());
     }
 
-    /**
-     * Add relevant query clauses and query bindings to use cursored pagination.
-     *
-     * @param cursoredPageable The cursored pageable
-     * @return The additional query part
-     */
     @NonNull
-    private String buildCursorPagination(@NonNull CursoredPageable cursoredPageable, int paramIndex) {
+    private String buildCursorPagination(@NonNull CursoredPageable cursoredPageable, int paramIndex, @Nullable String tableAlias) {
         RuntimePersistentEntity<Object> persistentEntity = (RuntimePersistentEntity<Object>) getPersistentEntity();
         List<RuntimePersistentProperty<Object>> cursorProperties = getCursorProperties(cursoredPageable, persistentEntity);
         Optional<Cursor> optionalCursor = cursoredPageable.cursor();
@@ -339,7 +337,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
             builder.append("(");
             for (int j = 0; j <= i; ++j) {
                 String propertyName = orders.get(j).getProperty();
-                builder.append(sqlStoredQuery.getQueryBuilder().buildPropertyByName(propertyName, query, persistentEntity, getAnnotationMetadata(), isNative(), null));
+                builder.append(sqlStoredQuery.getQueryBuilder().buildPropertyByName(propertyName, query, persistentEntity, getAnnotationMetadata(), isNative(), tableAlias));
                 if (orders.get(i).isAscending()) {
                     builder.append(i == j ? " > " : " = ");
                 } else {
