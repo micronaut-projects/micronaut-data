@@ -11,6 +11,7 @@ dependencies {
     annotationProcessor libs.micronaut.docs
 
     api projects.micronautDataConnection
+    api projects.micronautDataRuntime
     implementation mnSql.micronaut.jdbc
     implementation mn.micronaut.aop
 

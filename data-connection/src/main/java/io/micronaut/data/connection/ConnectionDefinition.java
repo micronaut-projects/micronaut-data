@@ -18,6 +18,7 @@ package io.micronaut.data.connection;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.connection.support.ConnectionClientInformation;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -100,6 +101,14 @@ public interface ConnectionDefinition {
      */
     @Nullable
     String getName();
+
+    /**
+     * Returns the client information associated with this connection definition.
+     * If no client information has been set, this method will return null.
+     *
+     * @return An instance of {@link ConnectionClientInformation} representing the client information, or null if not set.
+     */
+    @Nullable ConnectionClientInformation connectionClientInformation();
 
     /**
      * Connection definition with specific propagation.

@@ -20,6 +20,7 @@ import io.micronaut.aop.InterceptedMethod;
 import io.micronaut.aop.InterceptorBean;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
@@ -29,10 +30,12 @@ import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionOperationsRegistry;
 import io.micronaut.data.connection.DefaultConnectionDefinition;
+import io.micronaut.data.connection.annotation.ClientInfo;
 import io.micronaut.data.connection.annotation.Connectable;
 import io.micronaut.data.connection.async.AsyncConnectionOperations;
 import io.micronaut.data.connection.reactive.ReactiveStreamsConnectionOperations;
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
+import io.micronaut.data.connection.support.ConnectionClientInformation;
 import io.micronaut.inject.ExecutableMethod;
 import jakarta.inject.Singleton;
 import reactor.core.publisher.Flux;
@@ -63,6 +66,9 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
 
     private final ConversionService conversionService;
 
+    @Nullable
+    private final String appName;
+
     /**
      * Default constructor.
      *
@@ -72,9 +78,11 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
      */
     ConnectableInterceptor(@NonNull ConnectionOperationsRegistry connectionOperationsRegistry,
                            @Nullable ConnectionDataSourceTenantResolver tenantResolver,
+                           @Nullable @Value("${micronaut.application.name}") String appName,
                            ConversionService conversionService) {
         this.connectionOperationsRegistry = connectionOperationsRegistry;
         this.tenantResolver = tenantResolver;
+        this.appName = appName;
         this.conversionService = conversionService;
     }
 
@@ -97,7 +105,7 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
             final ConnectionInvocation connectionInvocation = connectionInvocationMap
                 .computeIfAbsent(new TenantExecutableMethod(tenantDataSourceName, executableMethod), ignore -> {
                     final String dataSource = tenantDataSourceName == null ? executableMethod.stringValue(Connectable.class).orElse(null) : tenantDataSourceName;
-                    final ConnectionDefinition connectionDefinition = getConnectionDefinition(executableMethod);
+                    final ConnectionDefinition connectionDefinition = getConnectionDefinition(executableMethod, appName);
 
                     switch (interceptedMethod.resultType()) {
                         case PUBLISHER -> {
@@ -150,17 +158,33 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
     }
 
     @NonNull
-    public static ConnectionDefinition getConnectionDefinition(ExecutableMethod<Object, Object> executableMethod) {
+    public static ConnectionDefinition getConnectionDefinition(ExecutableMethod<Object, Object> executableMethod, String appName) {
         AnnotationValue<Connectable> annotation = executableMethod.getAnnotation(Connectable.class);
         if (annotation == null) {
             throw new IllegalStateException("No declared @Connectable annotation present");
         }
 
+        AnnotationValue<ClientInfo> clientInfoAnnotationValue = executableMethod.getAnnotation(ClientInfo.class);
+        String module = null;
+        String action = null;
+        if (clientInfoAnnotationValue != null) {
+            module = clientInfoAnnotationValue.stringValue("module").orElse(null);
+            action = clientInfoAnnotationValue.stringValue("action").orElse(null);
+        }
+        if (module == null) {
+            module = executableMethod.getDeclaringType().getName();
+        }
+        if (action == null) {
+            action = executableMethod.getMethodName();
+        }
+        ConnectionClientInformation connectionClientInformation = new ConnectionClientInformation(appName, module, action);
+
         return new DefaultConnectionDefinition(
             executableMethod.getDeclaringType().getSimpleName() + "." + executableMethod.getMethodName(),
             annotation.enumValue("propagation", ConnectionDefinition.Propagation.class).orElse(ConnectionDefinition.PROPAGATION_DEFAULT),
             annotation.longValue("timeout").stream().mapToObj(Duration::ofSeconds).findFirst().orElse(null),
-            annotation.booleanValue("readOnly").orElse(null)
+            annotation.booleanValue("readOnly").orElse(null),
+            connectionClientInformation
         );
     }
 

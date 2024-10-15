@@ -19,7 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
+import io.micronaut.data.connection.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.QueryStatement;

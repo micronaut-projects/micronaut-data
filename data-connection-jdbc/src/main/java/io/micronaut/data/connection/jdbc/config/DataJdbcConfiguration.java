@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.config;
+package io.micronaut.data.connection.jdbc.config;
 
 import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
@@ -55,6 +55,7 @@ public class DataJdbcConfiguration implements Named, Toggleable {
      */
     private boolean allowConnectionPerOperation = true;
     private boolean enabled = true;
+    private boolean clientInfoTracing;
 
     /**
      * The configuration.
@@ -189,5 +190,23 @@ public class DataJdbcConfiguration implements Named, Toggleable {
      */
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    /**
+     * Checks if client info tracing is enabled for this data source.
+     *
+     * @return true if client info tracing is enabled, false otherwise.
+     */
+    public boolean isClientInfoTracing() {
+        return clientInfoTracing;
+    }
+
+    /**
+     * Sets an indicator telling whether client info tracing is enabled for this data source.
+     *
+     * @param clientInfoTracing an indicator telling whether client info tracing is enabled
+     */
+    public void setClientInfoTracing(boolean clientInfoTracing) {
+        this.clientInfoTracing = clientInfoTracing;
     }
 }

@@ -32,7 +32,7 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.annotation.Connectable;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
+import io.micronaut.data.connection.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.jdbc.convert.JdbcConversionContext;
 import io.micronaut.data.jdbc.mapper.ColumnIndexCallableResultReader;
 import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;

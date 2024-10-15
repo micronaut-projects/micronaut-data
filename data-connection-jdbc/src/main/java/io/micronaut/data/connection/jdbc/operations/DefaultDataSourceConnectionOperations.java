@@ -16,20 +16,25 @@
 package io.micronaut.data.connection.jdbc.operations;
 
 import io.micronaut.context.annotation.EachBean;
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.connection.exceptions.ConnectionException;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
+import io.micronaut.data.connection.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.connection.jdbc.exceptions.CannotGetJdbcConnectionException;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.ConnectionSynchronization;
 import io.micronaut.data.connection.support.AbstractConnectionOperations;
+import io.micronaut.data.connection.support.ConnectionClientInformation;
 import io.micronaut.data.connection.support.JdbcConnectionUtils;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
+import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,9 +51,12 @@ public final class DefaultDataSourceConnectionOperations extends AbstractConnect
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultDataSourceConnectionOperations.class);
     private final DataSource dataSource;
+    private final DataJdbcConfiguration dataJdbcConfiguration;
 
-    DefaultDataSourceConnectionOperations(DataSource dataSource) {
+    DefaultDataSourceConnectionOperations(DataSource dataSource,
+                                          @Parameter DataJdbcConfiguration dataJdbcConfiguration) {
         this.dataSource = DelegatingDataSource.unwrapDataSource(dataSource);
+        this.dataJdbcConfiguration = dataJdbcConfiguration;
     }
 
     @Override
@@ -62,7 +70,8 @@ public final class DefaultDataSourceConnectionOperations extends AbstractConnect
 
     @Override
     protected void setupConnection(ConnectionStatus<Connection> connectionStatus) {
-        connectionStatus.getDefinition().isReadOnly().ifPresent(readOnly -> {
+        ConnectionDefinition connectionDefinition = connectionStatus.getDefinition();
+        connectionDefinition.isReadOnly().ifPresent(readOnly -> {
             List<Runnable> onCompleteCallbacks = new ArrayList<>(1);
             JdbcConnectionUtils.applyReadOnly(LOG, connectionStatus.getConnection(), readOnly, onCompleteCallbacks);
             if (!onCompleteCallbacks.isEmpty()) {
@@ -76,6 +85,30 @@ public final class DefaultDataSourceConnectionOperations extends AbstractConnect
                 });
             }
         });
+        if (!dataJdbcConfiguration.isClientInfoTracing()) {
+            return;
+        }
+        if (dataJdbcConfiguration.getDialect() != Dialect.ORACLE) {
+            LOG.warn("Client info tracing is supported only for Oracle database connections.");
+            return;
+        }
+        ConnectionClientInformation connectionClientInformation = connectionDefinition.connectionClientInformation();
+        if (connectionClientInformation == null) {
+            LOG.warn("ConnectionClientInformation not provided for the connection.");
+            return;
+        }
+        LOG.debug("Setting client info to the Oracle connection");
+        Connection conn = connectionStatus.getConnection();
+
+        try {
+            if (connectionClientInformation.clientId() != null) {
+                conn.setClientInfo("OCSID.CLIENTID", connectionClientInformation.clientId());
+            }
+            conn.setClientInfo("OCSID.MODULE", connectionClientInformation.module());
+            conn.setClientInfo("OCSID.ACTION", connectionClientInformation.action());
+        } catch (SQLClientInfoException e) {
+            LOG.warn("Failed to set client info", e);
+        }
     }
 
     @Override
