@@ -257,7 +257,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
     }
 
     /**
-     * @return The limit of the query or 0 if none
+     * @return The offset of the query or 0 if none
      * @since 4.10
      */
     default int getOffset() {
