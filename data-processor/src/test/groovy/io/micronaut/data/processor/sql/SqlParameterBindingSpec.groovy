@@ -128,8 +128,8 @@ interface ProjectRepository extends CrudRepository<Project, ProjectId> {
 
         expect:"The repository compiles"
         repository != null
-        getDataTypes(method) == [DataType.STRING, DataType.STRING]
-        getParameterBindingIndexes(method) == ["0", "1"]
+        getDataTypes(method) == [DataType.STRING, DataType.STRING, DataType.OBJECT]
+        getParameterBindingIndexes(method) == ["0", "1", "2"]
     }
 
     void "test non-sql compile repository"() {

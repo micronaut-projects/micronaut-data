@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.query;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.DataAnnotationUtils;
@@ -31,6 +32,7 @@ import io.micronaut.data.operations.HintsCapableRepository;
 import io.micronaut.data.runtime.query.internal.DefaultStoredQuery;
 import io.micronaut.inject.ExecutableMethod;
 
+import java.lang.annotation.Annotation;
 import java.util.List;
 
 import static io.micronaut.data.model.runtime.StoredQuery.OperationType;
@@ -55,6 +57,16 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
 
     @Override
     public <E, R> StoredQuery<E, R> resolveCountQuery(MethodInvocationContext<?, ?> context) {
+        AnnotationValue<Annotation> dataMethodQuery = context.getAnnotation(DataMethod.NAME);
+        AnnotationValue<Annotation> countQuery = dataMethodQuery.getAnnotation(DataMethod.META_MEMBER_COUNT_QUERY).orElse(null);
+        if (countQuery != null) {
+            return new DefaultStoredQuery<>(
+                context.getExecutableMethod(),
+                countQuery,
+                getHintsCapableRepository()
+            );
+        }
+        // Previous way
         return new DefaultStoredQuery<>(
             context.getExecutableMethod(),
             true,

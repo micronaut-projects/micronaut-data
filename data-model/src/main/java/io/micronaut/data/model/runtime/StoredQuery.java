@@ -249,6 +249,22 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
     }
 
     /**
+     * @return The limit of the query or -1 if none
+     * @since 4.10
+     */
+    default int getLimit() {
+        return -1;
+    }
+
+    /**
+     * @return The offset of the query or 0 if none
+     * @since 4.10
+     */
+    default int getOffset() {
+        return 0;
+    }
+
+    /**
      * Describes the operation type.
      */
     enum OperationType {

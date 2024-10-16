@@ -20,11 +20,11 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.JoinPath;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Selection;
 
 import java.util.Collection;
@@ -81,18 +81,26 @@ public interface QueryBuilder2 {
     QueryResult buildDelete(@NonNull AnnotationMetadata annotationMetadata, @NonNull DeleteQueryDefinition definition);
 
     /**
-     * Encode the pageable.
+     * Generate the limit and offset query.
      *
-     * @param pageable The pageable
+     * @param limit  The limit (-1 of not set)
+     * @param offset The offset (0 if not set)
      * @return The encoded query
      */
     @NonNull
-    String buildPagination(@NonNull Pageable pageable);
+    String buildLimitAndOffset(long limit, long offset);
 
     /**
      * The select query definition.
      */
     interface SelectQueryDefinition extends BaseQueryDefinition {
+
+        /**
+         * @return The root
+         */
+        @NonNull
+        Root<?> root();
+
 
         /**
          * @return The selection
@@ -121,10 +129,10 @@ public interface QueryBuilder2 {
         }
 
         /**
-         * @return The index of {@link Pageable} or {@link io.micronaut.data.model.Sort}.
+         * @return The parameters in role
          */
-        default int getParameterPageableOrSortIndex() {
-            return -1;
+        default Map<String, Integer> parametersInRole() {
+            return Map.of();
         }
 
     }

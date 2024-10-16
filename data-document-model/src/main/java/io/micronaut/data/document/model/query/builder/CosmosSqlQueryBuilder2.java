@@ -24,8 +24,6 @@ import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.repeatable.WhereSpecifications;
 import io.micronaut.data.model.Association;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.PersistentAssociationPath;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentPropertyPath;
@@ -374,20 +372,11 @@ public final class CosmosSqlQueryBuilder2 extends SqlQueryBuilder2 {
         };
     }
 
-    @NonNull
     @Override
-    public String buildPagination(@NonNull Pageable pageable) {
-        if (pageable.getMode() != Mode.OFFSET) {
-            throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported by cosmos operations");
-        }
-        int size = pageable.getSize();
-        if (size > 0) {
-            StringBuilder builder = new StringBuilder(" ");
-            long from = pageable.getOffset();
-            builder.append("OFFSET ").append(from).append(" LIMIT ").append(size).append(" ");
-            return builder.toString();
+    public String buildLimitAndOffset(long limit, long offset) {
+        if (limit > 0) {
+            return " OFFSET " + offset + " LIMIT " + limit + " ";
         }
         return "";
     }
-
 }

@@ -17,7 +17,7 @@ package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.model.query.QueryModel;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder2;
 import io.micronaut.data.model.query.builder.QueryResult;
@@ -35,7 +35,14 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
 @Internal
 public interface QueryResultPersistentEntityCriteriaQuery {
 
-    static QueryBuilder2 findQueryBuilder2(QueryBuilder queryBuilder) {
+    default QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder queryBuilder) {
+        return buildQuery(annotationMetadata, asQueryBuilder2(queryBuilder));
+    }
+
+    QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder2 queryBuilder);
+
+    @NonNull
+    private static QueryBuilder2 asQueryBuilder2(QueryBuilder queryBuilder) {
         Class<? extends QueryBuilder> queryBuilderClass = queryBuilder.getClass();
         if (queryBuilderClass.getSimpleName().equals("CosmosSqlQueryBuilder")) {
             // Use new implementation
@@ -53,7 +60,7 @@ public interface QueryResultPersistentEntityCriteriaQuery {
         if (queryBuilderClass.getSimpleName().equals("MongoQueryBuilder")) {
             // Use new implementation
             try {
-                return (QueryBuilder2)  queryBuilderClass
+                return (QueryBuilder2) queryBuilderClass
                     .getClassLoader().loadClass("io.micronaut.data.document.model.query.builder.MongoQueryBuilder2")
                     .getDeclaredConstructor()
                     .newInstance();
@@ -65,29 +72,18 @@ public interface QueryResultPersistentEntityCriteriaQuery {
         }
         if (queryBuilderClass == SqlQueryBuilder.class) {
             // Use new implementation
-            return newSqlQueryBuilder((SqlQueryBuilder) queryBuilder);
+            AnnotationMetadata builderAnnotationMetadata = ((SqlQueryBuilder) queryBuilder).getAnnotationMetadata();
+            if (builderAnnotationMetadata == null) {
+                return new SqlQueryBuilder2(((SqlQueryBuilder) queryBuilder).getDialect());
+            } else {
+                return new SqlQueryBuilder2(builderAnnotationMetadata);
+            }
         }
         if (queryBuilderClass == JpaQueryBuilder.class) {
             // Use new implementation
             return new JpaQueryBuilder2();
         }
-        return null;
-    }
-
-    QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder queryBuilder);
-
-    QueryModel getQueryModel();
-
-    QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder2 queryBuilder);
-
-    private static QueryBuilder2 newSqlQueryBuilder(SqlQueryBuilder sqlQueryBuilder) {
-        // Use new implementation
-        AnnotationMetadata builderAnnotationMetadata = sqlQueryBuilder.getAnnotationMetadata();
-        if (builderAnnotationMetadata == null) {
-            return new SqlQueryBuilder2(sqlQueryBuilder.getDialect());
-        } else {
-            return new SqlQueryBuilder2(builderAnnotationMetadata);
-        }
+        return new LegacyQueryModelQueryBuilder(queryBuilder);
     }
 
 }
