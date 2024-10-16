@@ -15972,23 +15972,23 @@ abstract class AbstractBookRepository : CrudRepository&lt;Book, String&gt; {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MongoRepository
-public interface PersonRepository extends CrudRepository&lt;Person, ObjectId&gt;, JpaSpecificationExecutor&lt;Person&gt; {
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@CosmosRepository
+public interface PersonRepository extends CrudRepository&lt;Person, String&gt;, JpaSpecificationExecutor&lt;Person&gt; {
 }</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@MongoRepository
-interface PersonRepository extends CrudRepository&lt;Person, ObjectId&gt;, JpaSpecificationExecutor&lt;Person&gt; {
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@CosmosRepository
+interface PersonRepository extends CrudRepository&lt;Person, String&gt;, JpaSpecificationExecutor&lt;Person&gt; {
 }</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@MongoRepository
-interface PersonRepository : CrudRepository&lt;Person, ObjectId&gt;, JpaSpecificationExecutor&lt;Person&gt; {
-    }</code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@CosmosRepository
+interface PersonRepository : CrudRepository&lt;Person, String&gt;, JpaSpecificationExecutor&lt;Person&gt; {
+}</code></pre>
 </div>
 </div>
 <div class="paragraph">
