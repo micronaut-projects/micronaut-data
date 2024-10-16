@@ -163,9 +163,10 @@ implements <a href="../../../../model/query/builder/QueryBuilder2.html" title="i
 <div class="block">Builds an insert statement for the given entity.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildPagination(io.micronaut.data.model.Pageable)" class="member-name-link">buildPagination</a><wbr>(<a href="../../../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildLimitAndOffset(long,long)" class="member-name-link">buildLimitAndOffset</a><wbr>(long&nbsp;limit,
+ long&nbsp;offset)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Encode the pageable.</div>
+<div class="block">Generate the limit and offset query.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../../model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildSelect(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryBuilder2.SelectQueryDefinition)" class="member-name-link">buildSelect</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
@@ -334,16 +335,18 @@ implements <a href="../../../../model/query/builder/QueryBuilder2.html" title="i
 </section>
 </li>
 <li>
-<section class="detail" id="buildPagination(io.micronaut.data.model.Pageable)">
-<h3>buildPagination</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">buildPagination</span><wbr><span class="parameters">(<a href="../../../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</span></div>
-<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../../../../model/query/builder/QueryBuilder2.html#buildPagination(io.micronaut.data.model.Pageable)">QueryBuilder2</a></code></span></div>
-<div class="block">Encode the pageable.</div>
+<section class="detail" id="buildLimitAndOffset(long,long)">
+<h3>buildLimitAndOffset</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">buildLimitAndOffset</span><wbr><span class="parameters">(long&nbsp;limit,
+ long&nbsp;offset)</span></div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../../../../model/query/builder/QueryBuilder2.html#buildLimitAndOffset(long,long)">QueryBuilder2</a></code></span></div>
+<div class="block">Generate the limit and offset query.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../../../../model/query/builder/QueryBuilder2.html#buildPagination(io.micronaut.data.model.Pageable)">buildPagination</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../model/query/builder/QueryBuilder2.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder2</a></code></dd>
+<dd><code><a href="../../../../model/query/builder/QueryBuilder2.html#buildLimitAndOffset(long,long)">buildLimitAndOffset</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../model/query/builder/QueryBuilder2.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder2</a></code></dd>
 <dt>Parameters:</dt>
-<dd><code>pageable</code> - The pageable</dd>
+<dd><code>limit</code> - The limit (-1 of not set)</dd>
+<dd><code>offset</code> - The offset (0 if not set)</dd>
 <dt>Returns:</dt>
 <dd>The encoded query</dd>
 </dl>

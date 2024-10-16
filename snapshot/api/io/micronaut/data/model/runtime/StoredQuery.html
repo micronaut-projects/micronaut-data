@@ -168,6 +168,12 @@ extends io.micronaut.core.naming.Named, <a href="StoredDataOperation.html" title
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="../query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getJoinPaths()" class="member-name-link">getJoinPaths</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default int</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getLimit()" class="member-name-link">getLimit</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default int</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getOffset()" class="member-name-link">getOffset</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="StoredQuery.OperationType.html" title="enum class in io.micronaut.data.model.runtime">StoredQuery.OperationType</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getOperationType()" class="member-name-link">getOperationType</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
@@ -596,6 +602,30 @@ extends io.micronaut.core.naming.Named, <a href="StoredDataOperation.html" title
 <dd>Parameter expressions.</dd>
 <dt>Since:</dt>
 <dd>4.5.0</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="getLimit()">
+<h3>getLimit</h3>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">getLimit</span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>The limit of the query or -1 if none</dd>
+<dt>Since:</dt>
+<dd>4.10</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="getOffset()">
+<h3>getOffset</h3>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name">getOffset</span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>The offset of the query or 0 if none</dd>
+<dt>Since:</dt>
+<dd>4.10</dd>
 </dl>
 </section>
 </li>
