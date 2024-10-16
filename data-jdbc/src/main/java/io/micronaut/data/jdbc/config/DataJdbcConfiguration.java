@@ -190,5 +190,4 @@ public class DataJdbcConfiguration implements Named, Toggleable {
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
-
 }
