@@ -108,4 +108,13 @@ public abstract class DelegatingQueryParameterBinding implements QueryParameterB
         return delegate.getValue();
     }
 
+    @Override
+    public String getRole() {
+        return delegate.getRole();
+    }
+
+    @Override
+    public String getTableAlias() {
+        return delegate.getTableAlias();
+    }
 }

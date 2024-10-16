@@ -17,11 +17,9 @@ package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
-import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
@@ -33,13 +31,9 @@ import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.query.QueryModelPredicateVisitor;
-import io.micronaut.data.model.jpa.criteria.impl.query.QueryModelSelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.jpa.criteria.impl.util.Joiner;
 import io.micronaut.data.model.query.JoinPath;
-import io.micronaut.data.model.query.QueryModel;
-import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder2;
 import io.micronaut.data.model.query.builder.QueryResult;
 import jakarta.persistence.criteria.AbstractQuery;
@@ -79,7 +73,7 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requirePro
 public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEntityQuery<T>> implements AbstractQuery<T>,
     QueryResultPersistentEntityCriteriaQuery, PersistentEntityQuery<T> {
 
-    protected int parameterPageableOrSortIndex = -1;
+    protected Map<String, Integer> parametersInRole = new LinkedHashMap<>();
     protected final CriteriaBuilder criteriaBuilder;
     protected final ExpressionType<T> resultType;
     protected Predicate predicate;
@@ -96,8 +90,8 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
         this.criteriaBuilder = criteriaBuilder;
     }
 
-    public final void setParameterPageableOrSortIndex(int parameterPageableOrSortIndex) {
-        this.parameterPageableOrSortIndex = parameterPageableOrSortIndex;
+    public final Map<String, Integer> getParametersInRole() {
+        return parametersInRole;
     }
 
     /**
@@ -106,18 +100,8 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
     protected abstract Self self();
 
     @Override
-    public QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder queryBuilder) {
-        QueryBuilder2 queryBuilder2 = QueryResultPersistentEntityCriteriaQuery.findQueryBuilder2(queryBuilder);
-        if (queryBuilder2 == null) {
-            return queryBuilder.buildQuery(annotationMetadata, getQueryModel());
-        }
-        return buildQuery(annotationMetadata, queryBuilder2);
-    }
-
-    @Override
     public QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder2 queryBuilder) {
-        QueryBuilder2.SelectQueryDefinition definition = toSelectQueryDefinition();
-        return queryBuilder.buildSelect(annotationMetadata, definition);
+        return queryBuilder.buildSelect(annotationMetadata, toSelectQueryDefinition());
     }
 
     /**
@@ -125,6 +109,7 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
      */
     public QueryBuilder2.SelectQueryDefinition toSelectQueryDefinition() {
         return new SelectQueryDefinitionImpl(
+            entityRoot,
             entityRoot.getPersistentEntity(),
             predicate,
             selection == null ? entityRoot : selection,
@@ -134,7 +119,7 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
             orders == null ? List.of() : orders,
             max,
             offset,
-            parameterPageableOrSortIndex
+            parametersInRole
         );
     }
 
@@ -223,61 +208,6 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
             }
         }
         return false;
-    }
-
-    @NonNull
-    @Override
-    public QueryModel getQueryModel() {
-        if (entityRoot == null) {
-            throw new IllegalStateException("The root entity must be specified!");
-        }
-        QueryModel qm = QueryModel.from(entityRoot.getPersistentEntity());
-        Joiner joiner = new Joiner();
-        if (predicate instanceof IPredicate predicateVisitable) {
-            predicateVisitable.visitPredicate(createPredicateVisitor(qm));
-            predicateVisitable.visitPredicate(joiner);
-        }
-        if (selection instanceof ISelection<?> selectionVisitable) {
-            selectionVisitable.visitSelection(new QueryModelSelectionVisitor(qm, distinct));
-            selectionVisitable.visitSelection(joiner);
-            entityRoot.visitSelection(joiner);
-        } else {
-            entityRoot.visitSelection(new QueryModelSelectionVisitor(qm, distinct));
-            entityRoot.visitSelection(joiner);
-        }
-        if (orders != null && !orders.isEmpty()) {
-            List<Sort.Order> sortOrders = orders.stream().map(o -> {
-                PersistentPropertyPath<?> propertyPath = requireProperty(o.getExpression());
-                joiner.joinIfNeeded(propertyPath);
-                String name = propertyPath.getPathAsString();
-                if (o.isAscending()) {
-                    return Sort.Order.asc(name);
-                }
-                return Sort.Order.desc(name);
-            }).toList();
-            qm.sort(Sort.of(sortOrders));
-        }
-        for (Map.Entry<String, Joiner.Joined> e : joiner.getJoins().entrySet()) {
-            qm.join(e.getKey(), Optional.ofNullable(e.getValue().getType()).orElse(Join.Type.DEFAULT), e.getValue().getAlias());
-        }
-
-        qm.max(max);
-        qm.offset(offset);
-        if (forUpdate) {
-            qm.forUpdate();
-        }
-        return qm;
-    }
-
-    /**
-     * Creates query model predicate visitor.
-     *
-     * @param queryModel The query model
-     * @return the visitor
-     */
-    @NonNull
-    protected QueryModelPredicateVisitor createPredicateVisitor(QueryModel queryModel) {
-        return new QueryModelPredicateVisitor(queryModel);
     }
 
     @Override
@@ -445,15 +375,17 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
     @Internal
     private static final class SelectQueryDefinitionImpl extends BaseQueryDefinitionImpl implements QueryBuilder2.SelectQueryDefinition {
 
+        private final Root<?> root;
         private final Selection<?> selection;
         private final boolean isForUpdate;
         private final boolean isDistinct;
         private final List<Order> order;
         private final int limit;
         private final int offset;
-        private final int pageableOrSortParameterIndex;
+        private final Map<String, Integer> parametersInRole;
 
-        public SelectQueryDefinitionImpl(PersistentEntity persistentEntity,
+        public SelectQueryDefinitionImpl(Root<?> root,
+                                         PersistentEntity persistentEntity,
                                          Predicate predicate,
                                          Selection<?> selection,
                                          Map<String, JoinPath> joinPaths,
@@ -462,20 +394,26 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
                                          List<Order> order,
                                          int limit,
                                          int offset,
-                                         int pageableOrSortParameterIndex) {
+                                         Map<String, Integer> parametersInRole) {
             super(persistentEntity, predicate, joinPaths);
+            this.root = root;
             this.selection = selection;
             this.isForUpdate = isForUpdate;
             this.isDistinct = isDistinct;
             this.order = order;
             this.limit = limit;
             this.offset = offset;
-            this.pageableOrSortParameterIndex = pageableOrSortParameterIndex;
+            this.parametersInRole = parametersInRole;
         }
 
         @Override
-        public int getParameterPageableOrSortIndex() {
-            return pageableOrSortParameterIndex;
+        public Map<String, Integer> parametersInRole() {
+            return parametersInRole;
+        }
+
+        @Override
+        public Root<?> root() {
+            return root;
         }
 
         @Override

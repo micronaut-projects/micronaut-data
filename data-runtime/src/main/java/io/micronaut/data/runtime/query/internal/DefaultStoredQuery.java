@@ -24,6 +24,7 @@ import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.intercept.annotation.DataMethodQuery;
 import io.micronaut.data.intercept.annotation.DataMethodQueryParameter;
 import io.micronaut.data.model.AssociationUtils;
 import io.micronaut.data.model.DataType;
@@ -61,6 +62,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     private static final String DATA_METHOD_ANN_NAME = DataMethod.class.getName();
     @NonNull
     private final Class<RT> resultType;
+    private final DataType resultDataType;
     @NonNull
     private final Class<E> rootEntity;
     @NonNull
@@ -84,6 +86,8 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     private final boolean jsonEntity;
     private final OperationType operationType;
     private final Map<String, AnnotationValue<?>> parameterExpressions;
+    private final int limit;
+    private final int offset;
 
     /**
      * The default constructor.
@@ -93,26 +97,58 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
      * @param repositoryOperations The repositoryOperations
      */
     public DefaultStoredQuery(
-            @NonNull ExecutableMethod<?, ?> method,
-            boolean isCount,
-            HintsCapableRepository repositoryOperations) {
+        @NonNull ExecutableMethod<?, ?> method,
+        boolean isCount,
+        HintsCapableRepository repositoryOperations) {
+        this(method, method.getAnnotation(DataMethod.NAME), isCount, repositoryOperations);
+    }
+
+    /**
+     * The default constructor.
+     *
+     * @param method               The target method
+     * @param dataMethodQuery      The data method query annotation
+     * @param repositoryOperations The repositoryOperations
+     */
+    public DefaultStoredQuery(
+        @NonNull ExecutableMethod<?, ?> method,
+        AnnotationValue<Annotation> dataMethodQuery,
+        HintsCapableRepository repositoryOperations) {
+        this(method, dataMethodQuery, false, repositoryOperations);
+    }
+
+    /**
+     * The default constructor.
+     *
+     * @param method               The target method
+     * @param dataMethodQuery      The data method query annotation
+     * @param isCount              Is the query a count query
+     * @param repositoryOperations The repositoryOperations
+     */
+    public DefaultStoredQuery(
+        @NonNull ExecutableMethod<?, ?> method,
+        AnnotationValue<Annotation> dataMethodQuery,
+        boolean isCount,
+        HintsCapableRepository repositoryOperations) {
         super(method);
+
         this.rootEntity = getRequiredRootEntity(method);
         this.annotationMetadata = method.getAnnotationMetadata();
-        this.isNative = method.isTrue(Query.class, "nativeQuery");
-        this.isProcedure = method.isTrue(DataMethod.class, DataMethod.META_MEMBER_PROCEDURE);
+        this.isProcedure = dataMethodQuery.isTrue(DataMethodQuery.META_MEMBER_PROCEDURE);
         this.hasResultConsumer = method.stringValue(DATA_METHOD_ANN_NAME, "sqlMappingFunction").isPresent();
         this.isNumericPlaceHolder = method
                 .classValue(RepositoryConfiguration.class, "queryBuilder")
                 .map(c -> c == SqlQueryBuilder.class).orElse(false);
-        this.hasPageable = method.stringValue(DATA_METHOD_ANN_NAME, TypeRole.PAGEABLE).isPresent() ||
-                method.stringValue(DATA_METHOD_ANN_NAME, TypeRole.SORT).isPresent() ||
-                method.intValue(DATA_METHOD_ANN_NAME, META_MEMBER_LIMIT).orElse(-1) > -1 ||
-                method.intValue(DATA_METHOD_ANN_NAME, META_MEMBER_PAGE_SIZE).orElse(-1) > -1;
+        this.hasPageable = dataMethodQuery.stringValue(TypeRole.PAGEABLE).isPresent() ||
+            dataMethodQuery.stringValue(TypeRole.SORT).isPresent() ||
+            dataMethodQuery.intValue(META_MEMBER_LIMIT).orElse(-1) > -1 ||
+            dataMethodQuery.intValue(META_MEMBER_PAGE_SIZE).orElse(-1) > -1;
         String query;
         if (isCount) {
-            query = method.stringValue(Query.class, DataMethod.META_MEMBER_COUNT_QUERY)
-                .orElseGet(() -> method.stringValue(Query.class)
+            // Legacy count definition
+            AnnotationValue<Annotation> queryAnnotation = method.getAnnotation(Query.class.getName());
+            query = queryAnnotation.stringValue(DataMethod.META_MEMBER_COUNT_QUERY)
+                .orElseGet(() -> queryAnnotation.stringValue()
                     .orElseThrow(() -> new IllegalStateException("No query present in method")));
             Optional<String> rawCountQueryString = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_COUNT_QUERY);
             this.rawQuery = rawCountQueryString.isPresent();
@@ -122,29 +158,44 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
             if (ArrayUtils.isNotEmpty(countQueryParts)) {
                 this.queryParts = countQueryParts;
             } else {
-                this.queryParts = method.stringValues(DataMethod.class, DataMethod.META_MEMBER_EXPANDABLE_QUERY);
+                this.queryParts = method.stringValues(DataMethodQuery.class, DataMethodQuery.META_MEMBER_EXPANDABLE_QUERY);
             }
+            this.isNative = queryAnnotation.isTrue(DataMethodQuery.META_MEMBER_NATIVE);
             //noinspection unchecked
             this.resultType = (Class<RT>) Long.class;
+            this.resultDataType = DataType.LONG;
         } else {
-            query = method.stringValue(Query.class).orElseThrow(() ->
-                new IllegalStateException("No query present in method")
-            );
-            Optional<String> rawQueryString = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY);
-            this.rawQuery = rawQueryString.isPresent();
-            this.query = rawQueryString.orElse(query);
-            this.queryParts = method.stringValues(DataMethod.class, DataMethod.META_MEMBER_EXPANDABLE_QUERY);
+            Optional<String> q = dataMethodQuery.stringValue();
+            if (q.isPresent()) {
+                // Query defined by DataMethodQuery
+                Optional<String> rawQueryString = dataMethodQuery.stringValue(DataMethodQuery.META_MEMBER_RAW_QUERY);
+                this.isNative = dataMethodQuery.isTrue(DataMethodQuery.META_MEMBER_NATIVE);
+                this.rawQuery = rawQueryString.isPresent();
+                this.query = rawQueryString.orElseGet(q::get);
+            } else {
+                AnnotationValue<Annotation> queryAnnotation = method.getAnnotation(Query.class.getName());
+                query = queryAnnotation.stringValue().orElseThrow(() ->
+                    new IllegalStateException("No query present in method")
+                );
+                Optional<String> rawQueryString = queryAnnotation.stringValue(DataMethodQuery.META_MEMBER_RAW_QUERY);
+                this.isNative = queryAnnotation.isTrue(DataMethodQuery.META_MEMBER_NATIVE);
+                this.rawQuery = rawQueryString.isPresent();
+                this.query = rawQueryString.orElse(query);
+            }
+            this.resultDataType = dataMethodQuery.enumValue(DataMethodQuery.META_MEMBER_RESULT_DATA_TYPE, DataType.class).orElse(DataType.OBJECT);
+            this.queryParts = dataMethodQuery.stringValues(DataMethodQuery.META_MEMBER_EXPANDABLE_QUERY);
             //noinspection unchecked
-            this.resultType = method.classValue(DataMethod.NAME, DataMethod.META_MEMBER_RESULT_TYPE)
+            this.resultType = dataMethodQuery.classValue(DataMethodQuery.META_MEMBER_RESULT_TYPE)
                 .map(type -> (Class<RT>) ReflectionUtils.getWrapperType(type))
                 .orElse((Class<RT>) rootEntity);
         }
         this.method = method;
-        this.isDto = method.isTrue(DATA_METHOD_ANN_NAME, DataMethod.META_MEMBER_DTO);
-        this.isOptimisticLock = method.isTrue(DATA_METHOD_ANN_NAME, DataMethod.META_MEMBER_OPTIMISTIC_LOCK);
-
-        this.isCount = isCount;
-        AnnotationValue<DataMethod> annotation = annotationMetadata.getAnnotation(DataMethod.class);
+        this.isDto = dataMethodQuery.isTrue(DataMethodQuery.META_MEMBER_DTO);
+        this.isOptimisticLock = dataMethodQuery.isTrue(DataMethodQuery.META_MEMBER_OPTIMISTIC_LOCK);
+        this.operationType = dataMethodQuery.enumValue(DataMethodQuery.META_MEMBER_OPERATION_TYPE, DataMethodQuery.OperationType.class)
+            .map(op -> OperationType.valueOf(op.name()))
+            .orElse(OperationType.QUERY);
+        this.isCount = isCount || operationType == OperationType.COUNT;
         if (method.hasAnnotation(QueryHint.class)) {
             List<AnnotationValue<QueryHint>> values = method.getAnnotationValuesByType(QueryHint.class);
             this.queryHints = new HashMap<>(values.size());
@@ -165,20 +216,15 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
             }
         }
 
-        if (annotation == null) {
-            queryParameters = Collections.emptyList();
-        } else {
-            queryParameters = getQueryParameters(
-                annotation.getAnnotations(DataMethod.META_MEMBER_PARAMETERS, DataMethodQueryParameter.class),
-                isNumericPlaceHolder
-            );
-        }
+        this.queryParameters = getQueryParameters(
+            dataMethodQuery.getAnnotations(DataMethodQuery.META_MEMBER_PARAMETERS, DataMethodQueryParameter.class),
+            isNumericPlaceHolder
+        );
         this.jsonEntity = DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(annotationMetadata);
-        this.operationType = method.enumValue(DataMethod.NAME, DataMethod.META_MEMBER_OPERATION_TYPE, DataMethod.OperationType.class)
-            .map(op -> OperationType.valueOf(op.name()))
-            .orElse(OperationType.QUERY);
         this.parameterExpressions = annotationMetadata.getAnnotationValuesByType(ParameterExpression.class).stream()
             .collect(Collectors.toMap(av -> av.stringValue("name").orElseThrow(), av -> av));
+        this.limit = dataMethodQuery.intValue(DataMethodQuery.META_MEMBER_LIMIT).orElse(-1);
+        this.offset = dataMethodQuery.intValue(DataMethodQuery.META_MEMBER_OFFSET).orElse(0);
     }
 
     private static <E> Class<E> getRequiredRootEntity(ExecutableMethod<?, ?> context) {
@@ -231,10 +277,22 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
                             av.booleanValue(DataMethodQueryParameter.META_MEMBER_EXPANDABLE).orElse(false),
                             av.booleanValue(DataMethodQueryParameter.META_MEMBER_EXPRESSION).orElse(false),
                             value,
+                            av.stringValue(DataMethodQueryParameter.META_MEMBER_ROLE).orElse(null),
+                            av.stringValue(DataMethodQueryParameter.META_MEMBER_TABLE_ALIAS).orElse(null),
                             queryParameters
                     ));
         }
         return queryParameters;
+    }
+
+    @Override
+    public int getLimit() {
+        return limit;
+    }
+
+    @Override
+    public int getOffset() {
+        return offset;
     }
 
     @Override
@@ -335,11 +393,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     @NonNull
     @Override
     public DataType getResultDataType() {
-        if (isCount) {
-            return DataType.LONG;
-        }
-        return annotationMetadata.enumValue(DATA_METHOD_ANN_NAME, DataMethod.META_MEMBER_RESULT_DATA_TYPE, DataType.class)
-                .orElse(DataType.OBJECT);
+        return resultDataType;
     }
 
     /**
