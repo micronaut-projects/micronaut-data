@@ -4,7 +4,7 @@ dependency:jakarta.persistence:jakarta.persistence-api[]
 
 To implement queries that cannot be defined at the compile-time Micronaut Data introduces api:data.repository.JpaSpecificationExecutor[] repository interface that can be used to extend your repository interface:
 
-snippet::example.PersonRepository[project-base="doc-examples/mongo-example",source="main" tags="repository",indent="0"]
+snippet::example.PersonRepository[project-base="doc-examples/azure-cosmos-example",source="main" tags="repository",indent="0"]
 
 Each method expects a "specification" which is a functional interface with a set of Criteria API objects intended to build a query programmatically.
 

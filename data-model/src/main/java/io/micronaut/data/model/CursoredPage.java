@@ -52,7 +52,7 @@ import java.util.stream.Collectors;
 @DefaultImplementation(DefaultCursoredPage.class)
 public interface CursoredPage<T> extends Page<T> {
 
-    CursoredPage<?> EMPTY = new DefaultCursoredPage<>(Collections.emptyList(), Pageable.unpaged(), Collections.emptyList(), null);
+    CursoredPage<?> EMPTY = new DefaultCursoredPage<>(Collections.emptyList(), Pageable.unpaged(), Collections.emptyList(), -1L);
 
     /**
      * @return Whether this {@link CursoredPage} contains the total count of the records
@@ -125,6 +125,9 @@ public interface CursoredPage<T> extends Page<T> {
      */
     @Override
     default @NonNull <T2> CursoredPage<T2> map(Function<T, T2> function) {
+        if (this == EMPTY) {
+            return (CursoredPage<T2>) EMPTY;
+        }
         List<T2> content = getContent().stream().map(function).collect(Collectors.toList());
         return new DefaultCursoredPage<>(content, getPageable(), getCursors(), hasTotalSize() ? getTotalSize() : null);
     }

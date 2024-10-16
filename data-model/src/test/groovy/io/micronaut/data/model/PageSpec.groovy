@@ -199,6 +199,24 @@ class PageSpec extends Specification {
         !mappedCursoredPage.hasTotalSize()
     }
 
+    void "empty page can be mapped "() {
+        when:
+        Page<String> page = Page.empty()
+        def copy = page.map { it -> it }
+        copy.getTotalSize()
+
+        then:
+        notThrown(Throwable)
+
+        when:
+        CursoredPage<String> cursoredPage = CursoredPage.empty()
+        def newCopy = cursoredPage.map {it -> it }
+        newCopy.getTotalSize()
+
+        then:
+        notThrown(Throwable)
+    }
+
     @EqualsAndHashCode
     @ToString
     @Serdeable
