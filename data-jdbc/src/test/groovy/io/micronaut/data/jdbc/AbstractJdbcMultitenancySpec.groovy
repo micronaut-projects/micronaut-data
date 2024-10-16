@@ -17,7 +17,7 @@ package io.micronaut.data.jdbc
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.BeanContext
-import io.micronaut.data.connection.jdbc.config.DataJdbcConfiguration
+import io.micronaut.data.jdbc.config.DataJdbcConfiguration
 import io.micronaut.data.jdbc.operations.JdbcSchemaHandler
 import io.micronaut.data.tck.tests.AbstractMultitenancySpec
 import io.micronaut.inject.qualifiers.Qualifiers

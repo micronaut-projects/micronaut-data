@@ -26,7 +26,6 @@ import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.connection.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.operations.JdbcSchemaHandler;
 import io.micronaut.data.model.PersistentEntity;

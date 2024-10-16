@@ -18,7 +18,7 @@ package io.micronaut.data.connection;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.data.connection.support.ConnectionClientInformation;
+import io.micronaut.data.connection.support.ConnectionClientTracingInfo;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -30,7 +30,7 @@ import java.util.Optional;
  * @param propagationBehavior          The propagation behaviour
  * @param timeout                      The timeout
  * @param readOnlyValue                The read only
- * @param connectionClientInformation  The connection client information
+ * @param connectionClientTracingInfo  The connection client information
  * @author Denis Stepanov
  * @since 4.0.0
  */
@@ -41,7 +41,7 @@ public record DefaultConnectionDefinition(
     @Nullable Duration timeout,
     Boolean readOnlyValue,
 
-    @Nullable ConnectionClientInformation connectionClientInformation
+    @Nullable ConnectionClientTracingInfo connectionClientTracingInfo
 ) implements ConnectionDefinition {
 
     DefaultConnectionDefinition(String name) {
@@ -80,12 +80,12 @@ public record DefaultConnectionDefinition(
 
     @Override
     public ConnectionDefinition withPropagation(Propagation propagation) {
-        return new DefaultConnectionDefinition(name, propagation, timeout, readOnlyValue, connectionClientInformation);
+        return new DefaultConnectionDefinition(name, propagation, timeout, readOnlyValue, connectionClientTracingInfo);
     }
 
     @Override
     public ConnectionDefinition withName(String name) {
-        return new DefaultConnectionDefinition(name, propagationBehavior, timeout, readOnlyValue, connectionClientInformation);
+        return new DefaultConnectionDefinition(name, propagationBehavior, timeout, readOnlyValue, connectionClientTracingInfo);
     }
 
 }

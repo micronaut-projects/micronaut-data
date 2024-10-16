@@ -30,12 +30,11 @@ import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionOperationsRegistry;
 import io.micronaut.data.connection.DefaultConnectionDefinition;
-import io.micronaut.data.connection.annotation.ClientInfo;
 import io.micronaut.data.connection.annotation.Connectable;
 import io.micronaut.data.connection.async.AsyncConnectionOperations;
 import io.micronaut.data.connection.reactive.ReactiveStreamsConnectionOperations;
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
-import io.micronaut.data.connection.support.ConnectionClientInformation;
+import io.micronaut.data.connection.support.ConnectionClientTracingInfo;
 import io.micronaut.inject.ExecutableMethod;
 import jakarta.inject.Singleton;
 import reactor.core.publisher.Flux;
@@ -56,6 +55,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @Singleton
 @InterceptorBean(Connectable.class)
 public final class ConnectableInterceptor implements MethodInterceptor<Object, Object> {
+
+    private static final String TRACE_CLIENT_INFO_MEMBER = "traceClientInfo";
+    private static final String TRACING_MODULE_MEMBER = "tracingModule";
+    private static final String TRACING_ACTION_MEMBER = "tracingAction";
 
     private final Map<TenantExecutableMethod, ConnectionInvocation> connectionInvocationMap = new ConcurrentHashMap<>(30);
 
@@ -164,21 +167,7 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
             throw new IllegalStateException("No declared @Connectable annotation present");
         }
 
-        AnnotationValue<ClientInfo> clientInfoAnnotationValue = executableMethod.getAnnotation(ClientInfo.class);
-        String module = null;
-        String action = null;
-        if (clientInfoAnnotationValue != null) {
-            module = clientInfoAnnotationValue.stringValue("module").orElse(null);
-            action = clientInfoAnnotationValue.stringValue("action").orElse(null);
-        }
-        if (module == null) {
-            module = executableMethod.getDeclaringType().getName();
-        }
-        if (action == null) {
-            action = executableMethod.getMethodName();
-        }
-        ConnectionClientInformation connectionClientInformation = new ConnectionClientInformation(appName, module, action);
-
+        ConnectionClientTracingInfo connectionClientInformation = getConnectionClientTracingInfo(annotation, executableMethod, appName);
         return new DefaultConnectionDefinition(
             executableMethod.getDeclaringType().getSimpleName() + "." + executableMethod.getMethodName(),
             annotation.enumValue("propagation", ConnectionDefinition.Propagation.class).orElse(ConnectionDefinition.PROPAGATION_DEFAULT),
@@ -186,6 +175,31 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
             annotation.booleanValue("readOnly").orElse(null),
             connectionClientInformation
         );
+    }
+
+    /**
+     *
+     * @param annotation
+     * @param executableMethod
+     * @param appName
+     * @return
+     */
+    private static ConnectionClientTracingInfo getConnectionClientTracingInfo(AnnotationValue<Connectable> annotation,
+                                                                              ExecutableMethod<Object, Object> executableMethod,
+                                                                              String appName) {
+        boolean traceClientInfo = annotation.booleanValue(TRACE_CLIENT_INFO_MEMBER).orElse(false);
+        if (!traceClientInfo) {
+            return null;
+        }
+        String module = annotation.stringValue(TRACING_MODULE_MEMBER).orElse(null);
+        String action = annotation.stringValue(TRACING_ACTION_MEMBER).orElse(null);
+        if (module == null) {
+            module = executableMethod.getDeclaringType().getName();
+        }
+        if (action == null) {
+            action = executableMethod.getMethodName();
+        }
+        return new ConnectionClientTracingInfo(appName, module, action);
     }
 
     /**

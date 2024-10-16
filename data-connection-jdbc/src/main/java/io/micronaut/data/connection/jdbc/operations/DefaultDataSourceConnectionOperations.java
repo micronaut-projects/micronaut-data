@@ -16,19 +16,17 @@
 package io.micronaut.data.connection.jdbc.operations;
 
 import io.micronaut.context.annotation.EachBean;
-import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.connection.exceptions.ConnectionException;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
-import io.micronaut.data.connection.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.connection.jdbc.exceptions.CannotGetJdbcConnectionException;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.ConnectionSynchronization;
 import io.micronaut.data.connection.support.AbstractConnectionOperations;
-import io.micronaut.data.connection.support.ConnectionClientInformation;
+import io.micronaut.data.connection.support.ConnectionClientTracingInfo;
 import io.micronaut.data.connection.support.JdbcConnectionUtils;
-import io.micronaut.data.model.query.builder.sql.Dialect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,14 +47,15 @@ import java.util.List;
 @EachBean(DataSource.class)
 public final class DefaultDataSourceConnectionOperations extends AbstractConnectionOperations<Connection> {
 
+    private static final String ORACLE_TRACE_CLIENTID = "OCSID.CLIENTID";
+    private static final String ORACLE_TRACE_MODULE = "OCSID.MODULE";
+    private static final String ORACLE_TRACE_ACTION = "OCSID.ACTION";
+
     private static final Logger LOG = LoggerFactory.getLogger(DefaultDataSourceConnectionOperations.class);
     private final DataSource dataSource;
-    private final DataJdbcConfiguration dataJdbcConfiguration;
 
-    DefaultDataSourceConnectionOperations(DataSource dataSource,
-                                          @Parameter DataJdbcConfiguration dataJdbcConfiguration) {
+    DefaultDataSourceConnectionOperations(DataSource dataSource) {
         this.dataSource = DelegatingDataSource.unwrapDataSource(dataSource);
-        this.dataJdbcConfiguration = dataJdbcConfiguration;
     }
 
     @Override
@@ -85,29 +84,25 @@ public final class DefaultDataSourceConnectionOperations extends AbstractConnect
                 });
             }
         });
-        if (!dataJdbcConfiguration.isClientInfoTracing()) {
-            return;
-        }
-        if (dataJdbcConfiguration.getDialect() != Dialect.ORACLE) {
-            LOG.warn("Client info tracing is supported only for Oracle database connections.");
-            return;
-        }
-        ConnectionClientInformation connectionClientInformation = connectionDefinition.connectionClientInformation();
+        ConnectionClientTracingInfo connectionClientInformation = connectionDefinition.connectionClientTracingInfo();
         if (connectionClientInformation == null) {
-            LOG.warn("ConnectionClientInformation not provided for the connection.");
             return;
         }
-        LOG.debug("Setting client info to the Oracle connection");
         Connection conn = connectionStatus.getConnection();
+        if (!isOracleConnection(conn)) {
+            LOG.debug("Client tracing info is supported only for Oracle database connections.");
+            return;
+        }
 
+        LOG.trace("Setting connection client tracing info to the Oracle connection");
         try {
             if (connectionClientInformation.clientId() != null) {
-                conn.setClientInfo("OCSID.CLIENTID", connectionClientInformation.clientId());
+                conn.setClientInfo(ORACLE_TRACE_CLIENTID, connectionClientInformation.clientId());
             }
-            conn.setClientInfo("OCSID.MODULE", connectionClientInformation.module());
-            conn.setClientInfo("OCSID.ACTION", connectionClientInformation.action());
+            conn.setClientInfo(ORACLE_TRACE_MODULE, connectionClientInformation.module());
+            conn.setClientInfo(ORACLE_TRACE_ACTION, connectionClientInformation.action());
         } catch (SQLClientInfoException e) {
-            LOG.warn("Failed to set client info", e);
+            LOG.debug("Failed to set connection client tracing info", e);
         }
     }
 
@@ -120,4 +115,19 @@ public final class DefaultDataSourceConnectionOperations extends AbstractConnect
         }
     }
 
+    /**
+     * Checks whether current connection is Oracle database connection.
+     *
+     * @param connection The connection
+     * @return true if current connection is Oracle database connection
+     */
+    private boolean isOracleConnection(Connection connection) {
+        try {
+            String databaseProductName = connection.getMetaData().getDatabaseProductName();
+            return StringUtils.isNotEmpty(databaseProductName) && databaseProductName.toUpperCase().contains("ORACLE");
+        } catch (SQLException e) {
+            LOG.debug("Failed to get database product name from the connection", e);
+            return false;
+        }
+    }
 }
