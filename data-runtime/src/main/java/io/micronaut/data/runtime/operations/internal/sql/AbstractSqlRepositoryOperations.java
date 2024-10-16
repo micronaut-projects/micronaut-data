@@ -51,7 +51,6 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.operations.HintsCapableRepository;
-import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder;
 import io.micronaut.data.runtime.date.DateTimeProvider;
@@ -70,7 +69,6 @@ import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.json.JsonMapper;
-import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.util.AbstractMap;
@@ -103,8 +101,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     MethodContextAwareStoredQueryDecorator,
     HintsCapableRepository {
 
-    protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
-
     protected final String dataSourceName;
     @SuppressWarnings("WeakerAccess")
     protected final ResultReader<RS, String> columnNameResultSetReader;
@@ -119,6 +115,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     private final Map<QueryKey, SqlStoredQuery> entityInserts = new ConcurrentHashMap<>(10);
     private final Map<QueryKey, SqlStoredQuery> entityUpdates = new ConcurrentHashMap<>(10);
     private final Map<Association, String> associationInserts = new ConcurrentHashMap<>(10);
+    protected final List<SqlExecutionObserver> observers;
 
     /**
      * Default constructor.
@@ -146,7 +143,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         DataConversionService conversionService,
         AttributeConverterRegistry attributeConverterRegistry,
         JsonMapper jsonMapper,
-        SqlJsonColumnMapperProvider<RS> sqlJsonColumnMapperProvider) {
+        SqlJsonColumnMapperProvider<RS> sqlJsonColumnMapperProvider,
+            List<SqlExecutionObserver> observers) {
         super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
         this.dataSourceName = dataSourceName;
         this.columnNameResultSetReader = columnNameResultSetReader;
@@ -154,6 +152,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         this.preparedStatementWriter = preparedStatementWriter;
         this.jsonMapper = jsonMapper;
         this.sqlJsonColumnMapperProvider = sqlJsonColumnMapperProvider;
+        this.observers = observers;
         Collection<BeanDefinition<Object>> beanDefinitions = beanContext
             .getBeanDefinitions(Object.class, Qualifiers.byStereotype(Repository.class));
         for (BeanDefinition<Object> beanDefinition : beanDefinitions) {
@@ -203,9 +202,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         }
 
         String query = sqlPreparedQuery.getQuery();
-        if (QUERY_LOG.isDebugEnabled()) {
-            QUERY_LOG.debug("Executing Query: {}", query);
-        }
+        observers.forEach(listener -> listener.query(query));
         final PS ps;
         try {
             ps = statementFunction.create(query);
@@ -253,8 +250,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
 
         dataType = dialect.getDataType(dataType);
 
-        if (QUERY_LOG.isTraceEnabled()) {
-            QUERY_LOG.trace("Binding parameter at position {} to value {} with data type: {}", index, value, dataType);
+        for (SqlExecutionObserver listener : observers) {
+            listener.parameter(index, value, dataType);
         }
 
         // We want to avoid potential conversion for JSON because mapper already returned value ready to be set as statement parameter

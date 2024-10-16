@@ -88,10 +88,7 @@ import io.micronaut.data.runtime.operations.internal.AbstractSyncEntityOperation
 import io.micronaut.data.runtime.operations.internal.OperationContext;
 import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
 import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery;
-import io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOperations;
-import io.micronaut.data.runtime.operations.internal.sql.SqlJsonColumnMapperProvider;
-import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
-import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
+import io.micronaut.data.runtime.operations.internal.sql.*;
 import io.micronaut.data.runtime.support.AbstractConversionContext;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.transaction.TransactionOperations;
@@ -198,7 +195,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                     JdbcSchemaHandler schemaHandler,
                                     @Nullable JsonMapper jsonMapper,
                                     SqlJsonColumnMapperProvider<ResultSet> sqlJsonColumnMapperProvider,
-                                    List<SqlExceptionMapper> sqlExceptionMapperList) {
+                                    List<SqlExceptionMapper> sqlExceptionMapperList,
+                                    List<SqlExecutionObserver> observers) {
         super(
             dataSourceName,
             new ColumnNameResultSetReader(conversionService),
@@ -210,7 +208,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             conversionService,
             attributeConverterRegistry,
             jsonMapper,
-            sqlJsonColumnMapperProvider);
+            sqlJsonColumnMapperProvider,
+            observers);
         this.schemaTenantResolver = schemaTenantResolver;
         this.schemaHandler = schemaHandler;
         this.connectionOperations = connectionOperations;
@@ -538,8 +537,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, true, false)) {
                 preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
                 int result = ps.executeUpdate();
-                if (QUERY_LOG.isTraceEnabled()) {
-                    QUERY_LOG.trace("Update operation updated {} records", result);
+                for (SqlExecutionObserver observer : observers) {
+                    observer.updatedRecords(result);
                 }
                 if (preparedQuery.isOptimisticLock()) {
                     checkOptimisticLocking(1, result);
@@ -847,8 +846,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     public <R> R prepareStatement(@NonNull String sql, @NonNull PreparedStatementCallback<R> callback) {
         ArgumentUtils.requireNonNull("sql", sql);
         ArgumentUtils.requireNonNull("callback", callback);
-        if (QUERY_LOG.isDebugEnabled()) {
-            QUERY_LOG.debug("Executing Query: {}", sql);
+        for (SqlExecutionObserver observer : observers) {
+            observer.query(sql);
         }
         ConnectionContext connectionCtx = getConnectionCtx();
         try {
@@ -1169,8 +1168,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
         @Override
         protected void execute() throws SQLException {
-            if (QUERY_LOG.isDebugEnabled()) {
-                QUERY_LOG.debug("Executing SQL query: {}", storedQuery.getQuery());
+            for (SqlExecutionObserver observer : observers) {
+                observer.query(storedQuery.getQuery());
             }
             try {
                 if (storedQuery.getOperationType() == StoredQuery.OperationType.INSERT_RETURNING
@@ -1292,8 +1291,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
         @Override
         protected void execute() {
-            if (QUERY_LOG.isDebugEnabled()) {
-                QUERY_LOG.debug("Executing SQL query: {}", storedQuery.getQuery());
+            for (SqlExecutionObserver observer : observers) {
+                observer.query(storedQuery.getQuery());
             }
             if (storedQuery.getOperationType() == StoredQuery.OperationType.INSERT_RETURNING
                 || storedQuery.getOperationType() == StoredQuery.OperationType.UPDATE_RETURNING) {
