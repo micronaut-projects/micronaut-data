@@ -33,12 +33,10 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Where;
 import io.micronaut.data.annotation.repeatable.WhereSpecifications;
-import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.JsonDataType;
-import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentAssociationPath;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
@@ -55,7 +53,6 @@ import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.model.jpa.criteria.impl.DefaultPersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.IParameterExpression;
-import io.micronaut.data.model.jpa.criteria.impl.PersistentPropertyOrder;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
@@ -209,10 +206,10 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
 
     @NonNull
     protected final QueryState buildQuery(AnnotationMetadata annotationMetadata,
-                                          SelectQueryDefinition definition,
-                                          QueryBuilder queryBuilder,
-                                          boolean appendLimitOffset,
-                                          @Nullable String tableAliasPrefix) {
+                                    SelectQueryDefinition definition,
+                                    QueryBuilder queryBuilder,
+                                    boolean supportsQueryPagination,
+                                    @Nullable String tableAliasPrefix) {
         QueryState queryState = new QueryState(queryBuilder, definition, true, true, tableAliasPrefix);
 
         Predicate predicate = definition.predicate();
@@ -235,24 +232,15 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         if (predicate != null || annotationMetadata.hasStereotype(WhereSpecifications.class) || queryState.getEntity().getAnnotationMetadata().hasStereotype(WhereSpecifications.class)) {
             buildWhereClause(annotationMetadata, predicate, queryState);
         }
-        int parameterPageableOrSortIndex = definition.getParameterPageableOrSortIndex();
-        if (parameterPageableOrSortIndex == -1) {
-            List<Order> orders = definition.order();
-            if (appendLimitOffset && getDialect() == Dialect.SQL_SERVER && orders.isEmpty() && (definition.limit() > 0 || definition.offset() > 0)) {
-                PersistentEntity persistentEntity = definition.persistentEntity();
-                PersistentProperty identity = persistentEntity.getIdentity();
-                if (identity == null) {
-                    throw new DataAccessException("Pagination requires an entity ID on SQL Server");
-                }
-                orders = List.of(new PersistentPropertyOrder<>(new DefaultPersistentPropertyPath<>(identity, List.of(), null), true));
-            }
-            appendOrder(annotationMetadata, orders, queryState);
-            if (appendLimitOffset) {
-                appendLimitAndOffset(getDialect(), definition.limit(), definition.offset(), queryState.getQuery());
-            }
-        }
+        appendPaginationAndOrder(annotationMetadata, definition, supportsQueryPagination, queryState);
         appendForUpdate(QueryPosition.END_OF_QUERY, definition, queryState.getQuery());
         return queryState;
+    }
+
+    protected void appendPaginationAndOrder(AnnotationMetadata annotationMetadata,
+                                            SelectQueryDefinition definition,
+                                            boolean pagination,
+                                            QueryState queryState) {
     }
 
     /**
@@ -1344,11 +1332,8 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         }
     }
 
-    @NonNull
     @Override
-    public String buildPagination(@NonNull Pageable pageable) {
-        int limit = pageable.getSize();
-        long offset = pageable.getMode() == Pageable.Mode.OFFSET ? pageable.getOffset() : 0;
+    public String buildLimitAndOffset(long limit, long offset) {
         StringBuilder builder = new StringBuilder();
         appendLimitAndOffset(getDialect(), limit, offset, builder);
         return builder.toString();
@@ -1362,7 +1347,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
      * @param offset  The offset
      * @param builder The builder
      */
-    protected void appendLimitAndOffset(Dialect dialect, int limit, long offset, StringBuilder builder) {
+    protected void appendLimitAndOffset(Dialect dialect, long limit, long offset, StringBuilder builder) {
         boolean hasLimit = limit > 0;
         boolean hasOffset = offset > 0;
         if (!hasLimit && !hasOffset) {
@@ -1470,9 +1455,12 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
             StringBuilder sb = new StringBuilder(queryBuilder.queryParts.get(0));
             int i = 1;
             for (int k = 1; k < queryBuilder.queryParts.size(); k++) {
-                Placeholder placeholder = formatParameter(i++);
-                sb.append(placeholder.name);
-                sb.append(queryBuilder.queryParts.get(k));
+                QueryParameterBinding queryParameterBinding = queryBuilder.parameterBindings.get(i - 1);
+                if (queryParameterBinding.getRole() == null) {
+                    Placeholder placeholder = formatParameter(i++);
+                    sb.append(placeholder.name);
+                    sb.append(queryBuilder.queryParts.get(k));
+                } // Avoid create a placeholder for a role parameter
             }
             return sb.toString();
         }

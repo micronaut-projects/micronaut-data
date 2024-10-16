@@ -25,8 +25,8 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
-import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentPropertyPath;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.runtime.DelegatingQueryParameterBinding;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -202,7 +202,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
 
         List<Object> values;
         if (binding.isExpandable()) {
-            if (value instanceof Pageable) {
+            if (value instanceof Sort) {
                 return; // Skip
             }
             values = expandValue(value, binding.getDataType());

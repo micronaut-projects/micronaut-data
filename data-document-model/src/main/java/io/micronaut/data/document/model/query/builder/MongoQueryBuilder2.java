@@ -28,7 +28,6 @@ import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.document.mongo.MongoAnnotations;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
-import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
@@ -623,7 +622,7 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
     }
 
     @Override
-    public String buildPagination(Pageable pageable) {
+    public String buildLimitAndOffset(long limit, long offset) {
         throw new UnsupportedOperationException();
     }
 

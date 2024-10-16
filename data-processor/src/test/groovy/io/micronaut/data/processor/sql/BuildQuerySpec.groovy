@@ -882,7 +882,6 @@ import io.micronaut.data.tck.entities.Author;
 @JdbcRepository(dialect = Dialect.H2)
 interface AuthorRepository extends GenericRepository<Author, Long> {
 
-//     With books join, making sure count query doesn't use join
     @Where("@.nick_name = :nickName")
     @Join(value = "books", type = Join.Type.FETCH)
     Page<Author> findByName(String name, String nickName, Pageable pageable);
@@ -907,10 +906,10 @@ interface AuthorRepository extends GenericRepository<Author, Long> {
         def findByNickNameCountQuery = getCountQuery(findByNickNameMethod)
 
         expect:
-        findAllQuery == 'SELECT author_.`id`,author_.`name`,author_.`nick_name`,author_books_.`id` AS books_id,author_books_.`author_id` AS books_author_id,author_books_.`genre_id` AS books_genre_id,author_books_.`title` AS books_title,author_books_.`total_pages` AS books_total_pages,author_books_.`publisher_id` AS books_publisher_id,author_books_.`last_updated` AS books_last_updated FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id`'
-        findAllCountQuery == 'SELECT COUNT(*) FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id`'
-        findByNameQuery == 'SELECT author_.`id`,author_.`name`,author_.`nick_name`,author_books_.`id` AS books_id,author_books_.`author_id` AS books_author_id,author_books_.`genre_id` AS books_genre_id,author_books_.`title` AS books_title,author_books_.`total_pages` AS books_total_pages,author_books_.`publisher_id` AS books_publisher_id,author_books_.`last_updated` AS books_last_updated FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id` WHERE (author_.`name` = ? AND author_.nick_name = ?)'
-        findByNameCountQuery == 'SELECT COUNT(*) FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id` WHERE (author_.`name` = ? AND author_.nick_name = ?)'
+        findAllQuery == 'SELECT author_.`id`,author_.`name`,author_.`nick_name`,author_books_.`id` AS books_id,author_books_.`author_id` AS books_author_id,author_books_.`genre_id` AS books_genre_id,author_books_.`title` AS books_title,author_books_.`total_pages` AS books_total_pages,author_books_.`publisher_id` AS books_publisher_id,author_books_.`last_updated` AS books_last_updated FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id` WHERE (author_.`id` IN (SELECT author_author_.`id` FROM `author` author_author_ WHERE (author_author_.`id` IN (SELECT author_author_author_.`id` FROM `author` author_author_author_ INNER JOIN `book` author_author_author_books_ ON author_author_author_.`id`=author_author_author_books_.`author_id`))'
+        findAllCountQuery == 'SELECT COUNT(DISTINCT(author_.`id`)) FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id`'
+        findByNameQuery == 'SELECT author_.`id`,author_.`name`,author_.`nick_name`,author_books_.`id` AS books_id,author_books_.`author_id` AS books_author_id,author_books_.`genre_id` AS books_genre_id,author_books_.`title` AS books_title,author_books_.`total_pages` AS books_total_pages,author_books_.`publisher_id` AS books_publisher_id,author_books_.`last_updated` AS books_last_updated FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id` WHERE (author_.`id` IN (SELECT author_author_.`id` FROM `author` author_author_ WHERE (author_author_.`id` IN (SELECT author_author_author_.`id` FROM `author` author_author_author_ INNER JOIN `book` author_author_author_books_ ON author_author_author_.`id`=author_author_author_books_.`author_id` WHERE (author_author_author_.`name` = ?)))'
+        findByNameCountQuery == 'SELECT COUNT(DISTINCT(author_.`id`)) FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id` WHERE (author_.`name` = ? AND author_.nick_name = ?)'
         findByNickNameQuery == 'SELECT author_.`id`,author_.`name`,author_.`nick_name` FROM `author` author_ WHERE (author_.`nick_name` = ? AND author_.name = ?)'
         findByNickNameCountQuery == 'SELECT COUNT(*) FROM `author` author_ WHERE (author_.`nick_name` = ? AND author_.name = ?)'
         getResultDataType(findAllMethod) == DataType.ENTITY
@@ -971,17 +970,17 @@ interface AuthorRepository extends GenericRepository<Author, Long> {
             def findByNickNameExpressions = getParameterExpressions(findByNickNameMethod);
 
         expect:
-            findAllQuery == 'SELECT author_.`id`,author_.`name`,author_.`nick_name`,author_books_.`id` AS books_id,author_books_.`author_id` AS books_author_id,author_books_.`genre_id` AS books_genre_id,author_books_.`title` AS books_title,author_books_.`total_pages` AS books_total_pages,author_books_.`publisher_id` AS books_publisher_id,author_books_.`last_updated` AS books_last_updated FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id`'
-            findAllCountQuery == 'SELECT COUNT(*) FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id`'
-            findByNameQuery == 'SELECT author_.`id`,author_.`name`,author_.`nick_name`,author_books_.`id` AS books_id,author_books_.`author_id` AS books_author_id,author_books_.`genre_id` AS books_genre_id,author_books_.`title` AS books_title,author_books_.`total_pages` AS books_total_pages,author_books_.`publisher_id` AS books_publisher_id,author_books_.`last_updated` AS books_last_updated FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id` WHERE (author_.`name` = ? AND author_.nick_name = ?)'
-            findByNameCountQuery == 'SELECT COUNT(*) FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id` WHERE (author_.`name` = ? AND author_.nick_name = ?)'
+            findAllQuery == 'SELECT author_.`id`,author_.`name`,author_.`nick_name`,author_books_.`id` AS books_id,author_books_.`author_id` AS books_author_id,author_books_.`genre_id` AS books_genre_id,author_books_.`title` AS books_title,author_books_.`total_pages` AS books_total_pages,author_books_.`publisher_id` AS books_publisher_id,author_books_.`last_updated` AS books_last_updated FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id` WHERE (author_.`id` IN (SELECT author_author_.`id` FROM `author` author_author_ WHERE (author_author_.`id` IN (SELECT author_author_author_.`id` FROM `author` author_author_author_ INNER JOIN `book` author_author_author_books_ ON author_author_author_.`id`=author_author_author_books_.`author_id`))'
+            findAllCountQuery == 'SELECT COUNT(DISTINCT(author_.`id`)) FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id`'
+            findByNameQuery == 'SELECT author_.`id`,author_.`name`,author_.`nick_name`,author_books_.`id` AS books_id,author_books_.`author_id` AS books_author_id,author_books_.`genre_id` AS books_genre_id,author_books_.`title` AS books_title,author_books_.`total_pages` AS books_total_pages,author_books_.`publisher_id` AS books_publisher_id,author_books_.`last_updated` AS books_last_updated FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id` WHERE (author_.`id` IN (SELECT author_author_.`id` FROM `author` author_author_ WHERE (author_author_.`id` IN (SELECT author_author_author_.`id` FROM `author` author_author_author_ INNER JOIN `book` author_author_author_books_ ON author_author_author_.`id`=author_author_author_books_.`author_id` WHERE (author_author_author_.`name` = ?)))'
+            findByNameCountQuery == 'SELECT COUNT(DISTINCT(author_.`id`)) FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id` WHERE (author_.`name` = ? AND author_.nick_name = ?)'
             findByNickNameQuery == 'SELECT author_.`id`,author_.`name`,author_.`nick_name` FROM `author` author_ WHERE (author_.`nick_name` = ? AND author_.name = ?)'
             findByNickNameCountQuery == 'SELECT COUNT(*) FROM `author` author_ WHERE (author_.`nick_name` = ? AND author_.name = ?)'
             getResultDataType(findAllMethod) == DataType.ENTITY
             getResultDataType(findByNameMethod) == DataType.ENTITY
             getResultDataType(findByNickNameMethod) == DataType.ENTITY
-            findByNameExpressions == [false, true] as Boolean[]
-            findByNickNameExpressions == [false, true] as Boolean[]
+            findByNameExpressions == [false, false, true, false] as Boolean[]
+            findByNickNameExpressions == [false, true, false] as Boolean[]
     }
 
     void "test distinct query"() {
@@ -1508,8 +1507,8 @@ interface EntityWithIdClassRepository extends GenericRepository<Book, Long> {
 """)
             def findAll = repository.findPossibleMethods("findAll").findFirst().get()
         expect:
-            getQuery(findAll) == 'SELECT book_ FROM io.micronaut.data.tck.entities.Book AS book_ JOIN FETCH book_.author book_author_'
-            getCountQuery(findAll) == 'SELECT COUNT(book_) FROM io.micronaut.data.tck.entities.Book AS book_ JOIN book_.author book_author_'
+            getQuery(findAll) == 'SELECT book_ FROM io.micronaut.data.tck.entities.Book AS book_ JOIN FETCH book_.author book_author_ WHERE (book_.id IN (SELECT book_book_.id FROM io.micronaut.data.tck.entities.Book AS book_book_ WHERE (book_book_.id IN (SELECT book_book_book_.id FROM io.micronaut.data.tck.entities.Book AS book_book_book_ JOIN book_book_book_.author book_book_book_author_))))'
+            getCountQuery(findAll) == 'SELECT COUNT(DISTINCT(book_)) FROM io.micronaut.data.tck.entities.Book AS book_ JOIN book_.author book_author_'
     }
 
     void "test criteria"() {
@@ -1930,8 +1929,8 @@ class Resource {
         def findByResourcesKindCountQuery = getCountQuery(findByResourcesKindMethod)
 
         expect:
-        findByResourcesNameCountQuery == 'SELECT COUNT(*) FROM `work_request` work_request_ INNER JOIN `resource` work_request_resources_ ON work_request_.`id`=work_request_resources_.`work_request_id` WHERE (work_request_resources_.`name` = ?)'
-        findByResourcesKindCountQuery == 'SELECT COUNT(*) FROM `work_request` work_request_ INNER JOIN `resource` work_request_resources_ ON work_request_.`id`=work_request_resources_.`work_request_id` WHERE (work_request_resources_.`kind` = ?)'
+        findByResourcesNameCountQuery == 'SELECT COUNT(DISTINCT(work_request_.`id`)) FROM `work_request` work_request_ INNER JOIN `resource` work_request_resources_ ON work_request_.`id`=work_request_resources_.`work_request_id` WHERE (work_request_resources_.`name` = ?)'
+        findByResourcesKindCountQuery == 'SELECT COUNT(DISTINCT(work_request_.`id`)) FROM `work_request` work_request_ INNER JOIN `resource` work_request_resources_ ON work_request_.`id`=work_request_resources_.`work_request_id` WHERE (work_request_resources_.`kind` = ?)'
     }
 
     void "test find using LIKE with custom query builder"() {
@@ -1993,4 +1992,58 @@ interface TestRepository extends GenericRepository<Book, Long> {
             getQuery(findByAuthorInListMethod) == "SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated` FROM `book` book_ WHERE (book_.`author_id` IN (?))"
     }
 
+    void "test JOIN pagination"() {
+        given:
+        def repository = buildRepository('test.TestRepository', """
+
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.Author;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+
+import java.util.List;
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface TestRepository extends GenericRepository<Book, Long> {
+    @Join(value = "students", type = Join.Type.LEFT)
+    Page<Book> findAll(Pageable pageable);
+}
+
+""")
+        def findByAuthorInListMethod = repository.findPossibleMethods("findAll").findFirst().get()
+        def countQueryAnnotation = findByAuthorInListMethod.getAnnotation(DataMethod).getAnnotation(DataMethod.META_MEMBER_COUNT_QUERY).get()
+        expect:
+            getQuery(findByAuthorInListMethod) == """SELECT book_."id",book_."author_id",book_."genre_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated" FROM "book" book_ LEFT JOIN "book_student" book_students_book_student_ ON book_."id"=book_students_book_student_."book_id"  LEFT JOIN "student" book_students_ ON book_students_book_student_."student_id"=book_students_."id" WHERE (book_."id" IN (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."id" IN (SELECT book_book_book_."id" FROM "book" book_book_book_ LEFT JOIN "book_student" book_book_book_students_book_student_ ON book_book_book_."id"=book_book_book_students_book_student_."book_id"  LEFT JOIN "student" book_book_book_students_ ON book_book_book_students_book_student_."student_id"=book_book_book_students_."id"))"""
+            countQueryAnnotation.stringValue().get() == """SELECT COUNT(DISTINCT(book_."id")) FROM "book" book_ LEFT JOIN "book_student" book_students_book_student_ ON book_."id"=book_students_book_student_."book_id"  LEFT JOIN "student" book_students_ ON book_students_book_student_."student_id"=book_students_."id\""""
+    }
+
+    void "test JOIN pagination 2"() {
+        given:
+        def repository = buildRepository('test.TestRepository', """
+
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.Author;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+
+import java.util.List;
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface TestRepository extends GenericRepository<Book, Long> {
+    @Join(value = "students", type = Join.Type.LEFT_FETCH)
+    Page<Book> findAllByStudentsNameIn(List<String> names, Pageable pageable);
+}
+
+""")
+        def findAllByStudentsNameIn = repository.findPossibleMethods("findAllByStudentsNameIn").findFirst().get()
+        def countQueryAnnotation = findAllByStudentsNameIn.getAnnotation(DataMethod).getAnnotation(DataMethod.META_MEMBER_COUNT_QUERY).get()
+        expect:
+            getQuery(findAllByStudentsNameIn) == """SELECT book_."id",book_."author_id",book_."genre_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated",book_students_."id" AS students_id,book_students_."version" AS students_version,book_students_."name" AS students_name,book_students_."creation_time" AS students_creation_time,book_students_."last_updated_time" AS students_last_updated_time FROM "book" book_ LEFT JOIN "book_student" book_students_book_student_ ON book_."id"=book_students_book_student_."book_id"  LEFT JOIN "student" book_students_ ON book_students_book_student_."student_id"=book_students_."id" WHERE (book_."id" IN (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."id" IN (SELECT book_book_book_."id" FROM "book" book_book_book_ LEFT JOIN "book_student" book_book_book_students_book_student_ ON book_book_book_."id"=book_book_book_students_book_student_."book_id"  LEFT JOIN "student" book_book_book_students_ ON book_book_book_students_book_student_."student_id"=book_book_book_students_."id" WHERE (book_book_book_students_."name" IN (?))))"""
+            countQueryAnnotation.stringValue().get() == """SELECT COUNT(DISTINCT(book_."id")) FROM "book" book_ LEFT JOIN "book_student" book_students_book_student_ ON book_."id"=book_students_book_student_."book_id"  LEFT JOIN "student" book_students_ ON book_students_book_student_."student_id"=book_students_."id" WHERE (book_students_."name" IN (?))"""
+            countQueryAnnotation.getAnnotations("parameters").size() == 1
+    }
 }

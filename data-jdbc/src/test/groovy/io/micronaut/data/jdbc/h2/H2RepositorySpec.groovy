@@ -16,14 +16,8 @@
 package io.micronaut.data.jdbc.h2
 
 import groovy.transform.Memoized
-import io.micronaut.data.model.Page
-import io.micronaut.data.model.Pageable
-import io.micronaut.data.model.Sort
-import io.micronaut.data.tck.entities.Book
-import io.micronaut.data.tck.entities.Student
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
-import spock.lang.PendingFeature
 import spock.lang.Shared
 
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.findNameSubqueryEq

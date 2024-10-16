@@ -53,7 +53,7 @@ public final class CountMethodMatcher extends AbstractMethodMatcher {
                 protected PersistentEntityCriteriaQuery<Object> createQuery(MethodMatchContext matchContext,
                                                                             PersistentEntityCriteriaBuilder cb,
                                                                             List<AnnotationValue<Join>> joinSpecs) {
-                    return super.createCountQuery(matchContext, cb, joinSpecs);
+                    return super.createDefaultCountQuery(matchContext, cb, joinSpecs);
                 }
 
                 @Override

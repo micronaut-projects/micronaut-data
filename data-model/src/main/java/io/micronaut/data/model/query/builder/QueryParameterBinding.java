@@ -126,4 +126,26 @@ public interface QueryParameterBinding {
     default boolean isExpression() {
         return false;
     }
+
+    /**
+     * The role of the parameter.
+     *
+     * @return The role name or null
+     * @since 4.10
+     */
+    @Nullable
+    default String getRole() {
+        return null;
+    }
+
+    /**
+     * The table alias.
+     *
+     * @return The table alias
+     * @since 4.10
+     */
+    @Nullable
+    default String getTableAlias() {
+        return null;
+    }
 }
