@@ -19,11 +19,12 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 
 /**
- * The client information that can be used to set to {@link java.sql.Connection#setClientInfo(String, String)} )}.
+ * The client information that can be used to set to {@link java.sql.Connection#setClientInfo(String, String)}.
+ * Currently used only for Oracle database connections.
  *
- * @param clientId The client ID
+ * @param appName  The app name corresponding to the micronaut.application.name config value and can be null
  * @param module   The module
  * @param action   The action
  */
-public record ConnectionClientTracingInfo(@Nullable String clientId, @NonNull String module, @NonNull String action) {
+public record ConnectionClientTracingInfo(@Nullable String appName, @NonNull String module, @NonNull String action) {
 }

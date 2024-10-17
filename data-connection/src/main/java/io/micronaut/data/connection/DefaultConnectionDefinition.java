@@ -30,7 +30,7 @@ import java.util.Optional;
  * @param propagationBehavior          The propagation behaviour
  * @param timeout                      The timeout
  * @param readOnlyValue                The read only
- * @param connectionClientTracingInfo  The connection client information
+ * @param connectionClientTracingInfo  The connection client tracing info, can be null
  * @author Denis Stepanov
  * @since 4.0.0
  */

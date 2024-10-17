@@ -96,8 +96,8 @@ public final class DefaultDataSourceConnectionOperations extends AbstractConnect
 
         LOG.trace("Setting connection client tracing info to the Oracle connection");
         try {
-            if (connectionClientInformation.clientId() != null) {
-                conn.setClientInfo(ORACLE_TRACE_CLIENTID, connectionClientInformation.clientId());
+            if (connectionClientInformation.appName() != null) {
+                conn.setClientInfo(ORACLE_TRACE_CLIENTID, connectionClientInformation.appName());
             }
             conn.setClientInfo(ORACLE_TRACE_MODULE, connectionClientInformation.module());
             conn.setClientInfo(ORACLE_TRACE_ACTION, connectionClientInformation.action());

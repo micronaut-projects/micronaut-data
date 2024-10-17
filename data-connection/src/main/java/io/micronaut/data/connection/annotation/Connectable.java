@@ -94,6 +94,7 @@ public @interface Connectable {
     /**
      * The module name for tracing if {@link #traceClientInfo()} is true.
      * If not provided, then it will fall back to the name of the class currently being intercepted in {@link io.micronaut.data.connection.interceptor.ConnectableInterceptor}.
+     * Currently supported only for Oracle database connections.
      *
      * @return the custom module name for tracing
      */
@@ -102,6 +103,7 @@ public @interface Connectable {
     /**
      * The action name for tracing if {@link #traceClientInfo()} is true.
      * If not provided, then it will fall back to the name of the method currently being intercepted in {@link io.micronaut.data.connection.interceptor.ConnectableInterceptor}.
+     * Currently supported only for Oracle database connections.
      *
      * @return the custom module name for tracing
      */
