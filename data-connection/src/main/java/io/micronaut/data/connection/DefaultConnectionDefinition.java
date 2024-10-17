@@ -18,7 +18,7 @@ package io.micronaut.data.connection;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.data.connection.support.ConnectionClientTracingInfo;
+import io.micronaut.data.connection.support.ConnectionTracingInfo;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -26,11 +26,11 @@ import java.util.Optional;
 /**
  * Default implementation of the {@link ConnectionDefinition} interface.
  *
- * @param name                         The connection name
- * @param propagationBehavior          The propagation behaviour
- * @param timeout                      The timeout
- * @param readOnlyValue                The read only
- * @param connectionClientTracingInfo  The connection client tracing info, can be null
+ * @param name                  The connection name
+ * @param propagationBehavior    The propagation behaviour
+ * @param timeout                The timeout
+ * @param readOnlyValue          The read only
+ * @param connectionTracingInfo  The connection client tracing info, can be null
  * @author Denis Stepanov
  * @since 4.0.0
  */
@@ -41,7 +41,7 @@ public record DefaultConnectionDefinition(
     @Nullable Duration timeout,
     Boolean readOnlyValue,
 
-    @Nullable ConnectionClientTracingInfo connectionClientTracingInfo
+    @Nullable ConnectionTracingInfo connectionTracingInfo
 ) implements ConnectionDefinition {
 
     DefaultConnectionDefinition(String name) {
@@ -80,12 +80,12 @@ public record DefaultConnectionDefinition(
 
     @Override
     public ConnectionDefinition withPropagation(Propagation propagation) {
-        return new DefaultConnectionDefinition(name, propagation, timeout, readOnlyValue, connectionClientTracingInfo);
+        return new DefaultConnectionDefinition(name, propagation, timeout, readOnlyValue, connectionTracingInfo);
     }
 
     @Override
     public ConnectionDefinition withName(String name) {
-        return new DefaultConnectionDefinition(name, propagationBehavior, timeout, readOnlyValue, connectionClientTracingInfo);
+        return new DefaultConnectionDefinition(name, propagationBehavior, timeout, readOnlyValue, connectionTracingInfo);
     }
 
 }

@@ -25,7 +25,7 @@ import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.ConnectionSynchronization;
 import io.micronaut.data.connection.support.AbstractConnectionOperations;
-import io.micronaut.data.connection.support.ConnectionClientTracingInfo;
+import io.micronaut.data.connection.support.ConnectionTracingInfo;
 import io.micronaut.data.connection.support.JdbcConnectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,25 +84,25 @@ public final class DefaultDataSourceConnectionOperations extends AbstractConnect
                 });
             }
         });
-        ConnectionClientTracingInfo connectionClientInformation = connectionDefinition.connectionClientTracingInfo();
-        if (connectionClientInformation == null) {
+        ConnectionTracingInfo connectionTracingInfo = connectionDefinition.connectionTracingInfo();
+        if (connectionTracingInfo == null) {
             return;
         }
         Connection conn = connectionStatus.getConnection();
         if (!isOracleConnection(conn)) {
-            LOG.debug("Client tracing info is supported only for Oracle database connections.");
+            LOG.debug("Connection tracing info is supported only for Oracle database connections.");
             return;
         }
 
-        LOG.trace("Setting connection client tracing info to the Oracle connection");
+        LOG.trace("Setting connection tracing info to the Oracle connection");
         try {
-            if (connectionClientInformation.appName() != null) {
-                conn.setClientInfo(ORACLE_TRACE_CLIENTID, connectionClientInformation.appName());
+            if (connectionTracingInfo.appName() != null) {
+                conn.setClientInfo(ORACLE_TRACE_CLIENTID, connectionTracingInfo.appName());
             }
-            conn.setClientInfo(ORACLE_TRACE_MODULE, connectionClientInformation.module());
-            conn.setClientInfo(ORACLE_TRACE_ACTION, connectionClientInformation.action());
+            conn.setClientInfo(ORACLE_TRACE_MODULE, connectionTracingInfo.module());
+            conn.setClientInfo(ORACLE_TRACE_ACTION, connectionTracingInfo.action());
         } catch (SQLClientInfoException e) {
-            LOG.debug("Failed to set connection client tracing info", e);
+            LOG.debug("Failed to set connection tracing info", e);
         }
     }
 

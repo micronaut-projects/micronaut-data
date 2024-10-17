@@ -34,7 +34,7 @@ import io.micronaut.data.connection.annotation.Connectable;
 import io.micronaut.data.connection.async.AsyncConnectionOperations;
 import io.micronaut.data.connection.reactive.ReactiveStreamsConnectionOperations;
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
-import io.micronaut.data.connection.support.ConnectionClientTracingInfo;
+import io.micronaut.data.connection.support.ConnectionTracingInfo;
 import io.micronaut.inject.ExecutableMethod;
 import jakarta.inject.Singleton;
 import reactor.core.publisher.Flux;
@@ -167,26 +167,27 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
             throw new IllegalStateException("No declared @Connectable annotation present");
         }
 
-        ConnectionClientTracingInfo connectionClientInformation = getConnectionClientTracingInfo(annotation, executableMethod, appName);
+        ConnectionTracingInfo connectionTracingInfo = getConnectionClientTracingInfo(annotation, executableMethod, appName);
         return new DefaultConnectionDefinition(
             executableMethod.getDeclaringType().getSimpleName() + "." + executableMethod.getMethodName(),
             annotation.enumValue("propagation", ConnectionDefinition.Propagation.class).orElse(ConnectionDefinition.PROPAGATION_DEFAULT),
             annotation.longValue("timeout").stream().mapToObj(Duration::ofSeconds).findFirst().orElse(null),
             annotation.booleanValue("readOnly").orElse(null),
-            connectionClientInformation
+            connectionTracingInfo
         );
     }
 
     /**
+     * Gets connection tracing info from the {@link Connectable} annotation.
      *
-     * @param annotation
-     * @param executableMethod
-     * @param appName
-     * @return
+     * @param annotation The {@link Connectable} annotation value
+     * @param executableMethod The method being executed
+     * @param appName The micronaut application name, null if not set
+     * @return The connection tracing info or null if not configured to be used
      */
-    private static ConnectionClientTracingInfo getConnectionClientTracingInfo(AnnotationValue<Connectable> annotation,
-                                                                              ExecutableMethod<Object, Object> executableMethod,
-                                                                              String appName) {
+    private static ConnectionTracingInfo getConnectionClientTracingInfo(AnnotationValue<Connectable> annotation,
+                                                                        ExecutableMethod<Object, Object> executableMethod,
+                                                                        String appName) {
         boolean traceClientInfo = annotation.booleanValue(TRACE_CLIENT_INFO_MEMBER).orElse(false);
         if (!traceClientInfo) {
             return null;
@@ -199,7 +200,7 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
         if (action == null) {
             action = executableMethod.getMethodName();
         }
-        return new ConnectionClientTracingInfo(appName, module, action);
+        return new ConnectionTracingInfo(appName, module, action);
     }
 
     /**
