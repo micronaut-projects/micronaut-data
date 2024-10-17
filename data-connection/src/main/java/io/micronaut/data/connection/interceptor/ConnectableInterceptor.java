@@ -20,6 +20,7 @@ import io.micronaut.aop.InterceptedMethod;
 import io.micronaut.aop.InterceptorBean;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
@@ -33,6 +34,7 @@ import io.micronaut.data.connection.annotation.Connectable;
 import io.micronaut.data.connection.async.AsyncConnectionOperations;
 import io.micronaut.data.connection.reactive.ReactiveStreamsConnectionOperations;
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
+import io.micronaut.data.connection.support.ConnectionTracingInfo;
 import io.micronaut.inject.ExecutableMethod;
 import jakarta.inject.Singleton;
 import reactor.core.publisher.Flux;
@@ -54,6 +56,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @InterceptorBean(Connectable.class)
 public final class ConnectableInterceptor implements MethodInterceptor<Object, Object> {
 
+    private static final String TRACE_CLIENT_INFO_MEMBER = "traceClientInfo";
+    private static final String TRACING_MODULE_MEMBER = "tracingModule";
+    private static final String TRACING_ACTION_MEMBER = "tracingAction";
+
     private final Map<TenantExecutableMethod, ConnectionInvocation> connectionInvocationMap = new ConcurrentHashMap<>(30);
 
     @NonNull
@@ -62,6 +68,9 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
     private final ConnectionDataSourceTenantResolver tenantResolver;
 
     private final ConversionService conversionService;
+
+    @Nullable
+    private final String appName;
 
     /**
      * Default constructor.
@@ -72,9 +81,11 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
      */
     ConnectableInterceptor(@NonNull ConnectionOperationsRegistry connectionOperationsRegistry,
                            @Nullable ConnectionDataSourceTenantResolver tenantResolver,
+                           @Nullable @Value("${micronaut.application.name}") String appName,
                            ConversionService conversionService) {
         this.connectionOperationsRegistry = connectionOperationsRegistry;
         this.tenantResolver = tenantResolver;
+        this.appName = appName;
         this.conversionService = conversionService;
     }
 
@@ -97,7 +108,7 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
             final ConnectionInvocation connectionInvocation = connectionInvocationMap
                 .computeIfAbsent(new TenantExecutableMethod(tenantDataSourceName, executableMethod), ignore -> {
                     final String dataSource = tenantDataSourceName == null ? executableMethod.stringValue(Connectable.class).orElse(null) : tenantDataSourceName;
-                    final ConnectionDefinition connectionDefinition = getConnectionDefinition(executableMethod);
+                    final ConnectionDefinition connectionDefinition = getConnectionDefinition(executableMethod, appName);
 
                     switch (interceptedMethod.resultType()) {
                         case PUBLISHER -> {
@@ -150,18 +161,46 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
     }
 
     @NonNull
-    public static ConnectionDefinition getConnectionDefinition(ExecutableMethod<Object, Object> executableMethod) {
+    public static ConnectionDefinition getConnectionDefinition(ExecutableMethod<Object, Object> executableMethod, String appName) {
         AnnotationValue<Connectable> annotation = executableMethod.getAnnotation(Connectable.class);
         if (annotation == null) {
             throw new IllegalStateException("No declared @Connectable annotation present");
         }
 
+        ConnectionTracingInfo connectionTracingInfo = getConnectionClientTracingInfo(annotation, executableMethod, appName);
         return new DefaultConnectionDefinition(
             executableMethod.getDeclaringType().getSimpleName() + "." + executableMethod.getMethodName(),
             annotation.enumValue("propagation", ConnectionDefinition.Propagation.class).orElse(ConnectionDefinition.PROPAGATION_DEFAULT),
             annotation.longValue("timeout").stream().mapToObj(Duration::ofSeconds).findFirst().orElse(null),
-            annotation.booleanValue("readOnly").orElse(null)
+            annotation.booleanValue("readOnly").orElse(null),
+            connectionTracingInfo
         );
+    }
+
+    /**
+     * Gets connection tracing info from the {@link Connectable} annotation.
+     *
+     * @param annotation The {@link Connectable} annotation value
+     * @param executableMethod The method being executed
+     * @param appName The micronaut application name, null if not set
+     * @return The connection tracing info or null if not configured to be used
+     */
+    private static ConnectionTracingInfo getConnectionClientTracingInfo(AnnotationValue<Connectable> annotation,
+                                                                        ExecutableMethod<Object, Object> executableMethod,
+                                                                        String appName) {
+        boolean traceClientInfo = annotation.booleanValue(TRACE_CLIENT_INFO_MEMBER).orElse(false);
+        if (!traceClientInfo) {
+            return null;
+        }
+        String module = annotation.stringValue(TRACING_MODULE_MEMBER).orElse(null);
+        String action = annotation.stringValue(TRACING_ACTION_MEMBER).orElse(null);
+        if (module == null) {
+            module = executableMethod.getDeclaringType().getName();
+        }
+        if (action == null) {
+            action = executableMethod.getMethodName();
+        }
+        return new ConnectionTracingInfo(appName, module, action);
     }
 
     /**

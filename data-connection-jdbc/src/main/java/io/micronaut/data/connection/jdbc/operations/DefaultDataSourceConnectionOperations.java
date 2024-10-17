@@ -17,6 +17,7 @@ package io.micronaut.data.connection.jdbc.operations;
 
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.connection.exceptions.ConnectionException;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 import io.micronaut.data.connection.jdbc.exceptions.CannotGetJdbcConnectionException;
@@ -24,12 +25,14 @@ import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.ConnectionSynchronization;
 import io.micronaut.data.connection.support.AbstractConnectionOperations;
+import io.micronaut.data.connection.support.ConnectionTracingInfo;
 import io.micronaut.data.connection.support.JdbcConnectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
+import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +46,10 @@ import java.util.List;
 @Internal
 @EachBean(DataSource.class)
 public final class DefaultDataSourceConnectionOperations extends AbstractConnectionOperations<Connection> {
+
+    private static final String ORACLE_TRACE_CLIENTID = "OCSID.CLIENTID";
+    private static final String ORACLE_TRACE_MODULE = "OCSID.MODULE";
+    private static final String ORACLE_TRACE_ACTION = "OCSID.ACTION";
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultDataSourceConnectionOperations.class);
     private final DataSource dataSource;
@@ -62,7 +69,8 @@ public final class DefaultDataSourceConnectionOperations extends AbstractConnect
 
     @Override
     protected void setupConnection(ConnectionStatus<Connection> connectionStatus) {
-        connectionStatus.getDefinition().isReadOnly().ifPresent(readOnly -> {
+        ConnectionDefinition connectionDefinition = connectionStatus.getDefinition();
+        connectionDefinition.isReadOnly().ifPresent(readOnly -> {
             List<Runnable> onCompleteCallbacks = new ArrayList<>(1);
             JdbcConnectionUtils.applyReadOnly(LOG, connectionStatus.getConnection(), readOnly, onCompleteCallbacks);
             if (!onCompleteCallbacks.isEmpty()) {
@@ -76,6 +84,26 @@ public final class DefaultDataSourceConnectionOperations extends AbstractConnect
                 });
             }
         });
+        ConnectionTracingInfo connectionTracingInfo = connectionDefinition.connectionTracingInfo();
+        if (connectionTracingInfo == null) {
+            return;
+        }
+        Connection conn = connectionStatus.getConnection();
+        if (!isOracleConnection(conn)) {
+            LOG.debug("Connection tracing info is supported only for Oracle database connections.");
+            return;
+        }
+
+        LOG.trace("Setting connection tracing info to the Oracle connection");
+        try {
+            if (connectionTracingInfo.appName() != null) {
+                conn.setClientInfo(ORACLE_TRACE_CLIENTID, connectionTracingInfo.appName());
+            }
+            conn.setClientInfo(ORACLE_TRACE_MODULE, connectionTracingInfo.module());
+            conn.setClientInfo(ORACLE_TRACE_ACTION, connectionTracingInfo.action());
+        } catch (SQLClientInfoException e) {
+            LOG.debug("Failed to set connection tracing info", e);
+        }
     }
 
     @Override
@@ -87,4 +115,19 @@ public final class DefaultDataSourceConnectionOperations extends AbstractConnect
         }
     }
 
+    /**
+     * Checks whether current connection is Oracle database connection.
+     *
+     * @param connection The connection
+     * @return true if current connection is Oracle database connection
+     */
+    private boolean isOracleConnection(Connection connection) {
+        try {
+            String databaseProductName = connection.getMetaData().getDatabaseProductName();
+            return StringUtils.isNotEmpty(databaseProductName) && databaseProductName.toUpperCase().contains("ORACLE");
+        } catch (SQLException e) {
+            LOG.debug("Failed to get database product name from the connection", e);
+            return false;
+        }
+    }
 }

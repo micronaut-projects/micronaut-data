@@ -18,6 +18,7 @@ package io.micronaut.data.connection;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.connection.support.ConnectionTracingInfo;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -100,6 +101,14 @@ public interface ConnectionDefinition {
      */
     @Nullable
     String getName();
+
+    /**
+     * Returns the connection tracing information associated with this connection definition.
+     * If no connection tracing information has been set, this method will return null.
+     *
+     * @return An instance of {@link ConnectionTracingInfo} representing the connection tracing information, or null if not set.
+     */
+    @Nullable ConnectionTracingInfo connectionTracingInfo();
 
     /**
      * Connection definition with specific propagation.

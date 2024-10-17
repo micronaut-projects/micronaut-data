@@ -18,6 +18,7 @@ package io.micronaut.data.connection;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.connection.support.ConnectionTracingInfo;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -25,10 +26,11 @@ import java.util.Optional;
 /**
  * Default implementation of the {@link ConnectionDefinition} interface.
  *
- * @param name                The connection name
- * @param propagationBehavior The propagation behaviour
- * @param timeout             The timeout
- * @param readOnlyValue       The read only
+ * @param name                  The connection name
+ * @param propagationBehavior    The propagation behaviour
+ * @param timeout                The timeout
+ * @param readOnlyValue          The read only
+ * @param connectionTracingInfo  The connection client tracing info, can be null
  * @author Denis Stepanov
  * @since 4.0.0
  */
@@ -37,19 +39,21 @@ public record DefaultConnectionDefinition(
     @Nullable String name,
     Propagation propagationBehavior,
     @Nullable Duration timeout,
-    Boolean readOnlyValue
+    Boolean readOnlyValue,
+
+    @Nullable ConnectionTracingInfo connectionTracingInfo
 ) implements ConnectionDefinition {
 
     DefaultConnectionDefinition(String name) {
-        this(name, PROPAGATION_DEFAULT, null, null);
+        this(name, PROPAGATION_DEFAULT, null, null, null);
     }
 
     public DefaultConnectionDefinition(Propagation propagationBehaviour) {
-        this(null, propagationBehaviour, null, null);
+        this(null, propagationBehaviour, null, null, null);
     }
 
     public DefaultConnectionDefinition(String name, boolean readOnly) {
-        this(name, PROPAGATION_DEFAULT, null, readOnly);
+        this(name, PROPAGATION_DEFAULT, null, readOnly, null);
     }
 
     @Override
@@ -76,12 +80,12 @@ public record DefaultConnectionDefinition(
 
     @Override
     public ConnectionDefinition withPropagation(Propagation propagation) {
-        return new DefaultConnectionDefinition(name, propagation, timeout, readOnlyValue);
+        return new DefaultConnectionDefinition(name, propagation, timeout, readOnlyValue, connectionTracingInfo);
     }
 
     @Override
     public ConnectionDefinition withName(String name) {
-        return new DefaultConnectionDefinition(name, propagationBehavior, timeout, readOnlyValue);
+        return new DefaultConnectionDefinition(name, propagationBehavior, timeout, readOnlyValue, connectionTracingInfo);
     }
 
 }
