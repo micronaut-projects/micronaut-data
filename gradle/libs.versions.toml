@@ -1,5 +1,5 @@
 [versions]
-micronaut = "4.6.6"
+micronaut = "4.7.0"
 micronaut-platform = "4.4.2"
 micronaut-docs = "2.0.0"
 micronaut-gradle-plugin = "4.4.3"
@@ -17,7 +17,7 @@ micronaut-mongo = "5.4.0"
 micronaut-kotlin = "4.4.0"
 micronaut-multitenancy = "5.4.0"
 micronaut-validation = "4.7.0"
-micronaut-logging = "1.4.0"
+micronaut-logging = "1.5.0"
 micronaut-flyway = "7.4.0"
 micronaut-coherence = "5.0.4"
 
