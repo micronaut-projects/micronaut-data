@@ -61,5 +61,17 @@ As seen in the configuration above you should also configure the dialect. Althou
 
 IMPORTANT: The dialect setting in configuration does *not* replace the need to ensure the correct dialect is set at the repository. If the dialect is H2 in configuration, the repository should have `@JdbcRepository(dialect = Dialect.H2)` / `@R2dbcRepository(dialect = Dialect.H2)`. Because repositories are computed at compile time, the configuration value is not known at that time.
 
+=== Connection client info tracing (Oracle)
+
+In order to trace SQL calls using `java.sql.Connection.setClientInfo(String, String)` method, you can
+annotate repository with @api:data.connection.annotation.Connectable[] annotation. If boolean field `traceClientInfo` is not set to true, then Micronaut will not issue `setClientInfo` calls to the JDBC connection.
+Fields in given annotation `tracingModule` and `tracingAction` can set custom module and action. If omitted, then module value will default
+to the class name (usually Micronaut Data repository class) annotated with the given annotation and action to the name of the method
+being executed. Annotation can be used on class or method, customizing module or action.
+These values will be set to the JDBC connection using `setClientInfo("OCSID.MODULE", module)` and `setClientInfo("OCSID.ACTION", action)` respectively.
+Additionally, if `${micronaut.application.name}` is set, then it will be used to call JDBC connection `setClientInfo("OCSID.CLIENTID", appName)`.
+
+Please note this is currently supported only for Oracle database connections.
+
 TIP: See the guide for https://guides.micronaut.io/latest/micronaut-data-jdbc-repository.html[Access a Database with Micronaut Data JDBC] to learn more.
 
