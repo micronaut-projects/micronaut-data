@@ -38,16 +38,16 @@ dependencies {
 
     testAnnotationProcessor projects.micronautDataDocumentProcessor
     testAnnotationProcessor mn.micronaut.inject.java
-    testAnnotationProcessor(libs.managed.jakarta.persistence.api)
+    testAnnotationProcessor(mnSql.jakarta.persistence.api)
 
     testImplementation mnMongo.mongo.driver
     testImplementation mnMongo.mongo.reactive
     testImplementation projects.micronautDataDocumentProcessor
     testImplementation projects.micronautDataDocumentTck
-    testImplementation(libs.managed.jakarta.persistence.api)
+    testImplementation(mnSql.jakarta.persistence.api)
     testImplementation mnRxjava2.micronaut.rxjava2
     testImplementation mnReactor.micronaut.reactor
-    testImplementation(libs.managed.jakarta.persistence.api)
+    testImplementation(mnSql.jakarta.persistence.api)
     testImplementation mnValidation.micronaut.validation
 
     testCompileOnly mn.micronaut.inject.groovy

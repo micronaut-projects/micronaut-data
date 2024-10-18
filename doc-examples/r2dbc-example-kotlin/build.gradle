@@ -32,7 +32,7 @@ dependencies {
     implementation libs.kotlin.coroutines.reactor
     implementation mnSerde.micronaut.serde.support
     implementation mnKotlin.micronaut.kotlin.runtime
-    implementation(libs.managed.jakarta.persistence.api)
+    implementation(mnSql.jakarta.persistence.api)
 
     runtimeOnly mnR2dbc.r2dbc.mariadb
     runtimeOnly mnSql.mariadb.java.client

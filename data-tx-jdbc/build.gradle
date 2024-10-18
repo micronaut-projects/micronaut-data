@@ -5,7 +5,7 @@ plugins {
 dependencies {
     annotationProcessor mn.micronaut.inject.java
 
-    api(libs.managed.jakarta.transaction.api)
+    api(mnSql.jakarta.transaction.api)
     api projects.micronautDataTx
     api projects.micronautDataConnectionJdbc
 

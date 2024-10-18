@@ -25,7 +25,7 @@ dependencies {
     implementation(libs.reactor.netty.core)
 
     compileOnly mnR2dbc.r2dbc.oracle
-    compileOnly libs.managed.jakarta.persistence.api
+    compileOnly mnSql.jakarta.persistence.api
 
     testImplementation projects.micronautDataTck
     testImplementation mnTest.micronaut.test.spock
@@ -38,7 +38,7 @@ dependencies {
 
     testImplementation mn.jackson.databind
     testImplementation(libs.managed.javax.persistence.api)
-    testImplementation(libs.managed.jakarta.persistence.api)
+    testImplementation(mnSql.jakarta.persistence.api)
     testImplementation libs.groovy.sql
     testImplementation mnValidation.micronaut.validation
     testImplementation mnValidation.micronaut.validation.processor

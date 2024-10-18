@@ -35,8 +35,8 @@ dependencies {
     implementation mnMongo.mongo.reactive
     implementation mnKotlin.micronaut.kotlin.runtime
 
-    implementation(libs.managed.jakarta.persistence.api)
-    implementation(libs.managed.jakarta.transaction.api)
+    implementation(mnSql.jakarta.persistence.api)
+    implementation(mnSql.jakarta.transaction.api)
     implementation libs.kotlin.coroutines
     implementation libs.kotlin.coroutines.reactive
     implementation libs.kotlin.coroutines.reactor

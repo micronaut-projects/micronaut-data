@@ -32,7 +32,7 @@ dependencies {
     testImplementation mnReactor.micronaut.reactor
     testImplementation libs.jackson.databind
     testImplementation(libs.managed.javax.persistence.api)
-    testImplementation(libs.managed.jakarta.persistence.api)
+    testImplementation(mnSql.jakarta.persistence.api)
     testImplementation libs.groovy.sql
     testImplementation mnValidation.micronaut.validation
     testImplementation mnValidation.micronaut.validation.processor

@@ -19,7 +19,7 @@ dependencies {
     compileOnly(libs.managed.javax.persistence.api)
 
     implementation projects.micronautDataAzureCosmos
-    implementation(libs.managed.jakarta.persistence.api)
+    implementation(mnSql.jakarta.persistence.api)
 
     runtimeOnly mnLogging.logback.classic
 

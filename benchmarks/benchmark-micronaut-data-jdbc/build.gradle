@@ -5,7 +5,7 @@ plugins {
 dependencies {
     annotationProcessor projects.micronautDataProcessor
     implementation projects.micronautDataJdbc
-    implementation(libs.managed.jakarta.persistence.api)
+    implementation(mnSql.jakarta.persistence.api)
     runtimeOnly mnSql.micronaut.jdbc.hikari
     runtimeOnly mnSql.h2
     runtimeOnly mn.snakeyaml

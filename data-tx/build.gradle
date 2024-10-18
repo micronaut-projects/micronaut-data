@@ -8,7 +8,7 @@ dependencies {
     annotationProcessor mn.micronaut.inject.java
     kapt mn.micronaut.inject.java
 
-    api(libs.managed.jakarta.transaction.api)
+    api(mnSql.jakarta.transaction.api)
     api projects.micronautDataConnection
 
     implementation mn.micronaut.inject
