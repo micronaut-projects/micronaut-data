@@ -25,7 +25,7 @@ dependencies {
 
     implementation mn.micronaut.http.client
     implementation projects.micronautDataJdbc
-    implementation(libs.managed.jakarta.persistence.api)
+    implementation(mnSql.jakarta.persistence.api)
     implementation libs.kotlin.coroutines
     implementation libs.kotlin.coroutines.reactive
 

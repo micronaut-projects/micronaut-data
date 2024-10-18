@@ -24,8 +24,6 @@ micronaut-coherence = "5.0.4"
 groovy = "4.0.23"
 
 managed-javax-persistence = "2.2"
-managed-jakarta-persistence-api = "3.1.0"
-managed-jakarta-transaction-api = "2.0.1"
 
 spring-data = "3.3.4"
 
@@ -83,10 +81,7 @@ kotlin-coroutines-reactor = { module = "org.jetbrains.kotlinx:kotlinx-coroutines
 kotlin-coroutines-reactive = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactive", version.ref = "kotlin-coroutines" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }
 
-managed-jakarta-transaction-api = { module = "jakarta.transaction:jakarta.transaction-api", version.ref = "managed-jakarta-transaction-api" }
-
 managed-javax-persistence-api = { module = "javax.persistence:javax.persistence-api", version.ref = "managed-javax-persistence" }
-managed-jakarta-persistence-api = { module = "jakarta.persistence:jakarta.persistence-api", version.ref = "managed-jakarta-persistence-api" }
 
 # JPA
 

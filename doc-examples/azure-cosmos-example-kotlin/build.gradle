@@ -21,7 +21,7 @@ dependencies {
     compileOnly(libs.managed.javax.persistence.api)
 
     implementation projects.micronautDataAzureCosmos
-    implementation(libs.managed.jakarta.persistence.api)
+    implementation(mnSql.jakarta.persistence.api)
     implementation libs.kotlin.coroutines
     implementation libs.kotlin.coroutines.reactive
     implementation mnKotlin.micronaut.kotlin.runtime

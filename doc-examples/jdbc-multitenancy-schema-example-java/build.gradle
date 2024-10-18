@@ -24,8 +24,8 @@ dependencies {
     implementation mn.micronaut.http.client
     implementation projects.micronautDataJdbc
     implementation mnSerde.micronaut.serde.jackson
-    implementation(libs.managed.jakarta.persistence.api)
-    implementation(libs.managed.jakarta.transaction.api)
+    implementation(mnSql.jakarta.persistence.api)
+    implementation(mnSql.jakarta.transaction.api)
 
     runtimeOnly mnSql.micronaut.jdbc.tomcat
     runtimeOnly mnSql.h2

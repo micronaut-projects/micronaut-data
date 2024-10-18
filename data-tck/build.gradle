@@ -20,7 +20,7 @@ dependencies {
     implementation mn.jackson.databind
     implementation libs.groovy.dateutil
     implementation(libs.managed.javax.persistence.api)
-    implementation(libs.managed.jakarta.persistence.api)
+    implementation(mnSql.jakarta.persistence.api)
 
     compileOnly projects.micronautDataJdbc
     compileOnly mn.micronaut.inject.groovy

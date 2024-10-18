@@ -10,5 +10,5 @@ dependencies {
     api projects.micronautDataModel
     api mnSerde.micronaut.serde.api
 
-    compileOnly(libs.managed.jakarta.persistence.api)
+    compileOnly(mnSql.jakarta.persistence.api)
 }
