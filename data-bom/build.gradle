@@ -9,6 +9,15 @@ micronautBom {
     excludeProject.set({ p ->
         p.name.contains('benchmark') || p.name.contains('example') || p.name.endsWith('-tck')
     } as Spec<String>)
+
+    suppressions {
+        // jakarta-persistence-api and jakarta-transaction-api removed from the catalog
+        // and is used from micronaut-sql bom
+        acceptedLibraryRegressions.add("jakarta-persistence-api")
+        acceptedLibraryRegressions.add("jakarta-transaction-api")
+        acceptedVersionRegressions.add("jakarta-persistence-api")
+        acceptedVersionRegressions.add("jakarta-transaction-api")
+    }
 }
 
 
