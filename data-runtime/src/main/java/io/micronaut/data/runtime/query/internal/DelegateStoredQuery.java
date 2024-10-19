@@ -177,4 +177,14 @@ public interface DelegateStoredQuery<E, R> extends StoredQuery<E, R> {
     default Map<String, AnnotationValue<?>> getParameterExpressions() {
         return getStoredQueryDelegate().getParameterExpressions();
     }
+
+    @Override
+    default int getLimit() {
+        return getStoredQueryDelegate().getLimit();
+    }
+
+    @Override
+    default int getOffset() {
+        return getStoredQueryDelegate().getOffset();
+    }
 }

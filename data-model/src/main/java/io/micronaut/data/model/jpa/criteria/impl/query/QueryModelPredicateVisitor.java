@@ -226,7 +226,7 @@ public final class QueryModelPredicateVisitor implements PredicateVisitor {
 
     @Override
     public void visit(UnaryPredicate unaryPredicate) {
-        String propertyPath = getPropertyPath(CriteriaUtils.requireProperty(unaryPredicate));
+        String propertyPath = getPropertyPath(CriteriaUtils.requireProperty(unaryPredicate.getExpression()));
         switch (unaryPredicate.getOp()) {
             case IS_NULL:
                 add(Restrictions.isNull(propertyPath));
@@ -254,7 +254,7 @@ public final class QueryModelPredicateVisitor implements PredicateVisitor {
     @Override
     public void visit(BetweenPredicate betweenPredicate) {
         add(Restrictions.between(
-                getPropertyPath(CriteriaUtils.requireProperty(betweenPredicate)),
+                getPropertyPath(CriteriaUtils.requireProperty(betweenPredicate.getValue())),
                 asValue(betweenPredicate.getFrom()),
                 asValue(betweenPredicate.getTo())
         ));

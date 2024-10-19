@@ -25,7 +25,12 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
+import jakarta.persistence.Tuple;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -53,18 +58,39 @@ public class FindPageSpecificationInterceptor extends AbstractSpecificationInter
         }
 
         Pageable pageable = getPageable(context);
-        Iterable<?> iterable = findAll(methodKey, context, Type.FIND_PAGE);
+        CriteriaQuery<Object> criteriaQuery = buildQuery(methodKey, context);
+        Root<?> root = criteriaQuery.getRoots().iterator().next();
+        Iterable<?> iterable;
+        if (root.getJoins().isEmpty()) {
+            iterable = findAll(methodKey, context, pageable, criteriaQuery);
+        } else {
+            CriteriaQuery<Tuple> criteriaIdsQuery = buildIdsQuery(methodKey, context, pageable);
+            List<Tuple> tupleResult = findAll(methodKey, context, pageable, criteriaIdsQuery);
+            if (tupleResult.isEmpty()) {
+                iterable = List.of();
+            } else {
+                List<Object> ids = new ArrayList<>(tupleResult.size());
+                for (Tuple tuple : tupleResult) {
+                    ids.add(tuple.get(0));
+                }
+                Predicate inPredicate = getIdExpression(root).in(ids);
+                criteriaQuery.where(inPredicate);
+                iterable = findAll(methodKey, context, pageable.withoutPaging(), criteriaQuery);
+            }
+        }
+
         List<Object> resultList = (List<Object>) CollectionUtils.iterableToList(iterable);
         Long count = null;
         if (pageable.requestTotal()) {
-            count = count(methodKey, context);
+            CriteriaQuery<Long> query = buildCountQuery(methodKey, context);
+            count = getCriteriaRepositoryOperations(methodKey, context, null).findOne(query);
         }
 
-        Page page;
+        Page<?> page;
         if (pageable.getMode() == Pageable.Mode.OFFSET) {
             page = Page.of(resultList, pageable, count);
         } else {
-            PreparedQuery preparedQuery = (PreparedQuery) context.getAttribute(PREPARED_QUERY_KEY).orElse(null);
+            PreparedQuery<?, ?> preparedQuery = (PreparedQuery<?, ?>) context.getAttribute(PREPARED_QUERY_KEY).orElse(null);
             if (preparedQuery instanceof DefaultSqlPreparedQuery<?, ?> sqlPreparedQuery) {
                 List<Pageable.Cursor> cursors = sqlPreparedQuery.createCursors(resultList, pageable);
                 page = CursoredPage.of(resultList, pageable, cursors, count);
@@ -76,7 +102,8 @@ public class FindPageSpecificationInterceptor extends AbstractSpecificationInter
         if (rt.isInstance(page)) {
             return page;
         }
-        return operations.getConversionService().convert(page, rt).orElseThrow(() -> new IllegalStateException("Unsupported page interface type " + rt));
+        return operations.getConversionService().convert(page, rt)
+            .orElseThrow(() -> new IllegalStateException("Unsupported page interface type " + rt));
     }
 
 }

@@ -20,6 +20,7 @@ import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Path;
 import jakarta.persistence.metamodel.EntityType;
 
 import java.util.Collections;
@@ -44,6 +45,11 @@ final class SourcePersistentEntityRoot<T> extends AbstractSourcePersistentEntity
                                       CriteriaBuilder criteriaBuilder) {
         super(criteriaBuilder);
         this.sourcePersistentEntity = sourcePersistentEntity;
+    }
+
+    @Override
+    public Path<?> getParentPath() {
+        return null;
     }
 
     @Override

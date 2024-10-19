@@ -16,6 +16,7 @@
 package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -40,7 +41,7 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupport
 @Internal
 public abstract class AbstractPersistentEntityCriteriaQuery<T> extends AbstractPersistentEntityQuery<T, PersistentEntityCriteriaQuery<T>> implements PersistentEntityCriteriaQuery<T> {
 
-    protected AbstractPersistentEntityCriteriaQuery(Class<T> resultType, CriteriaBuilder criteriaBuilder) {
+    protected AbstractPersistentEntityCriteriaQuery(ExpressionType<T> resultType, CriteriaBuilder criteriaBuilder) {
         super(resultType, criteriaBuilder);
     }
 
@@ -78,14 +79,14 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> extends AbstractP
     }
 
     @Override
-    public PersistentEntityCriteriaQuery<T> orderBy(Order... o) {
-        orders = Arrays.asList(Objects.requireNonNull(o));
+    public PersistentEntityCriteriaQuery<T> orderBy(Order... orders) {
+        this.orders = Arrays.asList(Objects.requireNonNull(orders));
         return this;
     }
 
     @Override
-    public PersistentEntityCriteriaQuery<T> orderBy(List<Order> o) {
-        orders = Objects.requireNonNull(o);
+    public PersistentEntityCriteriaQuery<T> orderBy(List<Order> orders) {
+        this.orders = Objects.requireNonNull(orders);
         return this;
     }
 

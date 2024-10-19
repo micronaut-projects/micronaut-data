@@ -184,6 +184,52 @@ public interface Pageable extends Sort {
 
     @NonNull
     @Override
+    default Pageable orders(@NonNull List<Order> orders) {
+        Sort newSort = getSort();
+        for (Order order : orders) {
+            newSort = newSort.order(order);
+        }
+        return Pageable.from(getNumber(), getSize(), newSort);
+    }
+
+    /**
+     * Removes ordering.
+     *
+     * @since 4.10
+     * @return A pageable without ordering
+     */
+    @NonNull
+    default Pageable withoutSort() {
+        if (isSorted()) {
+            return Pageable.from(getNumber(), getSize());
+        }
+        return this;
+    }
+
+    /**
+     * Removes paging.
+     *
+     * @since 4.10
+     * @return A pageable without paging
+     */
+    @NonNull
+    default Pageable withoutPaging() {
+        return Pageable.UNPAGED.orders(getSort().getOrderBy());
+    }
+
+    /**
+     * Creates a new {@link Pageable} with a custom sort.
+     *
+     * @param sort a new sort
+     * @since 4.10
+     * @return A pageable instance with a new sort
+     */
+    default Pageable withSort(@NonNull Sort sort) {
+        return Pageable.from(getNumber(), getSize(), sort);
+    }
+
+    @NonNull
+    @Override
     @JsonIgnore
     default List<Order> getOrderBy() {
         return getSort().getOrderBy();
@@ -267,7 +313,7 @@ public interface Pageable extends Sort {
     @Internal
     @JsonCreator
     static @NonNull Pageable from(
-            @JsonProperty("page") int page,
+            @JsonProperty("number") int page,
             @JsonProperty("size") int size,
             @JsonProperty("mode") @Nullable Mode mode,
             @JsonProperty("cursor") @Nullable Cursor cursor,

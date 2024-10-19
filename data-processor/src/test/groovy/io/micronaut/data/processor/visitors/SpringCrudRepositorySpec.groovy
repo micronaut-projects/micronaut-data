@@ -86,7 +86,6 @@ interface MyInterface extends CrudRepository<Person, Long> {
         existsMethod
         existsMethod.getArguments()[0].type == Long
         existsMethod.synthesize(DataMethod).rootEntity() == Person
-        existsMethod.synthesize(DataMethod).idType() == Long
         existsMethod.synthesize(DataMethod).interceptor() == ExistsByInterceptor
 
         when:"the findAll method is retrieved"
@@ -96,7 +95,6 @@ interface MyInterface extends CrudRepository<Person, Long> {
         findAll
         findAll.getReturnType().asArgument().getFirstTypeVariable().get().type == Person
         findAll.synthesize(DataMethod).rootEntity() == Person
-        findAll.synthesize(DataMethod).idType() == Long
         findAll.synthesize(DataMethod).interceptor() == FindAllInterceptor
 
         when:"the count method is retrieved"
@@ -106,7 +104,6 @@ interface MyInterface extends CrudRepository<Person, Long> {
         count
         count.getReturnType().type == long.class
         count.synthesize(DataMethod).rootEntity() == Person
-        count.synthesize(DataMethod).idType() == Long
         count.synthesize(DataMethod).interceptor() == CountInterceptor
 
         when:"the list method with named query paremeters is retrieved"
@@ -116,7 +113,6 @@ interface MyInterface extends CrudRepository<Person, Long> {
         listPeople
         listPeople.getReturnType().type == List.class
         listPeople.synthesize(DataMethod).rootEntity() == Person
-        listPeople.synthesize(DataMethod).idType() == Long
         listPeople.synthesize(DataMethod).interceptor() == FindAllInterceptor
 
         when:"the count method with named query parameters is retrieved"
@@ -126,7 +122,6 @@ interface MyInterface extends CrudRepository<Person, Long> {
         countPeople
         countPeople.getReturnType().type == int.class
         countPeople.synthesize(DataMethod).rootEntity() == Person
-        countPeople.synthesize(DataMethod).idType() == Long
 
         when:"the delete by id method is retrieved"
         def deleteById = beanDefinition.getRequiredMethod("deleteById", Long)
@@ -135,7 +130,6 @@ interface MyInterface extends CrudRepository<Person, Long> {
         deleteById
         deleteById.getReturnType().type == void .class
         deleteById.synthesize(DataMethod).rootEntity() == Person
-        deleteById.synthesize(DataMethod).idType() == Long
         deleteById.synthesize(Query).value() == "DELETE $Person.name  AS ${alias} WHERE (${alias}.id = :p1)"
         deleteById.synthesize(DataMethod).interceptor() == DeleteAllInterceptor
 
@@ -146,7 +140,6 @@ interface MyInterface extends CrudRepository<Person, Long> {
         deleteAll
         deleteAll.getReturnType().type == void .class
         deleteAll.synthesize(DataMethod).rootEntity() == Person
-        deleteAll.synthesize(DataMethod).idType() == Long
         deleteAll.synthesize(DataMethod).interceptor() == DeleteAllInterceptor
 
         when:"the deleteOne method is retrieved"
@@ -156,7 +149,6 @@ interface MyInterface extends CrudRepository<Person, Long> {
         deleteOne
         deleteOne.getReturnType().type == void .class
         deleteOne.synthesize(DataMethod).rootEntity() == Person
-        deleteOne.synthesize(DataMethod).idType() == Long
         deleteOne.synthesize(DataMethod).interceptor() == DeleteOneInterceptor
 
         when:"the deleteAll with ids"
@@ -166,7 +158,6 @@ interface MyInterface extends CrudRepository<Person, Long> {
         deleteIds
         deleteIds.getReturnType().type == void .class
         deleteIds.synthesize(DataMethod).rootEntity() == Person
-        deleteIds.synthesize(DataMethod).idType() == Long
         deleteIds.synthesize(DataMethod).interceptor() == DeleteAllInterceptor
 
     }

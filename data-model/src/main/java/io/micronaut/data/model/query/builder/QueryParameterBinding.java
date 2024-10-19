@@ -49,7 +49,9 @@ public interface QueryParameterBinding {
      * @return The json representation data type if getDataType is {@link DataType#JSON} and is annotated with {@link JsonRepresentation}
      * annotation
      */
-    JsonDataType getJsonDataType();
+    default JsonDataType getJsonDataType() {
+        return JsonDataType.DEFAULT;
+    }
 
     /**
      * @return The converter class name
@@ -123,5 +125,27 @@ public interface QueryParameterBinding {
     @Nullable
     default boolean isExpression() {
         return false;
+    }
+
+    /**
+     * The role of the parameter.
+     *
+     * @return The role name or null
+     * @since 4.10
+     */
+    @Nullable
+    default String getRole() {
+        return null;
+    }
+
+    /**
+     * The table alias.
+     *
+     * @return The table alias
+     * @since 4.10
+     */
+    @Nullable
+    default String getTableAlias() {
+        return null;
     }
 }

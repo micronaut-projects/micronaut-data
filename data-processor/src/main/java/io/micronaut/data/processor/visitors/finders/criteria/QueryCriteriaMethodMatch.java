@@ -15,21 +15,31 @@
  */
 package io.micronaut.data.processor.visitors.finders.criteria;
 
+import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
+import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityQuery;
 import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
-import io.micronaut.data.model.query.builder.QueryBuilder;
+import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
+import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
-import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaQuery;
 import io.micronaut.data.processor.model.criteria.impl.MethodMatchSourcePersistentEntityCriteriaBuilderImpl;
 import io.micronaut.data.processor.visitors.MatchFailedException;
@@ -40,9 +50,10 @@ import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.data.processor.visitors.finders.MethodNameParser;
 import io.micronaut.data.processor.visitors.finders.QueryMatchId;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
-import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
 import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.inject.ast.Element;
 import io.micronaut.inject.ast.ParameterElement;
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
@@ -51,6 +62,7 @@ import jakarta.persistence.criteria.Selection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -72,63 +84,227 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
     }
 
     /**
-     * Apply query match.
+     * Create a query from the method.
      *
      * @param matchContext The match context
-     * @param root         The root
-     * @param query        The query
      * @param cb           The criteria builder
-     * @param <T>          The entity type
+     * @param joinSpecs    The joinSpecs
+     * @return A new query
      */
-    protected <T> void apply(MethodMatchContext matchContext,
-                             PersistentEntityRoot<T> root,
-                             PersistentEntityCriteriaQuery<T> query,
-                             SourcePersistentEntityCriteriaBuilder cb) {
-        boolean predicatedApplied = false;
-        boolean projectionApplied = false;
-        for (MethodNameParser.Match match : matches) {
-            if (match.id() == QueryMatchId.PROJECTION) {
-                applyProjections(matchContext, match.part(), root, query, cb);
-                projectionApplied = true;
-            } else if (match.id() == QueryMatchId.PREDICATE) {
-                applyPredicates(matchContext, match.part(), matchContext.getParameters(), root, query, cb);
-                predicatedApplied = true;
-            } else if (match.id() == QueryMatchId.ORDER) {
-                applyOrderBy(match.part(), root, query, cb);
-            } else if (match.id() == QueryMatchId.FOR_UPDATE) {
-                query.forUpdate(true);
-            } else if (match.id() == QueryMatchId.LIMIT) {
-                String str = match.part();
-                try {
-                    int max = StringUtils.isNotEmpty(str) ? Integer.parseInt(str) : 1;
-                    if (max > -1) {
-                        query.max(max);
-                    }
-                } catch (NumberFormatException e) {
-                    throw new MatchFailedException("Invalid number specified to top: " + str);
-                }
-            } else if (match.id() == QueryMatchId.FIRST) {
-                query.max(1);
-            } else if (match.id() == QueryMatchId.DISTINCT) {
-                applyDistinct(query);
+    protected PersistentEntityCriteriaQuery<Object> createQuery(MethodMatchContext matchContext,
+                                                                PersistentEntityCriteriaBuilder cb,
+                                                                List<AnnotationValue<Join>> joinSpecs) {
+        Element paginationParameter = matchContext.getParametersInRole().get(TypeRole.PAGEABLE);
+        boolean isPageable = matchContext.hasParameterInRole(TypeRole.PAGEABLE);
+        SourcePersistentEntity persistentEntity = matchContext.getRootEntity();
+        PersistentEntityCriteriaQuery<Object> criteriaQuery;
+        if (isPageable && isPageableWithJoins(persistentEntity, matchContext, joinSpecs)) {
+            int pageableParameterIndex = List.of(matchContext.getParameters()).indexOf(paginationParameter);
+            criteriaQuery = createQueryWithJoinsAndPagination(matchContext, cb, joinSpecs, pageableParameterIndex);
+        } else {
+            criteriaQuery = createDefaultQuery(matchContext, cb, joinSpecs);
+            if (isPageable) {
+                AbstractPersistentEntityQuery<?, ?> abstractPersistentEntityQuery = (AbstractPersistentEntityQuery<?, ?>) criteriaQuery;
+                abstractPersistentEntityQuery.getParametersInRole().put(TypeRole.PAGEABLE, List.of(matchContext.getParameters()).indexOf(paginationParameter));
+            } else if (matchContext.hasParameterInRole(TypeRole.SORT)) {
+                Element sortParameter = matchContext.getParametersInRole().get(TypeRole.SORT);
+                AbstractPersistentEntityQuery<?, ?> abstractPersistentEntityQuery = (AbstractPersistentEntityQuery<?, ?>) criteriaQuery;
+                abstractPersistentEntityQuery.getParametersInRole().put(TypeRole.SORT, List.of(matchContext.getParameters()).indexOf(sortParameter));
             }
         }
-        if (!predicatedApplied) {
-            applyPredicates(matchContext, matchContext.getParametersNotInRole(), root, query, cb);
-        }
-        if (!projectionApplied) {
-            applyProjections(matchContext, "", root, query, cb);
+        return criteriaQuery;
+    }
+
+    private boolean isPageableWithJoins(SourcePersistentEntity persistentEntity, MethodMatchContext matchContext, List<AnnotationValue<Join>> joinSpecs) {
+        return !joinSpecs.isEmpty()
+            && matchContext.getQueryBuilder() instanceof AbstractSqlLikeQueryBuilder sqlQueryBuilder
+            // MySQL doesn't support subquery with limits
+            && (!(sqlQueryBuilder instanceof SqlQueryBuilder queryBuilder) || queryBuilder.getDialect() != Dialect.MYSQL)
+            && !persistentEntity.hasCompositeIdentity()
+            && !(persistentEntity.getIdentity() instanceof Embedded);
+    }
+
+    private PersistentEntityCriteriaQuery<Object> createDefaultQuery(MethodMatchContext matchContext,
+                                                                     PersistentEntityCriteriaBuilder cb,
+                                                                     List<AnnotationValue<Join>> joinSpecs) {
+
+        PersistentEntityCriteriaQuery<Object> query = cb.createQuery();
+        PersistentEntityRoot<Object> root = query.from(matchContext.getRootEntity());
+
+        applyDistinct(query);
+        applyProjection(matchContext, cb, root, query);
+        applyPredicate(matchContext, cb, root, query);
+        applyOrder(cb, root, query);
+        applyForUpdate(query);
+        applyLimit(query);
+        applyJoinSpecs(root, joinSpecs);
+
+        return query;
+    }
+
+    /**
+     * Create a special query that supports using JOINs and pagination.
+     *
+     * @param matchContext The match context
+     * @param cb           The criteria builder
+     * @param joinSpecs    The joinSpecs
+     * @return A new query
+     */
+    private PersistentEntityCriteriaQuery<Object> createQueryWithJoinsAndPagination(MethodMatchContext matchContext,
+                                                                                    PersistentEntityCriteriaBuilder cb,
+                                                                                    List<AnnotationValue<Join>> joinSpecs,
+                                                                                    int pageableParameterIndex) {
+        // SQL tabular results with JOINs cannot be property limited by LIMIT and OFFSET
+        // Create a query that can be paginated with JOINs using a subquery
+        //
+        // SELECT mainEntity.* FROM MyEntity mainEntity JOIN ... WHERE mainEntity.id in (
+        //     SELECT paginationEntity.id FROM MyEntity paginationEntity WHERE paginationEntity.id in (
+        //        SELECT filteredEntity.id FROM MyEntity filteredEntity JOIN ... WHERE ... ;
+        //     ) ORDER BY ... LIMIT ... OFFSET ...
+        // ) ORDER BY ...
+        //
+        // NOTE: Joins might eliminate the entities so we need to include them (We might avoid them for LEFT JOINs)
+
+        PersistentEntityCriteriaQuery<Object> mainQuery = cb.createQuery();
+        PersistentEntityRoot<Object> mainRoot = mainQuery.from(matchContext.getRootEntity());
+
+        PersistentEntitySubquery<Object> paginationSubquery = mainQuery.subquery(mainRoot.getExpressionType());
+        PersistentEntityRoot<Object> paginationRoot = paginationSubquery.from(matchContext.getRootEntity());
+        paginationSubquery.select(paginationRoot.id());
+
+        // Apply pagination and sort to do subquery
+        // NOTE: Sort shouldn't be applied if unpaged
+        AbstractPersistentEntityQuery<?, ?> abstractPersistentEntityQuery = (AbstractPersistentEntityQuery<?, ?>) paginationSubquery;
+        abstractPersistentEntityQuery.getParametersInRole().put(TypeRole.PAGEABLE_REQUIRED, pageableParameterIndex);
+
+        PersistentEntitySubquery<Object> filteredSubquery = paginationSubquery.subquery(mainRoot.getExpressionType());
+        PersistentEntityRoot<Object> filteredRoot = filteredSubquery.from(matchContext.getRootEntity());
+        filteredSubquery.select(filteredRoot.id());
+
+        paginationSubquery.where(paginationRoot.id().in(filteredSubquery));
+        mainQuery.where(mainRoot.id().in(paginationSubquery));
+
+        applyProjection(matchContext, cb, mainRoot, mainQuery);
+        applyPredicate(matchContext, cb, filteredRoot, filteredSubquery);
+        applyOrder(cb, filteredRoot, filteredSubquery);
+        applyOrder(cb, mainRoot, mainQuery);
+
+        applyForUpdate(mainQuery);
+
+        applyLimit(filteredSubquery);
+
+        applyDistinct(mainQuery);
+
+        applyJoinSpecs(filteredRoot, joinSpecs);
+        applyJoinSpecs(mainRoot, joinSpecs);
+
+        // Sort last query
+        AbstractPersistentEntityQuery<?, ?> mainEntityQuery = (AbstractPersistentEntityQuery<?, ?>) mainQuery;
+        mainEntityQuery.getParametersInRole().put(TypeRole.SORT, pageableParameterIndex);
+
+        return mainQuery;
+    }
+
+    /**
+     * Create a count query.
+     *
+     * @param matchContext The match context
+     * @param cb           The criteria builder
+     * @param joinSpecs    The joinSpecs
+     * @return A new query
+     */
+    protected final PersistentEntityCriteriaQuery<Object> createDefaultCountQuery(MethodMatchContext matchContext,
+                                                                                  PersistentEntityCriteriaBuilder cb,
+                                                                                  List<AnnotationValue<Join>> joinSpecs) {
+
+        PersistentEntityCriteriaQuery<Object> query = cb.createQuery();
+        PersistentEntityRoot<Object> root = query.from(matchContext.getRootEntity());
+        query.select(cb.count(root));
+
+        applyPredicate(matchContext, cb, root, query);
+
+        boolean distinct = !joinSpecs.isEmpty() || findMatchPart(matches, QueryMatchId.DISTINCT).isPresent();
+        String projectionPart = findMatchPart(matches, QueryMatchId.PROJECTION).orElse(null);
+
+        if (StringUtils.isNotEmpty(projectionPart)) {
+            Expression<?> propertyPath = getProperty(root, projectionPart);
+            Expression<Long> count = distinct ? cb.countDistinct(propertyPath) : cb.count(propertyPath);
+            query.select(count);
+        } else {
+            Expression<Long> count = distinct ? cb.countDistinct(root) : cb.count(root);
+            query.select(count);
         }
 
-        applyJoinSpecs(root, joinSpecsAtMatchContext(matchContext, true));
+        applyJoinSpecs(root, joinSpecs);
+
+        return query;
+    }
+
+    private void applyForUpdate(PersistentEntityCriteriaQuery<Object> query) {
+        findMatchPart(matches, QueryMatchId.FOR_UPDATE)
+            .ifPresent(text -> query.forUpdate(true));
+    }
+
+    private void applyOrder(PersistentEntityCriteriaBuilder cb,
+                            PersistentEntityRoot<Object> root,
+                            PersistentEntityQuery<Object> query) {
+        findMatchPart(matches, QueryMatchId.ORDER)
+            .ifPresent(text -> applyOrderBy(text, root, query, cb));
+    }
+
+    private void applyDistinct(PersistentEntityCriteriaQuery<Object> mainQuery) {
+        findMatchPart(matches, QueryMatchId.DISTINCT)
+            .ifPresent(text -> setDistinct(mainQuery));
+    }
+
+    private void applyLimit(PersistentEntityQuery<Object> query) {
+        findMatchPart(matches, QueryMatchId.LIMIT)
+            .ifPresent(text -> {
+                try {
+                    int max = StringUtils.isNotEmpty(text) ? Integer.parseInt(text) : 1;
+                    if (max > -1) {
+                        query.limit(max);
+                    }
+                } catch (NumberFormatException e) {
+                    throw new MatchFailedException("Invalid number specified to top: " + text);
+                }
+            });
+
+        findMatchPart(matches, QueryMatchId.FIRST)
+            .ifPresent(text -> query.limit(1));
+    }
+
+    private void applyPredicate(MethodMatchContext matchContext,
+                                PersistentEntityCriteriaBuilder cb,
+                                PersistentEntityRoot<Object> root,
+                                PersistentEntityQuery<Object> entityQuery) {
+        findMatchPart(matches, QueryMatchId.PREDICATE)
+            .ifPresentOrElse(text -> applyPredicates(matchContext, text, matchContext.getParameters(), root, entityQuery, cb),
+                () -> applyPredicates(matchContext, matchContext.getParametersNotInRole(), root, entityQuery, cb));
+    }
+
+    private void applyProjection(MethodMatchContext matchContext,
+                                 PersistentEntityCriteriaBuilder cb,
+                                 PersistentEntityRoot<Object> root,
+                                 PersistentEntityCriteriaQuery<Object> criteriaQuery) {
+        findMatchPart(matches, QueryMatchId.PROJECTION)
+            .ifPresentOrElse(text -> applyProjections(matchContext, text, root, criteriaQuery, cb),
+                () -> applyProjections(matchContext, "", root, criteriaQuery, cb));
+    }
+
+    private Optional<String> findMatchPart(List<MethodNameParser.Match> matches, QueryMatchId id) {
+        return matches.stream()
+            .filter(match -> match.id() == id)
+            .findFirst()
+            .map(MethodNameParser.Match::part);
     }
 
     private <T> void applyPredicates(MethodMatchContext matchContext,
                                      String querySequence,
                                      ParameterElement[] parameters,
                                      PersistentEntityRoot<T> root,
-                                     PersistentEntityCriteriaQuery<T> query,
-                                     SourcePersistentEntityCriteriaBuilder cb) {
+                                     PersistentEntityQuery<?> query,
+                                     PersistentEntityCriteriaBuilder cb) {
         Predicate predicate = extractPredicates(querySequence, Arrays.asList(parameters).iterator(), root, cb);
         predicate = interceptPredicate(matchContext, List.of(), root, cb, predicate);
         if (predicate != null) {
@@ -139,8 +315,8 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
     private <T> void applyPredicates(MethodMatchContext matchContext,
                                      List<ParameterElement> parameters,
                                      PersistentEntityRoot<T> root,
-                                     PersistentEntityCriteriaQuery<T> query,
-                                     SourcePersistentEntityCriteriaBuilder cb) {
+                                     PersistentEntityQuery<?> query,
+                                     PersistentEntityCriteriaBuilder cb) {
         Predicate predicate = extractPredicates(parameters, root, cb);
         predicate = interceptPredicate(matchContext, List.of(), root, cb, predicate);
         if (predicate != null) {
@@ -154,7 +330,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
      * @param query The query
      * @param <T>   The query type
      */
-    protected <T> void applyDistinct(PersistentEntityCriteriaQuery<T> query) {
+    protected <T> void setDistinct(PersistentEntityCriteriaQuery<T> query) {
         if (query.isDistinct()) {
             throw new MatchFailedException("Distinct already specified!");
         }
@@ -166,8 +342,11 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
         MethodMatchSourcePersistentEntityCriteriaBuilderImpl cb = new MethodMatchSourcePersistentEntityCriteriaBuilderImpl(matchContext);
 
-        PersistentEntityCriteriaQuery<Object> criteriaQuery = cb.createQuery();
-        apply(matchContext, criteriaQuery.from(matchContext.getRootEntity()), criteriaQuery, cb);
+        List<AnnotationValue<Join>> joinSpecs = joinSpecsAtMatchContext(matchContext, true);
+
+        SourcePersistentEntity persistentEntity = matchContext.getRootEntity();
+
+        PersistentEntityCriteriaQuery<Object> criteriaQuery = createQuery(matchContext, cb, joinSpecs);
 
         FindersUtils.InterceptorMatch interceptorMatch = resolveReturnTypeAndInterceptor(matchContext);
         ClassElement resultType = interceptorMatch.returnType();
@@ -179,13 +358,13 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         MethodResult result = analyzeMethodResult(
             matchContext,
             query.getQueryResultTypeName(),
-            matchContext.getRootEntity().getClassElement(),
+            persistentEntity.getClassElement(),
             interceptorMatch,
             false
         );
 
         if (result.isDto() && !result.isRuntimeDtoConversion()) {
-            List<SourcePersistentProperty> dtoProjectionProperties = getDtoProjectionProperties(matchContext.getRootEntity(), resultType);
+            List<SourcePersistentProperty> dtoProjectionProperties = getDtoProjectionProperties(persistentEntity, resultType);
             if (!dtoProjectionProperties.isEmpty()) {
                 Root<?> root = query.getRoots().iterator().next();
                 List<Selection<?>> selectionList = dtoProjectionProperties.stream()
@@ -203,39 +382,37 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             }
         }
 
-        final AnnotationMetadataHierarchy annotationMetadataHierarchy = new AnnotationMetadataHierarchy(
-                matchContext.getRepositoryClass().getAnnotationMetadata(),
-                matchContext.getAnnotationMetadata()
-        );
-        QueryBuilder queryBuilder = matchContext.getQueryBuilder();
-        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(annotationMetadataHierarchy, queryBuilder);
+        final AnnotationMetadata annotationMetadata = matchContext.getMethodElement();
+        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(annotationMetadata, matchContext.getQueryBuilder());
 
         ClassElement genericReturnType = matchContext.getReturnType();
         if (TypeUtils.isReactiveOrFuture(genericReturnType)) {
-            genericReturnType = genericReturnType.getFirstTypeArgument().orElse(matchContext.getRootEntity().getType());
+            genericReturnType = genericReturnType.getFirstTypeArgument().orElse(persistentEntity.getType());
         }
+        boolean isReturnsPage = matchContext.isTypeInRole(genericReturnType, TypeRole.PAGE) || matchContext.isTypeInRole(genericReturnType, TypeRole.CURSORED_PAGE);
         QueryResult countQueryResult = null;
-        if (matchContext.isTypeInRole(genericReturnType, TypeRole.PAGE) || matchContext.isTypeInRole(genericReturnType, TypeRole.CURSORED_PAGE)) {
-            countQueryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildCountQuery(annotationMetadataHierarchy, queryBuilder);
+        if (isReturnsPage) {
+            PersistentEntityCriteriaQuery<Object> countQuery = createDefaultCountQuery(matchContext, cb, joinSpecs);
+            countQueryResult = ((QueryResultPersistentEntityCriteriaQuery) countQuery).buildQuery(annotationMetadata, matchContext.getQueryBuilder());
         }
 
         return new MethodMatchInfo(
-                DataMethod.OperationType.QUERY,
-                result.resultType(),
-                interceptorType
+            DataMethod.OperationType.QUERY,
+            result.resultType(),
+            interceptorType
         )
-                .dto(result.isDto())
-                .optimisticLock(optimisticLock)
-                .queryResult(queryResult)
-                .countQueryResult(countQueryResult);
+            .dto(result.isDto())
+            .optimisticLock(optimisticLock)
+            .queryResult(queryResult)
+            .countQueryResult(countQueryResult);
     }
 
-    private <T> void applyOrderBy(String orderBy,
-                                  PersistentEntityRoot<T> root,
-                                  PersistentEntityCriteriaQuery<T> query,
-                                  PersistentEntityCriteriaBuilder cb) {
-        List<Order> orders = new ArrayList<>();
+    private void applyOrderBy(String orderBy,
+                              PersistentEntityRoot<?> root,
+                              PersistentEntityQuery<?> query,
+                              PersistentEntityCriteriaBuilder cb) {
         String[] orderDefItems = orderBy.split("And");
+        List<Order> orders = new ArrayList<>(orderDefItems.length);
         for (String orderDef : orderDefItems) {
             String prop = NameUtils.decapitalize(orderDef);
             if (prop.endsWith("Desc")) {
@@ -276,10 +453,10 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
      * @param <T>          The query type
      */
     private <T> void applyProjections(MethodMatchContext matchContext,
-                                        String projection,
-                                        PersistentEntityRoot<T> root,
-                                        PersistentEntityCriteriaQuery<T> query,
-                                        SourcePersistentEntityCriteriaBuilder cb) {
+                                      String projection,
+                                      PersistentEntityRoot<T> root,
+                                      PersistentEntityCriteriaQuery<T> query,
+                                      PersistentEntityCriteriaBuilder cb) {
         applyProjections(projection, root, query, cb, matchContext.getReturnType().getSimpleName());
     }
 

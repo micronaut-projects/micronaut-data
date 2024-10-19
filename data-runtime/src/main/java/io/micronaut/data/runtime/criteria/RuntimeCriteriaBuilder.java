@@ -23,6 +23,7 @@ import io.micronaut.data.model.jpa.criteria.impl.AbstractCriteriaBuilder;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.runtime.criteria.metamodel.StaticMetamodelInitializer;
 import jakarta.inject.Singleton;
+import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.Expression;
 
 /**
@@ -44,6 +45,11 @@ public class RuntimeCriteriaBuilder extends AbstractCriteriaBuilder {
     @Override
     public PersistentEntityCriteriaQuery<Object> createQuery() {
         return new RuntimePersistentEntityCriteriaQuery<>(this, staticMetamodelInitializer, Object.class, runtimeEntityRegistry);
+    }
+
+    @Override
+    public PersistentEntityCriteriaQuery<Tuple> createTupleQuery() {
+        return new RuntimePersistentEntityCriteriaQuery<>(this, staticMetamodelInitializer, Tuple.class, runtimeEntityRegistry);
     }
 
     @Override

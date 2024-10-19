@@ -18,26 +18,19 @@ package io.micronaut.data.model.jpa.criteria.impl;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.IExpression;
-import io.micronaut.data.model.jpa.criteria.IPredicate;
-import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.query.QueryModelPredicateVisitor;
-import io.micronaut.data.model.jpa.criteria.impl.query.QueryModelSelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
-import io.micronaut.data.model.jpa.criteria.impl.util.Joiner;
-import io.micronaut.data.model.query.QueryModel;
-import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder2;
 import io.micronaut.data.model.query.builder.QueryResult;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Selection;
-import jakarta.persistence.criteria.Subquery;
 import jakarta.persistence.metamodel.EntityType;
 
 import java.util.Arrays;
@@ -45,7 +38,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
+
+import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupportedOperation;
 
 /**
  * The abstract implementation of {@link PersistentEntityCriteriaDelete}.
@@ -61,48 +55,6 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
     protected Predicate predicate;
     protected PersistentEntityRoot<T> entityRoot;
     protected Selection<?> returning;
-
-    @NonNull
-    @Override
-    public QueryModel getQueryModel() {
-        if (entityRoot == null) {
-            throw new IllegalStateException("The root entity must be specified!");
-        }
-        QueryModel qm = QueryModel.from(entityRoot.getPersistentEntity());
-        Joiner joiner = new Joiner();
-        if (predicate instanceof IPredicate predicateVisitable) {
-            predicateVisitable.visitPredicate(createPredicateVisitor(qm));
-            predicateVisitable.visitPredicate(joiner);
-        }
-        if (returning instanceof ISelection<?> selectionVisitable) {
-            selectionVisitable.visitSelection(new QueryModelSelectionVisitor(qm, false));
-            selectionVisitable.visitSelection(joiner);
-        }
-        for (Map.Entry<String, Joiner.Joined> e : joiner.getJoins().entrySet()) {
-            qm.join(e.getKey(), Optional.ofNullable(e.getValue().getType()).orElse(Join.Type.DEFAULT), e.getValue().getAlias());
-        }
-        return qm;
-    }
-
-    /**
-     * Creates query model predicate visitor.
-     *
-     * @param queryModel The query model
-     * @return the visitor
-     */
-    @NonNull
-    protected QueryModelPredicateVisitor createPredicateVisitor(QueryModel queryModel) {
-        return new QueryModelPredicateVisitor(queryModel);
-    }
-
-    @Override
-    public QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder queryBuilder) {
-        QueryBuilder2 queryBuilder2 = QueryResultPersistentEntityCriteriaQuery.findQueryBuilder2(queryBuilder);
-        if (queryBuilder2 == null) {
-            return queryBuilder.buildDelete(annotationMetadata, getQueryModel());
-        }
-        return buildQuery(annotationMetadata, queryBuilder2);
-    }
 
     @Override
     public QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder2 queryBuilder) {
@@ -153,8 +105,8 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
     }
 
     @Override
-    public <U> Subquery<U> subquery(Class<U> type) {
-        throw new IllegalStateException("Unsupported!");
+    public <U> PersistentEntitySubquery<U> subquery(ExpressionType<U> type) {
+        throw notSupportedOperation();
     }
 
     public final boolean hasVersionRestriction() {

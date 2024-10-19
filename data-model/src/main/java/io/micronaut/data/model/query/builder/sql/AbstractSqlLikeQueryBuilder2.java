@@ -190,11 +190,9 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
     }
 
     @Override
-    public QueryResult buildSelect(@NonNull AnnotationMetadata annotationMetadata, @NonNull SelectQueryDefinition definition) {
-        ArgumentUtils.requireNonNull("annotationMetadata", annotationMetadata);
-        ArgumentUtils.requireNonNull("definition", definition);
+    public QueryResult buildSelect(AnnotationMetadata annotationMetadata, SelectQueryDefinition definition) {
         QueryBuilder queryBuilder = new QueryBuilder();
-        QueryState queryState = buildQuery(annotationMetadata, definition, queryBuilder, null);
+        QueryState queryState = buildQuery(annotationMetadata, definition, queryBuilder, false, null);
 
         return QueryResult.of(
             queryState.getFinalQuery(),
@@ -207,10 +205,11 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
     }
 
     @NonNull
-    private QueryState buildQuery(AnnotationMetadata annotationMetadata,
-                                  SelectQueryDefinition definition,
-                                  QueryBuilder queryBuilder,
-                                  @Nullable String tableAliasPrefix) {
+    protected final QueryState buildQuery(AnnotationMetadata annotationMetadata,
+                                    SelectQueryDefinition definition,
+                                    QueryBuilder queryBuilder,
+                                    boolean supportsQueryPagination,
+                                    @Nullable String tableAliasPrefix) {
         QueryState queryState = new QueryState(queryBuilder, definition, true, true, tableAliasPrefix);
 
         Predicate predicate = definition.predicate();
@@ -233,10 +232,15 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         if (predicate != null || annotationMetadata.hasStereotype(WhereSpecifications.class) || queryState.getEntity().getAnnotationMetadata().hasStereotype(WhereSpecifications.class)) {
             buildWhereClause(annotationMetadata, predicate, queryState);
         }
-
-        appendOrder(annotationMetadata, definition, queryState);
+        appendPaginationAndOrder(annotationMetadata, definition, supportsQueryPagination, queryState);
         appendForUpdate(QueryPosition.END_OF_QUERY, definition, queryState.getQuery());
         return queryState;
+    }
+
+    protected void appendPaginationAndOrder(AnnotationMetadata annotationMetadata,
+                                            SelectQueryDefinition definition,
+                                            boolean pagination,
+                                            QueryState queryState) {
     }
 
     /**
@@ -626,11 +630,10 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
      * Appends order to the query.
      *
      * @param annotationMetadata the annotation metadata
-     * @param definition         the query model
+     * @param orders             the orders
      * @param queryState         the query state
      */
-    protected void appendOrder(AnnotationMetadata annotationMetadata, SelectQueryDefinition definition, QueryState queryState) {
-        List<Order> orders = definition.order();
+    protected void appendOrder(AnnotationMetadata annotationMetadata, List<Order> orders, QueryState queryState) {
         if (!orders.isEmpty()) {
             StringBuilder buff = queryState.getQuery();
             buff.append(ORDER_BY_CLAUSE);
@@ -968,11 +971,17 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
      * @param annotationMetadata The annotation metadata
      * @param sort               The sort
      * @param nativeQuery        Whether the query is native query, in which case sort field names will be supplied by the user and not verified
+     * @param tableAlias         The table alias
      * @return The encoded query
      */
     @NonNull
-    public QueryResult buildOrderBy(String query, @NonNull PersistentEntity entity, @NonNull AnnotationMetadata annotationMetadata, @NonNull Sort sort,
-                                    boolean nativeQuery) {
+    public String buildOrderBy(String query,
+                               @NonNull PersistentEntity entity,
+                               @NonNull AnnotationMetadata annotationMetadata,
+                               @NonNull Sort sort,
+                               boolean nativeQuery,
+                               @Nullable
+                               String tableAlias) {
         ArgumentUtils.requireNonNull("entity", entity);
         ArgumentUtils.requireNonNull("sort", sort);
         List<Sort.Order> orders = sort.getOrderBy();
@@ -990,7 +999,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
             if (ignoreCase) {
                 buff.append("LOWER(");
             }
-            buff.append(buildPropertyByName(property, query, entity, annotationMetadata, nativeQuery));
+            buff.append(buildPropertyByName(property, query, entity, annotationMetadata, nativeQuery, tableAlias));
             if (ignoreCase) {
                 buff.append(")");
             }
@@ -1000,12 +1009,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
             }
         }
 
-        return QueryResult.of(
-            buff.toString(),
-            Collections.emptyList(),
-            Collections.emptyList(),
-            Collections.emptyMap()
-        );
+        return buff.toString();
     }
 
     /**
@@ -1018,13 +1022,16 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
      * @param entity             The root entity
      * @param annotationMetadata The annotation metadata
      * @param nativeQuery        Whether the query is native query, in which case the property name will be supplied by the user and not verified
+     * @param tableAlias         The table alias
      * @return The encoded query
      */
     public String buildPropertyByName(@NonNull String propertyName,
                                       @NonNull String query,
                                       @NonNull PersistentEntity entity,
                                       @NonNull AnnotationMetadata annotationMetadata,
-                                      boolean nativeQuery) {
+                                      boolean nativeQuery,
+                                      @Nullable
+                                      String tableAlias) {
         if (nativeQuery) {
             return propertyName;
         }
@@ -1042,8 +1049,9 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         }
 
         StringBuilder buff = new StringBuilder();
+        String aliasName = tableAlias == null ? getAliasName(entity) : tableAlias;
         if (associations.isEmpty()) {
-            buff.append(getAliasName(entity));
+            buff.append(aliasName);
         } else {
             StringJoiner joiner = new StringJoiner(".");
             for (Association association : associations) {
@@ -1054,7 +1062,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
                 if (!query.contains(" " + joinAlias + " ") && !query.endsWith(" " + joinAlias)) {
                     // Special hack case for JPA, Hibernate can join the relation with cross join automatically when referenced by the property path
                     // This probably should be removed in the future major version
-                    buff.append(getAliasName(entity)).append(DOT);
+                    buff.append(aliasName).append(DOT);
                     StringJoiner pathJoiner = new StringJoiner(".");
                     for (Association association : associations) {
                         pathJoiner.add(association.getName());
@@ -1324,12 +1332,71 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         }
     }
 
-    private record QueryBuilder(AtomicInteger position,
-                                List<QueryParameterBinding> parameterBindings,
-                                StringBuilder query,
-                                List<String> queryParts) {
+    @Override
+    public String buildLimitAndOffset(long limit, long offset) {
+        StringBuilder builder = new StringBuilder();
+        appendLimitAndOffset(getDialect(), limit, offset, builder);
+        return builder.toString();
+    }
 
-        private QueryBuilder() {
+    /**
+     * Append limit and offset.
+     *
+     * @param dialect The dialect
+     * @param limit   The limit
+     * @param offset  The offset
+     * @param builder The builder
+     */
+    protected void appendLimitAndOffset(Dialect dialect, long limit, long offset, StringBuilder builder) {
+        boolean hasLimit = limit > 0;
+        boolean hasOffset = offset > 0;
+        if (!hasLimit && !hasOffset) {
+            return;
+        }
+        builder.append(' ');
+        switch (dialect) {
+            case SQL_SERVER -> {
+                // SQL server requires OFFSET always
+                if (hasOffset) {
+                    builder.append("OFFSET ").append(offset).append(" ROWS ");
+                } else {
+                    builder.append("OFFSET 0 ROWS ");
+                }
+                if (hasLimit) {
+                    builder.append("FETCH NEXT ").append(limit).append(" ROWS ONLY");
+                }
+            }
+            case ORACLE -> {
+                if (hasOffset) {
+                    builder.append("OFFSET ").append(offset).append(" ROWS");
+                }
+                if (hasLimit) {
+                    if (hasOffset) {
+                        builder.append(" ");
+                    }
+                    builder.append("FETCH NEXT ").append(limit).append(" ROWS ONLY");
+                }
+            }
+            default -> {
+                if (hasLimit) {
+                    builder.append("LIMIT ").append(limit);
+                }
+                if (hasOffset) {
+                    if (hasLimit) {
+                        builder.append(" ");
+                    }
+                    builder.append("OFFSET ").append(offset);
+                }
+            }
+        }
+    }
+
+    protected record QueryBuilder(AtomicInteger position,
+                                  List<QueryParameterBinding> parameterBindings,
+                                  StringBuilder query,
+                                  List<String> queryParts) {
+
+        public QueryBuilder() {
             this(new AtomicInteger(0), new ArrayList<>(), new StringBuilder(), new ArrayList<>());
         }
     }
@@ -1381,16 +1448,19 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         }
 
         public String getFinalQuery() {
-            if (!queryBuilder.query.isEmpty()) {
+            if (!queryBuilder.query.isEmpty() || !queryBuilder.queryParts.isEmpty()) {
                 queryBuilder.queryParts.add(queryBuilder.query.toString());
                 queryBuilder.query.setLength(0);
             }
             StringBuilder sb = new StringBuilder(queryBuilder.queryParts.get(0));
             int i = 1;
             for (int k = 1; k < queryBuilder.queryParts.size(); k++) {
-                Placeholder placeholder = formatParameter(i++);
-                sb.append(placeholder.name);
-                sb.append(queryBuilder.queryParts.get(k));
+                QueryParameterBinding queryParameterBinding = queryBuilder.parameterBindings.get(i - 1);
+                if (queryParameterBinding.getRole() == null) {
+                    Placeholder placeholder = formatParameter(i++);
+                    sb.append(placeholder.name);
+                    sb.append(queryBuilder.queryParts.get(k));
+                } // Avoid create a placeholder for a role parameter
             }
             return sb.toString();
         }
@@ -2220,7 +2290,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
                     if (requiresBrackets) {
                         query.append("(");
                     }
-                    buildQuery(AnnotationMetadata.EMPTY_METADATA, selectQueryDefinition, queryState.queryBuilder, outerAlias);
+                    buildQuery(AnnotationMetadata.EMPTY_METADATA, selectQueryDefinition, queryState.queryBuilder, false, outerAlias);
                     if (requiresBrackets) {
                         query.append(")");
                     }

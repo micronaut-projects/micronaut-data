@@ -47,10 +47,8 @@ import io.micronaut.inject.processing.ProcessingException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -307,11 +305,6 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             @Override
             public List<QueryParameterBinding> getParameterBindings() {
                 return parameterBindings;
-            }
-
-            @Override
-            public Map<String, String> getAdditionalRequiredParameters() {
-                return Collections.emptyMap();
             }
         };
     }

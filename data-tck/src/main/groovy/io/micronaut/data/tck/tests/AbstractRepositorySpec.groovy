@@ -23,6 +23,7 @@ import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery
 import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder
 import io.micronaut.data.repository.jpa.criteria.DeleteSpecification
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
@@ -64,13 +65,12 @@ import io.micronaut.transaction.TransactionStatus
 import jakarta.persistence.criteria.CriteriaBuilder
 import jakarta.persistence.criteria.CriteriaQuery
 import jakarta.persistence.criteria.CriteriaUpdate
-import jakarta.persistence.criteria.Path
+import jakarta.persistence.criteria.JoinType
 import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Root
 import spock.lang.AutoCleanup
 import spock.lang.IgnoreIf
 import spock.lang.Issue
-import spock.lang.PendingFeature
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -88,7 +88,6 @@ import static io.micronaut.data.tck.repositories.BookSpecifications.titleEqualsW
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.distinct
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.idsIn
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEquals
-import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEqualsCaseInsensitive
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.personWithOnlyNameAndAgeByName
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.setIncome
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.setName
@@ -204,6 +203,214 @@ abstract class AbstractRepositorySpec extends Specification {
         return false
     }
 
+    protected boolean skipJoinPagination() {
+        String name = getClass().getSimpleName()
+        return name.startsWith("Maria") || name.startsWith("MySql")
+    }
+
+    void "test JOIN pagination"() {
+        if (skipJoinPagination()) {
+            return
+        }
+        given:
+            Student denis = new Student("Denis")
+            Student josh = new Student("Josh")
+            Student kevin = new Student("Kevin")
+            def book1 = new Book(title: "The Stand", students: [denis, josh])
+            def book2 = new Book(title: "Pet Cemetery", students: [kevin])
+            def book3 = new Book(title: "Along Came a Spider", students: [kevin, josh])
+            bookRepository.save(book1)
+            bookRepository.save(book2)
+            bookRepository.save(book3
+            )
+            List<String> names = [denis.name, josh.name]
+        when:
+            io.micronaut.data.model.Page<Book> page = bookRepository.findAllByStudentsNameIn(names, Pageable.from(0, 10, Sort.of(Sort.Order.asc("title"))))
+
+        then:
+            page.totalSize == page.content.size()
+            page.totalSize == 2
+            page.content.collect { it.title }.sort() == ["Along Came a Spider", "The Stand"]
+            page.content[0].students.collect { it.name }.sort() == ["Josh", "Kevin"]
+            page.content[1].students.collect { it.name }.sort() == ["Denis", "Josh"]
+
+        when:
+            def pageable = Pageable.from(0, 1, Sort.of(Sort.Order.asc("title")))
+            page = bookRepository.findAllByStudentsNameIn(names, pageable)
+
+        then:
+            page.totalSize == 2
+            page.content.size() == 1
+            page.content[0].title == "Along Came a Spider"
+            page.content[0].students.collect { it.name }.sort() == ["Josh", "Kevin"]
+
+        when:
+            pageable = pageable.next()
+            page = bookRepository.findAllByStudentsNameIn(names, pageable)
+
+        then:
+            page.totalSize == 2
+            page.content.size() == 1
+            page.content[0].title == "The Stand"
+            page.content[0].students.collect { it.name }.sort() == ["Denis", "Josh"]
+
+        when:
+            pageable = pageable.next()
+            page = bookRepository.findAllByStudentsNameIn(names, pageable)
+
+        then:
+            page.totalSize == 2
+            page.content.size() == 0
+
+        when:
+            pageable = pageable.previous()
+            page = bookRepository.findAllByStudentsNameIn(names, pageable)
+
+        then:
+            page.totalSize == 2
+            page.content.size() == 1
+            page.content[0].title == "The Stand"
+            page.content[0].students.collect { it.name }.sort() == ["Denis", "Josh"]
+    }
+
+    void "test JOIN cursor pagination"() {
+        if (skipJoinPagination()) {
+            return
+        }
+        given:
+            Student denis = new Student("Denis")
+            Student josh = new Student("Josh")
+            Student kevin = new Student("Kevin")
+            def book1 = new Book(title: "The Stand", students: [denis, josh])
+            def book2 = new Book(title: "Pet Cemetery", students: [kevin])
+            def book3 = new Book(title: "Along Came a Spider", students: [kevin, josh])
+            bookRepository.save(book1)
+            bookRepository.save(book2)
+            bookRepository.save(book3
+            )
+            List<String> names = [denis.name, josh.name]
+        when:
+            io.micronaut.data.model.Page<Book> page = bookRepository.findAllByStudentsNameIn(names, CursoredPageable.from( 10, Sort.of(Sort.Order.asc("title"))))
+
+        then:
+            page.totalSize == page.content.size()
+            page.totalSize == 2
+            page.content.collect { it.title }.sort() == ["Along Came a Spider", "The Stand"]
+            page.content[0].students.collect { it.name }.sort() == ["Josh", "Kevin"]
+            page.content[1].students.collect { it.name }.sort() == ["Denis", "Josh"]
+
+        when:
+            def pageable = CursoredPageable.from(1, Sort.of(Sort.Order.asc("title")))
+            page = bookRepository.findAllByStudentsNameIn(names, pageable)
+
+        then:
+            page.totalSize == 2
+            page.content.size() == 1
+            page.content[0].title == "Along Came a Spider"
+            page.content[0].students.collect { it.name }.sort() == ["Josh", "Kevin"]
+
+        when:
+            pageable = page.nextPageable()
+            page = bookRepository.findAllByStudentsNameIn(names, pageable)
+
+        then:
+            page.totalSize == 2
+            page.content.size() == 1
+            page.content[0].title == "The Stand"
+            page.content[0].students.collect { it.name }.sort() == ["Denis", "Josh"]
+
+        when:
+            pageable = page.nextPageable()
+            page = bookRepository.findAllByStudentsNameIn(names, pageable)
+
+        then:
+            page.totalSize == 2
+            page.content.size() == 0
+
+// TODO: Can we support going back after page that doesn't return anything
+//
+//        when:
+//            pageable = page.previousPageable()
+//            page = bookRepository.findAllByStudentsNameIn(names, pageable)
+//
+//        then:
+//            page.totalSize == 2
+//            page.content.size() == 1
+//            page.content[0].title == "The Stand"
+//            page.content[0].students.collect { it.name }.sort() == ["Denis", "Josh"]
+    }
+
+    void "test criteria pagination"() {
+        given:
+            Student denis = new Student("Denis")
+            Student josh = new Student("Josh")
+            Student kevin = new Student("Kevin")
+            def book1 = new Book(title: "The Stand", students: [denis, josh])
+            def book2 = new Book(title: "Pet Cemetery", students: [kevin])
+            def book3 = new Book(title: "Along Came a Spider", students: [kevin, josh])
+            bookRepository.save(book1)
+            bookRepository.save(book2)
+            bookRepository.save(book3
+            )
+            def criteria = new PredicateSpecification() {
+                @Override
+                Predicate toPredicate(Root root, CriteriaBuilder criteriaBuilder) {
+                    def students = root.joinSet("students", JoinType.LEFT)
+                    return criteriaBuilder.or(
+                            criteriaBuilder.equal(students.get("name"), "Denis"),
+                            criteriaBuilder.equal(students.get("name"), "Josh")
+                    )
+                }
+            }
+        when:
+            io.micronaut.data.model.Page<Book> page = bookRepository.findAll(criteria, Pageable.from(0, 10, Sort.of(Sort.Order.asc("title")))) as io.micronaut.data.model.Page<Book>
+
+        then:
+            page.totalSize == page.content.size()
+            page.totalSize == 2
+            page.content.collect { it.title }.sort() == ["Along Came a Spider", "The Stand"]
+            page.content[0].students.collect { it.name }.sort() == ["Josh", "Kevin"]
+            page.content[1].students.collect { it.name }.sort() == ["Denis", "Josh"]
+
+        when:
+            def pageable = Pageable.from(0, 1, Sort.of(Sort.Order.asc("title")))
+            page = bookRepository.findAll(criteria, pageable)
+
+        then:
+            page.totalSize == 2
+            page.content.size() == 1
+            page.content[0].title == "Along Came a Spider"
+            page.content[0].students.collect { it.name }.sort() == ["Josh", "Kevin"]
+
+        when:
+            pageable = pageable.next()
+            page = bookRepository.findAll(criteria, pageable)
+
+        then:
+            page.totalSize == 2
+            page.content.size() == 1
+            page.content[0].title == "The Stand"
+            page.content[0].students.collect { it.name }.sort() == ["Denis", "Josh"]
+
+        when:
+            pageable = pageable.next()
+            page = bookRepository.findAll(criteria, pageable)
+
+        then:
+            page.totalSize == 2
+            page.content.size() == 0
+
+        when:
+            pageable = pageable.previous()
+            page = bookRepository.findAll(criteria, pageable)
+
+        then:
+            page.totalSize == 2
+            page.content.size() == 1
+            page.content[0].title == "The Stand"
+            page.content[0].students.collect { it.name }.sort() == ["Denis", "Josh"]
+    }
+
     void "test query with limit and offset" () {
         given:
             saveSampleBooks()
@@ -219,6 +426,23 @@ abstract class AbstractRepositorySpec extends Specification {
             books = bookRepository.findBooks(Integer.MAX_VALUE, 0)
         then:
             books.collect { it.id } == allBooks.toList().collect { it.id }
+    }
+
+    void "test fetching only by limit" () {
+        given:
+            saveSampleBooks()
+        when:
+            def books = bookRepository.findAll(new CriteriaQueryBuilder<Book>() {
+                @Override
+                CriteriaQuery<Book> build(CriteriaBuilder criteriaBuilder) {
+                    PersistentEntityCriteriaQuery criteriaQuery = criteriaBuilder.createQuery(Book)
+                    criteriaQuery.from(Book)
+                    criteriaQuery.limit(1)
+                    return criteriaQuery
+                }
+            })
+        then:
+            books.size() == 1
     }
 
     void "test save and retrieve basic types"() {
@@ -1028,6 +1252,17 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
         personRepository.findByName("Jack") == null
         personRepository.findByName("Jeffrey").age == 30
+
+        when:"Update by using entity with null id"
+        def jeffrey = personRepository.findByName("Jeffrey")
+        def initialAge = jeffrey.age
+        jeffrey.id = null
+        jeffrey.age = 31
+        personRepository.updateByName("Jeffrey", jeffrey)
+        def updatedJeffrey = personRepository.findByName("Jeffrey")
+        then:"Entity is updated"
+        initialAge == 30
+        updatedJeffrey.age == 31
     }
 
     void "test update by multiple fields"() {
@@ -2706,7 +2941,6 @@ abstract class AbstractRepositorySpec extends Specification {
         mealRepository.deleteById(meal.mid)
     }
 
-    @PendingFeature(reason = "Until fixed issue with count and joins")
     @Issue("https://github.com/micronaut-projects/micronaut-data/issues/1882")
     void "test author page total size"() {
         given:
@@ -2750,8 +2984,7 @@ abstract class AbstractRepositorySpec extends Specification {
         def authorPage = authorRepository.findByBooksTotalPages(120, CursoredPageable.from(10, null))
         then:
         !authorPage.empty
-        // TODO: Currently does not return correct total counts due to https://github.com/micronaut-projects/micronaut-data/issues/1882
-        // so once it is fixed check totalCount == 1
+        authorPage.totalSize == 1
         authorPage.cursors.size() == 1
         authorPage.content.size() == 1
     }

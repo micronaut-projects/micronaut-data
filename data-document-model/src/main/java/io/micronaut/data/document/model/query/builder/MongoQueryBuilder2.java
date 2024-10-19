@@ -28,7 +28,6 @@ import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.document.mongo.MongoAnnotations;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
-import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
@@ -186,35 +185,7 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
         } else {
             q = toJsonString(pipeline);
         }
-        return new QueryResult() {
-
-            @NonNull
-            @Override
-            public String getQuery() {
-                return q;
-            }
-
-            @Override
-            public int getMax() {
-                return selectQueryDefinition.limit();
-            }
-
-            @Override
-            public long getOffset() {
-                return selectQueryDefinition.offset();
-            }
-
-            @Override
-            public List<String> getQueryParts() {
-                return Collections.emptyList();
-            }
-
-            @Override
-            public List<QueryParameterBinding> getParameterBindings() {
-                return queryState.getParameterBindings();
-            }
-
-        };
+        return QueryResult.of(q, queryState.getParameterBindings());
     }
 
     private void addLookups(Collection<JoinPath> joins, QueryState queryState) {
@@ -646,14 +617,12 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
             predicateQuery,
             Collections.emptyList(),
             queryState.getParameterBindings(),
-            queryState.getAdditionalRequiredParameters(),
-            queryDefinition.limit(),
-            queryDefinition.offset()
+            queryState.getAdditionalRequiredParameters()
         );
     }
 
     @Override
-    public QueryResult buildPagination(Pageable pageable) {
+    public String buildLimitAndOffset(long limit, long offset) {
         throw new UnsupportedOperationException();
     }
 

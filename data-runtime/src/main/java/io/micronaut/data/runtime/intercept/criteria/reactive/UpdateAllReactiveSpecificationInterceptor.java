@@ -44,7 +44,8 @@ public class UpdateAllReactiveSpecificationInterceptor extends AbstractReactiveS
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         ReturnType<Object> returnType = context.getReturnType();
-        Publisher<Number> publisher = updateAllReactive(methodKey, context);
+        Publisher<Number> publisher = getReactiveCriteriaOperations(methodKey, context, null)
+            .updateAll(buildUpdateQuery(context));
         return Publishers.convertPublisher(conversionService, publisher, returnType.getType());
     }
 

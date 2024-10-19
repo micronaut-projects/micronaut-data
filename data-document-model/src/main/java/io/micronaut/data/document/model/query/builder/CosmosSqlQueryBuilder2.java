@@ -24,8 +24,6 @@ import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.repeatable.WhereSpecifications;
 import io.micronaut.data.model.Association;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.PersistentAssociationPath;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentPropertyPath;
@@ -41,7 +39,6 @@ import jakarta.persistence.criteria.Predicate;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -290,7 +287,7 @@ public final class CosmosSqlQueryBuilder2 extends SqlQueryBuilder2 {
             buildWhereClause(annotationMetadata, predicate, queryState);
         }
 
-        appendOrder(annotationMetadata, definition, queryState);
+        appendOrder(annotationMetadata, definition.order(), queryState);
         appendForUpdate(QueryPosition.END_OF_QUERY, definition, queryState.getQuery());
 
         return QueryResult.of(
@@ -375,30 +372,11 @@ public final class CosmosSqlQueryBuilder2 extends SqlQueryBuilder2 {
         };
     }
 
-    @NonNull
     @Override
-    public QueryResult buildPagination(@NonNull Pageable pageable) {
-        if (pageable.getMode() != Mode.OFFSET) {
-            throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported by cosmos operations");
+    public String buildLimitAndOffset(long limit, long offset) {
+        if (limit > 0) {
+            return " OFFSET " + offset + " LIMIT " + limit + " ";
         }
-        int size = pageable.getSize();
-        if (size > 0) {
-            StringBuilder builder = new StringBuilder(" ");
-            long from = pageable.getOffset();
-            builder.append("OFFSET ").append(from).append(" LIMIT ").append(size).append(" ");
-            return QueryResult.of(
-                builder.toString(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyMap()
-            );
-        }
-        return QueryResult.of(
-            "",
-            Collections.emptyList(),
-            Collections.emptyList(),
-            Collections.emptyMap()
-        );
+        return "";
     }
-
 }

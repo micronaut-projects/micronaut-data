@@ -1,20 +1,14 @@
-In some cases, you need to build a query programmatically and at the runtime; for that, Micronaut Data implements a subset of Jakarta Persistence Criteria API 3.0, which can be used for Micronaut Data JDBC and R2DBC features. To utilize this feature add the following dependency:
+Micronaut Criteria API for JDBC / R2DBC currently implements only a subset of the API.
+
+To use Jakarta Criteria API you need to add an optional dependency:
 
 dependency:jakarta.persistence:jakarta.persistence-api[]
 
-To implement queries that cannot be defined at the compile-time Micronaut Data introduces api:data.repository.JpaSpecificationExecutor[] repository interface that can be used to extend your repository interface:
-
-snippet::example.PersonRepository[project-base="doc-examples/jdbc-example",source="main" tags="repository",indent="0"]
-
-Each method expects a "specification" which is a functional interface with a set of Criteria API objects intended to build a query programmatically.
-
-Micronaut Criteria API currently implements only a subset of the API. Most of it is internally used to create queries with predicates and projections.
-
 Currently, not supported JPA Criteria API features:
 
-- Joins with custom `ON` expressions and typed join methods like `joinSet` etc
+- Joins with custom `ON` expressions
+- Operators dealing with an entity type and casting
 - Collection operations: `isMember` etc
-- Tuple result type
 - Transformation expressions like toString, substring etc.
 - Cases
 

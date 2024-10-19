@@ -1,36 +1,37 @@
 [versions]
-micronaut = "4.6.5"
+micronaut = "4.7.0"
 micronaut-platform = "4.4.2"
 micronaut-docs = "2.0.0"
-micronaut-gradle-plugin = "4.4.2"
-micronaut-testresources = "2.5.4"
+micronaut-gradle-plugin = "4.4.3"
+micronaut-testresources = "2.6.2"
 
 micronaut-azure = "5.7.1"
-micronaut-reactor = "3.5.0"
+micronaut-reactor = "3.6.0"
 micronaut-rxjava2 = "2.5.0"
 micronaut-r2dbc = "5.6.1"
-micronaut-sql = "5.8.1"
-micronaut-serde = "2.11.0"
-micronaut-spring = "5.8.0"
+micronaut-sql = "5.8.2"
+micronaut-serde = "2.11.1"
+micronaut-spring = "5.8.1"
 micronaut-test = "4.4.0"
 micronaut-mongo = "5.4.0"
 micronaut-kotlin = "4.4.0"
 micronaut-multitenancy = "5.4.0"
-micronaut-validation = "4.7.0"
-micronaut-logging = "1.4.0"
+micronaut-validation = "4.8.0"
+micronaut-logging = "1.5.0"
 micronaut-flyway = "7.4.0"
+micronaut-coherence = "5.0.4"
 
-groovy = "4.0.22"
+groovy = "4.0.23"
 
 managed-javax-persistence = "2.2"
 managed-jakarta-persistence-api = "3.1.0"
 managed-jakarta-transaction-api = "2.0.1"
 
-spring-data = "3.3.3"
+spring-data = "3.3.5"
 
 # Testing and benchmarking
 
-benchmark-spring-data = "2024.0.3"
+benchmark-spring-data = "2024.0.5"
 spock = "2.2-groovy-4.0"
 testcontainers = "1.19.4"
 jmh = "1.37"
@@ -40,7 +41,7 @@ jmh = "1.37"
 ksp-gradle-plugin = "1.9.25-1.0.20"
 kotlin-gradle-plugin = "1.9.25"
 jmh-gradle-plugin = "0.7.2"
-spring-boot-gradle-plugin = "3.3.3"
+spring-boot-gradle-plugin = "3.3.4"
 spring-dependency-management-gradle-plugin = "1.1.6"
 shadow-gradle-plugin = "8.0.0"
 
@@ -69,6 +70,7 @@ micronaut-sql = { module = "io.micronaut.sql:micronaut-sql-bom", version.ref = "
 micronaut-r2dbc = { module = "io.micronaut.r2dbc:micronaut-r2dbc-bom", version.ref = "micronaut-r2dbc" }
 micronaut-flyway = { module = "io.micronaut.flyway:micronaut-flyway-bom", version.ref = "micronaut-flyway" }
 micronaut-serde = { module = "io.micronaut.serde:micronaut-serde-bom", version.ref = "micronaut-serde" }
+micronaut-coherence = { module = "io.micronaut.coherence:micronaut-coherence-bom", version.ref = "micronaut-coherence" }
 
 micronaut-docs = { module = "io.micronaut.docs:micronaut-docs-asciidoc-config-props", version.ref = "micronaut-docs" }
 

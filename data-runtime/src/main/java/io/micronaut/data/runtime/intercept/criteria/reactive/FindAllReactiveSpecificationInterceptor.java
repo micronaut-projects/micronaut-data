@@ -42,7 +42,7 @@ public class FindAllReactiveSpecificationInterceptor extends AbstractReactiveSpe
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        Publisher<?> publisher = findAllReactive(methodKey, context, Type.FIND_ALL);
+        Publisher<?> publisher = findAllReactive(methodKey, context);
         return Publishers.convertPublisher(conversionService, publisher, context.getReturnType().getType());
     }
 

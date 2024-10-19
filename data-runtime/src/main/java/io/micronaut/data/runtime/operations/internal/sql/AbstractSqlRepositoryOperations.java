@@ -18,6 +18,7 @@ package io.micronaut.data.runtime.operations.internal.sql;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.ApplicationContextProvider;
 import io.micronaut.context.BeanContext;
+import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
@@ -26,6 +27,7 @@ import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
@@ -68,6 +70,7 @@ import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.json.JsonMapper;
+import jakarta.persistence.Tuple;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -407,6 +410,16 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 }
 
                 @Override
+                public Class<?> getParameterConverterClass() {
+                    return property.getKey()
+                        .getAnnotationMetadata()
+                        .getAnnotation(TypeDef.class)
+                        .annotationClassValue("converter")
+                        .flatMap(AnnotationClassValue::getType)
+                        .orElse(null);
+                }
+
+                @Override
                 public Object getValue() {
                     return property.getValue();
                 }
@@ -433,6 +446,16 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 @Override
                 public String[] getPropertyPath() {
                     return pp.getArrayPath();
+                }
+
+                @Override
+                public Class<?> getParameterConverterClass() {
+                    return pp.getProperty()
+                        .getAnnotationMetadata()
+                        .getAnnotation(TypeDef.class)
+                        .annotationClassValue("converter")
+                        .flatMap(AnnotationClassValue::getType)
+                        .orElse(null);
                 }
             });
         }
@@ -652,6 +675,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      */
     protected abstract Integer getFirstResultSetIndex();
 
+    protected abstract SqlTypeMapper<RS, Tuple> createTupleMapper();
+
     /**
      * Creates a result mapper.
      *
@@ -663,6 +688,9 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @since 4.2.0
      */
     protected <E, R> SqlTypeMapper<RS, R> createMapper(SqlStoredQuery<E, R> preparedQuery, Class<RS> rsType) {
+        if (preparedQuery.getResultType().equals(Tuple.class)) {
+            return (SqlTypeMapper<RS, R>) createTupleMapper();
+        }
         BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener;
         RuntimePersistentEntity<E> persistentEntity = preparedQuery.getPersistentEntity();
         boolean isEntityResult = preparedQuery.getResultDataType() == DataType.ENTITY;

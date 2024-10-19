@@ -17,7 +17,8 @@ class SqlServerHibernateTransactionSpec extends HibernateTransactionSpec impleme
                 "datasources.default.name"                       : "mymssqldb",
                 'jpa.default.properties.hibernate.hbm2ddl.auto'  : 'create-drop',
                 'jpa.default.properties.hibernate.dialect'       : 'org.hibernate.dialect.SQLServerDialect',
-                'test-resources.containers.mssql.accept-license' : 'true'
+                'test-resources.containers.mssql.accept-license' : 'true',
+                'test-resources.containers.mssql.image-name'     : 'mcr.microsoft.com/mssql/server:2022-latest'
         ]
     }
 

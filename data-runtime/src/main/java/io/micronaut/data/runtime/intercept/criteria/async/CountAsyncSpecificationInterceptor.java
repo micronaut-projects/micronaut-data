@@ -43,6 +43,9 @@ public class CountAsyncSpecificationInterceptor extends AbstractAsyncSpecificati
 
     @Override
     public CompletionStage<Number> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, CompletionStage<Number>> context) {
-        return countAsync(methodKey, context).thenApply(number -> convertNumberToReturnType(context, number));
+        return getAsyncCriteriaRepositoryOperations(methodKey, context, null)
+            .findOne(buildCountQuery(methodKey, context))
+            .<Number>thenApply(n -> n)
+            .thenApply(number -> convertNumberToReturnType(context, number));
     }
 }

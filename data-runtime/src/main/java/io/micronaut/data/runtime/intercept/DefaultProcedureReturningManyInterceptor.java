@@ -44,7 +44,7 @@ public final class DefaultProcedureReturningManyInterceptor<T, R> extends Abstra
 
     @Override
     public Iterable<R> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Iterable<R>> context) {
-        PreparedQuery<?, R> preparedQuery = prepareQuery(methodKey, context, null);
+        PreparedQuery<?, R> preparedQuery = prepareQuery(methodKey, context);
         return operations.execute(preparedQuery);
     }
 }

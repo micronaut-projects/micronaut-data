@@ -25,7 +25,6 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Embedded;
-import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentAssociationPath;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
@@ -34,6 +33,7 @@ import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder2;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 
 import java.util.HashSet;
 import java.util.List;
@@ -229,10 +229,19 @@ public final class JpaQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
         return queryString.append("DELETE ");
     }
 
-    @NonNull
     @Override
-    public QueryResult buildPagination(@NonNull Pageable pageable) {
+    public String buildLimitAndOffset(long limit, long offset) {
         throw new UnsupportedOperationException("JPA-QL does not support pagination in query definitions");
+    }
+
+    @Override
+    protected void appendLimitAndOffset(Dialect dialect, long limit, long offset, StringBuilder builder) {
+        // JPA doesn't support limit and offset in JPQL
+    }
+
+    @Override
+    protected void appendPaginationAndOrder(AnnotationMetadata annotationMetadata, SelectQueryDefinition definition, boolean pagination, QueryState queryState) {
+        appendOrder(annotationMetadata, definition.order(), queryState);
     }
 
     @Override

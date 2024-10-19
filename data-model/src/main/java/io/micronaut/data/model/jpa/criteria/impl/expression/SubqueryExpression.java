@@ -33,7 +33,7 @@ public final class SubqueryExpression<T> extends AbstractExpression<T> {
     private final Type type;
     private final PersistentEntitySubquery<T> subquery;
 
-    public SubqueryExpression(@NonNull Type type,@NonNull  PersistentEntitySubquery<T> subquery) {
+    public SubqueryExpression(@NonNull Type type, @NonNull PersistentEntitySubquery<T> subquery) {
         super(subquery.getExpressionType());
         this.type = type;
         this.subquery = subquery;
@@ -65,6 +65,9 @@ public final class SubqueryExpression<T> extends AbstractExpression<T> {
             '}';
     }
 
+    /**
+     * The type of the expression.
+     */
     public enum Type {
         ALL, SOME, ANY
     }

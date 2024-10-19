@@ -27,6 +27,7 @@ import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteria
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaUpdate;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ParameterElement;
+import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.ParameterExpression;
 
@@ -54,12 +55,17 @@ public final class SourcePersistentEntityCriteriaBuilderImpl extends AbstractCri
 
     @Override
     public SourcePersistentEntityCriteriaQuery<Object> createQuery() {
-        return new SourcePersistentEntityCriteriaQueryImpl<>(entityResolver, this);
+        return new SourcePersistentEntityCriteriaQueryImpl<>(Object.class, entityResolver, this);
     }
 
     @Override
     public <T> PersistentEntityCriteriaQuery<T> createQuery(Class<T> resultClass) {
-        return new SourcePersistentEntityCriteriaQueryImpl<>(entityResolver, this);
+        return new SourcePersistentEntityCriteriaQueryImpl<>(resultClass, entityResolver, this);
+    }
+
+    @Override
+    public PersistentEntityCriteriaQuery<Tuple> createTupleQuery() {
+        return new SourcePersistentEntityCriteriaQueryImpl<>(Tuple.class, entityResolver, criteriaBuilder);
     }
 
     @Override

@@ -24,6 +24,8 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.serde.annotation.Serdeable;
 
+import java.util.List;
+
 /**
  * Models a pageable request that uses a cursor.
  *
@@ -106,4 +108,21 @@ public interface CursoredPageable extends Pageable {
         return new DefaultCursoredPageable(size, cursor, mode, page, sort, requestTotal);
     }
 
+    @Override
+    CursoredPageable withoutSort();
+
+    @Override
+    CursoredPageable withoutPaging();
+
+    @Override
+    CursoredPageable withSort(Sort sort);
+
+    @Override
+    CursoredPageable withTotal();
+
+    @Override
+    CursoredPageable withoutTotal();
+
+    @Override
+    CursoredPageable orders(List<Order> orders);
 }

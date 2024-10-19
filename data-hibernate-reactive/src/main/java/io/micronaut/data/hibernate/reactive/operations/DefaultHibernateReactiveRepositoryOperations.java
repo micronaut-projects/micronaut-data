@@ -51,11 +51,14 @@ import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.CriteriaUpdate;
 import org.hibernate.SessionFactory;
+import org.hibernate.query.Order;
 import org.hibernate.reactive.stage.Stage;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.function.Function;
 
 /**
@@ -147,6 +150,11 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     @Override
     protected void setOffset(Stage.SelectionQuery<?> query, int offset) {
         query.setFirstResult(offset);
+    }
+
+    @Override
+    protected void setOrder(Stage.SelectionQuery<?> query, List<Order<?>> orders) {
+        query.setOrder((List) orders);
     }
 
     @Override
@@ -307,7 +315,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
                                                   InvocationContext<?, ?> invocationContext,
                                                   T entity) {
         Stage.MutationQuery query = session.createMutationQuery(storedQuery.getQuery());
-        bindParameters(query, storedQuery, invocationContext, true, entity);
+        bindParameters(query, storedQuery, invocationContext, entity);
         return helper.executeUpdate(query);
     }
 
@@ -431,6 +439,11 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     }
 
     @Override
+    public Publisher<Boolean> exists(CriteriaQuery<?> query) {
+        return withSession(session -> helper.monoFromCompletionStage(() -> session.createQuery(query).setMaxResults(1).getResultList().thenApply(l -> !l.isEmpty())));
+    }
+
+    @Override
     public <T> Flux<T> findAll(CriteriaQuery<T> query) {
         return withSession(session -> helper.monoFromCompletionStage(() -> session.createQuery(query).getResultList()))
             .flatMapIterable(res -> res);
@@ -440,10 +453,10 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     public <T> Flux<T> findAll(CriteriaQuery<T> query, int offset, int limit) {
         return withSession(session -> helper.monoFromCompletionStage(() -> {
             Stage.SelectionQuery<T> sessionQuery = session.createQuery(query);
-            if (offset != -1) {
+            if (offset > 0) {
                 sessionQuery = sessionQuery.setFirstResult(offset);
             }
-            if (limit != -1) {
+            if (limit > 0) {
                 sessionQuery = sessionQuery.setMaxResults(limit);
             }
             return sessionQuery.getResultList();

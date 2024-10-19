@@ -16,6 +16,7 @@
 package io.micronaut.data.jdbc.h2
 
 import groovy.transform.Memoized
+import io.micronaut.data.tck.repositories.BookAsyncRepository
 import io.micronaut.data.tck.repositories.PersonAsyncRepository
 import io.micronaut.data.tck.tests.AbstractAsyncRepositorySpec
 
@@ -27,4 +28,9 @@ class H2AsyncRepositorySpec extends AbstractAsyncRepositorySpec implements H2Tes
         return context.getBean(H2AsyncPersonRepository)
     }
 
+    @Memoized
+    @Override
+    BookAsyncRepository getBookRepository() {
+        return context.getBean(H2AsyncBookRepository)
+    }
 }

@@ -17,9 +17,7 @@ package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.annotation.Join;
-import io.micronaut.data.model.query.JoinPath;
-import io.micronaut.data.model.query.QueryModel;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder2;
 import io.micronaut.data.model.query.builder.QueryResult;
@@ -37,7 +35,14 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
 @Internal
 public interface QueryResultPersistentEntityCriteriaQuery {
 
-    static QueryBuilder2 findQueryBuilder2(QueryBuilder queryBuilder) {
+    default QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder queryBuilder) {
+        return buildQuery(annotationMetadata, asQueryBuilder2(queryBuilder));
+    }
+
+    QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder2 queryBuilder);
+
+    @NonNull
+    private static QueryBuilder2 asQueryBuilder2(QueryBuilder queryBuilder) {
         Class<? extends QueryBuilder> queryBuilderClass = queryBuilder.getClass();
         if (queryBuilderClass.getSimpleName().equals("CosmosSqlQueryBuilder")) {
             // Use new implementation
@@ -55,7 +60,7 @@ public interface QueryResultPersistentEntityCriteriaQuery {
         if (queryBuilderClass.getSimpleName().equals("MongoQueryBuilder")) {
             // Use new implementation
             try {
-                return (QueryBuilder2)  queryBuilderClass
+                return (QueryBuilder2) queryBuilderClass
                     .getClassLoader().loadClass("io.micronaut.data.document.model.query.builder.MongoQueryBuilder2")
                     .getDeclaredConstructor()
                     .newInstance();
@@ -67,71 +72,18 @@ public interface QueryResultPersistentEntityCriteriaQuery {
         }
         if (queryBuilderClass == SqlQueryBuilder.class) {
             // Use new implementation
-            return newSqlQueryBuilder((SqlQueryBuilder) queryBuilder);
+            AnnotationMetadata builderAnnotationMetadata = ((SqlQueryBuilder) queryBuilder).getAnnotationMetadata();
+            if (builderAnnotationMetadata == null) {
+                return new SqlQueryBuilder2(((SqlQueryBuilder) queryBuilder).getDialect());
+            } else {
+                return new SqlQueryBuilder2(builderAnnotationMetadata);
+            }
         }
         if (queryBuilderClass == JpaQueryBuilder.class) {
             // Use new implementation
             return new JpaQueryBuilder2();
         }
-        return null;
-    }
-
-    QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder queryBuilder);
-
-    QueryModel getQueryModel();
-
-    default QueryResult buildCountQuery(AnnotationMetadata annotationMetadata, QueryBuilder queryBuilder) {
-        if (queryBuilder.getClass() == SqlQueryBuilder.class) {
-            // Use new implementation
-            return buildCountQuery(annotationMetadata, newSqlQueryBuilder((SqlQueryBuilder) queryBuilder));
-        }
-        if (queryBuilder.getClass() == JpaQueryBuilder.class) {
-            // Use new implementation
-            return buildCountQuery(annotationMetadata, new JpaQueryBuilder2());
-        }
-        QueryModel queryModel = getQueryModel();
-        QueryModel countQuery = QueryModel.from(queryModel.getPersistentEntity());
-        countQuery.projections().count();
-        QueryModel.Junction junction = queryModel.getCriteria();
-        for (QueryModel.Criterion criterion : junction.getCriteria()) {
-            countQuery.add(criterion);
-        }
-
-        for (JoinPath joinPath : queryModel.getJoinPaths()) {
-            Join.Type joinType = joinPath.getJoinType();
-            switch (joinType) {
-                case INNER:
-                case FETCH:
-                    joinType = Join.Type.DEFAULT;
-                    break;
-                case LEFT_FETCH:
-                    joinType = Join.Type.LEFT;
-                    break;
-                case RIGHT_FETCH:
-                    joinType = Join.Type.RIGHT;
-                    break;
-                default:
-                    // no-op
-            }
-            countQuery.join(joinPath.getPath(), joinType, null);
-        }
-        return queryBuilder.buildQuery(annotationMetadata, countQuery);
-    }
-
-    QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder2 queryBuilder);
-
-    default QueryResult buildCountQuery(AnnotationMetadata annotationMetadata, QueryBuilder2 queryBuilder) {
-        throw new UnsupportedOperationException();
-    }
-
-    private static QueryBuilder2 newSqlQueryBuilder(SqlQueryBuilder sqlQueryBuilder) {
-        // Use new implementation
-        AnnotationMetadata builderAnnotationMetadata = sqlQueryBuilder.getAnnotationMetadata();
-        if (builderAnnotationMetadata == null) {
-            return new SqlQueryBuilder2(sqlQueryBuilder.getDialect());
-        } else {
-            return new SqlQueryBuilder2(builderAnnotationMetadata);
-        }
+        return new LegacyQueryModelQueryBuilder(queryBuilder);
     }
 
 }

@@ -16,6 +16,7 @@
 package io.micronaut.data.operations;
 
 import io.micronaut.context.ApplicationContextProvider;
+import io.micronaut.core.annotation.NextMajorVersion;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionServiceProvider;
@@ -82,6 +83,7 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * @param <T> The generic resultType
      * @return A result or null
      */
+    @NextMajorVersion("Switch boolean to ? as it doesn't require specific result")
     <T> boolean exists(@NonNull PreparedQuery<T, Boolean> preparedQuery);
 
     /**

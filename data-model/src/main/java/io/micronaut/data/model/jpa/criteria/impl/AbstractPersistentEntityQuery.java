@@ -17,32 +17,29 @@ package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
-import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
 import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
-import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.query.QueryModelPredicateVisitor;
-import io.micronaut.data.model.jpa.criteria.impl.query.QueryModelSelectionVisitor;
+import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.jpa.criteria.impl.util.Joiner;
 import io.micronaut.data.model.query.JoinPath;
-import io.micronaut.data.model.query.QueryModel;
-import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder2;
 import io.micronaut.data.model.query.builder.QueryResult;
 import jakarta.persistence.criteria.AbstractQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
@@ -73,11 +70,12 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requirePro
  * @since 3.2
  */
 @Internal
-public abstract class AbstractPersistentEntityQuery<T, Self extends AbstractQuery<T>> implements AbstractQuery<T>,
-    QueryResultPersistentEntityCriteriaQuery {
+public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEntityQuery<T>> implements AbstractQuery<T>,
+    QueryResultPersistentEntityCriteriaQuery, PersistentEntityQuery<T> {
 
+    protected Map<String, Integer> parametersInRole = new LinkedHashMap<>();
     protected final CriteriaBuilder criteriaBuilder;
-    protected final Class<T> resultType;
+    protected final ExpressionType<T> resultType;
     protected Predicate predicate;
     protected Selection<?> selection;
     protected PersistentEntityRoot<?> entityRoot;
@@ -87,9 +85,13 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends AbstractQuer
     protected boolean forUpdate;
     protected boolean distinct;
 
-    protected AbstractPersistentEntityQuery(Class<T> resultType, CriteriaBuilder criteriaBuilder) {
+    protected AbstractPersistentEntityQuery(ExpressionType<T> resultType, CriteriaBuilder criteriaBuilder) {
         this.resultType = resultType;
         this.criteriaBuilder = criteriaBuilder;
+    }
+
+    public final Map<String, Integer> getParametersInRole() {
+        return parametersInRole;
     }
 
     /**
@@ -98,18 +100,8 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends AbstractQuer
     protected abstract Self self();
 
     @Override
-    public QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder queryBuilder) {
-        QueryBuilder2 queryBuilder2 = QueryResultPersistentEntityCriteriaQuery.findQueryBuilder2(queryBuilder);
-        if (queryBuilder2 == null) {
-            return queryBuilder.buildQuery(annotationMetadata, getQueryModel());
-        }
-        return buildQuery(annotationMetadata, queryBuilder2);
-    }
-
-    @Override
     public QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder2 queryBuilder) {
-        QueryBuilder2.SelectQueryDefinition definition = toSelectQueryDefinition();
-        return queryBuilder.buildSelect(annotationMetadata, definition);
+        return queryBuilder.buildSelect(annotationMetadata, toSelectQueryDefinition());
     }
 
     /**
@@ -117,35 +109,21 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends AbstractQuer
      */
     public QueryBuilder2.SelectQueryDefinition toSelectQueryDefinition() {
         return new SelectQueryDefinitionImpl(
+            entityRoot,
             entityRoot.getPersistentEntity(),
             predicate,
             selection == null ? entityRoot : selection,
-            calculateJoins(entityRoot.getPersistentEntity(), false),
+            calculateJoins(entityRoot.getPersistentEntity()),
             forUpdate,
             distinct,
             orders == null ? List.of() : orders,
             max,
-            offset
+            offset,
+            parametersInRole
         );
     }
 
-    @Override
-    public QueryResult buildCountQuery(AnnotationMetadata annotationMetadata, QueryBuilder2 queryBuilder) {
-        SelectQueryDefinitionImpl definition = new SelectQueryDefinitionImpl(
-            entityRoot.getPersistentEntity(),
-            predicate,
-            criteriaBuilder.count(entityRoot),
-            calculateJoins(entityRoot.getPersistentEntity(), true),
-            false,
-            distinct,
-            List.of(),
-            -1,
-            -1
-        );
-        return queryBuilder.buildSelect(annotationMetadata, definition);
-    }
-
-    private Map<String, JoinPath> calculateJoins(PersistentEntity persistentEntity, boolean remapFetchJoins) {
+    private Map<String, JoinPath> calculateJoins(PersistentEntity persistentEntity) {
         Joiner joiner = new Joiner();
         if (predicate instanceof IPredicate predicateVisitable) {
             predicateVisitable.visitPredicate(joiner);
@@ -163,15 +141,8 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends AbstractQuer
         }
         Map<String, JoinPath> joinPaths = new LinkedHashMap<>();
         for (Map.Entry<String, Joiner.Joined> e : joiner.getJoins().entrySet()) {
-            Join.Type joinType = Optional.ofNullable(e.getValue().getType()).orElse(Join.Type.DEFAULT);
-            if (remapFetchJoins) {
-                joinType = switch (joinType) {
-                    case INNER, FETCH -> Join.Type.DEFAULT;
-                    case LEFT_FETCH -> Join.Type.LEFT;
-                    case RIGHT_FETCH -> Join.Type.RIGHT;
-                    default -> joinType;
-                };
-            }
+            Joiner.Joined joined = e.getValue();
+            Join.Type joinType = calculateJoinType(joined);
             String path = e.getKey();
             io.micronaut.data.model.PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(path);
             if (propertyPath == null) {
@@ -186,65 +157,57 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends AbstractQuer
             } else {
                 associationPath = propertyPath.getAssociations().toArray(new Association[0]);
             }
-            JoinPath jp = new JoinPath(path, associationPath, joinType, e.getValue().getAlias());
+            JoinPath jp = new JoinPath(path, associationPath, joinType, joined.getAlias());
             joinPaths.put(e.getKey(), jp);
         }
         return joinPaths;
     }
 
-    @NonNull
-    @Override
-    public QueryModel getQueryModel() {
-        if (entityRoot == null) {
-            throw new IllegalStateException("The root entity must be specified!");
+    private Join.Type calculateJoinType(Joiner.Joined joined) {
+        Join.Type joinType = Optional.ofNullable(joined.getType()).orElse(Join.Type.DEFAULT);
+        if (!isProjected(joined.getAssociation())) {
+            // Fetch joins don't make sense if the entity is not projected
+            joinType = switch (joinType) {
+                case INNER, FETCH -> Join.Type.DEFAULT;
+                case LEFT_FETCH -> Join.Type.LEFT;
+                case RIGHT_FETCH -> Join.Type.RIGHT;
+                default -> joinType;
+            };
         }
-        QueryModel qm = QueryModel.from(entityRoot.getPersistentEntity());
-        Joiner joiner = new Joiner();
-        if (predicate instanceof IPredicate predicateVisitable) {
-            predicateVisitable.visitPredicate(createPredicateVisitor(qm));
-            predicateVisitable.visitPredicate(joiner);
-        }
-        if (selection instanceof ISelection<?> selectionVisitable) {
-            selectionVisitable.visitSelection(new QueryModelSelectionVisitor(qm, distinct));
-            selectionVisitable.visitSelection(joiner);
-            entityRoot.visitSelection(joiner);
-        } else {
-            entityRoot.visitSelection(new QueryModelSelectionVisitor(qm, distinct));
-            entityRoot.visitSelection(joiner);
-        }
-        if (orders != null && !orders.isEmpty()) {
-            List<Sort.Order> sortOrders = orders.stream().map(o -> {
-                PersistentPropertyPath<?> propertyPath = requireProperty(o.getExpression());
-                joiner.joinIfNeeded(propertyPath);
-                String name = propertyPath.getPathAsString();
-                if (o.isAscending()) {
-                    return Sort.Order.asc(name);
-                }
-                return Sort.Order.desc(name);
-            }).toList();
-            qm.sort(Sort.of(sortOrders));
-        }
-        for (Map.Entry<String, Joiner.Joined> e : joiner.getJoins().entrySet()) {
-            qm.join(e.getKey(), Optional.ofNullable(e.getValue().getType()).orElse(Join.Type.DEFAULT), e.getValue().getAlias());
-        }
-
-        qm.max(max);
-        qm.offset(offset);
-        if (forUpdate) {
-            qm.forUpdate();
-        }
-        return qm;
+        return joinType;
     }
 
-    /**
-     * Creates query model predicate visitor.
-     *
-     * @param queryModel The query model
-     * @return the visitor
-     */
-    @NonNull
-    protected QueryModelPredicateVisitor createPredicateVisitor(QueryModel queryModel) {
-        return new QueryModelPredicateVisitor(queryModel);
+    private boolean isProjected(jakarta.persistence.criteria.Join<?, ?> join) {
+        return isProjected(selection, join);
+    }
+
+    private boolean isProjected(Selection<?> selection, jakarta.persistence.criteria.Join<?, ?> join) {
+        if (selection instanceof CompoundSelection<?> compoundSelection) {
+            // Avoid this check for now, we would need to support equals of different property paths
+            return true;
+//            for (Selection<?> compoundSelectionItem : compoundSelection.getCompoundSelectionItems()) {
+//                if (isProjected(compoundSelectionItem, join)) {
+//                    return true;
+//                }
+//            }
+//            return false;
+        }
+        var root = selection == null ? entityRoot : selection;
+        while (join != null) {
+            if (join == root) {
+                return true;
+            }
+            From<?, ?> parent = join.getParent();
+            if (parent == root) {
+                return true;
+            }
+            if (parent instanceof jakarta.persistence.criteria.Join<?, ?> nextJoin) {
+                join = nextJoin;
+            } else {
+                return false;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -263,11 +226,11 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends AbstractQuer
     /**
      * Sets the max rows.
      *
-     * @param max The max ros
+     * @param limit The max ros
      * @return self
      */
-    public Self max(int max) {
-        this.max = max;
+    public Self limit(int limit) {
+        this.max = limit;
         return self();
     }
 
@@ -363,12 +326,7 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends AbstractQuer
 
     @Override
     public Class<T> getResultType() {
-        return resultType;
-    }
-
-    @Override
-    public <U> PersistentEntitySubquery<U> subquery(Class<U> type) {
-        throw notSupportedOperation();
+        return resultType.getJavaType();
     }
 
     @Override
@@ -417,14 +375,17 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends AbstractQuer
     @Internal
     private static final class SelectQueryDefinitionImpl extends BaseQueryDefinitionImpl implements QueryBuilder2.SelectQueryDefinition {
 
+        private final Root<?> root;
         private final Selection<?> selection;
         private final boolean isForUpdate;
         private final boolean isDistinct;
         private final List<Order> order;
         private final int limit;
         private final int offset;
+        private final Map<String, Integer> parametersInRole;
 
-        public SelectQueryDefinitionImpl(PersistentEntity persistentEntity,
+        public SelectQueryDefinitionImpl(Root<?> root,
+                                         PersistentEntity persistentEntity,
                                          Predicate predicate,
                                          Selection<?> selection,
                                          Map<String, JoinPath> joinPaths,
@@ -432,14 +393,27 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends AbstractQuer
                                          boolean isDistinct,
                                          List<Order> order,
                                          int limit,
-                                         int offset) {
+                                         int offset,
+                                         Map<String, Integer> parametersInRole) {
             super(persistentEntity, predicate, joinPaths);
+            this.root = root;
             this.selection = selection;
             this.isForUpdate = isForUpdate;
             this.isDistinct = isDistinct;
             this.order = order;
             this.limit = limit;
             this.offset = offset;
+            this.parametersInRole = parametersInRole;
+        }
+
+        @Override
+        public Map<String, Integer> parametersInRole() {
+            return parametersInRole;
+        }
+
+        @Override
+        public Root<?> root() {
+            return root;
         }
 
         @Override

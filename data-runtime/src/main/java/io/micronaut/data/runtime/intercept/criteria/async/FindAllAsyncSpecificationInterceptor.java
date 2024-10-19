@@ -45,7 +45,7 @@ public class FindAllAsyncSpecificationInterceptor extends AbstractAsyncSpecifica
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        CompletionStage<? extends Iterable<?>> future = findAllAsync(methodKey, context, Type.FIND_ALL);
+        CompletionStage<? extends Iterable<?>> future = findAllAsync(methodKey, context);
         return future.thenApply((Function<Iterable<?>, Iterable<Object>>) iterable -> {
             Argument<?> argument = findReturnType(context, LIST_OF_OBJECTS);
             if (argument.getType().isInstance(iterable)) {
