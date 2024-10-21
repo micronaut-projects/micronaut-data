@@ -30,10 +30,13 @@ import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionOperationsRegistry;
 import io.micronaut.data.connection.DefaultConnectionDefinition;
 import io.micronaut.data.connection.annotation.Connectable;
+import io.micronaut.data.connection.annotation.OracleConnectionClientInfo;
 import io.micronaut.data.connection.async.AsyncConnectionOperations;
 import io.micronaut.data.connection.reactive.ReactiveStreamsConnectionOperations;
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
+import io.micronaut.data.connection.support.ConnectionTracingInfo;
 import io.micronaut.inject.ExecutableMethod;
+import io.micronaut.runtime.ApplicationConfiguration;
 import jakarta.inject.Singleton;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -54,6 +57,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @InterceptorBean(Connectable.class)
 public final class ConnectableInterceptor implements MethodInterceptor<Object, Object> {
 
+    private static final String DISABLE_CLIENT_INFO_TRACING_MEMBER = "disableClientInfoTracing";
+    private static final String TRACING_MODULE_MEMBER = "tracingModule";
+    private static final String TRACING_ACTION_MEMBER = "tracingAction";
+
     private final Map<TenantExecutableMethod, ConnectionInvocation> connectionInvocationMap = new ConcurrentHashMap<>(30);
 
     @NonNull
@@ -62,6 +69,9 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
     private final ConnectionDataSourceTenantResolver tenantResolver;
 
     private final ConversionService conversionService;
+
+    @Nullable
+    private final String appName;
 
     /**
      * Default constructor.
@@ -72,9 +82,11 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
      */
     ConnectableInterceptor(@NonNull ConnectionOperationsRegistry connectionOperationsRegistry,
                            @Nullable ConnectionDataSourceTenantResolver tenantResolver,
+                           ApplicationConfiguration applicationConfiguration,
                            ConversionService conversionService) {
         this.connectionOperationsRegistry = connectionOperationsRegistry;
         this.tenantResolver = tenantResolver;
+        this.appName = applicationConfiguration.getName().orElse(null);
         this.conversionService = conversionService;
     }
 
@@ -97,7 +109,7 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
             final ConnectionInvocation connectionInvocation = connectionInvocationMap
                 .computeIfAbsent(new TenantExecutableMethod(tenantDataSourceName, executableMethod), ignore -> {
                     final String dataSource = tenantDataSourceName == null ? executableMethod.stringValue(Connectable.class).orElse(null) : tenantDataSourceName;
-                    final ConnectionDefinition connectionDefinition = getConnectionDefinition(executableMethod);
+                    final ConnectionDefinition connectionDefinition = getConnectionDefinition(executableMethod, appName);
 
                     switch (interceptedMethod.resultType()) {
                         case PUBLISHER -> {
@@ -150,18 +162,46 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
     }
 
     @NonNull
-    public static ConnectionDefinition getConnectionDefinition(ExecutableMethod<Object, Object> executableMethod) {
+    public static ConnectionDefinition getConnectionDefinition(ExecutableMethod<Object, Object> executableMethod, String appName) {
         AnnotationValue<Connectable> annotation = executableMethod.getAnnotation(Connectable.class);
         if (annotation == null) {
             throw new IllegalStateException("No declared @Connectable annotation present");
         }
-
+        AnnotationValue<OracleConnectionClientInfo> oracleConnectionClientInfoAnnotationValue = executableMethod.getAnnotation(OracleConnectionClientInfo.class);
+        ConnectionTracingInfo connectionTracingInfo = oracleConnectionClientInfoAnnotationValue == null ? null : getConnectionClientTracingInfo(oracleConnectionClientInfoAnnotationValue, executableMethod, appName);
         return new DefaultConnectionDefinition(
             executableMethod.getDeclaringType().getSimpleName() + "." + executableMethod.getMethodName(),
             annotation.enumValue("propagation", ConnectionDefinition.Propagation.class).orElse(ConnectionDefinition.PROPAGATION_DEFAULT),
             annotation.longValue("timeout").stream().mapToObj(Duration::ofSeconds).findFirst().orElse(null),
-            annotation.booleanValue("readOnly").orElse(null)
+            annotation.booleanValue("readOnly").orElse(null),
+            connectionTracingInfo
         );
+    }
+
+    /**
+     * Gets Oracle connection tracing info from the {@link OracleConnectionClientInfo} annotation.
+     *
+     * @param annotation The {@link OracleConnectionClientInfo} annotation value
+     * @param executableMethod The method being executed
+     * @param appName The micronaut application name, null if not set
+     * @return The connection tracing info or null if not configured to be used
+     */
+    private static @Nullable ConnectionTracingInfo getConnectionClientTracingInfo(AnnotationValue<OracleConnectionClientInfo> annotation,
+                                                                        ExecutableMethod<Object, Object> executableMethod,
+                                                                        String appName) {
+        boolean disableClientInfoTracing = annotation.booleanValue(DISABLE_CLIENT_INFO_TRACING_MEMBER).orElse(false);
+        if (disableClientInfoTracing) {
+            return null;
+        }
+        String module = annotation.stringValue(TRACING_MODULE_MEMBER).orElse(null);
+        String action = annotation.stringValue(TRACING_ACTION_MEMBER).orElse(null);
+        if (module == null) {
+            module = executableMethod.getDeclaringType().getName();
+        }
+        if (action == null) {
+            action = executableMethod.getMethodName();
+        }
+        return new ConnectionTracingInfo(appName, module, action);
     }
 
     /**

@@ -15,11 +15,12 @@
  */
 package io.micronaut.data.jdbc.oraclexe;
 
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Expandable;
-import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.annotation.sql.Procedure;
+import io.micronaut.data.connection.annotation.OracleConnectionClientInfo;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -31,6 +32,7 @@ import java.util.Collection;
 import java.util.List;
 
 @JdbcRepository(dialect = Dialect.ORACLE)
+@OracleConnectionClientInfo(tracingModule = "BOOKS")
 public abstract class OracleXEBookRepository extends BookRepository {
     public OracleXEBookRepository(OracleXEAuthorRepository authorRepository) {
         super(authorRepository);
@@ -45,6 +47,7 @@ public abstract class OracleXEBookRepository extends BookRepository {
 
     @Override
     @Query(value = "select * from book b where b.title = ANY (:arg0)", nativeQuery = true)
+    @OracleConnectionClientInfo(disableClientInfoTracing = true)
     public abstract List<Book> listNativeBooksWithTitleAnyArray(@Expandable @TypeDef(type = DataType.STRING) @Nullable String[] arg0);
 
     @Procedure
@@ -53,7 +56,11 @@ public abstract class OracleXEBookRepository extends BookRepository {
     @Procedure("add1")
     public abstract int add1Aliased(int input);
 
-//    public abstract Book updateReturning(Book book);
+    @Override
+    @OracleConnectionClientInfo(tracingAction = "INSERT")
+    public abstract @NonNull Book save(@NonNull Book book);
+
+    //    public abstract Book updateReturning(Book book);
 //
 //    public abstract String updateReturningTitle(Book book);
 //
