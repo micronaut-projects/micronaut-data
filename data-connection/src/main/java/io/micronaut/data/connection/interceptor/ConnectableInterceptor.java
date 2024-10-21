@@ -30,6 +30,7 @@ import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionOperationsRegistry;
 import io.micronaut.data.connection.DefaultConnectionDefinition;
 import io.micronaut.data.connection.annotation.Connectable;
+import io.micronaut.data.connection.annotation.OracleConnectionClientInfo;
 import io.micronaut.data.connection.async.AsyncConnectionOperations;
 import io.micronaut.data.connection.reactive.ReactiveStreamsConnectionOperations;
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
@@ -56,7 +57,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @InterceptorBean(Connectable.class)
 public final class ConnectableInterceptor implements MethodInterceptor<Object, Object> {
 
-    private static final String TRACE_CLIENT_INFO_MEMBER = "traceClientInfo";
+    private static final String DISABLE_CLIENT_INFO_TRACING_MEMBER = "disableClientInfoTracing";
     private static final String TRACING_MODULE_MEMBER = "tracingModule";
     private static final String TRACING_ACTION_MEMBER = "tracingAction";
 
@@ -166,8 +167,8 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
         if (annotation == null) {
             throw new IllegalStateException("No declared @Connectable annotation present");
         }
-
-        ConnectionTracingInfo connectionTracingInfo = getConnectionClientTracingInfo(annotation, executableMethod, appName);
+        AnnotationValue<OracleConnectionClientInfo> oracleConnectionClientInfoAnnotationValue = executableMethod.getAnnotation(OracleConnectionClientInfo.class);
+        ConnectionTracingInfo connectionTracingInfo = oracleConnectionClientInfoAnnotationValue == null ? null : getConnectionClientTracingInfo(oracleConnectionClientInfoAnnotationValue, executableMethod, appName);
         return new DefaultConnectionDefinition(
             executableMethod.getDeclaringType().getSimpleName() + "." + executableMethod.getMethodName(),
             annotation.enumValue("propagation", ConnectionDefinition.Propagation.class).orElse(ConnectionDefinition.PROPAGATION_DEFAULT),
@@ -178,18 +179,18 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
     }
 
     /**
-     * Gets connection tracing info from the {@link Connectable} annotation.
+     * Gets Oracle connection tracing info from the {@link OracleConnectionClientInfo} annotation.
      *
-     * @param annotation The {@link Connectable} annotation value
+     * @param annotation The {@link OracleConnectionClientInfo} annotation value
      * @param executableMethod The method being executed
      * @param appName The micronaut application name, null if not set
      * @return The connection tracing info or null if not configured to be used
      */
-    private static ConnectionTracingInfo getConnectionClientTracingInfo(AnnotationValue<Connectable> annotation,
+    private static @Nullable ConnectionTracingInfo getConnectionClientTracingInfo(AnnotationValue<OracleConnectionClientInfo> annotation,
                                                                         ExecutableMethod<Object, Object> executableMethod,
                                                                         String appName) {
-        boolean traceClientInfo = annotation.booleanValue(TRACE_CLIENT_INFO_MEMBER).orElse(false);
-        if (!traceClientInfo) {
+        boolean disableClientInfoTracing = annotation.booleanValue(DISABLE_CLIENT_INFO_TRACING_MEMBER).orElse(false);
+        if (disableClientInfoTracing) {
             return null;
         }
         String module = annotation.stringValue(TRACING_MODULE_MEMBER).orElse(null);

@@ -82,30 +82,4 @@ public @interface Connectable {
      * @return Whether is read-only connection
      */
     boolean readOnly() default false;
-
-    /**
-     * If true, then when connection is established {@link java.sql.Connection#setClientInfo(String, String)} will be called
-     * if it is connected to the Oracle database. It will issue calls to set MODULE, ACTION and CLIENT_IDENTIFIER.
-     *
-     * @return whether connection should trace/set client info
-     */
-    boolean traceClientInfo() default false;
-
-    /**
-     * The module name for tracing if {@link #traceClientInfo()} is true.
-     * If not provided, then it will fall back to the name of the class currently being intercepted in {@link io.micronaut.data.connection.interceptor.ConnectableInterceptor}.
-     * Currently supported only for Oracle database connections.
-     *
-     * @return the custom module name for tracing
-     */
-    String tracingModule() default "";
-
-    /**
-     * The action name for tracing if {@link #traceClientInfo()} is true.
-     * If not provided, then it will fall back to the name of the method currently being intercepted in {@link io.micronaut.data.connection.interceptor.ConnectableInterceptor}.
-     * Currently supported only for Oracle database connections.
-     *
-     * @return the custom module name for tracing
-     */
-    String tracingAction() default "";
 }

@@ -64,7 +64,7 @@ IMPORTANT: The dialect setting in configuration does *not* replace the need to e
 === Connection client info tracing (Oracle)
 
 In order to trace SQL calls using `java.sql.Connection.setClientInfo(String, String)` method, you can
-annotate repository with @api:data.connection.annotation.Connectable[] annotation. If boolean field `traceClientInfo` is not set to true, then Micronaut will not issue `setClientInfo` calls to the JDBC connection.
+annotate repository with @api:data.connection.annotation.OracleConnectionClientInfo[] annotation. If boolean field `disableClientInfoTracing` is set to true, then Micronaut will not issue `setClientInfo` calls to the JDBC connection.
 Fields in given annotation `tracingModule` and `tracingAction` can set custom module and action. If omitted, then module value will default
 to the class name (usually Micronaut Data repository class) annotated with the given annotation and action to the name of the method
 being executed. Annotation can be used on class or method, customizing module or action.
