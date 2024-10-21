@@ -36,6 +36,8 @@ import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The {@link DataSource} connection operations.
@@ -50,9 +52,11 @@ public final class DefaultDataSourceConnectionOperations extends AbstractConnect
     private static final String ORACLE_TRACE_CLIENTID = "OCSID.CLIENTID";
     private static final String ORACLE_TRACE_MODULE = "OCSID.MODULE";
     private static final String ORACLE_TRACE_ACTION = "OCSID.ACTION";
+    private static final String ORACLE_CONNECTION_DATABASE_PRODUCT_NAME = "Oracle";
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultDataSourceConnectionOperations.class);
     private final DataSource dataSource;
+    private final Map<Connection, Boolean> connectionIsOracleMap = new ConcurrentHashMap<>(20);
 
     DefaultDataSourceConnectionOperations(DataSource dataSource) {
         this.dataSource = DelegatingDataSource.unwrapDataSource(dataSource);
@@ -60,11 +64,33 @@ public final class DefaultDataSourceConnectionOperations extends AbstractConnect
 
     @Override
     protected Connection openConnection(ConnectionDefinition definition) {
+        Connection connection;
         try {
-            return dataSource.getConnection();
+            connection = dataSource.getConnection();
         } catch (SQLException e) {
             throw new CannotGetJdbcConnectionException("Failed to obtain JDBC Connection", e);
         }
+
+        // Set client info for connection if Oracle connection after connection is opened
+        ConnectionTracingInfo connectionTracingInfo = definition.connectionTracingInfo();
+        if (connectionTracingInfo != null) {
+            boolean oracleConnection = connectionIsOracleMap.computeIfAbsent(connection, this::isOracleConnection);
+            if (!oracleConnection) {
+                LOG.debug("Connection tracing info is supported only for Oracle database connections.");
+            } else {
+                LOG.trace("Setting connection tracing info to the Oracle connection");
+                try {
+                    if (connectionTracingInfo.appName() != null) {
+                        connection.setClientInfo(ORACLE_TRACE_CLIENTID, connectionTracingInfo.appName());
+                    }
+                    connection.setClientInfo(ORACLE_TRACE_MODULE, connectionTracingInfo.module());
+                    connection.setClientInfo(ORACLE_TRACE_ACTION, connectionTracingInfo.action());
+                } catch (SQLClientInfoException e) {
+                    LOG.debug("Failed to set connection tracing info", e);
+                }
+            }
+        }
+        return connection;
     }
 
     @Override
@@ -84,32 +110,28 @@ public final class DefaultDataSourceConnectionOperations extends AbstractConnect
                 });
             }
         });
-        ConnectionTracingInfo connectionTracingInfo = connectionDefinition.connectionTracingInfo();
-        if (connectionTracingInfo == null) {
-            return;
-        }
-        Connection conn = connectionStatus.getConnection();
-        if (!isOracleConnection(conn)) {
-            LOG.debug("Connection tracing info is supported only for Oracle database connections.");
-            return;
-        }
-
-        LOG.trace("Setting connection tracing info to the Oracle connection");
-        try {
-            if (connectionTracingInfo.appName() != null) {
-                conn.setClientInfo(ORACLE_TRACE_CLIENTID, connectionTracingInfo.appName());
-            }
-            conn.setClientInfo(ORACLE_TRACE_MODULE, connectionTracingInfo.module());
-            conn.setClientInfo(ORACLE_TRACE_ACTION, connectionTracingInfo.action());
-        } catch (SQLClientInfoException e) {
-            LOG.debug("Failed to set connection tracing info", e);
-        }
     }
 
     @Override
     protected void closeConnection(ConnectionStatus<Connection> connectionStatus) {
+        Connection connection = connectionStatus.getConnection();
+        // Clear client info for connection if it was Oracle connection and client info was set previously
+        ConnectionTracingInfo connectionTracingInfo = connectionStatus.getDefinition().connectionTracingInfo();
+        if (connectionTracingInfo != null) {
+            boolean oracleConnection = connectionIsOracleMap.computeIfAbsent(connection, this::isOracleConnection);
+            if (oracleConnection) {
+                try {
+                    connection.setClientInfo(ORACLE_TRACE_CLIENTID, connectionTracingInfo.appName());
+                    connection.setClientInfo(ORACLE_TRACE_MODULE, connectionTracingInfo.module());
+                    connection.setClientInfo(ORACLE_TRACE_ACTION, connectionTracingInfo.action());
+                } catch (SQLClientInfoException e) {
+                    LOG.debug("Failed to clear connection tracing info", e);
+                }
+            }
+        }
+
         try {
-            connectionStatus.getConnection().close();
+            connection.close();
         } catch (SQLException e) {
             throw new ConnectionException("Failed to close the connection: " + e.getMessage(), e);
         }
@@ -124,7 +146,7 @@ public final class DefaultDataSourceConnectionOperations extends AbstractConnect
     private boolean isOracleConnection(Connection connection) {
         try {
             String databaseProductName = connection.getMetaData().getDatabaseProductName();
-            return StringUtils.isNotEmpty(databaseProductName) && databaseProductName.toUpperCase().contains("ORACLE");
+            return StringUtils.isNotEmpty(databaseProductName) && databaseProductName.equalsIgnoreCase(ORACLE_CONNECTION_DATABASE_PRODUCT_NAME);
         } catch (SQLException e) {
             LOG.debug("Failed to get database product name from the connection", e);
             return false;
