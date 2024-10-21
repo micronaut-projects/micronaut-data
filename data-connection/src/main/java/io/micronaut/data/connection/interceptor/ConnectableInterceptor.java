@@ -20,7 +20,6 @@ import io.micronaut.aop.InterceptedMethod;
 import io.micronaut.aop.InterceptorBean;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
@@ -36,6 +35,7 @@ import io.micronaut.data.connection.reactive.ReactiveStreamsConnectionOperations
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
 import io.micronaut.data.connection.support.ConnectionTracingInfo;
 import io.micronaut.inject.ExecutableMethod;
+import io.micronaut.runtime.ApplicationConfiguration;
 import jakarta.inject.Singleton;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -81,11 +81,11 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
      */
     ConnectableInterceptor(@NonNull ConnectionOperationsRegistry connectionOperationsRegistry,
                            @Nullable ConnectionDataSourceTenantResolver tenantResolver,
-                           @Nullable @Value("${micronaut.application.name}") String appName,
+                           ApplicationConfiguration applicationConfiguration,
                            ConversionService conversionService) {
         this.connectionOperationsRegistry = connectionOperationsRegistry;
         this.tenantResolver = tenantResolver;
-        this.appName = appName;
+        this.appName = applicationConfiguration.getName().orElse(null);
         this.conversionService = conversionService;
     }
 
