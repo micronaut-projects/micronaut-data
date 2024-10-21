@@ -52,7 +52,7 @@ public @interface OracleConnectionClientInfo {
      * If not provided, then it will fall back to the name of the method currently being intercepted in {@link io.micronaut.data.connection.interceptor.ConnectableInterceptor}.
      * Currently supported only for Oracle database connections.
      *
-     * @return the custom module name for tracing
+     * @return the custom action name for tracing
      */
     String tracingAction() default "";
 }
