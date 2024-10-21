@@ -18,7 +18,7 @@ dependencies {
     implementation projects.micronautDataSpringJdbc
     implementation mn.micronaut.http.client
     implementation mnValidation.micronaut.validation
-    implementation(libs.managed.jakarta.persistence.api)
+    implementation(mnSql.jakarta.persistence.api)
 
     runtimeOnly mnSql.micronaut.jdbc.tomcat
     runtimeOnly mnLogging.logback.classic

@@ -6,17 +6,17 @@ micronaut-gradle-plugin = "4.4.3"
 micronaut-testresources = "2.6.2"
 
 micronaut-azure = "5.7.1"
-micronaut-reactor = "3.5.0"
+micronaut-reactor = "3.6.0"
 micronaut-rxjava2 = "2.5.0"
 micronaut-r2dbc = "5.6.1"
 micronaut-sql = "5.8.2"
 micronaut-serde = "2.11.1"
-micronaut-spring = "5.8.0"
+micronaut-spring = "5.8.1"
 micronaut-test = "4.4.0"
 micronaut-mongo = "5.4.0"
 micronaut-kotlin = "4.4.0"
 micronaut-multitenancy = "5.4.0"
-micronaut-validation = "4.7.0"
+micronaut-validation = "4.8.0"
 micronaut-logging = "1.5.0"
 micronaut-flyway = "7.4.0"
 micronaut-coherence = "5.0.4"
@@ -24,14 +24,12 @@ micronaut-coherence = "5.0.4"
 groovy = "4.0.23"
 
 managed-javax-persistence = "2.2"
-managed-jakarta-persistence-api = "3.1.0"
-managed-jakarta-transaction-api = "2.0.1"
 
-spring-data = "3.3.4"
+spring-data = "3.3.5"
 
 # Testing and benchmarking
 
-benchmark-spring-data = "2024.0.4"
+benchmark-spring-data = "2024.0.5"
 spock = "2.2-groovy-4.0"
 testcontainers = "1.19.4"
 jmh = "1.37"
@@ -83,10 +81,7 @@ kotlin-coroutines-reactor = { module = "org.jetbrains.kotlinx:kotlinx-coroutines
 kotlin-coroutines-reactive = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactive", version.ref = "kotlin-coroutines" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }
 
-managed-jakarta-transaction-api = { module = "jakarta.transaction:jakarta.transaction-api", version.ref = "managed-jakarta-transaction-api" }
-
 managed-javax-persistence-api = { module = "javax.persistence:javax.persistence-api", version.ref = "managed-javax-persistence" }
-managed-jakarta-persistence-api = { module = "jakarta.persistence:jakarta.persistence-api", version.ref = "managed-jakarta-persistence-api" }
 
 # JPA
 
