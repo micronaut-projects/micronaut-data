@@ -24,7 +24,7 @@ dependencies {
     annotationProcessor projects.micronautDataProcessor
     implementation projects.micronautDataR2dbc
     implementation mnSql.micronaut.jdbc.hikari
-    implementation(libs.managed.jakarta.transaction.api)
+    implementation(mnSql.jakarta.transaction.api)
     implementation mnSerde.micronaut.serde.jackson
     implementation mnReactor.micrometer.context.propagation
 

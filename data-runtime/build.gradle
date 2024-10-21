@@ -16,7 +16,7 @@ dependencies {
 	compileOnly mn.micronaut.json.core
 
 	implementation mn.reactor
-    implementation libs.managed.jakarta.persistence.api
+    implementation mnSql.jakarta.persistence.api
 
 	compileOnly(libs.managed.javax.persistence.api)
     compileOnly libs.kotlin.coroutines.reactor
@@ -25,7 +25,7 @@ dependencies {
 	testAnnotationProcessor mn.micronaut.inject.java
 	testAnnotationProcessor projects.micronautDataProcessor
 
-	testImplementation(libs.managed.jakarta.persistence.api)
+	testImplementation(mnSql.jakarta.persistence.api)
 	testImplementation(libs.managed.javax.persistence.api)
 	testImplementation projects.micronautDataProcessor
 	testImplementation mn.micronaut.inject.groovy
