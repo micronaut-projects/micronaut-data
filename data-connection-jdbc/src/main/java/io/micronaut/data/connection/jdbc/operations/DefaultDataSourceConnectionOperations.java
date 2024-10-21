@@ -121,9 +121,9 @@ public final class DefaultDataSourceConnectionOperations extends AbstractConnect
             boolean oracleConnection = connectionIsOracleMap.computeIfAbsent(connection, this::isOracleConnection);
             if (oracleConnection) {
                 try {
-                    connection.setClientInfo(ORACLE_TRACE_CLIENTID, connectionTracingInfo.appName());
-                    connection.setClientInfo(ORACLE_TRACE_MODULE, connectionTracingInfo.module());
-                    connection.setClientInfo(ORACLE_TRACE_ACTION, connectionTracingInfo.action());
+                    connection.setClientInfo(ORACLE_TRACE_CLIENTID, null);
+                    connection.setClientInfo(ORACLE_TRACE_MODULE, null);
+                    connection.setClientInfo(ORACLE_TRACE_ACTION, null);
                 } catch (SQLClientInfoException e) {
                     LOG.debug("Failed to clear connection tracing info", e);
                 }
