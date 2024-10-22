@@ -80,6 +80,8 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 import static io.micronaut.data.tck.repositories.BookSpecifications.hasChapter
+import static io.micronaut.data.tck.repositories.BookSpecifications.titleAndTotalPagesEquals
+import static io.micronaut.data.tck.repositories.BookSpecifications.titleAndTotalPagesEqualsUsingConjunction
 import static io.micronaut.data.tck.repositories.BookSpecifications.titleContains
 import static io.micronaut.data.tck.repositories.BookSpecifications.titleEquals
 import static io.micronaut.data.tck.repositories.BookSpecifications.titleEqualsWithJoin
@@ -2417,6 +2419,7 @@ abstract class AbstractRepositorySpec extends Specification {
 
         def book = new Book()
         book.setTitle("1984")
+        book.setTotalPages(360)
         book.setGenre(genre)
         def ch1 = new Chapter()
         ch1.setTitle("Ch1")
@@ -2440,6 +2443,8 @@ abstract class AbstractRepositorySpec extends Specification {
         def bookNotLoadedUsingJoinCriteriaByChapterTitle = bookRepository.findOne(hasChapter("Ch32"))
         def booksLoadedByChapterTitleQuery = bookRepository.findAllByChaptersTitle("Ch1")
         def booksLoadedByChapterTitleAndBookTitleQuery = bookRepository.findAllByChaptersTitleAndTitle("Ch1", book.title)
+        def booksLoadedByTitleAndTotalPagesUsingSimpleCriteria = bookRepository.findAll ( titleAndTotalPagesEquals("1984", 360))
+        def booksLoadedByTitleAndTotalPagesUsingConjunctionPredicate = bookRepository.findAll ( titleAndTotalPagesEqualsUsingConjunction("1984", 360))
 
         then:
         bookLoadedUsingFindAllByGenre.genre.genreName != null
@@ -2466,6 +2471,10 @@ abstract class AbstractRepositorySpec extends Specification {
         booksLoadedByChapterTitleAndBookTitleQuery[0].id == book.id
         // Chapters not loaded
         !CollectionUtils.isEmpty(booksLoadedByChapterTitleAndBookTitleQuery[0].chapters)
+        booksLoadedByTitleAndTotalPagesUsingConjunctionPredicate.size() == 1
+        booksLoadedByTitleAndTotalPagesUsingConjunctionPredicate[0].title == "1984"
+        booksLoadedByTitleAndTotalPagesUsingSimpleCriteria.size() == 1
+        booksLoadedByTitleAndTotalPagesUsingSimpleCriteria[0].title == "1984"
     }
 
     void "test loading books vs page repository and joins"() {

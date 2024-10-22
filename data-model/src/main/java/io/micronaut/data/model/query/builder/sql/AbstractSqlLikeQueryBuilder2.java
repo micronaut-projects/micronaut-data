@@ -1816,14 +1816,21 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
 
         private void visitConjunctionPredicates(Collection<? extends IExpression<Boolean>> predicates) {
             Iterator<? extends IExpression<Boolean>> iterator = predicates.iterator();
+            boolean appendLogicalAnd = true;
             while (iterator.hasNext()) {
                 IExpression<Boolean> expression = iterator.next();
                 if (expression instanceof ConjunctionPredicate conjunctionPredicate) {
-                    visitConjunctionPredicates(conjunctionPredicate.getPredicates());
+                    Collection<? extends IExpression<Boolean>> conjunctionPredicates = conjunctionPredicate.getPredicates();
+                    if (CollectionUtils.isEmpty(conjunctionPredicates)) {
+                        // Nothing was added to the query so skip adding AND
+                        appendLogicalAnd = false;
+                    } else {
+                        visitConjunctionPredicates(conjunctionPredicates);
+                    }
                 } else {
                     visitPredicate(expression);
                 }
-                if (iterator.hasNext()) {
+                if (appendLogicalAnd && iterator.hasNext()) {
                     query.append(LOGICAL_AND);
                 }
             }
