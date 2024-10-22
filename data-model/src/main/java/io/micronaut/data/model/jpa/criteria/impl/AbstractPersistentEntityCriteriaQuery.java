@@ -297,7 +297,11 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> implements Persis
 
     @Override
     public PersistentEntityCriteriaQuery<T> where(Expression<Boolean> restriction) {
-        predicate = new ConjunctionPredicate(Collections.singleton((IExpression<Boolean>) restriction));
+        if (restriction instanceof ConjunctionPredicate conjunctionPredicate) {
+            predicate = conjunctionPredicate;
+        } else {
+            predicate = new ConjunctionPredicate(Collections.singleton((IExpression<Boolean>) restriction));
+        }
         return this;
     }
 

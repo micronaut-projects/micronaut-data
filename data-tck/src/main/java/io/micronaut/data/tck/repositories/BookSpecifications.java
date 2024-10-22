@@ -5,11 +5,16 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityJoin;
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 import io.micronaut.data.tck.entities.Book;
 
-public class BookSpecifications {
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
+import java.util.List;
+
+public final class BookSpecifications {
 
     private static final String TITLE_FIELD = "title";
 
-    private BookSpecifications() {}
+    private BookSpecifications() {
+    }
 
     public static PredicateSpecification<Book> titleEquals(String title) {
         return (root, criteriaBuilder) -> criteriaBuilder.equal(root.get(TITLE_FIELD), title);
@@ -33,4 +38,40 @@ public class BookSpecifications {
         };
     }
 
+    public static PredicateSpecification<Book> titleAndTotalPagesEquals(String title, int totalPages) {
+        return (root, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>(3);
+            if (title != null) {
+                predicates.add(criteriaBuilder.equal(root.get(TITLE_FIELD), title));
+            }
+            if (totalPages > 0) {
+                predicates.add(criteriaBuilder.equal(root.get("totalPages"), totalPages));
+            }
+            predicates.add(criteriaBuilder.isNotNull(root.get("id")));
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
+    public static PredicateSpecification<Book> titleAndTotalPagesEqualsUsingConjunction(String title, int totalPages) {
+        return (root, criteriaBuilder) -> {
+            Predicate predicate = criteriaBuilder.conjunction();
+
+            if (title != null) {
+                predicate =
+                    criteriaBuilder.and(
+                        predicate, criteriaBuilder.equal(root.get(TITLE_FIELD), title));
+            }
+            if (totalPages > 0) {
+                predicate =
+                    criteriaBuilder.and(
+                        predicate,
+                        criteriaBuilder.equal(
+                            root.get("totalPages"), totalPages));
+            }
+            predicate =
+                criteriaBuilder.and(
+                    predicate, criteriaBuilder.isNotNull(root.get("id")));
+            return predicate;
+        };
+    }
 }
