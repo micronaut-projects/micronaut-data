@@ -42,7 +42,7 @@ public final class BookSpecifications {
         return (root, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>(3);
             if (title != null) {
-                predicates.add(criteriaBuilder.equal(root.get("title"), title));
+                predicates.add(criteriaBuilder.equal(root.get(TITLE_FIELD), title));
             }
             if (totalPages > 0) {
                 predicates.add(criteriaBuilder.equal(root.get("totalPages"), totalPages));
@@ -59,7 +59,7 @@ public final class BookSpecifications {
             if (title != null) {
                 predicate =
                     criteriaBuilder.and(
-                        predicate, criteriaBuilder.equal(root.get("title"), title));
+                        predicate, criteriaBuilder.equal(root.get(TITLE_FIELD), title));
             }
             if (totalPages > 0) {
                 predicate =
