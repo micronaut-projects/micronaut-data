@@ -19,6 +19,8 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.Limit;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.StoredQuery;
@@ -186,5 +188,15 @@ public interface DelegateStoredQuery<E, R> extends StoredQuery<E, R> {
     @Override
     default int getOffset() {
         return getStoredQueryDelegate().getOffset();
+    }
+
+    @Override
+    default Limit getQueryLimit() {
+        return getStoredQueryDelegate().getQueryLimit();
+    }
+
+    @Override
+    default Sort getSort() {
+        return getStoredQueryDelegate().getSort();
     }
 }

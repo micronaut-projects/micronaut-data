@@ -21,10 +21,14 @@ import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanWrapper;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
+import io.micronaut.data.model.Limit;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.runtime.DelegatingQueryParameterBinding;
@@ -56,14 +60,19 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
 
     private final StoredQuery<E, R> storedQuery;
     private final RuntimePersistentEntity<E> runtimePersistentEntity;
+    private final ConversionService conversionService;
 
     /**
      * @param storedQuery             The stored query
      * @param runtimePersistentEntity The persistent entity
+     * @param conversionService       The conversion service
      */
-    public DefaultBindableParametersStoredQuery(StoredQuery<E, R> storedQuery, RuntimePersistentEntity<E> runtimePersistentEntity) {
+    public DefaultBindableParametersStoredQuery(StoredQuery<E, R> storedQuery,
+                                                RuntimePersistentEntity<E> runtimePersistentEntity,
+                                                ConversionService conversionService) {
         this.storedQuery = storedQuery;
         this.runtimePersistentEntity = runtimePersistentEntity;
+        this.conversionService = conversionService;
         Objects.requireNonNull(storedQuery, "Query cannot be null");
     }
 
@@ -100,6 +109,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
         Object value = binding.getValue();
         RuntimePersistentProperty<Object> persistentProperty = null;
         Argument<?> argument = null;
+        boolean skipExpansion = false;
         if (value == null) {
             if (binding.isExpression()) {
                 requireInvocationContext(invocationContext);
@@ -199,11 +209,20 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
                 };
             }
         }
-
+        if (binding.getRole() != null) {
+            value = switch (binding.getRole()) {
+                case TypeRole.PAGEABLE, TypeRole.PAGEABLE_REQUIRED -> conversionService.convertRequired(value, Pageable.class);
+                case TypeRole.LIMIT -> conversionService.convertRequired(value, Limit.class);
+                case TypeRole.SORT -> conversionService.convertRequired(value, Sort.class);
+                default ->
+                    throw new IllegalArgumentException("Unsupported role " + binding.getRole());
+            };
+            skipExpansion = true;
+        }
         List<Object> values;
         if (binding.isExpandable()) {
-            if (value instanceof Sort) {
-                return; // Skip
+            if (skipExpansion) {
+                return;
             }
             values = expandValue(value, binding.getDataType());
         } else {

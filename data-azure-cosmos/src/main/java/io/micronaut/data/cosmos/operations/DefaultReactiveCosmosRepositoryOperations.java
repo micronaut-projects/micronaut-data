@@ -183,7 +183,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             update = queryResultStoredQuery.getQueryResult().getUpdate();
         }
         RuntimePersistentEntity<E> runtimePersistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
-        return new CosmosSqlStoredQuery<>(storedQuery, runtimePersistentEntity, defaultCosmosSqlQueryBuilder, update);
+        return new CosmosSqlStoredQuery<>(storedQuery, runtimePersistentEntity, defaultCosmosSqlQueryBuilder, update, getConversionService());
     }
 
     @Override
@@ -218,7 +218,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     @Override
     public <T> Mono<Boolean> exists(@NonNull PreparedQuery<T, Boolean> pq) {
         SqlPreparedQuery<T, Boolean> preparedQuery = getSqlPreparedQuery(pq);
-        preparedQuery.attachPageable(preparedQuery.getPageable(), true);
+        preparedQuery.attachPageable(preparedQuery.getPageable(), preparedQuery.getQueryLimit(), preparedQuery.getSort(), true);
         preparedQuery.prepare(null);
         SqlQuerySpec querySpec = new SqlQuerySpec(preparedQuery.getQuery(), new ParameterBinder().bindParameters(preparedQuery));
         logQuery(querySpec);
@@ -235,7 +235,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     @NonNull
     public <T, R> Mono<R> findOne(@NonNull PreparedQuery<T, R> pq) {
         SqlPreparedQuery<T, R> preparedQuery = getSqlPreparedQuery(pq);
-        preparedQuery.attachPageable(preparedQuery.getPageable(), true);
+        preparedQuery.attachPageable(preparedQuery.getPageable(), preparedQuery.getQueryLimit(), preparedQuery.getSort(), true);
         preparedQuery.prepare(null);
         SqlQuerySpec querySpec = new SqlQuerySpec(preparedQuery.getQuery(), new ParameterBinder().bindParameters(preparedQuery));
         logQuery(querySpec);
@@ -276,7 +276,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     @NonNull
     public <T, R> Flux<R> findAll(@NonNull PreparedQuery<T, R> pq) {
         SqlPreparedQuery<T, R> preparedQuery = getSqlPreparedQuery(pq);
-        preparedQuery.attachPageable(preparedQuery.getPageable(), false);
+        preparedQuery.attachPageable(preparedQuery.getPageable(), preparedQuery.getQueryLimit(), preparedQuery.getSort(), false);
         preparedQuery.prepare(null);
         boolean dtoProjection = preparedQuery.isDtoProjection();
         boolean isEntity = preparedQuery.getResultDataType() == DataType.ENTITY;

@@ -17,12 +17,16 @@ package io.micronaut.data.runtime.query.internal;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.ConvertibleValues;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.StoredQuery;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -41,6 +45,11 @@ public interface DelegatePreparedQuery<E, R> extends PreparedQuery<E, R>, Delega
      * @return The delegate
      */
     PreparedQuery<E, R> getPreparedQueryDelegate();
+
+    @Override
+    default ConversionService getConversionService() {
+        return getPreparedQueryDelegate().getConversionService();
+    }
 
     @Override
     default StoredQuery getStoredQueryDelegate() {
@@ -65,6 +74,11 @@ public interface DelegatePreparedQuery<E, R> extends PreparedQuery<E, R>, Delega
     @Override
     default <RT1> Optional<RT1> getParameterInRole(@NonNull String role, @NonNull Class<RT1> type) {
         return getPreparedQueryDelegate().getParameterInRole(role, type);
+    }
+
+    @Override
+    default <RT> List<RT> getParametersInRole(String role, Class<RT> type) {
+        return getPreparedQueryDelegate().getParametersInRole(role, type);
     }
 
     @Override
@@ -117,4 +131,13 @@ public interface DelegatePreparedQuery<E, R> extends PreparedQuery<E, R>, Delega
         return getPreparedQueryDelegate().getAttribute(name, type);
     }
 
+    @Override
+    default Sort getSort() {
+        return getPreparedQueryDelegate().getSort();
+    }
+
+    @Override
+    default Limit getQueryLimit() {
+        return getPreparedQueryDelegate().getQueryLimit();
+    }
 }

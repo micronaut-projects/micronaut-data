@@ -29,7 +29,7 @@ import spock.lang.Specification
 
 @MicronautTest(rollback = false, packages = "io.micronaut.data.tck.entities")
 @H2DBProperties
-@Property(name = 'jpa.default.properties.hibernate.show_sql', value = 'true')
+//@Property(name = 'jpa.default.properties.hibernate.show_sql', value = 'true')
 class ReactorSpec extends Specification{
 
     @Inject

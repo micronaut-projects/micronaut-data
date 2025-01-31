@@ -94,7 +94,7 @@ public final class UpdateMethodMatcher extends AbstractMethodMatcher {
         return batchUpdateBy(matches, isReturning);
     }
 
-    private UpdateCriteriaMethodMatch entityUpdate(List<MethodNameParser.Match> matches,
+    public static UpdateCriteriaMethodMatch entityUpdate(List<MethodNameParser.Match> matches,
                                                    ParameterElement entityParameter,
                                                    ParameterElement entitiesParameter,
                                                    boolean isReturning) {

@@ -42,8 +42,11 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.connection.ConnectionDefinition;
+import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Pageable.Mode;
@@ -246,6 +249,14 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
 
     @Override
     public <R> Page<R> findPage(PagedQuery<R> query) {
+        if (query instanceof PreparedQuery<?, ?> pg) {
+            PreparedQuery<R, R> preparedQuery = (PreparedQuery<R, R>) pg;
+            return Page.of(
+                CollectionUtils.iterableToList(findAll(preparedQuery)),
+                query.getPageable(),
+                -1L
+            );
+        }
         throw new DataAccessException("Not supported!");
     }
 
@@ -256,23 +267,27 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
 
     @Override
     public <T, R> Stream<R> findStream(PreparedQuery<T, R> preparedQuery) {
-        return withClientSession(clientSession -> {
-            MongoIterable<R> iterable = (MongoIterable<R>) findAll(clientSession, getMongoPreparedQuery(preparedQuery), true);
-            MongoCursor<R> iterator = iterable.iterator();
-            Spliterators.AbstractSpliterator<R> spliterator = new Spliterators.AbstractSpliterator<>(Long.MAX_VALUE,
-                    Spliterator.ORDERED | Spliterator.IMMUTABLE) {
-                @Override
-                public boolean tryAdvance(Consumer<? super R> action) {
-                    if (iterator.hasNext()) {
-                        action.accept(iterator.next());
-                        return true;
-                    }
-                    iterator.close();
-                    return false;
+        Optional<ConnectionStatus<ClientSession>> connectionStatus = connectionOperations.findConnectionStatus();
+        if (connectionStatus.isEmpty()) {
+            return withClientSession(clientSession -> CollectionUtils.iterableToList(
+                findAll(clientSession, getMongoPreparedQuery(preparedQuery), false)
+            ).stream());
+        }
+        MongoIterable<R> iterable = (MongoIterable<R>) findAll(connectionStatus.get().getConnection(), getMongoPreparedQuery(preparedQuery), true);
+        MongoCursor<R> iterator = iterable.iterator();
+        Spliterators.AbstractSpliterator<R> spliterator = new Spliterators.AbstractSpliterator<>(Long.MAX_VALUE,
+                Spliterator.ORDERED | Spliterator.IMMUTABLE) {
+            @Override
+            public boolean tryAdvance(Consumer<? super R> action) {
+                if (iterator.hasNext()) {
+                    action.accept(iterator.next());
+                    return true;
                 }
-            };
-            return StreamSupport.stream(spliterator, false).onClose(iterator::close);
-        });
+                iterator.close();
+                return false;
+            }
+        };
+        return StreamSupport.stream(spliterator, false).onClose(iterator::close);
     }
 
     private <T, R> Iterable<R> findAll(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery, boolean stream) {
@@ -286,16 +301,15 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
     }
 
     private <T, R> R findOneFiltered(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
-        return find(clientSession, preparedQuery)
-                .limit(1)
-                .map(r -> {
-                    Class<T> type = preparedQuery.getRootEntity();
-                    RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
-                    if (type.isInstance(r)) {
-                        return (R) triggerPostLoad(preparedQuery.getAnnotationMetadata(), persistentEntity, type.cast(r));
-                    }
-                    return r;
-                }).first();
+        return findOne(find(clientSession, preparedQuery)
+            .map(r -> {
+                Class<T> type = preparedQuery.getRootEntity();
+                RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
+                if (type.isInstance(r)) {
+                    return (R) triggerPostLoad(preparedQuery.getAnnotationMetadata(), persistentEntity, type.cast(r));
+                }
+                return r;
+            }));
     }
 
     private <T, R> R findOneAggregated(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
@@ -306,13 +320,26 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
             BsonDocument result = aggregate(clientSession, preparedQuery, BsonDocument.class).first();
             return convertResult(database.getCodecRegistry(), resultType, result, preparedQuery.isDtoProjection());
         }
-        return aggregate(clientSession, preparedQuery).map(r -> {
+        return findOne(aggregate(clientSession, preparedQuery).map(r -> {
             RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
             if (type.isInstance(r)) {
                 return (R) triggerPostLoad(preparedQuery.getAnnotationMetadata(), persistentEntity, type.cast(r));
             }
             return r;
-        }).first();
+        }));
+    }
+
+    private static <R> R findOne(MongoIterable<R> iterable) {
+        try (MongoCursor<R> iterator = iterable.iterator()) {
+            if (iterator.hasNext()) {
+                R result = iterator.next();
+                if (iterator.hasNext()) {
+                    throw new NonUniqueResultException();
+                }
+                return result;
+            }
+            return null;
+        }
     }
 
     private <T, R> Iterable<R> findAllAggregated(ClientSession clientSession,

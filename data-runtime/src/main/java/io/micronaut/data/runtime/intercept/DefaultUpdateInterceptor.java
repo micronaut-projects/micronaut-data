@@ -55,7 +55,7 @@ public class DefaultUpdateInterceptor<T> extends AbstractQueryInterceptor<T, Obj
                         .orElse(0);
             }
         } else if (Boolean.class.isAssignableFrom(type)) {
-            return number == null || number.longValue() < 0;
+            return number != null && number.longValue() > 0;
         } else {
             return null;
         }

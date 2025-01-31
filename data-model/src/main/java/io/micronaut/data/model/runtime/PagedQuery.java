@@ -18,7 +18,9 @@ package io.micronaut.data.model.runtime;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.naming.Named;
+import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 
 import java.util.Collections;
 import java.util.Map;
@@ -43,6 +45,24 @@ public interface PagedQuery<E> extends Named, AnnotationMetadataProvider {
      */
     @NonNull
     Pageable getPageable();
+
+    /**
+     * @return The limit
+     * @see 4.12
+     */
+    @NonNull
+    default Limit getQueryLimit() {
+        return getPageable().getLimit();
+    }
+
+    /**
+     * @return The sort
+     * @see 4.12
+     */
+    @NonNull
+    default Sort getSort() {
+        return getPageable().getSort();
+    }
 
     /**
      * The parameter binding. That is the mapping between named query parameters and parameters of the method.

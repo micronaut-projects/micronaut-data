@@ -66,6 +66,11 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
     protected Selection<?> returning;
 
     @Override
+    public PersistentEntity getPersistentEntity() {
+        return entityRoot.getPersistentEntity();
+    }
+
+    @Override
     public QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder2 queryBuilder) {
         return queryBuilder.buildUpdate(
             annotationMetadata,

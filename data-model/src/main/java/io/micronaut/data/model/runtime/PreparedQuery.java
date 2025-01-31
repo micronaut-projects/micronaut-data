@@ -16,7 +16,11 @@
 package io.micronaut.data.model.runtime;
 
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.convert.ConversionServiceProvider;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.model.Limit;
+import io.micronaut.data.model.Sort;
 
 import java.util.Collections;
 import java.util.Map;
@@ -29,7 +33,7 @@ import java.util.Map;
  * @param <E> The entity type
  * @param <R> The result type
  */
-public interface PreparedQuery<E, R> extends PagedQuery<E>, StoredQuery<E, R>, PreparedDataOperation<R> {
+public interface PreparedQuery<E, R> extends PagedQuery<E>, StoredQuery<E, R>, PreparedDataOperation<R>, ConversionServiceProvider {
 
     /**
      * @return The repository type.
@@ -59,4 +63,19 @@ public interface PreparedQuery<E, R> extends PagedQuery<E>, StoredQuery<E, R>, P
      */
     @Override
     boolean isRawQuery();
+
+    @Override
+    default Sort getSort() {
+        return PagedQuery.super.getSort();
+    }
+
+    @Override
+    default Limit getQueryLimit() {
+        return PagedQuery.super.getQueryLimit();
+    }
+
+    @Override
+    default @NonNull ConversionService getConversionService() {
+        return ConversionService.SHARED;
+    }
 }

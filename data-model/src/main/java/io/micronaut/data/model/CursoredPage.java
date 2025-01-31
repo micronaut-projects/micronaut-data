@@ -97,7 +97,7 @@ public interface CursoredPage<T> extends Page<T> {
         if (pageable.getMode() == Mode.CURSOR_PREVIOUS) {
             return getContent().size() == pageable.getSize();
         } else {
-            return true;
+            return getPageNumber() != 0;
         }
     }
 

@@ -73,7 +73,6 @@ import java.util.Set;
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupportedOperation;
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requireBoolExpression;
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requireBoolExpressions;
-import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requireProperty;
 
 /**
  * Abstract {@link jakarta.persistence.criteria.CriteriaBuilder} implementation.
@@ -144,13 +143,18 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
     @NonNull
     public Order asc(@NonNull Expression<?> x) {
-        return new PersistentPropertyOrder<>(requireProperty(x), true);
+        return sort(x, true, false);
     }
 
     @Override
     @NonNull
     public Order desc(@NonNull Expression<?> x) {
-        return new PersistentPropertyOrder<>(requireProperty(x), false);
+        return sort(x, false, false);
+    }
+
+    @Override
+    public Order sort(Expression<?> x, boolean ascending, boolean ignoreCase) {
+        return new DefaultOrder<>(x, ascending, ignoreCase);
     }
 
     @Override
@@ -552,125 +556,70 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
         return new BinaryExpression<>(x, y, BinaryExpressionType.SUM, (Class<N>) Number.class);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     @NonNull
     public <N extends Number> Expression<N> sum(@NonNull Expression<? extends N> x, @NonNull N y) {
         return new BinaryExpression<>(x, literal(y), BinaryExpressionType.SUM, (Class<N>) Number.class);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     @NonNull
     public <N extends Number> Expression<N> sum(@NonNull N x, @NonNull Expression<? extends N> y) {
         return new BinaryExpression<>(literal(x), y, BinaryExpressionType.SUM, (Class<N>) Number.class);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     @NonNull
     public <N extends Number> Expression<N> prod(@NonNull Expression<? extends N> x, @NonNull Expression<? extends N> y) {
-        throw notSupportedOperation();
+        return new BinaryExpression<>(x, y, BinaryExpressionType.PROD, (Class<N>) Number.class);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     @NonNull
     public <N extends Number> Expression<N> prod(@NonNull Expression<? extends N> x, @NonNull N y) {
-        throw notSupportedOperation();
+        return new BinaryExpression<>(x, literal(y), BinaryExpressionType.PROD, (Class<N>) Number.class);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     @NonNull
     public <N extends Number> Expression<N> prod(@NonNull N x, @NonNull Expression<? extends N> y) {
-        throw notSupportedOperation();
+        return new BinaryExpression<>(literal(x), y, BinaryExpressionType.PROD, (Class<N>) Number.class);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     @NonNull
     public <N extends Number> Expression<N> diff(@NonNull Expression<? extends N> x, @NonNull Expression<? extends N> y) {
-        throw notSupportedOperation();
+        return new BinaryExpression<>(x, y, BinaryExpressionType.DIFF, (Class<N>) Number.class);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     @NonNull
     public <N extends Number> Expression<N> diff(@NonNull Expression<? extends N> x, @NonNull N y) {
-        throw notSupportedOperation();
+        return new BinaryExpression<>(x, literal(y), BinaryExpressionType.DIFF, (Class<N>) Number.class);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     @NonNull
     public <N extends Number> Expression<N> diff(@NonNull N x, @NonNull Expression<? extends N> y) {
-        throw notSupportedOperation();
+        return new BinaryExpression<>(literal(y), y, BinaryExpressionType.DIFF, (Class<N>) Number.class);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     @NonNull
     public Expression<Number> quot(@NonNull Expression<? extends Number> x, @NonNull Expression<? extends Number> y) {
-        throw notSupportedOperation();
+        return new BinaryExpression<>(x, y, BinaryExpressionType.QUOT, Number.class);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     @NonNull
     public Expression<Number> quot(@NonNull Expression<? extends Number> x, @NonNull Number y) {
-        throw notSupportedOperation();
+        return new BinaryExpression<>(x, literal(y), BinaryExpressionType.QUOT, Number.class);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     @NonNull
     public Expression<Number> quot(@NonNull Number x, @NonNull Expression<? extends Number> y) {
-        throw notSupportedOperation();
+        return new BinaryExpression<>(literal(x), y, BinaryExpressionType.QUOT, Number.class);
     }
 
     /**
@@ -1158,15 +1107,10 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
         return new UnaryExpression<>(x, UnaryExpressionType.UPPER);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * {@inheritDoc}
-     */
     @Override
     @NonNull
     public Expression<Integer> length(@NonNull Expression<String> x) {
-        throw notSupportedOperation();
+        return new UnaryExpression<>(x, UnaryExpressionType.LENGTH);
     }
 
     /**

@@ -31,8 +31,10 @@ import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionOperations;
+import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.annotation.Connectable;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.jdbc.convert.JdbcConversionContext;
 import io.micronaut.data.jdbc.mapper.ColumnIndexCallableResultReader;
@@ -44,9 +46,11 @@ import io.micronaut.data.jdbc.mapper.JdbcTupleMapper;
 import io.micronaut.data.jdbc.mapper.SqlResultConsumer;
 import io.micronaut.data.jdbc.runtime.ConnectionCallback;
 import io.micronaut.data.jdbc.runtime.PreparedStatementCallback;
+import io.micronaut.data.model.CursoredPage;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
@@ -90,6 +94,7 @@ import io.micronaut.data.runtime.operations.internal.OperationContext;
 import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
 import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery;
 import io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOperations;
+import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlJsonColumnMapperProvider;
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
@@ -160,6 +165,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
     private final ColumnIndexCallableResultReader columnIndexCallableResultReader;
     private final Map<Dialect, List<SqlExceptionMapper>> sqlExceptionMappers = new EnumMap<>(Dialect.class);
+
 
     /**
      * Default constructor.
@@ -349,7 +355,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     private <T, R> R findOne(Connection connection, SqlPreparedQuery<T, R> preparedQuery) {
-        try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, false, true)) {
+        boolean limitToSingleResult = !jdbcConfiguration.isUniqueResultOnFindOne();
+        try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, false, limitToSingleResult)) {
             preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
             try (ResultSet rs = ps.executeQuery()) {
                 SqlTypeMapper<ResultSet, R> mapper = createMapper(preparedQuery, ResultSet.class);
@@ -361,12 +368,19 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     if (rs.next()) {
                         oneMapper.processRow(rs);
                     }
-                    while (hasJoins && rs.next()) {
-                        oneMapper.processRow(rs);
+                    if (hasJoins) {
+                        while (rs.next()) {
+                            oneMapper.processRow(rs);
+                        }
+                    } else if (jdbcConfiguration.isUniqueResultOnFindOne() && rs.next()) {
+                        throw new NonUniqueResultException("Multiple results found for query: " + preparedQuery.getQuery());
                     }
                     result = oneMapper.getResult();
                 } else if (rs.next()) {
                     result = mapper.map(rs, preparedQuery.getResultType());
+                    if (jdbcConfiguration.isUniqueResultOnFindOne() && rs.next()) {
+                        throw new NonUniqueResultException("Multiple results found for query: " + preparedQuery.getQuery());
+                    }
                 } else {
                     result = null;
                 }
@@ -445,8 +459,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @NonNull
     @Override
     public <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery) {
-        ConnectionContext connectionContext = getConnectionCtx();
-        return findStream(preparedQuery, connectionContext.connection, connectionContext.needsToBeClosed);
+        Optional<ConnectionStatus<Connection>> connectionStatus = connectionOperations.findConnectionStatus();
+        if (connectionStatus.isPresent()) {
+            return findStream(preparedQuery, connectionStatus.get().getConnection(), false);
+        }
+        return findAll(preparedQuery).stream();
     }
 
     private <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> pq, Connection connection, boolean closeConnection) {
@@ -535,7 +552,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
     @NonNull
     @Override
-    public <T, R> Iterable<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
+    public <T, R> List<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
         SqlPreparedQuery<T, R> sqlPreparedQuery = getSqlPreparedQuery(preparedQuery);
         return executeRead(connection -> findAll(connection, sqlPreparedQuery, true), sqlPreparedQuery.getInvocationContext());
     }
@@ -727,7 +744,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @NonNull
     @Override
     public <T> Iterable<T> findAll(@NonNull PagedQuery<T> query) {
-        throw new UnsupportedOperationException("The findAll method without an explicit query is not supported. Use findAll(PreparedQuery) instead");
+        return findPage(query).getContent();
     }
 
     @Override
@@ -743,6 +760,28 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
     @Override
     public <R> Page<R> findPage(@NonNull PagedQuery<R> query) {
+        if (query instanceof PreparedQuery<?, ?> pq) {
+            PreparedQuery<R, R> preparedQuery = (PreparedQuery<R, R>) pq;
+            Pageable pageable = preparedQuery.getPageable();
+            List<R> results = findAll(preparedQuery);
+            if (pageable.getMode() == Pageable.Mode.OFFSET) {
+                return Page.of(results, pageable, -1L);
+            }
+            if (preparedQuery instanceof DefaultSqlPreparedQuery<?, ?> sqlPreparedQuery) {
+                List<Pageable.Cursor> cursors;
+                List<Object> resultList = (List<Object>) results;
+                if (preparedQuery.getResultDataType() == DataType.ENTITY) {
+                    cursors = sqlPreparedQuery.createCursors(resultList, pageable);
+                } else if (sqlPreparedQuery.isDtoProjection()) {
+                    RuntimePersistentEntity<Object> runtimePersistentEntity = (RuntimePersistentEntity<Object>) getEntity(sqlPreparedQuery.getResultType());
+                    cursors = sqlPreparedQuery.createCursors(resultList, pageable, runtimePersistentEntity);
+                } else {
+                    throw new IllegalStateException("CursoredPage cannot produce projection result");
+                }
+                return CursoredPage.of(results, pageable, cursors, -1L);
+            }
+            throw new UnsupportedOperationException("Only offset pageable mode is supported by this query implementation");
+        }
         throw new UnsupportedOperationException("The findPage method without an explicit query is not supported. Use findAll(PreparedQuery) instead");
     }
 

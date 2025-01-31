@@ -38,6 +38,7 @@ public final class CountMethodMatcher extends AbstractMethodMatcher {
     public CountMethodMatcher() {
         super(MethodNameParser.builder()
             .match(QueryMatchId.PREFIX, "count")
+            .tryMatch(QueryMatchId.ALL, ALL)
             .tryMatch(QueryMatchId.DISTINCT, DISTINCT)
             .tryMatchFirstOccurrencePrefixed(QueryMatchId.PREDICATE, BY)
             .takeRest(QueryMatchId.PROJECTION)

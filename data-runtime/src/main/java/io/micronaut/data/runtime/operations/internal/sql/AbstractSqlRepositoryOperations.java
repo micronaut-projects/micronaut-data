@@ -190,7 +190,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         Class<?> repositoryType = context.getTarget().getClass();
         SqlQueryBuilder2 queryBuilder = findQueryBuilder(repositoryType);
         RuntimePersistentEntity<E> runtimePersistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
-        return new DefaultSqlStoredQuery<>(storedQuery, runtimePersistentEntity, queryBuilder);
+        return new DefaultSqlStoredQuery<>(storedQuery, runtimePersistentEntity, queryBuilder, conversionService);
     }
 
     /**
@@ -211,7 +211,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         SqlPreparedQuery<T, R> sqlPreparedQuery = getSqlPreparedQuery(preparedQuery);
         sqlPreparedQuery.prepare(null);
         if (!isUpdate) {
-            sqlPreparedQuery.attachPageable(preparedQuery.getPageable(), isSingleResult);
+            sqlPreparedQuery.attachPageable(preparedQuery.getPageable(), preparedQuery.getQueryLimit(), preparedQuery.getSort(), isSingleResult);
         }
 
         String query = sqlPreparedQuery.getQuery();
@@ -315,7 +315,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             final SqlQueryBuilder2 queryBuilder = findQueryBuilder(repositoryType);
             final QueryResult queryResult = queryBuilder.buildInsert(annotationMetadata, new SqlQueryBuilder2.InsertQueryDefinitionImpl(persistentEntity));
             final QueryResult newQueryResult = replaceQueryPlaceholders(queryResult);
-            return new DefaultSqlStoredQuery<>(QueryResultStoredQuery.single(OperationType.INSERT, "Custom insert", AnnotationMetadata.EMPTY_METADATA, newQueryResult, rootEntity), persistentEntity, queryBuilder);
+
+            return new DefaultSqlStoredQuery<>(QueryResultStoredQuery.single(OperationType.INSERT, "Custom insert", AnnotationMetadata.EMPTY_METADATA, newQueryResult, rootEntity), persistentEntity, queryBuilder, getConversionService());
         });
     }
 
@@ -378,7 +379,9 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             return new DefaultSqlStoredQuery<>(
                 QueryResultStoredQuery.single(OperationType.UPDATE, "Custom update", AnnotationMetadata.EMPTY_METADATA, newQueryResult, rootEntity),
                 persistentEntity,
-                queryBuilder);
+                queryBuilder,
+                getConversionService()
+            );
         });
     }
 
@@ -466,7 +469,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         }
 
         RuntimePersistentEntity associatedEntity = association.getAssociatedEntity();
-        return new DefaultSqlStoredQuery<>(new BasicStoredQuery<>(sqlInsert, new String[0], parameters, persistentEntity.getIntrospection().getBeanType(), Object.class, OperationType.INSERT), associatedEntity, queryBuilder);
+        return new DefaultSqlStoredQuery<>(new BasicStoredQuery<>(sqlInsert, new String[0], parameters, persistentEntity.getIntrospection().getBeanType(), Object.class, OperationType.INSERT), associatedEntity, queryBuilder, getConversionService());
     }
 
     private SqlQueryBuilder2 findQueryBuilder(Class<?> repositoryType) {

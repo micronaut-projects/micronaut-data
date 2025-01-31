@@ -19,8 +19,10 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Expandable;
+import io.micronaut.data.annotation.Find;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.OrderBy;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
@@ -66,6 +68,17 @@ public abstract class BookRepository implements PageableRepository<Book, Long>, 
     @Override
     @Join("author")
     public abstract Page<Book> findAll(@NonNull Pageable pageable);
+
+    @Find
+    @Join("author")
+    @OrderBy("author.name")
+    @OrderBy("title")
+    public abstract Page<Book> findAllSorted(Pageable pageable);
+
+    @Find
+    @Join("author")
+    @OrderBy("author.name")
+    public abstract Page<Book> findAllSorted2(Pageable pageable);
 
     @Join(value = "author", type = Join.Type.LEFT_FETCH)
     public abstract Page<Book> findByTotalPagesGreaterThan(int totalPages, Pageable pageable);

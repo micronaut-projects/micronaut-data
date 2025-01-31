@@ -17,11 +17,14 @@ package io.micronaut.data.mongodb.operations;
 
 import com.mongodb.client.model.Sorts;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.annotation.TypeRole;
+import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.mongodb.operations.options.MongoFindOptions;
 import io.micronaut.data.runtime.operations.internal.query.DefaultBindableParametersPreparedQuery;
 import io.micronaut.data.runtime.query.internal.DefaultPreparedQuery;
@@ -29,6 +32,7 @@ import io.micronaut.data.runtime.query.internal.DelegatePreparedQuery;
 import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
+import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
@@ -66,12 +70,33 @@ final class DefaultMongoPreparedQuery<E, R> extends DefaultBindableParametersPre
     }
 
     @Override
+    public Limit getQueryLimit() {
+        Limit queryLimit = super.getQueryLimit();
+        if (queryLimit.isLimited()) {
+            return queryLimit;
+        }
+        return getParameterInRole(TypeRole.LIMIT, Limit.class).orElse(queryLimit);
+    }
+
+    @Override
+    public Sort getSort() {
+        return super.getSort();
+    }
+
+    @Override
     public MongoAggregation getAggregation() {
         MongoAggregation aggregation = mongoStoredQuery.getAggregation(defaultPreparedQuery.getContext());
         Pageable pageable = getPageable();
-        if (pageable != Pageable.UNPAGED) {
+        if (!pageable.isUnpaged()) {
             List<Bson> pipeline = new ArrayList<>(aggregation.getPipeline());
             applyPageable(pageable, pipeline);
+            return new MongoAggregation(pipeline, aggregation.getOptions());
+        }
+        Limit limit = getQueryLimit();
+        Sort sort = getSort();
+        if (limit.isLimited() || sort.isSorted()) {
+            List<Bson> pipeline = new ArrayList<>(aggregation.getPipeline());
+            applyPageable(limit, sort, pipeline);
             return new MongoAggregation(pipeline, aggregation.getOptions());
         }
         return aggregation;
@@ -81,22 +106,46 @@ final class DefaultMongoPreparedQuery<E, R> extends DefaultBindableParametersPre
     public MongoFind getFind() {
         MongoFind find = mongoStoredQuery.getFind(defaultPreparedQuery.getContext());
         Pageable pageable = defaultPreparedQuery.getPageable();
-        if (pageable != Pageable.UNPAGED) {
+        if (!pageable.isUnpaged()) {
             if (pageable.getMode() != Mode.OFFSET) {
                 throw new UnsupportedOperationException("Mode " + pageable.getMode() + " is not supported by the MongoDB implementation");
             }
-            MongoFindOptions findOptions = find.getOptions();
-            MongoFindOptions options = findOptions == null ? new MongoFindOptions() : new MongoFindOptions(findOptions);
-            options.limit(pageable.getSize()).skip((int) pageable.getOffset());
-            Sort pageableSort = pageable.getSort();
-            if (pageableSort.isSorted()) {
-                Bson sort = pageableSort.getOrderBy().stream().map(order -> order.isAscending() ? Sorts.ascending(order.getProperty()) : Sorts.descending(order.getProperty()))
-                    .collect(Collectors.collectingAndThen(Collectors.toList(), Sorts::orderBy));
-                options.sort(sort);
-            }
-            return new MongoFind(options);
+            Limit limit = pageable.getLimit();
+            Sort sort = pageable.getSort();
+            return applyLimitAndSort(find, limit, sort);
+        }
+        Limit limit = getQueryLimit();
+        Sort sort = getSort();
+        if (limit.isLimited() || sort.isSorted()) {
+            return applyLimitAndSort(find, limit, sort);
         }
         return find;
+    }
+
+    private MongoFind applyLimitAndSort(MongoFind find, Limit limit, Sort sort) {
+        MongoFindOptions findOptions = find.getOptions();
+        MongoFindOptions options = findOptions == null ? new MongoFindOptions() : new MongoFindOptions(findOptions);
+        options.limit(limit.maxResults()).skip((int) limit.offset());
+        if (sort.isSorted()) {
+            Bson sortBson = getSort(sort);
+            options.sort(sortBson);
+        }
+        return new MongoFind(options);
+    }
+
+    private Bson getSort(Sort sort) {
+        RuntimePersistentEntity<E> persistentEntity = getPersistentEntity();
+        RuntimePersistentProperty<E> identity = persistentEntity.getIdentity();
+        return sort.getOrderBy()
+            .stream()
+            .map(order -> {
+                String property = order.getProperty();
+                if (identity != null && identity.getName().contains(property)) {
+                    property = MongoUtils.ID;
+                }
+                return order.isAscending() ? Sorts.ascending(property) : Sorts.descending(property);
+            })
+            .collect(Collectors.collectingAndThen(Collectors.toList(), Sorts::orderBy));
     }
 
     @Override
@@ -114,28 +163,46 @@ final class DefaultMongoPreparedQuery<E, R> extends DefaultBindableParametersPre
         return defaultPreparedQuery;
     }
 
-    private int applyPageable(Pageable pageable, List<Bson> pipeline) {
-        int limit = 0;
-        if (pageable != Pageable.UNPAGED) {
-            if (pageable.getMode() != Mode.OFFSET) {
-                throw new UnsupportedOperationException("Mode " + pageable.getMode() + " is not supported by the MongoDB implementation");
+    private void applyPageable(Pageable pageable, List<Bson> pipeline) {
+        if (pageable.getMode() != Mode.OFFSET) {
+            throw new UnsupportedOperationException("Mode " + pageable.getMode() + " is not supported by the MongoDB implementation");
+        }
+        applyPageable(pageable.getLimit(), pageable.getSort(), pipeline);
+    }
+
+    private void applyPageable(Limit queryLimit, Sort sort, List<Bson> pipeline) {
+        if (sort.isSorted()) {
+            BsonDocument existingSortBson = null;
+            for (Bson p : pipeline) {
+                BsonDocument sortBsonDocument = p.toBsonDocument();
+                if (sortBsonDocument != null) {
+                    BsonValue bsonValue = sortBsonDocument.get("$sort");
+                    if (bsonValue != null) {
+                        existingSortBson = bsonValue.asDocument();
+                        if (existingSortBson != null) {
+                            break;
+                        }
+                    }
+                }
             }
-            int skip = (int) pageable.getOffset();
-            limit = pageable.getSize();
-            Sort pageableSort = pageable.getSort();
-            if (pageableSort.isSorted()) {
-                Bson sort = pageableSort.getOrderBy().stream().map(order -> order.isAscending() ? Sorts.ascending(order.getProperty()) : Sorts.descending(order.getProperty())).collect(Collectors.collectingAndThen(Collectors.toList(), Sorts::orderBy));
-                BsonDocument sortStage = new BsonDocument().append("$sort", sort.toBsonDocument());
+            Bson sortBson = getSort(sort);
+            if (existingSortBson != null) {
+                existingSortBson.putAll(sortBson.toBsonDocument());
+            } else {
+                BsonDocument sortStage = new BsonDocument().append("$sort", sortBson.toBsonDocument());
                 addStageToPipelineBefore(pipeline, sortStage, "$limit", "$skip");
             }
-            if (skip > 0) {
-                pipeline.add(new BsonDocument().append("$skip", new BsonInt32(skip)));
+        }
+        if (queryLimit.isLimited()) {
+            int offset = (int) queryLimit.offset();
+            if (offset > 0) {
+                pipeline.add(new BsonDocument().append("$skip", new BsonInt32(offset)));
             }
-            if (limit > 0) {
-                pipeline.add(new BsonDocument().append("$limit", new BsonInt32(limit)));
+            int maxResults = queryLimit.maxResults();
+            if (maxResults > 0) {
+                pipeline.add(new BsonDocument().append("$limit", new BsonInt32(maxResults)));
             }
         }
-        return limit;
     }
 
     private void addStageToPipelineBefore(List<Bson> pipeline, BsonDocument stageToAdd, String... beforeStages) {

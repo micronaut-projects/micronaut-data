@@ -62,7 +62,7 @@ public interface AdvancedPredicateVisitor<P> extends PredicateVisitor {
 
     @Override
     default void visit(BetweenPredicate betweenPredicate) {
-        visitInBetween(betweenPredicate.getValue(), betweenPredicate.getFrom(), betweenPredicate.getTo());
+        visitInBetween(betweenPredicate.getValue(), betweenPredicate.getFrom(), betweenPredicate.getTo(), false);
     }
 
     @Override
@@ -126,7 +126,7 @@ public interface AdvancedPredicateVisitor<P> extends PredicateVisitor {
 
     void visitLessThanOrEquals(Expression<?> leftExpression, Expression<?> rightExpression);
 
-    void visitInBetween(Expression<?> value, Expression<?> from, Expression<?> to);
+    void visitInBetween(Expression<?> value, Expression<?> from, Expression<?> to, boolean negated);
 
     void visitIsFalse(Expression<?> expression);
 

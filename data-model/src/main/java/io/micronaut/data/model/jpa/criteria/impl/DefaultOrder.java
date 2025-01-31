@@ -16,7 +16,6 @@
 package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Order;
 
@@ -28,19 +27,25 @@ import jakarta.persistence.criteria.Order;
  * @since 3.2
  */
 @Internal
-public final class PersistentPropertyOrder<T> implements Order {
+public final class DefaultOrder<T> implements Order {
 
-    private final PersistentPropertyPath<T> persistentPropertyPath;
+    private final Expression<T> expression;
     private final boolean ascending;
+    private final boolean ignoreCase;
 
-    public PersistentPropertyOrder(PersistentPropertyPath<T> persistentPropertyPath, boolean ascending) {
-        this.persistentPropertyPath = persistentPropertyPath;
+    public DefaultOrder(Expression<T> expression, boolean ascending, boolean ignoreCase) {
+        this.expression = expression;
         this.ascending = ascending;
+        this.ignoreCase = ignoreCase;
     }
 
     @Override
     public Order reverse() {
-        return new PersistentPropertyOrder<>(persistentPropertyPath, !ascending);
+        return new DefaultOrder<>(expression, !ascending, ignoreCase);
+    }
+
+    public boolean isIgnoreCase() {
+        return ignoreCase;
     }
 
     @Override
@@ -50,6 +55,6 @@ public final class PersistentPropertyOrder<T> implements Order {
 
     @Override
     public Expression<?> getExpression() {
-        return persistentPropertyPath;
+        return expression;
     }
 }

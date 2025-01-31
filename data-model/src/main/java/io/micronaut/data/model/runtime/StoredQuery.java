@@ -22,6 +22,8 @@ import io.micronaut.core.naming.Named;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.Limit;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.JoinPath;
 
 import java.util.Collections;
@@ -251,17 +253,39 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
     /**
      * @return The limit of the query or -1 if none
      * @since 4.10
+     * @deprecated Replaced by {@link #getQueryLimit()} ()}
      */
+    @Deprecated(forRemoval = true, since = "4.12")
     default int getLimit() {
-        return -1;
+        return getQueryLimit().maxResults();
     }
 
     /**
      * @return The offset of the query or 0 if none
      * @since 4.10
+     * @deprecated Replaced by {@link #getQueryLimit()} ()}
      */
+    @Deprecated(forRemoval = true, since = "4.12")
     default int getOffset() {
-        return 0;
+        return (int) getQueryLimit().offset();
+    }
+
+    /**
+     * @return The query limit
+     * @since 4.12
+     */
+    @NonNull
+    default Limit getQueryLimit() {
+        return Limit.of(getLimit(), getOffset());
+    }
+
+    /**
+     * @return The runtime sort
+     * @since 4.12
+     */
+    @NonNull
+    default Sort getSort() {
+        return Sort.UNSORTED;
     }
 
     /**

@@ -18,7 +18,9 @@ package io.micronaut.data.runtime.operations.internal.query;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.value.ConvertibleValues;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
@@ -55,6 +57,16 @@ public final class DummyPreparedQuery<E, R> implements PreparedQuery<E, R>, Dele
     @Override
     public boolean isRawQuery() {
         return storedQuery.isRawQuery();
+    }
+
+    @Override
+    public Sort getSort() {
+        return storedQuery.getSort();
+    }
+
+    @Override
+    public Limit getQueryLimit() {
+        return storedQuery.getQueryLimit();
     }
 
     @Override

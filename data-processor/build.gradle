@@ -1,10 +1,13 @@
 plugins {
 	id "io.micronaut.build.internal.data-module"
+    id 'antlr'
 }
 
 dependencies {
 	api projects.micronautDataModel
 	api(mnSql.jakarta.persistence.api)
+
+    implementation libs.antlr.runtime
 
 	compileOnly mn.micronaut.core.processor
 
@@ -21,4 +24,11 @@ dependencies {
 	testImplementation projects.micronautDataTck
 	testImplementation projects.micronautDataTx
 	testImplementation projects.micronautDataJdbc
+
+    antlr libs.antlr
+}
+
+generateGrammarSource {
+    outputDirectory = file("$outputDirectory/io/micronaut/data/jdql")
+    arguments += ["-package", "io.micronaut.data.jdql"]
 }

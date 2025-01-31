@@ -80,10 +80,11 @@ public interface Sort {
      */
     @NonNull
     default Sort orders(@NonNull List<Sort.Order> orders) {
+        Sort theSort = this;
         for (Order order : orders) {
-            order(order);
+            theSort = theSort.order(order);
         }
-        return this;
+        return theSort;
     }
 
     /**
@@ -245,6 +246,17 @@ public interface Sort {
          * @return The order instance
          */
         public static Order asc(String property, boolean ignoreCase) {
+            return new Order(property, Direction.ASC, ignoreCase);
+        }
+
+        /**
+         * Creates a new order for the given property in ascending order.
+         *
+         * @param property The property
+         * @param ignoreCase  Whether to ignore case
+         * @return The order instance
+         */
+        public static Order of(String property, boolean ignoreCase) {
             return new Order(property, Direction.ASC, ignoreCase);
         }
 

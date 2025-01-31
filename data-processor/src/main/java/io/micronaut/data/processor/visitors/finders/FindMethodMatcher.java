@@ -59,6 +59,10 @@ public final class FindMethodMatcher extends AbstractMethodMatcher {
 
     @Override
     public MethodMatch match(MethodMatchContext matchContext, List<MethodNameParser.Match> matches) {
+        return by(matches);
+    }
+
+    public static QueryCriteriaMethodMatch by(List<MethodNameParser.Match> matches) {
         return new QueryCriteriaMethodMatch(matches) {
 
             boolean hasIdMatch;

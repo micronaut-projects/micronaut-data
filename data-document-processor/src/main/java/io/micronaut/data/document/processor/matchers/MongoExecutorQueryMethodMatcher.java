@@ -63,7 +63,7 @@ public class MongoExecutorQueryMethodMatcher implements MethodMatcher {
 
                             @Override
                             protected void apply(MethodMatchInfo matchInfo) {
-                                matchInfo.addParameterRole(MongoAnnotations.FILTER_ROLE, parameter.getName());
+                                matchInfo.addParameterRole(parameter, MongoAnnotations.FILTER_ROLE);
                             }
 
                         };
@@ -72,7 +72,7 @@ public class MongoExecutorQueryMethodMatcher implements MethodMatcher {
 
                             @Override
                             protected void apply(MethodMatchInfo matchInfo) {
-                                matchInfo.addParameterRole(MongoAnnotations.PIPELINE_ROLE, parameter.getName());
+                                matchInfo.addParameterRole(parameter, MongoAnnotations.PIPELINE_ROLE);
                             }
 
                         };
@@ -81,7 +81,7 @@ public class MongoExecutorQueryMethodMatcher implements MethodMatcher {
 
                             @Override
                             protected void apply(MethodMatchInfo matchInfo) {
-                                matchInfo.addParameterRole(MongoAnnotations.FIND_OPTIONS_ROLE, parameter.getName());
+                                matchInfo.addParameterRole(parameter, MongoAnnotations.FIND_OPTIONS_ROLE);
                             }
 
                         };
@@ -95,8 +95,8 @@ public class MongoExecutorQueryMethodMatcher implements MethodMatcher {
 
                             @Override
                             protected void apply(MethodMatchInfo matchInfo) {
-                                matchInfo.addParameterRole(MongoAnnotations.FILTER_ROLE, parameter1.getName());
-                                matchInfo.addParameterRole(MongoAnnotations.FIND_OPTIONS_ROLE, parameter2.getName());
+                                matchInfo.addParameterRole(parameter1, MongoAnnotations.FILTER_ROLE);
+                                matchInfo.addParameterRole(parameter2, MongoAnnotations.FIND_OPTIONS_ROLE);
                             }
 
                         };
@@ -105,8 +105,8 @@ public class MongoExecutorQueryMethodMatcher implements MethodMatcher {
 
                             @Override
                             protected void apply(MethodMatchInfo matchInfo) {
-                                matchInfo.addParameterRole(MongoAnnotations.PIPELINE_ROLE, parameter1.getName());
-                                matchInfo.addParameterRole(MongoAnnotations.AGGREGATE_OPTIONS_ROLE, parameter2.getName());
+                                matchInfo.addParameterRole(parameter1, MongoAnnotations.PIPELINE_ROLE);
+                                matchInfo.addParameterRole(parameter2, MongoAnnotations.AGGREGATE_OPTIONS_ROLE);
                             }
 
                         };
@@ -122,8 +122,8 @@ public class MongoExecutorQueryMethodMatcher implements MethodMatcher {
 
                             @Override
                             protected void apply(MethodMatchInfo matchInfo) {
-                                matchInfo.addParameterRole(MongoAnnotations.FILTER_ROLE, p1.getName());
-                                matchInfo.addParameterRole(TypeRole.PAGEABLE, p2.getName());
+                                matchInfo.addParameterRole(p1, MongoAnnotations.FILTER_ROLE);
+                                matchInfo.addParameterRole(p2, TypeRole.PAGEABLE);
                                 // Fake query to have stored query
                                 matchContext.getMethodElement().annotate(Query.class, builder -> {
                                     builder.member(DataMethod.META_MEMBER_COUNT_QUERY, "{}");
@@ -137,8 +137,8 @@ public class MongoExecutorQueryMethodMatcher implements MethodMatcher {
 
                             @Override
                             protected void apply(MethodMatchInfo matchInfo) {
-                                matchInfo.addParameterRole(MongoAnnotations.FIND_OPTIONS_ROLE, p1.getName());
-                                matchInfo.addParameterRole(TypeRole.PAGEABLE, p2.getName());
+                                matchInfo.addParameterRole(p1, MongoAnnotations.FIND_OPTIONS_ROLE);
+                                matchInfo.addParameterRole(p2, TypeRole.PAGEABLE);
                                 // Fake query to have stored query
                                 matchContext.getMethodElement().annotate(Query  .class, builder -> {
                                     builder.member(DataMethod.META_MEMBER_COUNT_QUERY, "{}");
@@ -161,7 +161,7 @@ public class MongoExecutorQueryMethodMatcher implements MethodMatcher {
 
                         @Override
                         protected void apply(MethodMatchInfo matchInfo) {
-                            matchInfo.addParameterRole(MongoAnnotations.FILTER_ROLE, parameter.getName());
+                            matchInfo.addParameterRole(parameter, MongoAnnotations.FILTER_ROLE);
                         }
 
                     };
@@ -179,7 +179,7 @@ public class MongoExecutorQueryMethodMatcher implements MethodMatcher {
 
                             @Override
                             protected void apply(MethodMatchInfo matchInfo) {
-                                matchInfo.addParameterRole(MongoAnnotations.FILTER_ROLE, parameter.getName());
+                                matchInfo.addParameterRole(parameter, MongoAnnotations.FILTER_ROLE);
                             }
 
                         };
@@ -193,8 +193,8 @@ public class MongoExecutorQueryMethodMatcher implements MethodMatcher {
 
                             @Override
                             protected void apply(MethodMatchInfo matchInfo) {
-                                matchInfo.addParameterRole(MongoAnnotations.FILTER_ROLE, parameter1.getName());
-                                matchInfo.addParameterRole(MongoAnnotations.DELETE_OPTIONS_ROLE, parameter2.getName());
+                                matchInfo.addParameterRole(parameter1, MongoAnnotations.FILTER_ROLE);
+                                matchInfo.addParameterRole(parameter2, MongoAnnotations.DELETE_OPTIONS_ROLE);
                             }
 
                         };
@@ -215,8 +215,8 @@ public class MongoExecutorQueryMethodMatcher implements MethodMatcher {
 
                             @Override
                             protected void apply(MethodMatchInfo matchInfo) {
-                                matchInfo.addParameterRole(MongoAnnotations.FILTER_ROLE, parameter1.getName());
-                                matchInfo.addParameterRole(MongoAnnotations.UPDATE_ROLE, parameter2.getName());
+                                matchInfo.addParameterRole(parameter1, MongoAnnotations.FILTER_ROLE);
+                                matchInfo.addParameterRole(parameter2, MongoAnnotations.UPDATE_ROLE);
                             }
 
                         };
@@ -231,9 +231,9 @@ public class MongoExecutorQueryMethodMatcher implements MethodMatcher {
 
                             @Override
                             protected void apply(MethodMatchInfo matchInfo) {
-                                matchInfo.addParameterRole(MongoAnnotations.FILTER_ROLE, filter.getName());
-                                matchInfo.addParameterRole(MongoAnnotations.UPDATE_ROLE, update.getName());
-                                matchInfo.addParameterRole(MongoAnnotations.UPDATE_OPTIONS_ROLE, options.getName());
+                                matchInfo.addParameterRole(filter, MongoAnnotations.FILTER_ROLE);
+                                matchInfo.addParameterRole(update, MongoAnnotations.UPDATE_ROLE);
+                                matchInfo.addParameterRole(options, MongoAnnotations.UPDATE_OPTIONS_ROLE);
                             }
 
                         };

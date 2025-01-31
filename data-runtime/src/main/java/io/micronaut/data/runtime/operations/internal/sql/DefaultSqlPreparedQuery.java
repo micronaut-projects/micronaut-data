@@ -23,9 +23,11 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.model.CursoredPage;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.CursoredPageable;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Pageable.Cursor;
 import io.micronaut.data.model.Pageable.Mode;
@@ -56,6 +58,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import static io.micronaut.data.runtime.query.internal.DefaultPreparedQuery.hasReturnTypeInRole;
 
 /**
  * Implementation of {@link SqlPreparedQuery}.
@@ -155,19 +159,30 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
                 } else if (TypeRole.PAGEABLE_REQUIRED.equals(parameter.getRole())) {
                     Pageable pageable = getPageableParameter(parameter);
                     if (!pageable.isUnpaged()) {
-                        appendPaginationOrOrderQueryPart(q, pageable, false, parameter.getTableAlias(), inx);
+                        appendPageable(q, pageable, pageable.getLimit(), pageable.getSort(), parameter.getTableAlias(), inx);
                     }
                 } else if (TypeRole.PAGEABLE.equals(parameter.getRole())) {
                     Pageable pageable = getPageableParameter(parameter);
-                    appendPaginationOrOrderQueryPart(q, pageable, false, parameter.getTableAlias(), inx);
+                    appendPageable(q, pageable, pageable.getLimit(), pageable.getSort(), parameter.getTableAlias(), inx);
                 } else if (TypeRole.SORT.equals(parameter.getRole())) {
                     Sort sort = getSortParameter(parameter);
                     appendSort(sort, q, sqlStoredQuery.getQueryBuilder(), parameter.getTableAlias());
-                    int limit = sqlStoredQuery.getLimit();
-                    int offset = sqlStoredQuery.getOffset();
-                    if (limit != -1 || offset > 0) {
+                    Limit limit = sqlStoredQuery.getQueryLimit();
+                    if (!limit.isLimited()) {
+                        limit = getParameterInRole(TypeRole.LIMIT, Limit.class).orElse(limit);
+                    }
+                    if (limit.isLimited()) {
+                        q.append(queryBuilder.buildLimitAndOffset(limit.maxResults(), limit.offset()));
+                    }
+                } else if (TypeRole.LIMIT.equals(parameter.getRole())) {
+                    Sort sort = storedQuery.getSort();
+                    if (sort.isSorted()) {
+                        appendSort(sort, q, sqlStoredQuery.getQueryBuilder(), parameter.getTableAlias());
+                    }
+                    Limit limit = getLimitParameter(parameter);
+                    if (limit.isLimited()) {
                         // Limit defined by the method name
-                        q.append(queryBuilder.buildLimitAndOffset(limit, offset));
+                        q.append(queryBuilder.buildLimitAndOffset(limit.maxResults(), limit.offset()));
                     }
                 }
                 q.append(sqlStoredQuery.getExpandableQueryParts()[queryParamIndex++]);
@@ -178,25 +193,50 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
 
     private Pageable getPageableParameter(QueryParameterBinding parameter) {
         Object value = getParameterValue(parameter);
-        if (value instanceof Pageable) {
-            // The pageable might be modified
-            return preparedQuery.getPageable();
+        Pageable pageable = getConversionService()
+            .convert(value, Pageable.class).orElseThrow(() -> new IllegalArgumentException("Unsupported parameter type " + parameter.getRole()));
+        if (pageable.getMode() == Pageable.Mode.OFFSET && hasReturnTypeInRole(TypeRole.CURSORED_PAGE, CursoredPage.class, invocationContext, getConversionService())) {
+            if (pageable.getNumber() == 0) {
+                pageable = CursoredPageable.from(pageable.getSize(), pageable.getSort());
+            } else {
+                throw new IllegalArgumentException("Pageable with offset mode provided, but method must return a cursored page");
+            }
         }
-        if (value instanceof Sort sort) {
-            return Pageable.UNPAGED.withSort(sort);
+        Sort storedSort = storedQuery.getSort();
+        if (storedSort.isSorted()) {
+            pageable = pageable.withSort(storedSort.orders(pageable.getOrderBy()));
         }
-        throw new IllegalArgumentException("Unsupported parameter type " + parameter.getRole());
+        for (Sort sort : getParametersInRole(TypeRole.SORT, Sort.class)) {
+            if (sort != pageable) {
+                pageable = pageable.withSort(pageable.getSort().orders(sort.getOrderBy()));
+            }
+        }
+        return pageable;
     }
 
     private Sort getSortParameter(QueryParameterBinding parameter) {
         Object value = getParameterValue(parameter);
-        if (value instanceof Pageable pageable) {
-            return pageable.withoutPaging();
+        Sort sort = getConversionService()
+            .convert(value, Sort.class).orElseThrow(() -> new IllegalArgumentException("Unsupported parameter type " + parameter.getRole()));
+        Sort querySort = storedQuery.getSort();
+        if (querySort.isSorted()) {
+            sort = querySort.orders(sort.getOrderBy());
         }
-        if (value instanceof Sort sort) {
-            return sort;
+        for (Object itemValue : getParametersInRole(TypeRole.SORT, Object.class)) {
+            if (itemValue != value) {
+                Sort sortItem = getConversionService().convert(itemValue, Sort.class).orElse(null);
+                if (sortItem != null) {
+                    sort = sort.orders(sortItem.getOrderBy());
+                }
+            }
         }
-        throw new IllegalArgumentException("Unsupported parameter type " + parameter.getRole());
+        return sort;
+    }
+
+    private Limit getLimitParameter(QueryParameterBinding parameter) {
+        Object value = getParameterValue(parameter);
+        return getConversionService()
+            .convert(value, Limit.class).orElseThrow(() -> new IllegalArgumentException("Unsupported parameter type " + parameter.getRole()));
     }
 
     /**
@@ -247,12 +287,12 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
     }
 
     @Override
-    public void attachPageable(Pageable pageable, boolean isSingleResult) {
+    public void attachPageable(Pageable pageable, Limit limit, Sort sort) {
         if (pageable.isUnpaged() && !pageable.isSorted() || bindPageableOrSort) {
             return;
         }
         StringBuilder builder = new StringBuilder();
-        appendPaginationOrOrderQueryPart(builder, pageable, isSingleResult, null, storedQuery.getQueryBindings().size() + 1);
+        appendPageable(builder, pageable, limit, sort, null, storedQuery.getQueryBindings().size() + 1);
 
         int forUpdateIndex = this.query.lastIndexOf(SqlQueryBuilder.STANDARD_FOR_UPDATE_CLAUSE);
         if (forUpdateIndex == -1) {
@@ -265,10 +305,12 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         }
     }
 
-    private void appendPaginationOrOrderQueryPart(StringBuilder query, Pageable pageable,
-                                                  boolean isSingleResult,
-                                                  String tableAlias,
-                                                  int paramIndex) {
+    private void appendPageable(StringBuilder query,
+                                Pageable pageable,
+                                Limit limit,
+                                Sort sort,
+                                String tableAlias,
+                                int paramIndex) {
         SqlQueryBuilder2 queryBuilder = sqlStoredQuery.getQueryBuilder();
         if (pageable instanceof CursoredPageable cursored) {
             cursored = enhancePageable(cursored, getPersistentEntity());
@@ -276,12 +318,17 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
             appendSort(cursored.getSort(), query, queryBuilder, tableAlias);
             query.append(queryBuilder.buildLimitAndOffset(cursored.getSize(), 0)); // Append limit
         } else {
-            appendSort(pageable.getSort(), query, queryBuilder, tableAlias);
-            if (isSingleResult && pageable.getOffset() > 0) {
-                pageable = Pageable.from(pageable.getNumber(), 1);
-            }
-            query.append(queryBuilder.buildLimitAndOffset(pageable.getSize(), pageable.getOffset()));
+            appendLimitOrOrderQueryPart(query, limit, sort, tableAlias);
         }
+    }
+
+    private void appendLimitOrOrderQueryPart(StringBuilder query,
+                                             Limit limit,
+                                             Sort sort,
+                                             String tableAlias) {
+        SqlQueryBuilder2 queryBuilder = sqlStoredQuery.getQueryBuilder();
+        appendSort(sort, query, queryBuilder, tableAlias);
+        query.append(queryBuilder.buildLimitAndOffset(limit.maxResults(), limit.offset()));
     }
 
     private void appendSort(Sort sort, StringBuilder added, SqlQueryBuilder2 queryBuilder, String tableAlias) {

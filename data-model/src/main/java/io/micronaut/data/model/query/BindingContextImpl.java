@@ -29,6 +29,7 @@ final class BindingContextImpl implements BindingParameter.BindingContext {
     private String name;
     private PersistentPropertyPath incomingMethodParameterProperty;
     private PersistentPropertyPath outgoingQueryParameterProperty;
+    private PersistentPropertyPath parameterBindingPath;
     private boolean expandable;
 
     @Override
@@ -56,6 +57,12 @@ final class BindingContextImpl implements BindingParameter.BindingContext {
     }
 
     @Override
+    public BindingParameter.BindingContext parameterBindingPath(PersistentPropertyPath propertyPath) {
+        this.parameterBindingPath = propertyPath;
+        return this;
+    }
+
+    @Override
     public BindingParameter.BindingContext expandable() {
         this.expandable = true;
         return this;
@@ -79,6 +86,11 @@ final class BindingContextImpl implements BindingParameter.BindingContext {
     @Override
     public PersistentPropertyPath getOutgoingQueryParameterProperty() {
         return outgoingQueryParameterProperty;
+    }
+
+    @Override
+    public PersistentPropertyPath getParameterBindingPath() {
+        return parameterBindingPath;
     }
 
     @Override

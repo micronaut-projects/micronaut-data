@@ -66,6 +66,9 @@ dependencies {
 
     testImplementation mnSerde.micronaut.serde.support
     testImplementation mnTestResources.micronaut.test.resources.extensions.junit.platform
+    testRuntimeOnly(libs.jupiter.engine)
+    testImplementation(mnTest.micronaut.test.junit5)
+    testImplementation(libs.managed.jakarta.data.api)
 
     testRuntimeOnly mnSerde.micronaut.serde.oracle.jdbc.json
     testRuntimeOnly mnFlyway.micronaut.flyway

@@ -15,8 +15,8 @@
  */
 package io.micronaut.data.model;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.annotation.AutoPopulated;
@@ -25,6 +25,8 @@ import io.micronaut.data.annotation.JsonRepresentation;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
+
+import java.util.List;
 
 
 /**
@@ -37,13 +39,16 @@ public interface PersistentProperty extends PersistentElement {
 
     /**
      * The name of the property.
+     *
      * @return The property name
      */
     @Override
-    @NonNull String getName();
+    @NonNull
+    String getName();
 
     /**
      * The name with the first letter in upper case as per Java bean conventions.
+     *
      * @return The capitilized name
      * @deprecated The method with a type replaced with {@link #getCapitalizedName()}.
      */
@@ -54,6 +59,7 @@ public interface PersistentProperty extends PersistentElement {
 
     /**
      * The name with the first letter in upper case as per Java bean conventions.
+     *
      * @return The capitalized name
      * @since 4.2.0
      */
@@ -63,16 +69,19 @@ public interface PersistentProperty extends PersistentElement {
 
     /**
      * The type of the property.
+     *
      * @return The property type
      */
-    @NonNull String getTypeName();
+    @NonNull
+    String getTypeName();
 
     /**
      * Obtains the owner of this persistent property.
      *
      * @return The owner
      */
-    @NonNull PersistentEntity getOwner();
+    @NonNull
+    PersistentEntity getOwner();
 
     /**
      * Whether the property can be set to null.
@@ -87,18 +96,19 @@ public interface PersistentProperty extends PersistentElement {
      * Whether a property is required to be specified. This returns
      * false if the property is both not nullable and not generated.
      *
+     * @return True if the property is required
      * @see #isOptional()
      * @see #isGenerated()
-     * @return True if the property is required
      */
     default boolean isRequired() {
-       return !isOptional() &&
-               !isGenerated() &&
-               !getAnnotationMetadata().hasStereotype(AutoPopulated.class);
+        return !isOptional() &&
+            !isGenerated() &&
+            !getAnnotationMetadata().hasStereotype(AutoPopulated.class);
     }
 
     /**
      * Whether the property is read-only, for example for generated values.
+     *
      * @return True if it is read-only
      */
     default boolean isReadOnly() {
@@ -130,6 +140,7 @@ public interface PersistentProperty extends PersistentElement {
 
     /**
      * Is the property assignable to the given type name.
+     *
      * @param type The type name
      * @return True if it is
      */
@@ -137,6 +148,7 @@ public interface PersistentProperty extends PersistentElement {
 
     /**
      * Is the property assignable to the given type.
+     *
      * @param type The type
      * @return True it is
      */
@@ -153,18 +165,18 @@ public interface PersistentProperty extends PersistentElement {
         } else {
             AnnotationMetadata annotationMetadata = getAnnotationMetadata();
             return annotationMetadata.enumValue(MappedProperty.class, "type", DataType.class)
-                    .orElseGet(() -> {
-                        DataType dt = annotationMetadata.enumValue(TypeDef.class, "type", DataType.class).orElse(null);
-                        if (dt != null) {
-                            return dt;
+                .orElseGet(() -> {
+                    DataType dt = annotationMetadata.enumValue(TypeDef.class, "type", DataType.class).orElse(null);
+                    if (dt != null) {
+                        return dt;
+                    } else {
+                        if (isEnum()) {
+                            return DataType.STRING;
                         } else {
-                            if (isEnum()) {
-                                return DataType.STRING;
-                            } else {
-                                return DataType.OBJECT;
-                            }
+                            return DataType.OBJECT;
                         }
-                    });
+                    }
+                });
         }
     }
 
@@ -185,6 +197,13 @@ public interface PersistentProperty extends PersistentElement {
     }
 
     /**
+     * @return Returns the enum constants if the property type is an enum.
+     */
+    default List<EnumConstant> getEnumConstants() {
+        return List.of();
+    }
+
+    /**
      * @return Returns possible property convertor.
      */
     @Nullable
@@ -194,14 +213,15 @@ public interface PersistentProperty extends PersistentElement {
 
     /**
      * Return whether the metadata indicates the instance is nullable.
+     *
      * @param metadata The metadata
      * @return True if it is nullable
      */
     static boolean isNullableMetadata(@NonNull AnnotationMetadata metadata) {
         return metadata
-                .getDeclaredAnnotationNames()
-                .stream()
-                .anyMatch(n -> NameUtils.getSimpleName(n).equalsIgnoreCase("nullable"));
+            .getDeclaredAnnotationNames()
+            .stream()
+            .anyMatch(n -> NameUtils.getSimpleName(n).equalsIgnoreCase("nullable"));
     }
 
     /**
@@ -223,5 +243,18 @@ public interface PersistentProperty extends PersistentElement {
      */
     default boolean isEmbedded() {
         return false;
+    }
+
+    /**
+     * The enum constant.
+     *
+     * @since 4.12
+     */
+    interface EnumConstant {
+
+        String name();
+
+        int ordinal();
+
     }
 }

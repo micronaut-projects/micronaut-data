@@ -47,7 +47,7 @@ class CriteriaSpec extends AbstractCriteriaSpec {
 
     void setup() {
         testEntityElement = buildCustomElement()
-        criteriaBuilder = new SourcePersistentEntityCriteriaBuilderImpl(entityResolver, criteriaBuilder)
+        criteriaBuilder = new SourcePersistentEntityCriteriaBuilderImpl(entityResolver)
         criteriaQuery = criteriaBuilder.createQuery()
         criteriaDelete = criteriaBuilder.createCriteriaDelete(null)
         criteriaUpdate = criteriaBuilder.createCriteriaUpdate(null)

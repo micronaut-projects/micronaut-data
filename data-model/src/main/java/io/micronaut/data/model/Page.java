@@ -70,14 +70,17 @@ public interface Page<T> extends Slice<T> {
 
     /**
      * Get the total count of pages that can be given by this query.
-     * The method may produce a {@link IllegalStateException} if the {@link Pageable} request
-     * did not ask for total size.
+     * The method will return -1 if the total size is not available.
      *
      * @return The total page of pages
      */
     default int getTotalPages() {
         int size = getSize();
-        return size == 0 ? 1 : (int) Math.ceil((double) getTotalSize() / (double) size);
+        long totalSize = getTotalSize();
+        if (totalSize == -1) {
+            return -1;
+        }
+        return size == 0 ? 1 : (int) Math.ceil((double) totalSize / (double) size);
     }
 
     @Override

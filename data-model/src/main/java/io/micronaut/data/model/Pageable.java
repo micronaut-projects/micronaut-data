@@ -113,6 +113,16 @@ public interface Pageable extends Sort {
     }
 
     /**
+     * @return The limit
+     * @see 4.12
+     */
+    @NonNull
+    @JsonIgnore
+    default Limit getLimit() {
+        return Limit.of(getSize(), getOffset());
+    }
+
+    /**
      * @return The next pageable.
      */
     @NonNull
@@ -132,19 +142,14 @@ public interface Pageable extends Sort {
         int size = getSize();
         if (size < 0) {
             // unpaged
-            return Pageable.from(0, size, getSort());
+            return Pageable.from(0, size, getSort(), requestTotal());
         }
         Pageable newPageable;
         // handle overflow
         if (newNumber < 0) {
-            newPageable = Pageable.from(0, size, getSort());
-        } else {
-            newPageable = Pageable.from(newNumber, size, getSort());
+            return Pageable.from(0, size, getSort(), requestTotal());
         }
-        if (!requestTotal()) {
-            newPageable = newPageable.withoutTotal();
-        }
-        return newPageable;
+        return Pageable.from(newNumber, size, getSort(), requestTotal());
     }
 
     /**
@@ -159,7 +164,7 @@ public interface Pageable extends Sort {
     @Override
     default Pageable order(@NonNull String propertyName) {
         Sort newSort = getSort().order(propertyName);
-        return Pageable.from(getNumber(), getSize(), newSort);
+        return Pageable.from(getNumber(), getSize(), newSort, requestTotal());
     }
 
     @Override
@@ -172,24 +177,20 @@ public interface Pageable extends Sort {
     @Override
     default Pageable order(@NonNull Order order) {
         Sort newSort = getSort().order(order);
-        return Pageable.from(getNumber(), getSize(), newSort);
+        return Pageable.from(getNumber(), getSize(), newSort, requestTotal());
     }
 
     @NonNull
     @Override
     default Pageable order(@NonNull String propertyName, @NonNull Order.Direction direction) {
         Sort newSort = getSort().order(propertyName, direction);
-        return Pageable.from(getNumber(), getSize(), newSort);
+        return Pageable.from(getNumber(), getSize(), newSort, requestTotal());
     }
 
     @NonNull
     @Override
     default Pageable orders(@NonNull List<Order> orders) {
-        Sort newSort = getSort();
-        for (Order order : orders) {
-            newSort = newSort.order(order);
-        }
-        return Pageable.from(getNumber(), getSize(), newSort);
+        return Pageable.from(getNumber(), getSize(), getSort().orders(orders), requestTotal());
     }
 
     /**
@@ -201,7 +202,7 @@ public interface Pageable extends Sort {
     @NonNull
     default Pageable withoutSort() {
         if (isSorted()) {
-            return Pageable.from(getNumber(), getSize());
+            return Pageable.from(getNumber(), getSize(), null, requestTotal());
         }
         return this;
     }
@@ -225,7 +226,7 @@ public interface Pageable extends Sort {
      * @return A pageable instance with a new sort
      */
     default Pageable withSort(@NonNull Sort sort) {
-        return Pageable.from(getNumber(), getSize(), sort);
+        return Pageable.from(getNumber(), getSize(), sort, requestTotal());
     }
 
     @NonNull
@@ -296,6 +297,24 @@ public interface Pageable extends Sort {
         @Nullable Sort sort
     ) {
         return new DefaultPageable(page, size, sort, true);
+    }
+
+    /**
+     * Creates a new {@link Pageable} with the given offset.
+     *
+     * @param page         The page
+     * @param size         the size
+     * @param sort         the sort
+     * @param requestTotal The request total
+     * @return The pageable
+     * @since 4.12
+     */
+    static @NonNull Pageable from(
+        int page,
+        int size,
+        @Nullable Sort sort,
+        boolean requestTotal) {
+        return new DefaultPageable(page, size, sort, requestTotal);
     }
 
     /**
