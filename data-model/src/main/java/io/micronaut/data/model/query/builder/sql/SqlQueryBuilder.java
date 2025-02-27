@@ -892,7 +892,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         boolean escape = shouldEscape(entity);
         NamingStrategy namingStrategy = getNamingStrategy(entity);
         int length = sb.length();
-        traversePersistentProperties(entity, (associations, property)
+        traversePersistentProperties(entity, Association::isSingleEnded, (associations, property)
                 -> appendProperty(sb, associations, property, namingStrategy, alias, escape));
         int newLength = sb.length();
         if (newLength == length) {

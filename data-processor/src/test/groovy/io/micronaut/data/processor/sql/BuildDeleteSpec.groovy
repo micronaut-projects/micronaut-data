@@ -224,7 +224,7 @@ interface BookRepository extends GenericRepository<Book, Long> {
         when:
             def deleteReturningCustomMethod = repository.findPossibleMethods("deleteReturning").findFirst().get()
         then:
-            getQuery(deleteReturningCustomMethod) == 'DELETE  FROM "book"  WHERE ("id" = ?) RETURNING "id","author_id","genre_id","title","total_pages","publisher_id","last_updated"'
+            getQuery(deleteReturningCustomMethod) == 'DELETE  FROM "book"  WHERE ("id" = ?) RETURNING "id","title","total_pages","last_updated"'
             getDataResultType(deleteReturningCustomMethod) == "io.micronaut.data.tck.entities.Book"
             getParameterPropertyPaths(deleteReturningCustomMethod) == ["id"] as String[]
             getDataInterceptor(deleteReturningCustomMethod) == "io.micronaut.data.intercept.DeleteOneInterceptor"
@@ -338,7 +338,7 @@ interface BookRepository extends GenericRepository<Book, Long> {
         when:
             def deleteReturningCustomMethod = repository.findPossibleMethods("deleteReturning").findFirst().get()
         then:
-            getQuery(deleteReturningCustomMethod) == 'DELETE  FROM "book"  WHERE ("author_id" = ?) RETURNING "id","author_id","genre_id","title","total_pages","publisher_id","last_updated"'
+            getQuery(deleteReturningCustomMethod) == 'DELETE  FROM "book"  WHERE ("author_id" = ?) RETURNING "id","title","total_pages","last_updated"'
             getParameterPropertyPaths(deleteReturningCustomMethod) == ["author.id"] as String[]
             getDataResultType(deleteReturningCustomMethod) == "io.micronaut.data.tck.entities.Book"
             getDataInterceptor(deleteReturningCustomMethod) == "io.micronaut.data.intercept.DeleteReturningManyInterceptor"
@@ -364,7 +364,7 @@ interface BookRepository extends GenericRepository<Book, Long> {
         when:
             def deleteReturningMethod = repository.findPossibleMethods("deleteReturning").findFirst().get()
         then:
-            getQuery(deleteReturningMethod) == 'DELETE  FROM "book"  WHERE ("id" IN (?)) RETURNING "id","author_id","genre_id","title","total_pages","publisher_id","last_updated"'
+            getQuery(deleteReturningMethod) == 'DELETE  FROM "book"  WHERE ("id" IN (?)) RETURNING "id","title","total_pages","last_updated"'
             getParameterPropertyPaths(deleteReturningMethod) == ["id"] as String[]
             getDataResultType(deleteReturningMethod) == "io.micronaut.data.tck.entities.Book"
             getDataInterceptor(deleteReturningMethod) == "io.micronaut.data.intercept.DeleteAllReturningInterceptor"
