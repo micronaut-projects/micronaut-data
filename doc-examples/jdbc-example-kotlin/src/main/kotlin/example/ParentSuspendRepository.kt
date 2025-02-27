@@ -3,8 +3,11 @@ package example
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.model.Page
+import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.GenericRepository
+import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.data.repository.jpa.kotlin.CoroutineJpaSpecificationExecutor
 import io.micronaut.data.runtime.criteria.get
 import io.micronaut.data.runtime.criteria.joinMany
@@ -19,6 +22,9 @@ interface ParentSuspendRepository : GenericRepository<Parent, Int>, CoroutineJpa
 
     @Join(value = "children", type = Join.Type.FETCH)
     suspend fun findById(id: Int): Optional<Parent>
+
+    @Join(value = "children", type = Join.Type.FETCH)
+    override suspend fun findAll(spec: QuerySpecification<Parent>?, pageable: Pageable): Page<Parent>
 
     @Transactional(Transactional.TxType.MANDATORY)
     suspend fun queryById(id: Int): Optional<Parent>
