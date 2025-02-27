@@ -12,6 +12,10 @@ import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
+import io.micronaut.data.tck.entities.Document
+import io.micronaut.data.tck.entities.DocumentType
+import io.micronaut.data.tck.repositories.DocumentRepository
+import io.micronaut.data.tck.repositories.DocumentTypeRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -49,6 +53,14 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
     @Shared
     @Inject
     MyOtherRepository myOtherRepository
+
+    @Shared
+    @Inject
+    DocumentTypeRepository documentTypeRepository
+
+    @Shared
+    @Inject
+    DocumentRepository documentRepository
 
     void 'test many-to-one hierarchy'() {
         given:
@@ -142,6 +154,25 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
         optFound.present
         optFound.get().other
         optFound.get().other.lid == myOther.lid
+    }
+
+    void "test many to one join nullable"() {
+        when:
+        def documentType = documentTypeRepository.save(new DocumentType(null, "PDF", false));
+        def document = documentRepository.save(new Document(null, "Opinion.pdf", documentType))
+        then:
+        def optionalDocument = documentRepository.findById(document.id())
+        optionalDocument.present
+        optionalDocument.get().type()
+        when:
+        documentTypeRepository.updateDeletedById(documentType.id(), true)
+        optionalDocument = documentRepository.findById(document.id())
+        then:
+        optionalDocument.present
+        !optionalDocument.get().type()
+        cleanup:
+        documentRepository.deleteAll()
+        documentTypeRepository.deleteAll()
     }
 }
 
@@ -291,9 +322,12 @@ class User {
 @JdbcRepository(dialect = Dialect.H2)
 interface UserGroupMembershipRepository extends CrudRepository<UserGroupMembership, Long> {
 
+    @Join(value = "userGroup.area", type = Join.Type.FETCH)
+    @Join(value = "user", type = Join.Type.FETCH)
     List<UserGroupMembership> findAllByUserLogin(String login)
 
     @Join(value = "userGroup.area", type = Join.Type.FETCH)
+    @Join(value = "user", type = Join.Type.FETCH)
     List<UserGroupMembership> findAllByUserLoginAndUserGroup_AreaId(String login, Long uid)
 }
 
@@ -327,6 +361,10 @@ class MyOther {
 }
 @JdbcRepository(dialect = H2)
 interface MyEntityRepository extends CrudRepository<MyEntity, Long> {
+
+    @Override
+    @Join(value = "other", type = Join.Type.LEFT_FETCH)
+    Optional<MyEntity> findById(Long aLong);
 }
 @JdbcRepository(dialect = H2)
 interface MyOtherRepository extends CrudRepository<MyOther, String> {

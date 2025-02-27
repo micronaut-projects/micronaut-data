@@ -167,7 +167,7 @@ abstract class AbstractJSONSpec extends Specification {
         then:
         itemById.name == 'item 1'
         itemById.data == [count: "1"]
-        itemById.sale.id == sale.id
+        !itemById.sale
 
         cleanup:
         cleanup()

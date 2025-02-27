@@ -369,8 +369,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository(value = "secondary")
-@JdbcRepository(dialect= Dialect.MYSQL)
-@io.micronaut.context.annotation.Executable
+@JdbcRepository(dialect = Dialect.H2)
 interface FoodRepository extends GenericRepository<Food, UUID> {
 
     @Join("meal")
@@ -385,8 +384,8 @@ interface FoodRepository extends GenericRepository<Food, UUID> {
         def queryFind = getQuery(repository.getRequiredMethod("findById", UUID))
 
         expect:
-        query == 'SELECT food_.`fid`,food_.`key`,food_.`carbohydrates`,food_.`portion_grams`,food_.`created_on`,food_.`updated_on`,food_.`fk_meal_id`,food_.`fk_alt_meal`,food_.`loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name` AS ln,food_.`fresh`,food_meal_.`current_blood_glucose` AS meal_current_blood_glucose,food_meal_.`created_on` AS meal_created_on,food_meal_.`updated_on` AS meal_updated_on,food_meal_.`actual` AS meal_actual FROM `food` food_ INNER JOIN `meal` food_meal_ ON food_.`fk_meal_id`=food_meal_.`mid` AND food_meal_.actual = \'Y\' WHERE (food_.`fid` = ? AND food_.fresh = \'Y\')'
-        queryFind == 'SELECT food_.`fid`,food_.`key`,food_.`carbohydrates`,food_.`portion_grams`,food_.`created_on`,food_.`updated_on`,food_.`fk_meal_id`,food_.`fk_alt_meal`,food_.`loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name` AS ln,food_.`fresh` FROM `food` food_ WHERE (food_.`fid` = ? AND food_.fresh = \'Y\')'
+        query == 'SELECT food_.`fid`,food_.`key`,food_.`carbohydrates`,food_.`portion_grams`,food_.`created_on`,food_.`updated_on`,food_.`loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name` AS ln,food_.`fresh`,food_meal_.`mid` AS meal_mid,food_meal_.`current_blood_glucose` AS meal_current_blood_glucose,food_meal_.`created_on` AS meal_created_on,food_meal_.`updated_on` AS meal_updated_on,food_meal_.`actual` AS meal_actual FROM `food` food_ INNER JOIN `meal` food_meal_ ON food_.`fk_meal_id`=food_meal_.`mid` AND food_meal_.actual = \'Y\' WHERE (food_.`fid` = ? AND food_.fresh = \'Y\')'
+        queryFind == 'SELECT food_.`fid`,food_.`key`,food_.`carbohydrates`,food_.`portion_grams`,food_.`created_on`,food_.`updated_on`,food_.`loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name` AS ln,food_.`fresh` FROM `food` food_ WHERE (food_.`fid` = ? AND food_.fresh = \'Y\')'
     }
 
     void "test query with an entity with custom id and id field"() {
@@ -1128,8 +1127,34 @@ class CustomBook {
         def findAllQuery = getQuery(findAllMethod)
 
         expect:
-        findAllQuery == 'SELECT custom_book_.`id`,custom_book_.`title`,custom_book_.`pages`,custom_book_.`author_id2`,custom_book_author_.`id2` AS author_id2,custom_book_author_.`name` AS author_name FROM `custom_book` custom_book_ INNER JOIN `custom_author` custom_book_author_ ON custom_book_.`author_id2`=custom_book_author_.`id2`'
+        findAllQuery == 'SELECT custom_book_.`id`,custom_book_.`title`,custom_book_.`pages`,custom_book_author_.`id` AS author_id,custom_book_author_.`id2` AS author_id2,custom_book_author_.`name` AS author_name FROM `custom_book` custom_book_ INNER JOIN `custom_author` custom_book_author_ ON custom_book_.`author_id2`=custom_book_author_.`id2`'
         getResultDataType(findAllMethod) == DataType.ENTITY
+    }
+
+    void "test many-to-one foreign key join"() {
+        given:
+        def repository = buildRepository('test.DocumentRepository', """
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Document;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface DocumentRepository extends GenericRepository<Document, Long> {
+    @Join(value = "type", type = Join.Type.LEFT_FETCH)
+    Optional<Document> findById(UUID id);
+}
+""")
+
+        def findByIdMethod = repository.getRequiredMethod("findById", UUID)
+        def findByIdQuery = getQuery(findByIdMethod)
+
+        expect:
+        findByIdQuery == 'SELECT document_.`id`,document_.`name`,document_type_.`id` AS type_id,document_type_.`name` AS type_name,document_type_.`deleted` AS type_deleted' +
+                ' FROM `document` document_ LEFT JOIN `document_type` document_type_ ON document_.`type_id`=document_type_.`id` AND document_type_.deleted = false WHERE (document_.`id` = ?)'
+        getResultDataType(findByIdMethod) == DataType.ENTITY
     }
 
     void "test DTO with association and join"() {
@@ -1159,6 +1184,31 @@ interface AuthorRepository extends GenericRepository<Author, Long> {
         expect:
             queryAllQuery == 'SELECT author_.`id`,author_books_.`id` AS books_id,author_books_.`author_id` AS books_author_id,author_books_.`genre_id` AS books_genre_id,author_books_.`title` AS books_title,author_books_.`total_pages` AS books_total_pages,author_books_.`publisher_id` AS books_publisher_id,author_books_.`last_updated` AS books_last_updated FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id`'
             getResultDataType(queryAllMethod) == DataType.OBJECT
+    }
+
+    void "test embedded id with many-to-one counts"() {
+        given:
+        def repository = buildRepository('test.UserRoleRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.jdbc.entities.UserRole;
+import io.micronaut.data.tck.jdbc.entities.UserRoleId;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
+
+    long count();
+
+    long countDistinct();
+}
+
+""")
+        def countQuery = getQuery(repository.getRequiredMethod("count"))
+        def countDistinctQuery = getQuery(repository.getRequiredMethod("countDistinct"))
+        expect:
+        countQuery == 'SELECT COUNT(*) FROM `user_role_composite` user_role_'
+        countDistinctQuery == 'SELECT COUNT(DISTINCT( CONCAT(user_role_.`id_user_id`,user_role_.`id_role_id`))) FROM `user_role_composite` user_role_'
     }
 
     void "test many-to-one with properties starting with the same prefix"() {

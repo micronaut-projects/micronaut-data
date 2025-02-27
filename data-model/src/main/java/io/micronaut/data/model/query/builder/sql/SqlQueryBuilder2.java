@@ -1666,7 +1666,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
 
                 query.append(COMMA);
 
-                boolean includeIdentity = association.isForeignKey();
+                boolean includeIdentity = association.isForeignKey() || association.isSingleEnded();
                 // in the case of a foreign key association the ID is not in the table,
                 // so we need to retrieve it
                 PersistentEntityUtils.traversePersistentProperties(associatedEntity, includeIdentity, true, (propertyAssociations, prop) -> {
@@ -1710,7 +1710,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
             boolean escape = shouldEscape(entity);
             NamingStrategy namingStrategy = getNamingStrategy(entity);
             int length = query.length();
-            PersistentEntityUtils.traversePersistentProperties(entity, (associations, property)
+            PersistentEntityUtils.traversePersistentProperties(entity, Association::isSingleEnded, (associations, property)
                 -> appendProperty(query, associations, property, namingStrategy, alias, escape));
             int newLength = query.length();
             if (newLength == length) {

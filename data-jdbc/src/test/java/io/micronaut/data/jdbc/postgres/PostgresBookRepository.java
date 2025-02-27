@@ -18,6 +18,7 @@ package io.micronaut.data.jdbc.postgres;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Expandable;
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.annotation.sql.Procedure;
@@ -129,4 +130,8 @@ public abstract class PostgresBookRepository extends BookRepository {
         DELETE FROM "book" WHERE "id" = :id RETURNING *
         """)
     public abstract Book customDeleteOne(Long id);
+
+    @Override
+    @Join(value = "author", type = Join.Type.LEFT_FETCH)
+    public abstract List<Book> findAll();
 }

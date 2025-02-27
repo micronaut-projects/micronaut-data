@@ -501,30 +501,33 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                     args[i] = parent;
                                 } else {
                                     MappingContext<K> joinCtx = ctx.join(fetchJoinPaths, entityAssociation);
-                                    Object resolvedId = null;
-                                    if (!entityAssociation.isForeignKey()) {
-                                        resolvedId = readEntityId(rs, ctx.path(entityAssociation));
-                                    }
-                                    if (kind.isSingleEnded()) {
-                                        if (joinCtx.jp == null || resolvedId == null && !entityAssociation.isForeignKey()) {
-                                            args[i] = buildIdOnlyEntity(rs, ctx.path(entityAssociation), resolvedId);
-                                        } else {
-                                            args[i] = readEntity(rs, joinCtx, null, resolvedId);
+                                    // if join path is null means entity is not joined and we should not try to read it
+                                    if (joinCtx.jp != null) {
+                                        Object resolvedId = null;
+                                        if (!entityAssociation.isForeignKey() && !entityAssociation.isSingleEnded()) {
+                                            resolvedId = readEntityId(rs, ctx.path(entityAssociation));
                                         }
-                                    } else if (entityAssociation.getProperty().isReadOnly()) {
-                                        // For constructor-only properties (records) always set empty collection and replace later
-                                        args[i] = resultReader.convertRequired(new ArrayList<>(0), entityAssociation.getProperty().getType());
-                                        if (joinCtx.jp != null) {
-                                            MappingContext<K> associatedCtx = joinCtx.copy();
-                                            if (resolvedId == null) {
-                                                resolvedId = readEntityId(rs, associatedCtx);
+                                        if (kind.isSingleEnded()) {
+                                            if (joinCtx.jp == null || resolvedId == null && !entityAssociation.isForeignKey() && !entityAssociation.isSingleEnded()) {
+                                                args[i] = buildIdOnlyEntity(rs, ctx.path(entityAssociation), resolvedId);
+                                            } else {
+                                                args[i] = readEntity(rs, joinCtx, null, resolvedId);
                                             }
-                                            Object associatedEntity = null;
-                                            if (resolvedId != null || entityAssociation.isForeignKey()) {
-                                                associatedEntity = readEntity(rs, associatedCtx, null, resolvedId);
-                                            }
-                                            if (associatedEntity != null) {
-                                                joinCtx.associate(associatedCtx, resolvedId, associatedEntity);
+                                        } else if (entityAssociation.getProperty().isReadOnly()) {
+                                            // For constructor-only properties (records) always set empty collection and replace later
+                                            args[i] = resultReader.convertRequired(new ArrayList<>(0), entityAssociation.getProperty().getType());
+                                            if (joinCtx.jp != null) {
+                                                MappingContext<K> associatedCtx = joinCtx.copy();
+                                                if (resolvedId == null) {
+                                                    resolvedId = readEntityId(rs, associatedCtx);
+                                                }
+                                                Object associatedEntity = null;
+                                                if (resolvedId != null || entityAssociation.isForeignKey()) {
+                                                    associatedEntity = readEntity(rs, associatedCtx, null, resolvedId);
+                                                }
+                                                if (associatedEntity != null) {
+                                                    joinCtx.associate(associatedCtx, resolvedId, associatedEntity);
+                                                }
                                             }
                                         }
                                     }
@@ -602,7 +605,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                         } else {
                             MappingContext<K> joinCtx = ctx.join(fetchJoinPaths, entityAssociation);
                             Object associatedId = null;
-                            if (!entityAssociation.isForeignKey()) {
+                            if (!entityAssociation.isForeignKey() && !entityAssociation.isSingleEnded()) {
                                 associatedId = readEntityId(rs, ctx.path(entityAssociation));
                                 if (associatedId == null) {
                                     continue;
@@ -625,7 +628,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                         joinCtx.manyAssociations = new LinkedHashMap<>();
                                     }
                                 }
-                            } else if (entityAssociation.getKind().isSingleEnded() && !entityAssociation.isForeignKey()) {
+                            } else if (entityAssociation.getKind().isSingleEnded() && !entityAssociation.isForeignKey() && !entityAssociation.isSingleEnded()) {
                                 Object value = buildIdOnlyEntity(rs, ctx.path(entityAssociation), associatedId);
                                 entity = setProperty(property, entity, value);
                             }
