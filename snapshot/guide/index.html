@@ -13607,7 +13607,7 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import org.bson.types.ObjectId;
 
-@MappedEntity
+@MappedEntity("${mapping.custom.manufacturer}")
 public class Manufacturer {
     @Id
     @GeneratedValue
@@ -13817,7 +13817,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 import org.bson.types.ObjectId;
 
-@MappedEntity
+@MappedEntity("${mapping.custom.product}")
 public class Product {
 
     @Id
@@ -13944,7 +13944,7 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import org.bson.types.ObjectId;
 
-@MappedEntity
+@MappedEntity("${mapping.custom.manufacturer}")
 public class Manufacturer {
     @Id
     @GeneratedValue
