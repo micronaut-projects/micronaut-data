@@ -7,7 +7,7 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import org.bson.types.ObjectId;
 
-@MappedEntity
+@MappedEntity("${mapping.custom.manufacturer}")
 public class Manufacturer {
     @Id
     @GeneratedValue

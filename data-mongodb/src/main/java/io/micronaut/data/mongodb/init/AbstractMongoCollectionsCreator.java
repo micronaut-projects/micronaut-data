@@ -31,6 +31,7 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
+import io.micronaut.data.mongodb.operations.MongoCollectionNameProvider;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,10 +81,12 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
      * @param runtimeEntityRegistry      The entity registry
      * @param mongoConfigurations        The configuration
      * @param databaseOperationsProvider The database provider
+     * @param mongoCollectionNameProvider The Mongo collection name provider
      */
     protected void initialize(RuntimeEntityRegistry runtimeEntityRegistry,
                               List<AbstractMongoConfiguration> mongoConfigurations,
-                              DatabaseOperationsProvider<Dtbs> databaseOperationsProvider) {
+                              DatabaseOperationsProvider<Dtbs> databaseOperationsProvider,
+                              MongoCollectionNameProvider mongoCollectionNameProvider) {
 
         for (AbstractMongoConfiguration mongoConfiguration : mongoConfigurations) {
             // TODO: different initializer per conf
@@ -99,7 +102,7 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
             for (PersistentEntity entity : entities) {
                 Dtbs database = databaseOperations.find(entity);
                 Set<String> collections = databaseOperations.listCollectionNames(database);
-                String persistedName = entity.getPersistedName();
+                String persistedName = mongoCollectionNameProvider.provide(entity);
                 if (collections.add(persistedName)) {
                     if (LOG.isInfoEnabled()) {
                         LOG.info("Creating collection: {} in database: {}", persistedName, databaseOperations.getDatabaseName(database));

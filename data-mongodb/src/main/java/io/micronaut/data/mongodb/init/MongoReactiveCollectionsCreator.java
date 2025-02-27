@@ -27,6 +27,7 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.mongodb.conf.MongoDataConfiguration;
 import io.micronaut.data.mongodb.conf.RequiresReactiveMongo;
+import io.micronaut.data.mongodb.operations.MongoCollectionNameProvider;
 import io.micronaut.data.mongodb.operations.MongoDatabaseNameProvider;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -53,7 +54,8 @@ public final class MongoReactiveCollectionsCreator extends AbstractMongoCollecti
     @PostConstruct
     void initialize(BeanLocator beanLocator,
                     RuntimeEntityRegistry runtimeEntityRegistry,
-                    List<AbstractMongoConfiguration> mongoConfigurations) {
+                    List<AbstractMongoConfiguration> mongoConfigurations,
+                    MongoCollectionNameProvider mongoCollectionNameProvider) {
 
         super.initialize(runtimeEntityRegistry, mongoConfigurations, mongoConfiguration -> {
             MongoClient mongoClient = getMongoFactory(MongoClient.class, beanLocator, mongoConfiguration);
@@ -81,7 +83,7 @@ public final class MongoReactiveCollectionsCreator extends AbstractMongoCollecti
                     Mono.from(database.createCollection(collection)).block();
                 }
             };
-        });
+        }, mongoCollectionNameProvider);
     }
 
 }
