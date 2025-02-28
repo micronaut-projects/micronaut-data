@@ -1,6 +1,5 @@
 package io.micronaut.data.jdbc.h2.remap;
 
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
@@ -20,7 +19,6 @@ record Course(
     String name,
 
     @Relation(value = MANY_TO_MANY, mappedBy = "courses", cascade = ALL)
-    @Nullable
     List<Student> students
 ) {
 }

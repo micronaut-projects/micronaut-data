@@ -15,7 +15,15 @@
  */
 package io.micronaut.data.tck.repositories;
 
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.SaleItem;
 
-public interface SaleItemRepository extends CrudRepository<SaleItem, Long> {}
+import java.util.Optional;
+
+public interface SaleItemRepository extends CrudRepository<SaleItem, Long> {
+
+    @Override
+    @Join(value = "sale", type = Join.Type.LEFT)
+    Optional<SaleItem> findById(Long id);
+}

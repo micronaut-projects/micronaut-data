@@ -55,13 +55,11 @@ public class Food {
 
     @Relation(value = Relation.Kind.MANY_TO_ONE, cascade = Relation.Cascade.ALL)
     @JoinColumn(name = "fk_meal_id", referencedColumnName = "mid")
-   // @MappedProperty("fk_meal_id")
     private Meal meal;
 
     @Relation(value = Relation.Kind.MANY_TO_ONE, cascade = Relation.Cascade.ALL)
     @Nullable
     @JoinColumn(name = "fk_alt_meal", referencedColumnName = "mid")
-   // @MappedProperty("fk_alt_meal")
     private Meal alternativeMeal;
 
     @Nullable
