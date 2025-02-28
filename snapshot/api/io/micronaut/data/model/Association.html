@@ -157,6 +157,11 @@ extends <a href="PersistentProperty.html" title="interface in io.micronaut.data.
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#isForeignKey()" class="member-name-link">isForeignKey</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#isSingleEnded()" class="member-name-link">isSingleEnded</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Determines whether this association is single-ended, meaning it only has one end point.</div>
+</div>
 </div>
 </div>
 </div>
@@ -268,6 +273,19 @@ extends <a href="PersistentProperty.html" title="interface in io.micronaut.data.
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>Whether the association is a foreign key association</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="isSingleEnded()">
+<h3>isSingleEnded</h3>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isSingleEnded</span>()</div>
+<div class="block">Determines whether this association is single-ended, meaning it only has one end point.
+ An association is considered single-ended if its kind is either ONE_TO_ONE or MANY_TO_ONE,
+ but not EMBEDDED.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>True if the association is single-ended, false otherwise.</dd>
 </dl>
 </section>
 </li>
