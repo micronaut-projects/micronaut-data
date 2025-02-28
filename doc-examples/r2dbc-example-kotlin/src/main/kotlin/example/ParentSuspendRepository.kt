@@ -19,7 +19,6 @@ interface ParentSuspendRepository : GenericRepository<Parent, Int> {
     suspend fun update(@NonNull entity: Parent): Parent
 
     @Transactional(Transactional.TxType.MANDATORY)
-    @Join(value = "children", type = Join.Type.LEFT_FETCH)
     suspend fun queryById(id: Int): Optional<Parent>
 
     suspend fun count(): Long
