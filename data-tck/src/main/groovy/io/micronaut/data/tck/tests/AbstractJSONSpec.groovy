@@ -26,7 +26,6 @@ import io.micronaut.data.tck.repositories.JsonEntityRepository
 import io.micronaut.data.tck.repositories.SaleItemRepository
 import io.micronaut.data.tck.repositories.SaleRepository
 import spock.lang.AutoCleanup
-import spock.lang.PendingFeature
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -157,7 +156,6 @@ abstract class AbstractJSONSpec extends Specification {
         cleanup()
     }
 
-    @PendingFeature(reason = "Temporary disable as it is failing")
     void "test read and write json with constructor args"() {
         given:
         def sale = saleRepository.save(new Sale(name: "test 1"))

@@ -24,6 +24,6 @@ import java.util.Optional;
 public interface SaleItemRepository extends CrudRepository<SaleItem, Long> {
 
     @Override
-    @Join(value = "sale", type = Join.Type.LEFT)
+    @Join(value = "sale", type = Join.Type.FETCH)
     Optional<SaleItem> findById(Long id);
 }
