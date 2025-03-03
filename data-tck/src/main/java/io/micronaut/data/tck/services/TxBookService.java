@@ -3,6 +3,7 @@ package io.micronaut.data.tck.services;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.connection.ConnectionOperations;
+import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.annotation.Connectable;
 import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.TransactionDefinition;
@@ -10,6 +11,8 @@ import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.annotation.Transactional;
 import io.micronaut.transaction.support.DefaultTransactionDefinition;
 import jakarta.inject.Singleton;
+
+import java.util.Optional;
 
 @Requires(property = AbstractBookService.BOOK_REPOSITORY_CLASS_PROPERTY)
 @Singleton
@@ -28,16 +31,27 @@ public class TxBookService extends AbstractBookService {
 
     @Connectable
     public void bookAddedInConnectableNestedTransaction() {
-        if (connectionOperations.findConnectionStatus().isEmpty()) {
-            throw new IllegalStateException("No connection status available");
-        }
+        ConnectionStatus<Object> outerConnection = getConnection();
         TransactionDefinition definition = new DefaultTransactionDefinition(TransactionDefinition.Propagation.NESTED);
         TransactionStatus<Object> status = transactionManager.getTransaction(definition);
+        ConnectionStatus<Object> txConnection = getConnection();
+        if (!txConnection.equals(outerConnection)) {
+            throw new IllegalStateException("Connection is not the same as the outer connection");
+        }
         bookRepository.save(newBook("MandatoryBook"));
         transactionManager.commit(status);
-        if (connectionOperations.findConnectionStatus().isEmpty()) {
+        ConnectionStatus<Object> afterTxConnection = getConnection();
+        if (!afterTxConnection.equals(outerConnection)) {
+            throw new IllegalStateException("Connection is not the same as the outer connection");
+        }
+    }
+
+    private ConnectionStatus<Object> getConnection() {
+        Optional<ConnectionStatus<Object>> optionalConnection = connectionOperations.findConnectionStatus();
+        if (optionalConnection.isEmpty()) {
             throw new IllegalStateException("No connection status available");
         }
+        return optionalConnection.get();
     }
 
     @Transactional(name = "MyTx")

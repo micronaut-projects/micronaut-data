@@ -473,6 +473,14 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
                     throw new TransactionUsageException("Existing transaction found for transaction marked with propagation 'never'");
             };
         } else {
+            if (connectionStatus != null) {
+                return switch (definition.getPropagationBehavior()) {
+                    case REQUIRED, REQUIRES_NEW, NESTED -> openNewTransaction(connectionStatus, definition); // Nested propagation applies only for the existing TX
+                    case SUPPORTS, NEVER, NOT_SUPPORTED ->
+                        withNoTransactionStatus(connectionStatus, definition);
+                    case MANDATORY -> throw newMandatoryTx();
+                };
+            }
             return switch (definition.getPropagationBehavior()) {
                 case REQUIRED, REQUIRES_NEW, NESTED -> openNewConnectionAndTransaction(definition); // Nested propagation applies only for the existing TX
                 case SUPPORTS, NEVER, NOT_SUPPORTED ->
@@ -546,6 +554,20 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
             public void afterCompletion(Status status) {
                 scope.close();
                 synchronousConnectionManager.complete(newConnectionStatus);
+            }
+        });
+        begin(transactionStatus);
+        return transactionStatus;
+    }
+
+    @NonNull
+    private T openNewTransaction(ConnectionStatus<C> connectionStatus, TransactionDefinition definition) {
+        T transactionStatus = createNewTransactionStatus(connectionStatus, definition);
+        PropagatedContext.Scope scope = extendCurrentPropagatedContext(transactionStatus).propagate();
+        transactionStatus.registerInvocationSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCompletion(Status status) {
+                scope.close();
             }
         });
         begin(transactionStatus);
