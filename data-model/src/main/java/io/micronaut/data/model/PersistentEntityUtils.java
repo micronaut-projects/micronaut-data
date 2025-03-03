@@ -86,6 +86,16 @@ public final class PersistentEntityUtils {
         traversePersistentProperties(persistentEntity, null, consumer);
     }
 
+    /**
+     * Traverses properties that should be persisted.
+     * This method recursively traverses the properties of a persistent entity,
+     * including embedded entities and associations, and invokes the provided consumer
+     * function on each property.
+     *
+     * @param persistentEntity the persistent entity whose properties will be traversed
+     * @param skipAssociationPredicate an optional predicate to filter out certain associations
+     * @param consumer the function to invoke on every property
+     */
     public static void traversePersistentProperties(PersistentEntity persistentEntity, @Nullable Predicate<Association> skipAssociationPredicate, BiConsumer<List<Association>, PersistentProperty> consumer) {
         for (PersistentProperty identityProperty : persistentEntity.getIdentityProperties()) {
             traversePersistentProperties(Collections.emptyList(), identityProperty, skipAssociationPredicate, consumer);
@@ -150,6 +160,17 @@ public final class PersistentEntityUtils {
         traversePersistentProperties(associations, property, null, consumerProperty);
     }
 
+    /**
+     * Traverses properties that should be persisted.
+     * This method recursively traverses the properties of a persistent entity,
+     * including embedded entities and associations, and invokes the provided consumer
+     * function on each property.
+     *
+     * @param associations the current list of associations being traversed
+     * @param property the current property being processed
+     * @param skipAssociationPredicate an optional predicate to filter out certain associations
+     * @param consumerProperty the function to invoke on every property
+     */
     public static void traversePersistentProperties(List<Association> associations,
                                                     PersistentProperty property,
                                                     @Nullable Predicate<Association> skipAssociationPredicate,
@@ -181,6 +202,18 @@ public final class PersistentEntityUtils {
         traversePersistentProperties(associations, property, traverseEmbedded, null, consumerProperty);
     }
 
+    /**
+     * Traverses properties that should be persisted.
+     * This method recursively traverses the properties of a persistent entity,
+     * including embedded entities and associations, and invokes the provided consumer
+     * function on each property.
+     *
+     * @param associations the current list of associations being traversed
+     * @param property the current property being processed
+     * @param traverseEmbedded whether to traverse embedded entities
+     * @param skipAssociationPredicate an optional predicate to filter out certain associations
+     * @param consumerProperty the function to invoke on every property
+     */
     public static void traversePersistentProperties(List<Association> associations,
                                                     PersistentProperty property,
                                                     boolean traverseEmbedded,
