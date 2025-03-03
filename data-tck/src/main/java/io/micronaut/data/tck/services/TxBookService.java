@@ -2,10 +2,13 @@ package io.micronaut.data.tck.services;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.data.connection.ConnectionOperations;
+import io.micronaut.data.connection.annotation.Connectable;
 import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.annotation.Transactional;
+import io.micronaut.transaction.support.DefaultTransactionDefinition;
 import jakarta.inject.Singleton;
 
 @Requires(property = AbstractBookService.BOOK_REPOSITORY_CLASS_PROPERTY)
@@ -13,11 +16,28 @@ import jakarta.inject.Singleton;
 public class TxBookService extends AbstractBookService {
 
     private final SynchronousTransactionManager<Object> transactionManager;
+    private final ConnectionOperations<Object> connectionOperations;
 
     public TxBookService(ApplicationContext beanContext,
-                         SynchronousTransactionManager<Object> transactionManager) {
+                         SynchronousTransactionManager<Object> transactionManager,
+                         ConnectionOperations<Object> connectionOperations) {
         super(beanContext);
         this.transactionManager = transactionManager;
+        this.connectionOperations = connectionOperations;
+    }
+
+    @Connectable
+    public void bookAddedInConnectableNestedTransaction() {
+        if (connectionOperations.findConnectionStatus().isEmpty()) {
+            throw new IllegalStateException("No connection status available");
+        }
+        TransactionDefinition definition = new DefaultTransactionDefinition(TransactionDefinition.Propagation.NESTED);
+        TransactionStatus<Object> status = transactionManager.getTransaction(definition);
+        bookRepository.save(newBook("MandatoryBook"));
+        transactionManager.commit(status);
+        if (connectionOperations.findConnectionStatus().isEmpty()) {
+            throw new IllegalStateException("No connection status available");
+        }
     }
 
     @Transactional(name = "MyTx")

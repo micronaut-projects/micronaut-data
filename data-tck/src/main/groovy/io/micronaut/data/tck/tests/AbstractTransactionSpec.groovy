@@ -67,6 +67,13 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
         return false
     }
 
+    void "connectable with nested transaction"() {
+        when:
+            bookService.bookAddedInConnectableNestedTransaction()
+        then:
+            bookService.countBooksTransactional() == 1
+    }
+
     void "custom name transaction"() {
         when:
             bookService.bookAddedCustomNamedTransaction(new Runnable() {
@@ -78,7 +85,7 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
                 }
             })
         then:
-            assert bookService.countBooksTransactional() == 1
+            bookService.countBooksTransactional() == 1
     }
 
     void "test book added in read only transaction throws error"() {
