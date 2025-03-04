@@ -28,6 +28,7 @@ import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.runtime.convert.DataConversionService;
+import io.micronaut.data.runtime.support.NullValue;
 import io.micronaut.inject.InjectionPoint;
 import jakarta.inject.Inject;
 
@@ -96,7 +97,13 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
         completionStage.whenComplete((value, throwable) -> {
             try (PropagatedContext.Scope ignore = propagatedContext.propagate()) {
                 if (throwable == null) {
-                    completableFuture.complete(value);
+                    Class<Object> target = context.getReturnType().asArgument().getType();
+                    if (value == null) {
+                        value = new NullValue();
+                    }
+                    completableFuture.complete(
+                        conversionService.convert(value, target).orElse(value)
+                    );
                 } else {
                     Throwable finalThrowable = throwable;
                     if (finalThrowable instanceof CompletionException) {
