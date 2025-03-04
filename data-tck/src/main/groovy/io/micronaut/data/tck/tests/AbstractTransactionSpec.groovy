@@ -1,6 +1,7 @@
 package io.micronaut.data.tck.tests
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.data.connection.ConnectionOperations
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.services.TxBookService
 import io.micronaut.data.tck.services.TxEventsService
@@ -29,10 +30,15 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
 
     protected abstract TransactionOperations getTransactionOperations();
 
+    protected abstract ConnectionOperations getConnectionOperations();
+
     protected abstract Runnable getNoTxCheck();
 
     TxBookService getBookService() {
-        return context.getBean(TxBookService)
+        def service = context.getBean(TxBookService)
+        service.transactionManager = getTransactionOperations()
+        service.connectionOperations = getConnectionOperations()
+        return service
     }
 
     void cleanup() {

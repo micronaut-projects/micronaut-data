@@ -15,9 +15,11 @@
  */
 package io.micronaut.data.spring.hibernate
 
+import io.micronaut.data.connection.ConnectionOperations
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.spring.hibernate.micronaut.HibernateBookRepository
 import io.micronaut.data.spring.hibernate.micronaut.ReadOnlyTest
+import io.micronaut.data.spring.jpa.hibernate.SpringHibernateConnectionOperations
 import io.micronaut.data.spring.jpa.hibernate.SpringHibernateTransactionOperations
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.tests.AbstractTransactionSpec
@@ -53,6 +55,11 @@ class SpringHibernateTransactionSpec extends AbstractTransactionSpec implements 
     @Override
     protected SpringHibernateTransactionOperations getTransactionOperations() {
         return context.getBean(SpringHibernateTransactionOperations)
+    }
+
+    @Override
+    protected ConnectionOperations getConnectionOperations() {
+        return context.getBean(SpringHibernateConnectionOperations)
     }
 
     @Override
