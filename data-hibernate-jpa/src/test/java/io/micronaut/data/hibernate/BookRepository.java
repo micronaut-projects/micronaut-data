@@ -28,6 +28,7 @@ import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.tck.entities.Author;
 import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.BookDto;
 import io.micronaut.data.tck.repositories.AuthorRepository;
 
 import jakarta.transaction.Transactional;
@@ -125,4 +126,6 @@ public abstract class BookRepository extends io.micronaut.data.tck.repositories.
 
     @Query(nativeQuery = true, value = "select * from book limit 1")
     public abstract Book findFirstBook();
+
+    public abstract Page<BookDto> findByTotalPagesLessThan(int totalPages, Pageable pageable);
 }

@@ -264,15 +264,6 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
     protected abstract void setOffset(P query, int offset);
 
     /**
-     * Sets the order.
-     *
-     * @param query  The query
-     * @param orders The orders
-     * @since 4.10
-     */
-    protected abstract void setOrder(P query, List<org.hibernate.query.Order<?>> orders);
-
-    /**
      * Gets an entity graph.
      *
      * @param session    The session
@@ -358,6 +349,14 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
                         preparedQuery.isNative()).getQuery();
                 }
                 pageable = pageable.withoutSort();
+            } else {
+                if (pageable != Pageable.UNPAGED) {
+                    Sort sort = pageable.getSort();
+                    if (sort.isSorted()) {
+                        queryStr = queryStr + QUERY_BUILDER.buildOrderBy(queryStr, this.getEntity(preparedQuery.getRootEntity()), AnnotationMetadata.EMPTY_METADATA,
+                            sort, preparedQuery.isNative()).getQuery();
+                    }
+                }
             }
         }
         collectResults(session, queryStr, preparedQuery, pageable, collector);
@@ -628,19 +627,6 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
         long offset = pageable.getOffset();
         if (offset > 0) {
             setOffset(q, (int) offset);
-        }
-        Sort sort = pageable.getSort();
-        if (sort.isSorted()) {
-            List<Sort.Order> orderBy = sort.getOrderBy();
-            List<org.hibernate.query.Order<?>> orders = new ArrayList<>(orderBy.size());
-            for (Sort.Order order : orderBy) {
-                if (order.isAscending()) {
-                    orders.add(org.hibernate.query.Order.asc(entityClass, order.getProperty()));
-                } else {
-                    orders.add(org.hibernate.query.Order.desc(entityClass, order.getProperty()));
-                }
-            }
-            setOrder(q, orders);
         }
     }
 
