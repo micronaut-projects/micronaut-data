@@ -1026,7 +1026,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
             for (PersistentProperty prop : persistentProperties) {
                 traversePersistentProperties(prop, (associations, property) -> {
-                    if (prop.isGenerated()) {
+                    boolean generated = property.isGenerated();
+                    if (generated && prop instanceof Association) {
+                        generated = prop.isEmbedded();
+                    }
+                    if (generated) {
                         String columnName = getMappedName(namingStrategy, associations, property);
                         if (escape) {
                             columnName = quote(columnName);
@@ -1035,7 +1039,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         return;
                     }
 
-                    addWriteExpression(values, prop);
+                    addWriteExpression(values, property);
 
                     String key = String.valueOf(values.size());
                     String[] path = asStringPath(associations, property);
