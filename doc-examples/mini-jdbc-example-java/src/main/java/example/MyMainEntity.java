@@ -14,15 +14,18 @@ public class MyMainEntity {
     @GeneratedValue
     private String example;
 
+    private String value;
+
     @Relation(value = Relation.Kind.EMBEDDED)
     private MyPart part = new MyPart();
 
     public MyMainEntity() {
     }
 
-    public MyMainEntity(Long id, String example, MyPart part) {
+    public MyMainEntity(Long id, String example, String value, MyPart part) {
         this.id = id;
         this.example = example;
+        this.value = value;
         this.part = part;
     }
 
@@ -40,6 +43,14 @@ public class MyMainEntity {
 
     public void setExample(String example) {
         this.example = example;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
     }
 
     public MyPart getPart() {

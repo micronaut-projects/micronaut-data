@@ -45,6 +45,7 @@ import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.naming.NamingStrategy;
@@ -1026,10 +1027,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
             for (PersistentProperty prop : persistentProperties) {
                 traversePersistentProperties(prop, (associations, property) -> {
-                    boolean generated = property.isGenerated();
-                    if (generated && prop instanceof Association) {
-                        generated = prop.isEmbedded();
-                    }
+                    boolean generated = PersistentEntityUtils.isPropertyGenerated(entity, prop, property);
                     if (generated) {
                         String columnName = getMappedName(namingStrategy, associations, property);
                         if (escape) {

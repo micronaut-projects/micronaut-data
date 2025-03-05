@@ -51,19 +51,20 @@ class EmbeddedAssociationJoinSpec extends Specification implements H2TestPropert
     void setup() {
         def dataSource = DelegatingDataSource.unwrapDataSource(applicationContext.getBean(DataSource))
         def connection = dataSource.connection
-        connection.prepareStatement("DROP TABLE IF EXISTS my_main_entity").execute()
+        connection.prepareStatement("DROP TABLE IF EXISTS `my_main_entity`").execute()
         connection.prepareStatement("""
-                                        CREATE TABLE my_main_entity (
-                                            id bigint primary key not null,
-                                            example text,
-                                            part_text text);
+                                        CREATE TABLE `my_main_entity` (
+                                            `id` bigint primary key not null,
+                                            `value` text,
+                                            `example` text,
+                                            `part_text` text);
                                          """).execute()
     }
 
     void cleanup() {
         def dataSource = DelegatingDataSource.unwrapDataSource(applicationContext.getBean(DataSource))
         def connection = dataSource.connection
-        connection.prepareStatement("DROP TABLE IF EXISTS my_main_entity")
+        connection.prepareStatement("DROP TABLE IF EXISTS `my_main_entity`")
     }
 
     void 'test one-to-one update'() {
@@ -151,29 +152,33 @@ class EmbeddedAssociationJoinSpec extends Specification implements H2TestPropert
 
     void 'test save/update embedded with @GeneratedValue'() {
         when:"should not update field 'example'"
-        myMainEntityRepository.save(new MyMainEntity(id: 1L, example: "Test"))
+        myMainEntityRepository.save(new MyMainEntity(id: 1L, example: "Test", value: "Val"))
         def persistedEntity = myMainEntityRepository.findById(1L).orElse(null)
         then:
         persistedEntity
+        persistedEntity.value == "Val"
         !persistedEntity.example
         when:
-        myMainEntityRepository.update(new MyMainEntity(id: 1L, example: "Changed"))
+        myMainEntityRepository.update(new MyMainEntity(id: 1L, example: "Changed", value: "Val-Changed"))
         def updatedEntity = myMainEntityRepository.findById(1L).orElse(null)
         then:
         updatedEntity
+        updatedEntity.value == "Val-Changed"
         !updatedEntity.example
 
         when:"should not update field 'part_text'"
-        myMainEntityRepository.save(new MyMainEntity(id: 2L, part: new MyPart(text: "Test")))
+        myMainEntityRepository.save(new MyMainEntity(id: 2L, value: "Val1", part: new MyPart(text: "Test")))
         persistedEntity = myMainEntityRepository.findById(2L).orElse(null)
         then:
         persistedEntity
+        persistedEntity.value == "Val1"
         !persistedEntity.part.text
         when:
-        myMainEntityRepository.update(new MyMainEntity(id: 2L, part: new MyPart(text: "Changed")))
+        myMainEntityRepository.update(new MyMainEntity(id: 2L, value: "Val2", part: new MyPart(text: "Changed")))
         updatedEntity = myMainEntityRepository.findById(2L).orElse(null)
         then:
         updatedEntity
+        updatedEntity.value == "Val2"
         !updatedEntity.part.text
 
         cleanup:
@@ -284,6 +289,8 @@ class MyMainEntity {
 
     @GeneratedValue
     String example
+
+    String value
 
     @Relation(value = Relation.Kind.EMBEDDED)
     MyPart part = new MyPart()
