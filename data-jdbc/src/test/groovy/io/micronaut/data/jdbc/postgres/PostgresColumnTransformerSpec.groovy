@@ -88,7 +88,7 @@ class Rider {
 
     String name
 
-    @ColumnTransformer(read = "to_char(@.finish_time, 'PTHH24HMIM')")
+    @ColumnTransformer(read = "to_char(finish_time, 'PTHH24HMIM')")
     Duration finishTime
 }
 
