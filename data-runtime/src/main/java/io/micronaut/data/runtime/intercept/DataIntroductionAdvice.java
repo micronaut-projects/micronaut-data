@@ -99,11 +99,11 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
                 if (throwable == null) {
                     Class<Object> target = context.getReturnType().asArgument().getType();
                     if (value == null) {
-                        value = new NullValue();
+                        value = conversionService.convert(new NullValue(), target).orElse(value);
+                    } else {
+                        value = conversionService.convert(value, target).orElse(value);
                     }
-                    completableFuture.complete(
-                        conversionService.convert(value, target).orElse(value)
-                    );
+                    completableFuture.complete(value);
                 } else {
                     Throwable finalThrowable = throwable;
                     if (finalThrowable instanceof CompletionException) {
