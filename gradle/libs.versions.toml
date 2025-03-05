@@ -7,7 +7,7 @@ micronaut-testresources = "2.7.3"
 
 micronaut-azure = "5.8.0"
 micronaut-reactor = "3.6.0"
-micronaut-rxjava2 = "2.6.0"
+micronaut-rxjava2 = "2.7.0"
 micronaut-r2dbc = "5.7.0"
 micronaut-sql = "6.0.2"
 micronaut-serde = "2.13.1"
