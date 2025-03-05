@@ -18,7 +18,7 @@ abstract class AbstractJdbcTransactionSpec extends AbstractTransactionSpec {
 
     @Override
     protected ConnectionOperations getConnectionOperations() {
-        return context.getBean(DataSourceConnectionOperations)
+        return context.getBean(DefaultDataSourceConnectionOperations)
     }
 
     @Override
