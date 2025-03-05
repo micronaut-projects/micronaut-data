@@ -17,6 +17,7 @@ class ItemRepositorySpec {
 
     /**
      * Verifies issue https://github.com/micronaut-projects/micronaut-data/issues/3267 is fixed in core.
+     * TODO: Failing again with core 4.8.5
      */
     @Test
     void testGetItems() {
