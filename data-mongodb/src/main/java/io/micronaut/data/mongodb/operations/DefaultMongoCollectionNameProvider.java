@@ -16,7 +16,10 @@
 package io.micronaut.data.mongodb.operations;
 
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.env.Environment;
+import io.micronaut.context.env.PropertyPlaceholderResolver;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.PersistentEntity;
 import jakarta.inject.Singleton;
 
@@ -31,9 +34,20 @@ import jakarta.inject.Singleton;
 @Internal
 public final class DefaultMongoCollectionNameProvider implements MongoCollectionNameProvider {
 
+    @Nullable
+    private final PropertyPlaceholderResolver propertyPlaceholderResolver;
+
+    DefaultMongoCollectionNameProvider(@Nullable Environment environment) {
+        this.propertyPlaceholderResolver = environment != null ? environment.getPlaceholderResolver() : null;
+    }
+
     @Override
     public String provide(PersistentEntity persistentEntity) {
-        return persistentEntity.getPersistedName();
+        String persistedName = persistentEntity.getPersistedName();
+        if (propertyPlaceholderResolver != null && persistedName.contains(propertyPlaceholderResolver.getPrefix())) {
+            persistedName = propertyPlaceholderResolver.resolveRequiredPlaceholders(persistedName);
+        }
+        return persistedName;
     }
 
 }
