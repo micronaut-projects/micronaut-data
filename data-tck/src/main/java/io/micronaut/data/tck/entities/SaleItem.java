@@ -18,7 +18,6 @@ package io.micronaut.data.tck.entities;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.*;
-import io.micronaut.data.annotation.sql.JoinColumn;
 import io.micronaut.data.model.DataType;
 
 import java.util.Map;
@@ -31,7 +30,6 @@ public class SaleItem {
     private Long id;
 
     @Relation(value = Relation.Kind.MANY_TO_ONE, cascade = Relation.Cascade.ALL)
-    @JoinColumn(name = "sale_id", referencedColumnName = "id")
     @JsonBackReference // To avoid infinite recursion when reading Sale from JSON
     private Sale sale;
 
