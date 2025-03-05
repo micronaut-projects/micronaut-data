@@ -28,6 +28,7 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.mongodb.conf.MongoDataConfiguration;
 import io.micronaut.data.mongodb.conf.RequiresSyncMongo;
+import io.micronaut.data.mongodb.operations.MongoCollectionNameProvider;
 import io.micronaut.data.mongodb.operations.MongoDatabaseNameProvider;
 import jakarta.annotation.PostConstruct;
 
@@ -52,7 +53,8 @@ public final class MongoCollectionsCreator extends AbstractMongoCollectionsCreat
     @PostConstruct
     void initialize(BeanLocator beanLocator,
                     RuntimeEntityRegistry runtimeEntityRegistry,
-                    List<AbstractMongoConfiguration> mongoConfigurations) {
+                    List<AbstractMongoConfiguration> mongoConfigurations,
+                    MongoCollectionNameProvider mongoCollectionNameProvider) {
 
         super.initialize(runtimeEntityRegistry, mongoConfigurations, mongoConfiguration -> {
             MongoClient mongoClient = getMongoFactory(MongoClient.class, beanLocator, mongoConfiguration);
@@ -80,7 +82,7 @@ public final class MongoCollectionsCreator extends AbstractMongoCollectionsCreat
                     database.createCollection(collection);
                 }
             };
-        });
+        }, mongoCollectionNameProvider);
     }
 
 }

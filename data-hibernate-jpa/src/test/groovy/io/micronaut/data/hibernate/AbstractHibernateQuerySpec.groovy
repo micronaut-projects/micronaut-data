@@ -28,6 +28,7 @@ import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.EntityIdClass
 import io.micronaut.data.tck.entities.EntityWithIdClass
+import io.micronaut.data.tck.entities.Order
 import io.micronaut.data.tck.entities.Product
 import io.micronaut.data.tck.entities.Student
 import io.micronaut.data.tck.repositories.BookSpecifications
@@ -757,6 +758,11 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
             value.totalSize == 2
             value.content.size() == 2
             value.content[0].title == "Pet Cemetery"
+
+        when:
+            def bookDtoPage = bookRepository.findByTotalPagesLessThan(1000, Pageable.from(0, 10, Sort.of(Sort.Order.asc("title"))))
+        then:
+            bookDtoPage.totalSize > 1
     }
 
     void "test loading entity with MappedProperty and alias"() {

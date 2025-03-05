@@ -8,7 +8,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 import org.bson.types.ObjectId;
 
-@MappedEntity
+@MappedEntity("${mapping.custom.product}")
 public class Product {
 
     @Id
