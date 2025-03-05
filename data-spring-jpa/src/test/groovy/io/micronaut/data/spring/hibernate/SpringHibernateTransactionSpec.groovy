@@ -24,11 +24,7 @@ import io.micronaut.data.spring.jpa.hibernate.SpringHibernateTransactionOperatio
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.tests.AbstractTransactionSpec
 import io.micronaut.data.tck.tests.TestResourcesDatabaseTestPropertyProvider
-import io.micronaut.transaction.TransactionOperations
 import org.hibernate.resource.transaction.spi.TransactionStatus
-import org.springframework.jdbc.datasource.DataSourceUtils
-
-import java.sql.Connection
 
 class SpringHibernateTransactionSpec extends AbstractTransactionSpec implements TestResourcesDatabaseTestPropertyProvider {
 
