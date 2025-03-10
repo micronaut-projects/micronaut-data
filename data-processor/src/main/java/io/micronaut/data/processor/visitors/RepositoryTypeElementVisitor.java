@@ -322,7 +322,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 context.fail(matchContext.getUnableToImplementMessage() + e.getMessage(), e.getElement() == null ? element : e.getElement());
                 this.failing = true;
             } catch (Exception e) {
-                if (e.getClass().getSimpleName().equals("PostponeToNextRoundException")) {
+                if (e instanceof ElementPostponedToNextRoundException || e.getClass().getSimpleName().equals("PostponeToNextRoundException")) {
                     // rethrow postponed and don't fail compilation
                     // this is not ideal since PostponeToNextRoundException is part of inject-java
                     throw e;
