@@ -1,5 +1,7 @@
 package io.micronaut.data.jdbc
 
+import io.micronaut.data.connection.ConnectionOperations
+import io.micronaut.data.connection.jdbc.operations.DataSourceConnectionOperations
 import io.micronaut.data.connection.jdbc.operations.DefaultDataSourceConnectionOperations
 import io.micronaut.data.tck.tests.AbstractTransactionSpec
 import io.micronaut.transaction.TransactionOperations
@@ -12,6 +14,11 @@ abstract class AbstractJdbcTransactionSpec extends AbstractTransactionSpec {
     @Override
     protected TransactionOperations getTransactionOperations() {
         return context.getBean(DataSourceTransactionManager)
+    }
+
+    @Override
+    protected ConnectionOperations getConnectionOperations() {
+        return context.getBean(DefaultDataSourceConnectionOperations)
     }
 
     @Override
