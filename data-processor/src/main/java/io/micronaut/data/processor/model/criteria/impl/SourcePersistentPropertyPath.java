@@ -16,8 +16,8 @@
 package io.micronaut.data.processor.model.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
-import io.micronaut.data.processor.visitors.finders.TypeUtils;
 
 /**
  * The internal source version of {@link PersistentPropertyPath}.
@@ -33,17 +33,7 @@ interface SourcePersistentPropertyPath<T> extends PersistentPropertyPath<T> {
     io.micronaut.data.processor.model.SourcePersistentProperty getProperty();
 
     @Override
-    default boolean isBoolean() {
-        return TypeUtils.isBoolean(getProperty().getType());
-    }
-
-    @Override
-    default boolean isNumeric() {
-        return TypeUtils.isNumber(getProperty().getType());
-    }
-
-    @Override
-    default boolean isComparable() {
-        return TypeUtils.isComparable(getProperty().getType());
+    default ExpressionType<T> getExpressionType() {
+        return new ClassElementExpressionType<>(getProperty().getType());
     }
 }

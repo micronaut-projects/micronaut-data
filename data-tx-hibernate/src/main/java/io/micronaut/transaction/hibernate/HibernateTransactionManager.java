@@ -25,6 +25,7 @@ import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.SynchronousConnectionManager;
 import io.micronaut.data.connection.support.JdbcConnectionUtils;
 import io.micronaut.transaction.TransactionDefinition;
+import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.micronaut.transaction.exceptions.InvalidIsolationLevelException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
@@ -36,17 +37,20 @@ import org.hibernate.FlushMode;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.hibernate.TransactionException;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.resource.jdbc.spi.PhysicalConnectionHandlingMode;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
+import java.sql.Savepoint;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
 
 /**
  * The Hibernate transaction manager.
@@ -60,6 +64,9 @@ import java.util.function.Function;
 @Requires(condition = HibernateTransactionManagerCondition.class)
 @TypeHint(HibernateTransactionManager.class)
 public final class HibernateTransactionManager extends AbstractDefaultTransactionOperations<Session> {
+
+    // Error with this message is thrown from SQL server when operation is not supported (like Connection.releaseSavepoint)
+    private static final String OPERATION_NOT_SUPPORTED = "This operation is not supported.";
 
     private boolean prepareConnection = true;
 
@@ -123,7 +130,7 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
             FlushMode flushMode = session.getHibernateFlushMode();
             if (FlushMode.MANUAL.equals(flushMode)) {
                 session.setFlushMode(FlushMode.AUTO.toJpaFlushMode());
-                txStatus.registerSynchronization(new TransactionSynchronization() {
+                txStatus.registerInvocationSynchronization(new TransactionSynchronization() {
                     @Override
                     public void beforeCompletion() {
                         session.setFlushMode(flushMode.toJpaFlushMode());
@@ -142,7 +149,7 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
 
         if (!onComplete.isEmpty()) {
             Collections.reverse(onComplete);
-            txStatus.registerSynchronization(new TransactionSynchronization() {
+            txStatus.registerInvocationSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCompletion(Status status) {
                     if (isPhysicallyConnected(session)) {
@@ -172,7 +179,7 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
 
         try {
             transaction.commit();
-        } catch (org.hibernate.TransactionException ex) {
+        } catch (TransactionException ex) {
             // assumable from commit call to the underlying JDBC connection
             throw new TransactionSystemException("Could not commit Hibernate transaction", ex);
         } catch (PersistenceException ex) {
@@ -193,7 +200,7 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
 
         try {
             transaction.rollback();
-        } catch (org.hibernate.TransactionException ex) {
+        } catch (TransactionException ex) {
             throw new TransactionSystemException("Could not roll back Hibernate transaction", ex);
         } finally {
             if (!tx.getConnectionStatus().isNew()) {
@@ -201,6 +208,57 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
                 // Necessary for pre-bound Sessions, to avoid inconsistent state.
                 tx.getConnection().clear();
             }
+        }
+    }
+
+    @Override
+    protected void doNestedBegin(DefaultTransactionStatus<Session> status) {
+        try {
+            Session session = status.getConnection();
+            Savepoint savepoint = getConnection(session).setSavepoint();
+            status.setSavepoint(savepoint);
+        } catch (SQLException e) {
+            throw new CannotCreateTransactionException("Could not create JDBC savepoint", e);
+        }
+    }
+
+    @Override
+    protected void doNestedCommit(DefaultTransactionStatus<Session> status) {
+        if (status.getSavepoint() != null) {
+            Session session = status.getConnection();
+            if (logger.isDebugEnabled()) {
+                logger.debug("Releasing JDBC savepoint for Session [{}]", session);
+            }
+            try {
+                getConnection(session).releaseSavepoint((Savepoint) status.getSavepoint());
+            } catch (Exception e) {
+                if (isUnsupportedOperation(e)) {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("JDBC SavePoint release not supported by the Session [{}]", session, e);
+                    }
+                } else {
+                    throw new TransactionSystemException("Could not release JDBC savepoint", e);
+                }
+            }
+        } else {
+            throw new TransactionSystemException("Missing a JDBC savepoint");
+        }
+    }
+
+    @Override
+    protected void doNestedRollback(DefaultTransactionStatus<Session> status) {
+        if (status.getSavepoint() != null) {
+            Session session = status.getConnection();
+            if (logger.isDebugEnabled()) {
+                logger.debug("Rolling back JDBC transaction to the savepoint for Session [{}]", session);
+            }
+            try {
+                getConnection(session).rollback((Savepoint) status.getSavepoint());
+            } catch (Exception e) {
+                throw new TransactionSystemException("Could not roll back to JDBC savepoint", e);
+            }
+        } else {
+            throw new TransactionSystemException("Missing a JDBC savepoint");
         }
     }
 
@@ -228,15 +286,15 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
      * @see org.hibernate.ConnectionReleaseMode#ON_CLOSE
      */
     private boolean isSameConnectionForEntireSession(Session session) {
-        if (!(session instanceof SessionImplementor)) {
+        if (!(session instanceof SessionImplementor sessionImplementor)) {
             // The best we can do is to assume we're safe.
             return true;
         }
         PhysicalConnectionHandlingMode releaseMode =
-            ((SessionImplementor) session).getJdbcCoordinator()
+            sessionImplementor.getJdbcCoordinator()
                 .getLogicalConnection()
                 .getConnectionHandlingMode();
-        return PhysicalConnectionHandlingMode.DELAYED_ACQUISITION_AND_HOLD.equals(releaseMode);
+        return PhysicalConnectionHandlingMode.DELAYED_ACQUISITION_AND_HOLD == releaseMode;
     }
 
     /**
@@ -248,15 +306,31 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
      * @see #isSameConnectionForEntireSession(Session)
      */
     private boolean isPhysicallyConnected(Session session) {
-        if (!(session instanceof SessionImplementor)) {
+        if (!(session instanceof SessionImplementor sessionImplementor)) {
             // The best we can do is to check whether we're logically connected.
             return session.isConnected();
         }
-        return ((SessionImplementor) session).getJdbcCoordinator().getLogicalConnection().isPhysicallyConnected();
+        return sessionImplementor.getJdbcCoordinator().getLogicalConnection().isPhysicallyConnected();
     }
 
     private Connection getConnection(Session session) {
         return ((SessionImplementor) session).getJdbcCoordinator().getLogicalConnection().getPhysicalConnection();
     }
 
+    /**
+     * Checks if thrown exception is from the JDBC driver telling that feature is not supported.
+     * For example, some drivers don't support {@link Connection#releaseSavepoint(Savepoint)}
+     * and we want to handle that case and continue execution.
+     *
+     * @param exception The thrown exception
+     * @return true if exception is thrown for unsupported operation
+     */
+    private static boolean isUnsupportedOperation(Exception exception) {
+        if (exception instanceof SQLFeatureNotSupportedException) {
+            return true;
+        } else if (exception instanceof SQLException sqlException) {
+            return OPERATION_NOT_SUPPORTED.equals(sqlException.getMessage());
+        }
+        return false;
+    }
 }

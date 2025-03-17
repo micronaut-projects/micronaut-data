@@ -53,4 +53,5 @@ public interface PagedQuery<E> extends Named, AnnotationMetadataProvider {
     default Map<String, Object> getQueryHints() {
         return Collections.emptyMap();
     }
+
 }

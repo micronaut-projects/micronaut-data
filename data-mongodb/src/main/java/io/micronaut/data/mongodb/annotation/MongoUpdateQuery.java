@@ -58,4 +58,13 @@ public @interface MongoUpdateQuery {
      */
     @AliasFor(member = "value", annotation = MongoCollation.class)
     String collation() default "";
+
+    /**
+     * The array filters.
+     *
+     * @return The array filters
+     * @since 4.2.0
+     */
+    @AliasFor(member = "arrayFilters", annotation = MongoUpdateOptions.class)
+    String[] arrayFilters() default {};
 }

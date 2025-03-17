@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.operations.internal.query;
 
 import io.micronaut.aop.InvocationContext;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
@@ -27,6 +28,7 @@ import io.micronaut.data.runtime.query.internal.DelegatePreparedQuery;
 import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Implementation of {@link BindableParametersPreparedQuery}.
@@ -58,8 +60,8 @@ public class DefaultBindableParametersPreparedQuery<E, R> implements BindablePar
     }
 
     private static <X, Y> BindableParametersStoredQuery<X, Y> unwrap(StoredQuery<X, Y> storedQuery) {
-        if (storedQuery instanceof BindableParametersStoredQuery) {
-            return (BindableParametersStoredQuery<X, Y>) storedQuery;
+        if (storedQuery instanceof BindableParametersStoredQuery<X, Y> bindableParametersStoredQuery) {
+            return bindableParametersStoredQuery;
         }
         if (storedQuery instanceof DelegateStoredQuery) {
             return unwrap(storedQuery);
@@ -87,4 +89,14 @@ public class DefaultBindableParametersPreparedQuery<E, R> implements BindablePar
         storedQuery.bindParameters(binder, this.invocationContext, entity, previousValues);
     }
 
+    @Override
+    public void bindParameters(Binder binder) {
+        Optional<Object> optionalEntity = getParameterInRole(TypeRole.ENTITY, Object.class);
+        if (optionalEntity.isPresent()) {
+            E entity = (E) optionalEntity.get();
+            bindParameters(binder, invocationContext, entity, null);
+        } else {
+            BindableParametersPreparedQuery.super.bindParameters(binder);
+        }
+    }
 }

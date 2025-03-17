@@ -3,6 +3,7 @@ package io.micronaut.data.azure
 import io.micronaut.data.cosmos.config.StorageUpdatePolicy
 import io.micronaut.test.support.TestPropertyProvider
 import org.testcontainers.containers.CosmosDBEmulatorContainer
+import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.utility.DockerImageName
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -10,12 +11,16 @@ import spock.lang.Shared
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.KeyStore
+import java.time.Duration
 
 trait AzureCosmosTestProperties implements TestPropertyProvider {
+
+    static final Duration STARTUP_TIMEOUT = Duration.ofMinutes(5)
 
     @Shared
     @AutoCleanup("stop")
     CosmosDBEmulatorContainer emulator = new CosmosDBEmulatorContainer(DockerImageName.parse("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest"))
+            .waitingFor(Wait.forHttps("/_explorer/emulator.pem").forStatusCode(200).allowInsecure().withStartupTimeout(STARTUP_TIMEOUT))
 
     @Override
     Map<String, String> getProperties() {
@@ -29,6 +34,7 @@ trait AzureCosmosTestProperties implements TestPropertyProvider {
         System.setProperty("javax.net.ssl.trustStoreType", "PKCS12")
 
         def defaultProps = [
+                'azure.cosmos.database.disable-non-streaming-order-by'     : 'true',
                 'azure.cosmos.default-gateway-mode'                        : 'true',
                 'azure.cosmos.endpoint-discovery-enabled'                  : 'false',
                 'azure.cosmos.endpoint'                                    : emulator.getEmulatorEndpoint(),

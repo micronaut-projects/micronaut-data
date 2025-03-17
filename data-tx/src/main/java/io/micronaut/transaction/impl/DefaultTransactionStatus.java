@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.transaction.TransactionDefinition;
+import io.micronaut.transaction.support.TransactionSynchronization;
 
 /**
  * The default transaction status.
@@ -35,6 +36,8 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
     private final TransactionDefinition definition;
     @Nullable
     private Object transaction;
+    @Nullable
+    private Object savepoint;
 
     private DefaultTransactionStatus(ConnectionStatus<C> connectionStatus,
                                      TransactionDefinition definition) {
@@ -56,6 +59,11 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
         return new ExistingTransactionStatus<>(connectionStatus, existingTransaction);
     }
 
+    @Override
+    public boolean isNestedTransaction() {
+        return definition.getPropagationBehavior() == TransactionDefinition.Propagation.NESTED;
+    }
+
     /**
      * Sets the transaction representation object.
      *
@@ -63,6 +71,24 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
      */
     public void setTransaction(Object transaction) {
         this.transaction = transaction;
+    }
+
+    /**
+     * Sets the savepoint for nested the transaction.
+     * @param savepoint The savepoint
+     * @since 4.1.0
+     */
+    public void setSavepoint(@NonNull Object savepoint) {
+        this.savepoint = savepoint;
+    }
+
+    /**
+     * @return The savepoint
+     * @since 4.1.0
+     */
+    @Nullable
+    public Object getSavepoint() {
+        return savepoint;
     }
 
     @Override
@@ -134,6 +160,12 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
         public void setRollbackOnly() {
             super.setRollbackOnly();
             existingTransaction.setGlobalRollbackOnly();
+        }
+
+        @Override
+        public void registerSynchronization(TransactionSynchronization synchronization) {
+            // The synchronization should be bound to the current TX
+            existingTransaction.registerSynchronization(synchronization);
         }
     }
 }

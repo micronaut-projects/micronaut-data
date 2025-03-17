@@ -29,7 +29,7 @@ import java.lang.annotation.Annotation;
 import java.util.Collection;
 
 /**
- * Event listener that allows invoking methods defined on entities and annotated with an event annotation such as {@link io.micronaut.data.annotation.event.PrePersist}.
+ * Event listener that allows invoking methods defined on entities and annotated with an event annotation such as {@link PrePersist}.
  *
  * @author graemerocher
  * @since 2.3.0

@@ -40,7 +40,9 @@ import java.util.List;
  * @author graemerocher
  * @author Denis Stepanov
  * @since 3.1
+ * @deprecated {@link Specification} is deprecated
  */
+@Deprecated(since = "4.10", forRemoval = true)
 @Internal
 public class FindPageSpecificationInterceptor extends AbstractSpecificationInterceptor<Object, Object> {
     private final JpaRepositoryOperations jpaOperations;
@@ -52,17 +54,18 @@ public class FindPageSpecificationInterceptor extends AbstractSpecificationInter
      */
     protected FindPageSpecificationInterceptor(@NonNull RepositoryOperations operations) {
         super(operations);
-        if (operations instanceof JpaRepositoryOperations) {
-            this.jpaOperations = (JpaRepositoryOperations) operations;
+        if (operations instanceof JpaRepositoryOperations jpaRepositoryOperations) {
+            this.jpaOperations = jpaRepositoryOperations;
         } else {
             throw new IllegalStateException("Repository operations must be na instance of JpaRepositoryOperations");
         }
     }
 
+    @Override
     protected final Pageable getPageable(MethodInvocationContext<?, ?> context) {
         final Object parameterValue = context.getParameterValues()[1];
-        if (parameterValue instanceof Pageable) {
-            return (Pageable) parameterValue;
+        if (parameterValue instanceof Pageable pageable) {
+            return pageable;
         }
         return Pageable.UNPAGED;
     }
@@ -72,13 +75,13 @@ public class FindPageSpecificationInterceptor extends AbstractSpecificationInter
         if (context.getParameterValues().length != 2) {
             throw new IllegalStateException("Expected exactly 2 arguments to method");
         }
-        Specification specification = getSpecification(context);
+        Specification specification = getSpecification(context, true);
         final EntityManager entityManager = jpaOperations.getCurrentEntityManager();
         final CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         Class<Object> rootEntity = getRequiredRootEntity(context);
         final CriteriaQuery<Object> query = criteriaBuilder.createQuery(rootEntity);
         final Root<Object> root = query.from(rootEntity);
-        final Predicate predicate = specification.toPredicate(root, query, criteriaBuilder);
+        final Predicate predicate = specification != null ? specification.toPredicate(root, query, criteriaBuilder) : null;
         if (predicate != null) {
             query.where(predicate);
         }
@@ -95,25 +98,33 @@ public class FindPageSpecificationInterceptor extends AbstractSpecificationInter
             return Page.of(
                     resultList,
                     pageable,
-                    resultList.size()
+                    (long) resultList.size()
             );
         } else {
             typedQuery.setFirstResult((int) pageable.getOffset());
             typedQuery.setMaxResults(pageable.getSize());
             final List<Object> results = typedQuery.getResultList();
-            final CriteriaQuery<Long> countQuery = criteriaBuilder.createQuery(Long.class);
-            final Root<?> countRoot = countQuery.from(rootEntity);
-            final Predicate countPredicate = specification.toPredicate(countRoot, countQuery, criteriaBuilder);
-            if (countPredicate != null) {
-                countQuery.where(countPredicate);
+
+            Long totalCount = null;
+            if (pageable.requestTotal()) {
+                final CriteriaQuery<Long> countQuery = criteriaBuilder.createQuery(Long.class);
+                final Root<?> countRoot = countQuery.from(rootEntity);
+                final Predicate countPredicate = specification != null ? specification.toPredicate(countRoot, countQuery, criteriaBuilder) : null;
+                if (countPredicate != null) {
+                    countQuery.where(countPredicate);
+                }
+                if (countQuery.isDistinct()) {
+                    countQuery.select(criteriaBuilder.countDistinct(countRoot));
+                } else {
+                    countQuery.select(criteriaBuilder.count(countRoot));
+                }
+                totalCount = entityManager.createQuery(countQuery).getSingleResult();
             }
-            countQuery.select(criteriaBuilder.count(countRoot));
-            Long singleResult = entityManager.createQuery(countQuery).getSingleResult();
 
             return Page.of(
                     results,
                     pageable,
-                    singleResult
+                    totalCount
             );
         }
 

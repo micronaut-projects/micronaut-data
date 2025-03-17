@@ -23,6 +23,7 @@ dependencies {
     implementation mnReactor.micronaut.reactor
 
     compileOnly mnR2dbc.r2dbc.oracle
+    compileOnly mnSql.jakarta.persistence.api
 
     testImplementation projects.micronautDataTck
     testImplementation mnTest.micronaut.test.spock
@@ -34,8 +35,8 @@ dependencies {
     testAnnotationProcessor projects.micronautDataProcessor
 
     testImplementation mn.jackson.databind
-    testImplementation libs.javax.persistence.api
-    testImplementation libs.jakarta.persistence.api
+    testImplementation(libs.managed.javax.persistence.api)
+    testImplementation(mnSql.jakarta.persistence.api)
     testImplementation libs.groovy.sql
     testImplementation mnValidation.micronaut.validation
     testImplementation mnValidation.micronaut.validation.processor
@@ -43,9 +44,7 @@ dependencies {
     testImplementation mn.micronaut.http.server.netty
     testImplementation mn.micronaut.http.client
 
-    testImplementation platform(libs.testcontainers.bom)
-
-    testImplementation libs.testcontainers.r2dbc
+    testImplementation(mnTestResources.testcontainers.r2dbc)
 
     // oracle
     testImplementation mnR2dbc.r2dbc.oracle
@@ -55,7 +54,7 @@ dependencies {
     testImplementation mnSql.mariadb.java.client
 
     // mysql
-    testImplementation mnR2dbc.r2dbc.mysql
+    testImplementation mnR2dbc.r2dbc.io.asyncer.mysql
     testImplementation mnSql.mysql.connector.java
 
     // h2
@@ -78,7 +77,7 @@ dependencies {
     testCompileOnly projects.micronautDataProcessor
 
     testResourcesService mnSql.mariadb.java.client
-    testResourcesService libs.drivers.jdbc.oracle
+    testResourcesService mnSql.ojdbc11
     testResourcesService mnSql.mysql.connector.java
     testResourcesService mnSql.postgresql
     testResourcesService mnSql.mssql.jdbc
@@ -101,7 +100,7 @@ micronaut {
         additionalModules.add(KnownModules.R2DBC_POSTGRESQL)
         additionalModules.add(KnownModules.R2DBC_MYSQL)
         additionalModules.add(KnownModules.R2DBC_MARIADB)
-        additionalModules.add(KnownModules.R2DBC_ORACLE_XE)
+        additionalModules.add(KnownModules.R2DBC_ORACLE_FREE)
         additionalModules.add(KnownModules.R2DBC_MSSQL)
         clientTimeout = 300
         version = libs.versions.micronaut.testresources.get()

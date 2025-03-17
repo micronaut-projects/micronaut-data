@@ -10,4 +10,4 @@ The above example defines two methods that use `CompletableFuture` as return typ
 
 snippet::example.ProductRepositorySpec[project-base="doc-examples/hibernate-example"tags="async", indent="0"]
 
-NOTE: In the case of JPA each operation will run with its own transaction and session, hence care needs to be taken to fetch the correct data and avoid detached objects. In addition for more complex operations it may be more efficient to write custom code that uses a single session.
+NOTE: In the case of JPA each operation will run with its own transaction and session, hence care needs to be taken to fetch the correct data and avoid detached objects. In addition, for more complex operations it may be more efficient to write custom code that uses a single session.

@@ -30,12 +30,14 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.mongodb.annotation.MongoAggregateOptions;
 import io.micronaut.data.mongodb.annotation.MongoCollation;
 import io.micronaut.data.mongodb.annotation.MongoDeleteOptions;
 import io.micronaut.data.mongodb.annotation.MongoUpdateOptions;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 /**
@@ -56,6 +58,11 @@ public final class MongoOptionsUtils {
         optionsAnn.booleanValue("upsert").ifPresent(options::upsert);
         optionsAnn.booleanValue("bypassDocumentValidation").ifPresent(options::bypassDocumentValidation);
         optionsAnn.stringValue("hint").map(BsonDocument::parse).ifPresent(options::hint);
+        String[] arrayFilters = optionsAnn.stringValues("arrayFilters");
+        if (arrayFilters.length > 0) {
+            options.arrayFilters(Arrays.stream(arrayFilters).map(BsonDocument::parse).toList());
+        }
+
         if (includeCollation) {
             annotationMetadata.stringValue(MongoCollation.class)
                     .map(BsonDocument::parse)
@@ -119,8 +126,8 @@ public final class MongoOptionsUtils {
     }
 
     public static Optional<MongoAggregationOptions> buildAggregateOptions(AnnotationMetadata annotationMetadata) {
-        AnnotationValue<io.micronaut.data.mongodb.annotation.MongoAggregateOptions> optionsAnn = annotationMetadata
-                .getAnnotation(io.micronaut.data.mongodb.annotation.MongoAggregateOptions.class);
+        AnnotationValue<MongoAggregateOptions> optionsAnn = annotationMetadata
+                .getAnnotation(MongoAggregateOptions.class);
         if (optionsAnn == null) {
             return Optional.empty();
         }

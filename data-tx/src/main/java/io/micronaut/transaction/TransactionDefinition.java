@@ -28,7 +28,7 @@ import java.util.Optional;
 
 /**
  * NOTICE: This is a fork of Spring's {@code PlatformTransactionManager} modernizing it
- * to use enums, Slf4j and decoupling from Spring.
+ * to use enums, SLF4J and decoupling from Spring.
  *
  * Interface that defines Spring-compliant transaction properties.
  * Based on the propagation behavior definitions analogous to EJB CMT attributes.
@@ -96,7 +96,7 @@ public interface TransactionDefinition {
          * {@code PROPAGATION_SUPPORTS} is slightly different from no transaction
          * at all, as it defines a transaction scope that synchronization might apply to.
          * As a consequence, the same resources (a JDBC {@code Connection}, a
-         * Hibernate {@code Session}, etc) will be shared for the entire specified
+         * Hibernate {@code Session}, etc.) will be shared for the entire specified
          * scope. Note that the exact behavior depends on the actual synchronization
          * configuration of the transaction manager!
          * <p>In general, use {@code PROPAGATION_SUPPORTS} with care! In particular, do
@@ -325,7 +325,7 @@ public interface TransactionDefinition {
      * transaction monitor, if applicable (for example, WebLogic's).
      * <p>In case of Spring's declarative transactions, the exposed name will be
      * the {@code fully-qualified class name + "." + method name} (by default).
-     * @return the name of this transaction ({@code null} by default}
+     * @return the name of this transaction ({@code null} by default)
      */
     @Nullable
     default String getName() {

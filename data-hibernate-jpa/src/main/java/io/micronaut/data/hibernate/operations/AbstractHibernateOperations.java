@@ -15,22 +15,22 @@
  */
 package io.micronaut.data.hibernate.operations;
 
+import io.micronaut.aop.InvocationContext;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.beans.BeanIntrospection;
-import io.micronaut.core.beans.BeanProperty;
-import io.micronaut.core.beans.exceptions.IntrospectionException;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
 import io.micronaut.data.model.runtime.PagedQuery;
@@ -49,11 +49,6 @@ import io.micronaut.data.runtime.operations.internal.query.DefaultBindableParame
 import io.micronaut.data.runtime.operations.internal.query.DefaultBindableParametersStoredQuery;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.data.runtime.query.StoredQueryDecorator;
-import org.hibernate.graph.AttributeNode;
-import org.hibernate.graph.Graph;
-import org.hibernate.graph.RootGraph;
-import org.hibernate.graph.SubGraph;
-
 import jakarta.persistence.FlushModeType;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.TupleElement;
@@ -63,6 +58,11 @@ import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Root;
+import org.hibernate.graph.AttributeNode;
+import org.hibernate.graph.Graph;
+import org.hibernate.graph.RootGraph;
+import org.hibernate.graph.SubGraph;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -82,8 +82,8 @@ import java.util.stream.Collectors;
  *
  * @param <S> The session type
  * @param <Q> The query type
- * @param <P> The selection query
- * @author Denis Stepaov
+ * @param <P> The selection query type
+ * @author Denis Stepanov
  * @since 3.5.0
  */
 @Internal
@@ -200,6 +200,44 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
     protected abstract void setParameterList(Q query, String parameterName, Collection<Object> value, Argument<?> argument);
 
     /**
+     * Sets a parameter into query.
+     *
+     * @param query          The query
+     * @param parameterIndex The parameter index
+     * @param value          The value
+     */
+    protected abstract void setParameter(Q query, int parameterIndex, Object value);
+
+    /**
+     * Sets parameter into query.
+     *
+     * @param query          The query
+     * @param parameterIndex The parameter index
+     * @param value          The value
+     * @param argument       The argument
+     */
+    protected abstract void setParameter(Q query, int parameterIndex, Object value, Argument<?> argument);
+
+    /**
+     * Sets a list parameter into query.
+     *
+     * @param query          The query
+     * @param parameterIndex The parameter index
+     * @param value          The value
+     */
+    protected abstract void setParameterList(Q query, int parameterIndex, Collection<Object> value);
+
+    /**
+     * Sets a list parameter into query.
+     *
+     * @param query          The query
+     * @param parameterIndex The parameter index
+     * @param value          The value
+     * @param argument       The argument
+     */
+    protected abstract void setParameterList(Q query, int parameterIndex, Collection<Object> value, Argument<?> argument);
+
+    /**
      * Sets a hint.
      *
      * @param query    The query
@@ -284,7 +322,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
      */
     protected <R> void collectFindOne(S session, PreparedQuery<?, R> preparedQuery, ResultCollector<R> collector) {
         String query = preparedQuery.getQuery();
-        collectResults(session, query, preparedQuery, collector);
+        collectResults(session, query, preparedQuery, preparedQuery.getPageable(), collector);
     }
 
     /**
@@ -299,15 +337,27 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
         String queryStr = preparedQuery.getQuery();
         Pageable pageable = preparedQuery.getPageable();
         if (pageable != Pageable.UNPAGED) {
+            if (pageable.getMode() != Mode.OFFSET) {
+                throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported by hibernate operations");
+            }
             Sort sort = pageable.getSort();
             if (sort.isSorted()) {
-                queryStr += QUERY_BUILDER.buildOrderBy(queryStr, getEntity(preparedQuery.getRootEntity()), AnnotationMetadata.EMPTY_METADATA, sort).getQuery();
+                queryStr += QUERY_BUILDER.buildOrderBy(queryStr, getEntity(preparedQuery.getRootEntity()), AnnotationMetadata.EMPTY_METADATA, sort,
+                    preparedQuery.isNative()).getQuery();
+            }
+            if (preparedQuery.isNative()) {
+                // Native queries don't support setting the order
+                pageable = pageable.withoutSort();
             }
         }
-        collectResults(session, queryStr, preparedQuery, collector);
+        collectResults(session, queryStr, preparedQuery, pageable, collector);
     }
 
-    private <T, R> void collectResults(S session, String queryStr, PreparedQuery<T, R> preparedQuery, ResultCollector<R> resultCollector) {
+    private <T, R> void collectResults(S session,
+                                       String queryStr,
+                                       PreparedQuery<T, R> preparedQuery,
+                                       Pageable pageable,
+                                       ResultCollector<R> resultCollector) {
         if (preparedQuery.isDtoProjection()) {
             P q;
             if (preparedQuery.isNative()) {
@@ -315,13 +365,13 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
             } else if (queryStr.toLowerCase(Locale.ENGLISH).startsWith("select new ")) {
                 @SuppressWarnings("unchecked") Class<R> wrapperType = (Class<R>) ReflectionUtils.getWrapperType(preparedQuery.getResultType());
                 P query = createQuery(session, queryStr, wrapperType);
-                bindPreparedQuery(query, preparedQuery, session);
+                bindPreparedQuery(query, preparedQuery, pageable, session);
                 resultCollector.collect(query);
                 return;
             } else {
                 q = createQuery(session, queryStr, Tuple.class);
             }
-            bindPreparedQuery(q, preparedQuery, session);
+            bindPreparedQuery(q, preparedQuery, pageable, session);
             resultCollector.collectTuple(q, tuple -> {
                 Set<String> properties = tuple.getElements().stream().map(TupleElement::getAlias).collect(Collectors.toCollection(() -> new TreeSet<>(String.CASE_INSENSITIVE_ORDER)));
                 return (new BeanIntrospectionMapper<Tuple, R>() {
@@ -347,7 +397,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
                 Class<T> rootEntity = preparedQuery.getRootEntity();
                 if (wrapperType != rootEntity) {
                     P nativeQuery = createNativeQuery(session, queryStr, Tuple.class);
-                    bindPreparedQuery(nativeQuery, preparedQuery, session);
+                    bindPreparedQuery(nativeQuery, preparedQuery, pageable, session);
                     resultCollector.collectTuple(nativeQuery, tuple -> {
                         Object o = tuple.get(0);
                         if (wrapperType.isInstance(o)) {
@@ -362,7 +412,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
             } else {
                 q = createQuery(session, queryStr, wrapperType);
             }
-            bindPreparedQuery(q, preparedQuery, session);
+            bindPreparedQuery(q, preparedQuery, pageable, session);
             resultCollector.collect(q);
         }
     }
@@ -371,13 +421,40 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
      * Bind parameters into query.
      *
      * @param q             The query
-     * @param preparedQuery THe prepared query
+     * @param preparedQuery The prepared query
+     * @param bindNamed     If parameter should be bind by the name
      * @param <T>           The entity type
      * @param <R>           The result type
      */
-    protected <T, R> void bindParameters(Q q, @NonNull PreparedQuery<T, R> preparedQuery) {
+    protected <T, R> void bindParameters(Q q, @NonNull PreparedQuery<T, R> preparedQuery, boolean bindNamed) {
         BindableParametersPreparedQuery<T, R> bindableParametersPreparedQuery = getBindableParametersPreparedQuery(preparedQuery);
-        bindableParametersPreparedQuery.bindParameters(new BindableParametersStoredQuery.Binder() {
+        BindableParametersStoredQuery.Binder binder = createBinder(q, preparedQuery.getArguments(), bindNamed);
+        bindableParametersPreparedQuery.bindParameters(binder);
+    }
+
+    /**
+     * Bind parameters into query.
+     *
+     * @param <T>               The entity type
+     * @param <R>               The result type
+     * @param q                 The query
+     * @param storedQuery       The stored query
+     * @param invocationContext The invocationContext
+     * @param entity            The entity
+     */
+    protected <T, R> void bindParameters(Q q, @NonNull StoredQuery<T, R> storedQuery,
+                                         InvocationContext<?, ?> invocationContext,
+                                         T entity) {
+        BindableParametersStoredQuery<T, R> bindableParametersPreparedQuery = (BindableParametersStoredQuery<T, R>) storedQuery;
+        BindableParametersStoredQuery.Binder binder = createBinder(q, invocationContext.getArguments(), true);
+        bindableParametersPreparedQuery.bindParameters(binder, invocationContext, entity, null);
+    }
+
+    private BindableParametersStoredQuery.Binder createBinder(Q q, Argument<?>[] arguments, boolean bindNamed) {
+        return new BindableParametersStoredQuery.Binder() {
+
+            int index = 1;
+
             @Override
             public Object autoPopulateRuntimeProperty(RuntimePersistentProperty<?> persistentProperty, Object previousValue) {
                 return runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
@@ -396,28 +473,41 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
             @Override
             public void bindOne(QueryParameterBinding binding, Object value) {
                 String parameterName = Objects.requireNonNull(binding.getName(), "Parameter name cannot be null!");
-                if (preparedQuery.isNative()) {
+                if (binding.getParameterIndex() != -1) {
                     int parameterIndex = binding.getParameterIndex();
-                    Argument<?> argument = preparedQuery.getArguments()[parameterIndex];
+                    Argument<?> argument = arguments[parameterIndex];
                     Class<?> argumentType = argument.getType();
                     if (Collection.class.isAssignableFrom(argumentType)) {
-                        setParameterList(q, parameterName, value == null ? Collections.emptyList() : (Collection<Object>) value, argument.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT));
+                        if (bindNamed) {
+                            setParameterList(q, parameterName, value == null ? Collections.emptyList() : (Collection<Object>) value, argument.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT));
+                        } else {
+                            setParameterList(q, index, value == null ? Collections.emptyList() : (Collection<Object>) value, argument.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT));
+                        }
                     } else if (Object[].class.isAssignableFrom(argumentType)) {
                         Collection<Object> coll;
                         if (value == null) {
                             coll = Collections.emptyList();
-                        } else if (value instanceof Collection) {
-                            coll = (Collection<Object>) value;
+                        } else if (value instanceof Collection collection) {
+                            coll = collection;
                         } else {
                             coll = Arrays.asList((Object[]) value);
                         }
-                        setParameterList(q, parameterName, coll);
-                    } else {
+                        if (bindNamed) {
+                            setParameterList(q, parameterName, coll);
+                        } else {
+                            setParameterList(q, index, coll);
+                        }
+                    } else if (bindNamed) {
                         setParameter(q, parameterName, value, argument);
+                    } else {
+                        setParameter(q, index, value, argument);
                     }
-                } else {
+                } else if (bindNamed) {
                     setParameter(q, parameterName, value);
+                } else {
+                    setParameter(q, index, value);
                 }
+                index++;
             }
 
             @Override
@@ -425,12 +515,12 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
                 bindOne(binding, values);
             }
 
-        });
+        };
     }
 
-    private <T, R> void bindPreparedQuery(P q, @NonNull PreparedQuery<T, R> preparedQuery, S currentSession) {
-        bindParameters(q, preparedQuery);
-        bindPageable(q, preparedQuery.getPageable());
+    private <T, R> void bindPreparedQuery(P q, @NonNull PreparedQuery<T, R> preparedQuery, Pageable pageable, S currentSession) {
+        bindParameters(q, preparedQuery, true);
+        bindPageable(q, pageable);
         bindQueryHints(q, preparedQuery, currentSession);
     }
 
@@ -471,7 +561,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
     private <T> RootGraph<T> createGraph(@NonNull String[] paths, @NonNull S session, @NonNull Class<T> rootEntity) {
         RootGraph<T> rootGraph = (RootGraph<T>) createEntityGraph(session, rootEntity);
         for (String path : paths) {
-            if (path.trim().equals("")) {
+            if (path.trim().isEmpty()) {
                 continue;
             }
             String[] parts = path.split("\\.");
@@ -508,18 +598,6 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
         return rootGraph;
     }
 
-    protected final Object getParameterValue(String[] propertyPath, Object value) {
-        for (String property : propertyPath) {
-            Object finalValue = value;
-            BeanProperty beanProperty = BeanIntrospection.getIntrospection(value.getClass()).getProperty(property).orElseThrow(() -> new IntrospectionException("Cannot find a property: '" + property + "' on bean: " + finalValue));
-            value = beanProperty.get(value);
-            if (value == null) {
-                return null;
-            }
-        }
-        return value;
-    }
-
     protected final FlushModeType getFlushModeType(AnnotationMetadata annotationMetadata) {
         return annotationMetadata.getAnnotationValuesByType(QueryHint.class).stream().filter(av -> FlushModeType.class.getName().equals(av.stringValue("name").orElse(null))).map(av -> av.enumValue("value", FlushModeType.class)).findFirst().orElse(Optional.empty()).orElse(null);
     }
@@ -528,6 +606,9 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
         if (pageable == Pageable.UNPAGED) {
             // no pagination
             return;
+        }
+        if (pageable.getMode() != Mode.OFFSET) {
+            throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported by hibernate operations");
         }
 
         int max = pageable.getSize();
@@ -547,7 +628,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
         Root<T> root = query.from(entity);
         bindCriteriaSort(query, root, criteriaBuilder, pageable);
         P q = createQuery(session, query);
-        bindPageable(q, pageable);
+        bindPageable(q, pageable.withoutSort());
         bindQueryHints(q, pagedQuery, session);
         resultCollector.collect(q);
     }
@@ -557,7 +638,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
         countQuery.select(criteriaBuilder.count(countQuery.from(entity)));
         P countQ = createQuery(session, countQuery);
         if (pageable != null) {
-            bindPageable(countQ, pageable);
+            bindPageable(countQ, pageable.withoutSort());
         }
         resultCollector.collect(countQ);
     }
@@ -565,20 +646,19 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
     private <T> void bindCriteriaSort(CriteriaQuery<T> criteriaQuery, Root<?> root, CriteriaBuilder builder, @NonNull Sort sort) {
         List<Order> orders = new ArrayList<>();
         for (Sort.Order order : sort.getOrderBy()) {
-            Path<String> path = root.get(order.getProperty());
-            Expression expression = order.isIgnoreCase() ? builder.lower(path) : path;
-            if (order.getDirection() == Sort.Order.Direction.DESC) {
-                orders.add(builder.desc(expression));
-            } else {
-                orders.add(builder.asc(expression));
+            Path<?> path = root;
+            for (String property : StringUtils.splitOmitEmptyStrings(order.getProperty(), '.')) {
+                path = path.get(property);
             }
+            Expression<?> expression = order.isIgnoreCase() ? builder.lower(path.type().as(String.class)) : path;
+            orders.add(order.isAscending() ? builder.asc(expression) : builder.desc(expression));
         }
         criteriaQuery.orderBy(orders);
     }
 
     private <E, R> BindableParametersPreparedQuery<E, R> getBindableParametersPreparedQuery(PreparedQuery<E, R> preparedQuery) {
-        if (preparedQuery instanceof BindableParametersPreparedQuery) {
-            return (BindableParametersPreparedQuery<E, R>) preparedQuery;
+        if (preparedQuery instanceof BindableParametersPreparedQuery<E, R> bindableParametersPreparedQuery) {
+            return bindableParametersPreparedQuery;
         }
         throw new IllegalStateException("Expected for prepared query to be of type: BindableParametersPreparedQuery");
     }

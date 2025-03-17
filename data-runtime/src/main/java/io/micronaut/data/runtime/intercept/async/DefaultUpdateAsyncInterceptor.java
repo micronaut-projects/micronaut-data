@@ -42,7 +42,7 @@ public class DefaultUpdateAsyncInterceptor extends AbstractCountConvertCompletio
 
     @Override
     protected CompletionStage<?> interceptCompletionStage(RepositoryMethodKey methodKey, MethodInvocationContext<Object, CompletionStage<Object>> context) {
-        PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
+        PreparedQuery<?, Number> preparedQuery = prepareQuery(methodKey, context);
         return asyncDatastoreOperations.executeUpdate(preparedQuery);
     }
 

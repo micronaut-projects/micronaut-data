@@ -30,6 +30,10 @@ public interface JsonEntityRepository extends CrudRepository<JsonEntity, Long> {
     @Query("UPDATE json_entity SET json_blob = :jsonBlob WHERE id = :id")
     void updateJsonBlobById(Long id, SampleData jsonBlob);
 
+    JsonEntity save(Long id, Iterable<String> values);
+
+    void update(@Id Long id, Iterable<String> values);
+
     @NonNull
     @Override
     JsonEntity save(@Valid @NotNull @NonNull JsonEntity entity);

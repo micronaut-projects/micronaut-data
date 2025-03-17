@@ -15,19 +15,16 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.intercept.DataInterceptor;
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
-import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.criteria.QueryCriteriaMethodMatch;
-import io.micronaut.inject.ast.ClassElement;
-import jakarta.persistence.criteria.Expression;
 
-import java.util.Map;
+import java.util.List;
 
 /**
  * Count method match.
@@ -36,38 +33,31 @@ import java.util.Map;
  * @since 3.2
  */
 @Internal
-public final class CountMethodMatcher extends AbstractPatternMethodMatcher {
+public final class CountMethodMatcher extends AbstractMethodMatcher {
 
     public CountMethodMatcher() {
-        super(true, "count");
+        super(MethodNameParser.builder()
+            .match(QueryMatchId.PREFIX, "count")
+            .tryMatch(QueryMatchId.DISTINCT, DISTINCT)
+            .tryMatchFirstOccurrencePrefixed(QueryMatchId.PREDICATE, BY)
+            .takeRest(QueryMatchId.PROJECTION)
+            .build());
     }
 
     @Override
-    protected MethodMatch match(MethodMatchContext matchContext, java.util.regex.Matcher matcher) {
+    protected MethodMatch match(MethodMatchContext matchContext, List<MethodNameParser.Match> matches) {
         if (TypeUtils.isValidCountReturnType(matchContext)) {
-            return new QueryCriteriaMethodMatch(matcher) {
+            return new QueryCriteriaMethodMatch(matches) {
 
                 @Override
-                protected <T> String applyProjections(String querySequence, PersistentEntityRoot<T> root, PersistentEntityCriteriaQuery<T> query, PersistentEntityCriteriaBuilder cb) {
-                    boolean distinct = false;
-                    if (querySequence.startsWith("Distinct")) {
-                        distinct = true;
-                        querySequence = querySequence.substring("Distinct".length());
-                    }
-                    if (StringUtils.isNotEmpty(querySequence)) {
-                        Expression<?> propertyPath = getProperty(root, querySequence);
-                        Expression<Long> count = distinct ? cb.countDistinct(propertyPath) : cb.count(propertyPath);
-                        query.multiselect(count);
-                    } else {
-                        // TODO: correct distinct
-                        Expression<Long> count = cb.count(root);
-                        query.multiselect(count);
-                    }
-                    return "";
+                protected PersistentEntityCriteriaQuery<Object> createQuery(MethodMatchContext matchContext,
+                                                                            PersistentEntityCriteriaBuilder cb,
+                                                                            List<AnnotationValue<Join>> joinSpecs) {
+                    return super.createDefaultCountQuery(matchContext, cb, joinSpecs);
                 }
 
                 @Override
-                protected Map.Entry<ClassElement, Class<? extends DataInterceptor>> resolveReturnTypeAndInterceptor(MethodMatchContext matchContext) {
+                protected FindersUtils.InterceptorMatch resolveReturnTypeAndInterceptor(MethodMatchContext matchContext) {
                     return FindersUtils.pickCountInterceptor(matchContext, matchContext.getReturnType());
                 }
 

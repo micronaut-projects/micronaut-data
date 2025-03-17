@@ -15,18 +15,16 @@
  */
 package io.micronaut.data.spring.hibernate
 
+import io.micronaut.data.connection.ConnectionOperations
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.spring.hibernate.micronaut.HibernateBookRepository
 import io.micronaut.data.spring.hibernate.micronaut.ReadOnlyTest
+import io.micronaut.data.spring.jpa.hibernate.SpringHibernateConnectionOperations
 import io.micronaut.data.spring.jpa.hibernate.SpringHibernateTransactionOperations
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.tests.AbstractTransactionSpec
 import io.micronaut.data.tck.tests.TestResourcesDatabaseTestPropertyProvider
-import io.micronaut.transaction.TransactionOperations
 import org.hibernate.resource.transaction.spi.TransactionStatus
-import org.springframework.jdbc.datasource.DataSourceUtils
-
-import java.sql.Connection
 
 class SpringHibernateTransactionSpec extends AbstractTransactionSpec implements TestResourcesDatabaseTestPropertyProvider {
 
@@ -39,7 +37,7 @@ class SpringHibernateTransactionSpec extends AbstractTransactionSpec implements 
     Map<String, String> getProperties() {
         return TestResourcesDatabaseTestPropertyProvider.super.getProperties() + [
                 "datasources.default.name"                     : "mydb",
-                "datasources.default.transactionManager"       : "springHibernate",
+                "datasources.default.transaction-manager"       : "springHibernate",
                 'jpa.default.properties.hibernate.hbm2ddl.auto': 'create-drop',
                 'jpa.default.properties.hibernate.dialect'     : 'org.hibernate.dialect.PostgreSQLDialect'
         ]
@@ -53,6 +51,11 @@ class SpringHibernateTransactionSpec extends AbstractTransactionSpec implements 
     @Override
     protected SpringHibernateTransactionOperations getTransactionOperations() {
         return context.getBean(SpringHibernateTransactionOperations)
+    }
+
+    @Override
+    protected ConnectionOperations getConnectionOperations() {
+        return context.getBean(SpringHibernateConnectionOperations)
     }
 
     @Override

@@ -81,6 +81,10 @@ class SpringCrudRepositoryJpaSpec extends Specification implements H2Properties 
         results.size() == 4
         results.every({ it instanceof Person})
 
+        def pageReq = PageRequest.of(0, 2, Sort.by("age"))
+        def page = crudRepository.findAll(SpringCrudRepository.Specifications.ageGreaterThanThirty(true), pageReq)
+        page.totalElements <= 4
+
         def sorted = crudRepository.findAll(SpringCrudRepository.Specifications.ageGreaterThanThirty(), Sort.by("age"))
 
         sorted.first().name == "James"

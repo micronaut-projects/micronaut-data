@@ -7,7 +7,7 @@ CREATE TABLE "TBL_CONTACT"
 );
 
 CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW CONTACT_VIEW AS
-SELECT JSON{'id': c.id,
+SELECT JSON{'_id': c.id,
             'name': c.name WITH UPDATE,
             'age': c.age,
             'startDateTime': c.start_date_time WITH UPDATE,

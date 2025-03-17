@@ -55,7 +55,7 @@ class BookRepositorySpec extends AbstractAzureCosmosSpec {
             book
             book.title == "The Stand"
             book.itemPrice
-            book.itemPrice.price == 99.5
+            book.itemPrice.price == 99.5D
         when:
             def count = bookRepository.count()
         then:

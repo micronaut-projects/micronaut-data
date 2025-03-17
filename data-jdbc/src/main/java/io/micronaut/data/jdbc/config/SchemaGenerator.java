@@ -17,6 +17,8 @@ package io.micronaut.data.jdbc.config;
 
 import io.micronaut.context.BeanLocator;
 import io.micronaut.context.annotation.Context;
+import io.micronaut.context.env.Environment;
+import io.micronaut.context.env.PropertyPlaceholderResolver;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.context.exceptions.NoSuchBeanException;
 import io.micronaut.core.annotation.Internal;
@@ -31,7 +33,7 @@ import io.micronaut.data.jdbc.operations.JdbcSchemaHandler;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.TableStatements;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.config.SchemaGenerate;
@@ -39,6 +41,9 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 
 import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.sql.DataSource;
 import java.lang.reflect.Modifier;
 import java.sql.Connection;
@@ -57,18 +62,25 @@ import java.util.List;
 @Internal
 public class SchemaGenerator {
 
+    private static final Logger LOG = LoggerFactory.getLogger(SchemaGenerator.class);
+
     private final List<DataJdbcConfiguration> configurations;
     private final JdbcSchemaHandler schemaHandler;
+    private final PropertyPlaceholderResolver propertyPlaceholderResolver;
 
     /**
      * Constructors a schema generator for the given configurations.
      *
      * @param configurations The configurations
      * @param schemaHandler  The schema handler
+     * @param environment    The environment
      */
-    public SchemaGenerator(List<DataJdbcConfiguration> configurations, JdbcSchemaHandler schemaHandler) {
+    public SchemaGenerator(List<DataJdbcConfiguration> configurations,
+                           JdbcSchemaHandler schemaHandler,
+                           Environment environment) {
         this.configurations = configurations == null ? Collections.emptyList() : configurations;
         this.schemaHandler = schemaHandler;
+        this.propertyPlaceholderResolver = environment.getPlaceholderResolver();
     }
 
     /**
@@ -80,8 +92,12 @@ public class SchemaGenerator {
     public void createSchema(BeanLocator beanLocator) {
         RuntimeEntityRegistry runtimeEntityRegistry = beanLocator.getBean(RuntimeEntityRegistry.class);
         for (DataJdbcConfiguration configuration : configurations) {
+            boolean enabled = configuration.isEnabled();
             SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
-            if (schemaGenerate == null || schemaGenerate == SchemaGenerate.NONE) {
+            if (!enabled || schemaGenerate == null || schemaGenerate == SchemaGenerate.NONE) {
+                if (!enabled && LOG.isDebugEnabled()) {
+                    LOG.debug("The datasource [{}] is disabled, skipping schema generator.", configuration.getName());
+                }
                 continue;
             }
             Dialect dialect = configuration.getDialect();
@@ -109,14 +125,14 @@ public class SchemaGenerator {
                             for (String schemaName : configuration.getSchemaGenerateNames()) {
                                 schemaHandler.createSchema(connection, dialect, schemaName);
                                 schemaHandler.useSchema(connection, dialect, schemaName);
-                                generate(connection, configuration, entities);
+                                generate(connection, configuration, propertyPlaceholderResolver, entities);
                             }
                         } else {
                             if (configuration.getSchemaGenerateName() != null) {
                                 schemaHandler.createSchema(connection, dialect, configuration.getSchemaGenerateName());
                                 schemaHandler.useSchema(connection, dialect, configuration.getSchemaGenerateName());
                             }
-                            generate(connection, configuration, entities);
+                            generate(connection, configuration, propertyPlaceholderResolver, entities);
                         }
                     } catch (SQLException e) {
                         throw new DataAccessException("Unable to create database schema: " + e.getMessage(), e);
@@ -130,6 +146,7 @@ public class SchemaGenerator {
 
     private static void generate(Connection connection,
                                  DataJdbcConfiguration configuration,
+                                 PropertyPlaceholderResolver propertyPlaceholderResolver,
                                  PersistentEntity[] entities) throws SQLException {
         Dialect dialect = configuration.getDialect();
         boolean handleForeignKeys = configuration.isHandleForeignKeys();
@@ -138,7 +155,7 @@ public class SchemaGenerator {
             switch (configuration.getSchemaGenerate()) {
                 case CREATE_DROP:
                     try {
-                        String sql = builder.buildBatchDropTableStatement(handleForeignKeys, entities);
+                        String sql = resolveSql(builder.buildBatchDropTableStatement(handleForeignKeys, entities));
                         if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                             DataSettings.QUERY_LOG.debug("Dropping Tables: \n{}", sql);
                         }
@@ -151,7 +168,7 @@ public class SchemaGenerator {
                         }
                     }
                 case CREATE:
-                    String sql = builder.buildBatchCreateTableStatement(handleForeignKeys, entities);
+                    String sql = resolveSql(builder.buildBatchCreateTableStatement(handleForeignKeys, entities));
                     if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                         DataSettings.QUERY_LOG.debug("Creating Tables: \n{}", sql);
                     }
@@ -174,6 +191,7 @@ public class SchemaGenerator {
                             if (handleForeignKeys) {
                                 String[] statements = tableStatements.getForeignKeyStatements();
                                 for (String sql : statements) {
+                                    sql = resolveSql(propertyPlaceholderResolver, sql);
                                     try {
                                         if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                                             DataSettings.QUERY_LOG.debug("Dropping Foreign Key : \n{}", sql);
@@ -216,6 +234,7 @@ public class SchemaGenerator {
                             foreignKeyStatements.addAll(Arrays.asList(creteTableStatements.getForeignKeyStatements()));
                         }
                         for (String stmt : creteTableStatements.getStatements()) {
+                            stmt = resolveSql(propertyPlaceholderResolver, stmt);
                             if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                                 DataSettings.QUERY_LOG.debug("Executing CREATE statement: \n{}", stmt);
                             }
@@ -251,5 +270,19 @@ public class SchemaGenerator {
                     // do nothing
             }
         }
+    }
+
+    /**
+     * Resolves property placeholder values if there are any.
+     *
+     * @param propertyPlaceholderResolver The property placeholder resolver
+     * @param sql The SQL to resolve placeholder properties if there are any
+     * @return The resulting SQL with resolved properties if there were any
+     */
+    private static String resolveSql(PropertyPlaceholderResolver propertyPlaceholderResolver, String sql) {
+        if (sql.contains(propertyPlaceholderResolver.getPrefix())) {
+            return propertyPlaceholderResolver.resolveRequiredPlaceholders(sql);
+        }
+        return sql;
     }
 }

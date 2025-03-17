@@ -15,27 +15,26 @@
  */
 package io.micronaut.data.document.processor.matchers;
 
-import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.document.mongo.MongoAnnotations;
-import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.annotation.DataMethod;
-import io.micronaut.data.model.PersistentPropertyPath;
-import io.micronaut.data.model.query.BindingParameter.BindingContext;
+import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
-import io.micronaut.data.processor.model.criteria.impl.SourceParameterExpressionImpl;
 import io.micronaut.data.processor.visitors.MatchFailedException;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.FindersUtils;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.data.processor.visitors.finders.MethodMatcher;
+import io.micronaut.data.processor.visitors.finders.RawQueryMethodMatcher;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
 import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
 import io.micronaut.inject.annotation.MutableAnnotationMetadata;
@@ -47,8 +46,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.regex.Pattern;
 
 /**
@@ -60,12 +57,6 @@ import java.util.regex.Pattern;
 public class MongoRawQueryMethodMatcher implements MethodMatcher {
 
     private static final Pattern VARIABLE_PATTERN = Pattern.compile("([^:]*)((?<![:]):([a-zA-Z]+[a-zA-Z0-9]*))([^:]*)");
-
-    /**
-     * Default constructor.
-     */
-    public MongoRawQueryMethodMatcher() {
-    }
 
     @Override
     public final int getOrder() {
@@ -101,9 +92,9 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
             removeAnnotation(hierarchy.getRootMetadata(), annotation);
             return;
         }
-        if (annotationMetadata instanceof MutableAnnotationMetadata) {
-            ((MutableAnnotationMetadata) annotationMetadata).removeAnnotation(annotation);
-            ((MutableAnnotationMetadata) annotationMetadata).removeStereotype(annotation);
+        if (annotationMetadata instanceof MutableAnnotationMetadata mutableAnnotationMetadata) {
+            mutableAnnotationMetadata.removeAnnotation(annotation);
+            mutableAnnotationMetadata.removeStereotype(annotation);
         }
     }
 
@@ -123,14 +114,14 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
                     entitiesParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isIterableOfEntity(p.getGenericType())).findFirst().orElse(null);
                 }
 
-                Map.Entry<ClassElement, Class<? extends DataInterceptor>> entry = FindersUtils.resolveInterceptorTypeByOperationType(
+                FindersUtils.InterceptorMatch entry = FindersUtils.resolveInterceptorTypeByOperationType(
                         entityParameter != null,
                         entitiesParameter != null,
                         operationType,
                         matchContext);
 
-                ClassElement resultType = entry.getKey();
-                Class<? extends DataInterceptor> interceptorType = entry.getValue();
+                ClassElement resultType = entry.returnType();
+                ClassElement interceptorType = entry.interceptor();
 
                 boolean isDto = false;
                 if (resultType == null) {
@@ -146,7 +137,7 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
                 MethodMatchInfo methodMatchInfo = new MethodMatchInfo(
                         operationType,
                         resultType,
-                        FindersUtils.getInterceptorElement(matchContext, interceptorType)
+                        interceptorType
                 );
 
                 methodMatchInfo.dto(isDto);
@@ -229,36 +220,14 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
         }
         List<QueryParameterBinding> parameterBindings = new ArrayList<>(parameters.size());
         String filterQuery = processCustomQuery(matchContext, filterQueryString, parameters, entityParam, persistentEntity, parameterBindings);
-        return new QueryResult() {
-            @Override
-            public String getQuery() {
-                return filterQuery;
-            }
-
-            @Override
-            public List<String> getQueryParts() {
-                return Collections.emptyList();
-            }
-
-            @Override
-            public List<QueryParameterBinding> getParameterBindings() {
-                return parameterBindings;
-            }
-
-            @Override
-            public Map<String, String> getAdditionalRequiredParameters() {
-                return Collections.emptyMap();
-            }
-        };
+        return QueryResult.of(filterQuery, parameterBindings);
     }
 
     private QueryResult getUpdateQueryResult(MethodMatchContext matchContext,
                                        List<ParameterElement> parameters,
                                        ParameterElement entityParam,
                                        SourcePersistentEntity persistentEntity) {
-        String filterQueryString = matchContext.getMethodElement().stringValue(MongoAnnotations.FILTER).orElseThrow(() ->
-                new MatchFailedException("Filter query is missing!")
-        );
+        String filterQueryString = matchContext.getMethodElement().stringValue(MongoAnnotations.FILTER).orElse("{}");
         String updateQueryString = matchContext.getMethodElement().stringValue(MongoAnnotations.UPDATE_QUERY, "update").orElseThrow(() ->
                 new MatchFailedException("Update query is missing!")
         );
@@ -288,14 +257,14 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
                 return parameterBindings;
             }
 
-            @Override
-            public Map<String, String> getAdditionalRequiredParameters() {
-                return Collections.emptyMap();
-            }
         };
     }
 
     private String processCustomQuery(MethodMatchContext matchContext, String queryString, List<ParameterElement> parameters, ParameterElement entityParam, SourcePersistentEntity persistentEntity, List<QueryParameterBinding> parameterBindings) {
+        List<AnnotationValue<ParameterExpression>> parameterExpressions = matchContext.getMethodElement()
+            .getAnnotationMetadata()
+            .getAnnotationValuesByType(ParameterExpression.class);
+
         java.util.regex.Matcher matcher = VARIABLE_PATTERN.matcher(queryString);
         List<String> queryParts = new ArrayList<>();
         int lastOffset = 0;
@@ -309,30 +278,17 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
 
             String name = matcher.group(3);
 
-            Optional<ParameterElement> element = parameters.stream()
-                    .filter(p -> p.stringValue(Parameter.class).orElse(p.getName()).equals(name))
-                    .findFirst();
-            if (element.isPresent()) {
-                PersistentPropertyPath propertyPath = matchContext.getRootEntity().getPropertyPath(name);
-                BindingContext bindingContext = BindingContext.create()
-                        .name(name)
-                        .incomingMethodParameterProperty(propertyPath)
-                        .outgoingQueryParameterProperty(propertyPath);
-                parameterBindings.add(bindingParameter(matchContext, element.get()).bind(bindingContext));
-            } else if (persistentEntity != null) {
-                PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(name);
-                if (propertyPath == null) {
-                    throw new MatchFailedException("Cannot update non-existent property: " + name);
-                } else {
-                    BindingContext bindingContext = BindingContext.create()
-                            .name(name)
-                            .incomingMethodParameterProperty(propertyPath)
-                            .outgoingQueryParameterProperty(propertyPath);
-                    parameterBindings.add(bindingParameter(matchContext, entityParam, true).bind(bindingContext));
-                }
-            } else {
-                throw new MatchFailedException("No method parameter found for named Query parameter: " + name);
-            }
+            QueryParameterBinding binding = RawQueryMethodMatcher.addBinding(
+                matchContext,
+                parameters,
+                parameterExpressions,
+                entityParam,
+                persistentEntity,
+                name,
+                BindingParameter.BindingContext.create().name(name)
+            );
+
+            parameterBindings.add(binding);
 
             int ind = parameterBindings.size() - 1;
             queryParts.add("{$mn_qp:" + ind + "}");
@@ -342,18 +298,6 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
             queryParts.add(end);
         }
         return String.join("", queryParts);
-    }
-
-    private SourceParameterExpressionImpl bindingParameter(MethodMatchContext matchContext, ParameterElement element) {
-        return bindingParameter(matchContext, element, false);
-    }
-
-    private SourceParameterExpressionImpl bindingParameter(MethodMatchContext matchContext, ParameterElement element, boolean isEntityParameter) {
-        return new SourceParameterExpressionImpl(
-                Collections.emptyMap(),
-                matchContext.getParameters(),
-                element,
-                isEntityParameter);
     }
 
 }

@@ -32,8 +32,8 @@ dependencies {
     implementation projects.micronautDataMongodb
     implementation mnMongo.mongo.driver
 
-    implementation libs.jakarta.persistence.api
-    implementation libs.jakarta.transaction.api
+    implementation(mnSql.jakarta.persistence.api)
+    implementation(mnSql.jakarta.transaction.api)
 
     runtimeOnly mnLogging.logback.classic
 }

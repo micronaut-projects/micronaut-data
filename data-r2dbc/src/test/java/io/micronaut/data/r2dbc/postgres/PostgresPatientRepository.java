@@ -13,6 +13,7 @@ import java.util.List;
 @R2dbcRepository(dialect = Dialect.POSTGRES)
 public interface PostgresPatientRepository extends PatientRepository {
 
+    @Override
     @Query("UPDATE patient SET appointments = to_json(:appointments::json) WHERE name = :name")
     void updateAppointmentsByName(@Parameter String name, @TypeDef(type = DataType.JSON) List<String> appointments);
 }

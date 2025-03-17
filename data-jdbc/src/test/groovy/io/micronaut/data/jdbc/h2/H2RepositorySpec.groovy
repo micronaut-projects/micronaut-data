@@ -16,30 +16,17 @@
 package io.micronaut.data.jdbc.h2
 
 import groovy.transform.Memoized
-import io.micronaut.data.tck.repositories.AuthorRepository
-import io.micronaut.data.tck.repositories.BasicTypesRepository
-import io.micronaut.data.tck.repositories.BookDtoRepository
-import io.micronaut.data.tck.repositories.BookRepository
-import io.micronaut.data.tck.repositories.CarRepository
-import io.micronaut.data.tck.repositories.CityRepository
-import io.micronaut.data.tck.repositories.CompanyRepository
-import io.micronaut.data.tck.repositories.CountryRegionCityRepository
-import io.micronaut.data.tck.repositories.CountryRepository
-import io.micronaut.data.tck.repositories.FaceRepository
-import io.micronaut.data.tck.repositories.FoodRepository
-import io.micronaut.data.tck.repositories.GenreRepository
-import io.micronaut.data.tck.repositories.MealRepository
-import io.micronaut.data.tck.repositories.NoseRepository
-import io.micronaut.data.tck.repositories.PageRepository
-import io.micronaut.data.tck.repositories.PersonRepository
-import io.micronaut.data.tck.repositories.RegionRepository
-import io.micronaut.data.tck.repositories.RoleRepository
-import io.micronaut.data.tck.repositories.StudentRepository
-import io.micronaut.data.tck.repositories.TimezoneBasicTypesRepository
-import io.micronaut.data.tck.repositories.UserRepository
-import io.micronaut.data.tck.repositories.UserRoleRepository
+import io.micronaut.data.tck.entities.embedded.BookEntity
+import io.micronaut.data.tck.entities.embedded.BookState
+import io.micronaut.data.tck.entities.embedded.ResourceEntity
+import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 import spock.lang.Shared
+
+import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.findNameSubqueryEq
+import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.findNameSubqueryIn
+import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEqualsCaseInsensitive
+import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.subqueriesWithJoinReferencingOuter
 
 class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyProvider {
 
@@ -102,6 +89,28 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
 
     @Shared
     H2PageRepository pageRepo = context.getBean(H2PageRepository)
+
+    @Shared
+    H2EntityWithIdClassRepository entityWithIdClassRepo = context.getBean(H2EntityWithIdClassRepository)
+
+    @Shared
+    H2EntityWithIdClass2Repository entityWithIdClass2Repo = context.getBean(H2EntityWithIdClass2Repository)
+
+    @Shared
+    H2BookEntityRepository bookEntityRepository = context.getBean(H2BookEntityRepository)
+
+    @Shared
+    H2ExampleEntityRepository exampleEntityRepo = context.getBean(H2ExampleEntityRepository)
+
+    @Override
+    EntityWithIdClassRepository getEntityWithIdClassRepository() {
+        return entityWithIdClassRepo
+    }
+
+    @Override
+    EntityWithIdClass2Repository getEntityWithIdClass2Repository() {
+        return entityWithIdClass2Repo
+    }
 
     @Override
     NoseRepository getNoseRepository() {
@@ -216,6 +225,11 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
     }
 
     @Override
+    ExampleEntityRepository getExampleEntityRepository() {
+        return exampleEntityRepo
+    }
+
+    @Override
     boolean isSupportsArrays() {
         return true
     }
@@ -223,6 +237,39 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
     @Override
     protected boolean skipQueryByDataArray() {
         return true
+    }
+
+    void "test subquery with JOIN" () {
+        given:
+            saveSampleBooks()
+        when:
+            def books = bookRepository.findAll(subqueriesWithJoinReferencingOuter())
+        then:
+            books.size() == 6
+    }
+
+    void "test subquery IN" () {
+        when:
+            savePersons(["Jeff", "James"])
+            def person = personRepository.findOne(findNameSubqueryIn("James"))
+        then:
+            person
+    }
+
+    void "test subquery EQ" () {
+        when:
+            savePersons(["Jeff", "James"])
+            def person = personRepository.findOne(findNameSubqueryEq("James"))
+        then:
+            person
+    }
+
+    void "test criteria lower select" () {
+        when:
+            savePersons(["Jeff", "James"])
+            def person = personRepository.findOne(nameEqualsCaseInsensitive("james"))
+        then:
+            person.isPresent()
     }
 
     void "test manual joining on many ended association"() {
@@ -273,4 +320,14 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
         cleanupData()
     }
 
+    void "find by embedded entity field"() {
+        when:
+        def bookEntity = new BookEntity(1L, new ResourceEntity<BookState>("1984", BookState.BORROWED))
+        bookEntityRepository.save(bookEntity)
+        def result = bookEntityRepository.findAllByResourceState(BookState.BORROWED)
+        then:
+        result
+        cleanup:
+        bookEntityRepository.deleteAll()
+    }
 }

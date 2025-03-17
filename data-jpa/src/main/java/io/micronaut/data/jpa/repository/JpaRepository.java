@@ -25,7 +25,6 @@ import io.micronaut.data.model.Sort;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.PageableRepository;
 
-import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -73,7 +72,7 @@ public interface JpaRepository<E, ID> extends CrudRepository<E, ID>, PageableRep
      * @return An uninitialized proxy
      */
     @DataMethod(interceptor = LoadInterceptor.class)
-    <S extends E> S load(@NonNull Serializable id);
+    <S extends E> S load(@NonNull Object id);
 
     /**
      * Merge the state of the given entity into the

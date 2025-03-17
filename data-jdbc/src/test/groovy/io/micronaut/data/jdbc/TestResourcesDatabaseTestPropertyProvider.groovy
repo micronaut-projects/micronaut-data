@@ -58,7 +58,11 @@ trait TestResourcesDatabaseTestPropertyProvider implements TestPropertyProvider 
                 (prefix + '.handle-foreign-keys') : handleForeignKeys(),
                 (prefix + '.dialect')             : dialect(),
                 (prefix + '.packages')            : packages(),
+                (prefix + '.enabled')           : dataSourceEnabled(dataSourceName)
         ] as Map<String, String>
     }
 
+    boolean dataSourceEnabled(String dataSourceName) {
+        true
+    }
 }

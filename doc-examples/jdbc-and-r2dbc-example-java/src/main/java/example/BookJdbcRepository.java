@@ -26,6 +26,7 @@ interface BookJdbcRepository extends CrudRepository<Book, Long> {
 
     void update(@Id Long id, String title);
 
+    @Override
     void deleteAll();
 
     void delete(String title);

@@ -21,10 +21,16 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
+import jakarta.persistence.Tuple;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 /**
  * Runtime implementation of {@code CompletableFuture<Page> find(Specification, Pageable)}.
@@ -56,18 +62,67 @@ public class FindPageAsyncSpecificationInterceptor extends AbstractAsyncSpecific
 
         Pageable pageable = getPageable(context);
         if (pageable.isUnpaged()) {
-            PreparedQuery<?, ?> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.FIND_PAGE);
-            return asyncOperations.findAll(preparedQuery).thenApply(iterable -> {
+            return findAllAsync(methodKey, context).thenApply(iterable -> {
                 List<?> resultList = CollectionUtils.iterableToList(iterable);
-                return Page.of(resultList, pageable, resultList.size());
+                return Page.of(resultList, pageable, (long) resultList.size());
             });
         }
-        PreparedQuery<?, ?> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.FIND_PAGE);
-        PreparedQuery<?, Number> countQuery = preparedQueryForCriteria(methodKey, context, Type.COUNT);
 
-        return asyncOperations.findAll(preparedQuery).thenCompose(iterable -> asyncOperations.findOne(countQuery)
-                .thenApply(count -> Page.of(CollectionUtils.iterableToList(iterable), pageable, count.longValue())));
+        CriteriaQuery<Object> criteriaQuery = buildQuery(methodKey, context);
+        Root<?> root = criteriaQuery.getRoots().iterator().next();
+        CompletionStage<List<Object>> content;
+        if (root.getJoins().isEmpty()) {
+            content = findAllAsync(methodKey, context, pageable, criteriaQuery);
+        } else {
+            CriteriaQuery<Tuple> criteriaIdsQuery = buildIdsQuery(methodKey, context, pageable);
+            content = findAllAsync(methodKey, context, pageable, criteriaIdsQuery)
+                .thenCompose(tupleResult -> {
+                    if (tupleResult.isEmpty()) {
+                        return CompletableFuture.completedFuture(List.of());
+                    } else {
+                        List<Object> ids = new ArrayList<>(tupleResult.size());
+                        for (Tuple tuple : tupleResult) {
+                            ids.add(tuple.get(0));
+                        }
+                        Predicate inPredicate = getIdExpression(root).in(ids);
+                        criteriaQuery.where(inPredicate);
+                        return findAllAsync(methodKey, context, pageable.withoutPaging(), criteriaQuery);
+                    }
+                });
+        }
 
+        return content.thenCompose(iterable -> {
+                if (pageable.requestTotal()) {
+                    return getAsyncCriteriaRepositoryOperations(methodKey, context, null)
+                        .findOne(buildCountQuery(methodKey, context)).<Number>thenApply(n -> n)
+                        .thenApply(count -> Page.of(CollectionUtils.iterableToList(iterable), pageable, count.longValue()));
+                } else {
+                    return CompletableFuture.completedFuture(Page.of(CollectionUtils.iterableToList(iterable), pageable, null));
+                }
+            }
+        );
+
+    }
+
+    private <T> CompletionStage<List<T>> findAllAsync(RepositoryMethodKey methodKey,
+                                                      MethodInvocationContext<?, ?> context,
+                                                      Pageable pageable, CriteriaQuery<T> criteriaQuery) {
+        pageable = applyPaginationAndSort(pageable, criteriaQuery, false);
+        if (asyncCriteriaOperations != null) {
+            if (pageable != null) {
+                if (pageable.getMode() != Pageable.Mode.OFFSET) {
+                    throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported by hibernate operations");
+                }
+                return asyncCriteriaOperations.findAll(criteriaQuery, (int) pageable.getOffset(), pageable.getSize());
+            }
+            int offset = getOffset(context);
+            int limit = getLimit(context);
+            if (offset > 0 || limit > 0) {
+                return asyncCriteriaOperations.findAll(criteriaQuery, offset, limit);
+            }
+            return asyncCriteriaOperations.findAll(criteriaQuery);
+        }
+        return getAsyncCriteriaRepositoryOperations(methodKey, context, pageable).findAll(criteriaQuery);
     }
 
 }

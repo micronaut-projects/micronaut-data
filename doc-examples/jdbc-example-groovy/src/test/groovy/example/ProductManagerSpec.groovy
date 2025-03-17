@@ -37,4 +37,22 @@ class ProductManagerSpec extends Specification {
             vr.name == "VR"
     }
 
+    void "test product manager using repo"() {
+        given:
+        Manufacturer intel = manufacturerRepository.save("Intel")
+
+        when:
+        productManager.save("Processor", intel)
+
+        then:
+        def product = productManager.findUsingRepo("Processor")
+        product.name == "Processor"
+
+        when:
+        product = productManager.findUsingRepo("NonExistingProduct")
+
+        then:
+        !product
+    }
+
 }

@@ -44,8 +44,9 @@ import jakarta.persistence.metamodel.PluralAttribute;
 import jakarta.persistence.metamodel.SetAttribute;
 import jakarta.persistence.metamodel.SingularAttribute;
 
-import java.util.HashSet;
+import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -61,23 +62,48 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupport
  * @since 3.2
  */
 @Internal
-public abstract class AbstractPersistentEntityJoinSupport<J, E> implements PersistentEntityFrom<J, E>, SelectionVisitable {
+public abstract class AbstractPersistentEntityJoinSupport<J, E> implements PersistentEntityFrom<J, E> {
 
-    protected final Map<String, PersistentAssociationPath> joins = new LinkedHashMap<>();
+    protected final Map<String, PersistentAssociationPath<E, ?>> joins = new LinkedHashMap<>();
 
+    @Override
     public abstract PersistentEntity getPersistentEntity();
 
-    protected abstract <X, Y> PersistentAssociationPath<X, Y> createJoinAssociation(@NonNull Association association,
-                                                                                    @Nullable io.micronaut.data.annotation.Join.Type type,
-                                                                                    @Nullable String alias);
+    protected abstract <Y> PersistentAssociationPath<E, Y> createJoinAssociation(@NonNull Association association,
+                                                                                 @Nullable io.micronaut.data.annotation.Join.Type type,
+                                                                                 @Nullable String alias);
+
+    private <X, Y> PersistentAssociationPath<X, Y> getJoin(String attributeName) {
+        return getJoin(attributeName, null, null);
+
+    }
+
+    private <X, Y> PersistentAssociationPath<X, Y> getJoin(String attributeName, io.micronaut.data.annotation.Join.Type type) {
+        return getJoin(attributeName, type, null);
+    }
 
     private <X, Y> PersistentAssociationPath<X, Y> getJoin(String attributeName, io.micronaut.data.annotation.Join.Type type, String alias) {
         PersistentProperty persistentProperty = getPersistentEntity().getPropertyByName(attributeName);
-        if (!(persistentProperty instanceof Association)) {
+
+        if (persistentProperty == null && attributeName.contains(".")) {
+            int periodIndex = attributeName.indexOf(".");
+            String owner = attributeName.substring(0, periodIndex);
+            PersistentAssociationPath<E, ?> persistentAssociationPath;
+            if (joins.containsKey(owner)) {
+                persistentAssociationPath = joins.get(owner);
+            } else {
+                persistentAssociationPath = (PersistentAssociationPath<E, ?>) join(owner, type);
+            }
+            String remainingJoinPath = attributeName.substring(periodIndex + 1);
+            return alias == null ? (PersistentAssociationPath<X, Y>) persistentAssociationPath.join(remainingJoinPath, type)
+                : (PersistentAssociationPath<X, Y>) persistentAssociationPath.join(remainingJoinPath, type, alias);
+        }
+
+        if (!(persistentProperty instanceof Association association)) {
             throw new IllegalStateException("Expected an association for attribute name: " + attributeName);
         }
 
-        PersistentAssociationPath path = joins.computeIfAbsent(attributeName, a -> createJoinAssociation((Association) persistentProperty, type, alias));
+        PersistentAssociationPath<E, ?> path = joins.computeIfAbsent(attributeName, a -> createJoinAssociation(association, type, alias));
 
         if (type != null && type != io.micronaut.data.annotation.Join.Type.DEFAULT) {
             path.setAssociationJoinType(type);
@@ -88,33 +114,28 @@ public abstract class AbstractPersistentEntityJoinSupport<J, E> implements Persi
         return (PersistentAssociationPath<X, Y>) path;
     }
 
-    private <X, Y> PersistentCollectionAssociationPath<X, Y> getCollectionJoin(String attributeName, io.micronaut.data.annotation.Join.Type type, String alias) {
-        PersistentAssociationPath<Object, Object> join = getJoin(attributeName, type, alias);
-        if (!(join instanceof PersistentCollectionAssociationPath)) {
+    private <Y> PersistentCollectionAssociationPath<E, Y> getCollectionJoin(String attributeName, io.micronaut.data.annotation.Join.Type type) {
+        PersistentAssociationPath<E, Y> join = getJoin(attributeName, type);
+        if (!(join instanceof PersistentCollectionAssociationPath<E, Y> persistentCollectionAssociationPath)) {
             throw new IllegalStateException("Join is not a Collection!");
         }
-        return (PersistentCollectionAssociationPath<X, Y>) join;
+        return persistentCollectionAssociationPath;
     }
 
-    private <X, Y> PersistentSetAssociationPath<X, Y> getSetJoin(String attributeName, io.micronaut.data.annotation.Join.Type type, String alias) {
-        PersistentAssociationPath<Object, Object> join = getJoin(attributeName, type, alias);
-        if (!(join instanceof PersistentSetAssociationPath)) {
+    private <Y> PersistentSetAssociationPath<E, Y> getSetJoin(String attributeName, io.micronaut.data.annotation.Join.Type type) {
+        PersistentAssociationPath<E, Y> join = getJoin(attributeName, type);
+        if (!(join instanceof PersistentSetAssociationPath<E, Y> persistentSetAssociationPath)) {
             throw new IllegalStateException("Join is not a Set!");
         }
-        return (PersistentSetAssociationPath<X, Y>) join;
+        return persistentSetAssociationPath;
     }
 
-    private <X, Y> PersistentListAssociationPath<X, Y> getListJoin(String attributeName, io.micronaut.data.annotation.Join.Type type, String alias) {
-        PersistentAssociationPath<Object, Object> join = getJoin(attributeName, type, alias);
-        if (!(join instanceof PersistentListAssociationPath)) {
+    private <Y> PersistentListAssociationPath<E, Y> getListJoin(String attributeName, io.micronaut.data.annotation.Join.Type type) {
+        PersistentAssociationPath<E, Y> join = getJoin(attributeName, type);
+        if (!(join instanceof PersistentListAssociationPath<E, Y> persistentListAssociationPath)) {
             throw new IllegalStateException("Join is not a List!");
         }
-        return (PersistentListAssociationPath<X, Y>) join;
-    }
-
-    @Override
-    public Path<?> getParentPath() {
-        throw notSupportedOperation();
+        return persistentListAssociationPath;
     }
 
     @Override
@@ -123,23 +144,23 @@ public abstract class AbstractPersistentEntityJoinSupport<J, E> implements Persi
     }
 
     @Override
-    public <K, C extends java.util.Collection<K>> Expression<C> get(PluralAttribute<E, C, K> collection) {
+    public <K, C extends Collection<K>> Expression<C> get(PluralAttribute<E, C, K> collection) {
         return get(collection.getName());
     }
 
     @Override
     public <X, Y> PersistentEntityJoin<X, Y> join(String attributeName) {
-        return getJoin(attributeName, null, null);
+        return getJoin(attributeName);
     }
 
     @Override
     public <X, Y> PersistentEntityJoin<X, Y> join(String attributeName, JoinType jt) {
-        return getJoin(attributeName, convert(Objects.requireNonNull(jt)), null);
+        return getJoin(attributeName, convert(Objects.requireNonNull(jt)));
     }
 
     @Override
     public <X, Y> PersistentEntityJoin<X, Y> join(String attributeName, io.micronaut.data.annotation.Join.Type type) {
-        return getJoin(attributeName, Objects.requireNonNull(type), null);
+        return getJoin(attributeName, Objects.requireNonNull(type));
     }
 
     @Override
@@ -152,46 +173,41 @@ public abstract class AbstractPersistentEntityJoinSupport<J, E> implements Persi
         if (joinType == null) {
             return null;
         }
-        switch (joinType) {
-            case LEFT:
-                return io.micronaut.data.annotation.Join.Type.LEFT;
-            case RIGHT:
-                return io.micronaut.data.annotation.Join.Type.RIGHT;
-            case INNER:
-                return io.micronaut.data.annotation.Join.Type.INNER;
-            default:
-                return null;
-        }
+        return switch (joinType) {
+            case LEFT -> io.micronaut.data.annotation.Join.Type.LEFT_FETCH;
+            case RIGHT -> io.micronaut.data.annotation.Join.Type.RIGHT_FETCH;
+            case INNER -> io.micronaut.data.annotation.Join.Type.INNER;
+        };
     }
 
     @Override
     public <Y> PersistentEntityJoin<E, Y> join(SingularAttribute<? super E, Y> attribute) {
-        return getJoin(attribute.getName(), null, null);
+        return getJoin(attribute.getName());
     }
 
     @Override
     public <Y> PersistentEntityJoin<E, Y> join(SingularAttribute<? super E, Y> attribute, JoinType jt) {
-        return getJoin(attribute.getName(), convert(Objects.requireNonNull(jt)), null);
+        return getJoin(attribute.getName(), convert(Objects.requireNonNull(jt)));
     }
 
     @Override
     public <Y> PersistentEntityCollectionJoin<E, Y> join(CollectionAttribute<? super E, Y> collection, JoinType jt) {
-        return getCollectionJoin(collection.getName(), convert(jt), null);
+        return getCollectionJoin(collection.getName(), convert(jt));
     }
 
     @Override
     public <Y> PersistentEntityCollectionJoin<E, Y> join(CollectionAttribute<? super E, Y> collection) {
-        return getCollectionJoin(collection.getName(), null, null);
+        return getCollectionJoin(collection.getName(), null);
     }
 
     @Override
     public <Y> PersistentEntitySetJoin<E, Y> join(SetAttribute<? super E, Y> set) {
-        return getSetJoin(set.getName(), null, null);
+        return getSetJoin(set.getName(), null);
     }
 
     @Override
     public <Y> PersistentEntityListJoin<E, Y> join(ListAttribute<? super E, Y> list) {
-        return getListJoin(list.getName(), null, null);
+        return getListJoin(list.getName(), null);
     }
 
     @Override
@@ -201,12 +217,12 @@ public abstract class AbstractPersistentEntityJoinSupport<J, E> implements Persi
 
     @Override
     public <Y> PersistentEntitySetJoin<E, Y> join(SetAttribute<? super E, Y> set, JoinType jt) {
-        return getSetJoin(set.getName(), convert(Objects.requireNonNull(jt)), null);
+        return getSetJoin(set.getName(), convert(Objects.requireNonNull(jt)));
     }
 
     @Override
     public <Y> PersistentEntityListJoin<E, Y> join(ListAttribute<? super E, Y> list, JoinType jt) {
-        return getListJoin(list.getName(), convert(Objects.requireNonNull(jt)), null);
+        return getListJoin(list.getName(), convert(Objects.requireNonNull(jt)));
     }
 
     @Override
@@ -216,17 +232,17 @@ public abstract class AbstractPersistentEntityJoinSupport<J, E> implements Persi
 
     @Override
     public <X, Y> PersistentEntityCollectionJoin<X, Y> joinCollection(String attributeName) {
-        return getCollectionJoin(attributeName, null, null);
+        return (PersistentEntityCollectionJoin<X, Y>) getCollectionJoin(attributeName, null);
     }
 
     @Override
     public <X, Y> PersistentEntitySetJoin<X, Y> joinSet(String attributeName) {
-        return getSetJoin(attributeName, null, null);
+        return (PersistentEntitySetJoin<X, Y>) getSetJoin(attributeName, null);
     }
 
     @Override
     public <X, Y> PersistentEntityListJoin<X, Y> joinList(String attributeName) {
-        return getListJoin(attributeName, null, null);
+        return (PersistentEntityListJoin<X, Y>) getListJoin(attributeName, null);
     }
 
     @Override
@@ -236,17 +252,17 @@ public abstract class AbstractPersistentEntityJoinSupport<J, E> implements Persi
 
     @Override
     public <X, Y> PersistentEntityCollectionJoin<X, Y> joinCollection(String attributeName, JoinType jt) {
-        return getCollectionJoin(attributeName, null, null);
+        return (PersistentEntityCollectionJoin<X, Y>) getCollectionJoin(attributeName, null);
     }
 
     @Override
     public <X, Y> PersistentEntitySetJoin<X, Y> joinSet(String attributeName, JoinType jt) {
-        return getSetJoin(attributeName, convert(Objects.requireNonNull(jt)), null);
+        return (PersistentEntitySetJoin<X, Y>) getSetJoin(attributeName, convert(Objects.requireNonNull(jt)));
     }
 
     @Override
     public <X, Y> PersistentEntityListJoin<X, Y> joinList(String attributeName, JoinType jt) {
-        return getListJoin(attributeName, convert(Objects.requireNonNull(jt)), null);
+        return (PersistentEntityListJoin<X, Y>) getListJoin(attributeName, convert(Objects.requireNonNull(jt)));
     }
 
     @Override
@@ -256,7 +272,12 @@ public abstract class AbstractPersistentEntityJoinSupport<J, E> implements Persi
 
     @Override
     public Set<Join<E, ?>> getJoins() {
-        return new HashSet(joins.values());
+        return new LinkedHashSet<>(joins.values());
+    }
+
+    @Override
+    public Collection<PersistentAssociationPath<E, ?>> getPersistentJoins() {
+        return joins.values();
     }
 
     @Override
@@ -311,11 +332,6 @@ public abstract class AbstractPersistentEntityJoinSupport<J, E> implements Persi
 
     @Override
     public Expression<Class<? extends E>> type() {
-        throw notSupportedOperation();
-    }
-
-    @Override
-    public Class<? extends E> getJavaType() {
         throw notSupportedOperation();
     }
 

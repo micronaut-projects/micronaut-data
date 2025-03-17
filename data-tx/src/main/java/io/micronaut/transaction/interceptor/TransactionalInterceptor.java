@@ -153,8 +153,9 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
      * @return The {@link TransactionDefinition}
      */
     private TransactionDefinition resolveTransactionDefinition(ExecutableMethod<Object, Object> executableMethod) {
-        TransactionDefinition definition = TransactionUtil.getTransactionDefinition(
-            executableMethod.getDeclaringType().getSimpleName() + "." + executableMethod.getMethodName(), executableMethod);
+        String name = executableMethod.stringValue(Transactional.class, "name")
+            .orElseGet(() -> executableMethod.getDeclaringType().getSimpleName() + "." + executableMethod.getMethodName());
+        TransactionDefinition definition = TransactionUtil.getTransactionDefinition(name, executableMethod);
         if (definition == TransactionDefinition.DEFAULT) {
             throw new IllegalStateException("No declared @Transactional annotation present");
         }

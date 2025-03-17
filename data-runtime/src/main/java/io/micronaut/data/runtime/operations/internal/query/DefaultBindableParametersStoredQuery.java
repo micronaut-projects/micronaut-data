@@ -16,6 +16,8 @@
 package io.micronaut.data.runtime.operations.internal.query;
 
 import io.micronaut.aop.InvocationContext;
+import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanWrapper;
@@ -24,12 +26,14 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentPropertyPath;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.runtime.DelegatingQueryParameterBinding;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
+import io.micronaut.inject.annotation.EvaluatedAnnotationValue;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -97,7 +101,22 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
         RuntimePersistentProperty<Object> persistentProperty = null;
         Argument<?> argument = null;
         if (value == null) {
-            if (binding.getParameterIndex() != -1) {
+            if (binding.isExpression()) {
+                requireInvocationContext(invocationContext);
+                AnnotationValue<?> annotationValue = storedQuery.getParameterExpressions().get(binding.getName());
+                if (annotationValue == null) {
+                    throw new IllegalStateException("Required annotation value for parameter expression: " + binding.getName());
+                }
+                if (annotationValue instanceof EvaluatedAnnotationValue<?> evaluatedAnnotationValue) {
+                    evaluatedAnnotationValue = evaluatedAnnotationValue.withArguments(
+                        invocationContext.getTarget(),
+                        invocationContext.getParameterValues()
+                    );
+                    value = evaluatedAnnotationValue.get("expression", Argument.OBJECT_ARGUMENT).orElseThrow();
+                } else {
+                    throw new IllegalStateException("Required evaluated annotation value for parameter expression: " + binding.getName());
+                }
+            } else if (binding.getParameterIndex() != -1) {
                 requireInvocationContext(invocationContext);
                 value = resolveParameterValue(binding, invocationContext.getParameterValues());
                 argument = invocationContext.getArguments()[binding.getParameterIndex()];
@@ -135,13 +154,31 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
                     persistentProperty = (RuntimePersistentProperty<Object>) pp.getProperty();
                 }
             } else {
-                int currentIndex = binder.currentIndex();
-                if (currentIndex != -1) {
-                    throw new IllegalStateException("Invalid query [" + getQuery() + "]. Unable to establish parameter value for parameter at position: " + currentIndex);
+                // If this expression below is false that means value was set/provided in binding object, so we
+                // shouldn't throw an error, otherwise we throw an error as we couldn't resolve the value.
+                // This is the case with runtime criteria
+                if (binding.getParameterIndex() != -1 || binding.isAutoPopulated()) {
+                    int currentIndex = binder.currentIndex();
+                    if (currentIndex != -1) {
+                        throw new IllegalStateException("Invalid query [" + getQuery() + "]. Unable to establish parameter value for parameter at position: " + currentIndex);
+                    } else {
+                        throw new IllegalStateException("Invalid query [" + getQuery() + "]. Unable to establish parameter value for parameter: " + binding.getName());
+                    }
                 } else {
-                    throw new IllegalStateException("Invalid query [" + getQuery() + "]. Unable to establish parameter value for parameter: " + binding.getName());
+                    // Otherwise, value got from binding object meaning it was set to null, so we can at least check
+                    // since value is null whether the property is nullable
+                    String[] propertyPath = binding.getPropertyPath();
+                    PersistentPropertyPath pp = persistentEntity.getPropertyPath(propertyPath);
+                    if (pp != null && pp.getProperty().isRequired()) {
+                        throw new IllegalStateException("Field [" + pp.getProperty().getName() + "] does not allow null value.");
+                    }
                 }
             }
+        } else if (value instanceof EvaluatedAnnotationValue<?> evaluatedAnnotationValue) {
+            value = evaluatedAnnotationValue.withArguments(
+                invocationContext.getTarget(),
+                invocationContext.getParameterValues()
+            ).get(AnnotationMetadata.VALUE_MEMBER, Object.class).orElse(null);
         }
 
         if (persistentProperty != null) {
@@ -163,7 +200,15 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
             }
         }
 
-        List<Object> values = binding.isExpandable() ? expandValue(value, binding.getDataType()) : null;
+        List<Object> values;
+        if (binding.isExpandable()) {
+            if (value instanceof Sort) {
+                return; // Skip
+            }
+            values = expandValue(value, binding.getDataType());
+        } else {
+            values = null;
+        }
         if (values != null && values.isEmpty()) {
             // Empty collections / array should always set at least one value
             value = null;
@@ -192,8 +237,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
     }
 
     private Object resolveParameterValue(QueryParameterBinding queryParameterBinding, Object[] parameterArray) {
-        Object value;
-        value = parameterArray[queryParameterBinding.getParameterIndex()];
+        Object value = parameterArray[queryParameterBinding.getParameterIndex()];
         String[] parameterBindingPath = queryParameterBinding.getParameterBindingPath();
         if (parameterBindingPath != null) {
             for (String prop : parameterBindingPath) {
@@ -211,14 +255,14 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
         if (value == null || dataType != null && dataType.isArray() && dataType != DataType.BYTE_ARRAY || value instanceof byte[]) {
             // not expanded
             return null;
-        } else if (value instanceof Iterable) {
-            return (List<Object>) CollectionUtils.iterableToList((Iterable<?>) value);
+        } else if (value instanceof Iterable<?> iterable) {
+            return (List<Object>) CollectionUtils.iterableToList(iterable);
         } else if (value.getClass().isArray()) {
             int len = Array.getLength(value);
             if (len == 0) {
                 return Collections.emptyList();
             } else {
-                List<Object> list = new ArrayList<>(len);
+                var list = new ArrayList<>(len);
                 for (int j = 0; j < len; j++) {
                     Object o = Array.get(value, j);
                     list.add(o);

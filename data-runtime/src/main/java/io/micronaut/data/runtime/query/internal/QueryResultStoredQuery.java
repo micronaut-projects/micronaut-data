@@ -18,7 +18,6 @@ package io.micronaut.data.runtime.query.internal;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.reflect.ClassUtils;
-import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.query.JoinPath;
@@ -29,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -44,7 +42,6 @@ import java.util.Set;
 @Internal
 public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
 
-    private final DataMethod.OperationType operationType;
     private final QueryResult queryResult;
     private final Set<JoinPath> joinPaths;
 
@@ -56,26 +53,53 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
                                   boolean pageable,
                                   boolean isSingleResult,
                                   boolean isCount,
-                                  DataMethod.OperationType operationType,
+                                  OperationType operationType,
                                   Collection<JoinPath> joinPaths) {
         super(name,
-                annotationMetadata,
-                queryResult.getQuery(),
-                queryResult.getParameterBindings().stream()
-                        .anyMatch(io.micronaut.data.model.query.builder.QueryParameterBinding::isExpandable) ? queryResult.getQueryParts().toArray(new String[0]) : null,
-                map(queryResult.getParameterBindings()),
-                rootEntity,
-                resultType,
-                pageable,
-                isSingleResult,
-                isCount
-        );
+            annotationMetadata,
+            queryResult.getQuery(),
+            queryResult.getParameterBindings().stream()
+                .anyMatch(io.micronaut.data.model.query.builder.QueryParameterBinding::isExpandable) ? queryResult.getQueryParts().toArray(new String[0]) : null,
+            map(queryResult.getParameterBindings()),
+            rootEntity,
+            resultType,
+            pageable,
+            isSingleResult,
+            isCount,
+            operationType);
         this.queryResult = queryResult;
-        this.operationType = operationType;
-        this.joinPaths = joinPaths == null ? Collections.emptySet() : Collections.unmodifiableSet(new HashSet<>(joinPaths));
+        this.joinPaths = joinPaths == null ? Collections.emptySet() : Set.copyOf(joinPaths);
     }
 
-    public static <T> QueryResultStoredQuery<T, T> single(DataMethod.OperationType operationType,
+    public QueryResultStoredQuery(String name,
+                                  AnnotationMetadata annotationMetadata,
+                                  QueryResult queryResult,
+                                  Class<E> rootEntity,
+                                  Class<R> resultType,
+                                  boolean pageable,
+                                  boolean isSingleResult,
+                                  boolean isCount,
+                                  boolean isDto,
+                                  OperationType operationType,
+                                  Collection<JoinPath> joinPaths) {
+        super(name,
+            annotationMetadata,
+            queryResult.getQuery(),
+            queryResult.getParameterBindings().stream()
+                .anyMatch(io.micronaut.data.model.query.builder.QueryParameterBinding::isExpandable) ? queryResult.getQueryParts().toArray(new String[0]) : null,
+            map(queryResult.getParameterBindings()),
+            rootEntity,
+            resultType,
+            pageable,
+            isSingleResult,
+            isCount,
+            isDto,
+            operationType);
+        this.queryResult = queryResult;
+        this.joinPaths = joinPaths == null ? Collections.emptySet() : Set.copyOf(joinPaths);
+    }
+
+    public static <T> QueryResultStoredQuery<T, T> single(OperationType operationType,
                                                           String name,
                                                           AnnotationMetadata annotationMetadata,
                                                           QueryResult queryResult,
@@ -83,22 +107,33 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
         return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, rootEntity, false, true, false, operationType, Collections.emptySet());
     }
 
-    public static <T, R> QueryResultStoredQuery<T, R> single(DataMethod.OperationType operationType,
-                                                          String name,
-                                                          AnnotationMetadata annotationMetadata,
-                                                          QueryResult queryResult,
-                                                          Class<T> rootEntity,
-                                                          Class<R> resultType,
-                                                          Collection<JoinPath> joinPaths) {
+    public static <T, R> QueryResultStoredQuery<T, R> single(OperationType operationType,
+                                                             String name,
+                                                             AnnotationMetadata annotationMetadata,
+                                                             QueryResult queryResult,
+                                                             Class<T> rootEntity,
+                                                             Class<R> resultType,
+                                                             Collection<JoinPath> joinPaths) {
         return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, resultType == Object.class ? (Class<R>) rootEntity : resultType, false, true, false, operationType, joinPaths);
     }
 
+    public static <T, R> QueryResultStoredQuery<T, R> single(OperationType operationType,
+                                                             String name,
+                                                             AnnotationMetadata annotationMetadata,
+                                                             QueryResult queryResult,
+                                                             Class<T> rootEntity,
+                                                             Class<R> resultType,
+                                                             boolean isDto,
+                                                             Collection<JoinPath> joinPaths) {
+        return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, resultType == Object.class ? (Class<R>) rootEntity : resultType, false, true, false, isDto, operationType, joinPaths);
+    }
+
     public static <T> QueryResultStoredQuery<T, T> many(String name,
-                                                           AnnotationMetadata annotationMetadata,
-                                                           QueryResult queryResult,
-                                                           Class<T> rootEntity,
-                                                           boolean pageable) {
-        return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, rootEntity, pageable, false, false, DataMethod.OperationType.QUERY, Collections.emptySet());
+                                                        AnnotationMetadata annotationMetadata,
+                                                        QueryResult queryResult,
+                                                        Class<T> rootEntity,
+                                                        boolean pageable) {
+        return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, rootEntity, pageable, false, false, OperationType.QUERY, Collections.emptySet());
     }
 
     public static <T, R> QueryResultStoredQuery<T, R> many(String name,
@@ -108,21 +143,32 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
                                                            Class<R> resultType,
                                                            boolean pageable,
                                                            Collection<JoinPath> joinPaths) {
-        return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, resultType == Object.class ? (Class<R>) rootEntity : resultType, pageable, false, false, DataMethod.OperationType.QUERY, joinPaths);
+        return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, resultType == Object.class ? (Class<R>) rootEntity : resultType, pageable, false, false, OperationType.QUERY, joinPaths);
+    }
+
+    public static <T, R> QueryResultStoredQuery<T, R> many(String name,
+                                                           AnnotationMetadata annotationMetadata,
+                                                           QueryResult queryResult,
+                                                           Class<T> rootEntity,
+                                                           Class<R> resultType,
+                                                           boolean pageable,
+                                                           boolean isDto,
+                                                           Collection<JoinPath> joinPaths) {
+        return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, resultType == Object.class ? (Class<R>) rootEntity : resultType, pageable, false, false, isDto, OperationType.QUERY, joinPaths);
     }
 
     public static <T> QueryResultStoredQuery<T, Long> count(String name,
                                                             AnnotationMetadata annotationMetadata,
                                                             QueryResult queryResult,
                                                             Class<T> rootEntity) {
-        return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, Long.class, false, true, true, DataMethod.OperationType.COUNT, Collections.emptySet());
+        return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, Long.class, false, true, true, OperationType.COUNT, Collections.emptySet());
     }
 
     private static List<QueryParameterBinding> map(List<io.micronaut.data.model.query.builder.QueryParameterBinding> parameterBindings) {
         List<QueryParameterBinding> queryParameters = new ArrayList<>(parameterBindings.size());
         for (io.micronaut.data.model.query.builder.QueryParameterBinding p : parameterBindings) {
             queryParameters.add(
-                    new QueryResultParameterBinding(p, queryParameters)
+                new QueryResultParameterBinding(p, queryParameters)
             );
         }
         return queryParameters;
@@ -132,12 +178,13 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
         return queryResult;
     }
 
-    public DataMethod.OperationType getOperationType() {
-        return operationType;
+    @Override
+    public Set<JoinPath> getJoinFetchPaths() {
+        return joinPaths;
     }
 
     @Override
-    public Set<JoinPath> getJoinFetchPaths() {
+    public Set<JoinPath> getJoinPaths() {
         return joinPaths;
     }
 
@@ -223,6 +270,11 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
         @Override
         public Object getValue() {
             return p.getValue();
+        }
+
+        @Override
+        public boolean isExpression() {
+            return p.isExpression();
         }
     }
 }

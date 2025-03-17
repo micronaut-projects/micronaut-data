@@ -29,6 +29,10 @@ public class JsonEntity {
     @Nullable
     private SampleData jsonString;
 
+    @TypeDef(type = DataType.JSON)
+    @Nullable
+    private Iterable<String> values;
+
     public Long getId() {
         return id;
     }
@@ -62,5 +66,13 @@ public class JsonEntity {
 
     public void setJsonString(@Nullable SampleData jsonString) {
         this.jsonString = jsonString;
+    }
+
+    public Iterable<String> getValues() {
+        return values;
+    }
+
+    public void setValues(Iterable<String> values) {
+        this.values = values;
     }
 }

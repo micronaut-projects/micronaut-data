@@ -18,7 +18,49 @@ package io.micronaut.data.processor.visitors
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.tck.entities.Company
 
+import static io.micronaut.data.processor.visitors.TestUtils.getQuery
+
 class OrderBySpec extends AbstractDataSpec {
+
+    void "test sort embedded"() {
+        given:
+            def repository = buildRepository('test.TestRepository', '''
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Shipment;
+import io.micronaut.data.tck.entities.ShipmentDto;
+import io.micronaut.data.tck.entities.ShipmentId;
+@Repository
+interface TestRepository extends GenericRepository<Shipment, ShipmentId> {
+    List<Shipment> findAllOrderByShipmentIdCity();
+}
+''')
+        when:
+            def queryFindByText = getQuery(repository.getRequiredMethod("findAllOrderByShipmentIdCity"))
+        then:
+            queryFindByText == 'SELECT shipment_ FROM io.micronaut.data.tck.entities.Shipment AS shipment_ ORDER BY shipment_.shipmentId.city ASC'
+    }
+
+    void "test sort embedded JDBC"() {
+        given:
+            def repository = buildRepository('test.TestRepository', '''
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Shipment;
+import io.micronaut.data.tck.entities.ShipmentDto;
+import io.micronaut.data.tck.entities.ShipmentId;
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface TestRepository extends GenericRepository<Shipment, ShipmentId> {
+    List<Shipment> findAllOrderByShipmentIdCity();
+}
+''')
+        when:
+            def queryFindByText = getQuery(repository.getRequiredMethod("findAllOrderByShipmentIdCity"))
+        then:
+            queryFindByText == 'SELECT shipment_."sp_country",shipment_."sp_city",shipment_."field" FROM "Shipment1" shipment_ ORDER BY shipment_."sp_city" ASC'
+    }
 
     void "test order by date created"() {
         given:

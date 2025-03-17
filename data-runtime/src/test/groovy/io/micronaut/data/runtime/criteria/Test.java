@@ -2,6 +2,7 @@ package io.micronaut.data.runtime.criteria;
 
 import io.micronaut.data.annotation.Id;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.OneToMany;
 
@@ -11,7 +12,7 @@ import java.util.List;
 @Entity
 class Test {
     @Id
-    @jakarta.persistence.GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
     private boolean enabled;

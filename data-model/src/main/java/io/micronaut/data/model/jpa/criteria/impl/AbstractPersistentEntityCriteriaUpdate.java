@@ -15,35 +15,35 @@
  */
 package io.micronaut.data.model.jpa.criteria.impl;
 
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
+import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityQuery.BaseQueryDefinitionImpl;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.query.QueryModelPredicateVisitor;
-import io.micronaut.data.model.jpa.criteria.impl.util.Joiner;
-import io.micronaut.data.model.query.QueryModel;
-import io.micronaut.data.model.query.builder.QueryBuilder;
+import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
+import io.micronaut.data.model.query.builder.QueryBuilder2;
 import io.micronaut.data.model.query.builder.QueryResult;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.ParameterExpression;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Subquery;
+import jakarta.persistence.criteria.Selection;
 import jakarta.persistence.metamodel.EntityType;
 import jakarta.persistence.metamodel.SingularAttribute;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupportedOperation;
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requireParameter;
@@ -58,43 +58,19 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requirePro
  */
 @Internal
 public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements PersistentEntityCriteriaUpdate<T>,
-        QueryResultPersistentEntityCriteriaQuery {
+    QueryResultPersistentEntityCriteriaQuery {
 
     protected Predicate predicate;
     protected PersistentEntityRoot<T> entityRoot;
     protected Map<String, Object> updateValues = new LinkedHashMap<>();
+    protected Selection<?> returning;
 
     @Override
-    public QueryResult buildQuery(QueryBuilder queryBuilder) {
-        return queryBuilder.buildUpdate(getQueryModel(), updateValues);
-    }
-
-    @Override
-    @NonNull
-    public QueryModel getQueryModel() {
-        if (entityRoot == null) {
-            throw new IllegalStateException("The root entity must be specified!");
-        }
-        QueryModel qm = QueryModel.from(entityRoot.getPersistentEntity());
-        Joiner joiner = new Joiner();
-        if (predicate instanceof PredicateVisitable) {
-            PredicateVisitable predicate = (PredicateVisitable) this.predicate;
-            predicate.accept(createPredicateVisitor(qm));
-            predicate.accept(joiner);
-        }
-        for (Map.Entry<String, Joiner.Joined> e : joiner.getJoins().entrySet()) {
-            qm.join(e.getKey(), Optional.ofNullable(e.getValue().getType()).orElse(Join.Type.DEFAULT), e.getValue().getAlias());
-        }
-        return qm;
-    }
-
-    /**
-     * Creates query model predicate visitor.
-     * @param queryModel The query model
-     * @return the visitor
-     */
-    protected QueryModelPredicateVisitor createPredicateVisitor(QueryModel queryModel) {
-        return new QueryModelPredicateVisitor(queryModel);
+    public QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder2 queryBuilder) {
+        return queryBuilder.buildUpdate(
+            annotationMetadata,
+            new UpdateQueryDefinitionImpl(entityRoot.getPersistentEntity(), predicate, returning, updateValues)
+        );
     }
 
     @Override
@@ -128,13 +104,13 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
 
     @Override
     public <Y, X extends Y> PersistentEntityCriteriaUpdate<T> set(Path<Y> attribute, X value) {
-        setValue(requireProperty(attribute).getProperty().getName(), value);
+        setValue(requireProperty(attribute).getPathAsString(), value);
         return this;
     }
 
     @Override
     public <Y> PersistentEntityCriteriaUpdate<T> set(Path<Y> attribute, Expression<? extends Y> value) {
-        setValue(requireProperty(attribute).getProperty().getName(), requireParameter(value));
+        setValue(requireProperty(attribute).getPathAsString(), requireParameter(value));
         return this;
     }
 
@@ -156,18 +132,20 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
 
     @Override
     public PersistentEntityCriteriaUpdate<T> where(Expression<Boolean> restriction) {
-        // TODO: bind parameters
-        predicate = new ConjunctionPredicate(Collections.singleton((IExpression<Boolean>) restriction));
+        if (restriction instanceof ConjunctionPredicate conjunctionPredicate) {
+            predicate = conjunctionPredicate;
+        } else {
+            predicate = new ConjunctionPredicate(Collections.singleton((IExpression<Boolean>) restriction));
+        }
         return this;
     }
 
     @Override
     public PersistentEntityCriteriaUpdate<T> where(Predicate... restrictions) {
-        // TODO: bind parameters
         Objects.requireNonNull(restrictions);
         if (restrictions.length > 0) {
             predicate = restrictions.length == 1 ? restrictions[0] : new ConjunctionPredicate(
-                    Arrays.stream(restrictions).sequential().map(x -> (IExpression<Boolean>) x).collect(Collectors.toList())
+                Arrays.stream(restrictions).sequential().map(x -> (IExpression<Boolean>) x).toList()
             );
         } else {
             predicate = null;
@@ -181,7 +159,7 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
     }
 
     @Override
-    public <U> Subquery<U> subquery(Class<U> type) {
+    public <U> PersistentEntitySubquery<U> subquery(ExpressionType<U> type) {
         throw notSupportedOperation();
     }
 
@@ -199,5 +177,60 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
     @Override
     public Set<ParameterExpression<?>> getParameters() {
         return CriteriaUtils.extractPredicateParameters(predicate);
+    }
+
+    @Override
+    public PersistentEntityCriteriaUpdate<T> returning(Selection<? extends T> selection) {
+        Objects.requireNonNull(selection);
+        this.returning = selection;
+        return this;
+    }
+
+    @Override
+    public PersistentEntityCriteriaUpdate<T> returningMulti(List<Selection<?>> selectionList) {
+        Objects.requireNonNull(selectionList);
+        if (!selectionList.isEmpty()) {
+            this.returning = new CompoundSelection<>(selectionList);
+        } else {
+            this.returning = null;
+        }
+        return this;
+    }
+
+    @Override
+    public PersistentEntityCriteriaUpdate<T> returningMulti(@NonNull Selection<?>... selections) {
+        Objects.requireNonNull(selections);
+        if (selections.length != 0) {
+            this.returning = new CompoundSelection<>(List.of(selections));
+        } else {
+            this.returning = null;
+        }
+        return this;
+    }
+
+
+    private static final class UpdateQueryDefinitionImpl extends BaseQueryDefinitionImpl implements QueryBuilder2.UpdateQueryDefinition {
+
+        private final Map<String, Object> propertiesToUpdate;
+        private final Selection<?> returningSelection;
+
+        public UpdateQueryDefinitionImpl(PersistentEntity persistentEntity,
+                                         Predicate predicate,
+                                         Selection<?> returningSelection,
+                                         Map<String, Object> propertiesToUpdate) {
+            super(persistentEntity, predicate, Map.of());
+            this.propertiesToUpdate = propertiesToUpdate;
+            this.returningSelection = returningSelection;
+        }
+
+        @Override
+        public Map<String, Object> propertiesToUpdate() {
+            return propertiesToUpdate;
+        }
+
+        @Override
+        public Selection<?> returningSelection() {
+            return returningSelection;
+        }
     }
 }

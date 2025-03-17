@@ -17,16 +17,11 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.model.Embedded;
-import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
-import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
-import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
 import io.micronaut.data.processor.visitors.MatchFailedException;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.criteria.DeleteCriteriaMethodMatch;
 import io.micronaut.inject.ast.ParameterElement;
-import jakarta.persistence.criteria.Predicate;
 
 import java.util.Arrays;
 import java.util.List;
@@ -39,7 +34,7 @@ import java.util.regex.Pattern;
  * @since 3.2
  */
 @Internal
-public final class DeleteMethodMatcher extends AbstractPatternMethodMatcher {
+public final class DeleteMethodMatcher extends AbstractMethodMatcher {
 
     public static final Pattern METHOD_PATTERN = Pattern.compile("^((delete|remove|erase|eliminate)(\\S*?))$");
 
@@ -47,13 +42,20 @@ public final class DeleteMethodMatcher extends AbstractPatternMethodMatcher {
      * Default constructor.
      */
     public DeleteMethodMatcher() {
-        super(false, "delete", "remove", "erase", "eliminate", "deleteAll", "removeAll", "eraseAll", "eliminateAll");
+        super(MethodNameParser.builder()
+            .match(QueryMatchId.PREFIX, "delete", "remove", "erase", "eliminate")
+            .tryMatch(QueryMatchId.ALL_OR_ONE, ALL_OR_ONE)
+            .tryMatchLastOccurrencePrefixed(QueryMatchId.RETURNING, null, RETURNING)
+            .tryMatchFirstOccurrencePrefixed(QueryMatchId.PREDICATE, BY)
+            .failOnRest("Delete method doesn't support projections")
+            .build());
     }
 
     @Override
-    public MethodMatch match(MethodMatchContext matchContext, java.util.regex.Matcher matcher) {
+    protected MethodMatch match(MethodMatchContext matchContext, List<MethodNameParser.Match> matches) {
         ParameterElement[] parameters = matchContext.getParameters();
-        boolean isSpecificDelete = matcher.group(2).endsWith("By");
+        boolean isSpecificDelete = matches.stream().anyMatch(m -> m.id() == QueryMatchId.PREDICATE);
+        boolean isReturning = matches.stream().anyMatch(m -> m.id() == QueryMatchId.RETURNING);
         ParameterElement entityParameter = null;
         ParameterElement entitiesParameter = null;
         if (matchContext.getParametersNotInRole().size() == 1) {
@@ -74,10 +76,10 @@ public final class DeleteMethodMatcher extends AbstractPatternMethodMatcher {
             }
         }
         if (entityParameter == null && entitiesParameter == null) {
-            if (!TypeUtils.isValidBatchUpdateReturnType(matchContext.getMethodElement())) {
+            if (!isReturning && !TypeUtils.isValidBatchUpdateReturnType(matchContext.getMethodElement())) {
                 return null;
             }
-            return new DeleteCriteriaMethodMatch(matcher);
+            return new DeleteCriteriaMethodMatch(matches, isReturning);
         }
 
         SourcePersistentEntity rootEntity = matchContext.getRootEntity();
@@ -85,77 +87,16 @@ public final class DeleteMethodMatcher extends AbstractPatternMethodMatcher {
             throw new MatchFailedException("Delete all not supported for entities with no ID");
         }
 
-        boolean supportedByImplicitQueries = !matcher.group(2).endsWith("By");
+        boolean supportedByImplicitQueries = !isSpecificDelete;
 
-        boolean generateInIdList = entitiesParameter != null
-                && !rootEntity.hasCompositeIdentity()
-                && !(rootEntity.getIdentity() instanceof Embedded) && rootEntity.getVersion() == null;
         ParameterElement finalEntityParameter = entityParameter;
         ParameterElement finalEntitiesParameter = entitiesParameter;
-        if (generateInIdList) {
-            return new DeleteCriteriaMethodMatch(matcher) {
 
-                @Override
-                protected boolean supportedByImplicitQueries() {
-                    return supportedByImplicitQueries;
-                }
-
-                @Override
-                protected <T> void applyPredicates(List<ParameterElement> parameters,
-                                                   PersistentEntityRoot<T> root,
-                                                   PersistentEntityCriteriaDelete<T> query,
-                                                   SourcePersistentEntityCriteriaBuilder cb) {
-                    Predicate restriction = query.getRestriction();
-                    Predicate predicate = root.id().in(cb.entityPropertyParameter(finalEntitiesParameter));
-                    if (restriction == null) {
-                        query.where(predicate);
-                    } else {
-                        query.where(cb.and(predicate, restriction));
-                    }
-                }
-
-                @Override
-                protected ParameterElement getEntityParameter() {
-                    return finalEntityParameter;
-                }
-
-                @Override
-                protected ParameterElement getEntitiesParameter() {
-                    return finalEntitiesParameter;
-                }
-
-            };
-        }
-
-        ParameterElement entityParam = entityParameter == null ? entitiesParameter : entityParameter;
-
-        return new DeleteCriteriaMethodMatch(matcher) {
+        return new DeleteCriteriaMethodMatch(matches, isReturning) {
 
             @Override
             protected boolean supportedByImplicitQueries() {
                 return supportedByImplicitQueries;
-            }
-
-            @Override
-            protected <T> void applyPredicates(List<ParameterElement> parameters,
-                                               PersistentEntityRoot<T> root,
-                                               PersistentEntityCriteriaDelete<T> query,
-                                               SourcePersistentEntityCriteriaBuilder cb) {
-                Predicate restriction = query.getRestriction();
-                Predicate predicate;
-                if (rootEntity.getVersion() != null) {
-                    predicate = cb.and(
-                            cb.equal(root.id(), cb.entityPropertyParameter(entityParam)),
-                            cb.equal(root.version(), cb.entityPropertyParameter(entityParam))
-                    );
-                } else {
-                    predicate = cb.equal(root.id(), cb.entityPropertyParameter(entityParam));
-                }
-                if (restriction == null) {
-                    query.where(predicate);
-                } else {
-                    query.where(cb.and(predicate, restriction));
-                }
             }
 
             @Override

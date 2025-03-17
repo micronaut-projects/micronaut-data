@@ -42,7 +42,11 @@ public final class StoredQueryParameter implements QueryParameterBinding {
     private final boolean requiresPreviousPopulatedValue;
     private final Class<?> parameterConverterClass;
     private final boolean expandable;
-    private final List<? extends QueryParameterBinding> all;
+    private final List<QueryParameterBinding> all;
+    private final boolean expression;
+    private final Object value;
+    private final String role;
+    private final String tableAlias;
 
     private boolean previousInitialized;
     private QueryParameterBinding previousPopulatedValueParameter;
@@ -57,7 +61,11 @@ public final class StoredQueryParameter implements QueryParameterBinding {
                          boolean requiresPreviousPopulatedValue,
                          Class<?> parameterConverterClass,
                          boolean expandable,
-                         List<? extends QueryParameterBinding> all) {
+                         final boolean expression,
+                         Object value,
+                         String role,
+                         String tableAlias,
+                         List<QueryParameterBinding> all) {
         this.name = name;
         this.dataType = dataType;
         this.jsonDataType = jsonDataType;
@@ -68,6 +76,10 @@ public final class StoredQueryParameter implements QueryParameterBinding {
         this.requiresPreviousPopulatedValue = requiresPreviousPopulatedValue;
         this.parameterConverterClass = parameterConverterClass;
         this.expandable = expandable;
+        this.expression = expression;
+        this.value = value;
+        this.role = role;
+        this.tableAlias = tableAlias;
         this.all = all;
     }
 
@@ -136,6 +148,26 @@ public final class StoredQueryParameter implements QueryParameterBinding {
     }
 
     @Override
+    public boolean isExpression() {
+        return expression;
+    }
+
+    @Override
+    public Object getValue() {
+        return value;
+    }
+
+    @Override
+    public String getRole() {
+        return role;
+    }
+
+    @Override
+    public String getTableAlias() {
+        return tableAlias;
+    }
+
+    @Override
     public String toString() {
         return "StoredQueryParameter{" +
                 "name='" + name + '\'' +
@@ -147,6 +179,10 @@ public final class StoredQueryParameter implements QueryParameterBinding {
                 ", requiresPreviousPopulatedValue=" + requiresPreviousPopulatedValue +
                 ", previousPopulatedValueParameter=" + previousPopulatedValueParameter +
                 ", expandable=" + expandable +
+                ", expression=" + expression +
+                ", value=" + value +
+                ", role=" + role +
+                ", tableAlias=" + tableAlias +
                 '}';
     }
 }

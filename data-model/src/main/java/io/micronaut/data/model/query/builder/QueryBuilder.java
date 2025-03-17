@@ -58,14 +58,14 @@ public interface QueryBuilder {
     QueryResult buildInsert(AnnotationMetadata repositoryMetadata, PersistentEntity entity);
 
     /**
-     * Encode the given query into the encoded query instance.
-     *
-     * @param query The query
-     * @return The encoded query
+     * Builds an insert statement for the given entity.
+     * @param repositoryMetadata The repository annotation metadata
+     * @param entity The entity
+     * @return The insert statement or null if the implementation doesn't require insert statements
      */
-    @NonNull
-    default QueryResult buildQuery(@NonNull QueryModel query) {
-        return buildQuery(AnnotationMetadata.EMPTY_METADATA, query);
+    @Nullable
+    default QueryResult buildInsertReturning(AnnotationMetadata repositoryMetadata, PersistentEntity entity) {
+        throw new IllegalStateException("Query builder: " + getClass().getSimpleName() + " doesn't support an insert with a returning clause");
     }
 
     /**

@@ -28,6 +28,7 @@ class ParameterTypeDefSpec extends AbstractDataSpec {
         def repository = buildRepository('test.PersonRepository', '''
 import java.util.UUID;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.repository.GenericRepository;
 
 @RepositoryConfiguration(
     queryBuilder = SqlQueryBuilder.class,
@@ -36,10 +37,10 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 )
 @Repository
 @io.micronaut.context.annotation.Executable
-interface PersonRepository extends io.micronaut.data.repository.GenericRepository<Person, UUID> {
+interface PersonRepository extends GenericRepository<Person, UUID> {
     List<Person> findByIdIn(List<UUID> id);
-    
-     
+
+
     void deleteAll(Iterable<Person> entities);
 }
 
@@ -48,11 +49,11 @@ class Person {
     @Id
     @TypeDef(type = DataType.OBJECT)
     protected UUID id = UUID.randomUUID();
-    
+
     public UUID getId() {
         return id;
-    }    
-    
+    }
+
     public void setId(UUID id) {
         this.id = id;
     }
@@ -74,6 +75,7 @@ class Person {
         given:
         def repository = buildRepository('test.BookRepository', '''
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.tck.repositories.AuthorRepository;
 
 @RepositoryConfiguration(
     queryBuilder = SqlQueryBuilder.class,
@@ -84,7 +86,7 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 @io.micronaut.context.annotation.Executable
 abstract class BookRepository extends io.micronaut.data.tck.repositories.BookRepository {
 
-    public BookRepository(io.micronaut.data.tck.repositories.AuthorRepository authorRepository) {
+    public BookRepository(AuthorRepository authorRepository) {
         super(authorRepository);
     }
 
@@ -126,6 +128,7 @@ abstract class BookRepository extends io.micronaut.data.tck.repositories.BookRep
         def repository = buildRepository('test.PersonRepository', '''
 import java.util.UUID;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.repository.GenericRepository;
 
 @RepositoryConfiguration(
     queryBuilder = SqlQueryBuilder.class,
@@ -134,7 +137,7 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 )
 @Repository
 @io.micronaut.context.annotation.Executable
-interface PersonRepository extends io.micronaut.data.repository.GenericRepository<Person, Long> {
+interface PersonRepository extends GenericRepository<Person, Long> {
     void deleteAll(Iterable<Person> entities);
 }
 
@@ -142,11 +145,11 @@ interface PersonRepository extends io.micronaut.data.repository.GenericRepositor
 class Person {
     @Id
     protected Long id;
-    
+
     public Long getId() {
         return id;
-    }    
-    
+    }
+
     public void setId(Long id) {
         this.id = id;
     }

@@ -16,16 +16,14 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.criteria.QueryCriteriaMethodMatch;
-import io.micronaut.inject.ast.ClassElement;
 
-import java.util.Map;
+import java.util.List;
 
 /**
  * Exists method matcher.
@@ -34,25 +32,32 @@ import java.util.Map;
  * @since 3.2
  */
 @Internal
-public final class ExistsMethodMatcher extends AbstractPatternMethodMatcher {
+public final class ExistsMethodMatcher extends AbstractMethodMatcher {
 
     public ExistsMethodMatcher() {
-        super(false, "exists");
+        super(MethodNameParser.builder()
+            .match(QueryMatchId.PREFIX, "exists")
+            .tryMatchFirstOccurrencePrefixed(QueryMatchId.PREDICATE, BY)
+            .failOnRest("Exists method doesn't support projections")
+            .build());
     }
 
     @Override
-    protected MethodMatch match(MethodMatchContext matchContext, java.util.regex.Matcher matcher) {
+    protected MethodMatch match(MethodMatchContext matchContext, List<MethodNameParser.Match> matches) {
         if (TypeUtils.doesMethodProducesABoolean(matchContext.getMethodElement())) {
-            return new QueryCriteriaMethodMatch(matcher) {
+            return new QueryCriteriaMethodMatch(matches) {
 
                 @Override
-                protected <T> String applyProjections(String querySequence, PersistentEntityRoot<T> root, PersistentEntityCriteriaQuery<T> query, PersistentEntityCriteriaBuilder cb) {
+                protected <T> void applyProjections(String projectionPart,
+                                                    PersistentEntityRoot<T> root,
+                                                    PersistentEntityCriteriaQuery<T> query,
+                                                    PersistentEntityCriteriaBuilder cb,
+                                                    String returnTypeName) {
                     query.multiselect(cb.literal(true));
-                    return "";
                 }
 
                 @Override
-                protected Map.Entry<ClassElement, Class<? extends DataInterceptor>> resolveReturnTypeAndInterceptor(MethodMatchContext matchContext) {
+                protected FindersUtils.InterceptorMatch resolveReturnTypeAndInterceptor(MethodMatchContext matchContext) {
                     return FindersUtils.pickExistsInterceptor(matchContext, matchContext.getReturnType());
                 }
 

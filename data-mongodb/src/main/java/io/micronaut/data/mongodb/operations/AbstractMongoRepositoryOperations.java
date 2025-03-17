@@ -53,11 +53,11 @@ import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 /**
  * Shared implementation of Mongo sync and reactive repositories.
@@ -73,6 +73,8 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
 
     protected static final BsonDocument EMPTY = new BsonDocument();
     protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
+
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractMongoRepositoryOperations.class);
 
     protected final MongoCollectionNameProvider collectionNameProvider;
     protected final MongoDatabaseNameProvider databaseNameProvider;
@@ -119,15 +121,15 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
     protected abstract CodecRegistry getCodecRegistry(Dtb database);
 
     protected <E, R> MongoStoredQuery<E, R> getMongoStoredQuery(StoredQuery<E, R> storedQuery) {
-        if (storedQuery instanceof MongoStoredQuery) {
-            return (MongoStoredQuery<E, R>) storedQuery;
+        if (storedQuery instanceof MongoStoredQuery<E, R> mongoStoredQuery) {
+            return mongoStoredQuery;
         }
         throw new IllegalStateException("Expected for stored query to be of type: MongoStoredQuery");
     }
 
     protected <E, R> MongoPreparedQuery<E, R> getMongoPreparedQuery(PreparedQuery<E, R> preparedQuery) {
-        if (preparedQuery instanceof MongoPreparedQuery) {
-            return (MongoPreparedQuery<E, R>) preparedQuery;
+        if (preparedQuery instanceof MongoPreparedQuery<E, R> mongoPreparedQuery) {
+            return mongoPreparedQuery;
         }
         throw new IllegalStateException("Expected for prepared query to be of type: MongoPreparedQuery");
     }
@@ -143,12 +145,11 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
         Class<?> repositoryType = context.getTarget().getClass();
         // CodecRegistry is per MongoClient and can be memoized
         Supplier<CodecRegistry> codecRegistry = SupplierUtil.memoizedNonEmpty(() -> getCodecRegistry(getDatabase(persistentEntity, repositoryType)));
-        if (storedQuery instanceof QueryResultStoredQuery) {
-            QueryResultStoredQuery<?, ?> resultStoredQuery = (QueryResultStoredQuery) storedQuery;
+        if (storedQuery instanceof QueryResultStoredQuery<?, ?> resultStoredQuery) {
             String update = resultStoredQuery.getQueryResult().getUpdate();
             if (update != null) {
                 return new DefaultMongoStoredQuery<>(storedQuery, codecRegistry, attributeConverterRegistry,
-                    runtimeEntityRegistry, conversionService, persistentEntity, resultStoredQuery.getOperationType(), update);
+                    runtimeEntityRegistry, conversionService, persistentEntity, update);
             }
         }
         return new DefaultMongoStoredQuery<>(storedQuery, codecRegistry, attributeConverterRegistry,
@@ -162,47 +163,89 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
         if (resultType == BsonDocument.class) {
             return (R) result;
         }
-        Optional<BeanIntrospection<R>> introspection = BeanIntrospector.SHARED.findIntrospection(resultType);
-        if (introspection.isPresent()) {
-            return (new BeanIntrospectionMapper<BsonDocument, R>() {
-                @Override
-                public Object read(BsonDocument document, String alias) {
-                    BsonValue bsonValue = document.get(alias);
-                    if (bsonValue == null) {
-                        return null;
-                    }
-                    return MongoUtils.toValue(bsonValue);
-                }
 
-                @Override
-                public ConversionService getConversionService() {
-                    return conversionService;
-                }
-
-            }).map(result, resultType);
+        Optional<R> maybeConverted = convertUsingIntrospected(result, resultType);
+        if (maybeConverted.isPresent()) {
+            return maybeConverted.get();
         }
+
         BsonValue value;
         if (result == null) {
             value = BsonNull.VALUE;
         } else if (result.size() == 1) {
             value = result.values().iterator().next();
         } else if (result.size() == 2) {
-            Optional<Map.Entry<String, BsonValue>> id = result.entrySet().stream().filter(f -> !f.getKey().equals("_id")).findFirst();
-            if (id.isPresent()) {
-                value = id.get().getValue();
+            Optional<Map.Entry<String, BsonValue>> nonIdValue = result.entrySet().stream().filter(f -> !f.getKey().equals("_id")).findFirst();
+            if (nonIdValue.isPresent()) {
+                value = nonIdValue.get().getValue();
             } else {
                 value = result.values().iterator().next();
             }
         } else if (isDtoProjection) {
-            Object dtoResult = MongoUtils.toValue(result.asDocument(), resultType, codecRegistry);
+            R dtoResult = MongoUtils.toValue(result.asDocument(), resultType, codecRegistry);
             if (resultType.isInstance(dtoResult)) {
-                return (R) dtoResult;
+                return dtoResult;
             }
             return conversionService.convertRequired(dtoResult, resultType);
         } else {
             throw new IllegalStateException("Unrecognized result: " + result);
         }
         return conversionService.convertRequired(MongoUtils.toValue(value), resultType);
+    }
+
+    /**
+     * Attempts to convert a BSON document into an instance of the specified result type using introspection.
+     *
+     * If the result type has been annotated with `@Introspection`, this method will attempt to use the provided
+     * `BeanIntrospection` to map the BSON document onto an instance of the result type.
+     *
+     * If the mapping fails or if no `BeanIntrospection` is found for the result type, an empty `Optional` is returned.
+     *
+     * @param result      The BSON document containing the data to be mapped
+     * @param resultType  The type of the object being mapped
+     * @param <R>         The type parameter representing the result type
+     * @return An `Optional` containing the mapped object, or an empty `Optional` if mapping failed or no `BeanIntrospection` was found
+     */
+    protected <R> Optional<R> convertUsingIntrospected(BsonDocument result, Class<R> resultType) {
+        Optional<BeanIntrospection<R>> introspection = BeanIntrospector.SHARED.findIntrospection(resultType);
+        if (introspection.isPresent()) {
+            try {
+                return Optional.of(mapIntrospectedObject(result, resultType));
+            } catch (Exception e) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Failed to map @Introspection annotated result. " +
+                        "Now attempting to fallback and read object from the document. Error: {}", e.getMessage());
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Maps an introspected object from a BSON document.
+     *
+     * @param result      The BSON document containing the data to be mapped
+     * @param resultType  The type of the object being mapped
+     * @param <R>         The type parameter representing the result type
+     * @return An instance of the specified result type, populated with data from the BSON document
+     */
+    private <R> R mapIntrospectedObject(BsonDocument result, Class<R> resultType) {
+        return (new BeanIntrospectionMapper<BsonDocument, R>() {
+            @Override
+            public Object read(BsonDocument document, String alias) {
+                BsonValue bsonValue = document.get(alias);
+                if (bsonValue == null) {
+                    return null;
+                }
+                return MongoUtils.toValue(bsonValue);
+            }
+
+            @Override
+            public ConversionService getConversionService() {
+                return conversionService;
+            }
+
+        }).map(result, resultType);
     }
 
     protected BsonDocument association(CodecRegistry codecRegistry,
@@ -245,7 +288,9 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
                 sb.append(" collation: ").append(collation);
             }
         }
-        QUERY_LOG.debug(sb.toString());
+        if (QUERY_LOG.isDebugEnabled()) {
+            QUERY_LOG.debug(sb.toString());
+        }
     }
 
     protected void logAggregate(MongoAggregation aggregation) {
@@ -253,13 +298,15 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
         StringBuilder sb = new StringBuilder("Executing Mongo 'aggregate'");
         if (options != null) {
             sb.append(" with");
-            sb.append(" pipeline: ").append(aggregation.getPipeline().stream().map(e -> e.toBsonDocument().toJson()).collect(Collectors.toList()));
+            sb.append(" pipeline: ").append(aggregation.getPipeline().stream().map(e -> e.toBsonDocument().toJson()).toList());
             Collation collation = options.getCollation();
             if (collation != null) {
                 sb.append(" collation: ").append(collation);
             }
         }
-        QUERY_LOG.debug(sb.toString());
+        if (QUERY_LOG.isDebugEnabled()) {
+            QUERY_LOG.debug(sb.toString());
+        }
     }
 
 }

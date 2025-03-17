@@ -65,8 +65,8 @@ public final class StaticMetamodelInitializer {
                         try {
                             if (field.get(field.getDeclaringClass()) == null) {
                                 RuntimePersistentProperty<T> prop = persistentEntity.getPropertyByName(property);
-                                if (prop instanceof RuntimeAssociation) {
-                                    initializeMetadataInternal(((RuntimeAssociation<T>) prop).getAssociatedEntity());
+                                if (prop instanceof RuntimeAssociation<T> runtimeAssociation) {
+                                    initializeMetadataInternal(runtimeAssociation.getAssociatedEntity());
                                 }
                                 if (field.getType() == SingularAttribute.class) {
                                     ReflectionUtils.setField(field, field.getDeclaringClass(), new RuntimePersistentPropertySingularAttribute<>(persistentEntity, prop));

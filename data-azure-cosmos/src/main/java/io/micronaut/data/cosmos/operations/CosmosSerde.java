@@ -30,6 +30,7 @@ import io.micronaut.jackson.core.tree.JsonNodeTreeCodec;
 import io.micronaut.json.tree.JsonNode;
 import io.micronaut.serde.Decoder;
 import io.micronaut.serde.Deserializer;
+import io.micronaut.serde.LimitingStream;
 import io.micronaut.serde.SerdeRegistry;
 import io.micronaut.serde.Serializer;
 import io.micronaut.serde.jackson.JacksonDecoder;
@@ -157,7 +158,7 @@ final class CosmosSerde {
             if (!parser.hasCurrentToken()) {
                 parser.nextToken();
             }
-            final Decoder decoder = JacksonDecoder.create(parser);
+            final Decoder decoder = JacksonDecoder.create(parser, LimitingStream.DEFAULT_LIMITS);
             return deserializer.deserialize(decoder, decoderContext, type);
         } catch (IOException e) {
             throw new DataAccessException("Failed to deserialize: " + e.getMessage(), e);

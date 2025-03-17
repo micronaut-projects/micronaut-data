@@ -1,5 +1,6 @@
 package io.micronaut.data.runtime.criteria.ext
 
+import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.runtime.criteria.*
@@ -9,7 +10,7 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
 @MicronautTest
-class KCriteriaBuilderExtKtTest(var runtimeCriteriaBuilder: RuntimeCriteriaBuilder) {
+class KCriteriaBuilderExtKtTest(private val runtimeCriteriaBuilder: RuntimeCriteriaBuilder) {
 
     @Test
     fun testBasic() {
@@ -22,14 +23,15 @@ class KCriteriaBuilderExtKtTest(var runtimeCriteriaBuilder: RuntimeCriteriaBuild
                     or {
                         (root[TestEntity::name] eq "AAA")
                         (root[TestEntity::name] eq "BBB")
+                        (root[TestEntity::age] lessThanOrEqualTo 50)
                     }
                 }
             }
         }
         val criteriaQuery = query.build(runtimeCriteriaBuilder) as QueryResultPersistentEntityCriteriaQuery
-        val q = criteriaQuery.buildQuery(SqlQueryBuilder()).query
+        val q = criteriaQuery.buildQuery(AnnotationMetadata.EMPTY_METADATA, SqlQueryBuilder()).query
 
-        Assertions.assertEquals("""SELECT MAX(test_entity_."birth") FROM "test_entity" test_entity_ WHERE (test_entity_."name" = ? AND test_entity_."enabled" = TRUE AND (test_entity_."name" = ? OR test_entity_."name" = ?))""", q)
+        Assertions.assertEquals("""SELECT MAX(test_entity_."birth") FROM "test_entity" test_entity_ WHERE (test_entity_."name" = ? AND test_entity_."enabled" = TRUE AND (test_entity_."name" = ? OR test_entity_."name" = ? OR test_entity_."age" <= ?))""", q)
     }
 
     @Test
@@ -64,12 +66,13 @@ class KCriteriaBuilderExtKtTest(var runtimeCriteriaBuilder: RuntimeCriteriaBuild
                     (root[TestEntity::age] lt 40)
                     (root[TestEntity::age] le 50)
                 }
+                root[TestEntity::name] inList listOf("AAA", "BBB")
             }
         }
         val criteriaQuery = query.build(runtimeCriteriaBuilder) as QueryResultPersistentEntityCriteriaQuery
-        val q = criteriaQuery.buildQuery(SqlQueryBuilder()).query
+        val q = criteriaQuery.buildQuery(AnnotationMetadata.EMPTY_METADATA, SqlQueryBuilder()).query
 
-        Assertions.assertEquals( """SELECT MIN(test_entity_."name") FROM "test_entity" test_entity_ WHERE ((test_entity_."enabled" = TRUE OR test_entity_."enabled" = FALSE OR test_entity_."enabled" IS NULL OR test_entity_."enabled" IS NOT NULL) AND NOT(test_entity_."enabled" = ?) AND NOT(test_entity_."enabled" != ?) AND NOT(test_entity_."enabled" = ?) AND NOT(test_entity_."enabled" != ?) AND (test_entity_."name" < ? OR test_entity_."name" < ?) AND test_entity_."name" > ? AND test_entity_."name" >= ? AND ((test_entity_."age" >= ? AND test_entity_."age" <= ?) OR test_entity_."age" > ? OR test_entity_."age" >= ? OR test_entity_."age" < ? OR test_entity_."age" <= ?))""", q)
+        Assertions.assertEquals( """SELECT MIN(test_entity_."name") FROM "test_entity" test_entity_ WHERE ((test_entity_."enabled" = TRUE OR test_entity_."enabled" = FALSE OR test_entity_."enabled" IS NULL OR test_entity_."enabled" IS NOT NULL) AND NOT(test_entity_."enabled" = ? AND test_entity_."enabled" != ? AND test_entity_."enabled" = ? AND test_entity_."enabled" != ?) AND (test_entity_."name" < ? OR test_entity_."name" <= ?) AND test_entity_."name" > ? AND test_entity_."name" >= ? AND ((test_entity_."age" >= ? AND test_entity_."age" <= ?) OR test_entity_."age" > ? OR test_entity_."age" >= ? OR test_entity_."age" < ? OR test_entity_."age" <= ?) AND test_entity_."name" IN (?,?))""", q)
     }
 
     @Test
@@ -84,6 +87,7 @@ class KCriteriaBuilderExtKtTest(var runtimeCriteriaBuilder: RuntimeCriteriaBuild
                     root[TestEntity::enabled].ne(bool)
                     root[TestEntity::enabled].equal(bool)
                     root[TestEntity::enabled].notEqual(bool)
+                    root[TestEntity::name] inList listOf("AAA", "BBB")
                 }
                 or {
                     root[TestEntity::enabled].eq(str)
@@ -100,9 +104,9 @@ class KCriteriaBuilderExtKtTest(var runtimeCriteriaBuilder: RuntimeCriteriaBuild
             }
         }
         val criteriaQuery = query.build(runtimeCriteriaBuilder) as QueryResultPersistentEntityCriteriaQuery
-        val q = criteriaQuery.buildQuery(SqlQueryBuilder()).query
+        val q = criteriaQuery.buildQuery(AnnotationMetadata.EMPTY_METADATA, SqlQueryBuilder()).query
 
-        Assertions.assertEquals("""SELECT MIN(test_entity_."name") FROM "test_entity" test_entity_ WHERE (NOT(test_entity_."enabled" = ?) AND NOT(test_entity_."enabled" != ?) AND NOT(test_entity_."enabled" = ?) AND NOT(test_entity_."enabled" != ?) AND (test_entity_."enabled" = ? OR test_entity_."enabled" != ? OR test_entity_."enabled" = ? OR test_entity_."enabled" != ?) AND test_entity_."description" = ? AND test_entity_."description" != ? AND test_entity_."description" = ? AND test_entity_."description" != ?)""", q)
+        Assertions.assertEquals("""SELECT MIN(test_entity_."name") FROM "test_entity" test_entity_ WHERE (NOT(test_entity_."enabled" = ? AND test_entity_."enabled" != ? AND test_entity_."enabled" = ? AND test_entity_."enabled" != ? AND test_entity_."name" IN (?,?)) AND (test_entity_."enabled" = ? OR test_entity_."enabled" != ? OR test_entity_."enabled" = ? OR test_entity_."enabled" != ?) AND test_entity_."description" = ? AND test_entity_."description" != ? AND test_entity_."description" = ? AND test_entity_."description" != ?)""", q)
     }
 
     @Test
@@ -134,9 +138,26 @@ class KCriteriaBuilderExtKtTest(var runtimeCriteriaBuilder: RuntimeCriteriaBuild
             }
         }
         val criteriaQuery = query.build(runtimeCriteriaBuilder) as QueryResultPersistentEntityCriteriaQuery
-        val q = criteriaQuery.buildQuery(SqlQueryBuilder()).query
+        val q = criteriaQuery.buildQuery(AnnotationMetadata.EMPTY_METADATA, SqlQueryBuilder()).query
 
-        Assertions.assertEquals("""SELECT MIN(test_entity_."name") FROM "test_entity" test_entity_ INNER JOIN "other_entity" test_entity_others_ ON test_entity_."id"=test_entity_others_."test_id" WHERE (NOT(test_entity_."enabled"=test_entity_others_."enabled") AND NOT(test_entity_."enabled"!=test_entity_others_."enabled") AND NOT(test_entity_."enabled"=test_entity_others_."enabled") AND NOT(test_entity_."enabled"!=test_entity_others_."enabled") AND (test_entity_."name"<test_entity_others_."name" OR test_entity_."name"<test_entity_others_."name") AND test_entity_."name">test_entity_others_."name" AND test_entity_."name">=test_entity_others_."name" AND (test_entity_."age">test_entity_others_."age" OR test_entity_."age">=test_entity_others_."age" OR test_entity_."age"<test_entity_others_."age" OR test_entity_."age"<=test_entity_others_."age"))""", q)
+        Assertions.assertEquals("""SELECT MIN(test_entity_."name") FROM "test_entity" test_entity_ INNER JOIN "other_entity" test_entity_others_ ON test_entity_."id"=test_entity_others_."test_id" WHERE (NOT(test_entity_."enabled" = test_entity_others_."enabled" AND test_entity_."enabled" != test_entity_others_."enabled" AND test_entity_."enabled" = test_entity_others_."enabled" AND test_entity_."enabled" != test_entity_others_."enabled") AND (test_entity_."name" < test_entity_others_."name" OR test_entity_."name" <= test_entity_others_."name") AND test_entity_."name" > test_entity_others_."name" AND test_entity_."name" >= test_entity_others_."name" AND (test_entity_."age" > test_entity_others_."age" OR test_entity_."age" >= test_entity_others_."age" OR test_entity_."age" < test_entity_others_."age" OR test_entity_."age" <= test_entity_others_."age"))""", q)
+    }
+
+    @Test
+    fun testCriteriaAndJoinWithAssociationId() {
+        val query = query<TestEntity, String> {
+            select(root[TestEntity::name])
+            val others = root.joinMany(TestEntity::others)
+            where {
+                and {
+                    others[OtherEntity::id] gt root[TestEntity::id]
+                }
+            }
+        }
+        val criteriaQuery = query.build(runtimeCriteriaBuilder) as QueryResultPersistentEntityCriteriaQuery
+        val q = criteriaQuery.buildQuery(AnnotationMetadata.EMPTY_METADATA, SqlQueryBuilder()).query
+
+        Assertions.assertEquals("""SELECT test_entity_."name" FROM "test_entity" test_entity_ INNER JOIN "other_entity" test_entity_others_ ON test_entity_."id"=test_entity_others_."test_id" WHERE (test_entity_others_."id" > test_entity_."id")""", q)
     }
 
     @Test
@@ -148,7 +169,7 @@ class KCriteriaBuilderExtKtTest(var runtimeCriteriaBuilder: RuntimeCriteriaBuild
             }
         }
         val criteriaQuery = query.build(runtimeCriteriaBuilder) as QueryResultPersistentEntityCriteriaQuery
-        val q = criteriaQuery.buildQuery(SqlQueryBuilder()).query
+        val q = criteriaQuery.buildQuery(AnnotationMetadata.EMPTY_METADATA, SqlQueryBuilder()).query
 
         Assertions.assertEquals("""SELECT AVG(other_entity_."age"),MAX(other_entity_."age"),MIN(other_entity_."age"),MAX(other_entity_."name"),MIN(other_entity_."name") FROM "other_entity" other_entity_ WHERE (other_entity_."name" = ?)""", q)
     }
@@ -162,7 +183,7 @@ class KCriteriaBuilderExtKtTest(var runtimeCriteriaBuilder: RuntimeCriteriaBuild
             }
         }
         val criteriaQuery = updateQuery.build(runtimeCriteriaBuilder) as QueryResultPersistentEntityCriteriaQuery
-        val q = criteriaQuery.buildQuery(SqlQueryBuilder()).query
+        val q = criteriaQuery.buildQuery(AnnotationMetadata.EMPTY_METADATA, SqlQueryBuilder()).query
 
         Assertions.assertEquals("""UPDATE "other_entity" SET "name"=? WHERE ("name" = ?)""", q)
     }

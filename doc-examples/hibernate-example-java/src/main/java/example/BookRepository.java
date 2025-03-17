@@ -4,6 +4,7 @@ package example;
 
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.annotation.Repository;
@@ -68,12 +69,15 @@ interface BookRepository extends CrudRepository<Book, Long> { // <2>
     // end::explicit[]
 
     // tag::save[]
+    @Override
     Book save(Book entity);
     // end::save[]
 
     // tag::inserts[]
     @Query("INSERT INTO Book(title, pages) VALUES (:title, :pages)")
-    void insert(String title, int pages);
+    @ParameterExpression(name = "title", expression = "#{book.title + 'ABC'}")
+    @ParameterExpression(name = "pages", expression = "#{book.pages}")
+    void insertCustomExp(Book book);
 
     @Query("INSERT INTO Book(title, pages) VALUES (:title, :pages)")
     void insertOne(Book book);
@@ -87,6 +91,7 @@ interface BookRepository extends CrudRepository<Book, Long> { // <2>
     // end::save2[]
 
     // tag::update[]
+    @Override
     Book update(Book newBook);
     // end::update[]
 
@@ -112,6 +117,7 @@ interface BookRepository extends CrudRepository<Book, Long> { // <2>
     // end::updateCustomQuery[]
 
     // tag::deleteall[]
+    @Override
     void deleteAll();
     // end::deleteall[]
 

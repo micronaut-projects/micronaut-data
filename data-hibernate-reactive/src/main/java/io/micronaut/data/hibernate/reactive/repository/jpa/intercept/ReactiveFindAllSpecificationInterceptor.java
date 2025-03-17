@@ -55,7 +55,7 @@ public class ReactiveFindAllSpecificationInterceptor extends AbstractSpecificati
         final CriteriaBuilder criteriaBuilder = operations.getCriteriaBuilder();
         final CriteriaQuery<Object> query = criteriaBuilder.createQuery(getRequiredRootEntity(context));
         final Root<Object> root = query.from(getRequiredRootEntity(context));
-        final Predicate predicate = specification.toPredicate(root, query, criteriaBuilder);
+        final Predicate predicate = specification != null ? specification.toPredicate(root, query, criteriaBuilder) : null;
         if (predicate != null) {
             query.where(predicate);
         }
@@ -78,8 +78,7 @@ public class ReactiveFindAllSpecificationInterceptor extends AbstractSpecificati
      */
     private void addSort(Object sortObject,
                            CriteriaQuery<Object> query, Root<Object> root, CriteriaBuilder criteriaBuilder) {
-        if (sortObject instanceof Sort) {
-            Sort sort = (Sort) sortObject;
+        if (sortObject instanceof Sort sort) {
             if (sort.isSorted()) {
                 query.orderBy(getOrders(sort, root, criteriaBuilder));
             }

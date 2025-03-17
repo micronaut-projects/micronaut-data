@@ -22,9 +22,11 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.support.AbstractConnectionOperations;
+import io.micronaut.data.mongodb.conf.RequiresSyncMongo;
 
-@Internal
+@RequiresSyncMongo
 @EachBean(MongoClient.class)
+@Internal
 final class MongoConnectionOperationsImpl extends AbstractConnectionOperations<ClientSession> implements MongoConnectionOperations {
 
     private final MongoClient mongoClient;
@@ -40,9 +42,6 @@ final class MongoConnectionOperationsImpl extends AbstractConnectionOperations<C
 
     @Override
     protected void setupConnection(ConnectionStatus<ClientSession> connectionStatus) {
-//        if (connectionStatus.getDefinition().isP) {
-//            throw new ConnectionException("MongoDB client doesn't support read only client session!");
-//        }
     }
 
     @Override

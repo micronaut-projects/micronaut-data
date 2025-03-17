@@ -24,7 +24,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import java.lang.annotation.Annotation;
 
 /**
- * Functional version or {@link io.micronaut.data.annotation.event.PrePersist} event handlers.
+ * Functional version or {@link PrePersist} event handlers.
  *
  * @param <T> The entity type
  * @author graemerocher

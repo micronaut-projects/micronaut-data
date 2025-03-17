@@ -18,6 +18,9 @@ package io.micronaut.data.jdbc.h2
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.data.annotation.*
 import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.model.Page
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Sort
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.data.tck.entities.Shipment
@@ -51,6 +54,9 @@ class H2EmbeddedIdSpec extends Specification {
     }
 
     void "test CRUD"() {
+        given:
+        repository.deleteAll()
+
         when:
         ShipmentId id = new ShipmentId("a", "b")
         repository.save(new Shipment(id, "test"))
@@ -130,6 +136,19 @@ class H2EmbeddedIdSpec extends Specification {
         foundAllOrderByCountryCityDesc[0].field == "test3"
         foundAllOrderByCountryCityDesc[1].field == "test4"
 
+        when:
+        def foundAllOrderByDynamic = repository.findAll(Sort.of(Sort.Order.desc("country"), Sort.Order.asc( "city")))
+
+        then:
+        foundAllOrderByDynamic.size() == 2
+        foundAllOrderByDynamic[0].shipmentId.country == "g"
+        foundAllOrderByDynamic[0].shipmentId.city == "h"
+        foundAllOrderByDynamic[1].shipmentId.country == "e"
+        foundAllOrderByDynamic[1].shipmentId.city == "f"
+
+        then:
+        foundAllOrderByDynamic.size() == 2
+
         when:"deleteAll is used with an iterable"
         repository.deleteAll([all.first()])
 
@@ -141,6 +160,31 @@ class H2EmbeddedIdSpec extends Specification {
 
         then:"The entities where deleted"
         repository.count() == 0
+    }
+
+    void "test criteria order of embedded"() {
+        given:
+        repository.deleteAll()
+        when:
+        ShipmentId id = new ShipmentId("a", "b")
+        repository.save(new Shipment(id, "test"))
+
+        ShipmentId id2 = new ShipmentId("c", "d")
+        repository.save(new Shipment(id2, "test2"))
+
+        ShipmentId id3 = new ShipmentId("e", "f")
+        repository.save(new Shipment(id3, "test3"))
+
+        ShipmentId id4 = new ShipmentId("g", "h")
+        repository.save(new Shipment(id4, "test4"))
+
+            Sort.Order.Direction sortDirection = Sort.Order.Direction.ASC;
+            Pageable pageable = Pageable.UNPAGED.order(new Sort.Order("shipmentId.city", sortDirection, false));
+            def page = repository.findAll(pageable)
+
+        then:
+        page.totalSize == 4
+        page.content[0].shipmentId.city == "b"
     }
 }
 

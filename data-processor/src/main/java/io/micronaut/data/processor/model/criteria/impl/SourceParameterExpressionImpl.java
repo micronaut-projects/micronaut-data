@@ -16,6 +16,7 @@
 package io.micronaut.data.processor.model.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.Expandable;
 import io.micronaut.data.annotation.JsonRepresentation;
@@ -25,17 +26,16 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
-import io.micronaut.data.model.jpa.criteria.impl.ParameterExpressionImpl;
+import io.micronaut.data.model.jpa.criteria.impl.IParameterExpression;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
 import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.inject.ast.Element;
 import io.micronaut.inject.ast.ParameterElement;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -43,29 +43,71 @@ import java.util.Objects;
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupportedOperation;
 
 /**
- * The internal source implementation of {@link ParameterExpressionImpl}.
+ * The internal source implementation of {@link IParameterExpression}.
  *
  * @author Denis Stepanov
  * @since 3.2
  */
 @Internal
-public final class SourceParameterExpressionImpl extends ParameterExpressionImpl<Object> implements BindingParameter {
+public final class SourceParameterExpressionImpl extends IParameterExpression<Object> implements BindingParameter {
 
     private final Map<String, DataType> dataTypes;
+    private final ClassElement expressionType;
+    @Nullable
     private final ParameterElement[] parameters;
     private final ParameterElement parameterElement;
     private final boolean isEntityParameter;
     private boolean isUpdate;
+    private final PersistentPropertyPath parameterPropertyPath;
 
     public SourceParameterExpressionImpl(Map<String, DataType> dataTypes,
                                          ParameterElement[] parameters,
                                          ParameterElement parameterElement,
-                                         boolean isEntityParameter) {
-        super(null, parameterElement == null ? null : parameterElement.getName());
+                                         boolean isEntityParameter,
+                                         PersistentPropertyPath parameterPropertyPath) {
+        this(parameterElement == null ? null : parameterElement.getName(),
+            dataTypes, null, parameters, parameterElement, isEntityParameter, false, parameterPropertyPath);
+    }
+
+    public SourceParameterExpressionImpl(Map<String, DataType> dataTypes,
+                                         String name,
+                                         ClassElement expressionType,
+                                         PersistentPropertyPath parameterPropertyPath) {
+        this(name, dataTypes, expressionType, null, null, false, false, parameterPropertyPath);
+    }
+
+    private SourceParameterExpressionImpl(String name,
+                                          Map<String, DataType> dataTypes,
+                                          ClassElement expressionType,
+                                          @Nullable ParameterElement[] parameters,
+                                          ParameterElement parameterElement,
+                                          boolean isEntityParameter,
+                                          boolean isUpdate,
+                                          PersistentPropertyPath parameterPropertyPath) {
+        super(new ClassElementExpressionType<>(getSourceExpressionType(expressionType, parameterElement, parameterPropertyPath)), name);
         this.dataTypes = dataTypes;
+        this.expressionType = expressionType;
         this.parameters = parameters;
         this.parameterElement = parameterElement;
         this.isEntityParameter = isEntityParameter;
+        this.isUpdate = isUpdate;
+        this.parameterPropertyPath = parameterPropertyPath;
+    }
+
+    public static ClassElement getSourceExpressionType(ClassElement expressionType,
+                                                       ParameterElement parameterElement,
+                                                       PersistentPropertyPath parameterPropertyPath) {
+        if (expressionType != null) {
+            return expressionType;
+        }
+        if (parameterPropertyPath != null) {
+            SourcePersistentProperty property = (SourcePersistentProperty) parameterPropertyPath.getProperty();
+            return property.getType();
+        }
+        if (parameterElement != null) {
+            return parameterElement.getType();
+        }
+        return null;
     }
 
     @Override
@@ -86,24 +128,71 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
             bindName = bindingContext.getName();
         }
         PersistentPropertyPath incomingMethodParameterProperty = bindingContext.getIncomingMethodParameterProperty();
+        if (incomingMethodParameterProperty == null) {
+            incomingMethodParameterProperty = parameterPropertyPath;
+        }
         PersistentPropertyPath outgoingQueryParameterProperty = bindingContext.getOutgoingQueryParameterProperty();
         PersistentPropertyPath propertyPath = outgoingQueryParameterProperty == null ? incomingMethodParameterProperty : outgoingQueryParameterProperty;
         if (propertyPath == null) {
-            Objects.requireNonNull(parameterElement);
-            int index = Arrays.asList(parameters).indexOf(parameterElement);
-            DataType dataType = getDataType(null, parameterElement);
-            JsonDataType jsonDataType = dataType == DataType.JSON ? getJsonDataType(null, parameterElement) : null;
-            String converter = parameterElement.stringValue(TypeDef.class, "converter").orElse(null);
+            if (parameterElement != null) {
+                int index = Arrays.asList(parameters).indexOf(parameterElement);
+                DataType dataType = getDataType(null, parameterElement, expressionType);
+                JsonDataType jsonDataType = dataType == DataType.JSON ? getJsonDataType(null, parameterElement, expressionType) : null;
+                String converter = parameterElement.stringValue(TypeDef.class, "converter").orElse(null);
+                boolean isExpandable = isExpandable(bindingContext, dataType);
+                return new QueryParameterBinding() {
+
+                    @Override
+                    public String getName() {
+                        return SourceParameterExpressionImpl.this.getName();
+                    }
+
+                    @Override
+                    public String getKey() {
+                        return bindName;
+                    }
+
+                    @Override
+                    public int getParameterIndex() {
+                        return index;
+                    }
+
+                    @Override
+                    public DataType getDataType() {
+                        return dataType;
+                    }
+
+                    @Override
+                    public JsonDataType getJsonDataType() {
+                        return jsonDataType;
+                    }
+
+                    @Override
+                    public String getConverterClassName() {
+                        return converter;
+                    }
+
+                    @Override
+                    public boolean isExpandable() {
+                        return isExpandable;
+                    }
+
+                };
+            }
+            Objects.requireNonNull(expressionType);
+            DataType dataType = getDataType(null, null, expressionType);
+            JsonDataType jsonDataType = dataType == DataType.JSON ? getJsonDataType(null, null, expressionType) : null;
             boolean isExpandable = isExpandable(bindingContext, dataType);
             return new QueryParameterBinding() {
+
                 @Override
-                public String getKey() {
-                    return bindName;
+                public String getName() {
+                    return SourceParameterExpressionImpl.this.getName();
                 }
 
                 @Override
-                public int getParameterIndex() {
-                    return index;
+                public String getKey() {
+                    return bindName;
                 }
 
                 @Override
@@ -117,32 +206,47 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
                 }
 
                 @Override
-                public String getConverterClassName() {
-                    return converter;
-                }
-
-                @Override
                 public boolean isExpandable() {
                     return isExpandable;
                 }
+
+                @Override
+                public boolean isExpression() {
+                    return true;
+                }
             };
-        }
-        if (outgoingQueryParameterProperty == null) {
-            throw new IllegalStateException("Outgoing query parameter property is required!");
+
         }
         boolean autopopulated = propertyPath.getProperty()
-                        .findAnnotation(AutoPopulated.class)
-                        .map(ap -> ap.getRequiredValue(AutoPopulated.UPDATEABLE, Boolean.class))
-                        .orElse(false);
-        DataType dataType = getDataType(propertyPath, parameterElement);
-        JsonDataType jsonDataType = getJsonDataType(propertyPath, parameterElement);
+            .findAnnotation(AutoPopulated.class)
+            .map(ap -> ap.getRequiredValue(AutoPopulated.UPDATEABLE, Boolean.class))
+            .orElse(false);
+        DataType dataType = getDataType(propertyPath, parameterElement, expressionType);
+        JsonDataType jsonDataType = getJsonDataType(propertyPath, parameterElement, expressionType);
         String converterClassName = ((SourcePersistentProperty) propertyPath.getProperty()).getConverterClassName();
         int index = parameterElement == null || isEntityParameter ? -1 : Arrays.asList(parameters).indexOf(parameterElement);
-        String[] path = asStringPath(outgoingQueryParameterProperty.getAssociations(), outgoingQueryParameterProperty.getProperty());
-        String[] parameterBindingPath = index != -1 ? getBindingPath(incomingMethodParameterProperty, outgoingQueryParameterProperty) : null;
         boolean requiresPrevValue = index == -1 && autopopulated && !isUpdate;
         boolean isExpandable = isExpandable(bindingContext, dataType);
+        String[] path;
+        String[] parameterBindingPath;
+        if (outgoingQueryParameterProperty != null) {
+            path = outgoingQueryParameterProperty.getArrayPath();
+            if (index != -1) {
+                parameterBindingPath = getBindingPath(incomingMethodParameterProperty, outgoingQueryParameterProperty);
+            } else {
+                parameterBindingPath = null;
+            }
+        } else {
+            path = null;
+            parameterBindingPath = null;
+        }
         return new QueryParameterBinding() {
+
+            @Override
+            public String getName() {
+                return SourceParameterExpressionImpl.this.getName();
+            }
+
             @Override
             public String getKey() {
                 return bindName;
@@ -192,6 +296,11 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
             public boolean isExpandable() {
                 return isExpandable;
             }
+
+            @Override
+            public boolean isExpression() {
+                return expressionType != null;
+            }
         };
     }
 
@@ -210,10 +319,10 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
 
     private String[] getBindingPath(PersistentPropertyPath parameterProperty, PersistentPropertyPath bindedPath) {
         if (parameterProperty == null) {
-            return asStringPath(bindedPath.getAssociations(), bindedPath.getProperty());
+            return bindedPath.getArrayPath();
         }
-        List<String> parameterPath = Arrays.asList(asStringPath(parameterProperty.getAssociations(), parameterProperty.getProperty()));
-        List<String> path = new LinkedList<>(Arrays.asList(asStringPath(bindedPath.getAssociations(), bindedPath.getProperty())));
+        List<String> parameterPath = List.of(parameterProperty.getArrayPath());
+        List<String> path = List.of(bindedPath.getArrayPath());
         if (path.equals(parameterPath)) {
             return null;
         }
@@ -230,7 +339,7 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
         return path.subList(fromIndex, path.size()).toArray(new String[0]);
     }
 
-    private DataType getDataType(PersistentPropertyPath propertyPath, ParameterElement parameterElement) {
+    private DataType getDataType(PersistentPropertyPath propertyPath, ParameterElement parameterElement, ClassElement type) {
         if (propertyPath != null) {
             PersistentProperty property = propertyPath.getProperty();
             if (!(property instanceof Association)) {
@@ -242,7 +351,11 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
             if (dataType != null) {
                 return dataType;
             }
-            ClassElement type = parameterElement.getType();
+            if (type == null) {
+                type = parameterElement.getType();
+            }
+        }
+        if (type != null) {
             if (TypeUtils.isContainerType(type)) {
                 type = type.getFirstTypeArgument().orElse(type);
             }
@@ -251,7 +364,7 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
         return DataType.OBJECT;
     }
 
-    private JsonDataType getJsonDataType(PersistentPropertyPath propertyPath, ParameterElement parameterElement) {
+    private JsonDataType getJsonDataType(PersistentPropertyPath propertyPath, ParameterElement parameterElement, ClassElement type) {
         if (propertyPath != null) {
             PersistentProperty property = propertyPath.getProperty();
             if (!(property instanceof Association)) {
@@ -261,26 +374,17 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
                 }
             }
         }
-        if (parameterElement != null) {
-            JsonDataType jsonDataType = parameterElement.enumValue(JsonRepresentation.class, "type", JsonDataType.class).orElse(JsonDataType.DEFAULT);
-            if (jsonDataType != null) {
-                return jsonDataType;
-            }
+        Element element;
+        if (type == null && parameterElement != null) {
+            element = parameterElement;
+        } else {
+            element = type;
+        }
+        if (element != null) {
+            return element.enumValue(JsonRepresentation.class, "type", JsonDataType.class).orElse(JsonDataType.DEFAULT);
         }
         // default
         return JsonDataType.DEFAULT;
-    }
-
-    private String[] asStringPath(List<Association> associations, PersistentProperty property) {
-        if (associations.isEmpty()) {
-            return new String[]{property.getName()};
-        }
-        List<String> path = new ArrayList<>(associations.size() + 1);
-        for (Association association : associations) {
-            path.add(association.getName());
-        }
-        path.add(property.getName());
-        return path.toArray(new String[0]);
     }
 
 }

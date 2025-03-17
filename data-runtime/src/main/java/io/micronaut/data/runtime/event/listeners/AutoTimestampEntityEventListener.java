@@ -98,8 +98,8 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
 
     private Object truncate(Object now, ChronoUnit truncateToValue) {
         if (truncateToValue != null) {
-            if (now instanceof OffsetDateTime) {
-                now = ((OffsetDateTime) now).truncatedTo(truncateToValue);
+            if (now instanceof OffsetDateTime offsetDateTime) {
+                now = offsetDateTime.truncatedTo(truncateToValue);
             } else {
                 now = conversionService.convertRequired(now, Instant.class).truncatedTo(truncateToValue);
             }

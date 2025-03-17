@@ -16,6 +16,8 @@
 package io.micronaut.data.r2dbc.postgres
 
 import groovy.transform.Memoized
+import io.micronaut.data.r2dbc.oraclexe.OracleBookAsyncRepository
+import io.micronaut.data.tck.repositories.BookAsyncRepository
 import io.micronaut.data.tck.repositories.PersonAsyncRepository
 import io.micronaut.data.tck.tests.AbstractAsyncRepositorySpec
 
@@ -27,4 +29,9 @@ class PostgresAsyncRepositorySpec extends AbstractAsyncRepositorySpec implements
         return context.getBean(PostgresPersonAsyncRepository)
     }
 
+    @Memoized
+    @Override
+    BookAsyncRepository getBookRepository() {
+        return context.getBean(PostgresBookAsyncRepository)
+    }
 }

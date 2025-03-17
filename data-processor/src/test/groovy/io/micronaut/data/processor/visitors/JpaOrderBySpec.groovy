@@ -41,6 +41,7 @@ class JpaOrderBySpec extends AbstractTypeElementSpec {
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package test;
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.entities.Person;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.repository.CrudRepository;
@@ -52,7 +53,7 @@ import io.micronaut.data.repository.GenericRepository;
 import java.net.URL;
 
 @Repository
-@io.micronaut.context.annotation.Executable
+@Executable
 interface MyInterface extends GenericRepository<Person, Long> {
 
     List<Person> queryByNameOrderByName(String n);
@@ -83,7 +84,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
         listName.synthesize(Query).value() == "SELECT ${alias}.name FROM $Person.name AS ${alias} ORDER BY ${alias}.name ASC"
         listName.synthesize(DataMethod).resultType() == String
         listTop3.synthesize(Query).value() == "SELECT ${alias} FROM $Person.name AS ${alias} ORDER BY ${alias}.name ASC"
-        listTop3.synthesize(DataMethod).pageSize() == 3
+        listTop3.intValue(DataMethod, DataMethod.META_MEMBER_LIMIT).getAsInt() == 3
         findByCompanyUrlOrderByCompanyUrl.synthesize(Query).value() == "SELECT ${alias} FROM $Person.name AS ${alias} JOIN ${alias}.company ${alias}${companyAlias} WHERE (${alias}${companyAlias}.url = :p1) ORDER BY ${alias}${companyAlias}.url ASC"
     }
 

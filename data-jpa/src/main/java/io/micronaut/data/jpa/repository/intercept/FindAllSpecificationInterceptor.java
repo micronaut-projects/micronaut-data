@@ -48,8 +48,8 @@ public class FindAllSpecificationInterceptor extends AbstractSpecificationInterc
      */
     protected FindAllSpecificationInterceptor(@NonNull RepositoryOperations operations) {
         super(operations);
-        if (operations instanceof JpaRepositoryOperations) {
-            this.jpaOperations = (JpaRepositoryOperations) operations;
+        if (operations instanceof JpaRepositoryOperations jpaRepositoryOperations) {
+            this.jpaOperations = jpaRepositoryOperations;
         } else {
             throw new IllegalStateException("Repository operations must be na instance of JpaRepositoryOperations");
         }
@@ -57,12 +57,12 @@ public class FindAllSpecificationInterceptor extends AbstractSpecificationInterc
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        final Specification specification = getSpecification(context);
+        final Specification specification = getSpecification(context, true);
         final EntityManager entityManager = jpaOperations.getCurrentEntityManager();
         final CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         final CriteriaQuery<Object> query = criteriaBuilder.createQuery(getRequiredRootEntity(context));
         final Root<Object> root = query.from(getRequiredRootEntity(context));
-        final Predicate predicate = specification.toPredicate(root, query, criteriaBuilder);
+        final Predicate predicate = specification != null ? specification.toPredicate(root, query, criteriaBuilder) : null;
         if (predicate != null) {
             query.where(predicate);
         }
@@ -84,8 +84,7 @@ public class FindAllSpecificationInterceptor extends AbstractSpecificationInterc
      */
     protected void addSort(Object sortObject,
                            CriteriaQuery<Object> query, Root<Object> root, CriteriaBuilder criteriaBuilder) {
-        if (sortObject instanceof Sort) {
-            Sort sort = (Sort) sortObject;
+        if (sortObject instanceof Sort sort) {
             if (sort.isSorted()) {
                 query.orderBy(getOrders(sort, root, criteriaBuilder));
             }

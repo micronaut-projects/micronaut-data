@@ -70,7 +70,6 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Default implementation of {@link MongoStoredQuery}.
@@ -111,8 +110,6 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 runtimeEntityRegistry,
                 conversionService,
                 persistentEntity,
-                storedQuery.getAnnotationMetadata().enumValue(DataMethod.NAME, DataMethod.META_MEMBER_OPERATION_TYPE, DataMethod.OperationType.class)
-                        .orElseThrow(IllegalStateException::new),
                 storedQuery.getAnnotationMetadata().stringValue(Query.class, "update").orElse(null));
     }
 
@@ -122,7 +119,6 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                             RuntimeEntityRegistry runtimeEntityRegistry,
                             ConversionService conversionService,
                             RuntimePersistentEntity<E> persistentEntity,
-                            DataMethod.OperationType operationType,
                             String updateJson) {
         super(storedQuery, persistentEntity);
         this.storedQuery = storedQuery;
@@ -131,7 +127,8 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         this.runtimeEntityRegistry = runtimeEntityRegistry;
         this.conversionService = conversionService;
         this.persistentEntity = persistentEntity;
-        if (operationType == DataMethod.OperationType.QUERY || operationType == DataMethod.OperationType.EXISTS || operationType == DataMethod.OperationType.COUNT) {
+        OperationType operationType = storedQuery.getOperationType();
+        if (operationType == OperationType.QUERY || operationType == OperationType.EXISTS || operationType == OperationType.COUNT) {
             String query = storedQuery.getQuery();
             String filterParameter = getParameterInRole(MongoRoles.FILTER_ROLE);
             String filterOptionsParameter = getParameterInRole(MongoRoles.FIND_OPTIONS_ROLE);
@@ -146,20 +143,20 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 aggregateData = null;
                 findData = new FindData(BsonDocument.parse(query));
             } else if (query.startsWith("[")) {
-                aggregateData = new AggregateData(BsonArray.parse(query).stream().map(BsonValue::asDocument).collect(Collectors.toList()));
+                aggregateData = new AggregateData(parseAggregation(query, storedQuery.isCount()));
                 findData = null;
             } else {
                 aggregateData = null;
                 findData = new FindData(BsonDocument.parse(query));
             }
-            isCount = operationType == DataMethod.OperationType.COUNT || storedQuery.isCount() || query.contains("$count");
+            isCount = operationType == OperationType.COUNT || storedQuery.isCount() || query.contains("$count");
         } else {
             aggregateData = null;
             findData = null;
             isCount = false;
         }
 
-        if (operationType == DataMethod.OperationType.DELETE) {
+        if (operationType == OperationType.DELETE) {
             String query = storedQuery.getQuery();
             deleteData = new DeleteData(
                     StringUtils.isEmpty(query) ? EMPTY : BsonDocument.parse(query),
@@ -170,7 +167,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             deleteData = null;
         }
 
-        if (operationType == DataMethod.OperationType.UPDATE) {
+        if (operationType == OperationType.UPDATE) {
             if (StringUtils.isEmpty(updateJson)) {
                 throw new IllegalStateException("Update query is expected!");
             }
@@ -184,6 +181,17 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         } else {
             updateData = null;
         }
+    }
+
+    private List<Bson> parseAggregation(String query, boolean isCount) {
+        List<Bson> pipeline = BsonArray.parse(query).stream().<Bson>map(BsonValue::asDocument).toList();
+        if (isCount && pipeline.stream().noneMatch(p -> p.toBsonDocument().containsKey("$count"))) {
+            // We can probably remove sorting projection etc. or allow a user to specify a custom count pipeline
+            List<Bson> countPipeline = new ArrayList<>(pipeline);
+            countPipeline.add(BsonDocument.parse("{ $count: \"totalCount\" }"));
+            return countPipeline;
+        }
+        return pipeline;
     }
 
     @Override
@@ -204,8 +212,8 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         if (name == null) {
             return -1;
         }
-        if (storedQuery instanceof DefaultStoredQuery) {
-            String[] argumentNames = ((DefaultStoredQuery<E, R>) storedQuery).getMethod().getArgumentNames();
+        if (storedQuery instanceof DefaultStoredQuery<?, ?> defaultStoredQuery) {
+            String[] argumentNames = defaultStoredQuery.getMethod().getArgumentNames();
             for (int i = 0; i < argumentNames.length; i++) {
                 String argumentName = argumentNames[i];
                 if (argumentName.equals(name)) {
@@ -333,8 +341,8 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
     }
 
     private Bson replaceQueryParameters(Bson value, @Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
-        if (value instanceof BsonDocument) {
-            return (BsonDocument) replaceQueryParametersInBsonValue(((BsonDocument) value).clone(), invocationContext, entity);
+        if (value instanceof BsonDocument bsonDocument) {
+            return (BsonDocument) replaceQueryParametersInBsonValue(bsonDocument.clone(), invocationContext, entity);
         }
         throw new IllegalStateException("Unrecognized value: " + value);
     }
@@ -484,28 +492,27 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         if (isIdentity && value instanceof String) {
             return new BsonObjectId(new ObjectId((String) value));
         }
-        if (value instanceof Object[]) {
-            List<Object> valueList = Arrays.asList((Object[]) value);
+        if (value instanceof Object[] objects) {
+            List<Object> valueList = Arrays.asList(objects);
             if (isIdentity) {
                 for (ListIterator<Object> iterator = valueList.listIterator(); iterator.hasNext(); ) {
                     Object item = iterator.next();
-                    if (item instanceof String) {
-                        item = new BsonObjectId(new ObjectId((String) item));
+                    if (item instanceof String string) {
+                        item = new BsonObjectId(new ObjectId(string));
                     }
                     iterator.set(item);
                 }
             }
             value = valueList;
         }
-        if (value instanceof Collection) {
+        if (value instanceof Collection<?> values) {
             final boolean isIdentityField = isIdentity;
-            Collection<?> values = (Collection) value;
             return new BsonArray(values.stream().map(val -> {
-                if (isIdentityField && val instanceof String) {
-                    return new BsonObjectId(new ObjectId((String) val));
+                if (isIdentityField && val instanceof String string) {
+                    return new BsonObjectId(new ObjectId(string));
                 }
                 return MongoUtils.toBsonValue(conversionService, val, codecRegistry.get());
-            }).collect(Collectors.toList()));
+            }).toList());
         }
         return MongoUtils.toBsonValue(conversionService, value, codecRegistry.get());
     }
@@ -608,6 +615,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             newOptions.bypassDocumentValidation(options.getBypassDocumentValidation());
             newOptions.hint(options.getHint());
             newOptions.hintString(options.getHintString());
+            newOptions.arrayFilters(options.getArrayFilters());
             return newOptions;
         }
 
@@ -626,6 +634,9 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             }
             if (from.getHintString() != null) {
                 to.hintString(from.getHintString());
+            }
+            if (from.getArrayFilters() != null) {
+                to.arrayFilters(from.getArrayFilters());
             }
         }
 

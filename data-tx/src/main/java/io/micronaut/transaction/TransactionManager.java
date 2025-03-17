@@ -17,7 +17,7 @@ package io.micronaut.transaction;
 
 /**
  * NOTICE: This is a fork of Spring's {@code TransactionManager} modernizing it
- * to use enums, Slf4j and decoupling from Spring.
+ * to use enums, SLF4J and decoupling from Spring.
  * Marker interface for transaction manager implementations,
  * either traditional or reactive.
  *

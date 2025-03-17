@@ -26,6 +26,7 @@ import io.micronaut.data.annotation.repeatable.WhereSpecifications;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
@@ -95,6 +96,11 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     }
 
     @Override
+    protected void appendProjectionRowCountDistinct(StringBuilder queryString, QueryState queryState, PersistentEntity entity, AnnotationMetadata annotationMetadata, String logicalName) {
+        throw new UnsupportedOperationException("Count distinct is not supported by Micronaut Data Azure Cosmos.");
+    }
+
+    @Override
     protected NamingStrategy getNamingStrategy(PersistentEntity entity) {
         return entity.findNamingStrategy().orElse(RAW_NAMING_STRATEGY);
     }
@@ -143,7 +149,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
         // For projections, we need to have VALUE in order to be able to read value
         // but for DTO when there can be more fields retrieved (meaning there is comma in the query) then VALUE cannot work
         // also literal projection does not need VALUE
-        if (projections.size() == 1 && !(projections.get(0) instanceof QueryModel.LiteralProjection) && select.indexOf(",") == -1) {
+        if (projections.size() == 1 && !(projections.get(0) instanceof QueryModel.LiteralProjection) && !(projections.get(0) instanceof QueryModel.RootEntityProjection) && select.indexOf(",") == -1) {
             select.insert(SELECT_CLAUSE.length(), VALUE);
         }
 
@@ -203,7 +209,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
         Map<String, String> joinedPaths = new HashMap<>();
         for (JoinPath joinPath : allPaths) {
             Association association = joinPath.getAssociation();
-            if (association instanceof Embedded) {
+            if (association.isEmbedded()) {
                 // joins on embedded don't make sense
                 continue;
             }
@@ -225,7 +231,7 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     }
 
     @Override
-    protected boolean appendAssociationProjection(QueryState queryState, StringBuilder queryString, PersistentProperty property, PersistentPropertyPath propertyPath) {
+    protected boolean appendAssociationProjection(QueryState queryState, StringBuilder queryString, PersistentProperty property, PersistentPropertyPath propertyPath, String columnAlias) {
         String joinedPath = propertyPath.getPath();
         if (!queryState.isJoined(joinedPath)) {
             queryString.setLength(queryString.length() - 1);
@@ -324,6 +330,9 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
     @NonNull
     @Override
     public QueryResult buildPagination(@NonNull Pageable pageable) {
+        if (pageable.getMode() != Mode.OFFSET) {
+            throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported by cosmos operations");
+        }
         int size = pageable.getSize();
         if (size > 0) {
             StringBuilder builder = new StringBuilder(" ");
@@ -391,8 +400,8 @@ public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
             appendPropertyRef(whereClause, ctx.getAnnotationMetadata(), ctx.getPersistentEntity(), propertyPath);
             whereClause.append(COMMA);
             Object value = criterion.getValue();
-            if (value instanceof BindingParameter) {
-                ctx.pushParameter((BindingParameter) value, newBindingContext(propertyPath.getPropertyPath()));
+            if (value instanceof BindingParameter bindingParameter) {
+                ctx.pushParameter(bindingParameter, newBindingContext(propertyPath.getPropertyPath()));
             } else {
                 asLiterals(ctx.query(), value);
             }

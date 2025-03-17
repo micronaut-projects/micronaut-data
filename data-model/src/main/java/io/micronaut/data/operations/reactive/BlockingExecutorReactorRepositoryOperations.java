@@ -30,7 +30,7 @@ import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.RepositoryOperations;
 import reactor.core.publisher.Mono;
 
-import java.io.Serializable;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -48,8 +48,9 @@ public interface BlockingExecutorReactorRepositoryOperations extends RepositoryO
 
     <T> Optional<T> blockOptional(Function<ReactorReactiveRepositoryOperations, Mono<T>> supplier);
 
+    @Override
     @Nullable
-    default <T> T findOne(@NonNull Class<T> type, @NonNull Serializable id) {
+    default <T> T findOne(@NonNull Class<T> type, @NonNull Object id) {
         return block(reactive -> reactive.findOne(type, id));
     }
 
@@ -103,6 +104,11 @@ public interface BlockingExecutorReactorRepositoryOperations extends RepositoryO
     @Override
     default Optional<Number> executeDelete(@NonNull PreparedQuery<?, Number> preparedQuery) {
         return blockOptional(reactive -> reactive.executeDelete(preparedQuery));
+    }
+
+    @Override
+    default <R> List<R> execute(PreparedQuery<?, R> preparedQuery) {
+        return block(reactive -> reactive.execute(preparedQuery).collectList());
     }
 
     @Override

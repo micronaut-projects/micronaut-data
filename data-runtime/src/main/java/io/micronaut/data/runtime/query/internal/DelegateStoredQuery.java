@@ -16,7 +16,7 @@
 package io.micronaut.data.runtime.query.internal;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
-import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.JoinPath;
@@ -94,6 +94,16 @@ public interface DelegateStoredQuery<E, R> extends StoredQuery<E, R> {
     }
 
     @Override
+    default boolean isProcedure() {
+        return getStoredQueryDelegate().isProcedure();
+    }
+
+    @Override
+    default OperationType getOperationType() {
+        return getStoredQueryDelegate().getOperationType();
+    }
+
+    @Override
     default boolean useNumericPlaceholders() {
         return getStoredQueryDelegate().useNumericPlaceholders();
     }
@@ -129,6 +139,11 @@ public interface DelegateStoredQuery<E, R> extends StoredQuery<E, R> {
     }
 
     @Override
+    default Set<JoinPath> getJoinPaths() {
+        return getStoredQueryDelegate().getJoinPaths();
+    }
+
+    @Override
     default boolean isSingleResult() {
         return getStoredQueryDelegate().isSingleResult();
     }
@@ -148,22 +163,6 @@ public interface DelegateStoredQuery<E, R> extends StoredQuery<E, R> {
         return getStoredQueryDelegate().getName();
     }
 
-    @Nullable
-    @Override
-    default String[] getIndexedParameterAutoPopulatedPropertyPaths() {
-        return getStoredQueryDelegate().getIndexedParameterAutoPopulatedPropertyPaths();
-    }
-
-    @Override
-    default String[] getIndexedParameterAutoPopulatedPreviousPropertyPaths() {
-        return getStoredQueryDelegate().getIndexedParameterAutoPopulatedPreviousPropertyPaths();
-    }
-
-    @Override
-    default int[] getIndexedParameterAutoPopulatedPreviousPropertyIndexes() {
-        return getStoredQueryDelegate().getIndexedParameterAutoPopulatedPreviousPropertyIndexes();
-    }
-
     @Override
     default boolean isRawQuery() {
         return getStoredQueryDelegate().isRawQuery();
@@ -172,5 +171,20 @@ public interface DelegateStoredQuery<E, R> extends StoredQuery<E, R> {
     @Override
     default boolean isJsonEntity() {
         return getStoredQueryDelegate().isJsonEntity();
+    }
+
+    @Override
+    default Map<String, AnnotationValue<?>> getParameterExpressions() {
+        return getStoredQueryDelegate().getParameterExpressions();
+    }
+
+    @Override
+    default int getLimit() {
+        return getStoredQueryDelegate().getLimit();
+    }
+
+    @Override
+    default int getOffset() {
+        return getStoredQueryDelegate().getOffset();
     }
 }

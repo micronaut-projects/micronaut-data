@@ -18,7 +18,10 @@ package io.micronaut.data.hibernate;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.Shipment;
+import io.micronaut.data.tck.entities.ShipmentDto;
 import io.micronaut.data.tck.entities.ShipmentId;
+
+import java.util.List;
 
 @Repository
 public interface JpaShipmentRepository extends CrudRepository<Shipment, ShipmentId> {
@@ -27,4 +30,9 @@ public interface JpaShipmentRepository extends CrudRepository<Shipment, Shipment
 
     Shipment findByShipmentIdCountryAndShipmentIdCity(String country, String city);
 
+    long countDistinct();
+
+    List<Shipment> findAllByShipmentIdCountry(String country);
+
+    List<ShipmentDto> queryAllByShipmentIdCountry(String country);
 }

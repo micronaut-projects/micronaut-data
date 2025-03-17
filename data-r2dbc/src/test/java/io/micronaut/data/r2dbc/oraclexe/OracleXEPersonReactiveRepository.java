@@ -16,6 +16,7 @@
 package io.micronaut.data.r2dbc.oraclexe;
 
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.sql.Procedure;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.tck.entities.Person;
@@ -27,10 +28,21 @@ import java.util.List;
 @R2dbcRepository(dialect = Dialect.ORACLE)
 public interface OracleXEPersonReactiveRepository extends PersonReactiveRepository {
 
+    @Override
     @Query("INSERT INTO person(id, name, age, enabled) VALUES (\"PERSON_SEQ\".nextval, :name, :age, 1)")
     Mono<Long> saveCustom(List<Person> people);
 
+    @Override
     @Query("INSERT INTO person(id, name, age, enabled) VALUES (\"PERSON_SEQ\".nextval, :name, :age, 1)")
     Mono<Long> saveCustomSingle(Person people);
 
+    @Override
+    @Query("INSERT INTO person(id, name, age, enabled) VALUES (\"PERSON_SEQ\".nextval, :name, :age, 1)")
+    Mono<Long> saveCustomSingleExpression(Person person);
+
+    @Procedure
+    Mono<Integer> add1(int input);
+
+    @Procedure("add1")
+    Mono<Integer> add1Aliased(int input);
 }

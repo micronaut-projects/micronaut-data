@@ -37,13 +37,6 @@ public interface PreparedQuery<E, R> extends PagedQuery<E>, StoredQuery<E, R>, P
     Class<?> getRepositoryType();
 
     /**
-     * @return The named parameter values
-     */
-    @NonNull
-    @Deprecated
-    Map<String, Object> getParameterValues();
-
-    /**
      * @return The method parameters
      */
     Object[] getParameterArray();
@@ -64,5 +57,6 @@ public interface PreparedQuery<E, R> extends PagedQuery<E>, StoredQuery<E, R>, P
      *
      * @return true if it is raw query
      */
+    @Override
     boolean isRawQuery();
 }

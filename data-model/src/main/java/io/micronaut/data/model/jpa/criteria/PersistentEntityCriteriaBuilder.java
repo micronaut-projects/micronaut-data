@@ -78,22 +78,24 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
     Predicate isNotEmptyString(Expression<String> expression);
 
     /**
-     * Creates a rlike predicate between an expression x and y.
+     * Creates an case-insensitive like predicate.
      *
      * @param x The expression
-     * @param y The expression
+     * @param pattern The pattern
      * @return a new predicate
      */
-    Predicate rlikeString(Expression<String> x, Expression<String> y);
+    Predicate ilike(Expression<String> x, Expression<String> pattern);
 
     /**
-     * Creates an ilike predicate between an expression x and y.
+     * Creates an case-insensitive like predicate.
      *
      * @param x The expression
-     * @param y The expression
+     * @param pattern The pattern
      * @return a new predicate
      */
-    Predicate ilikeString(Expression<String> x, Expression<String> y);
+    default Predicate ilike(Expression<String> x, String pattern) {
+        return ilike(x, literal(pattern));
+    }
 
     /**
      * Checks if the expression x starts with the expression y.

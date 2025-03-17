@@ -60,11 +60,19 @@ class TestUtils {
     }
 
     static String getDataInterceptor(AnnotationMetadataProvider metadata) {
-        return metadata.getAnnotation(DataMethod).stringValue( DataMethod.META_MEMBER_INTERCEPTOR).get()
+        return metadata.getAnnotation(DataMethod).stringValue(DataMethod.META_MEMBER_INTERCEPTOR).get()
+    }
+
+    static String getDataResultType(AnnotationMetadataProvider metadata) {
+        return metadata.getAnnotation(DataMethod).stringValue(DataMethod.META_MEMBER_RESULT_TYPE).get()
     }
 
     static String[] getParameterPropertyPaths(AnnotationMetadataProvider metadata) {
         return getParameterPropertyPaths(metadata.getAnnotation(DataMethod))
+    }
+
+    static Boolean[] getParameterExpressions(AnnotationMetadataProvider metadata) {
+        return getParameterExpressions(metadata.getAnnotation(DataMethod))
     }
 
     static String[] getQueryParameterNames(AnnotationMetadataProvider metadata) {
@@ -87,12 +95,24 @@ class TestUtils {
         return getParameterBindingPaths(metadata.getAnnotation(DataMethod))
     }
 
+    static Object[] getParameterValues(AnnotationMetadataProvider metadata) {
+        return getParameterValues(metadata.getAnnotation(DataMethod))
+    }
+
     static DataType[] getDataTypes(AnnotationMetadataProvider metadata) {
         return getDataTypes(metadata.getAnnotation(DataMethod))
     }
 
     static boolean isExpandableQuery(AnnotationMetadataProvider metadata) {
         return metadata.getAnnotation(DataMethod).booleanValue(DataMethod.META_MEMBER_EXPANDABLE_QUERY)
+    }
+
+    static DataType getResultDataType(AnnotationMetadataProvider metadata) {
+        return metadata.getAnnotation(DataMethod).enumValue(DataMethod.META_MEMBER_RESULT_DATA_TYPE, DataType).orElse(null)
+    }
+
+    static DataMethod.OperationType getOperationType(AnnotationMetadataProvider metadata) {
+        return metadata.getAnnotation(DataMethod).enumValue(DataMethod.META_MEMBER_OPERATION_TYPE, DataMethod.OperationType).orElse(null)
     }
 
     static DataType[] getDataTypes(AnnotationValue<DataMethod> annotationValue) {
@@ -152,6 +172,22 @@ class TestUtils {
                 .toArray(String[]::new)
     }
 
+    static Boolean[] getParameterExpressions(AnnotationValue<DataMethod> annotationValue) {
+        return annotationValue.getAnnotations(DataMethod.META_MEMBER_PARAMETERS, DataMethodQueryParameter)
+                .stream()
+                .map(p -> isExpression(p))
+                .toArray(Boolean[]::new)
+    }
+
+    static Object[] getParameterValues(AnnotationValue<DataMethod> annotationValue) {
+        return annotationValue.getAnnotations(DataMethod.META_MEMBER_PARAMETERS, DataMethodQueryParameter)
+                .stream()
+                .map(p -> {
+                    p.get(AnnotationMetadata.VALUE_MEMBER, Object).orElse(null)
+                })
+                .toArray(Object[]::new)
+    }
+
     private static String getPropertyPath(AnnotationValue<DataMethodQueryParameter> p) {
         def propertyPath
         def prop = p.stringValue(DataMethodQueryParameter.META_MEMBER_PROPERTY)
@@ -161,6 +197,10 @@ class TestUtils {
             propertyPath = String.join(".", p.stringValues(DataMethodQueryParameter.META_MEMBER_PROPERTY_PATH))
         }
         return propertyPath
+    }
+
+    private static boolean isExpression(AnnotationValue<DataMethodQueryParameter> p) {
+        return p.booleanValue(DataMethodQueryParameter.META_MEMBER_EXPRESSION)
     }
 
     static String[] getParameterBindingIndexes(AnnotationValue<DataMethod> annotationValue) {

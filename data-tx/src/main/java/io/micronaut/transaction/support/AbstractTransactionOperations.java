@@ -29,6 +29,7 @@ import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.exceptions.IllegalTransactionStateException;
+import io.micronaut.transaction.exceptions.NestedTransactionNotSupportedException;
 import io.micronaut.transaction.exceptions.TransactionException;
 import io.micronaut.transaction.exceptions.TransactionUsageException;
 import io.micronaut.transaction.exceptions.UnexpectedRollbackException;
@@ -128,13 +129,12 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         T existingTransaction = findTransactionStatus().orElse(null);
         if (existingTransaction != null) {
             return executeWithExistingTransaction(
-                connectionStatus,
                 definition,
                 existingTransaction,
                 callback
             );
         }
-        return execute(
+        return executeNew(
             connectionStatus,
             definition,
             callback
@@ -175,6 +175,33 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
     protected abstract void doRollback(T tx);
 
     /**
+     * Alternative of the {@link #doBegin(InternalTransaction)} intended for a nested transaction.
+     *
+     * @param tx The transaction
+     */
+    protected void doNestedBegin(T tx) {
+        throw nestedTxNotSupported();
+    }
+
+    /**
+     * Alternative of the {@link #doCommit(InternalTransaction)} intended for a nested transaction.
+     *
+     * @param tx The transaction
+     */
+    protected void doNestedCommit(T tx) {
+        throw nestedTxNotSupported();
+    }
+
+    /**
+     * Alternative of the {@link #doRollback(InternalTransaction)} intended for a nested transaction.
+     *
+     * @param tx The transaction
+     */
+    protected void doNestedRollback(T tx) {
+        throw nestedTxNotSupported();
+    }
+
+    /**
      * Determine the actual timeout to use for the given definition.
      * Will fall back to this manager's default timeout if the
      * transaction definition doesn't specify a non-default value.
@@ -195,12 +222,16 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         return new IllegalTransactionStateException("No existing transaction found for transaction marked with propagation 'mandatory'");
     }
 
-    private <R> R execute(ConnectionStatus<C> connectionStatus,
-                          TransactionDefinition definition,
-                          TransactionCallback<C, R> callback) {
+    private NestedTransactionNotSupportedException nestedTxNotSupported() {
+        return new NestedTransactionNotSupportedException("Transaction manager does not allow nested transactions");
+    }
+
+    private <R> R executeNew(ConnectionStatus<C> connectionStatus,
+                             TransactionDefinition definition,
+                             TransactionCallback<C, R> callback) {
 
         return switch (definition.getPropagationBehavior()) {
-            case REQUIRED, REQUIRES_NEW, NESTED ->
+            case REQUIRED, REQUIRES_NEW, NESTED -> // Nested propagation applies only for the existing TX
                 executeWithNewTransaction(connectionStatus, definition, callback);
             case SUPPORTS, NEVER, NOT_SUPPORTED ->
                 executeWithoutTransaction(connectionStatus, callback);
@@ -208,16 +239,13 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         };
     }
 
-    private <R> R executeWithExistingTransaction(ConnectionStatus<C> connectionStatus,
-                                                 TransactionDefinition definition,
+    private <R> R executeWithExistingTransaction(TransactionDefinition definition,
                                                  T existingTransaction,
                                                  TransactionCallback<C, R> callback) {
 
         return switch (definition.getPropagationBehavior()) {
-            case REQUIRED, SUPPORTS, MANDATORY ->
-                executeWithExistingTransaction(definition, existingTransaction, callback);
-            case NESTED ->
-                nested(existingTransaction, () -> executeWithNewTransaction(connectionStatus, definition, callback));
+            case REQUIRED, SUPPORTS, MANDATORY, NESTED ->
+                openConnectionAndExecuteTransaction(definition, existingTransaction, callback);
             case REQUIRES_NEW -> suspend(existingTransaction, () -> connectionOperations.execute(
                 txConnectionDefinition(definition),
                 status -> executeWithNewTransaction(
@@ -266,21 +294,9 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         return callback.get();
     }
 
-    /**
-     * Do execute nested transaction.
-     *
-     * @param existingTransaction The transaction
-     * @param callback            The callback
-     * @param <R>                 The result type
-     * @return The callback result
-     */
-    protected <R> R nested(T existingTransaction, Supplier<R> callback) {
-        throw new TransactionUsageException("Transaction manager: " + getClass().getSimpleName() + " doesn't support nested transactions!");
-    }
-
-    private <R> R executeWithExistingTransaction(TransactionDefinition definition,
-                                                 T existingTransaction,
-                                                 TransactionCallback<C, R> callback) {
+    private <R> R openConnectionAndExecuteTransaction(TransactionDefinition definition,
+                                                      T existingTransaction,
+                                                      TransactionCallback<C, R> callback) {
         ConnectionDefinition txConnectionDefinition = txConnectionDefinition(definition);
         return connectionOperations.execute(txConnectionDefinition,
             status -> executeTransactional(
@@ -315,7 +331,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         R result;
         try {
             result = callback.apply(transaction);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             if (definition.rollbackOn(e)) {
                 rollbackInternal(transaction);
             } else {
@@ -330,6 +346,8 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
     private void begin(T transaction) {
         if (transaction.isNewTransaction()) {
             doBegin(transaction);
+        } else if (transaction.isNestedTransaction()) {
+            doNestedBegin(transaction);
         }
     }
 
@@ -359,6 +377,8 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
 
                 if (tx.isNewTransaction()) {
                     doCommit(tx);
+                } else if (tx.isNestedTransaction()) {
+                    doNestedCommit(tx);
                 }
 
             } catch (UnexpectedRollbackException ex) {
@@ -400,6 +420,8 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
                 tx.triggerBeforeCompletion();
                 if (tx.isNewTransaction()) {
                     doRollback(tx);
+                } else if (tx.isNestedTransaction()) {
+                    doNestedRollback(tx);
                 } else {
                     tx.setRollbackOnly();
                 }
@@ -443,17 +465,24 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         if (existingTransactionStatus.isPresent()) {
             T existingTransaction = existingTransactionStatus.get();
             return switch (definition.getPropagationBehavior()) {
-                case REQUIRED, SUPPORTS, MANDATORY ->
+                case REQUIRED, SUPPORTS, MANDATORY, NESTED ->
                     reuseTransaction(definition, connectionStatus, existingTransaction);
-                case NESTED -> throw new IllegalStateException("TODO");
                 case REQUIRES_NEW -> suspendAndOpenNewTransaction(definition, existingTransaction);
                 case NOT_SUPPORTED -> suspendAndOpenNewConnection(definition, existingTransaction);
                 case NEVER ->
                     throw new TransactionUsageException("Existing transaction found for transaction marked with propagation 'never'");
             };
         } else {
+            if (connectionStatus != null) {
+                return switch (definition.getPropagationBehavior()) {
+                    case REQUIRED, REQUIRES_NEW, NESTED -> openNewTransaction(connectionStatus, definition); // Nested propagation applies only for the existing TX
+                    case SUPPORTS, NEVER, NOT_SUPPORTED ->
+                        withNoTransactionStatus(connectionStatus, definition);
+                    case MANDATORY -> throw newMandatoryTx();
+                };
+            }
             return switch (definition.getPropagationBehavior()) {
-                case REQUIRED, REQUIRES_NEW, NESTED -> openNewConnectionAndTransaction(definition);
+                case REQUIRED, REQUIRES_NEW, NESTED -> openNewConnectionAndTransaction(definition); // Nested propagation applies only for the existing TX
                 case SUPPORTS, NEVER, NOT_SUPPORTED ->
                     withNoTransactionStatus(connectionStatus, definition);
                 case MANDATORY -> throw newMandatoryTx();
@@ -469,7 +498,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
             existingTransaction
         );
         PropagatedContext.Scope scope = extendCurrentPropagatedContext(transactionStatus).propagate();
-        transactionStatus.registerSynchronization(new TransactionSynchronization() {
+        transactionStatus.registerInvocationSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCompletion(Status status) {
                 scope.close();
@@ -483,9 +512,9 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
     private T suspendAndOpenNewTransaction(TransactionDefinition definition, T existingTransaction) {
         doSuspend(existingTransaction);
         ConnectionStatus<C> newConnectionStatus = synchronousConnectionManager.getConnection(ConnectionDefinition.REQUIRES_NEW);
-        T transactionStatus = createExistingTransactionStatus(newConnectionStatus, definition, existingTransaction);
+        T transactionStatus = createNewTransactionStatus(newConnectionStatus, definition);
         PropagatedContext.Scope scope = extendCurrentPropagatedContext(transactionStatus).propagate();
-        transactionStatus.registerSynchronization(new TransactionSynchronization() {
+        transactionStatus.registerInvocationSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCompletion(Status status) {
                 doResume(existingTransaction);
@@ -503,7 +532,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         ConnectionStatus<C> newConnectionStatus = synchronousConnectionManager.getConnection(ConnectionDefinition.REQUIRES_NEW);
         T transactionStatus = createNoTxTransactionStatus(newConnectionStatus, definition);
         PropagatedContext.Scope scope = extendCurrentPropagatedContext(transactionStatus).propagate();
-        transactionStatus.registerSynchronization(new TransactionSynchronization() {
+        transactionStatus.registerInvocationSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCompletion(Status status) {
                 doResume(existingTransaction);
@@ -520,7 +549,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         ConnectionStatus<C> newConnectionStatus = synchronousConnectionManager.getConnection(ConnectionDefinition.REQUIRES_NEW);
         T transactionStatus = createNewTransactionStatus(newConnectionStatus, definition);
         PropagatedContext.Scope scope = extendCurrentPropagatedContext(transactionStatus).propagate();
-        transactionStatus.registerSynchronization(new TransactionSynchronization() {
+        transactionStatus.registerInvocationSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCompletion(Status status) {
                 scope.close();
@@ -532,10 +561,24 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
     }
 
     @NonNull
+    private T openNewTransaction(ConnectionStatus<C> connectionStatus, TransactionDefinition definition) {
+        T transactionStatus = createNewTransactionStatus(connectionStatus, definition);
+        PropagatedContext.Scope scope = extendCurrentPropagatedContext(transactionStatus).propagate();
+        transactionStatus.registerInvocationSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCompletion(Status status) {
+                scope.close();
+            }
+        });
+        begin(transactionStatus);
+        return transactionStatus;
+    }
+
+    @NonNull
     private T withNoTransactionStatus(ConnectionStatus<C> connectionStatus, TransactionDefinition definition) {
         T transactionStatus = createNoTxTransactionStatus(connectionStatus, definition);
         PropagatedContext.Scope scope = extendCurrentPropagatedContext(transactionStatus).propagate();
-        transactionStatus.registerSynchronization(new TransactionSynchronization() {
+        transactionStatus.registerInvocationSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCompletion(Status status) {
                 scope.close();

@@ -31,10 +31,12 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
+import io.micronaut.data.mongodb.operations.MongoCollectionNameProvider;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -65,8 +67,8 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
     protected <M> M getMongoFactory(Class<M> mongoFactoryClass, BeanLocator beanLocator, AbstractMongoConfiguration mongoConfiguration) {
         if (mongoConfiguration instanceof DefaultMongoConfiguration) {
             return beanLocator.getBean(mongoFactoryClass);
-        } else if (mongoConfiguration instanceof NamedMongoConfiguration) {
-            Qualifier<M> qualifier = Qualifiers.byName(((NamedMongoConfiguration) mongoConfiguration).getServerName());
+        } else if (mongoConfiguration instanceof NamedMongoConfiguration namedMongoConfiguration) {
+            Qualifier<M> qualifier = Qualifiers.byName(namedMongoConfiguration.getServerName());
             return beanLocator.getBean(mongoFactoryClass, qualifier);
         } else {
             throw new IllegalStateException("Cannot get MongoDB client for unrecognized configuration: " + mongoConfiguration);
@@ -79,10 +81,12 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
      * @param runtimeEntityRegistry      The entity registry
      * @param mongoConfigurations        The configuration
      * @param databaseOperationsProvider The database provider
+     * @param mongoCollectionNameProvider The Mongo collection name provider
      */
     protected void initialize(RuntimeEntityRegistry runtimeEntityRegistry,
                               List<AbstractMongoConfiguration> mongoConfigurations,
-                              DatabaseOperationsProvider<Dtbs> databaseOperationsProvider) {
+                              DatabaseOperationsProvider<Dtbs> databaseOperationsProvider,
+                              MongoCollectionNameProvider mongoCollectionNameProvider) {
 
         for (AbstractMongoConfiguration mongoConfiguration : mongoConfigurations) {
             // TODO: different initializer per conf
@@ -90,7 +94,7 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
             PersistentEntity[] entities = introspections.stream()
                     // filter out inner / internal / abstract(MappedSuperClass) classes
                     .filter(i -> !i.getBeanType().getName().contains("$"))
-                    .filter(i -> !java.lang.reflect.Modifier.isAbstract(i.getBeanType().getModifiers()))
+                    .filter(i -> !Modifier.isAbstract(i.getBeanType().getModifiers()))
                     .map(e -> runtimeEntityRegistry.getEntity(e.getBeanType())).toArray(PersistentEntity[]::new);
 
             DatabaseOperations<Dtbs> databaseOperations = databaseOperationsProvider.get(mongoConfiguration);
@@ -98,7 +102,7 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
             for (PersistentEntity entity : entities) {
                 Dtbs database = databaseOperations.find(entity);
                 Set<String> collections = databaseOperations.listCollectionNames(database);
-                String persistedName = entity.getPersistedName();
+                String persistedName = mongoCollectionNameProvider.provide(entity);
                 if (collections.add(persistedName)) {
                     if (LOG.isInfoEnabled()) {
                         LOG.info("Creating collection: {} in database: {}", persistedName, databaseOperations.getDatabaseName(database));

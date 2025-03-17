@@ -54,7 +54,7 @@ public class ReactiveCountSpecificationInterceptor extends AbstractSpecification
         final CriteriaBuilder criteriaBuilder = operations.getCriteriaBuilder();
         final CriteriaQuery<Long> query = criteriaBuilder.createQuery(Long.class);
         final Root<Object> root = query.from(getRequiredRootEntity(context));
-        final Predicate predicate = specification.toPredicate(root, query, criteriaBuilder);
+        final Predicate predicate = specification != null ? specification.toPredicate(root, query, criteriaBuilder) : null;
         if (predicate != null) {
             query.where(predicate);
         }

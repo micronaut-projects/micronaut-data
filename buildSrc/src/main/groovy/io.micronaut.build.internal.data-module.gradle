@@ -1,15 +1,17 @@
 plugins {
     id "io.micronaut.build.internal.data-base"
     id "io.micronaut.build.internal.module"
+    id("org.sonatype.gradle.plugins.scan")
 }
-
-micronautBuild {
-    binaryCompatibility {
-        baselineVersion = "4.0.0-M10"
-        enabled = true
+String ossIndexUsername = System.getenv("OSS_INDEX_USERNAME") ?: project.properties["ossIndexUsername"]
+String ossIndexPassword = System.getenv("OSS_INDEX_PASSWORD") ?: project.properties["ossIndexPassword"]
+boolean sonatypePluginConfigured = ossIndexUsername != null && ossIndexPassword != null
+if (sonatypePluginConfigured) {
+    ossIndexAudit {
+        username = ossIndexUsername
+        password = ossIndexPassword
     }
 }
-
 dependencies {
     testRuntimeOnly mnSerde.micronaut.serde.jackson
 }

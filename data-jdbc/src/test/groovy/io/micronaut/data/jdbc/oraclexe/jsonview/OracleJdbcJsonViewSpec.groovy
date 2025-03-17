@@ -3,10 +3,12 @@ package io.micronaut.data.jdbc.oraclexe.jsonview
 import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.tck.entities.Metadata
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification
 
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
@@ -44,9 +46,10 @@ class OracleJdbcJsonViewSpec extends Specification {
         Address address2 = addressRepository.save(new Address("New Street", "City1"))
 
         def startDateTime = LocalDateTime.now()
-        Student denis = studentRepository.save(new Student("Denis", 8.5, startDateTime.minusDays(1), address1))
-        Student josh = studentRepository.save(new Student("Josh", 9.1, startDateTime, address1))
-        Student fred = studentRepository.save(new Student("Fred", 7.6, startDateTime.plusDays(2), address2))
+        def birthDate = LocalDate.now().minusYears(20)
+        Student denis = studentRepository.save(new Student("Denis", birthDate, 8.5, startDateTime.minusDays(1), address1))
+        Student josh = studentRepository.save(new Student("Josh", birthDate.minusMonths(3), 9.1, startDateTime, address1))
+        Student fred = studentRepository.save(new Student("Fred", birthDate.plusMonths(1), 7.6, startDateTime.plusDays(2), address2))
 
         Class math = classRepository.save(new Class("Math", "A101", LocalTime.of(10, 00), teacherAnna))
         Class english = classRepository.save(new Class("English", "A102", LocalTime.of(11, 00), teacherJeff))
@@ -104,6 +107,13 @@ class OracleJdbcJsonViewSpec extends Specification {
         allSorted[0].name == "Denis"
         allSorted[1].name == "Fred"
         allSorted[2].name == "Josh"
+        when:
+        allSorted = studentViewRepository.findAll(Sort.of(Sort.Order.asc("startDateTime")))
+        then:
+        allSorted.size() == 3
+        allSorted[0].name == "Denis"
+        allSorted[1].name == "Josh"
+        allSorted[2].name == "Fred"
 
         when:
         def allPages = studentViewRepository.findAll(Pageable.from(0, 2, Sort.of(Sort.Order.desc("name"))))
@@ -164,6 +174,34 @@ class OracleJdbcJsonViewSpec extends Specification {
         def optUnexpectedStudent = studentViewRepository.findByName(randomName)
         then:"Expected not found"
         !optUnexpectedStudent.present
+
+        when:
+        denisStudentView = studentViewRepository.findByName("Denis").orElse(null)
+        denisStudentView.setActive(false)
+        studentViewRepository.update(denisStudentView)
+        allSorted = studentViewRepository.findAllOrderByActive()
+        then:
+        allSorted.size() == 3
+        allSorted[0].name == "Denis"
+        when:
+        def inActives = studentViewRepository.findAllByActive(false)
+        def actives = studentViewRepository.findAllByActive(true)
+        then:
+        inActives.size() == 1
+        inActives[0].name == "Denis"
+        actives.size() == 2
+
+        when:
+        def birthDate = studentViewRepository.findBirthDateById(denisStudentView.id)
+        then:
+        birthDate == denisStudentView.birthDate
+        when:
+        allSorted = studentViewRepository.findAllOrderByBirthDate()
+        then:
+        allSorted.size() == 3
+        allSorted[0].name == "Josh_"
+        allSorted[1].name == "Denis"
+        allSorted[2].name == "Fred_"
     }
 
     def "find and update partial"() {
@@ -191,8 +229,13 @@ class OracleJdbcJsonViewSpec extends Specification {
 
         when:"Try to trigger optimistic lock exception with invalid ETAG"
         def newJoshStudentView = studentViewRepository.findByName(newStudentName).get()
-        newJoshStudentView.getMetadata().setEtag(UUID.randomUUID().toString())
+        newJoshStudentView.setMetadata(new Metadata(UUID.randomUUID().toString(), newJoshStudentView.getMetadata().asof()))
         studentViewRepository.update(newJoshStudentView)
+        then:
+        thrown(OptimisticLockException)
+
+        when:"Optimistic lock exception with invalid ETAG in batch update"
+        studentViewRepository.updateAll(List.of(newJoshStudentView))
         then:
         thrown(OptimisticLockException)
     }
@@ -201,13 +244,15 @@ class OracleJdbcJsonViewSpec extends Specification {
         when:"Test inserting into the view"
         def ivoneStudentView = new StudentView()
         def ivoneStudentName = "Ivone"
-        ivoneStudentView.setName(ivoneStudentName)
-        ivoneStudentView.setAverageGrade(9.2)
-        ivoneStudentView.setStartDateTime(LocalDateTime.now().minusDays(90));
+        ivoneStudentView.averageGrade = 9.2d
+        ivoneStudentView.startDateTime = LocalDateTime.now().minusDays(90)
+        ivoneStudentView.name = ivoneStudentName
+        ivoneStudentView.birthDate = LocalDate.now().minusYears(20)
 
         def peterStudentView = new StudentView()
         def peterStudentName = "Peter"
-        peterStudentView.setName(peterStudentName)
+        peterStudentView.name = peterStudentName
+        peterStudentView.birthDate = LocalDate.now().minusYears(20).minusDays(10)
 
         def newStudentScheduleView = new StudentScheduleView()
 

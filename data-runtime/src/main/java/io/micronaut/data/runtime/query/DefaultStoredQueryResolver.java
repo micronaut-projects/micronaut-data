@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.query;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.DataAnnotationUtils;
@@ -31,7 +32,10 @@ import io.micronaut.data.operations.HintsCapableRepository;
 import io.micronaut.data.runtime.query.internal.DefaultStoredQuery;
 import io.micronaut.inject.ExecutableMethod;
 
+import java.lang.annotation.Annotation;
 import java.util.List;
+
+import static io.micronaut.data.model.runtime.StoredQuery.OperationType;
 
 /**
  * Default stored query resolver.
@@ -43,43 +47,36 @@ import java.util.List;
 public abstract class DefaultStoredQueryResolver implements StoredQueryResolver {
 
     @Override
-    public <E, R> StoredQuery<E, R> resolveQuery(MethodInvocationContext<?, ?> context, Class<E> entityClass, Class<R> resultType, boolean isCount) {
-        if (resultType == null) {
-            //noinspection unchecked
-            resultType = (Class<R>) context.classValue(DataMethod.NAME, DataMethod.META_MEMBER_RESULT_TYPE)
-                    .orElse(entityClass);
-        }
-        String query = context.stringValue(Query.class).orElseThrow(() ->
-                new IllegalStateException("No query present in method")
-        );
+    public <E, R> StoredQuery<E, R> resolveQuery(MethodInvocationContext<?, ?> context) {
         return new DefaultStoredQuery<>(
-                context.getExecutableMethod(),
-                resultType,
-                entityClass,
-                query,
-                isCount,
-                getHintsCapableRepository()
+            context.getExecutableMethod(),
+            false,
+            getHintsCapableRepository()
         );
     }
 
     @Override
-    public <E, R> StoredQuery<E, R> resolveCountQuery(MethodInvocationContext<?, ?> context, Class<E> entityClass, Class<R> resultType) {
-        String query = context.stringValue(Query.class, DataMethod.META_MEMBER_COUNT_QUERY).orElseThrow(() ->
-                new IllegalStateException("No query present in method")
-        );
-        return new DefaultStoredQuery<>(
+    public <E, R> StoredQuery<E, R> resolveCountQuery(MethodInvocationContext<?, ?> context) {
+        AnnotationValue<Annotation> dataMethodQuery = context.getAnnotation(DataMethod.NAME);
+        AnnotationValue<Annotation> countQuery = dataMethodQuery.getAnnotation(DataMethod.META_MEMBER_COUNT_QUERY).orElse(null);
+        if (countQuery != null) {
+            return new DefaultStoredQuery<>(
                 context.getExecutableMethod(),
-                resultType,
-                entityClass,
-                query,
-                true,
+                countQuery,
                 getHintsCapableRepository()
+            );
+        }
+        // Previous way
+        return new DefaultStoredQuery<>(
+            context.getExecutableMethod(),
+            true,
+            getHintsCapableRepository()
         );
     }
 
     @Override
     public <E, QR> StoredQuery<E, QR> createStoredQuery(ExecutableMethod<?, ?> executableMethod,
-                                                        DataMethod.OperationType operationType,
+                                                        OperationType operationType,
                                                         String name,
                                                         AnnotationMetadata annotationMetadata,
                                                         Class<Object> rootEntity,
@@ -93,9 +90,17 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
             queryParts = new String[0];
         }
         String[] finalQueryParts = queryParts;
+        Class<QR> resultType = annotationMetadata.classValue(DataMethod.class, DataMethod.META_MEMBER_RESULT_DATA_TYPE).orElse(rootEntity);
+        DataType resultDataType = annotationMetadata.enumValue(DataMethod.class, DataMethod.META_MEMBER_RESULT_DATA_TYPE, DataType.class).orElse(DataType.ENTITY);
         boolean rawQuery = annotationMetadata.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
         boolean jsonEntity = DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(annotationMetadata);
-        return new StoredQuery<E, QR>() {
+        return new StoredQuery<>() {
+
+            @Override
+            public OperationType getOperationType() {
+                return operationType;
+            }
+
             @Override
             public Class<E> getRootEntity() {
                 return (Class<E>) rootEntity;
@@ -123,7 +128,7 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
 
             @Override
             public Class<QR> getResultType() {
-                return (Class<QR>) rootEntity;
+                return resultType;
             }
 
             @Override
@@ -133,13 +138,13 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
 
             @Override
             public DataType getResultDataType() {
-                return DataType.ENTITY;
+                return resultDataType;
             }
 
             @Override
             public boolean useNumericPlaceholders() {
                 return annotationMetadata.classValue(RepositoryConfiguration.class, "queryBuilder")
-                        .map(c -> c == SqlQueryBuilder.class).orElse(false);
+                    .map(c -> c == SqlQueryBuilder.class).orElse(false);
             }
 
             @Override
@@ -176,7 +181,7 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
 
     @Override
     public StoredQuery<Object, Long> createCountStoredQuery(ExecutableMethod<?, ?> executableMethod,
-                                                            DataMethod.OperationType operationType,
+                                                            OperationType operationType,
                                                             String name,
                                                             AnnotationMetadata annotationMetadata,
                                                             Class<Object> rootEntity,
@@ -188,7 +193,12 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
         }
         String[] finalQueryParts = queryParts;
         boolean rawCountQuery = annotationMetadata.stringValue(Query.class, DataMethod.META_MEMBER_RAW_COUNT_QUERY).isPresent();
-        return new StoredQuery<Object, Long>() {
+        return new StoredQuery<>() {
+
+            @Override
+            public OperationType getOperationType() {
+                return operationType;
+            }
 
             @Override
             public Class<Object> getRootEntity() {
@@ -233,8 +243,8 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
             @Override
             public boolean useNumericPlaceholders() {
                 return annotationMetadata
-                        .classValue(RepositoryConfiguration.class, "queryBuilder")
-                        .map(c -> c == SqlQueryBuilder.class).orElse(false);
+                    .classValue(RepositoryConfiguration.class, "queryBuilder")
+                    .map(c -> c == SqlQueryBuilder.class).orElse(false);
             }
 
             @Override

@@ -12,9 +12,11 @@ include::data-tck/src/main/java/io/micronaut/data/tck/entities/CountryRegion.jav
 
 Few important things to note. Since Micronaut Data pre-computes the table and column name mappings at compilation time the specified api:data.model.naming.NamingStrategy[] implementation must be on the annotation processor classpath (`annotationProcessor` scope for Java or `kapt` for Kotlin).
 
-In addition if you don't want to repeat the above annotation definition on every entity it is handy to define a meta-annotation where the above annotation definition is applied to another annotation that you add to your class.
+If running project in native image, custom naming strategy needs to have `io.micronaut.core.annotation.TypeHint(CustomNamingStrategy.class)` annotation where custom naming strategy class is `CustomNamingStrategy`.
 
-==== Escaping Table/Column Name Identifiers
+In addition, if you don't want to repeat the above annotation definition on every entity it is handy to define a meta-annotation where the above annotation definition is applied to another annotation that you add to your class.
+
+=== Escaping Table/Column Name Identifiers
 
 In some cases it may be necessary to escape table and/or column names if characters are used within the names that are invalid without the presence of escaping.
 
@@ -27,7 +29,7 @@ In this case you should set the `escape` member of the ann:data.annotation.Mappe
 
 Micronaut Data will generate SQL statements that escape table and column names within queries using the escape character that is appropriate for the configured SQL dialect.
 
-==== Overriding default query alias
+=== Overriding default query alias
 
 The default query alias is the table name followed by an underscore. If you want to change it, specify it in the ann:data.annotation.MappedEntity[] annotation:
 

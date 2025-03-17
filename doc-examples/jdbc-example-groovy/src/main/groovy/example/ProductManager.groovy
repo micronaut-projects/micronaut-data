@@ -12,11 +12,14 @@ class ProductManager {
 
     private final Connection connection
     private final TransactionOperations<Connection> transactionManager
+    private final ProductRepository productRepository
 
     ProductManager(Connection connection,
-                   TransactionOperations<Connection> transactionManager) { // <1>
+                   TransactionOperations<Connection> transactionManager, // <1>
+                   ProductRepository productRepository) {
         this.connection = connection
         this.transactionManager = transactionManager
+        this.productRepository = productRepository
     }
 
     Product save(String name, Manufacturer manufacturer) {
@@ -45,5 +48,30 @@ class ProductManager {
                     }
             }
         }
+    }
+
+    /**
+     * Creates new product using transaction operations and product repository.
+     *
+     * @param name the product name
+     * @param manufacturer the manufacturer
+     * @return the created product instance
+     */
+    Product saveUsingRepo(String name, Manufacturer manufacturer) {
+        return transactionManager.executeWrite(status -> { // <4>
+            return productRepository.save(new Product(name, manufacturer));
+        })
+    }
+
+    /**
+     * Finds product by name using transaction manager and product repository.
+     *
+     * @param name the product name
+     * @return found product or null if none product found matching by name
+     */
+    Product findUsingRepo(String name) {
+        return transactionManager.executeRead(status -> { // <5>
+            return productRepository.findByName(name).orElse(null);
+        })
     }
 }

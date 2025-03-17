@@ -19,6 +19,7 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.document.tck.entities.Person;
+import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Slice;
 import io.micronaut.data.model.Sort;
@@ -58,9 +59,9 @@ public interface PersonRepository extends CrudRepository<Person, String>, Pageab
 
     List<Person> findByNameRegex(String name, Pageable pageable);
 
-    io.micronaut.data.model.Page<Person> getByNameRegex(String name, Pageable pageable);
+    Page<Person> getByNameRegex(String name, Pageable pageable);
 
-    io.micronaut.data.model.Page<Person> findAllByNameRegex(String name, Pageable pageable);
+    Page<Person> findAllByNameRegex(String name, Pageable pageable);
 
     Slice<Person> queryByNameRegex(String name, Pageable pageable);
 
@@ -124,10 +125,16 @@ public interface PersonRepository extends CrudRepository<Person, String>, Pageab
 
     List<Person> findByNameContainsIgnoreCase(String name);
 
+    List<Person> findByNameLike(String name);
+
     class Specifications {
 
         public static PredicateSpecification<Person> nameEquals(String name) {
             return (root, criteriaBuilder) -> criteriaBuilder.equal(root.get("name"), name);
+        }
+
+        public static PredicateSpecification<Person> nameLike(String name) {
+            return (root, criteriaBuilder) -> criteriaBuilder.like(root.get("name"), name);
         }
 
         public static PredicateSpecification<Person> dateOfBirthEquals(LocalDate localDate) {

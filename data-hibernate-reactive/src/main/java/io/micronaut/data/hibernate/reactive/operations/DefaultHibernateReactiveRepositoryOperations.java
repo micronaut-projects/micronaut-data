@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.hibernate.reactive.operations;
 
+import io.micronaut.aop.InvocationContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
@@ -34,25 +35,27 @@ import io.micronaut.data.model.runtime.InsertBatchOperation;
 import io.micronaut.data.model.runtime.InsertOperation;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
-import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
+import io.micronaut.data.operations.reactive.ReactorCriteriaRepositoryOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
 import jakarta.persistence.EntityGraph;
 import jakarta.persistence.FlushModeType;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.CriteriaUpdate;
 import org.hibernate.SessionFactory;
 import org.hibernate.reactive.stage.Stage;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.function.Function;
 
@@ -67,7 +70,7 @@ import java.util.function.Function;
 @EachBean(SessionFactory.class)
 @Internal
 final class DefaultHibernateReactiveRepositoryOperations extends AbstractHibernateOperations<Stage.Session, Stage.AbstractQuery, Stage.SelectionQuery<?>>
-        implements HibernateReactorRepositoryOperations {
+        implements HibernateReactorRepositoryOperations, ReactorCriteriaRepositoryOperations {
 
     private final SessionFactory sessionFactory;
     private final Stage.SessionFactory stageSessionFactory;
@@ -106,6 +109,26 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     @Override
     protected void setParameterList(Stage.AbstractQuery query, String parameterName, Collection<Object> value, Argument<?> argument) {
         query.setParameter(parameterName, value);
+    }
+
+    @Override
+    protected void setParameter(Stage.AbstractQuery query, int parameterIndex, Object value) {
+        query.setParameter(parameterIndex, value);
+    }
+
+    @Override
+    protected void setParameter(Stage.AbstractQuery query, int parameterIndex, Object value, Argument<?> argument) {
+        query.setParameter(parameterIndex, value);
+    }
+
+    @Override
+    protected void setParameterList(Stage.AbstractQuery query, int parameterIndex, Collection<Object> value) {
+        query.setParameter(parameterIndex, value);
+    }
+
+    @Override
+    protected void setParameterList(Stage.AbstractQuery query, int parameterIndex, Collection<Object> value, Argument<?> argument) {
+        query.setParameter(parameterIndex, value);
     }
 
     @Override
@@ -158,7 +181,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     }
 
     @Override
-    public <T> Mono<T> findOne(Class<T> type, Serializable id) {
+    public <T> Mono<T> findOne(Class<T> type, Object id) {
         return operation(session -> helper.find(session, type, id));
     }
 
@@ -201,7 +224,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     }
 
     @Override
-    public <T> Mono<T> findOptional(Class<T> type, Serializable id) {
+    public <T> Mono<T> findOptional(Class<T> type, Object id) {
         return findOne(type, id);
     }
 
@@ -251,8 +274,15 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     @Override
     public <T> Mono<T> persist(InsertOperation<T> operation) {
         return operation(session -> {
+            StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
             T entity = operation.getEntity();
-            Mono<T> result = helper.persist(session, entity);
+            Mono<T> result;
+            if (storedQuery != null) {
+                result = executeEntityUpdate(session, storedQuery, operation.getInvocationContext(), entity)
+                    .thenReturn(entity);
+            } else {
+                result = helper.persist(session, entity);
+            }
             return flushIfNecessary(result, session, operation.getAnnotationMetadata());
         });
     }
@@ -264,7 +294,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
             T entity = operation.getEntity();
             Mono<T> result;
             if (storedQuery != null) {
-                result = executeEntityUpdate(session, storedQuery, entity)
+                result = executeEntityUpdate(session, storedQuery, operation.getInvocationContext(), entity)
                         .thenReturn(entity);
             } else {
                 result = helper.merge(session, entity);
@@ -273,11 +303,12 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
         });
     }
 
-    private Mono<Integer> executeEntityUpdate(Stage.Session session, StoredQuery<?, ?> storedQuery, Object entity) {
-        Stage.Query<Object> query = session.createQuery(storedQuery.getQuery());
-        for (QueryParameterBinding queryParameterBinding : storedQuery.getQueryBindings()) {
-            query.setParameter(queryParameterBinding.getRequiredName(), getParameterValue(queryParameterBinding.getRequiredPropertyPath(), entity));
-        }
+    private <T> Mono<Integer> executeEntityUpdate(Stage.Session session,
+                                                  StoredQuery<T, ?> storedQuery,
+                                                  InvocationContext<?, ?> invocationContext,
+                                                  T entity) {
+        Stage.MutationQuery query = session.createMutationQuery(storedQuery.getQuery());
+        bindParameters(query, storedQuery, invocationContext, entity);
         return helper.executeUpdate(query);
     }
 
@@ -288,7 +319,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
             Flux<T> result;
             if (storedQuery != null) {
                 result = Flux.fromIterable(operation)
-                        .concatMap(t -> executeEntityUpdate(session, storedQuery, t).thenReturn(t));
+                        .concatMap(t -> executeEntityUpdate(session, storedQuery, operation.getInvocationContext(), t).thenReturn(t));
             } else {
                 result = helper.mergeAll(session, operation);
             }
@@ -299,7 +330,14 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     @Override
     public <T> Flux<T> persistAll(InsertBatchOperation<T> operation) {
         return operationFlux(session -> {
-            Flux<T> result = helper.persistAll(session, operation);
+            StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
+            Flux<T> result;
+            if (storedQuery != null) {
+                result = Flux.fromIterable(operation)
+                    .concatMap(t -> executeEntityUpdate(session, storedQuery, operation.getInvocationContext(), t).thenReturn(t));
+            } else {
+                result = helper.persistAll(session, operation);
+            }
             return flushIfNecessaryFlux(result, session, operation.getAnnotationMetadata());
         });
     }
@@ -308,8 +346,8 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     public Mono<Number> executeUpdate(PreparedQuery<?, Number> preparedQuery) {
         return operation(session -> {
             String query = preparedQuery.getQuery();
-            Stage.Query<Object> q = session.createQuery(query);
-            bindParameters(q, preparedQuery);
+            Stage.MutationQuery q = session.createMutationQuery(query);
+            bindParameters(q, preparedQuery, true);
             Mono<Number> result = helper.executeUpdate(q).cast(Number.class);
             return flushIfNecessary(result, session, preparedQuery.getAnnotationMetadata());
         });
@@ -326,7 +364,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
             StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
             Mono<Number> result;
             if (storedQuery != null) {
-                result = executeEntityUpdate(session, storedQuery, operation.getEntity()).cast(Number.class);
+                result = executeEntityUpdate(session, storedQuery, operation.getInvocationContext(), operation.getEntity()).cast(Number.class);
             } else {
                 result = helper.remove(session, operation.getEntity()).thenReturn(1);
             }
@@ -341,7 +379,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
             Mono<Number> result;
             if (storedQuery != null) {
                 result = Flux.fromIterable(operation)
-                        .concatMap(entity -> executeEntityUpdate(session, storedQuery, entity))
+                        .concatMap(entity -> executeEntityUpdate(session, storedQuery, operation.getInvocationContext(), entity))
                         .reduce(0, (i1, i2) -> i1 + i2)
                         .cast(Number.class);
             } else {
@@ -386,6 +424,46 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     @Override
     public ConversionService getConversionService() {
         return dataConversionService;
+    }
+
+    @Override
+    public <R> Mono<R> findOne(CriteriaQuery<R> query) {
+        return withSession(session -> helper.monoFromCompletionStage(() -> session.createQuery(query).getSingleResult()));
+    }
+
+    @Override
+    public Publisher<Boolean> exists(CriteriaQuery<?> query) {
+        return withSession(session -> helper.monoFromCompletionStage(() -> session.createQuery(query).setMaxResults(1).getResultList().thenApply(l -> !l.isEmpty())));
+    }
+
+    @Override
+    public <T> Flux<T> findAll(CriteriaQuery<T> query) {
+        return withSession(session -> helper.monoFromCompletionStage(() -> session.createQuery(query).getResultList()))
+            .flatMapIterable(res -> res);
+    }
+
+    @Override
+    public <T> Flux<T> findAll(CriteriaQuery<T> query, int offset, int limit) {
+        return withSession(session -> helper.monoFromCompletionStage(() -> {
+            Stage.SelectionQuery<T> sessionQuery = session.createQuery(query);
+            if (offset > 0) {
+                sessionQuery = sessionQuery.setFirstResult(offset);
+            }
+            if (limit > 0) {
+                sessionQuery = sessionQuery.setMaxResults(limit);
+            }
+            return sessionQuery.getResultList();
+        })).flatMapIterable(res -> res);
+    }
+
+    @Override
+    public Mono<Number> updateAll(CriteriaUpdate<Number> query) {
+        return withSession(session -> helper.monoFromCompletionStage(() -> session.createQuery(query).executeUpdate()).map(n -> n));
+    }
+
+    @Override
+    public Mono<Number> deleteAll(CriteriaDelete<Number> query) {
+        return withSession(session -> helper.monoFromCompletionStage(() -> session.createQuery(query).executeUpdate()).map(n -> n));
     }
 
     private final class ListResultCollector<R> extends ResultCollector<R> {

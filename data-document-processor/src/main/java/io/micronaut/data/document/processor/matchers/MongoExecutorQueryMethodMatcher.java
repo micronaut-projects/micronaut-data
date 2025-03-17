@@ -18,7 +18,6 @@ package io.micronaut.data.document.processor.matchers;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.document.mongo.MongoAnnotations;
-import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.FindersUtils;
@@ -27,7 +26,6 @@ import io.micronaut.data.processor.visitors.finders.MethodMatcher;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ParameterElement;
 
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -37,12 +35,6 @@ import java.util.Optional;
  * @since 3.3.0
  */
 public class MongoExecutorQueryMethodMatcher implements MethodMatcher {
-
-    /**
-     * Default constructor.
-     */
-    public MongoExecutorQueryMethodMatcher() {
-    }
 
     @Override
     public final int getOrder() {
@@ -54,6 +46,10 @@ public class MongoExecutorQueryMethodMatcher implements MethodMatcher {
     public MethodMatch match(MethodMatchContext matchContext) {
         Optional<ClassElement> executor = matchContext.getVisitorContext().getClassElement(MongoAnnotations.EXECUTOR_REPOSITORY);
         if (executor.isPresent() && executor.get().isAssignable(matchContext.getRepositoryClass())) {
+            return null;
+        }
+        Optional<ClassElement> reactiveExecutor = matchContext.getVisitorContext().getClassElement(MongoAnnotations.REACTIVE_EXECUTOR_REPOSITORY);
+        if (reactiveExecutor.isPresent() && reactiveExecutor.get().isAssignable(matchContext.getRepositoryClass())) {
             return null;
         }
         String methodName = matchContext.getMethodElement().getName();
@@ -273,15 +269,15 @@ public class MongoExecutorQueryMethodMatcher implements MethodMatcher {
 
         @Override
         public MethodMatchInfo buildMatchInfo(MethodMatchContext matchContext) {
-            Map.Entry<ClassElement, Class<? extends DataInterceptor>> entry = FindersUtils.resolveInterceptorTypeByOperationType(
+            FindersUtils.InterceptorMatch entry = FindersUtils.resolveInterceptorTypeByOperationType(
                     false,
                     false,
                     operationType,
                     matchContext);
             MethodMatchInfo methodMatchInfo = new MethodMatchInfo(
                     operationType,
-                    entry.getKey(),
-                    FindersUtils.getInterceptorElement(matchContext, entry.getValue())
+                    entry.returnType(),
+                    entry.interceptor()
             );
             // Fake query to have stored query
             matchContext.getMethodElement().annotate(Query.class, builder -> {

@@ -53,7 +53,7 @@ public class ReactiveFindOneSpecificationInterceptor extends AbstractSpecificati
         final CriteriaBuilder criteriaBuilder = operations.getCriteriaBuilder();
         final CriteriaQuery<Object> query = criteriaBuilder.createQuery(getRequiredRootEntity(context));
         final Root<Object> root = query.from(getRequiredRootEntity(context));
-        final Predicate predicate = specification.toPredicate(root, query, criteriaBuilder);
+        final Predicate predicate = specification != null ? specification.toPredicate(root, query, criteriaBuilder) : null;
         if (predicate != null) {
             query.where(predicate);
         }

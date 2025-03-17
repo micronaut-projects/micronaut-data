@@ -33,7 +33,6 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.Serializable;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 
@@ -62,7 +61,7 @@ public class AsyncFromReactiveAsyncRepositoryOperation implements AsyncRepositor
 
     @NonNull
     @Override
-    public <T> CompletionStage<T> findOne(@NonNull Class<T> type, @NonNull Serializable id) {
+    public <T> CompletionStage<T> findOne(@NonNull Class<T> type, @NonNull Object id) {
         return toCompletionStage(reactiveOperations.findOne(type, id));
     }
 
@@ -79,7 +78,7 @@ public class AsyncFromReactiveAsyncRepositoryOperation implements AsyncRepositor
 
     @NonNull
     @Override
-    public <T> CompletionStage<T> findOptional(@NonNull Class<T> type, @NonNull Serializable id) {
+    public <T> CompletionStage<T> findOptional(@NonNull Class<T> type, @NonNull Object id) {
         return toCompletionStage(reactiveOperations.findOptional(type, id));
     }
 

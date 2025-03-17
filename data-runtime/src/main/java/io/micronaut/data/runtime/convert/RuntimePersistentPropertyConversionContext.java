@@ -20,7 +20,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 
 /**
- * Conversion context that has access to converter {@link io.micronaut.data.model.runtime.RuntimePersistentProperty}.
+ * Conversion context that has access to converter {@link RuntimePersistentProperty}.
  *
  * @author Denis Stepanov
  * @since 3.1

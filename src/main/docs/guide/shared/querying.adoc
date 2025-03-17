@@ -41,7 +41,7 @@ The above examples return a single instance of an entity, the supported return t
 |A `java.util.concurrent.Future` for asynchronous execution
 
 |`Publisher<Book>` (or 'Flowable', `Single`, `Maybe`, `Flux`, `Mono` etc.)
-|An Reactive Streams compatible type
+|A Reactive Streams compatible type
 
 |`Flow<Book>` as an alternative to `suspend` functions
 |A Kotlin reactive type. Requires `kotlinx-coroutines-reactive` dependency for the proper conversion.
@@ -87,6 +87,10 @@ The following table summarizes the possible alternative patterns, behaviour and 
 |A primitive or wrapper `boolean`
 |Checks whether a record exists matching properties
 
+|`save`, `persist`, `store`, `insert` with an entity or entities method parameter
+|A `void` or an entity
+|Inserts one or many instances
+
 |`delete`, `remove`, `erase`, `eliminate` with an entity or entities method parameter
 |A `void` or `Number` return type
 |Delete one or many entries
@@ -111,6 +115,18 @@ The following table summarizes the possible alternative patterns, behaviour and 
 |A `void` or `Number` return type
 |Batch update where parameter/s represents an entity's property (must be named the same)
 
+|`saveReturning` all of the save variations plus a suffix `Returning`
+|An entity type or any types that can be returned by the query
+|Insert with a returning clause (Might not be supported by a DIALECT or an implementation)
+
+|`updateReturning` all of the update variations plus a suffix `Returning`
+|An entity type or any types that can be returned by the query
+|Update with a returning clause (Might not be supported by a DIALECT or an implementation)
+
+|`deleteReturning` all of the delete variations plus a suffix `Returning`
+|An entity type or any types that can be returned by the query
+|Delete with a returning clause (Might not be supported by a DIALECT or an implementation)
+
 |===
 
 Note that every method prefix can have `One` or `All` suffix: `findOneByTitle`, `countAllByTitle` etc.
@@ -121,5 +137,5 @@ Finally, as an alternative to the `By` syntax you also define simple finders tha
 
 snippet::example.BookRepository[project-base="doc-examples/hibernate-example", source="main", tags="simple-alt", indent="0"]
 
-Note that in this case if the `title` parameter does not exist as a property in the entity being queried or the type does not match up a compilation error will occur. Also you can specify more than one parameter to perform a logical `AND`.
+Note that in this case if the `title` parameter does not exist as a property in the entity being queried or the type does not match up a compilation error will occur. Also, you can specify more than one parameter to perform a logical `AND`.
 

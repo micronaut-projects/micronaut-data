@@ -1,0 +1,15 @@
+micronaut:
+  data:
+    multi-tenancy:
+      mode: DISCRIMINATOR
+  multitenancy:
+    tenantresolver:
+      httpheader:
+        enabled: true
+
+r2dbc:
+  datasources:
+    default:
+      db-type: mariadb
+      schema-generate: CREATE_DROP
+      dialect: MYSQL

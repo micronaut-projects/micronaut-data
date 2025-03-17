@@ -1,11 +1,14 @@
 plugins {
     id "io.micronaut.build.internal.data-module"
+    id "io.micronaut.build.internal.data-kotlin"
+    id "org.jetbrains.kotlin.kapt"
 }
 
 dependencies {
     annotationProcessor mn.micronaut.inject.java
+    kapt mn.micronaut.inject.java
 
-    api libs.jakarta.transaction.api
+    api(mnSql.jakarta.transaction.api)
     api projects.micronautDataConnection
 
     implementation mn.micronaut.inject
@@ -23,20 +26,18 @@ dependencies {
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.micronautDataProcessor
+    kaptTest mn.micronaut.inject.java
 
     testImplementation projects.micronautDataProcessor
     testImplementation mn.jackson.databind
     testImplementation mnSql.micronaut.jdbc
     testImplementation mnReactor.micronaut.reactor
     testImplementation mnTest.micronaut.test.junit5
+    testImplementation "javax.transaction:javax.transaction-api:1.3"
 
     testRuntimeOnly mnSql.h2
     testRuntimeOnly mnSql.micronaut.jdbc.tomcat
-
-    testImplementation(libs.jupiter.api)
     testRuntimeOnly(libs.jupiter.engine)
-
-    testImplementation "javax.transaction:javax.transaction-api:1.3"
 }
 
 test {

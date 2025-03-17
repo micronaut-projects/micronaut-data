@@ -18,7 +18,7 @@ package io.micronaut.data.model.query;
 import io.micronaut.data.model.PersistentPropertyPath;
 
 /**
- * Default implementation of {@link io.micronaut.data.model.query.BindingParameter.BindingContext}.
+ * Default implementation of {@link BindingParameter.BindingContext}.
  *
  * @author Denis Stepanov
  * @since 3.2

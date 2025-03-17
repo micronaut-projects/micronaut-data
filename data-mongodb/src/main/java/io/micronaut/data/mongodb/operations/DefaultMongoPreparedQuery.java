@@ -18,6 +18,7 @@ package io.micronaut.data.mongodb.operations;
 import com.mongodb.client.model.Sorts;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -81,6 +82,9 @@ final class DefaultMongoPreparedQuery<E, R> extends DefaultBindableParametersPre
         MongoFind find = mongoStoredQuery.getFind(defaultPreparedQuery.getContext());
         Pageable pageable = defaultPreparedQuery.getPageable();
         if (pageable != Pageable.UNPAGED) {
+            if (pageable.getMode() != Mode.OFFSET) {
+                throw new UnsupportedOperationException("Mode " + pageable.getMode() + " is not supported by the MongoDB implementation");
+            }
             MongoFindOptions findOptions = find.getOptions();
             MongoFindOptions options = findOptions == null ? new MongoFindOptions() : new MongoFindOptions(findOptions);
             options.limit(pageable.getSize()).skip((int) pageable.getOffset());
@@ -113,6 +117,9 @@ final class DefaultMongoPreparedQuery<E, R> extends DefaultBindableParametersPre
     private int applyPageable(Pageable pageable, List<Bson> pipeline) {
         int limit = 0;
         if (pageable != Pageable.UNPAGED) {
+            if (pageable.getMode() != Mode.OFFSET) {
+                throw new UnsupportedOperationException("Mode " + pageable.getMode() + " is not supported by the MongoDB implementation");
+            }
             int skip = (int) pageable.getOffset();
             limit = pageable.getSize();
             Sort pageableSort = pageable.getSort();

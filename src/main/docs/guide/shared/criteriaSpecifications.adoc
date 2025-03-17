@@ -1,0 +1,7 @@
+In some cases, you need to build a query programmatically and at the runtime; for that, Micronaut Data supports Jakarta Persistence Criteria API 3.0.
+
+To implement queries that cannot be defined at the compile-time Micronaut Data introduces api:data.repository.JpaSpecificationExecutor[] repository interface that can be used to extend your repository interface:
+
+snippet::example.PersonRepository[project-base="doc-examples/jdbc-example",source="main" tags="repository",indent="0"]
+
+Each method expects a "specification" which is a functional interface with a set of Criteria API objects intended to build a query programmatically.

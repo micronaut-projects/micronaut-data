@@ -20,6 +20,7 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.hibernate.entities.AuthorDto;
 import io.micronaut.data.jpa.annotation.EntityGraph;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.tck.entities.Author;
 
 import jakarta.transaction.Transactional;
@@ -45,6 +46,6 @@ public interface AuthorRepository extends io.micronaut.data.tck.repositories.Aut
     List<Long> longs();
 
     @Query(value = "select id as authorId, name as authorName from Author", nativeQuery = true)
-    List<AuthorDto> getAuthorsByNativeQuery();
+    List<AuthorDto> getAuthorsByNativeQuery(Sort sort);
 
 }

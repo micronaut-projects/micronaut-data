@@ -26,7 +26,6 @@ import spock.lang.Shared
 
 import static io.micronaut.data.processor.visitors.TestUtils.*
 
-//@IgnoreIf({ !jvm.isJava8() })
 class CompositePrimaryKeySpec extends AbstractDataSpec {
 
     @Shared SourcePersistentEntity entity
@@ -163,6 +162,9 @@ import io.micronaut.data.repository.CrudRepository;
 interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, EntityIdClass> {
     List<EntityWithIdClass> findById1(Long id1);
     List<EntityWithIdClass> findById2(Long id2);
+    @Override long count();
+    long countDistinct();
+    long countDistinctName();
 }
 """)
 
@@ -170,6 +172,9 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
         def findByIdMethod = repository.findPossibleMethods("findById").findFirst().get()
         def findById1Method = repository.findPossibleMethods("findById1").findFirst().get()
         def findById2Method = repository.findPossibleMethods("findById2").findFirst().get()
+        def countMethod = repository.findPossibleMethods("count").findFirst().get()
+        def countDistinctMethod = repository.findPossibleMethods("countDistinct").findFirst().get()
+        def countDistinctNameMethod = repository.findPossibleMethods("countDistinctName").findFirst().get()
 
         then:
         getQuery(findByIdMethod) == 'SELECT entityWithIdClass_ FROM io.micronaut.data.tck.entities.EntityWithIdClass AS entityWithIdClass_ WHERE (entityWithIdClass_.id1 = :p1 AND entityWithIdClass_.id2 = :p2)'
@@ -185,6 +190,10 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
         getParameterBindingIndexes(findById2Method) == ["0"]
         getParameterPropertyPaths(findById2Method) == ["id2"] as String[]
         getParameterBindingPaths(findById2Method) == [""] as String[]
+
+        getQuery(countMethod) == 'SELECT COUNT(entityWithIdClass_) FROM io.micronaut.data.tck.entities.EntityWithIdClass AS entityWithIdClass_'
+        getQuery(countDistinctMethod) == 'SELECT COUNT(DISTINCT(entityWithIdClass_)) FROM io.micronaut.data.tck.entities.EntityWithIdClass AS entityWithIdClass_'
+        getQuery(countDistinctNameMethod) == 'SELECT COUNT(DISTINCT(entityWithIdClass_.name)) FROM io.micronaut.data.tck.entities.EntityWithIdClass AS entityWithIdClass_'
     }
 
     void "test create table"() {
@@ -217,7 +226,7 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
 
         when:
         SqlQueryBuilder builder = new SqlQueryBuilder()
-        def sql = builder.buildQuery(model).query
+        def sql = builder.buildQuery(AnnotationMetadata.EMPTY_METADATA, model).query
 
         then:
         sql == 'SELECT project_."department_id",project_."project_id_project_id",project_."name" FROM "project" project_ WHERE (project_."department_id" = ? AND project_."project_id_project_id" = ?)'
@@ -233,7 +242,7 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
 
         when:
         SqlQueryBuilder builder = new SqlQueryBuilder()
-        def sql = builder.buildQuery(model).query
+        def sql = builder.buildQuery(AnnotationMetadata.EMPTY_METADATA, model).query
 
         then:
         sql.startsWith('SELECT project_."department_id",project_."project_id_project_id"')
@@ -243,7 +252,7 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
                           .idEq(new QueryParameter("test"))
 
         model.projections().id()
-        sql = builder.buildQuery(model).query
+        sql = builder.buildQuery(AnnotationMetadata.EMPTY_METADATA, model).query
 
         then:
         sql.startsWith('SELECT project_."department_id",project_."project_id_project_id"')

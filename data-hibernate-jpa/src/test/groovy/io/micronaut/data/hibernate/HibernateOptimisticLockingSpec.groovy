@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.hibernate
 
-import io.micronaut.context.annotation.Property
 import io.micronaut.data.hibernate.entities.FavoriteStudents
 import io.micronaut.data.hibernate.entities.Favorites
 import io.micronaut.data.tck.entities.Student
@@ -25,8 +24,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 @MicronautTest(packages = "io.micronaut.data.tck.entities")
-@Property(name = "datasources.default.name", value = "mydb")
-@Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
+@H2DBProperties
 class HibernateOptimisticLockingSpec extends Specification {
 
     @Shared

@@ -36,7 +36,7 @@ public class MySqlUuidEntity {
     private UUID id5;
 
     @TypeDef(type = DataType.BYTE_ARRAY)
-    @jakarta.persistence.Convert(converter = JakartaMySqlUUIDBinaryConverter.class)
+    @Convert(converter = JakartaMySqlUUIDBinaryConverter.class)
     @Column(columnDefinition = "binary(16)")
     private UUID id6;
 

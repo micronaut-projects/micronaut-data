@@ -1,7 +1,9 @@
 package example
 
 import example.PersonRepository.Specifications.ageIsLessThan
+import example.PersonRepository.Specifications.nameAndAgeMatch
 import example.PersonRepository.Specifications.nameEquals
+import example.PersonRepository.Specifications.nameInList
 import example.PersonRepository.Specifications.updateName
 import jakarta.inject.Inject
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
@@ -57,6 +59,13 @@ class PersonRepositorySpec : AbstractAzureCosmosTest() {
         Assertions.assertEquals(1, countAgeLess20)
         Assertions.assertEquals(1, countAgeLess30NotDenis)
         Assertions.assertEquals(2, people.size)
+    }
+
+    @Test
+    fun testNameAndAgeMatch() {
+        personRepository.save(Person("Josh", 14))
+        val peopleWithNameOrAge = personRepository.findAll(nameAndAgeMatch(25, "Josh"))
+        Assertions.assertEquals(2, peopleWithNameOrAge.size)
     }
 
     @Test
@@ -144,4 +153,16 @@ class PersonRepositorySpec : AbstractAzureCosmosTest() {
         Assertions.assertEquals(1, all.size)
     }
 
+    @Test
+    fun testFindInList() {
+        val twoPeople = personRepository.findAll(PredicateSpecification.where(nameInList(listOf("Denis", "Josh"))))
+        val denis = personRepository.findAll(PredicateSpecification.where(nameInList(listOf("Denis"))))
+        val josh = personRepository.findAll(PredicateSpecification.where(nameInList(listOf("Josh"))))
+
+        Assertions.assertEquals(2, twoPeople.size)
+        Assertions.assertEquals(1, denis.size)
+        Assertions.assertEquals("Denis", denis.first().name)
+        Assertions.assertEquals(1, josh.size)
+        Assertions.assertEquals("Josh", josh.first().name)
+    }
 }

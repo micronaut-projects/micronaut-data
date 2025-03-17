@@ -21,7 +21,6 @@ import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
@@ -33,7 +32,7 @@ import io.micronaut.data.runtime.convert.DataConversionService;
 
 /**
  * A {@link BeanIntrospectionMapper} that reads the result using the specified
- * {@link PersistentEntity} and {@link ResultReader} and using the {@link #map(Object, Class)} allows mapping a result to a introspected Data Transfer Object (DTO).
+ * {@link PersistentEntity} and {@link ResultReader} and using the {@link #map(Object, Class)} allows mapping a result to an introspected Data Transfer Object (DTO).
  *
  * @param <T> The entity type
  * @param <S> The source type.
@@ -144,7 +143,7 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
     public @Nullable Object read(@NonNull S resultSet, @NonNull RuntimePersistentProperty<?> property) {
         String propertyName = property.getPersistedName();
         DataType dataType = property.getDataType();
-        String aliasPropertyName = property.getAnnotationMetadata().stringValue(MappedProperty.class, MappedProperty.ALIAS).orElse("");
+        String aliasPropertyName = property.getAlias();
         if (StringUtils.isNotEmpty(aliasPropertyName)) {
             propertyName = aliasPropertyName;
         }

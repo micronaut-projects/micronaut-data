@@ -19,11 +19,18 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.intercept.RepositoryMethodKey;
+import io.micronaut.data.model.CursoredPage;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
+import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
+import jakarta.persistence.Tuple;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -38,7 +45,7 @@ public class FindPageSpecificationInterceptor extends AbstractSpecificationInter
     /**
      * Default constructor.
      *
-     * @param operations            The operations
+     * @param operations The operations
      */
     protected FindPageSpecificationInterceptor(RepositoryOperations operations) {
         super(operations);
@@ -51,30 +58,52 @@ public class FindPageSpecificationInterceptor extends AbstractSpecificationInter
         }
 
         Pageable pageable = getPageable(context);
-        if (pageable.isUnpaged()) {
-            PreparedQuery<?, ?> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.FIND_PAGE);
-            Iterable<?> iterable = operations.findAll(preparedQuery);
-            List<Object> resultList = (List<Object>) CollectionUtils.iterableToList(iterable);
-            return Page.of(
-                    resultList,
-                    pageable,
-                    resultList.size()
-            );
+        CriteriaQuery<Object> criteriaQuery = buildQuery(methodKey, context);
+        Root<?> root = criteriaQuery.getRoots().iterator().next();
+        Iterable<?> iterable;
+        if (root.getJoins().isEmpty()) {
+            iterable = findAll(methodKey, context, pageable, criteriaQuery);
+        } else {
+            CriteriaQuery<Tuple> criteriaIdsQuery = buildIdsQuery(methodKey, context, pageable);
+            List<Tuple> tupleResult = findAll(methodKey, context, pageable, criteriaIdsQuery);
+            if (tupleResult.isEmpty()) {
+                iterable = List.of();
+            } else {
+                List<Object> ids = new ArrayList<>(tupleResult.size());
+                for (Tuple tuple : tupleResult) {
+                    ids.add(tuple.get(0));
+                }
+                Predicate inPredicate = getIdExpression(root).in(ids);
+                criteriaQuery.where(inPredicate);
+                iterable = findAll(methodKey, context, pageable.withoutPaging(), criteriaQuery);
+            }
         }
-        PreparedQuery<?, ?> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.FIND_PAGE);
-        PreparedQuery<?, Number> countQuery = preparedQueryForCriteria(methodKey, context, Type.COUNT);
 
-        Iterable<?> iterable = operations.findAll(preparedQuery);
         List<Object> resultList = (List<Object>) CollectionUtils.iterableToList(iterable);
+        Long count = null;
+        if (pageable.requestTotal()) {
+            CriteriaQuery<Long> query = buildCountQuery(methodKey, context);
+            count = getCriteriaRepositoryOperations(methodKey, context, null).findOne(query);
+        }
 
-        Number count = operations.findOne(countQuery);
-
-        Page page = Page.of(resultList, getPageable(context), count != null ? count.longValue() : 0);
+        Page<?> page;
+        if (pageable.getMode() == Pageable.Mode.OFFSET) {
+            page = Page.of(resultList, pageable, count);
+        } else {
+            PreparedQuery<?, ?> preparedQuery = (PreparedQuery<?, ?>) context.getAttribute(PREPARED_QUERY_KEY).orElse(null);
+            if (preparedQuery instanceof DefaultSqlPreparedQuery<?, ?> sqlPreparedQuery) {
+                List<Pageable.Cursor> cursors = sqlPreparedQuery.createCursors(resultList, pageable);
+                page = CursoredPage.of(resultList, pageable, cursors, count);
+            } else {
+                throw new UnsupportedOperationException("Only offset pageable mode is supported by this query implementation");
+            }
+        }
         Class<Object> rt = context.getReturnType().getType();
         if (rt.isInstance(page)) {
             return page;
         }
-        return operations.getConversionService().convert(page, rt).orElseThrow(() -> new IllegalStateException("Unsupported page interface type " + rt));
+        return operations.getConversionService().convert(page, rt)
+            .orElseThrow(() -> new IllegalStateException("Unsupported page interface type " + rt));
     }
 
 }

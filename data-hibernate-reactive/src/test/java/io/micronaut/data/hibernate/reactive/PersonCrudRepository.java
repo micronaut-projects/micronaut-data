@@ -52,11 +52,13 @@ public interface PersonCrudRepository extends PersonReactiveRepository {
     @Transactional
     Flux<Person> listPeople(String n);
 
+    @Override
     @Query(value = "from Person p where p.name like :n",
             countQuery = "select count(p) from Person p where p.name like :n")
     @Transactional
     Mono<Page<Person>> findPeople(String n, Pageable pageable);
 
+    @Override
     @Query("from Person p where p.name = :n")
     @Transactional
     Mono<Person> findByName(String n);

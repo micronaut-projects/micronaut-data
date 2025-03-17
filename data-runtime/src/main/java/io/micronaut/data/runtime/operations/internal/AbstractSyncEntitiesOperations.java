@@ -80,8 +80,8 @@ public abstract class AbstractSyncEntitiesOperations<Ctx extends OperationContex
         this.hasGeneratedId = insert && persistentEntity.getIdentity() != null && persistentEntity.getIdentity().isGenerated();
         Objects.requireNonNull(entities, "Entities cannot be null");
         Stream<T> stream;
-        if (entities instanceof Collection) {
-            stream = ((Collection) entities).stream();
+        if (entities instanceof Collection collection) {
+            stream = collection.stream();
         } else {
             stream = CollectionUtils.iterableToList(entities).stream();
         }
@@ -89,7 +89,7 @@ public abstract class AbstractSyncEntitiesOperations<Ctx extends OperationContex
             Data d = new Data();
             d.entity = entity;
             return d;
-        }).collect(Collectors.toList());
+        }).toList();
     }
 
     @Override
@@ -157,6 +157,7 @@ public abstract class AbstractSyncEntitiesOperations<Ctx extends OperationContex
     }
 
     @Override
+    @SuppressWarnings({"java:S6204"})
     public List<T> getEntities() {
         return entities.stream().map(d -> d.entity).collect(Collectors.toList());
     }

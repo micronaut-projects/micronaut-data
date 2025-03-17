@@ -16,7 +16,6 @@
 package io.micronaut.data.hibernate
 
 import io.micronaut.context.ApplicationContext
-import io.micronaut.context.annotation.Property
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
@@ -28,8 +27,7 @@ import spock.lang.Stepwise
 import jakarta.inject.Inject
 
 @MicronautTest(rollback = false, packages = "io.micronaut.data.tck.entities")
-@Property(name = "datasources.default.name", value = "mydb")
-@Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
+@H2DBProperties
 @Stepwise
 class CrudRepositorySpec extends Specification {
 
@@ -62,6 +60,7 @@ class CrudRepositorySpec extends Specification {
         crudRepository.get(person.id).name == 'Fred'
         crudRepository.existsById(person.id)
         crudRepository.count() == 3
+        crudRepository.countDistinct() == 3
         crudRepository.count("Fred") == 1
         crudRepository.findAll().size() == 3
         crudRepository.listPeople("Fred").size() == 1

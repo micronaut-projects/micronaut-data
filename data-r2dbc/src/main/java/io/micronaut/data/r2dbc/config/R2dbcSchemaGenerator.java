@@ -45,7 +45,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Schema generation for R2DBC.
@@ -93,11 +92,11 @@ public class R2dbcSchemaGenerator {
                     introspections = BeanIntrospector.SHARED.findIntrospections(MappedEntity.class);
                 }
                 PersistentEntity[] entities = introspections.stream()
-                        // filter out inner / internal / abstract(MappedSuperClass) classes
-                        .filter(i -> !i.getBeanType().getName().contains("$"))
-                        .filter(i -> !java.lang.reflect.Modifier.isAbstract(i.getBeanType().getModifiers()))
-                        .filter(i -> !i.hasAnnotation(JsonView.class))
-                        .map(e -> runtimeEntityRegistry.getEntity(e.getBeanType())).toArray(PersistentEntity[]::new);
+                    // filter out inner / internal / abstract(MappedSuperClass) classes
+                    .filter(i -> !i.getBeanType().getName().contains("$"))
+                    .filter(i -> !java.lang.reflect.Modifier.isAbstract(i.getBeanType().getModifiers()))
+                    .filter(i -> !i.hasAnnotation(JsonView.class))
+                    .map(e -> runtimeEntityRegistry.getEntity(e.getBeanType())).toArray(PersistentEntity[]::new);
                 if (ArrayUtils.isNotEmpty(entities)) {
                     SqlQueryBuilder builder = new SqlQueryBuilder(configuration.getDialect());
                     Mono.from(configuration.getConnectionFactory().create()).flatMap(connection -> {
@@ -127,7 +126,7 @@ public class R2dbcSchemaGenerator {
     private Mono<Void> generate(Connection connection, SchemaGenerate schemaGenerate, boolean handleForeignKeys, PersistentEntity[] entities, SqlQueryBuilder builder) {
         List<TableStatements> tableStatementsList = Arrays.stream(entities)
             .map(entity -> builder.buildCreateTableStatements(handleForeignKeys, entity))
-            .collect(Collectors.toList());
+            .toList();
         List<String> createStatements = new ArrayList<>(SqlQueryBuilder.INITIAL_STATEMENT_LIST_SIZE);
         List<String> createForeignKeyStatements;
         if (handleForeignKeys) {
@@ -166,10 +165,10 @@ public class R2dbcSchemaGenerator {
                         return Mono.empty();
                     }));
             });
-        switch (schemaGenerate) {
-            case CREATE_DROP:
+        return switch (schemaGenerate) {
+            case CREATE_DROP -> {
                 List<TableStatements> dropTableStatementsList = Arrays.stream(entities).map(entity -> builder.buildDropTableStatements(handleForeignKeys, entity))
-                    .collect(Collectors.toList());
+                    .toList();
                 List<String> dropStatements = new ArrayList<>(SqlQueryBuilder.INITIAL_STATEMENT_LIST_SIZE);
                 List<String> dropForeignKeyStatements;
                 if (handleForeignKeys) {
@@ -182,7 +181,7 @@ public class R2dbcSchemaGenerator {
                     dropForeignKeyStatements = Collections.emptyList();
                     tableStatementsList.forEach(ts -> dropStatements.addAll(Arrays.asList(ts.getStatements())));
                 }
-                return Flux.fromIterable(dropForeignKeyStatements)
+                yield Flux.fromIterable(dropForeignKeyStatements)
                     .concatMap(foreignKeySql -> {
                         if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                             DataSettings.QUERY_LOG.debug("Dropping Foreign Key: \n{}", foreignKeySql);
@@ -204,17 +203,16 @@ public class R2dbcSchemaGenerator {
                         }))
                     .concatWith(createTablesFlow).concatWith(createForeignKeysFlow)
                     .then();
-            case CREATE:
-            default:
-                return createTablesFlow.concatWith(createForeignKeysFlow)
+            }
+            default -> createTablesFlow.concatWith(createForeignKeysFlow)
                     .then();
-        }
+        };
     }
 
     private Mono<Void> execute(Connection connection, String sql) {
         return Flux.from(connection.createStatement(sql).execute())
-                .flatMap(result -> Flux.from(result.getRowsUpdated()))
-                .collectList()
-                .then();
+            .flatMap(result -> Flux.from(result.getRowsUpdated()))
+            .collectList()
+            .then();
     }
 }

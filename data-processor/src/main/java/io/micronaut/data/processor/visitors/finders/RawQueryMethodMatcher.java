@@ -16,14 +16,15 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.context.annotation.Parameter;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.data.annotation.DataAnnotationUtils;
+import io.micronaut.core.expressions.EvaluatedExpressionReference;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.annotation.TypeRole;
-import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.BindingParameter.BindingContext;
@@ -31,20 +32,25 @@ import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.criteria.impl.SourceParameterExpressionImpl;
+import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MatchFailedException;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.Utils;
+import io.micronaut.expressions.context.DefaultExpressionCompilationContextFactory;
+import io.micronaut.expressions.context.ExpressionEvaluationContext;
+import io.micronaut.expressions.parser.CompoundEvaluatedExpressionParser;
+import io.micronaut.expressions.parser.compilation.ExpressionVisitorContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
+import io.micronaut.inject.processing.ProcessingException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -55,18 +61,16 @@ import java.util.regex.Pattern;
  */
 public class RawQueryMethodMatcher implements MethodMatcher {
 
-    private static final String SELECT = "select";
-    private static final String DELETE = "delete";
-    private static final String UPDATE = "update";
-    private static final String INSERT = "insert";
+    private static final Pattern UPDATE_PATTERN = Pattern.compile(".*\\bupdate\\b.*");
+    private static final Pattern FOR_UPDATE_PATTERN = Pattern.compile("for\\s+update");
+    private static final Pattern DELETE_PATTERN = Pattern.compile(".*\\bdelete\\b.*");
+    private static final Pattern INSERT_PATTERN = Pattern.compile(".*\\binsert\\b.*");
+    private static final Pattern RETURNING_PATTERN = Pattern.compile(".*\\breturning\\b.*");
 
     private static final Pattern VARIABLE_PATTERN = Pattern.compile("([^:\\\\]*)((?<![:]):([a-zA-Z0-9]+))([^:]*)");
-
-    /**
-     * Default constructor.
-     */
-    public RawQueryMethodMatcher() {
-    }
+    private static final String COLON = ":";
+    private static final String COLON_ESCAPE_PATTERN = "\\" + COLON;
+    private static final String COLON_TEMP_REPLACEMENT = "___MICRONAUT_COLON_PLA@CEHOLDER___";
 
     @Override
     public final int getOrder() {
@@ -81,6 +85,8 @@ public class RawQueryMethodMatcher implements MethodMatcher {
 
                 @Override
                 public MethodMatchInfo buildMatchInfo(MethodMatchContext matchContext) {
+                    boolean implicitQueries = matchContext.getRepositoryClass().booleanValue(RepositoryConfiguration.class, "implicitQueries").orElse(true);
+
                     MethodElement methodElement = matchContext.getMethodElement();
 
                     ParameterElement[] parameters = matchContext.getParameters();
@@ -98,22 +104,24 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                     String query = matchContext.getAnnotationMetadata().stringValue(Query.class).orElseThrow(IllegalStateException::new);
                     DataMethod.OperationType operationType = findOperationType(methodElement.getName(), query, readOnly);
 
-                    Map.Entry<ClassElement, Class<? extends DataInterceptor>> entry = FindersUtils.resolveInterceptorTypeByOperationType(
+                    // Don't use implicit entity interceptors for implicit-query repositories
+                    // Otherwise JPA's implicit interceptors will not use a custom query
+                    FindersUtils.InterceptorMatch entry = FindersUtils.resolveInterceptorTypeByOperationType(
                             entityParameter != null,
-                            entitiesParameter != null,
+                        entitiesParameter != null,
                             operationType,
                             matchContext);
-                    ClassElement resultType = entry.getKey();
-                    Class<? extends DataInterceptor> interceptorType = entry.getValue();
+                    ClassElement resultType = entry.returnType();
+                    ClassElement interceptorType = entry.interceptor();
 
                     if (interceptorType.getSimpleName().startsWith("SaveOne")) {
                         // Use `executeUpdate` operation for "insert(String a, String b)" style queries
                         // - custom query doesn't need to use root entity
                         // - we would like to know how many rows were updated
                         operationType = DataMethod.OperationType.UPDATE;
-                        Map.Entry<ClassElement, Class<? extends DataInterceptor>> e = FindersUtils.pickUpdateInterceptor(matchContext, matchContext.getReturnType());
-                        resultType = e.getKey();
-                        interceptorType = e.getValue();
+                        FindersUtils.InterceptorMatch e = FindersUtils.pickUpdateInterceptor(matchContext, matchContext.getReturnType());
+                        resultType = e.returnType();
+                        interceptorType = e.interceptor();
                     }
 
                     if (operationType == DataMethod.OperationType.QUERY) {
@@ -140,12 +148,12 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                     MethodMatchInfo methodMatchInfo = new MethodMatchInfo(
                             operationType,
                             resultType,
-                            FindersUtils.getInterceptorElement(matchContext, interceptorType)
+                            interceptorType
                     );
 
                     methodMatchInfo.dto(isDto);
 
-                    buildRawQuery(matchContext, methodMatchInfo, entityParameter, entitiesParameter, operationType);
+                    buildRawQuery(matchContext, methodMatchInfo, entityParameter, entitiesParameter, operationType, implicitQueries);
 
                     if (entityParameter != null) {
                         methodMatchInfo.addParameterRole(TypeRole.ENTITY, entityParameter.getName());
@@ -168,16 +176,26 @@ public class RawQueryMethodMatcher implements MethodMatcher {
 
     private DataMethod.OperationType findOperationType(String methodName, String query, boolean readOnly) {
         query = query.trim().toLowerCase(Locale.ENGLISH);
-        if (query.startsWith(SELECT)) {
-            return DataMethod.OperationType.QUERY;
-        } else if (query.startsWith(DELETE)) {
+
+        if (DELETE_PATTERN.matcher(query).find()) {
+            if (RETURNING_PATTERN.matcher(query).find()) {
+                return DataMethod.OperationType.DELETE_RETURNING;
+            }
             return DataMethod.OperationType.DELETE;
-        } else if (query.startsWith(UPDATE)) {
+        } else if (UPDATE_PATTERN.matcher(query).find()) {
+            if (RETURNING_PATTERN.matcher(query).find()) {
+                return DataMethod.OperationType.UPDATE_RETURNING;
+            }
             if (DeleteMethodMatcher.METHOD_PATTERN.matcher(methodName.toLowerCase(Locale.ENGLISH)).matches()) {
                 return DataMethod.OperationType.DELETE;
             }
-            return DataMethod.OperationType.UPDATE;
-        } else if (query.startsWith(INSERT)) {
+            if (!FOR_UPDATE_PATTERN.matcher(query).find()) {
+                return DataMethod.OperationType.UPDATE;
+            }
+        } else if (INSERT_PATTERN.matcher(query).find()) {
+            if (RETURNING_PATTERN.matcher(query).find()) {
+                return DataMethod.OperationType.INSERT_RETURNING;
+            }
             return DataMethod.OperationType.INSERT;
         }
         if (readOnly) {
@@ -193,7 +211,8 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                                MethodMatchInfo methodMatchInfo,
                                ParameterElement entityParameter,
                                ParameterElement entitiesParameter,
-                               DataMethod.OperationType operationType) {
+                               DataMethod.OperationType operationType,
+                               boolean implicitQueries) {
         MethodElement methodElement = matchContext.getMethodElement();
         String queryString = methodElement.stringValue(Query.class).orElseThrow(() ->
                 new IllegalStateException("Should only be called if Query has value!")
@@ -216,11 +235,11 @@ public class RawQueryMethodMatcher implements MethodMatcher {
         String cq = matchContext.getAnnotationMetadata().stringValue(Query.class, "countQuery")
                 .orElse(null);
         QueryResult countQueryResult = cq == null ? null : getQueryResult(matchContext, cq, parameters, namedParameters, entityParam, persistentEntity);
-        boolean encodeEntityParameters = persistentEntity != null || operationType == DataMethod.OperationType.INSERT;
-        if (encodeEntityParameters && (operationType == DataMethod.OperationType.INSERT &&
-            DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(matchContext.getAnnotationMetadata()))) {
-                encodeEntityParameters = false;
-
+        boolean encodeEntityParameters;
+        if (implicitQueries) {
+            encodeEntityParameters = persistentEntity != null || operationType == DataMethod.OperationType.INSERT;
+        } else {
+            encodeEntityParameters = false;
         }
         methodMatchInfo
                 .isRawQuery(true)
@@ -235,78 +254,47 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                                        boolean namedParameters,
                                        ParameterElement entityParam,
                                        SourcePersistentEntity persistentEntity) {
-        java.util.regex.Matcher matcher = VARIABLE_PATTERN.matcher(queryString.replace("\\:", ""));
+        String newQueryString = queryString.replace(COLON_ESCAPE_PATTERN, COLON_TEMP_REPLACEMENT);
+        Matcher matcher = VARIABLE_PATTERN.matcher(newQueryString);
+
+        List<AnnotationValue<ParameterExpression>> parameterExpressions = matchContext.getMethodElement()
+            .getAnnotationMetadata()
+            .getAnnotationValuesByType(ParameterExpression.class);
 
         List<QueryParameterBinding> parameterBindings = new ArrayList<>(parameters.size());
         List<String> queryParts = new ArrayList<>();
         int index = 1;
         int lastOffset = 0;
         while (matcher.find()) {
-            String prefix = queryString.substring(lastOffset, matcher.start(3) - 1);
+            String prefix = newQueryString.substring(lastOffset, matcher.start(3) - 1);
             if (!prefix.isEmpty()) {
-                queryParts.add(prefix);
+                queryParts.add(prefix.replace(COLON_TEMP_REPLACEMENT, COLON));
             }
             lastOffset = matcher.end(3);
             String name = matcher.group(3);
+            BindingContext bindingContext;
             if (namedParameters) {
-                Optional<ParameterElement> element = parameters.stream()
-                        .filter(p -> p.stringValue(Parameter.class).orElse(p.getName()).equals(name))
-                        .findFirst();
-                if (element.isPresent()) {
-                    PersistentPropertyPath propertyPath = matchContext.getRootEntity().getPropertyPath(name);
-                    BindingContext bindingContext = BindingContext.create()
-                            .name(name)
-                            .incomingMethodParameterProperty(propertyPath)
-                            .outgoingQueryParameterProperty(propertyPath);
-                    parameterBindings.add(bindingParameter(matchContext, element.get()).bind(bindingContext));
-                } else if (persistentEntity != null) {
-                    PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(name);
-                    if (propertyPath == null) {
-                        throw new MatchFailedException("Cannot update non-existent property: " + name);
-                    } else {
-                        BindingContext bindingContext = BindingContext.create()
-                                .name(name)
-                                .incomingMethodParameterProperty(propertyPath)
-                                .outgoingQueryParameterProperty(propertyPath);
-                        parameterBindings.add(bindingParameter(matchContext, entityParam, true).bind(bindingContext));
-                    }
-                } else {
-                    throw new MatchFailedException("No method parameter found for named Query parameter: " + name);
-                }
+                bindingContext = BindingContext.create().name(name);
             } else {
-                Optional<ParameterElement> element = parameters.stream()
-                        .filter(p -> p.stringValue(Parameter.class).orElse(p.getName()).equals(name))
-                        .findFirst();
-                if (element.isPresent()) {
-                    PersistentPropertyPath propertyPath = matchContext.getRootEntity().getPropertyPath(name);
-                    BindingContext bindingContext = BindingContext.create()
-                            .index(index++)
-                            .incomingMethodParameterProperty(propertyPath)
-                            .outgoingQueryParameterProperty(propertyPath);
-                    parameterBindings.add(bindingParameter(matchContext, element.get()).bind(bindingContext));
-                } else if (persistentEntity != null) {
-                    PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(name);
-                    if (propertyPath == null) {
-                        matchContext.fail("Cannot update non-existent property: " + name);
-                    } else {
-                        BindingContext bindingContext = BindingContext.create()
-                                .index(index++)
-                                .incomingMethodParameterProperty(propertyPath)
-                                .outgoingQueryParameterProperty(propertyPath);
-                        parameterBindings.add(bindingParameter(matchContext, entityParam, true).bind(bindingContext));
-                    }
-                } else {
-                    throw new MatchFailedException("No method parameter found for named Query parameter: " + name);
-                }
+                bindingContext = BindingContext.create().index(index++);
             }
+            QueryParameterBinding queryParameterBinding = addBinding(
+                matchContext,
+                parameters,
+                parameterExpressions,
+                entityParam,
+                persistentEntity,
+                name,
+                bindingContext);
+            parameterBindings.add(queryParameterBinding);
         }
-        queryString = queryString.replace("\\:", ":");
+
         if (queryParts.isEmpty()) {
-            queryParts.add(queryString);
+            queryParts.add(newQueryString.replace(COLON_TEMP_REPLACEMENT, COLON));
         } else if (lastOffset > 0) {
-            queryParts.add(queryString.substring(lastOffset));
+            queryParts.add(newQueryString.substring(lastOffset).replace(COLON_TEMP_REPLACEMENT, COLON));
         }
-        String finalQueryString = queryString;
+        String finalQueryString = newQueryString.replace(COLON_TEMP_REPLACEMENT, COLON);
         return new QueryResult() {
             @Override
             public String getQuery() {
@@ -322,24 +310,97 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             public List<QueryParameterBinding> getParameterBindings() {
                 return parameterBindings;
             }
-
-            @Override
-            public Map<String, String> getAdditionalRequiredParameters() {
-                return Collections.emptyMap();
-            }
         };
     }
 
-    private SourceParameterExpressionImpl bindingParameter(MethodMatchContext matchContext, ParameterElement element) {
+    public static QueryParameterBinding addBinding(MethodMatchContext matchContext,
+                                                   List<ParameterElement> parameters,
+                                                   List<AnnotationValue<ParameterExpression>> parameterExpressions,
+                                                   ParameterElement entityParam,
+                                                   SourcePersistentEntity persistentEntity,
+                                                   String name,
+                                                   BindingContext bindingContext) {
+        Optional<AnnotationValue<ParameterExpression>> parameterExpression = parameterExpressions.stream()
+            .filter(av -> av.stringValue("name").orElse("").equals(name))
+            .findFirst();
+        if (parameterExpression.isPresent()) {
+            ClassElement type = extractExpressionType(matchContext, parameterExpression.orElseThrow());
+
+            PersistentPropertyPath propertyPath = matchContext.getRootEntity().getPropertyPath(name);
+            bindingContext = bindingContext
+                .incomingMethodParameterProperty(propertyPath)
+                .outgoingQueryParameterProperty(propertyPath);
+
+            return bindingParameter(matchContext, name, type)
+                .bind(bindingContext);
+        }
+        Optional<ParameterElement> element = parameters.stream()
+            .filter(p -> p.stringValue(Parameter.class).orElse(p.getName()).equals(name))
+            .findFirst();
+        if (element.isPresent()) {
+            PersistentPropertyPath propertyPath = matchContext.getRootEntity().getPropertyPath(name);
+            bindingContext = bindingContext
+                .incomingMethodParameterProperty(propertyPath)
+                .outgoingQueryParameterProperty(propertyPath);
+            return bindingParameter(matchContext, element.get())
+                .bind(bindingContext);
+        }
+        if (persistentEntity != null) {
+            PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(name);
+            if (propertyPath == null) {
+                throw new MatchFailedException("Cannot update non-existent property: " + name);
+            } else {
+                bindingContext = bindingContext
+                    .incomingMethodParameterProperty(propertyPath)
+                    .outgoingQueryParameterProperty(propertyPath);
+                return bindingParameter(matchContext, entityParam, true)
+                    .bind(bindingContext);
+            }
+        }
+        throw new MatchFailedException("No method parameter found for named Query parameter: " + name);
+    }
+
+    private static SourceParameterExpressionImpl bindingParameter(MethodMatchContext matchContext, ParameterElement element) {
         return bindingParameter(matchContext, element, false);
     }
 
-    private SourceParameterExpressionImpl bindingParameter(MethodMatchContext matchContext, ParameterElement element, boolean isEntityParameter) {
+    private static SourceParameterExpressionImpl bindingParameter(MethodMatchContext matchContext, ParameterElement element, boolean isEntityParameter) {
         return new SourceParameterExpressionImpl(
                 Utils.getConfiguredDataTypes(matchContext.getRepositoryClass()),
                 matchContext.getParameters(),
                 element,
-                isEntityParameter);
+                isEntityParameter,
+            null);
+    }
+
+    private static SourceParameterExpressionImpl bindingParameter(MethodMatchContext matchContext,
+                                                                  String name,
+                                                                  ClassElement type) {
+        return new SourceParameterExpressionImpl(
+                Utils.getConfiguredDataTypes(matchContext.getRepositoryClass()),
+            name,
+            type,
+            null);
+    }
+
+    /**
+     * Extract the expression type.
+     * @param matchContext The match context
+     * @param parameterExpression The parameter expression
+     * @return the type
+     */
+    public static ClassElement extractExpressionType(MatchContext matchContext, AnnotationValue<ParameterExpression> parameterExpression) {
+        Object expressionValue = parameterExpression.getValues().get("expression");
+        if (expressionValue instanceof String) {
+            throw new ProcessingException(matchContext.getMethodElement(), "Expected an expression '#{...}' found a string!");
+        }
+        EvaluatedExpressionReference ref = (EvaluatedExpressionReference) expressionValue;
+        DefaultExpressionCompilationContextFactory factory = new DefaultExpressionCompilationContextFactory(matchContext.getVisitorContext());
+        ExpressionEvaluationContext compilationContext = factory.buildContextForMethod(ref, matchContext.getMethodElement());
+        String expression = (String) ref.annotationValue();
+        return new CompoundEvaluatedExpressionParser(expression)
+            .parse()
+            .resolveClassElement(new ExpressionVisitorContext(compilationContext, matchContext.getVisitorContext()));
     }
 
 }

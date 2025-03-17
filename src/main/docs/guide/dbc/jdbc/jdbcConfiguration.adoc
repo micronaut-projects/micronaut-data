@@ -34,7 +34,7 @@ The `schema-generate` option is currently only recommended for simple applicatio
 
 === Setting the Dialect
 
-As seen in the configuration above you should also configure the dialect. Although queries are precomputed in the repository some cases (like pagination) still require the dialect to specified. The following table summarizes the supported dialects:
+As seen in the configuration above you should also configure the dialect. Although queries are precomputed in the repository some cases (like pagination) still require the dialect to specify. The following table summarizes the supported dialects:
 
 .Supported JDBC / R2DBC Dialects
 [cols=2*]
@@ -60,3 +60,23 @@ As seen in the configuration above you should also configure the dialect. Althou
 |===
 
 IMPORTANT: The dialect setting in configuration does *not* replace the need to ensure the correct dialect is set at the repository. If the dialect is H2 in configuration, the repository should have `@JdbcRepository(dialect = Dialect.H2)` / `@R2dbcRepository(dialect = Dialect.H2)`. Because repositories are computed at compile time, the configuration value is not known at that time.
+
+=== Connection client info tracing
+
+In order to trace SQL calls using `java.sql.Connection.setClientInfo(String, String)` method, you can
+annotate a repository with the ann:data.connection.annotation.ClientInfo[] annotation or ann:data.connection.annotation.ClientInfo.Attribute[] for individual client info.
+
+Note that the ann:data.connection.annotation.ClientInfo.Attribute[] annotation can be used on either the class or the method, thus allowing customization of the  module or action individually.
+
+For Oracle database, following attributes can be set to the connection client info: `OCSID.MODULE`, `OCSID.ACTION` and `OCSID.CLIENTID` and provided in ann:data.connection.annotation.ClientInfo.Attribute[].
+If some of these attributes are not provided then Micronaut Data Jdbc is going to populate values automatically for Oracle connections:
+
+*** `OCSID.MODULE` will get the value of the class name where annotation `@ClientInfo.Attribute` is added (usually Micronaut Data repository class)
+*** `OCSID.ACTION` will get the value of the method name which is annotated with `@ClientInfo.Attribute` annotation
+*** `OCSID.CLIENTID` will get the value of the Micronaut application name, if configured
+
+Please note this feature is currently supported only for Oracle database connections. In order to enable Oracle JDBC connection client info to be set,
+you need to specify the configuration property `datasources.<datasource-name>.enable-oracle-client-info=true` on a per datasource basis.
+
+TIP: See the guide for https://guides.micronaut.io/latest/micronaut-data-jdbc-repository.html[Access a Database with Micronaut Data JDBC] to learn more.
+

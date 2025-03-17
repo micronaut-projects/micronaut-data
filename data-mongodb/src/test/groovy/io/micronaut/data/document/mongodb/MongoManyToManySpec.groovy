@@ -2,6 +2,7 @@ package io.micronaut.data.document.mongodb
 
 import groovy.transform.EqualsAndHashCode
 import io.micronaut.context.ApplicationContext
+import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.annotation.Embeddable
 import io.micronaut.data.annotation.EmbeddedId
 import io.micronaut.data.annotation.GeneratedValue
@@ -106,7 +107,7 @@ class MongoManyToManySpec extends Specification implements MongoTestPropertyProv
             QueryBuilder encoder = new MongoQueryBuilder()
             def queryModel = QueryModel.from(getRuntimePersistentEntity(Student))
             queryModel.join("courses", Join.Type.FETCH, null)
-            def q = encoder.buildQuery(queryModel.idEq(new QueryParameter("id")))
+            def q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel.idEq(new QueryParameter("id")))
         then:
             q.query == '''[{$lookup:{from:'student_course',localField:'_id',foreignField:'m2m_student',pipeline:[{$lookup:{from:'m2m_course',localField:'m2m_course',foreignField:'_id',as:'m2m_course'}},{$unwind:{path:'$m2m_course',preserveNullAndEmptyArrays:true}},{$replaceRoot:{newRoot:'$m2m_course'}}],as:'courses'}},{$match:{_id:{$eq:{$mn_qp:0}}}}]'''
     }
@@ -116,7 +117,7 @@ class MongoManyToManySpec extends Specification implements MongoTestPropertyProv
             QueryBuilder encoder = new MongoQueryBuilder()
             def queryModel = QueryModel.from(getRuntimePersistentEntity(Student))
             queryModel.join("ratings", Join.Type.FETCH, null)
-            def q = encoder.buildQuery(queryModel.idEq(new QueryParameter("id")))
+            def q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel.idEq(new QueryParameter("id")))
         then:
             q.query == '''[{$lookup:{from:'m2m_course_rating',localField:'_id',foreignField:'student._id',as:'ratings'}},{$match:{_id:{$eq:{$mn_qp:0}}}}]'''
     }

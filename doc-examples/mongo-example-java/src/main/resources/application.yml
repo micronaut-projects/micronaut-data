@@ -4,3 +4,7 @@ micronaut:
   data:
     mongodb:
       create-collections: true
+mapping:
+  custom:
+    product: col_product
+    manufacturer: col_manufacturer

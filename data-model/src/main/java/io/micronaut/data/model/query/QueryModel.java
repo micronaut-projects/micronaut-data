@@ -30,7 +30,9 @@ import java.util.*;
  *
  * @author graemerocher
  * @since 1.0
+ * @deprecated Replaced by JPA criteria
  */
+@Deprecated(forRemoval = true, since = "4.9")
 public interface QueryModel extends Criteria {
 
     @NonNull
@@ -270,18 +272,6 @@ public interface QueryModel extends Criteria {
     /**
      * Join on the given association.
      * @param path The join path
-     * @param association The association
-     * @param joinType The join type
-     * @param alias The alias to use.
-     * @return The query
-     */
-    @NonNull
-    @Deprecated
-    JoinPath join(String path, Association association, @NonNull Join.Type joinType, @Nullable String alias);
-
-    /**
-     * Join on the given association.
-     * @param path The join path
      * @param joinType The join type
      * @param alias The alias to use.
      * @return The query
@@ -300,7 +290,7 @@ public interface QueryModel extends Criteria {
         if (getPersistentEntity() != association.getOwner()) {
             throw new IllegalArgumentException("The association " + association + " must be owned by: " + getPersistentEntity());
         }
-        return join(association.getName(), association, joinType, null);
+        return join(association.getName(), joinType, null);
     }
 
     /**
@@ -310,7 +300,7 @@ public interface QueryModel extends Criteria {
      */
     @NonNull
     default JoinPath join(@NonNull Association association) {
-        return join(association.getName(), association, Join.Type.DEFAULT, null);
+        return join(association.getName(), Join.Type.DEFAULT, null);
     }
 
     /**
@@ -389,7 +379,7 @@ public interface QueryModel extends Criteria {
 
     /**
      * Whether to lock the selected entities.
-     * @return true if the the selected entities should be locked
+     * @return true if the selected entities should be locked
      */
     boolean isForUpdate();
 
@@ -1288,7 +1278,7 @@ public interface QueryModel extends Criteria {
      * base class for a junction (AND or OR or NOT).
      */
     abstract class Junction implements Criterion {
-        private List<Criterion> criteria = new ArrayList<Criterion>();
+        private List<Criterion> criteria = new ArrayList<>();
 
         /**
          * Default constructor.
@@ -1305,7 +1295,7 @@ public interface QueryModel extends Criteria {
         }
 
         /**
-         * Adds an additional criterion.
+         * Adds another criterion.
          * @param c The criterion
          * @return This junction
          */
@@ -1335,22 +1325,12 @@ public interface QueryModel extends Criteria {
      * A Criterion used to combine to criterion in a logical AND.
      */
     class Conjunction extends Junction {
-        /**
-         * Default constructor.
-         */
-        public Conjunction() {
-        }
     }
 
     /**
      * A Criterion used to combine to criterion in a logical OR.
      */
     class Disjunction extends Junction {
-        /**
-         * Default constructor.
-         */
-        public Disjunction() {
-        }
     }
 
     /**
@@ -1370,6 +1350,14 @@ public interface QueryModel extends Criteria {
      * A projection used to obtain the identifier of an object.
      */
     class IdProjection extends Projection {
+
+    }
+
+    /**
+     * A projection used to project the root entity.
+     * @since 4.2.0
+     */
+    class RootEntityProjection extends Projection {
 
     }
 
@@ -1411,13 +1399,24 @@ public interface QueryModel extends Criteria {
     class PropertyProjection extends Projection {
         private final String propertyName;
         private String alias;
+        private boolean compound;
 
         /**
          * Default constructor.
          * @param propertyName The property name
          */
         public PropertyProjection(String propertyName) {
+            this(propertyName, false);
+        }
+
+        /**
+         * Default constructor.
+         * @param propertyName The property name
+         * @param compound Is compound property
+         */
+        public PropertyProjection(String propertyName, boolean compound) {
             this.propertyName = propertyName;
+            this.compound = compound;
         }
 
         /**
@@ -1450,23 +1449,17 @@ public interface QueryModel extends Criteria {
         public Optional<String> getAlias() {
             return Optional.ofNullable(alias);
         }
-    }
 
-    /**
-     * Projection to return distinct property names.
-     */
-    class DistinctPropertyProjection extends PropertyProjection {
         /**
-         * Default constructor.
-         * @param propertyName The property name
+         * @return True if it's compound property
          */
-        public DistinctPropertyProjection(String propertyName) {
-            super(propertyName);
+        public boolean isCompound() {
+            return compound;
         }
     }
 
     /**
-     * Projection to count distinct property names.
+     * Projection to count distinct property name.
      */
     class CountDistinctProjection extends PropertyProjection {
         /**
@@ -1476,6 +1469,12 @@ public interface QueryModel extends Criteria {
         public CountDistinctProjection(String property) {
             super(property);
         }
+    }
+
+    /**
+     * Projection to count distinct entity will do count distinct against identity or composite identity.
+     */
+    class CountDistinctRootProjection extends Projection {
     }
 
     /**

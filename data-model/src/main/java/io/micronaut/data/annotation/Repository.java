@@ -26,7 +26,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Designates a type of a data repository. If the type is an interface or abstract
+ * Designates a type of data repository. If the type is an interface or abstract
  * class this annotation will attempt to automatically provide implementations at compilation time.
  *
  * @author graemerocher

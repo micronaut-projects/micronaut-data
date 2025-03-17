@@ -15,10 +15,13 @@
  */
 package io.micronaut.data.model;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
+import io.micronaut.core.beans.BeanIntrospection;
+import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.reflect.InstantiationUtils;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.model.naming.NamingStrategy;
@@ -33,6 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author graemerocher
  * @since 1.0.0
  */
+@Internal
 public abstract class AbstractPersistentEntity implements PersistentEntity {
 
     private static final Map<String, NamingStrategy> NAMING_STRATEGIES = new ConcurrentHashMap<>(3);
@@ -50,6 +54,16 @@ public abstract class AbstractPersistentEntity implements PersistentEntity {
         this.namingStrategy = getNamingStrategy(annotationMetadataProvider.getAnnotationMetadata());
     }
 
+    /**
+     * Log error message.
+     *
+     * @param message The message
+     * @param e       The exception
+     */
+    protected void logDebug(String message, Exception e) {
+        System.err.println(message + " " + e.getMessage());
+    }
+
     @NonNull
     @Override
     public String getAliasName() {
@@ -65,11 +79,24 @@ public abstract class AbstractPersistentEntity implements PersistentEntity {
     }
 
     @NonNull
-    private static Optional<NamingStrategy> getNamingStrategy(String className, ClassLoader classLoader) {
+    private Optional<NamingStrategy> getNamingStrategy(String className, ClassLoader classLoader) {
         NamingStrategy namingStrategy = NAMING_STRATEGIES.get(className);
         if (namingStrategy != null) {
             return Optional.of(namingStrategy);
         } else {
+            try {
+                Class<?> namingStrategyClass = ClassUtils.forName(className, classLoader).orElse(null);
+                if (namingStrategyClass != null) {
+                    BeanIntrospection<?> beanIntrospection = BeanIntrospection.getIntrospection(namingStrategyClass);
+                    Object o = beanIntrospection.instantiate();
+                    if (o instanceof NamingStrategy ns) {
+                        NAMING_STRATEGIES.put(className, ns);
+                        return Optional.of(ns);
+                    }
+                }
+            } catch (Exception e) {
+                logDebug("Tried, but could not instantiate naming strategy: " + className, e);
+            }
             Object o = InstantiationUtils.tryInstantiate(className, classLoader).orElse(null);
             if (o instanceof NamingStrategy ns) {
                 NAMING_STRATEGIES.put(className, ns);

@@ -43,10 +43,17 @@ public interface PersonCrudRepository extends JpaRepository<Person, Long>, Perso
     @Transactional
     List<Person> listPeople(String n);
 
+    @Override
     @Query(value = "from Person p where p.name like :n",
             countQuery = "select count(p) from Person p where p.name like :n")
     @Transactional
     Page<Person> findPeople(String n, Pageable pageable);
+
+    @Query(value = "SELECT * FROM person WHERE name LIKE :n",
+            countQuery = "SELECT COUNT(*) FROM person WHERE name LIKE :n",
+            nativeQuery = true)
+    @Transactional
+    Page<Person> findPeopleNative(String n, Pageable pageable);
 
     @Query("from Person p where p.name = :n")
     @Transactional
@@ -68,4 +75,6 @@ public interface PersonCrudRepository extends JpaRepository<Person, Long>, Perso
     @Override
     @QueryHint(name = "jakarta.persistence.FlushModeType", value = "AUTO")
     Long updatePerson(@Id Long id, int age);
+
+    long countDistinct();
 }

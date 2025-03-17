@@ -70,36 +70,45 @@ final class DataInterceptorResolver {
         } else {
             tenantDataSourceName = null;
         }
-        return interceptors.computeIfAbsent(new TenantRepositoryMethodKey(tenantDataSourceName, key), k -> {
-            final String dataSourceName;
-            if (tenantDataSourceName == null) {
-                dataSourceName = context.stringValue(Repository.class)
-                    .orElseGet(() -> injectionPoint == null ? null : injectionPoint.getAnnotationMetadata().stringValue(Repository.class).orElse(null));
-            } else {
-                dataSourceName = tenantDataSourceName;
-            }
-            final Class<? extends RepositoryOperations> operationsType = context.classValue(RepositoryConfiguration.class, "operations")
-                .orElse(PrimaryRepositoryOperations.class);
-            final Class<?> interceptorType = context
-                .classValue(DataMethod.class, DataMethod.META_MEMBER_INTERCEPTOR)
-                .orElseGet(() -> {
-                    final AnnotationValue<DataMethod> declaredAnnotation = context.getDeclaredAnnotation(DataMethod.class);
-                    if (declaredAnnotation == null) {
-                        return null;
-                    }
-                    return declaredAnnotation.classValue(DataMethod.META_MEMBER_INTERCEPTOR).orElse(null);
-                });
+        TenantRepositoryMethodKey theKey = new TenantRepositoryMethodKey(tenantDataSourceName, key);
+        // Don't use "computeIfAbsent" to avoid "java.lang.IllegalStateException: Recursive update"
+        DataInterceptor<? super Object, ? super Object> dataInterceptor = interceptors.get(theKey);
+        if (dataInterceptor == null) {
+            dataInterceptor = findDataInterceptor(context, injectionPoint, tenantDataSourceName);
+            interceptors.put(theKey, dataInterceptor);
+        }
+        return dataInterceptor;
+    }
 
-            if (interceptorType != null && DataInterceptor.class.isAssignableFrom(interceptorType)) {
-                return findInterceptor(dataSourceName, operationsType, interceptorType);
-            }
+    private DataInterceptor<Object, Object> findDataInterceptor(MethodInvocationContext<Object, Object> context, InjectionPoint<?> injectionPoint, String tenantDataSourceName) {
+        final String dataSourceName;
+        if (tenantDataSourceName == null) {
+            dataSourceName = context.stringValue(Repository.class)
+                .orElseGet(() -> injectionPoint == null ? null : injectionPoint.getAnnotationMetadata().stringValue(Repository.class).orElse(null));
+        } else {
+            dataSourceName = tenantDataSourceName;
+        }
+        final Class<? extends RepositoryOperations> operationsType = context.classValue(RepositoryConfiguration.class, "operations")
+            .orElse(PrimaryRepositoryOperations.class);
+        final Class<?> interceptorType = context
+            .classValue(DataMethod.class, DataMethod.META_MEMBER_INTERCEPTOR)
+            .orElseGet(() -> {
+                final AnnotationValue<DataMethod> declaredAnnotation = context.getDeclaredAnnotation(DataMethod.class);
+                if (declaredAnnotation == null) {
+                    return null;
+                }
+                return declaredAnnotation.classValue(DataMethod.META_MEMBER_INTERCEPTOR).orElse(null);
+            });
 
-            final String interceptorName = context.getAnnotationMetadata().stringValue(DataMethod.class, DataMethod.META_MEMBER_INTERCEPTOR).orElse(null);
-            if (interceptorName != null) {
-                throw new IllegalStateException("Micronaut Data Interceptor [" + interceptorName + "] is not on the classpath but required by the method: " + context.getExecutableMethod());
-            }
-            throw new IllegalStateException("Micronaut Data method is missing compilation time query information. Ensure that the Micronaut Data annotation processors are declared in your build and try again with a clean re-build.");
-        });
+        if (interceptorType != null && DataInterceptor.class.isAssignableFrom(interceptorType)) {
+            return findInterceptor(dataSourceName, operationsType, interceptorType);
+        }
+
+        final String interceptorName = context.getAnnotationMetadata().stringValue(DataMethod.class, DataMethod.META_MEMBER_INTERCEPTOR).orElse(null);
+        if (interceptorName != null) {
+            throw new IllegalStateException("Micronaut Data Interceptor [" + interceptorName + "] is not on the classpath but required by the method: " + context.getExecutableMethod());
+        }
+        throw new IllegalStateException("Micronaut Data method is missing compilation time query information. Ensure that the Micronaut Data annotation processors are declared in your build and try again with a clean re-build.");
     }
 
     @NonNull

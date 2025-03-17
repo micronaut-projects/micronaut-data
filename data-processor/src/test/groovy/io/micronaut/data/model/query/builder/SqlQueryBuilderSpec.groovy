@@ -81,7 +81,7 @@ interface MyRepository {
 
         expect:
         builder.dialect == Dialect.POSTGRES
-        builder.buildQuery(queryModel).query == 'SELECT sale_.id,sale_.name,sale_.data,sale_.quantities,sale_.extra_data,sale_.data_list FROM sale sale_ WHERE (sale_.name = $1)'
+        builder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel).query == 'SELECT sale_.id,sale_.name,sale_.data,sale_.quantities,sale_.extra_data,sale_.data_list FROM sale sale_ WHERE (sale_.name = $1)'
         builder.buildDelete(queryModel).query == 'DELETE  FROM sale  WHERE (name = $1)'
         builder.buildUpdate(queryModel, Arrays.asList("name")).query == 'UPDATE sale SET name=$1 WHERE (name = $2)'
         builder.buildInsert(annotationMetadata, entity).query == 'INSERT INTO sale (name,data,quantities,extra_data,data_list) VALUES ($1,to_json($2::json),to_json($3::json),to_json($4::json),to_json($5::json))'
@@ -150,7 +150,7 @@ interface MyRepository {
         PersistentEntity entity = PersistentEntity.of(type)
         QueryModel q = QueryModel.from(entity)
         QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
-        def encoded = encoder.buildQuery(q)
+        def encoded = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
 
         then:"The select includes the schema in the table name reference"
         encoded.query == query
@@ -166,11 +166,55 @@ interface MyRepository {
         PersistentEntity entity = PersistentEntity.of(Restaurant)
         QueryModel q = QueryModel.from(entity)
         QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
-        def encoded = encoder.buildQuery(q)
+        def encoded = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
 
         expect:
         encoded.query.startsWith('SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`address_street`,restaurant_.`address_zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM')
 
+    }
+
+    void "test h2 crud"() {
+        given:
+        def annotationMetadata = buildTypeAnnotationMetadata('''
+package test;
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.model.query.builder.sql.*;
+import java.lang.annotation.*;
+import io.micronaut.data.jdbc.annotation.*;
+import io.micronaut.context.annotation.*;
+
+@MyAnnotation(dialect = Dialect.H2)
+interface MyRepository {
+}
+
+@RepositoryConfiguration(
+        queryBuilder = SqlQueryBuilder.class
+)
+@SqlQueryConfiguration(
+    @SqlQueryConfiguration.DialectConfiguration(
+        dialect = Dialect.H2,
+        positionalParameterFormat = "$%s",
+        escapeQueries = false
+    )
+)
+@Retention(RetentionPolicy.RUNTIME)
+@Repository
+@interface MyAnnotation {
+    @AliasFor(annotation = Repository.class, member = "dialect")
+    Dialect dialect() default Dialect.ANSI;
+}
+''')
+
+        PersistentEntity entity = PersistentEntity.of(Sale)
+        QueryBuilder builder = new SqlQueryBuilder(Dialect.H2)
+        def queryModel = QueryModel.from(entity).eq("name", QueryParameter.of("name"))
+
+        expect:
+        builder.dialect == Dialect.H2
+        builder.buildQuery(annotationMetadata, queryModel).query == 'SELECT sale_.`id`,sale_.`name`,sale_.`data`,sale_.`quantities`,sale_.`extra_data`,sale_.`data_list` FROM `sale` sale_ WHERE (sale_.`name` = ?)'
+        builder.buildDelete(queryModel).query == 'DELETE  FROM `sale`  WHERE (`name` = ?)'
+        builder.buildUpdate(queryModel, Arrays.asList("name")).query == 'UPDATE `sale` SET `name`=? WHERE (`name` = ?)'
+        builder.buildInsert(annotationMetadata, entity).query == 'INSERT INTO `sale` (`name`,`data`,`quantities`,`extra_data`,`data_list`) VALUES (?,? FORMAT JSON,? FORMAT JSON,? FORMAT JSON,? FORMAT JSON)'
     }
 
     void "test encode to-one join - single level"() {
@@ -180,7 +224,7 @@ interface MyRepository {
         q.idEq(new QueryParameter("test"))
         q.join(entity.getPropertyByName("author") as Association, Join.Type.FETCH)
         QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
-        def encoded = encoder.buildQuery(q)
+        def encoded = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
 
         expect:
         encoded.query == 'SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated`,book_author_.`name` AS author_name,book_author_.`nick_name` AS author_nick_name FROM `book` book_ INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` = ?)'
@@ -195,7 +239,7 @@ interface MyRepository {
         q.join(entity.getPropertyByName("author") as Association, Join.Type.FETCH)
         q.join(entity.getPropertyByName("genre") as Association, Join.Type.LEFT_FETCH)
         QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
-        def encoded = encoder.buildQuery(q)
+        def encoded = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
 
         expect:
         encoded.query == 'SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated`,book_genre_.`genre_name` AS genre_genre_name,book_author_.`name` AS author_name,book_author_.`nick_name` AS author_nick_name FROM `book` book_ LEFT JOIN `genre` book_genre_ ON book_.`genre_id`=book_genre_.`id` INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` = ?)'
@@ -210,7 +254,7 @@ interface MyRepository {
         q.join(entity.getPropertyByName("author") as Association, Join.Type.OUTER)
         q.join(entity.getPropertyByName("genre") as Association, Join.Type.OUTER_FETCH)
         QueryBuilder encoder = new SqlQueryBuilder(Dialect.POSTGRES)
-        def encoded = encoder.buildQuery(q)
+        def encoded = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
 
         expect:
         encoded.query == 'SELECT book_."id",book_."author_id",book_."genre_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated",book_genre_."genre_name" AS genre_genre_name FROM "book" book_ FULL OUTER JOIN "genre" book_genre_ ON book_."genre_id"=book_genre_."id" FULL OUTER JOIN "author" book_author_ ON book_."author_id"=book_author_."id" WHERE (book_."id" = ?)'
@@ -226,7 +270,7 @@ interface MyRepository {
         QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
 
         when:
-        encoder.buildQuery(q)
+        encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
 
         then:
         def e = thrown(IllegalArgumentException)
@@ -244,7 +288,7 @@ interface MyRepository {
         QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
 
         when:
-        encoder.buildQuery(q)
+        encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
 
         then:
         def e = thrown(IllegalArgumentException)
@@ -262,7 +306,7 @@ interface MyRepository {
         QueryBuilder encoder = new SqlQueryBuilder(Dialect.MYSQL)
 
         when:
-        encoder.buildQuery(q)
+        encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
 
         then:
         def e = thrown(IllegalArgumentException)
@@ -280,7 +324,7 @@ interface MyRepository {
         QueryBuilder encoder = new SqlQueryBuilder(Dialect.MYSQL)
 
         when:
-        encoder.buildQuery(q)
+        encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
 
         then:
         def e = thrown(IllegalArgumentException)
@@ -335,7 +379,7 @@ interface MyRepository {
         def result = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity)
 
         expect:
-        result.query == 'INSERT INTO "person" ("name","age","enabled","public_id","company_my_id") VALUES (?,?,?,?,?)'
+        result.query == 'INSERT INTO "person" ("name","age","enabled","public_id","company_id") VALUES (?,?,?,?,?)'
         result.parameters.equals('1': 'name', '2': 'age', '3': 'enabled', '4': "publicId", '5': 'company.myId')
     }
 
@@ -403,7 +447,7 @@ interface MyRepository {
                 .eq("author.nickName", new QueryParameter("test"))
         query.join("author", Join.Type.DEFAULT, null)
 
-        def result = encoder.buildQuery(query)
+        def result = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, query)
 
         expect:
         result.query == "SELECT $columns FROM \"book\" book_ INNER JOIN \"author\" book_author_ ON book_.\"author_id\"=book_author_.\"id\" WHERE (book_author_.\"nick_name\" = ?)"
@@ -419,7 +463,7 @@ interface MyRepository {
         SqlQueryBuilder encoder = new SqlQueryBuilder()
         StringBuilder columns = new StringBuilder()
         encoder.selectAllColumns(entity, "person_", columns)
-        QueryResult encodedQuery = encoder.buildQuery(q)
+        QueryResult encodedQuery = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
         NamingStrategy namingStrategy = NamingStrategies.UnderScoreSeparatedLowerCase.newInstance()
         def mappedName = namingStrategy.mappedName(property)
 
@@ -449,7 +493,7 @@ interface MyRepository {
         q."$method"(property, QueryParameter.of('test'))
         q.projections()."$projection"(property)
         QueryBuilder encoder = new SqlQueryBuilder()
-        QueryResult encodedQuery = encoder.buildQuery(q)
+        QueryResult encodedQuery = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
         def aliasName = encoder.getAliasName(entity)
 
         expect:
@@ -464,14 +508,13 @@ interface MyRepository {
         Person | 'gt'   | 'name'   | '>'      | 'min'
         Person | 'lt'   | 'name'   | '<'      | 'sum'
         Person | 'ge'   | 'name'   | '>='     | 'avg'
-        Person | 'le'   | 'name'   | '<='     | 'distinct'
     }
 
     @Unroll
     void "test build query embedded"() {
         when:
             QueryBuilder encoder = new SqlQueryBuilder()
-            QueryResult encodedQuery = encoder.buildQuery(queryModel)
+            QueryResult encodedQuery = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel)
 
         then:
             encodedQuery.query == query
@@ -483,13 +526,13 @@ interface MyRepository {
                     {
                         def entity = getRuntimePersistentEntity(UserRole)
                         def qm = QueryModel.from(entity)
-                        qm.join("role", entity.getPropertyByPath("id.role").get() as Association, Join.Type.DEFAULT, null)
+                        qm.join("role", Join.Type.DEFAULT, null)
                         qm
                     }.call(),
                     {
                         def entity = getRuntimePersistentEntity(UserRole)
                         def qm = QueryModel.from(entity)
-                        qm.join("user", entity.getPropertyByPath("id.user").get() as Association, Join.Type.DEFAULT, null)
+                        qm.join("user", Join.Type.DEFAULT, null)
                         qm.eq("user", new QueryParameter("xyz"))
                     }.call(),
                     QueryModel.from(getRuntimePersistentEntity(UuidEntity)).idEq(new QueryParameter("xyz")),
@@ -497,9 +540,9 @@ interface MyRepository {
                     {
                         def entity = getRuntimePersistentEntity(Challenge)
                         def qm = QueryModel.from(entity)
-                        qm.join("authentication", null, Join.Type.FETCH, null)
-                        qm.join("authentication.device", null, Join.Type.FETCH, null)
-                        qm.join("authentication.device.user", null, Join.Type.FETCH, null)
+                        qm.join("authentication", Join.Type.FETCH, null)
+                        qm.join("authentication.device", Join.Type.FETCH, null)
+                        qm.join("authentication.device.user", Join.Type.FETCH, null)
                         qm.idEq(new QueryParameter("xyz"))
                         qm
                     }.call(),
@@ -507,14 +550,14 @@ interface MyRepository {
                         def entity = getRuntimePersistentEntity(UserRole)
                         def qm = QueryModel.from(entity)
                         qm.projections().add(Projections.property("role"))
-                        qm.join("role", null, Join.Type.FETCH, null)
+                        qm.join("role", Join.Type.FETCH, null)
                         qm.eq("user", new QueryParameter("xyz"))
                         qm
                     }.call(),
                     {
                         def entity = getRuntimePersistentEntity(Meal)
                         def qm = QueryModel.from(entity)
-                        qm.join("foods", null, Join.Type.FETCH, null)
+                        qm.join("foods", Join.Type.FETCH, null)
                         qm.idEq(new QueryParameter("xyz"))
                         qm
                     }.call()
@@ -528,7 +571,7 @@ interface MyRepository {
                     'SELECT user_role_."id_user_id",user_role_."id_role_id" FROM "user_role_composite" user_role_ WHERE (user_role_."id_user_id" = ? AND user_role_."id_role_id" = ?)',
                     'SELECT challenge_."id",challenge_."token",challenge_."authentication_id",challenge_authentication_device_."NAME" AS authentication_device_NAME,challenge_authentication_device_."USER_ID" AS authentication_device_USER_ID,challenge_authentication_device_user_."NAME" AS authentication_device_user_NAME,challenge_authentication_."DESCRIPTION" AS authentication_DESCRIPTION,challenge_authentication_."DEVICE_ID" AS authentication_DEVICE_ID FROM "challenge" challenge_ INNER JOIN "AUTHENTICATION" challenge_authentication_ ON challenge_."authentication_id"=challenge_authentication_."ID" INNER JOIN "DEVICE" challenge_authentication_device_ ON challenge_authentication_."DEVICE_ID"=challenge_authentication_device_."ID" INNER JOIN "USER" challenge_authentication_device_user_ ON challenge_authentication_device_."USER_ID"=challenge_authentication_device_user_."ID" WHERE (challenge_."id" = ?)',
                     'SELECT user_role_id_role_."id",user_role_id_role_."name" FROM "user_role_composite" user_role_ INNER JOIN "role_composite" user_role_id_role_ ON user_role_."id_role_id"=user_role_id_role_."id" WHERE (user_role_."id_user_id" = ?)',
-                    'SELECT meal_."mid",meal_."current_blood_glucose",meal_."created_on",meal_."updated_on",meal_."actual",meal_foods_."fid" AS foods_fid,meal_foods_."key" AS foods_key,meal_foods_."carbohydrates" AS foods_carbohydrates,meal_foods_."portion_grams" AS foods_portion_grams,meal_foods_."created_on" AS foods_created_on,meal_foods_."updated_on" AS foods_updated_on,meal_foods_."fk_meal_id" AS foods_fk_meal_id,meal_foods_."fk_alt_meal" AS foods_fk_alt_meal,meal_foods_."loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name" AS ln,meal_foods_."fresh" AS foods_fresh FROM "meal" meal_ INNER JOIN "food" meal_foods_ ON meal_."mid"=meal_foods_."fk_meal_id" WHERE (meal_."mid" = ? AND (meal_.actual = \'Y\' AND meal_foods_.fresh = \'Y\'))'
+                    'SELECT meal_."mid",meal_."current_blood_glucose",meal_."created_on",meal_."updated_on",meal_."actual",meal_foods_."fid" AS foods_fid,meal_foods_."key" AS foods_key,meal_foods_."carbohydrates" AS foods_carbohydrates,meal_foods_."portion_grams" AS foods_portion_grams,meal_foods_."created_on" AS foods_created_on,meal_foods_."updated_on" AS foods_updated_on,meal_foods_."fk_meal_id" AS foods_fk_meal_id,meal_foods_."fk_alt_meal" AS foods_fk_alt_meal,meal_foods_."loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name" AS ln,meal_foods_."fresh" AS foods_fresh FROM "meal" meal_ INNER JOIN "food" meal_foods_ ON meal_."mid"=meal_foods_."fk_meal_id" AND meal_foods_.fresh = \'Y\' WHERE (meal_."mid" = ? AND (meal_.actual = \'Y\'))'
             ]
     }
 
@@ -642,7 +685,7 @@ interface MyRepository {
     void "test build composite id query"() {
         when:
             QueryBuilder encoder = new SqlQueryBuilder()
-            def q = encoder.buildQuery(QueryModel.from(getRuntimePersistentEntity(Project)).idEq(new QueryParameter("projectId")))
+            def q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, QueryModel.from(getRuntimePersistentEntity(Project)).idEq(new QueryParameter("projectId")))
 
         then:
             q.query == 'SELECT project_."project_id_department_id",project_."project_id_project_id",LOWER(project_.name) AS name,project_.name AS db_name,UPPER(project_.org) AS org FROM "project" project_ WHERE (project_."project_id_department_id" = ? AND project_."project_id_project_id" = ?)'

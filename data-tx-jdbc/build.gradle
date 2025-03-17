@@ -5,7 +5,7 @@ plugins {
 dependencies {
     annotationProcessor mn.micronaut.inject.java
 
-    api libs.jakarta.transaction.api
+    api(mnSql.jakarta.transaction.api)
     api projects.micronautDataTx
     api projects.micronautDataConnectionJdbc
 
@@ -24,11 +24,4 @@ dependencies {
 
     testRuntimeOnly mnSql.h2
     testRuntimeOnly mnSql.micronaut.jdbc.tomcat
-}
-
-micronautBuild {
-    // New module in 4.0
-    binaryCompatibility {
-        enabled = false
-    }
 }

@@ -21,6 +21,7 @@ import io.micronaut.data.processor.visitors.MethodMatchContext;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -47,7 +48,7 @@ public abstract class AbstractPrefixPatternMethodMatcher implements MethodMatche
     @Override
     public MethodMatch match(MethodMatchContext matchContext) {
         String methodName = matchContext.getMethodElement().getName();
-        java.util.regex.Matcher matcher = pattern.matcher(methodName);
+        Matcher matcher = pattern.matcher(methodName);
         if (matcher.find()) {
             return match(matchContext, matcher);
         }
@@ -61,7 +62,7 @@ public abstract class AbstractPrefixPatternMethodMatcher implements MethodMatche
      * @param matcher The matcher
      * @return The method matcher
      */
-    protected abstract MethodMatch match(MethodMatchContext matchContext, java.util.regex.Matcher matcher);
+    protected abstract MethodMatch match(MethodMatchContext matchContext, Matcher matcher);
 
     private static Pattern computePattern(List<String> prefixes) {
         String prefixPattern = prefixes.stream()

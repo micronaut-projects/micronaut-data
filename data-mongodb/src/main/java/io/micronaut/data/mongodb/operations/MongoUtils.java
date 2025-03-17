@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
@@ -39,6 +40,8 @@ import org.bson.types.ObjectId;
 
 import java.time.Instant;
 import java.util.Date;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Mongo internal utils.
@@ -118,6 +121,16 @@ public final class MongoUtils {
                 return Instant.ofEpochMilli(bsonValue.asDateTime().getValue());
             case NULL:
                 return null;
+            case DOCUMENT:
+                BsonDocument bsonDocument = bsonValue.asDocument();
+                Set<String> keys = bsonDocument.keySet();
+                Map<String, Object> result = CollectionUtils.newHashMap(keys.size());
+                for (String key : keys) {
+                    result.put(key, toValue(bsonDocument.get(key)));
+                }
+                return result;
+            case ARRAY:
+                return bsonValue.asArray().stream().map(MongoUtils::toValue).toList();
             default:
                 throw new IllegalStateException("Not implemented for: " + bsonValue.getBsonType());
         }
@@ -127,17 +140,17 @@ public final class MongoUtils {
         if (value == null) {
             return BsonNull.VALUE;
         }
-        if (value instanceof String) {
-            return new BsonString((String) value);
+        if (value instanceof String strValue) {
+            return new BsonString(strValue);
         }
-        if (value instanceof Integer) {
-            return new BsonInt32((Integer) value);
+        if (value instanceof Integer intValue) {
+            return new BsonInt32(intValue);
         }
-        if (value instanceof Long) {
-            return new BsonInt64((Long) value);
+        if (value instanceof Long longValue) {
+            return new BsonInt64(longValue);
         }
-        if (value instanceof ObjectId) {
-            return new BsonObjectId((ObjectId) value);
+        if (value instanceof ObjectId objectId) {
+            return new BsonObjectId(objectId);
         }
         return BsonDocumentWrapper.asBsonDocument(value, codecRegistry).toBsonDocument();
     }
@@ -147,14 +160,14 @@ public final class MongoUtils {
             case STRING:
                 return new BsonString(value.toString());
             case OBJECT_ID:
-                if (value instanceof String) {
-                    return new BsonObjectId(new ObjectId((String) value));
+                if (value instanceof String strValue) {
+                    return new BsonObjectId(new ObjectId(strValue));
                 }
-                if (value instanceof byte[]) {
-                    return new BsonObjectId(new ObjectId((byte[]) value));
+                if (value instanceof byte[] bytesValue) {
+                    return new BsonObjectId(new ObjectId(bytesValue));
                 }
-                if (value instanceof Date) {
-                    return new BsonObjectId(new ObjectId((Date) value));
+                if (value instanceof Date dateValue) {
+                    return new BsonObjectId(new ObjectId(dateValue));
                 }
                 return new BsonObjectId(conversionService.convertRequired(value, ObjectId.class));
             default:

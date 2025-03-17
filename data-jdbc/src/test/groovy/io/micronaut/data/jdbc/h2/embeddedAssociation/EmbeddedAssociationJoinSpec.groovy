@@ -2,11 +2,18 @@ package io.micronaut.data.jdbc.h2.embeddedAssociation
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.*
+import io.micronaut.data.annotation.repeatable.JoinSpecifications
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.h2.H2DBProperties
 import io.micronaut.data.jdbc.h2.H2TestPropertyProvider
+import io.micronaut.data.model.Page
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Sort
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
+import io.micronaut.data.repository.jpa.JpaSpecificationExecutor
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
+import io.micronaut.data.tck.entities.Order
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -64,6 +71,11 @@ class EmbeddedAssociationJoinSpec extends Specification implements H2TestPropert
         when:
             mainEntityRepository.save(e)
             e = mainEntityRepository.findById(e.id).get()
+            Sort.Order.Direction sortDirection = Sort.Order.Direction.ASC;
+            Pageable pageable = Pageable.UNPAGED.order(new Sort.Order("child.name", sortDirection, false));
+            mainEntityRepository.findAll(pageable).totalPages == 1
+            PredicateSpecification<Order> predicate = null
+             mainEntityRepository.findAllByCriteria(predicate, pageable).totalPages == 1
         then:
             e.id
             e.assoc.size() == 2
@@ -113,12 +125,18 @@ class EmbeddedAssociationJoinSpec extends Specification implements H2TestPropert
 }
 
 @JdbcRepository(dialect = Dialect.H2)
-interface MainEntityRepository extends CrudRepository<MainEntity, Long> {
+interface MainEntityRepository extends CrudRepository<MainEntity, Long>, JpaSpecificationExecutor<MainEntity> {
 
     @Join(value = "assoc", type = Join.Type.FETCH)
     @Join(value = "em.assoc", type = Join.Type.FETCH)
     @Override
     Optional<MainEntity> findById(Long aLong)
+
+    @JoinSpecifications(@Join(value = "child", type = Join.Type.LEFT_FETCH))
+    Page<MainEntity> findAll(Pageable pageable)
+
+    @JoinSpecifications(@Join(value = "child", type = Join.Type.LEFT_FETCH))
+    Page<MainEntity> findAllByCriteria(PredicateSpecification<Order> spec, Pageable pageable)
 }
 
 @JdbcRepository(dialect = Dialect.H2)

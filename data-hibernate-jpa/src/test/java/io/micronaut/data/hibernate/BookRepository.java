@@ -18,6 +18,7 @@ package io.micronaut.data.hibernate;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.Where;
@@ -27,6 +28,7 @@ import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.tck.entities.Author;
 import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.BookDto;
 import io.micronaut.data.tck.repositories.AuthorRepository;
 
 import jakarta.transaction.Transactional;
@@ -40,9 +42,13 @@ public abstract class BookRepository extends io.micronaut.data.tck.repositories.
         super(authorRepository);
     }
 
+    @Override
+    public abstract Book save(Book book);
+
     /**
      * @deprecated Order by 'author.name' case without a join. Hibernate will do the cross join if the association property is accessed by the property path without join.
      */
+    @Override
     @Query(value = "SELECT book_ FROM Book book_", countQuery = "SELECT count(book_) FROM Book book_ ")
     @Join(value = "author", type = Join.Type.FETCH)
     @Deprecated
@@ -69,7 +75,7 @@ public abstract class BookRepository extends io.micronaut.data.tck.repositories.
     @Query(value = "select count(*) from book b where b.title like :title and b.total_pages > :pages", nativeQuery = true)
     abstract int countNativeByTitleWithPagesGreaterThan(String title, int pages);
 
-    @Query(value = "select * from book where (CASE WHEN CAST(:arg0 AS VARCHAR) is not null THEN title = :arg0 ELSE true END)", nativeQuery = true)
+    @Query(value = "select * from book where (CASE WHEN CAST(:arg0 AS VARCHAR) is not null THEN title = :arg0 ELSE true END) FOR UPDATE", nativeQuery = true)
     public abstract List<Book> listNativeBooksNullableSearch(@Nullable String arg0);
 
     @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title IN (:arg0) ELSE true END)", nativeQuery = true)
@@ -92,16 +98,22 @@ public abstract class BookRepository extends io.micronaut.data.tck.repositories.
     @Query("UPDATE Book SET author = :author WHERE id = :id")
     public abstract long updateAuthorCustomQuery(Long id, Author author);
 
+    @Override
     public abstract long updateAuthor(@Id Long id, Author author);
 
     @Query("SELECT b FROM Book b WHERE b.author = :author")
     public abstract List<Book> findByAuthor(Author author);
 
-    @Query("INSERT INTO Book(title, pages, author) VALUES (:title, :pages, :author)")
+    @Query("INSERT INTO Book(title, totalPages) VALUES (:title, :totalPages)")
     public abstract void saveCustom(Collection<Book> books);
 
-    @Query("INSERT INTO Book(title, pages, author) VALUES (:title, :pages, :author)")
+    @Query("INSERT INTO Book(title, totalPages) VALUES (:title, :totalPages)")
     public abstract void saveCustomSingle(Book book);
+
+    @Query("INSERT INTO Book(title, totalPages) VALUES (:title, :totalPages)")
+    @ParameterExpression(name = "title", expression = "#{book.title + 'XYZ'}")
+    @ParameterExpression(name = "totalPages", expression = "#{book.totalPages}")
+    public abstract void saveCustomSingleExpressions(Book book);
 
     @Query("DELETE FROM Book WHERE title = :title")
     public abstract int deleteCustom(Collection<Book> books);
@@ -114,4 +126,6 @@ public abstract class BookRepository extends io.micronaut.data.tck.repositories.
 
     @Query(nativeQuery = true, value = "select * from book limit 1")
     public abstract Book findFirstBook();
+
+    public abstract Page<BookDto> findByTotalPagesLessThan(int totalPages, Pageable pageable);
 }

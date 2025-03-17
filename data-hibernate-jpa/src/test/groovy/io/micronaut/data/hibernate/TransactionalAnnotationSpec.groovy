@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.hibernate
 
-import io.micronaut.context.annotation.Property
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.transaction.TransactionOperations
@@ -27,8 +26,7 @@ import jakarta.persistence.EntityManager
 import jakarta.transaction.Transactional
 
 @MicronautTest(packages = "io.micronaut.data.tck.entities", transactional = false)
-@Property(name = "datasources.default.name", value = "mydb")
-@Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
+@H2DBProperties
 class TransactionalAnnotationSpec extends Specification {
 
     @Inject BookService bookService

@@ -26,6 +26,7 @@ import io.micronaut.core.naming.Named;
  * @since 1.0.0
  */
 public interface PersistentElement extends Named, AnnotationMetadataProvider {
+
     /**
      * The persisted name is the fully qualified name including potential schema definitions.
      *

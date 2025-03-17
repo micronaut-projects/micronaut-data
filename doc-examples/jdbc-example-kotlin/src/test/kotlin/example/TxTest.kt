@@ -154,4 +154,56 @@ class TxTest {
         Assertions.assertEquals(0, service.countForCustomDb())
     }
 
+    @Test
+    @Order(12)
+    fun storeThrowable() {
+        repeat(10000) { // Validate the connection is properly closed
+            assertThrows<Throwable> {
+                service.normalStoreThrowable()
+            }
+
+            Assertions.assertEquals(0, service.count())
+        }
+    }
+
+    @Test
+    @Order(13)
+    fun throwable() {
+        repeat(10000) { // Validate the connection is properly closed
+            assertThrows<Throwable> {
+                service.normalThrowable()
+            }
+
+            Assertions.assertEquals(0, service.count())
+        }
+    }
+
+    @Test
+    @Order(14)
+    fun coroutineStoreThrowable() {
+        runBlocking {
+            repeat(10000) { // Validate the connection is properly closed
+                assertThrows<Throwable> {
+                    service.coroutinesStoreThrowable()
+                }
+
+                Assertions.assertEquals(0, service.count())
+            }
+        }
+    }
+
+    @Test
+    @Order(15)
+    fun coroutineThrowable() {
+        runBlocking {
+            repeat(10000) { // Validate the connection is properly closed
+                assertThrows<Throwable> {
+                    service.coroutinesThrowable()
+                }
+
+                Assertions.assertEquals(0, service.count())
+            }
+        }
+    }
+
 }

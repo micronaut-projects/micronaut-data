@@ -38,10 +38,12 @@ interface BookRepository extends ReactorCrudRepository<Book, Long> { // <2>
     }
 
     // tag::save[]
+    @Override
     Mono<Book> save(Book entity);
     // end::save[]
 
     // tag::update[]
+    @Override
     Mono<Book> update(Book newBook);
 
     Mono<Void> update(@Id Long id, int pages);

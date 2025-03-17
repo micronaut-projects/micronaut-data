@@ -15,10 +15,31 @@
  */
 package io.micronaut.data.jdbc.oraclexe;
 
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Face;
 import io.micronaut.data.tck.repositories.FaceRepository;
+
+import java.util.List;
 
 @JdbcRepository(dialect = Dialect.ORACLE)
 public interface OracleXEFaceRepository extends FaceRepository {
+
+    @Query(
+        """
+        SELECT * FROM face f WHERE
+            (f.date_created >= COALESCE(TO_TIMESTAMP(:dateCreatedParam, 'YYYY-MM-DD"T"HH24\\:MI\\:SS"Z"'), f.date_created) OR :dateCreatedParam IS NULL) AND
+            (f.name = :name OR :name IS NULL)
+        """)
+    List<Face> findAllWithOptionalFilters(
+        @Nullable String name,
+        @Nullable String dateCreatedParam);
+
+    /**
+     * Test for custom repository void method not returning result.
+     */
+    @Query("LOCK TABLE face IN EXCLUSIVE MODE")
+    void lock();
 }

@@ -17,6 +17,8 @@ package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
+import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 
@@ -35,19 +37,15 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupport
 public interface IExpression<T> extends Expression<T>, ISelection<T> {
 
     /**
-     * @return true if the expression is of boolean type
+     * @return The expression type
      */
-    boolean isBoolean();
+    @NonNull
+    ExpressionType<T> getExpressionType();
 
-    /**
-     * @return true if the expression is of numeric type
-     */
-    boolean isNumeric();
-
-    /**
-     * @return true if the expression is of comparable type
-     */
-    boolean isComparable();
+    @Override
+    default Class<? extends T> getJavaType() {
+        return getExpressionType().getJavaType();
+    }
 
     @Override
     @NonNull
@@ -91,4 +89,15 @@ public interface IExpression<T> extends Expression<T>, ISelection<T> {
         throw notSupportedOperation();
     }
 
+    /**
+     * Visit the expression.
+     *
+     * @param expressionVisitor The expression visitor
+     */
+    void visitExpression(ExpressionVisitor expressionVisitor);
+
+    @Override
+    default void visitSelection(SelectionVisitor selectionVisitor) {
+        visitExpression(selectionVisitor);
+    }
 }

@@ -49,26 +49,29 @@ public class MatchContext implements AnnotationMetadataProvider {
     private final ClassElement repositoryClass;
     private final QueryBuilder queryBuilder;
     private final List<String> possibleFailures = new ArrayList<>();
-    private boolean failing = false;
+    private final Map<ClassElement, FindInterceptorDef> findInterceptors;
 
     /**
      * Default constructor.
-     * @param queryBuilder The query builder
-     * @param repositoryClass The repository class
-     * @param visitorContext The visitor context
-     * @param methodElement The method element
-     * @param typeRoles The type roles
-     * @param returnType The return type
-     * @param parameters The parameters
+     *
+     * @param queryBuilder     The query builder
+     * @param repositoryClass  The repository class
+     * @param visitorContext   The visitor context
+     * @param methodElement    The method element
+     * @param typeRoles        The type roles
+     * @param returnType       The return type
+     * @param parameters       The parameters
+     * @param findInterceptors The find interceptors
      */
     MatchContext(
-            @NonNull QueryBuilder queryBuilder,
-            @NonNull ClassElement repositoryClass,
-            @NonNull VisitorContext visitorContext,
-            @NonNull MethodElement methodElement,
-            @NonNull Map<String, String> typeRoles,
-            @NonNull ClassElement returnType,
-            @NonNull ParameterElement[] parameters) {
+        @NonNull QueryBuilder queryBuilder,
+        @NonNull ClassElement repositoryClass,
+        @NonNull VisitorContext visitorContext,
+        @NonNull MethodElement methodElement,
+        @NonNull Map<String, String> typeRoles,
+        @NonNull ClassElement returnType,
+        @NonNull ParameterElement[] parameters,
+        @NonNull Map<ClassElement, FindInterceptorDef> findInterceptors) {
         this.queryBuilder = queryBuilder;
         this.repositoryClass = repositoryClass;
         this.visitorContext = visitorContext;
@@ -76,6 +79,7 @@ public class MatchContext implements AnnotationMetadataProvider {
         this.typeRoles = typeRoles;
         this.returnType = returnType;
         this.parameters = parameters;
+        this.findInterceptors = findInterceptors;
     }
 
     /**
@@ -123,10 +127,8 @@ public class MatchContext implements AnnotationMetadataProvider {
 
     /**
      * @return The return type
-     * @deprecated Use {@link #getMethodElement()} and {@link #getReturnType()}.
      */
     @NonNull
-    @Deprecated
     public ClassElement getReturnType() {
         return returnType;
     }
@@ -134,7 +136,6 @@ public class MatchContext implements AnnotationMetadataProvider {
     /**
      * @return The parameters
      */
-    @NonNull
     public ParameterElement[] getParameters() {
         return parameters;
     }
@@ -144,30 +145,7 @@ public class MatchContext implements AnnotationMetadataProvider {
      * @param message The message
      */
     public void fail(@NonNull String message) {
-        this.failing = true;
         getVisitorContext().fail(getUnableToImplementMessage() + message, getMethodElement());
-    }
-
-    /**
-     * Add a message that indicates a given finder failed. This should only be used
-     * if a finder matches a method, but some additional requirement is not met. This
-     * leaves the possibility that another finder may match the method and proceed
-     * successfully. Possible failures will only be logged if the method could not be
-     * implemented.
-     *
-     * @param message The message
-     */
-    public void possiblyFail(@NonNull String message) {
-        this.possibleFailures.add(message);
-    }
-
-    /**
-     * Is there a current error.
-     *
-     * @return True if there is an error
-     */
-    public boolean isFailing() {
-        return failing;
     }
 
     /**
@@ -192,7 +170,7 @@ public class MatchContext implements AnnotationMetadataProvider {
     }
 
     /**
-     * Whether or not implicit queries such as lookup by id and counting is supported without an explicit query.
+     * Whether implicit queries such as lookup by id and counting is supported without an explicit query.
      * @return True if it is
      */
     public boolean supportsImplicitQueries() {
@@ -211,5 +189,12 @@ public class MatchContext implements AnnotationMetadataProvider {
      */
     public String getUnableToImplementMessage() {
         return "Unable to implement Repository method: " + repositoryClass.getSimpleName() + "." + methodElement.getName() + "(" + Arrays.stream(methodElement.getParameters()).map(p -> p.getType().getSimpleName() + " " + p.getName()).collect(Collectors.joining(",")) + "). ";
+    }
+
+    /**
+     * @return The find interceptors
+     */
+    public Map<ClassElement, FindInterceptorDef> getFindInterceptors() {
+        return findInterceptors;
     }
 }

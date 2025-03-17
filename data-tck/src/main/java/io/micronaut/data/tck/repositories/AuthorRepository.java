@@ -19,20 +19,28 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.Where;
+import io.micronaut.data.model.CursoredPage;
+import io.micronaut.data.model.CursoredPageable;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
+import io.micronaut.data.repository.jpa.criteria.QuerySpecification;
 import io.micronaut.data.tck.entities.Author;
 
 import io.micronaut.core.annotation.Nullable;
 
+import io.micronaut.data.tck.entities.AuthorDtoWithBooks;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-public interface AuthorRepository extends CrudRepository<Author, Long> {
+public interface AuthorRepository extends CrudRepository<Author, Long>, JpaSpecificationExecutor<Author> {
 
     @Join(value = "books", type = Join.Type.LEFT_FETCH)
     Author queryByName(String name);
@@ -42,6 +50,19 @@ public interface AuthorRepository extends CrudRepository<Author, Long> {
     @Join(value = "books", alias = "b", type = Join.Type.LEFT_FETCH)
     @Join(value = "books.pages", alias = "bp", type = Join.Type.LEFT_FETCH)
     Optional<Author> findById(@NonNull @NotNull Long aLong);
+
+    @Override
+    @Join(value = "books.pages", alias = "bp", type = Join.Type.LEFT_FETCH)
+    @Join(value = "books", alias = "b", type = Join.Type.LEFT_FETCH)
+    Optional<Author> findOne(PredicateSpecification<Author> specification);
+
+    @Override
+    @Join(value = "books.pages", alias = "bp", type = Join.Type.LEFT_FETCH)
+    List<Author> findAll(PredicateSpecification<Author> specification);
+
+    @Override
+    @Join(value = "books.pages", type = Join.Type.LEFT_FETCH)
+    Optional<Author> findOne(QuerySpecification<Author> specification);
 
     Author findByName(String name);
 
@@ -86,8 +107,65 @@ public interface AuthorRepository extends CrudRepository<Author, Long> {
     @Join(value = "books", type = Join.Type.RIGHT_FETCH)
     List<Author> findByNameIsNotNull();
 
+    List<AuthorDtoWithBooks> searchAll();
+
+    @Join("books")
+    List<AuthorDtoWithBooks> queryAll();
+
+    @Join(value = "books", type = Join.Type.LEFT_FETCH)
+    List<AuthorDtoWithBooks> retrieveByIdIsNotNull();
+
+    @Join(value = "books", type = Join.Type.RIGHT_FETCH)
+    List<AuthorDtoWithBooks> searchByNameIsNotNull();
+
+    List<AuthorDtoWithBooks> readAll();
+
+    @Join("books")
+    List<AuthorDtoWithBooks> read();
+
+    @Join(value = "books", type = Join.Type.LEFT_FETCH)
+    List<AuthorDtoWithBooks> readByIdIsNotNull();
+
+    @Join(value = "books", type = Join.Type.RIGHT_FETCH)
+    List<AuthorDtoWithBooks> readByNameIsNotNull();
+
     void updateNickname(@Id Long id, @Parameter("nickName") @Nullable String nickName);
 
     @Join(value = "books", type = Join.Type.LEFT_FETCH)
     Page<Author> findAll(Pageable pageable);
+
+    @Join(value = "books", type = Join.Type.LEFT_FETCH)
+    @Where("@.nick_name = :nickName")
+    Page<Author> findAllByName(String name, String nickName, Pageable pageable);
+
+    @Where("@.name = :name")
+    Page<Author> findAllByNickName(String nickName, String name, Pageable pageable);
+
+    @Join(value = "books", type = Join.Type.LEFT_FETCH)
+    CursoredPage<Author> findByBooksTotalPages(int totalPages, CursoredPageable pageable);
+
+    @Join(value = "books", alias = "b_")
+    @Query("""
+        SELECT author_.*,
+               b_.id AS b_id, b_.author_id AS b_author_id, b_.genre_id AS b_genre_id,
+               b_.title AS b_title, b_.total_pages AS b_total_pages, b_.publisher_id AS b_publisher_id,
+               b_.last_updated AS b_last_updated
+        FROM author author_ INNER JOIN book b_ ON author_.id = b_.author_id
+        WHERE author_.name = :name
+        """)
+    List<Author> findAllByNameCustom(String name);
+
+    final class Specifications {
+
+        private Specifications() {
+        }
+
+        static PredicateSpecification<Author> authorNameEquals(String name) {
+            return (root, criteriaBuilder) -> criteriaBuilder.equal(root.get("name"), name);
+        }
+
+        static QuerySpecification<Author> authorIdEquals(Long id) {
+            return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("id"), id);
+        }
+    }
 }

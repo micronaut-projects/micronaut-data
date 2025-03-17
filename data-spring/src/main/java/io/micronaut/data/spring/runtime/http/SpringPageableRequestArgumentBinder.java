@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * Spring version of pageable binder.
@@ -94,7 +93,7 @@ public class SpringPageableRequestArgumentBinder implements TypedRequestArgument
 
             List<Sort.Order> orders = sortParams.stream()
                     .map(sortMapper)
-                    .collect(Collectors.toList());
+                    .toList();
             sort = Sort.by(orders);
         } else {
             sort = Sort.unsorted();

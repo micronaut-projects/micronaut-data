@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.naming.NameUtils;
+import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
@@ -30,7 +31,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 
 /**
  * Projections.
@@ -49,7 +49,7 @@ public final class Projections {
                 } catch (Throwable e) {
                     return null;
                 }
-            }).collect(Collectors.toList());
+            }).toList();
 
     @Nullable
     public static Selection<?> find(@NonNull PersistentEntityRoot<?> entityRoot,
@@ -57,7 +57,7 @@ public final class Projections {
                                     String value,
                                     BiFunction<PersistentEntityRoot<?>, String, PersistentPropertyPath<?>> findFunction) {
         String decapitalized = NameUtils.decapitalize(value);
-        Optional<String> path = entityRoot.getPersistentEntity().getPath(decapitalized);
+        Optional<String> path = PersistentEntityUtils.getPersistentPropertyPath(entityRoot.getPersistentEntity(), decapitalized);
         if (path.isPresent()) {
             return entityRoot.get(path.get());
         }
@@ -77,7 +77,7 @@ public final class Projections {
 
         @Override
         public Selection<?> createProjection(CriteriaBuilder cb, PersistentPropertyPath<?> propertyPath) {
-            return propertyPath.isNumeric()
+            return propertyPath.getExpressionType().isNumeric()
                 ? cb.max((PersistentPropertyPath<? extends Number>) propertyPath)
                 : cb.greatest((PersistentPropertyPath<? extends Comparable>) propertyPath);
         }
@@ -95,7 +95,7 @@ public final class Projections {
 
         @Override
         public Selection<?> createProjection(CriteriaBuilder cb, PersistentPropertyPath<?> propertyPath) {
-            return propertyPath.isNumeric()
+            return propertyPath.getExpressionType().isNumeric()
                 ? cb.min((PersistentPropertyPath<? extends Number>) propertyPath)
                 : cb.least((PersistentPropertyPath<? extends Comparable>) propertyPath);
         }

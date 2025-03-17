@@ -33,7 +33,8 @@ class MySqlDbPlainR2dbcSpec extends PlainR2dbcSpec implements MySqlTestPropertyP
     }
 
     @Override
-    boolean isFailsRandomlyWhenConvertingFluxToMono() {
-        return true
+    protected String getSelectByIdQuery() {
+        return 'SELECT * FROM author WHERE id=?'
     }
+
 }

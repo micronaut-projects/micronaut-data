@@ -13,6 +13,7 @@ import java.util.List;
 @R2dbcRepository(dialect = Dialect.MYSQL)
 public interface MySqlPatientRepository extends PatientRepository {
 
+    @Override
     @Query("UPDATE patient SET appointments = CONVERT(:appointments USING UTF8MB4) WHERE name = :name")
     void updateAppointmentsByName(@Parameter String name, @TypeDef(type = DataType.JSON) List<String> appointments);
 }

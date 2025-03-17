@@ -18,10 +18,11 @@ package io.micronaut.data.operations.async;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.NonBlocking;
 import io.micronaut.core.async.annotation.SingleResult;
+import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.runtime.*;
 
-import java.io.Serializable;
+import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 
@@ -48,11 +49,10 @@ public interface AsyncRepositoryOperations {
      * @return A completion stage that emits the result
      */
     @NonNull
-    <T> CompletionStage<T> findOne(@NonNull Class<T> type, @NonNull Serializable id);
-
+    <T> CompletionStage<T> findOne(@NonNull Class<T> type, @NonNull Object id);
 
     /**
-     * Check with an record exists for the given query.
+     * Check with a record exists for the given query.
      * @param preparedQuery The query
      * @param <T> The declaring type
      * @return True if it exists
@@ -78,7 +78,7 @@ public interface AsyncRepositoryOperations {
      * @return A completion stage that emits the result or null if there is no result
      */
     @NonNull
-    <T> CompletionStage<T> findOptional(@NonNull Class<T> type, @NonNull Serializable id);
+    <T> CompletionStage<T> findOptional(@NonNull Class<T> type, @NonNull Object id);
 
     /**
      * Find one by Query.
@@ -167,9 +167,7 @@ public interface AsyncRepositoryOperations {
      * @return A completion that emits a boolean true if successful
      */
     @NonNull
-    CompletionStage<Number> executeUpdate(
-            @NonNull PreparedQuery<?, Number> preparedQuery
-    );
+    CompletionStage<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery);
 
     /**
      * Executes a delete batch for the given query and parameter values. If it is possible to
@@ -178,10 +176,21 @@ public interface AsyncRepositoryOperations {
      * @return A completion that emits a boolean true if successful
      */
     @NonNull
-    default CompletionStage<Number> executeDelete(
-            @NonNull PreparedQuery<?, Number> preparedQuery
-    ) {
+    default CompletionStage<Number> executeDelete(@NonNull PreparedQuery<?, Number> preparedQuery) {
         return executeUpdate(preparedQuery);
+    }
+
+    /**
+     * Executes the given query with parameter values returning a result.
+     *
+     * @param preparedQuery The prepared query
+     * @param <R>           The result type
+     * @return The result
+     * @since 4.2.0
+     */
+    @NonNull
+    default <R> CompletionStage<List<R>> execute(@NonNull PreparedQuery<?, R> preparedQuery) {
+        throw new DataAccessException("Current repository: " + getClass() + " doesn't support method 'execute'!");
     }
 
     /**

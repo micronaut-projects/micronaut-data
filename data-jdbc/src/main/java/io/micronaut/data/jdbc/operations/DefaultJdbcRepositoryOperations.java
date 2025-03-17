@@ -28,14 +28,19 @@ import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
-import io.micronaut.data.connection.annotation.Connectable;
+import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionOperations;
+import io.micronaut.data.connection.annotation.Connectable;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.jdbc.convert.JdbcConversionContext;
+import io.micronaut.data.jdbc.mapper.ColumnIndexCallableResultReader;
 import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;
+import io.micronaut.data.jdbc.mapper.ColumnNameExistenceAwareResultSetReader;
 import io.micronaut.data.jdbc.mapper.ColumnNameResultSetReader;
 import io.micronaut.data.jdbc.mapper.JdbcQueryStatement;
+import io.micronaut.data.jdbc.mapper.JdbcTupleMapper;
 import io.micronaut.data.jdbc.mapper.SqlResultConsumer;
 import io.micronaut.data.jdbc.runtime.ConnectionCallback;
 import io.micronaut.data.jdbc.runtime.PreparedStatementCallback;
@@ -47,20 +52,23 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
+import io.micronaut.data.model.runtime.DeleteReturningBatchOperation;
+import io.micronaut.data.model.runtime.DeleteReturningOperation;
 import io.micronaut.data.model.runtime.EntityOperation;
 import io.micronaut.data.model.runtime.InsertBatchOperation;
 import io.micronaut.data.model.runtime.InsertOperation;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
-import io.micronaut.data.model.runtime.QueryResultInfo;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import io.micronaut.data.operations.DeleteReturningRepositoryOperations;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
@@ -71,7 +79,6 @@ import io.micronaut.data.runtime.mapper.DTOMapper;
 import io.micronaut.data.runtime.mapper.ResultConsumer;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.runtime.mapper.TypeMapper;
-import io.micronaut.data.runtime.mapper.sql.SqlDTOMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlTypeMapper;
 import io.micronaut.data.runtime.multitenancy.SchemaTenantResolver;
@@ -89,12 +96,11 @@ import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
 import io.micronaut.data.runtime.support.AbstractConversionContext;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.transaction.TransactionOperations;
-import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
-import jakarta.inject.Named;
-
 import jakarta.annotation.PreDestroy;
+import jakarta.inject.Named;
+import jakarta.persistence.Tuple;
+
 import javax.sql.DataSource;
-import java.io.Serializable;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -105,6 +111,7 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -117,11 +124,9 @@ import java.util.Spliterators;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -135,15 +140,16 @@ import java.util.stream.StreamSupport;
 @EachBean(DataSource.class)
 @Internal
 public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperations<ResultSet, PreparedStatement, SQLException> implements
-        JdbcRepositoryOperations,
-        AsyncCapableRepository,
-        ReactiveCapableRepository,
-        AutoCloseable,
-        SyncCascadeOperations.SyncCascadeOperationsHelper<DefaultJdbcRepositoryOperations.JdbcOperationContext> {
+    JdbcRepositoryOperations,
+    DeleteReturningRepositoryOperations,
+    AsyncCapableRepository,
+    ReactiveCapableRepository,
+    AutoCloseable,
+    SyncCascadeOperations.SyncCascadeOperationsHelper<DefaultJdbcRepositoryOperations.JdbcOperationContext> {
+
     private final ConnectionOperations<Connection> connectionOperations;
     private final TransactionOperations<Connection> transactionOperations;
     private final DataSource dataSource;
-    private final DataSource unwrapedDataSource;
     private ExecutorAsyncOperations asyncOperations;
     private ExecutorService executorService;
     private final SyncCascadeOperations<JdbcOperationContext> cascadeOperations;
@@ -152,12 +158,16 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final SchemaTenantResolver schemaTenantResolver;
     private final JdbcSchemaHandler schemaHandler;
 
+    private final ColumnIndexCallableResultReader columnIndexCallableResultReader;
+    private final Map<Dialect, List<SqlExceptionMapper>> sqlExceptionMappers = new EnumMap<>(Dialect.class);
+
     /**
      * Default constructor.
      *
      * @param dataSourceName              The data source name
      * @param jdbcConfiguration           The jdbcConfiguration
      * @param dataSource                  The datasource
+     * @param connectionOperations        The connection operations
      * @param transactionOperations       The JDBC operations for the data source
      * @param executorService             The executor service
      * @param beanContext                 The bean context
@@ -169,55 +179,81 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
      * @param schemaHandler               The schema handler
      * @param jsonMapper                  The JSON mapper
      * @param sqlJsonColumnMapperProvider The SQL JSON column mapper provider
-     * @param connectionOperations
+     * @param sqlExceptionMapperList The SQL exception mapper list
      */
     @Internal
     @SuppressWarnings("ParameterNumber")
-    protected DefaultJdbcRepositoryOperations(@Parameter String dataSourceName,
-                                              @Parameter DataJdbcConfiguration jdbcConfiguration,
-                                              DataSource dataSource,
-                                              @Parameter ConnectionOperations<Connection> connectionOperations,
-                                              @Parameter TransactionOperations<Connection> transactionOperations,
-                                              @Named("io") @Nullable ExecutorService executorService,
-                                              BeanContext beanContext,
-                                              @NonNull DateTimeProvider dateTimeProvider,
-                                              RuntimeEntityRegistry entityRegistry,
-                                              DataConversionService conversionService,
-                                              AttributeConverterRegistry attributeConverterRegistry,
-                                              @Nullable
-                                              SchemaTenantResolver schemaTenantResolver,
-                                              JdbcSchemaHandler schemaHandler,
-                                              @Nullable JsonMapper jsonMapper,
-                                              SqlJsonColumnMapperProvider<ResultSet> sqlJsonColumnMapperProvider) {
+    DefaultJdbcRepositoryOperations(@Parameter String dataSourceName,
+                                    @Parameter DataJdbcConfiguration jdbcConfiguration,
+                                    DataSource dataSource,
+                                    @Parameter ConnectionOperations<Connection> connectionOperations,
+                                    @Parameter TransactionOperations<Connection> transactionOperations,
+                                    @Named("io") @Nullable ExecutorService executorService,
+                                    BeanContext beanContext,
+                                    @NonNull DateTimeProvider dateTimeProvider,
+                                    RuntimeEntityRegistry entityRegistry,
+                                    DataConversionService conversionService,
+                                    AttributeConverterRegistry attributeConverterRegistry,
+                                    @Nullable SchemaTenantResolver schemaTenantResolver,
+                                    JdbcSchemaHandler schemaHandler,
+                                    @Nullable JsonMapper jsonMapper,
+                                    SqlJsonColumnMapperProvider<ResultSet> sqlJsonColumnMapperProvider,
+                                    List<SqlExceptionMapper> sqlExceptionMapperList) {
         super(
-                dataSourceName,
-                new ColumnNameResultSetReader(conversionService),
-                new ColumnIndexResultSetReader(conversionService),
-                new JdbcQueryStatement(conversionService),
-                dateTimeProvider,
-                entityRegistry,
-                beanContext,
-                conversionService,
-                attributeConverterRegistry,
-                jsonMapper,
-                sqlJsonColumnMapperProvider);
+            dataSourceName,
+            new ColumnNameResultSetReader(conversionService),
+            new ColumnIndexResultSetReader(conversionService),
+            new JdbcQueryStatement(conversionService, jdbcConfiguration),
+            dateTimeProvider,
+            entityRegistry,
+            beanContext,
+            conversionService,
+            attributeConverterRegistry,
+            jsonMapper,
+            sqlJsonColumnMapperProvider);
         this.schemaTenantResolver = schemaTenantResolver;
         this.schemaHandler = schemaHandler;
         this.connectionOperations = connectionOperations;
         ArgumentUtils.requireNonNull("dataSource", dataSource);
         ArgumentUtils.requireNonNull("transactionOperations", transactionOperations);
         this.dataSource = dataSource;
-        this.unwrapedDataSource = DelegatingDataSource.unwrapDataSource(dataSource);
         this.transactionOperations = transactionOperations;
         this.executorService = executorService;
         this.cascadeOperations = new SyncCascadeOperations<>(conversionService, this);
         this.jdbcConfiguration = jdbcConfiguration;
+        this.columnIndexCallableResultReader = new ColumnIndexCallableResultReader(conversionService);
+        if (CollectionUtils.isNotEmpty(sqlExceptionMapperList)) {
+            for (SqlExceptionMapper sqlExceptionMapper : sqlExceptionMapperList) {
+                Dialect dialect = sqlExceptionMapper.getDialect();
+                List<SqlExceptionMapper> dialectSqlExceptionMapperList = sqlExceptionMappers.get(dialect);
+                if (dialectSqlExceptionMapperList == null) {
+                    dialectSqlExceptionMapperList = new ArrayList<>();
+                }
+                dialectSqlExceptionMapperList.add(sqlExceptionMapper);
+                sqlExceptionMappers.put(dialect, dialectSqlExceptionMapperList);
+            }
+        }
+    }
+
+    @Override
+    protected ResultReader<ResultSet, String> createColumnNameResultSetReaderWithColumnExistenceAware() {
+        return new ColumnNameExistenceAwareResultSetReader();
     }
 
     @NonNull
     private ExecutorService newLocalThreadPool() {
         this.executorService = Executors.newCachedThreadPool();
         return executorService;
+    }
+
+    @Override
+    protected Integer getFirstResultSetIndex() {
+        return 1;
+    }
+
+    @Override
+    protected SqlTypeMapper<ResultSet, Tuple> createTupleMapper() {
+        return new JdbcTupleMapper(conversionService);
     }
 
     @Override
@@ -233,10 +269,10 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                     RuntimePersistentEntity<T> childPersistentEntity,
                                     Predicate<T> predicate) {
         SqlStoredQuery<T, T> storedQuery = resolveEntityInsert(
-                ctx.annotationMetadata,
-                ctx.repositoryType,
-                childPersistentEntity.getIntrospection().getBeanType(),
-                childPersistentEntity
+            ctx.annotationMetadata,
+            ctx.repositoryType,
+            childPersistentEntity.getIntrospection().getBeanType(),
+            childPersistentEntity
         );
         JdbcEntitiesOperations<T> persistBatchOp = new JdbcEntitiesOperations<>(ctx, childPersistentEntity, values, storedQuery, true);
         persistBatchOp.veto(predicate);
@@ -289,8 +325,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 asyncOperations = this.asyncOperations;
                 if (asyncOperations == null) {
                     asyncOperations = new ExecutorAsyncOperations(
-                            this,
-                            executorService != null ? executorService : newLocalThreadPool()
+                        this,
+                        executorService != null ? executorService : newLocalThreadPool()
                     );
                     this.asyncOperations = asyncOperations;
                 }
@@ -308,98 +344,92 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @Nullable
     @Override
     public <T, R> R findOne(@NonNull PreparedQuery<T, R> pq) {
-        return executeRead(connection -> {
-            SqlPreparedQuery<T, R> preparedQuery = getSqlPreparedQuery(pq);
-            RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
-            try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, false, true)) {
-                preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
-                try (ResultSet rs = ps.executeQuery()) {
-                    Class<R> resultType = preparedQuery.getResultType();
-                    if (preparedQuery.getResultDataType() == DataType.ENTITY) {
-                        RuntimePersistentEntity<R> resultPersistentEntity = getEntity(resultType);
-                        BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener = (loadedEntity, o) -> {
-                            if (loadedEntity.hasPostLoadEventListeners()) {
-                                return triggerPostLoad(o, loadedEntity, preparedQuery.getAnnotationMetadata());
-                            } else {
-                                return o;
-                            }
-                        };
-                        QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                        if (isJsonResult(preparedQuery, queryResultInfo)) {
-                            return rs.next() ? mapQueryColumnResult(preparedQuery, rs, getJsonColumn(queryResultInfo), getJsonDataType(queryResultInfo),
-                                persistentEntity, resultType, ResultSet.class, loadListener) : null;
-                        } else {
-                            final Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
-                            SqlResultEntityTypeMapper<ResultSet, R> mapper = new SqlResultEntityTypeMapper<>(
-                                resultPersistentEntity,
-                                columnNameResultSetReader,
-                                joinFetchPaths,
-                                sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, ResultSet.class),
-                                loadListener,
-                                conversionService);
-                            SqlResultEntityTypeMapper.PushingMapper<ResultSet, R> oneMapper = mapper.readOneWithJoins();
-                            if (rs.next()) {
-                                oneMapper.processRow(rs);
-                            }
-                            while (!joinFetchPaths.isEmpty() && rs.next()) {
-                                oneMapper.processRow(rs);
-                            }
-                            R result = oneMapper.getResult();
-                            if (preparedQuery.hasResultConsumer()) {
-                                preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class)
-                                    .ifPresent(consumer -> consumer.accept(result, newMappingContext(rs)));
-                            }
-                            return result;
-                        }
-                    } else if (rs.next()) {
-                        if (preparedQuery.isDtoProjection()) {
-                            QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                            if (isJsonResult(preparedQuery, queryResultInfo)) {
-                                String column = getJsonColumn(queryResultInfo);
-                                JsonDataType jsonDataType = getJsonDataType(queryResultInfo);
-                                return mapQueryColumnResult(preparedQuery, rs, column, jsonDataType, persistentEntity, resultType, ResultSet.class, null);
-                            } else {
-                                boolean isRawQuery = preparedQuery.isRawQuery();
-                                TypeMapper<ResultSet, R> introspectedDataMapper = new SqlDTOMapper<>(
-                                    persistentEntity,
-                                    isRawQuery ? getEntity(preparedQuery.getResultType()) : persistentEntity,
-                                    columnNameResultSetReader,
-                                    sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, ResultSet.class),
-                                    conversionService
-                                );
-                                return introspectedDataMapper.map(rs, resultType);
-                            }
-                        } else {
-                            QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                            if (isJsonResult(preparedQuery, queryResultInfo)) {
-                                String column = getJsonColumn(queryResultInfo);
-                                JsonDataType jsonDataType = getJsonDataType(queryResultInfo);
-                                return mapQueryColumnResult(preparedQuery, rs, column, jsonDataType, persistentEntity, resultType, ResultSet.class, null);
-                            } else {
-                                Object v = columnIndexResultSetReader.readDynamic(rs, 1, preparedQuery.getResultDataType());
-                                if (v == null) {
-                                    return null;
-                                } else if (resultType.isInstance(v)) {
-                                    return (R) v;
-                                } else {
-                                    return columnIndexResultSetReader.convertRequired(v, resultType);
-                                }
-                            }
-                        }
+        SqlPreparedQuery<T, R> sqlPreparedQuery = getSqlPreparedQuery(pq);
+        return executeRead(connection -> findOne(connection, getSqlPreparedQuery(pq)), sqlPreparedQuery.getInvocationContext());
+    }
+
+    private <T, R> R findOne(Connection connection, SqlPreparedQuery<T, R> preparedQuery) {
+        try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, false, true)) {
+            preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
+            try (ResultSet rs = ps.executeQuery()) {
+                SqlTypeMapper<ResultSet, R> mapper = createMapper(preparedQuery, ResultSet.class);
+                R result;
+                if (mapper instanceof SqlResultEntityTypeMapper<ResultSet, R> entityTypeMapper) {
+                    final boolean hasJoins = !preparedQuery.getJoinPaths().isEmpty();
+
+                    SqlResultEntityTypeMapper.PushingMapper<ResultSet, R> oneMapper = entityTypeMapper.readOneMapper();
+                    if (rs.next()) {
+                        oneMapper.processRow(rs);
                     }
+                    while (hasJoins && rs.next()) {
+                        oneMapper.processRow(rs);
+                    }
+                    result = oneMapper.getResult();
+                } else if (rs.next()) {
+                    result = mapper.map(rs, preparedQuery.getResultType());
+                } else {
+                    result = null;
                 }
-            } catch (SQLException e) {
-                throw new DataAccessException("Error executing SQL Query: " + e.getMessage(), e);
+                if (result != null && preparedQuery.hasResultConsumer()) {
+                    preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class)
+                        .ifPresent(consumer -> consumer.accept(result, newMappingContext(rs)));
+                }
+                return result;
             }
-            return null;
-        });
+        } catch (SQLException e) {
+            throw new DataAccessException("Error executing SQL Query: " + e.getMessage(), e);
+        }
+    }
+
+    private <T, R> List<R> findAll(Connection connection, SqlPreparedQuery<T, R> preparedQuery, boolean applyPageable) {
+        try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, !applyPageable, false)) {
+            preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
+            return findAll(preparedQuery, ps);
+        } catch (Throwable e) {
+            throw new DataAccessException("Error executing SQL Query: " + preparedQuery.getQuery() + " " + e.getMessage(), e);
+        }
+    }
+
+    private <T, R> List<R> findAll(SqlStoredQuery<T, R> sqlStoredQuery, PreparedStatement ps) throws SQLException {
+        try (ResultSet rs = ps.executeQuery()) {
+            return findAll(sqlStoredQuery, rs);
+        }
+    }
+
+    @NonNull
+    private <T, R> List<R> findAll(SqlStoredQuery<T, R> sqlStoredQuery, ResultSet rs) throws SQLException {
+        SqlTypeMapper<ResultSet, R> mapper = createMapper(sqlStoredQuery, ResultSet.class);
+        List<R> result;
+        if (mapper instanceof SqlResultEntityTypeMapper<ResultSet, R> entityTypeMapper) {
+            SqlResultEntityTypeMapper.PushingMapper<ResultSet, List<R>> manyMapper = entityTypeMapper.readManyMapper();
+            while (rs.next()) {
+                manyMapper.processRow(rs);
+            }
+            result = manyMapper.getResult();
+            if (result == null) {
+                result = List.of();
+            }
+        } else {
+            result = new ArrayList<>();
+            while (rs.next()) {
+                result.add(
+                    mapper.map(rs, sqlStoredQuery.getResultType())
+                );
+            }
+        }
+        if (sqlStoredQuery.hasResultConsumer() && sqlStoredQuery instanceof PreparedQuery<?, ?> preparedQuery) {
+            List<R> finalResult = result;
+            preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class)
+                .ifPresent(consumer -> consumer.accept(finalResult, newMappingContext(rs)));
+        }
+        return result;
     }
 
     @Override
     public <T> boolean exists(@NonNull PreparedQuery<T, Boolean> pq) {
+        SqlPreparedQuery<T, Boolean> preparedQuery = getSqlPreparedQuery(pq);
         return executeRead(connection -> {
             try {
-                SqlPreparedQuery<T, Boolean> preparedQuery = getSqlPreparedQuery(pq);
                 try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, false, true)) {
                     preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
                     try (ResultSet rs = ps.executeQuery()) {
@@ -409,7 +439,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             } catch (SQLException e) {
                 throw new DataAccessException("Error executing SQL query: " + e.getMessage(), e);
             }
-        });
+        }, preparedQuery.getInvocationContext());
     }
 
     @NonNull
@@ -438,129 +468,45 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         try {
             openedRs = ps.executeQuery();
             rs = openedRs;
-
-            boolean dtoProjection = preparedQuery.isDtoProjection();
-            boolean isEntity = preparedQuery.getResultDataType() == DataType.ENTITY;
-            Spliterator<R> spliterator;
-
-            if (isEntity || dtoProjection) {
-                SqlResultConsumer sqlMappingConsumer = preparedQuery.hasResultConsumer() ? preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class).orElse(null) : null;
-                SqlTypeMapper<ResultSet, R> mapper;
-                if (dtoProjection) {
-                    QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                    if (isJsonResult(preparedQuery, queryResultInfo)) {
-                        String column = getJsonColumn(queryResultInfo);
-                        JsonDataType jsonDataType = getJsonDataType(queryResultInfo);
-                        mapper = createQueryResultMapper(preparedQuery, column, jsonDataType, ResultSet.class, persistentEntity, null);
-                    } else  {
-                        boolean isRawQuery = preparedQuery.isRawQuery();
-                        mapper = new SqlDTOMapper<>(
-                            persistentEntity,
-                            isRawQuery ? getEntity(preparedQuery.getResultType()) : persistentEntity,
-                            columnNameResultSetReader,
-                            sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, ResultSet.class),
-                            conversionService
-                        );
-                    }
-                } else {
-                    BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener = (loadedEntity, o) -> {
-                        if (loadedEntity.hasPostLoadEventListeners()) {
-                            return triggerPostLoad(o, loadedEntity, preparedQuery.getAnnotationMetadata());
-                        } else {
-                            return o;
+            SqlResultConsumer<R> sqlMappingConsumer = preparedQuery.hasResultConsumer() ? preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class).orElse(null) : null;
+            SqlTypeMapper<ResultSet, R> resultMapper = createMapper(preparedQuery, ResultSet.class);
+            if (resultMapper instanceof SqlResultEntityTypeMapper<ResultSet, R> entityTypeMapper) {
+                Set<JoinPath> joinFetchPaths = preparedQuery.getJoinPaths();
+                boolean onlySingleEndedJoins = isOnlySingleEndedJoins(persistentEntity, joinFetchPaths);
+                // Cannot stream ResultSet for "many" joined query
+                if (!onlySingleEndedJoins) {
+                    try {
+                        SqlResultEntityTypeMapper.PushingMapper<ResultSet, List<R>> manyMapper = entityTypeMapper.readManyMapper();
+                        while (rs.next()) {
+                            manyMapper.processRow(rs);
                         }
-                    };
-                    QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                    if (isJsonResult(preparedQuery, queryResultInfo)) {
-                        String column = getJsonColumn(queryResultInfo);
-                        JsonDataType jsonDataType = getJsonDataType(queryResultInfo);
-                        mapper = createQueryResultMapper(preparedQuery, column, jsonDataType, ResultSet.class, persistentEntity, loadListener);
-                    } else {
-                        Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
-                        SqlResultEntityTypeMapper<ResultSet, R> entityTypeMapper = new SqlResultEntityTypeMapper<>(
-                            getEntity(resultType),
-                            columnNameResultSetReader,
-                            joinFetchPaths,
-                            sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, ResultSet.class),
-                            loadListener,
-                            conversionService);
-                        boolean onlySingleEndedJoins = isOnlySingleEndedJoins(persistentEntity, joinFetchPaths);
-                        // Cannot stream ResultSet for "many" joined query
-                        if (!onlySingleEndedJoins) {
-                            try {
-                                SqlResultEntityTypeMapper.PushingMapper<ResultSet, List<R>> manyMapper = entityTypeMapper.readAllWithJoins();
-                                while (rs.next()) {
-                                    manyMapper.processRow(rs);
-                                }
-                                return manyMapper.getResult().stream();
-                            } finally {
-                                closeResultSet(connection, ps, rs, finished, closeConnection);
-                            }
-                        } else {
-                            mapper = entityTypeMapper;
-                        }
+                        return manyMapper.getResult().stream();
+                    } finally {
+                        closeResultSet(connection, ps, rs, finished, closeConnection);
                     }
                 }
-                spliterator = new Spliterators.AbstractSpliterator<R>(Long.MAX_VALUE,
-                        Spliterator.ORDERED | Spliterator.IMMUTABLE) {
-                    @Override
-                    public boolean tryAdvance(Consumer<? super R> action) {
-                        if (finished.get()) {
-                            return false;
-                        }
-                        boolean hasNext = mapper.hasNext(rs);
-                        if (hasNext) {
-                            R o = mapper.map(rs, resultType);
-                            if (sqlMappingConsumer != null) {
-                                sqlMappingConsumer.accept(rs, o);
-                            }
-                            action.accept(o);
-                        } else {
-                            closeResultSet(connection, ps, rs, finished, closeConnection);
-                        }
-                        return hasNext;
-                    }
-                };
-            } else {
-                QueryResultInfo queryResultInfo = preparedQuery.getQueryResultInfo();
-                spliterator = new Spliterators.AbstractSpliterator<R>(Long.MAX_VALUE,
-                    Spliterator.ORDERED | Spliterator.IMMUTABLE) {
-                    @Override
-                    public boolean tryAdvance(Consumer<? super R> action) {
-                        if (finished.get()) {
-                            return false;
-                        }
-                        try {
-
-                            boolean hasNext = rs.next();
-                            if (hasNext) {
-                                if (isJsonResult(preparedQuery, queryResultInfo)) {
-                                    String column = getJsonColumn(queryResultInfo);
-                                    JsonDataType jsonDataType = getJsonDataType(queryResultInfo);
-                                    action.accept(mapQueryColumnResult(preparedQuery, rs, column, jsonDataType, persistentEntity, resultType, ResultSet.class, null));
-                                } else {
-                                    Object v = columnIndexResultSetReader
-                                        .readDynamic(rs, 1, preparedQuery.getResultDataType());
-                                    if (resultType.isInstance(v)) {
-                                        //noinspection unchecked
-                                        action.accept((R) v);
-                                    } else if (v != null) {
-                                        Object r = columnIndexResultSetReader.convertRequired(v, resultType);
-                                        if (r != null) {
-                                            action.accept((R) r);
-                                        }
-                                    }
-                                }
-                            } else {
-                                closeResultSet(connection, ps, rs, finished, closeConnection);
-                            }
-                            return hasNext;
-                        } catch (SQLException e) {
-                            throw new DataAccessException("Error retrieving next JDBC result: " + e.getMessage(), e);
-                        }
-                    }
-                };
             }
+
+            Spliterator<R> spliterator = new Spliterators.AbstractSpliterator<>(Long.MAX_VALUE,
+                    Spliterator.ORDERED | Spliterator.IMMUTABLE) {
+                @Override
+                public boolean tryAdvance(Consumer<? super R> action) {
+                    if (finished.get()) {
+                        return false;
+                    }
+                    boolean hasNext = resultMapper.hasNext(rs);
+                    if (hasNext) {
+                        R o = resultMapper.map(rs, resultType);
+                        if (sqlMappingConsumer != null) {
+                            sqlMappingConsumer.accept(o, newMappingContext(rs));
+                        }
+                        action.accept(o);
+                    } else {
+                        closeResultSet(connection, ps, rs, finished, closeConnection);
+                    }
+                    return hasNext;
+                }
+            };
             return StreamSupport.stream(spliterator, false)
                 .onClose(() -> closeResultSet(connection, ps, rs, finished, closeConnection));
         } catch (Exception e) {
@@ -590,38 +536,71 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @NonNull
     @Override
     public <T, R> Iterable<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return executeRead(connection -> {
-            try (Stream<R> stream = findStream(preparedQuery, connection, false)) {
-                return stream.collect(Collectors.toList());
-            }
-        });
+        SqlPreparedQuery<T, R> sqlPreparedQuery = getSqlPreparedQuery(preparedQuery);
+        return executeRead(connection -> findAll(connection, sqlPreparedQuery, true), sqlPreparedQuery.getInvocationContext());
     }
 
     @NonNull
     @Override
     public Optional<Number> executeUpdate(@NonNull PreparedQuery<?, Number> pq) {
+        SqlPreparedQuery<?, Number> preparedQuery = getSqlPreparedQuery(pq);
         return executeWrite(connection -> {
-            SqlPreparedQuery<?, Number> preparedQuery = getSqlPreparedQuery(pq);
+            try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, true, false)) {
+                preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
+                int result = ps.executeUpdate();
+                if (QUERY_LOG.isTraceEnabled()) {
+                    QUERY_LOG.trace("Update operation updated {} records", result);
+                }
+                if (preparedQuery.isOptimisticLock()) {
+                    checkOptimisticLocking(1, result);
+                }
+                return Optional.of(result);
+            } catch (SQLException e) {
+                throw sqlExceptionToDataAccessException(e, preparedQuery.getDialect(), sqlException -> new DataAccessException("Error executing SQL UPDATE: " + sqlException.getMessage(), sqlException));
+            }
+        }, preparedQuery.getInvocationContext());
+    }
+
+    @Override
+    public <R> List<R> execute(PreparedQuery<?, R> pq) {
+        SqlPreparedQuery<?, R> preparedQuery = getSqlPreparedQuery(pq);
+        return executeWrite(connection -> {
             try {
-                try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, true, false)) {
-                    preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
-                    int result = ps.executeUpdate();
-                    if (QUERY_LOG.isTraceEnabled()) {
-                        QUERY_LOG.trace("Update operation updated {} records", result);
-                    }
-                    if (preparedQuery.isOptimisticLock()) {
-                        checkOptimisticLocking(1, result);
-                    }
-                    return Optional.of(result);
+                if (preparedQuery.isProcedure()) {
+                    return callProcedure(connection, preparedQuery);
+                } else {
+                    return findAll(connection, preparedQuery, false);
                 }
             } catch (SQLException e) {
-                Throwable throwable = handleSqlException(e, preparedQuery.getDialect());
-                if (throwable instanceof DataAccessException dataAccessException) {
-                    throw dataAccessException;
-                }
-                throw new DataAccessException("Error executing SQL UPDATE: " + e.getMessage(), e);
+                throw sqlExceptionToDataAccessException(e, preparedQuery.getDialect(), sqlException -> new DataAccessException("Error executing SQL UPDATE: " + sqlException.getMessage(), sqlException));
             }
-        });
+        }, preparedQuery.getInvocationContext());
+    }
+
+    private <R> List<R> callProcedure(Connection connection, SqlPreparedQuery<?, R> preparedQuery) throws SQLException {
+        try (CallableStatement callableStatement = connection.prepareCall(preparedQuery.getQuery())) {
+            preparedQuery.bindParameters(new JdbcParameterBinder(connection, callableStatement, preparedQuery));
+            if (!preparedQuery.getResultArgument().isVoid()) {
+                DataType resultDataType = preparedQuery.getResultDataType();
+                int sqlType = JdbcQueryStatement.findSqlType(resultDataType, jdbcConfiguration.getDialect());
+                int outIndex = preparedQuery.getQueryBindings().size() + 1;
+                callableStatement.registerOutParameter(outIndex, sqlType);
+            }
+            callableStatement.execute();
+            if (preparedQuery.getResultArgument().isVoid()) {
+                return List.of();
+            }
+            int outIndex = preparedQuery.getQueryBindings().size() + 1;
+            List<R> result = new ArrayList<>();
+            result.add(
+                (R) columnIndexCallableResultReader.readDynamic(
+                    callableStatement,
+                    outIndex,
+                    preparedQuery.getResultDataType()
+                )
+            );
+            return result;
+        }
     }
 
     private Integer sum(Stream<Integer> stream) {
@@ -640,14 +619,14 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 return op.rowsUpdated;
             }
             return sum(
-                    operation.split().stream()
-                            .map(deleteOp -> {
-                                JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, persistentEntity, deleteOp.getEntity(), storedQuery);
-                                op.delete();
-                                return op.rowsUpdated;
-                            })
+                operation.split().stream()
+                    .map(deleteOp -> {
+                        JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, persistentEntity, deleteOp.getEntity(), storedQuery);
+                        op.delete();
+                        return op.rowsUpdated;
+                    })
             );
-        }));
+        }, operation.getInvocationContext()));
     }
 
     @Override
@@ -658,7 +637,38 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, storedQuery.getPersistentEntity(), operation.getEntity(), storedQuery);
             op.delete();
             return op;
-        }).rowsUpdated;
+        }, operation.getInvocationContext()).rowsUpdated;
+    }
+
+    @Override
+    public <E, R> R deleteReturning(DeleteReturningOperation<E, R> operation) {
+        return executeWrite(connection -> {
+            SqlStoredQuery<E, R> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
+            JdbcOperationContext ctx = createContext(operation, connection, storedQuery);
+            JdbcEntityOperations<E> op = new JdbcEntityOperations<>(ctx, storedQuery.getPersistentEntity(), operation.getEntity(), storedQuery);
+            op.delete();
+            return (R) op.getEntity();
+        }, operation.getInvocationContext());
+    }
+
+    @Override
+    public <E, R> List<R> deleteAllReturning(DeleteReturningBatchOperation<E, R> operation) {
+        return executeWrite(connection -> {
+            SqlStoredQuery<E, R> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
+            JdbcOperationContext ctx = createContext(operation, connection, storedQuery);
+            RuntimePersistentEntity<E> persistentEntity = storedQuery.getPersistentEntity();
+            if (isSupportsBatchDelete(persistentEntity, storedQuery.getDialect())) {
+                JdbcEntitiesOperations<E> op = new JdbcEntitiesOperations<>(ctx, persistentEntity, operation, storedQuery);
+                op.delete();
+                return (List<R>) op.getEntities();
+            }
+            return (List<R>) operation.split().stream()
+                    .map(deleteOp -> {
+                        JdbcEntityOperations<E> op = new JdbcEntityOperations<>(ctx, persistentEntity, deleteOp.getEntity(), storedQuery);
+                        op.delete();
+                        return op.getEntity();
+                    }).toList();
+        }, operation.getInvocationContext());
     }
 
     @NonNull
@@ -670,7 +680,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, storedQuery.getPersistentEntity(), operation.getEntity(), storedQuery);
             op.update();
             return op.getEntity();
-        });
+        }, operation.getInvocationContext());
     }
 
     @NonNull
@@ -680,20 +690,20 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
             final RuntimePersistentEntity<T> persistentEntity = storedQuery.getPersistentEntity();
             JdbcOperationContext ctx = createContext(operation, connection, storedQuery);
-            if (!isSupportsBatchUpdate(persistentEntity, storedQuery.getDialect())) {
+            if (!isSupportsBatchUpdate(persistentEntity, storedQuery)) {
                 return operation.split()
-                        .stream()
-                        .map(updateOp -> {
-                            JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, persistentEntity, updateOp.getEntity(), storedQuery);
-                            op.update();
-                            return op.getEntity();
-                        })
-                        .collect(Collectors.toList());
+                    .stream()
+                    .map(updateOp -> {
+                        JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, persistentEntity, updateOp.getEntity(), storedQuery);
+                        op.update();
+                        return op.getEntity();
+                    })
+                    .toList();
             }
             JdbcEntitiesOperations<T> op = new JdbcEntitiesOperations<>(ctx, persistentEntity, operation, storedQuery);
             op.update();
             return op.getEntities();
-        });
+        }, operation.getInvocationContext());
     }
 
     @NonNull
@@ -705,12 +715,12 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, storedQuery, storedQuery.getPersistentEntity(), operation.getEntity(), true);
             op.persist();
             return op;
-        }).getEntity();
+        }, operation.getInvocationContext()).getEntity();
     }
 
     @Nullable
     @Override
-    public <T> T findOne(@NonNull Class<T> type, @NonNull Serializable id) {
+    public <T> T findOne(@NonNull Class<T> type, @NonNull Object id) {
         throw new UnsupportedOperationException("The findOne method by ID is not supported. Execute the SQL query directly");
     }
 
@@ -733,48 +743,49 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
     @Override
     public <R> Page<R> findPage(@NonNull PagedQuery<R> query) {
-        throw new UnsupportedOperationException("The findPage method without an explicit query is not supported. Use findPage(PreparedQuery) instead");
+        throw new UnsupportedOperationException("The findPage method without an explicit query is not supported. Use findAll(PreparedQuery) instead");
     }
 
+    @Override
     @NonNull
     public <T> Iterable<T> persistAll(@NonNull InsertBatchOperation<T> operation) {
         return executeWrite(connection -> {
             final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
             final RuntimePersistentEntity<T> persistentEntity = storedQuery.getPersistentEntity();
             JdbcOperationContext ctx = createContext(operation, connection, storedQuery);
-            if (!isSupportsBatchInsert(persistentEntity, storedQuery.getDialect())) {
+            if (!isSupportsBatchInsert(persistentEntity, storedQuery)) {
                 return operation.split().stream()
-                        .map(persistOp -> {
-                            JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, storedQuery, persistentEntity, persistOp.getEntity(), true);
-                            op.persist();
-                            return op.getEntity();
-                        })
-                        .collect(Collectors.toList());
+                    .map(persistOp -> {
+                        JdbcEntityOperations<T> op = new JdbcEntityOperations<>(ctx, storedQuery, persistentEntity, persistOp.getEntity(), true);
+                        op.persist();
+                        return op.getEntity();
+                    })
+                    .toList();
             } else {
                 JdbcEntitiesOperations<T> op = new JdbcEntitiesOperations<>(ctx, persistentEntity, operation, storedQuery, true);
                 op.persist();
                 return op.getEntities();
             }
 
-        });
+        }, operation.getInvocationContext());
     }
 
-    private <I> I executeRead(Function<Connection, I> fn) {
+    private <I> I executeRead(Function<Connection, I> fn, AnnotationMetadata annotationMetadata) {
         if (!jdbcConfiguration.isAllowConnectionPerOperation() && connectionOperations.findConnectionStatus().isEmpty()) {
             throw connectionNotFoundAndNewNotAllowed();
         }
-        return connectionOperations.executeRead(status -> {
+        return connectionOperations.execute(ConnectionDefinition.READ_ONLY.withAnnotationMetadata(annotationMetadata), status -> {
             Connection connection = status.getConnection();
             applySchema(connection);
             return fn.apply(connection);
         });
     }
 
-    private <I> I executeWrite(Function<Connection, I> fn) {
+    private <I> I executeWrite(Function<Connection, I> fn, AnnotationMetadata annotationMetadata) {
         if (!jdbcConfiguration.isAllowConnectionPerOperation() && connectionOperations.findConnectionStatus().isEmpty()) {
             throw connectionNotFoundAndNewNotAllowed();
         }
-        return connectionOperations.executeWrite(status -> {
+        return connectionOperations.execute(ConnectionDefinition.DEFAULT.withAnnotationMetadata(annotationMetadata), status -> {
             Connection connection = status.getConnection();
             applySchema(connection);
             return fn.apply(connection);
@@ -838,7 +849,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             } catch (SQLException e) {
                 throw new DataAccessException("Error executing SQL Callback: " + e.getMessage(), e);
             }
-        });
+        }, AnnotationMetadata.EMPTY_METADATA);
     }
 
     @NonNull
@@ -882,21 +893,21 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @Override
     public <E> E readEntity(@NonNull String prefix, @NonNull ResultSet resultSet, @NonNull Class<E> type) throws DataAccessException {
         return new SqlResultEntityTypeMapper<>(
-                prefix,
-                getEntity(type),
-                columnNameResultSetReader,
-                jsonMapper != null ? () -> jsonMapper : null,
-                conversionService).map(resultSet, type);
+            prefix,
+            getEntity(type),
+            columnNameResultSetReader,
+            jsonMapper != null ? () -> jsonMapper : null,
+            conversionService).map(resultSet, type);
     }
 
     @NonNull
     @Override
     public <E, D> D readDTO(@NonNull String prefix, @NonNull ResultSet resultSet, @NonNull Class<E> rootEntity, @NonNull Class<D> dtoType) throws DataAccessException {
         return new DTOMapper<E, ResultSet, D>(
-                getEntity(rootEntity),
-                columnNameResultSetReader,
-                jsonMapper != null ? () -> jsonMapper : null,
-                conversionService).map(resultSet, dtoType);
+            getEntity(rootEntity),
+            columnNameResultSetReader,
+            jsonMapper != null ? () -> jsonMapper : null,
+            conversionService).map(resultSet, dtoType);
     }
 
     @NonNull
@@ -906,7 +917,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         ArgumentUtils.requireNonNull("rootEntity", rootEntity);
         TypeMapper<ResultSet, T> mapper = new SqlResultEntityTypeMapper<>(prefix, getEntity(rootEntity), columnNameResultSetReader,
             jsonMapper != null ? () -> jsonMapper : null, conversionService);
-        Iterable<T> iterable = () -> new Iterator<T>() {
+        Iterable<T> iterable = () -> new Iterator<>() {
             boolean fetched = false;
             boolean end = false;
 
@@ -942,9 +953,31 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return StreamSupport.stream(iterable.spliterator(), false);
     }
 
+    /**
+     * Maps SQL exception, used in context of update but could be used elsewhere.
+     * It will return custom {@DataAccessException} based on the {@link SQLException} or null
+     * if it cannot be mapped to the custom {@link DataAccessException}.
+     *
+     * @param sqlException the SQL exception
+     * @param dialect the SQL dialect
+     * @return custom {@link DataAccessException} exception based on {@link SQLException} that was thrown or null
+     * if exception is not mappable to {@link DataAccessException} in given dialect {@link SqlExceptionMapper}
+     */
+    @Nullable
+    private DataAccessException mapSqlException(SQLException sqlException, Dialect dialect) {
+        List<SqlExceptionMapper> dialectSqlExceptionMapperList = sqlExceptionMappers.getOrDefault(dialect, List.of());
+        for (SqlExceptionMapper dialectSqlExceptionMapper : dialectSqlExceptionMapperList) {
+            DataAccessException dataAccessException = dialectSqlExceptionMapper.mapSqlException(sqlException);
+            if (dataAccessException != null) {
+                return dataAccessException;
+            }
+        }
+        return null;
+    }
+
     @NonNull
     private ResultConsumer.Context<ResultSet> newMappingContext(ResultSet rs) {
-        return new ResultConsumer.Context<ResultSet>() {
+        return new ResultConsumer.Context<>() {
             @Override
             public ResultSet getResultSet() {
                 return rs;
@@ -983,15 +1016,15 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     private <T> JdbcOperationContext createContext(EntityOperation<T> operation, Connection connection, SqlStoredQuery<T, ?> storedQuery) {
-        return new JdbcOperationContext(operation.getAnnotationMetadata(),  operation.getInvocationContext(), operation.getRepositoryType(), storedQuery.getDialect(), connection);
+        return new JdbcOperationContext(operation.getAnnotationMetadata(), operation.getInvocationContext(), operation.getRepositoryType(), storedQuery.getDialect(), connection);
     }
 
     /**
      * Gets the generated id on record insert.
      *
      * @param generatedKeysResultSet the generated keys result set
-     * @param identity the identity persistent field
-     * @param dialect the SQL dialect
+     * @param identity               the identity persistent field
+     * @param dialect                the SQL dialect
      * @return the generated id
      */
     private Object getGeneratedIdentity(@NonNull ResultSet generatedKeysResultSet, RuntimePersistentProperty<?> identity, Dialect dialect) {
@@ -1000,6 +1033,23 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             return columnNameResultSetReader.readDynamic(generatedKeysResultSet, identity.getPersistedName(), identity.getDataType());
         }
         return columnIndexResultSetReader.readDynamic(generatedKeysResultSet, 1, identity.getDataType());
+    }
+
+    /**
+     * Handles {@link SQLException} first trying to map it to {@link DataAccessException} using {@link SqlExceptionMapper}.
+     * If mapped exception is not {@link DataAccessException} then returns {@link DataAccessException} using provided fallbackMapper.
+     *
+     * @param sqlException      The SQL exception that was thrown
+     * @param dialect           The dialect
+     * @param fallbackMapper    The fallback mapper that returns {@link DataAccessException} if {@link SQLException} was not mapped to {@link DataAccessException}
+     * @return DataAccessException
+     */
+    private DataAccessException sqlExceptionToDataAccessException(SQLException sqlException, Dialect dialect, Function<SQLException, DataAccessException> fallbackMapper) {
+        DataAccessException dataAccessException = mapSqlException(sqlException, dialect);
+        if (dataAccessException != null) {
+            return dataAccessException;
+        }
+        return fallbackMapper.apply(sqlException);
     }
 
     @Override
@@ -1092,9 +1142,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
         private JdbcEntityOperations(JdbcOperationContext ctx, SqlStoredQuery<T, ?> storedQuery, RuntimePersistentEntity<T> persistentEntity, T entity, boolean insert) {
             super(ctx,
-                    DefaultJdbcRepositoryOperations.this.cascadeOperations,
-                    entityEventRegistry, persistentEntity,
-                    DefaultJdbcRepositoryOperations.this.conversionService, entity, insert);
+                DefaultJdbcRepositoryOperations.this.cascadeOperations,
+                entityEventRegistry, persistentEntity,
+                DefaultJdbcRepositoryOperations.this.conversionService, entity, insert);
             this.storedQuery = storedQuery;
         }
 
@@ -1103,9 +1153,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             previousValues = storedQuery.collectAutoPopulatedPreviousValues(entity);
         }
 
-        private PreparedStatement prepare(Connection connection, SqlStoredQuery storedQuery) throws SQLException {
-            if (storedQuery instanceof SqlPreparedQuery) {
-                ((SqlPreparedQuery) storedQuery).prepare(entity);
+        private PreparedStatement prepare(Connection connection, SqlStoredQuery<T, ?> storedQuery) throws SQLException {
+            if (storedQuery instanceof SqlPreparedQuery<T, ?> sqlPreparedQuery) {
+                sqlPreparedQuery.prepare(entity);
             }
             if (insert) {
                 Dialect dialect = storedQuery.getDialect();
@@ -1132,6 +1182,41 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             if (QUERY_LOG.isDebugEnabled()) {
                 QUERY_LOG.debug("Executing SQL query: {}", storedQuery.getQuery());
             }
+            try {
+                if (storedQuery.getOperationType() == StoredQuery.OperationType.INSERT_RETURNING
+                    || storedQuery.getOperationType() == StoredQuery.OperationType.UPDATE_RETURNING
+                    || storedQuery.getOperationType() == StoredQuery.OperationType.DELETE_RETURNING) {
+                    executeReturning();
+                } else {
+                    executeUpdate();
+                }
+                if (storedQuery.isOptimisticLock()) {
+                    checkOptimisticLocking(1, rowsUpdated);
+                }
+            } catch (SQLException e) {
+                DataAccessException dataAccessException = mapSqlException(e, ctx.dialect);
+                if (dataAccessException != null) {
+                    throw dataAccessException;
+                }
+                throw e;
+            }
+        }
+
+        private void executeReturning() {
+            try (PreparedStatement ps = ctx.connection.prepareStatement(storedQuery.getQuery())) {
+                storedQuery.bindParameters(new JdbcParameterBinder(ctx.connection, ps, storedQuery), ctx.invocationContext, entity, previousValues);
+                List<T> result = (List<T>) findAll(storedQuery, ps);
+                if (result.isEmpty()) {
+                    throw new DataAccessException("Returning clause produced no results");
+                }
+                rowsUpdated = result.size();
+                entity = result.iterator().next();
+            } catch (SQLException e) {
+                throw new DataAccessException("Error executing SQL Query: " + e.getMessage(), e);
+            }
+        }
+
+        private void executeUpdate() throws SQLException {
             try (PreparedStatement ps = prepare(ctx.connection, storedQuery)) {
                 storedQuery.bindParameters(new JdbcParameterBinder(ctx.connection, ps, storedQuery), ctx.invocationContext, entity, previousValues);
                 rowsUpdated = ps.executeUpdate();
@@ -1153,15 +1238,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         }
                     }
                 }
-                if (storedQuery.isOptimisticLock()) {
-                    checkOptimisticLocking(1, rowsUpdated);
-                }
-            } catch (SQLException e) {
-                Throwable throwable = handleSqlException(e, ctx.dialect);
-                if (throwable instanceof DataAccessException dataAccessException) {
-                    throw dataAccessException;
-                }
-                throw e;
             }
         }
     }
@@ -1177,9 +1253,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
         private JdbcEntitiesOperations(JdbcOperationContext ctx, RuntimePersistentEntity<T> persistentEntity, Iterable<T> entities, SqlStoredQuery<T, ?> storedQuery, boolean insert) {
             super(ctx,
-                    DefaultJdbcRepositoryOperations.this.cascadeOperations,
-                    DefaultJdbcRepositoryOperations.this.conversionService,
-                    entityEventRegistry, persistentEntity, entities, insert);
+                DefaultJdbcRepositoryOperations.this.cascadeOperations,
+                DefaultJdbcRepositoryOperations.this.conversionService,
+                entityEventRegistry, persistentEntity, entities, insert);
             this.storedQuery = storedQuery;
         }
 
@@ -1225,9 +1301,13 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
 
         @Override
-        protected void execute() throws SQLException {
+        protected void execute() {
             if (QUERY_LOG.isDebugEnabled()) {
                 QUERY_LOG.debug("Executing SQL query: {}", storedQuery.getQuery());
+            }
+            if (storedQuery.getOperationType() == StoredQuery.OperationType.INSERT_RETURNING
+                || storedQuery.getOperationType() == StoredQuery.OperationType.UPDATE_RETURNING) {
+                throw new IllegalStateException("Batch operations don't support returning operations");
             }
             try (PreparedStatement ps = prepare(ctx.connection)) {
                 setParameters(ps, storedQuery);
@@ -1258,6 +1338,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     int expected = (int) entities.stream().filter(d -> !d.vetoed).count();
                     checkOptimisticLocking(expected, rowsUpdated);
                 }
+            } catch (SQLException e) {
+                throw sqlExceptionToDataAccessException(e, ctx.dialect, sqlException -> new DataAccessException("Error executing batch SQL UPDATE: " + sqlException.getMessage(), sqlException));
             }
         }
 
@@ -1271,27 +1353,13 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         private final InvocationContext<?, ?> invocationContext;
 
         /**
-         * The old deprecated constructor.
-         *
-         * @param annotationMetadata the annotation metadata
-         * @param repositoryType the repository type
-         * @param dialect the dialect
-         * @param connection the connection
-         * @deprecated Use constructor with {@link InvocationContext}.
-         */
-        @Deprecated
-        public JdbcOperationContext(AnnotationMetadata annotationMetadata, Class<?> repositoryType, Dialect dialect, Connection connection) {
-            this(annotationMetadata, null , repositoryType, dialect, connection);
-        }
-
-        /**
          * The default constructor.
          *
          * @param annotationMetadata the annotation metadata
-         * @param invocationContext the invocation context
-         * @param repositoryType the repository type
-         * @param dialect the dialect
-         * @param connection the connection
+         * @param invocationContext  the invocation context
+         * @param repositoryType     the repository type
+         * @param dialect            the dialect
+         * @param connection         the connection
          */
         public JdbcOperationContext(AnnotationMetadata annotationMetadata, InvocationContext<?, ?> invocationContext, Class<?> repositoryType, Dialect dialect, Connection connection) {
             super(annotationMetadata, repositoryType);
@@ -1332,7 +1400,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     private static class JdbcConversionContextImpl extends AbstractConversionContext
-            implements JdbcConversionContext {
+        implements JdbcConversionContext {
 
         private final Connection connection;
 

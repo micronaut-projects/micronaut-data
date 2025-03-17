@@ -18,11 +18,10 @@ package io.micronaut.data.operations.reactive;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.core.convert.ConversionServiceProvider;
+import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.runtime.*;
 import org.reactivestreams.Publisher;
-
-import java.io.Serializable;
 
 /**
  * Reactive operations for reading data from a backing implementations.
@@ -42,10 +41,10 @@ public interface ReactiveRepositoryOperations extends ConversionServiceProvider 
      */
     @NonNull
     @SingleResult
-    <T> Publisher<T> findOne(@NonNull Class<T> type, @NonNull Serializable id);
+    <T> Publisher<T> findOne(@NonNull Class<T> type, @NonNull Object id);
 
     /**
-     * Check with an record exists for the given query.
+     * Check with a record exists for the given query.
      * @param preparedQuery The query
      * @param <T> The declaring type
      * @return True if it exists
@@ -76,7 +75,7 @@ public interface ReactiveRepositoryOperations extends ConversionServiceProvider 
      */
     @NonNull
     @SingleResult
-    <T> Publisher<T> findOptional(@NonNull Class<T> type, @NonNull Serializable id);
+    <T> Publisher<T> findOptional(@NonNull Class<T> type, @NonNull Object id);
 
     /**
      * Find one by Query.
@@ -166,9 +165,7 @@ public interface ReactiveRepositoryOperations extends ConversionServiceProvider 
      */
     @NonNull
     @SingleResult
-    Publisher<Number> executeUpdate(
-            @NonNull PreparedQuery<?, Number> preparedQuery
-    );
+    Publisher<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery);
 
     /**
      * Executes a batch delete for the given query and parameter values. If it is possible to
@@ -178,10 +175,21 @@ public interface ReactiveRepositoryOperations extends ConversionServiceProvider 
      */
     @NonNull
     @SingleResult
-    default Publisher<Number> executeDelete(
-            @NonNull PreparedQuery<?, Number> preparedQuery
-    ) {
+    default Publisher<Number> executeDelete(@NonNull PreparedQuery<?, Number> preparedQuery) {
         return executeUpdate(preparedQuery);
+    }
+
+    /**
+     * Executes the given query with parameter values returning a result.
+     *
+     * @param preparedQuery The prepared query
+     * @param <R>           The result type
+     * @return A publisher that emits the result
+     * @since 4.2.0
+     */
+    @NonNull
+    default <R> Publisher<R> execute(@NonNull PreparedQuery<?, R> preparedQuery) {
+        throw new DataAccessException("Current repository: " + getClass() + " doesn't support method 'execute'!");
     }
 
     /**

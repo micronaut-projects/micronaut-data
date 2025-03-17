@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.query.internal;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.RepositoryConfiguration;
@@ -51,13 +52,16 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
     private final boolean isCount;
     private final DataType resultDataType;
     private final boolean rawQuery;
+    private final OperationType operationType;
+    private final boolean isDto;
 
     public BasicStoredQuery(String query,
                             String[] expandableQueryParts,
                             List<QueryParameterBinding> queryParameterBindings,
                             Class<E> rootEntity,
-                            Class<R> resultType) {
-        this("Custom query", AnnotationMetadata.EMPTY_METADATA, query, expandableQueryParts, queryParameterBindings, rootEntity, resultType, false, false, false);
+                            Class<R> resultType,
+                            OperationType operationType) {
+        this("Custom query", AnnotationMetadata.EMPTY_METADATA, query, expandableQueryParts, queryParameterBindings, rootEntity, resultType, false, false, false, operationType);
     }
 
     public BasicStoredQuery(String name,
@@ -69,7 +73,26 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
                             Class<R> resultType,
                             boolean pageable,
                             boolean isSingleResult,
-                            boolean isCount) {
+                            boolean isCount,
+                            OperationType operationType) {
+        this(name, annotationMetadata, query, expandableQueryParts, queryParameterBindings,
+            rootEntity, resultType, pageable, isSingleResult, isCount,
+            rootEntity != resultType && (DataType.forType(resultType) == DataType.OBJECT && BeanIntrospector.SHARED.findIntrospection(resultType).isPresent()),
+            operationType);
+    }
+
+    public BasicStoredQuery(String name,
+                            AnnotationMetadata annotationMetadata,
+                            String query,
+                            String[] expandableQueryParts,
+                            List<QueryParameterBinding> queryParameterBindings,
+                            Class<E> rootEntity,
+                            Class<R> resultType,
+                            boolean pageable,
+                            boolean isSingleResult,
+                            boolean isCount,
+                            boolean isDto,
+                            OperationType operationType) {
         this.name = name;
         this.annotationMetadata = annotationMetadata;
         this.query = query;
@@ -80,8 +103,20 @@ public class BasicStoredQuery<E, R> implements StoredQuery<E, R> {
         this.pageable = pageable;
         this.isSingleResult = isSingleResult;
         this.isCount = isCount;
-        this.resultDataType = isCount ? DataType.forType(resultType) : DataType.ENTITY;
+        this.operationType = operationType;
+        this.resultDataType = isCount ? DataType.forType(resultType) : (rootEntity == resultType) ? DataType.ENTITY : DataType.forType(resultType);
         this.rawQuery = annotationMetadata.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).isPresent();
+        this.isDto = isDto;
+    }
+
+    @Override
+    public boolean isDtoProjection() {
+        return isDto;
+    }
+
+    @Override
+    public OperationType getOperationType() {
+        return operationType;
     }
 
     @Override

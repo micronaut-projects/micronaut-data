@@ -1,5 +1,7 @@
 package io.micronaut.data.jdbc
 
+import io.micronaut.data.connection.ConnectionOperations
+import io.micronaut.data.connection.jdbc.operations.DataSourceConnectionOperations
 import io.micronaut.data.connection.jdbc.operations.DefaultDataSourceConnectionOperations
 import io.micronaut.data.tck.tests.AbstractTransactionSpec
 import io.micronaut.transaction.TransactionOperations
@@ -15,12 +17,21 @@ abstract class AbstractJdbcTransactionSpec extends AbstractTransactionSpec {
     }
 
     @Override
+    protected ConnectionOperations getConnectionOperations() {
+        return context.getBean(DefaultDataSourceConnectionOperations)
+    }
+
+    @Override
     protected Runnable getNoTxCheck() {
         DefaultDataSourceConnectionOperations connectionOperations = context.getBean(DefaultDataSourceConnectionOperations)
         return new Runnable() {
             @Override
             void run() {
-                Connection connection = connectionOperations.getConnectionStatus().getConnection()
+                def status = connectionOperations.findConnectionStatus()
+                if (status.isEmpty()) {
+                    return
+                }
+                Connection connection = status.get().getConnection()
                 // No transaction -> autoCommit == true
                 assert connection.getAutoCommit()
             }

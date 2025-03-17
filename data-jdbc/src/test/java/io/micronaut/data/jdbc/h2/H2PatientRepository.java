@@ -13,6 +13,7 @@ import java.util.List;
 @JdbcRepository(dialect = Dialect.H2)
 public interface H2PatientRepository extends PatientRepository {
 
+    @Override
     @Query("UPDATE patient SET appointments = :appointments FORMAT JSON WHERE name = :name")
     void updateAppointmentsByName(@Parameter String name, @TypeDef(type = DataType.JSON) List<String> appointments);
 }

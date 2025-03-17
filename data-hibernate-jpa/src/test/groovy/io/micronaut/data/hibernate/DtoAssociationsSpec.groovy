@@ -1,6 +1,5 @@
 package io.micronaut.data.hibernate
 
-import io.micronaut.context.annotation.Property
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.Join
@@ -18,8 +17,7 @@ import jakarta.persistence.ManyToMany
 import jakarta.persistence.Table
 
 @MicronautTest(rollback = false, transactional = false)
-@Property(name = "datasources.default.name", value = "mydb")
-@Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
+@H2DBProperties
 class DtoAssociationsSpec extends Specification {
 
     @Inject

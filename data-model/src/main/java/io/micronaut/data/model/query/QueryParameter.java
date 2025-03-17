@@ -34,7 +34,9 @@ import java.util.Objects;
  *
  * @author graemerocher
  * @since 1.0
+ * @deprecated Will switch to an internal
  */
+@Deprecated(forRemoval = true, since = "4.9")
 public class QueryParameter implements Named, BindingParameter {
 
     private final String name;
@@ -88,6 +90,11 @@ public class QueryParameter implements Named, BindingParameter {
         String name = bindingContext.getName() == null ? String.valueOf(bindingContext.getIndex()) : bindingContext.getName();
         PersistentPropertyPath outgoingQueryParameterProperty = bindingContext.getOutgoingQueryParameterProperty();
         return new QueryParameterBinding() {
+            @Override
+            public String getName() {
+                return name;
+            }
+
             @Override
             public String getKey() {
                 return name;

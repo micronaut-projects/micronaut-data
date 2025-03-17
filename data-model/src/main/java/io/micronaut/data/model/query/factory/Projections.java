@@ -22,7 +22,9 @@ import io.micronaut.data.model.query.QueryModel;
  *
  * @author Graeme Rocher
  * @since 1.0
+ * @deprecated Replaced by JPA criteria
  */
+@Deprecated(forRemoval = true, since = "4.9")
 public class Projections {
     public static final QueryModel.IdProjection ID_PROJECTION = new QueryModel.IdProjection();
     public static final QueryModel.CountProjection COUNT_PROJECTION = new QueryModel.CountProjection();
@@ -61,6 +63,17 @@ public class Projections {
      */
     public static QueryModel.PropertyProjection property(String name) {
         return new QueryModel.PropertyProjection(name);
+    }
+
+    /**
+     * A projection that obtains the value of a property of an entity.
+     * @param name The name of the property
+     * @param compound Is compound
+     * @return The PropertyProjection instance
+     * @since 4.2.0
+     */
+    public static QueryModel.PropertyProjection property(String name, boolean compound) {
+        return new QueryModel.PropertyProjection(name, compound);
     }
 
     /**
@@ -118,18 +131,17 @@ public class Projections {
      * @param property The name of the property
      * @return Distinct projection
      */
-    public static QueryModel.DistinctPropertyProjection distinct(String property) {
-        return new QueryModel.DistinctPropertyProjection(property);
+    public static QueryModel.CountDistinctProjection countDistinct(String property) {
+        return new QueryModel.CountDistinctProjection(property);
     }
 
     /**
-     * Projection that signifies to return only distinct results.
+     * Projection that signifies to return only distinct results against an entity, meaning its identity property/properties.
      *
-     * @param property The name of the property
-     * @return Distinct projection
+     * @return count distinct projection for the entity
      */
-    public static QueryModel.CountDistinctProjection countDistinct(String property) {
-        return new QueryModel.CountDistinctProjection(property);
+    public static QueryModel.CountDistinctRootProjection countDistinctRoot() {
+        return new QueryModel.CountDistinctRootProjection();
     }
 
     /**
@@ -141,5 +153,14 @@ public class Projections {
      */
     public static QueryModel.GroupPropertyProjection groupProperty(String property) {
         return new QueryModel.GroupPropertyProjection(property);
+    }
+
+    /**
+     * Defines a projection of the root entity.
+     *
+     * @return The projection
+     */
+    public static QueryModel.RootEntityProjection rootEntity() {
+        return new QueryModel.RootEntityProjection();
     }
 }

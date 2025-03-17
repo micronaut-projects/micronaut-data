@@ -42,7 +42,6 @@ trait TestResourcesDatabaseTestPropertyProvider implements TestPropertyProvider 
             case Dialect.ORACLE:
                 return "oracle"
             case Dialect.MYSQL:
-//                return "mariadb"
                 return "mysql"
         }
     }
@@ -60,8 +59,9 @@ trait TestResourcesDatabaseTestPropertyProvider implements TestPropertyProvider 
     Map<String, String> getDataSourceProperties(String dataSourceName) {
         def prefix = 'r2dbc.datasources.' + dataSourceName
         def dialect = dialect()
+        def dbType = dbType()
         def options = [
-                (prefix + '.db-type')         : dbType(),
+                (prefix + '.db-type')         : dbType,
                 (prefix + '.schema-generate') : schemaGenerate(),
                 (prefix + '.handle-foreign-keys') : handleForeignKeys(),
                 (prefix + '.dialect')         : dialect,
@@ -76,8 +76,7 @@ trait TestResourcesDatabaseTestPropertyProvider implements TestPropertyProvider 
                     (prefix + '.options.DEFAULT_LOCK_TIMEOUT'): "10000",
                     (prefix + '.options.protocol')            : "mem"
             ]
-        }
-        if (dialect == Dialect.SQL_SERVER) {
+        } else if (dialect == Dialect.SQL_SERVER) {
             // note: we use a Boolean which is in conflict with the return type of the method
             // but that's the only thing which works
             options += ['test-resources.containers.mssql.accept-license': true]

@@ -1,4 +1,4 @@
-In some cases, the query needs to be expanded to accommodate all of the parameter's values. The query with a parameter which is a collection or an array: `WHERE value IN (?)` would be expanded to: `WHERE value IN (?, ?, ?, ?)`
+In some cases, the query needs to be expanded to accommodate all the parameter's values. The query with a parameter which is a collection or an array: `WHERE value IN (?)` would be expanded to: `WHERE value IN (?, ?, ?, ?)`
 
 Micronaut Data will store additional information about the query at the build-time if one of the parameters is expandable, that eliminates the need to parse the query at runtime.
 

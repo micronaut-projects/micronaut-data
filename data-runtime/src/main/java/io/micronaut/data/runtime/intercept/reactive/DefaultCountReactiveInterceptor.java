@@ -43,7 +43,7 @@ public class DefaultCountReactiveInterceptor extends AbstractPublisherIntercepto
     @Override
     public Publisher<?> interceptPublisher(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, Long> preparedQuery = prepareQuery(methodKey, context, Long.class);
+            PreparedQuery<?, Long> preparedQuery = prepareQuery(methodKey, context);
             return reactiveOperations.findAll(preparedQuery);
         }
         return reactiveOperations.count(getPagedQuery(context));

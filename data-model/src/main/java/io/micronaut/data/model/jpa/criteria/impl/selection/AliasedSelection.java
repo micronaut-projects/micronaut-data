@@ -17,7 +17,6 @@ package io.micronaut.data.model.jpa.criteria.impl.selection;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.jpa.criteria.ISelection;
-import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitable;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import jakarta.persistence.criteria.Selection;
 
@@ -31,7 +30,7 @@ import java.util.List;
  * @since 3.2
  */
 @Internal
-public final class AliasedSelection<T> implements ISelection<T>, SelectionVisitable {
+public final class AliasedSelection<T> implements ISelection<T> {
 
     private final ISelection<T> selection;
     private final String alias;
@@ -42,7 +41,7 @@ public final class AliasedSelection<T> implements ISelection<T>, SelectionVisita
     }
 
     @Override
-    public void accept(SelectionVisitor selectionVisitor) {
+    public void visitSelection(SelectionVisitor selectionVisitor) {
         selectionVisitor.visit(this);
     }
 

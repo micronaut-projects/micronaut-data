@@ -22,36 +22,49 @@ public interface PersonRepository extends CrudRepository<Person, ObjectId>, JpaS
 // end::repository[]
 
     // tag::find[]
+    @Override
     Optional<Person> findOne(PredicateSpecification<Person> spec);
 
+    @Override
     Optional<Person> findOne(QuerySpecification<Person> spec);
 
+    @Override
     List<Person> findAll(PredicateSpecification<Person> spec);
 
+    @Override
     List<Person> findAll(QuerySpecification<Person> spec);
 
+    @Override
     List<Person> findAll(PredicateSpecification<Person> spec, Sort sort);
 
+    @Override
     List<Person> findAll(QuerySpecification<Person> spec, Sort sort);
 
+    @Override
     Page<Person> findAll(PredicateSpecification<Person> spec, Pageable pageable);
 
+    @Override
     Page<Person> findAll(QuerySpecification<Person> spec, Pageable pageable);
     // end::find[]
 
     // tag::count[]
+    @Override
     long count(PredicateSpecification<Person> spec);
 
+    @Override
     long count(QuerySpecification<Person> spec);
     // end::count[]
 
     // tag::update[]
+    @Override
     long updateAll(UpdateSpecification<Person> spec);
     // end::update[]
 
     // tag::delete[]
+    @Override
     long deleteAll(PredicateSpecification<Person> spec);
 
+    @Override
     long deleteAll(DeleteSpecification<Person> spec);
     // end::delete[]
 

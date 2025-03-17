@@ -1,0 +1,31 @@
+plugins {
+    id "io.micronaut.build.internal.data-native-example"
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "junit5"
+    testResources {
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
+}
+
+dependencies {
+    annotationProcessor projects.micronautDataProcessor
+
+    implementation mnMultitenancy.micronaut.multitenancy
+    implementation mn.micronaut.http.client
+    implementation mnSql.micronaut.hibernate.jpa
+    implementation projects.micronautDataHibernateJpa
+    implementation mnSerde.micronaut.serde.jackson
+
+    runtimeOnly mnSql.micronaut.jdbc.tomcat
+    runtimeOnly mnSql.h2
+    runtimeOnly mnLogging.logback.classic
+}

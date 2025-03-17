@@ -19,8 +19,9 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.operations.RepositoryOperations;
+import jakarta.persistence.criteria.CriteriaQuery;
 import org.reactivestreams.Publisher;
 
 /**
@@ -43,8 +44,10 @@ public class FindOneReactiveSpecificationInterceptor extends AbstractReactiveSpe
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        PreparedQuery<Object, Object> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.FIND_ONE);
-        Publisher<Object> publisher = reactiveOperations.findOptional(preparedQuery);
+        CriteriaQuery<Object> query = buildQuery(methodKey, context);
+        Pageable pageable = applyPaginationAndSort(getPageable(context), query, true);
+        Publisher<Object> publisher = getReactiveCriteriaOperations(methodKey, context, pageable)
+            .findOne(query);
         return Publishers.convertPublisher(conversionService, publisher, context.getReturnType().getType());
     }
 }

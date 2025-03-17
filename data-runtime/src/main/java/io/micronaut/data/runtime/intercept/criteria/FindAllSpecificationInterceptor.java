@@ -18,8 +18,8 @@ package io.micronaut.data.runtime.intercept.criteria;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
+import jakarta.persistence.criteria.CriteriaQuery;
 
 import java.util.Collections;
 
@@ -43,9 +43,9 @@ public class FindAllSpecificationInterceptor extends AbstractSpecificationInterc
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        PreparedQuery<?, ?> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.FIND_ALL);
         Class<Object> rt = context.getReturnType().getType();
-        Iterable<?> iterable = operations.findAll(preparedQuery);
+        CriteriaQuery<Object> criteriaQuery = buildQuery(methodKey, context);
+        Iterable<?> iterable = findAll(methodKey, context, getPageable(context), criteriaQuery);
         if (rt.isInstance(iterable)) {
             return iterable;
         }

@@ -25,6 +25,8 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.TypeDef;
+import io.micronaut.data.annotation.sql.JoinColumn;
+import io.micronaut.data.annotation.sql.JoinColumns;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
@@ -43,7 +45,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static io.micronaut.data.processor.visitors.Utils.getConfiguredDataConverters;
 import static io.micronaut.data.processor.visitors.Utils.getConfiguredDataTypes;
@@ -60,8 +61,15 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
      */
     public static final int POSITION = 100;
 
+    private static final String JSON_VIEW_ANNOTATION = "io.micronaut.data.annotation.JsonView";
+    private static final String JSON_PROPERTY_ANNOTATION = "com.fasterxml.jackson.annotation.JsonProperty";
+    private static final String SERDE_CONFIG_ANNOTATION = "io.micronaut.serde.config.annotation.SerdeConfig";
+    private static final String JSON_VIEW_ID = "_id";
+    private static final String VALUE = "value";
+    private static final String PROPERTY = "property";
+
     private final Map<String, SourcePersistentEntity> entityMap = new HashMap<>(50);
-    private final Function<ClassElement, SourcePersistentEntity> entityResolver = new Function<ClassElement, SourcePersistentEntity>() {
+    private final Function<ClassElement, SourcePersistentEntity> entityResolver = new Function<>() {
         @Override
         public SourcePersistentEntity apply(ClassElement classElement) {
             return entityMap.computeIfAbsent(classElement.getName(), s -> new SourcePersistentEntity(classElement, this));
@@ -105,7 +113,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
 
         final List<AnnotationValue<Index>> indexes = properties.stream()
                 .flatMap(prop -> prop.findAnnotation(Index.class).stream())
-                .collect(Collectors.toList());
+                .toList();
 
         if (!indexes.isEmpty()) {
            element.annotate(Indexes.class, builder -> builder.values(indexes.toArray(new AnnotationValue[]{})));
@@ -117,6 +125,9 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         SourcePersistentProperty identity = entity.getIdentity();
         if (identity != null) {
             computeMappingDefaults(identity, dataTypes, dataConverters, context);
+            if (entity.hasAnnotation(JSON_VIEW_ANNOTATION)) {
+                handleJsonViewIdentity(identity);
+            }
         }
         SourcePersistentProperty[] compositeIdentities = entity.getCompositeIdentity();
         if (compositeIdentities != null) {
@@ -205,6 +216,9 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
             String finalConverter = converter;
             propertyElement.annotate(MappedProperty.class, builder -> builder.member("converter", new AnnotationClassValue<>(finalConverter)));
         }
+        if (isRelation) {
+            useJoinColumnNameIfSet(annotationMetadata, propertyElement);
+        }
     }
 
     private DataType getDataTypeFromConverter(ClassElement type, String converter, Map<String, DataType> dataTypes, VisitorContext context) {
@@ -252,5 +266,60 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
             typeArguments = genericType.getTypeArguments("jakarta.persistence.AttributeConverter");
         }
         return typeArguments.get("Y");
+    }
+
+    /**
+     * If property is association and has JoinColumn annotation, we want to use MappedProperty from JoinColumn name
+     * or else query builder will attempt to join with association id which might not be correct join column.
+     *
+     * @param annotationMetadata the annotation metadata
+     * @param propertyElement the property element
+     */
+    private void useJoinColumnNameIfSet(AnnotationMetadata annotationMetadata, PropertyElement propertyElement) {
+        String mappedPropertyValue = annotationMetadata.stringValue(MappedProperty.class, AnnotationMetadata.VALUE_MEMBER).orElse(null);
+        // We do this only if MappedProperty value does not have explicitly set value
+        if (mappedPropertyValue != null) {
+            return;
+        }
+        AnnotationValue<JoinColumns> joinColumnsAnnotationValue = annotationMetadata.getAnnotation(JoinColumns.class);
+        // and if JoinColumn is set
+        if (joinColumnsAnnotationValue == null) {
+            return;
+        }
+        List<AnnotationValue<JoinColumn>> joinColumnsAnnotationValueAnnotations = joinColumnsAnnotationValue.getAnnotations(AnnotationMetadata.VALUE_MEMBER);
+        if (joinColumnsAnnotationValueAnnotations.size() != 1) {
+            // Set MappedProperty value only if just one JoinColumn configured
+            return;
+        }
+        AnnotationValue<JoinColumn> joinColumnAnnotationValue = joinColumnsAnnotationValueAnnotations.get(0);
+        String joinColumnName = joinColumnAnnotationValue.stringValue("name").orElse(null);
+        if (joinColumnName != null) {
+            propertyElement.annotate(MappedProperty.class, builder -> builder.member(AnnotationMetadata.VALUE_MEMBER, joinColumnName));
+        }
+    }
+
+    /**
+     * An identity field for Oracle duality Json View has to be '_id' so we are verifying and configuring it here.
+     *
+     * @param identity the identity field
+     */
+    private void handleJsonViewIdentity(SourcePersistentProperty identity) {
+        PropertyElement identityPropertyElement = identity.getPropertyElement();
+        String mappedPropertyIdName = identity.stringValue(MappedProperty.class).orElse(null);
+        if (mappedPropertyIdName == null) {
+            identityPropertyElement.annotate(MappedProperty.class, builder -> builder.member(VALUE, JSON_VIEW_ID));
+        } else if (!mappedPropertyIdName.equals(JSON_VIEW_ID)) {
+            throw new ProcessingException(identity, "@JsonView identity @MappedProperty value cannot be set to value different than '" + JSON_VIEW_ID + "'");
+        }
+        String jsonPropertyIdName = identity.stringValue(JSON_PROPERTY_ANNOTATION).orElse(null);
+        if (jsonPropertyIdName != null && !jsonPropertyIdName.equals(JSON_VIEW_ID)) {
+            throw new ProcessingException(identity, "@JsonView identity @JsonProperty value cannot be set to value different than '" + JSON_VIEW_ID + "'");
+        }
+        String serdeConfigPropertyIdName = identity.stringValue(SERDE_CONFIG_ANNOTATION, PROPERTY).orElse(null);
+        if (serdeConfigPropertyIdName == null) {
+            identityPropertyElement.annotate(SERDE_CONFIG_ANNOTATION, builder -> builder.member(PROPERTY, JSON_VIEW_ID));
+        } else if (!serdeConfigPropertyIdName.equals(JSON_VIEW_ID)) {
+            throw new ProcessingException(identity, "@JsonView identity @SerdeConfig property cannot be set to value different than '" + JSON_VIEW_ID + "'");
+        }
     }
 }

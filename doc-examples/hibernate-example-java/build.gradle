@@ -21,6 +21,7 @@ dependencies {
     implementation mnRxjava2.micronaut.rxjava2
     implementation mnSql.micronaut.hibernate.jpa
     implementation projects.micronautDataHibernateJpa
+    implementation mnValidation.validation
 
     runtimeOnly mnSql.micronaut.jdbc.tomcat
     runtimeOnly mnLogging.logback.classic

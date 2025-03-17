@@ -15,11 +15,21 @@
  */
 package io.micronaut.data.runtime.intercept.criteria.reactive;
 
+import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.intercept.RepositoryMethodKey;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Pageable.Mode;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
+import io.micronaut.data.operations.reactive.ReactiveCriteriaCapableRepository;
+import io.micronaut.data.operations.reactive.ReactiveCriteriaRepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterceptor;
+import jakarta.persistence.criteria.CriteriaQuery;
+import org.reactivestreams.Publisher;
 
 /**
  * Abstract reactive specification interceptor.
@@ -32,6 +42,7 @@ import io.micronaut.data.runtime.intercept.criteria.AbstractSpecificationInterce
 public abstract class AbstractReactiveSpecificationInterceptor<T, R> extends AbstractSpecificationInterceptor<T, R> {
 
     protected final ReactiveRepositoryOperations reactiveOperations;
+    protected final ReactiveCriteriaRepositoryOperations reactiveCriteriaOperations;
 
     /**
      * Default constructor.
@@ -40,10 +51,59 @@ public abstract class AbstractReactiveSpecificationInterceptor<T, R> extends Abs
      */
     protected AbstractReactiveSpecificationInterceptor(RepositoryOperations operations) {
         super(operations);
-        if (operations instanceof ReactiveCapableRepository) {
-            this.reactiveOperations = ((ReactiveCapableRepository) operations).reactive();
+        if (operations instanceof ReactiveCapableRepository reactiveCapableRepository) {
+            this.reactiveOperations = reactiveCapableRepository.reactive();
         } else {
             throw new DataAccessException("Datastore of type [" + operations.getClass() + "] does not support reactive operations");
         }
+        if (reactiveOperations instanceof ReactiveCriteriaRepositoryOperations reactiveCriteriaRepositoryOperations) {
+            reactiveCriteriaOperations = reactiveCriteriaRepositoryOperations;
+        } else if (operations instanceof ReactiveCriteriaRepositoryOperations reactiveCriteriaRepositoryOperations) {
+            reactiveCriteriaOperations = reactiveCriteriaRepositoryOperations;
+        } else if (operations instanceof ReactiveCriteriaCapableRepository repository) {
+            reactiveCriteriaOperations = repository.reactive();
+        } else {
+            reactiveCriteriaOperations = null;
+        }
     }
+
+    final ReactiveCriteriaRepositoryOperations getReactiveCriteriaOperations(RepositoryMethodKey methodKey,
+                                                                             MethodInvocationContext<?, ?> context,
+                                                                             Pageable pageable) {
+        if (reactiveCriteriaOperations != null) {
+            return reactiveCriteriaOperations;
+        }
+        QueryBuilder sqlQueryBuilder = getQueryBuilder(methodKey, context);
+        return new PreparedQueryReactiveCriteriaRepositoryOperations(
+            criteriaBuilder,
+            reactiveOperations,
+            operations,
+            context,
+            sqlQueryBuilder,
+            getRequiredRootEntity(context),
+            pageable
+        );
+    }
+
+    @NonNull
+    protected final Publisher<Object> findAllReactive(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
+        CriteriaQuery<Object> criteriaQuery = buildQuery(methodKey, context);
+        Pageable pageable = applyPaginationAndSort(getPageable(context), criteriaQuery, false);
+        if (reactiveCriteriaOperations != null) {
+            if (pageable != null && !pageable.isUnpaged()) {
+                if (pageable.getMode() != Mode.OFFSET) {
+                    throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported by hibernate operations");
+                }
+                return reactiveCriteriaOperations.findAll(criteriaQuery, (int) pageable.getOffset(), pageable.getSize());
+            }
+            int offset = getOffset(context);
+            int limit = getLimit(context);
+            if (offset > 0 || limit > 0) {
+                return reactiveCriteriaOperations.findAll(criteriaQuery, offset, limit);
+            }
+            return reactiveCriteriaOperations.findAll(criteriaQuery);
+        }
+        return getReactiveCriteriaOperations(methodKey, context, pageable).findAll(criteriaQuery);
+    }
+
 }

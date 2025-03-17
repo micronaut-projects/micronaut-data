@@ -1,0 +1,33 @@
+[
+  {
+    "name": "org.hibernate.event.spi.PreInsertEventListener[]",
+    "condition": {
+      "typeReachable": "org.hibernate.event.service.internal.EventListenerGroupImpl"
+    },
+    "unsafeAllocated": true
+  },
+  {
+    "name": "org.hibernate.event.spi.PreDeleteEventListener[]",
+    "condition": {
+      "typeReachable": "org.hibernate.event.service.internal.EventListenerGroupImpl"
+    },
+    "unsafeAllocated": true
+  },
+  {
+    "name": "org.hibernate.event.spi.PreUpdateEventListener[]",
+    "condition": {
+      "typeReachable": "org.hibernate.event.service.internal.EventListenerGroupImpl"
+    },
+    "unsafeAllocated": true
+  },
+  {
+    "name": "org.hibernate.binder.internal.BatchSizeBinder",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+        ]
+      }
+    ]
+  }
+]

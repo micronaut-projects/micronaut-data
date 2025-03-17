@@ -32,7 +32,7 @@ import io.micronaut.data.operations.RepositoryOperations;
 import reactor.util.context.Context;
 import reactor.util.context.ContextView;
 
-import java.io.Serializable;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -49,8 +49,9 @@ public interface BlockingReactorRepositoryOperations extends RepositoryOperation
         return ReactorPropagation.addPropagatedContext(Context.empty(), PropagatedContext.getOrEmpty());
     }
 
+    @Override
     @Nullable
-    default <T> T findOne(@NonNull Class<T> type, @NonNull Serializable id) {
+    default <T> T findOne(@NonNull Class<T> type, @NonNull Object id) {
         return reactive().findOne(type, id)
             .contextWrite(getContextView())
             .block();
@@ -136,6 +137,14 @@ public interface BlockingReactorRepositoryOperations extends RepositoryOperation
     }
 
     @Override
+    default <R> List<R> execute(PreparedQuery<?, R> preparedQuery) {
+        return reactive().execute(preparedQuery)
+            .contextWrite(getContextView())
+            .collectList()
+            .block();
+    }
+
+    @Override
     default <T> int delete(@NonNull DeleteOperation<T> operation) {
         return reactive().delete(operation)
             .contextWrite(getContextView())
@@ -169,7 +178,8 @@ public interface BlockingReactorRepositoryOperations extends RepositoryOperation
         return reactive().findAll(query)
             .contextWrite(getContextView())
             .collectList()
-            .block();
+            .blockOptional()
+            .orElseGet(List::of);
     }
 
     @Override

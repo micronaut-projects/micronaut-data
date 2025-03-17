@@ -20,6 +20,8 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.entities.Restaurant
+import io.micronaut.data.tck.jdbc.entities.Employee
+import io.micronaut.data.tck.jdbc.entities.EmployeeGroup
 import spock.lang.Unroll
 
 //@Requires({ javaVersion <= 1.8 })
@@ -43,6 +45,8 @@ class BuildTableSpec extends AbstractDataSpec {
     void "test build create table for JSON type for dialect #dialect"() {
         given:
         def entity = buildJpaEntity('test.Test', '''
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Version;
 import java.util.Map;
 
 @Entity
@@ -54,6 +58,10 @@ class Test {
 
     @io.micronaut.data.annotation.TypeDef(type=io.micronaut.data.model.DataType.JSON)
     private Map json;
+
+    @Version
+    @GeneratedValue
+    private Long version;
 
     public Long getId() {
         return id;
@@ -70,6 +78,14 @@ class Test {
     public void setJson(Map json) {
         this.json = json;
     }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
+    }
 }
 ''')
         SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
@@ -80,7 +96,7 @@ class Test {
 
         where:
         dialect          | statement
-        Dialect.H2       | 'CREATE TABLE `test` (`id` BIGINT AUTO_INCREMENT PRIMARY KEY,`json` JSON NOT NULL);'
+        Dialect.H2       | 'CREATE TABLE `test` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`json` JSON NOT NULL);'
         Dialect.MYSQL    | 'CREATE TABLE `test` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`json` JSON NOT NULL);'
         Dialect.POSTGRES | 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"json" JSONB NOT NULL);'
         Dialect.ORACLE   | 'CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE' + System.lineSeparator() +
@@ -282,7 +298,7 @@ class Test {
 
         where:
         dialect          | statement
-        Dialect.H2       | 'CREATE TABLE `test` (`id` BIGINT AUTO_INCREMENT PRIMARY KEY,`text1` VARCHAR(255) NOT NULL,`text2` VARCHAR(10) NOT NULL,`text3` VARCHAR(7) NOT NULL,`amount1` DECIMAL NOT NULL,`amount2` NUMERIC(11,2) NOT NULL,`amount3` DECIMAL NOT NULL,`float_amount1` FLOAT NOT NULL,`float_amount2` NUMERIC(11,2) NOT NULL,`double_amount1` DOUBLE NOT NULL,`double_amount2` NUMERIC(11,2) NOT NULL);'
+        Dialect.H2       | 'CREATE TABLE `test` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`text1` VARCHAR(255) NOT NULL,`text2` VARCHAR(10) NOT NULL,`text3` VARCHAR(7) NOT NULL,`amount1` DECIMAL NOT NULL,`amount2` NUMERIC(11,2) NOT NULL,`amount3` DECIMAL NOT NULL,`float_amount1` FLOAT NOT NULL,`float_amount2` NUMERIC(11,2) NOT NULL,`double_amount1` DOUBLE NOT NULL,`double_amount2` NUMERIC(11,2) NOT NULL);'
         Dialect.MYSQL    | 'CREATE TABLE `test` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`text1` VARCHAR(255) NOT NULL,`text2` VARCHAR(10) NOT NULL,`text3` VARCHAR(7) NOT NULL,`amount1` DECIMAL NOT NULL,`amount2` NUMERIC(11,2) NOT NULL,`amount3` DECIMAL NOT NULL,`float_amount1` FLOAT NOT NULL,`float_amount2` NUMERIC(11,2) NOT NULL,`double_amount1` DOUBLE NOT NULL,`double_amount2` NUMERIC(11,2) NOT NULL);'
         Dialect.POSTGRES | 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"text1" VARCHAR(255) NOT NULL,"text2" VARCHAR(10) NOT NULL,"text3" VARCHAR(7) NOT NULL,"amount1" DECIMAL NOT NULL,"amount2" NUMERIC(11,2) NOT NULL,"amount3" DECIMAL NOT NULL,"float_amount1" REAL NOT NULL,"float_amount2" NUMERIC(11,2) NOT NULL,"double_amount1" DOUBLE PRECISION NOT NULL,"double_amount2" NUMERIC(11,2) NOT NULL);'
         Dialect.ORACLE   | 'CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE' + System.lineSeparator() +
@@ -394,5 +410,108 @@ class Emb {
 
         then:
         sql == 'CREATE TABLE "embedded_entity" ("id" BIGINT NOT NULL,"emb_a_a" VARCHAR(255) NOT NULL,"emb_a_b" VARCHAR(255) NOT NULL,"emb_b_a" VARCHAR(255) NOT NULL,"emb_b_b" VARCHAR(255) NOT NULL, PRIMARY KEY("id"));'
+    }
+
+    void "test create table OneToMany with JoinColumn"() {
+        given:
+        def employeeEntity = PersistentEntity.of(Employee)
+        def employeeGroupEntity = PersistentEntity.of(EmployeeGroup)
+        def builder = new SqlQueryBuilder(Dialect.H2)
+
+        when:"Tables are created"
+        def employeeSql = builder.buildCreateTableStatements(employeeEntity)
+        def employeeGroupSql = builder.buildCreateTableStatements(employeeGroupEntity)
+        then:"No join table is created"
+        employeeSql.length == 1
+        employeeSql[0] == 'CREATE TABLE `employee` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`name` VARCHAR(255) NOT NULL,`category_id` BIGINT NOT NULL,`employer_id` BIGINT NOT NULL);'
+        employeeGroupSql.length == 1
+        employeeGroupSql[0] == 'CREATE TABLE `employee_group` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`name` VARCHAR(255) NOT NULL,`category_id` BIGINT NOT NULL,`employer_id` BIGINT NOT NULL);'
+    }
+
+    void "test create ManyToMany table with schema"() {
+        given:
+        def entity = buildJpaEntity('test.Student', '''
+import io.micronaut.data.annotation.Embeddable;
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.sql.JoinColumn;
+import io.micronaut.data.annotation.sql.JoinTable;
+
+@MappedEntity(value = "m2m_student", schema = "students")
+class Student {
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String name;
+    @JoinTable(
+            name = "m2m_student_course_association",
+            joinColumns = @JoinColumn(name = "st_id"),
+            inverseJoinColumns = @JoinColumn(name = "cs_id"),
+            schema = "students")
+    @Relation(value = Relation.Kind.MANY_TO_MANY, cascade = Relation.Cascade.PERSIST)
+    private List<Course> courses;
+    @JoinTable(
+            name = "m2m_student_teacher_association",
+            joinColumns = @JoinColumn(name = "st_id"),
+            inverseJoinColumns = @JoinColumn(name = "te_id"))
+    @Relation(value = Relation.Kind.MANY_TO_MANY, cascade = Relation.Cascade.PERSIST)
+    private List<Teacher> teachers;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public List<Course> getCourses() { return courses; }
+    public void setCourses(List<Course> courses) { this.courses = courses; }
+    public List<Teacher> getTeachers() { return teachers; }
+    public void setTeachers(List<Teacher> teachers) { this.teachers = teachers; }
+}
+
+@MappedEntity(value = "m2m_course", schema = "students")
+class Course {
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String name;
+    @Relation(value = Relation.Kind.MANY_TO_MANY, mappedBy = "courses")
+    private List<Student> students;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public List<Student> getStudents() { return students; }
+    public void setStudents(List<Student> students) { this.students = students; }
+}
+
+@MappedEntity(value = "m2m_teacher", schema = "students")
+class Teacher {
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String name;
+    @Relation(value = Relation.Kind.MANY_TO_MANY, mappedBy = "teachers")
+    private List<Student> students;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public List<Student> getStudents() { return students; }
+    public void setStudents(List<Student> students) { this.students = students; }
+}
+
+''')
+
+        when:
+        SqlQueryBuilder builder = new SqlQueryBuilder()
+        def sql = builder.buildCreateTableStatements(entity)
+
+        then:
+        sql.length == 4
+        sql[0] == 'CREATE SCHEMA "students";'
+        sql[1] == 'CREATE TABLE "students"."m2m_student_course_association" ("st_id" BIGINT NOT NULL,"cs_id" BIGINT NOT NULL);'
+        sql[2] == 'CREATE TABLE "students"."m2m_student_teacher_association" ("st_id" BIGINT NOT NULL,"te_id" BIGINT NOT NULL);'
+        sql[3] == 'CREATE TABLE "students"."m2m_student" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL);'
     }
 }

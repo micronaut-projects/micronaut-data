@@ -1,0 +1,25 @@
+plugins {
+    id "org.jetbrains.kotlin.jvm"
+    id "org.jetbrains.kotlin.kapt"
+    id "org.jetbrains.kotlin.plugin.allopen"
+    id "io.micronaut.build.internal.data-kotlin-example"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "junit5"
+}
+
+dependencies {
+    kapt projects.micronautDataProcessor
+    kapt mnValidation.micronaut.validation.processor
+
+    implementation projects.micronautDataJdbc
+    implementation projects.micronautDataSpringJdbc
+    implementation mnValidation.micronaut.validation
+
+    runtimeOnly mnSql.micronaut.jdbc.tomcat
+    runtimeOnly mnLogging.logback.classic
+    runtimeOnly mnSql.h2
+}

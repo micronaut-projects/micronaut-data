@@ -157,8 +157,8 @@ public abstract class AbstractRepositoryOperations implements ApplicationContext
                     if (propertyPath == null) {
                         return Stream.empty();
                     }
-                    if (propertyPath.getProperty() instanceof Association) {
-                        return Stream.concat(propertyPath.getAssociations().stream(), Stream.of((Association) propertyPath.getProperty()));
+                    if (propertyPath.getProperty() instanceof Association association) {
+                        return Stream.concat(propertyPath.getAssociations().stream(), Stream.of(association));
                     }
                     return propertyPath.getAssociations().stream();
                 })

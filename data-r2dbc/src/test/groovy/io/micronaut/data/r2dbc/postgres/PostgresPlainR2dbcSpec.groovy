@@ -30,4 +30,5 @@ class PostgresPlainR2dbcSpec extends PlainR2dbcSpec implements PostgresTestPrope
     boolean isFailsToInsertWithoutGetRowsUpdatedCall() {
         return true
     }
+
 }

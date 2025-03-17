@@ -12,8 +12,7 @@ import spock.lang.Specification
 import spock.lang.Stepwise
 
 @MicronautTest(transactional = false, packages = "io.micronaut.data.tck.entities")
-@Property(name = "datasources.default.name", value = "mydb")
-@Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
+@H2DBProperties
 @Property(name = "spec.name", value = "EventsPreRemoveSpec")
 @Stepwise
 class EventsPreRemoveSpec extends Specification {

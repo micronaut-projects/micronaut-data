@@ -3,6 +3,7 @@ package example;
 
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.sql.Procedure;
 import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.jpa.repository.JpaSpecificationExecutor;
 import io.micronaut.data.jpa.repository.criteria.Specification;
@@ -17,11 +18,13 @@ import java.util.concurrent.CompletableFuture;
 // tag::join[]
 // tag::async[]
 // tag::specifications[]
+// tag::procedure[]
 @Repository
 public interface ProductRepository extends CrudRepository<Product, Long>, JpaSpecificationExecutor<Product> {
 // end::join[]
 // end::async[]
 // end::specifications[]
+// end::procedure[]
 
     // tag::join[]
     @Join(value = "manufacturer", type = Join.Type.FETCH) // <1>
@@ -29,6 +32,7 @@ public interface ProductRepository extends CrudRepository<Product, Long>, JpaSpe
     // end::join[]
 
     // tag::entitygraph[]
+    @Override
     @EntityGraph(attributePaths = {"manufacturer", "title"}) // <1>
     List<Product> findAll();
     // end::entitygraph[]
@@ -45,6 +49,14 @@ public interface ProductRepository extends CrudRepository<Product, Long>, JpaSpe
 
     Single<Long> countDistinctByManufacturerName(String name);
     // end::reactive[]
+
+    // tag::procedure[]
+    @Procedure(named = "calculateSum")
+    long calculateSum(Long productId); // <1>
+
+    @Procedure("calculateSumInternal")
+    long calculateSumCustom(Long productId); // <2>
+    // end::procedure[]
 
     // tag::specifications[]
 
@@ -82,7 +94,9 @@ public interface ProductRepository extends CrudRepository<Product, Long>, JpaSpe
 // tag::join[]
 // tag::async[]
 // tag::specifications[]
+// tag::procedure[]
 }
 // end::join[]
 // end::async[]
 // end::specifications[]
+// end::procedure[]

@@ -40,8 +40,10 @@ public abstract class H2PersonRepository implements io.micronaut.data.tck.reposi
         this.jdbcOperations = jdbcOperations;
     }
 
+    @Override
     public abstract Person save(String name, int age);
 
+    @Override
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
     public abstract int saveCustom(String name, int age);
 

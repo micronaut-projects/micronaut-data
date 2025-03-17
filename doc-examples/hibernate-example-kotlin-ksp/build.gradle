@@ -15,12 +15,16 @@ dependencies {
     implementation mn.micronaut.http.client
     implementation projects.micronautDataHibernateJpa
     implementation mnKotlin.micronaut.kotlin.runtime
-    implementation libs.jakarta.persistence.api
-    implementation libs.jakarta.transaction.api
+    implementation(mnSql.jakarta.persistence.api)
+    implementation(mnSql.jakarta.transaction.api)
     implementation libs.kotlin.coroutines
     implementation libs.kotlin.coroutines.reactive
 
     runtimeOnly mnSql.micronaut.jdbc.tomcat
     runtimeOnly mnSql.h2
     runtimeOnly mnLogging.logback.classic
+
+    runtimeOnly libs.kotlin.reflect
+
+    testImplementation mnTest.micronaut.test.kotest5
 }

@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.spring.jdbc
 
-
+import io.micronaut.data.connection.ConnectionOperations
 import io.micronaut.data.spring.jdbc.micronaut.H2BookRepository
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.tests.AbstractTransactionSpec
@@ -30,7 +30,7 @@ class SpringJdbcTransactionSpec extends AbstractTransactionSpec {
     Map<String, String> getProperties() {
         return [
                 "datasources.default.name": "mydb",
-                "datasources.default.transactionManager": "springJdbc",
+                "datasources.default.transaction-manager": "springJdbc",
                 "datasources.default.schema-generate": "create-drop",
                 "datasources.default.dialect": "h2",
                 "datasources.default.driver-class-name": "org.h2.Driver",
@@ -43,6 +43,11 @@ class SpringJdbcTransactionSpec extends AbstractTransactionSpec {
     @Override
     protected TransactionOperations getTransactionOperations() {
         return context.getBean(SpringJdbcTransactionOperations)
+    }
+
+    @Override
+    protected ConnectionOperations getConnectionOperations() {
+        return context.getBean(SpringJdbcConnectionOperations)
     }
 
     @Override

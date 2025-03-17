@@ -23,6 +23,5 @@ r2dbc:
 test-resources:
   containers:
     oracle:
-      image-name: gvenzl/oracle-free:latest-faststart
       startup-timeout: 600s
       db-name: test

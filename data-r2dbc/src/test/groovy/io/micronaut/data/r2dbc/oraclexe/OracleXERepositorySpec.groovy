@@ -18,7 +18,6 @@ package io.micronaut.data.r2dbc.oraclexe
 import groovy.transform.Memoized
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
-import spock.lang.IgnoreIf
 
 class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleXETestPropertyProvider {
 
@@ -159,6 +158,24 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleXET
         return context.getBean(OracleXEPageRepository)
     }
 
+    @Memoized
+    @Override
+    EntityWithIdClassRepository getEntityWithIdClassRepository() {
+        return context.getBean(OracleXEEntityWithIdClassRepository)
+    }
+
+    @Memoized
+    @Override
+    EntityWithIdClass2Repository getEntityWithIdClass2Repository() {
+        return context.getBean(OracleXEEntityWithIdClass2Repository)
+    }
+
+    @Memoized
+    @Override
+    ExampleEntityRepository getExampleEntityRepository() {
+        return context.getBean(OracleExampleEntityRepository)
+    }
+
     @Override
     protected boolean skipCustomSchemaAndCatalogTest() {
         // ORA-04043: object "FORD"."CARS" does not exist
@@ -169,6 +186,12 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleXET
     protected boolean skipQueryByDataArray() {
         // ORA-00932: inconsistent datatypes: expected - got BLOB
         return true
+    }
+
+    void "test procedure"() {
+        expect:
+            bookRepository.add1(123) == 124
+            bookRepository.add1Aliased(123) == 124
     }
 
     void "test ANY queries"() {

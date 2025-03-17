@@ -44,7 +44,7 @@ public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
     /**
      * This method issues an explicit update for the given entity. The method differs from {@link #save(Object)} in that an update will be generated regardless if the entity has been saved previously or not. If the entity has no assigned ID then an exception will be thrown.
      *
-     * @param entity The entity to updated. Must not be {@literal null}.
+     * @param entity The entity to update. Must not be {@literal null}.
      * @return The updated entity will never be {@literal null}.
      * @param <S> The generic type
      */
@@ -64,7 +64,7 @@ public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
     /**
      * Saves all given entities, possibly returning new instances representing the saved state.
      *
-     * @param entities The entities to saved. Must not be {@literal null}.
+     * @param entities The entities to save. Must not be {@literal null}.
      * @param <S> The generic type
      * @return The saved entities objects. will never be {@literal null}.
      */

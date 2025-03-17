@@ -73,8 +73,8 @@ class BookJdbcSchemaMultiTenancySpec {
     }
 
     private long getBooksCount(String schemaName) throws SQLException {
-        if (dataSource instanceof DelegatingDataSource) {
-            dataSource = ((DelegatingDataSource) dataSource).getTargetDataSource();
+        if (dataSource instanceof DelegatingDataSource delegatingDataSource) {
+            dataSource = delegatingDataSource.getTargetDataSource();
         }
         try (Connection connection = dataSource.getConnection()) {
             jdbcSchemaHandler.useSchema(connection, Dialect.H2, schemaName);

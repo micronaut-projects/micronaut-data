@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * A request argument binder for binding a {@link Pageable} object from the request.
@@ -92,7 +91,7 @@ public class PageableRequestArgumentBinder implements TypedRequestArgumentBinder
 
             List<Sort.Order> orders = sortParams.stream()
                     .map(sortMapper)
-                    .collect(Collectors.toList());
+                    .toList();
             sort = Sort.of(orders);
         }
 

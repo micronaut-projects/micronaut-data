@@ -1,6 +1,5 @@
 package io.micronaut.data.hibernate
 
-import io.micronaut.context.annotation.Property
 import io.micronaut.data.hibernate.entities.Children
 import io.micronaut.data.hibernate.entities.ChildrenId
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
@@ -13,8 +12,7 @@ import jakarta.inject.Inject
 import jakarta.validation.ConstraintViolationException
 
 @MicronautTest(rollback = false, packages = "io.micronaut.data.tck.entities")
-@Property(name = "datasources.default.name", value = "mydb")
-@Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
+@H2DBProperties
 @Stepwise
 class LoadSpec extends Specification {
 

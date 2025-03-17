@@ -17,13 +17,16 @@ package io.micronaut.data.tck.repositories;
 
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 import io.micronaut.data.repository.jpa.reactive.ReactorJpaSpecificationExecutor;
 import io.micronaut.data.repository.reactive.ReactorPageableRepository;
 import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.tck.entities.PersonDto;
+import io.micronaut.data.tck.entities.PersonWithIdAndNameDto;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -71,13 +74,38 @@ public interface PersonReactiveRepository extends ReactorPageableRepository<Pers
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
     Mono<Long> saveCustomSingle(Person people);
 
+    @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
+    @ParameterExpression(name = "name", expression = "#{person.name + 'XYZ'}")
+    @ParameterExpression(name = "age", expression = "#{person.age}")
+    Mono<Long> saveCustomSingleExpression(Person person);
+
     @Query("DELETE FROM person WHERE name = :name")
     Mono<Long> deleteCustom(List<Person> people);
 
     @Query("DELETE FROM person WHERE name = :name")
     Mono<Long> deleteCustomSingle(Person person);
 
+    @Query("DELETE FROM person WHERE name = :name")
+    @ParameterExpression(name = "name", expression = "#{person.name}")
+    Mono<Long> deleteCustomSingleExpression(Person person);
+
     @Query("DELETE FROM person WHERE name = :xyz")
     Mono<Long> deleteCustomSingleNoEntity(String xyz);
 
+    Mono<Page<PersonWithIdAndNameDto>> searchByNameLike(String name, Pageable pageable);
+
+    // This method will fail because when used with CursoredPage cannot return single property
+    Mono<Page<String>> findNameByNameLike(String name, Pageable pageable);
+
+    Mono<Page<PersonDto>> queryByAgeGreaterThan(int age, Pageable pageable);
+
+    final class Specifications {
+
+        private Specifications() {
+        }
+
+        public static PredicateSpecification<Person> nameLike(String name) {
+            return (root, criteriaBuilder) -> criteriaBuilder.like(root.get("name"), name);
+        }
+    }
 }

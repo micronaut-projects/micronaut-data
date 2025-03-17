@@ -49,8 +49,7 @@ public final class CosmosUtils {
         }
         //  Unwrap the exception in case if it is a reactive exception
         final Throwable unwrappedThrowable = Exceptions.unwrap(throwable);
-        if (unwrappedThrowable instanceof CosmosException && cosmosDiagnosticsProcessor != null) {
-            CosmosException cosmosException = (CosmosException) unwrappedThrowable;
+        if (unwrappedThrowable instanceof CosmosException cosmosException && cosmosDiagnosticsProcessor != null) {
             processDiagnostics(cosmosDiagnosticsProcessor, operationName, cosmosException.getDiagnostics(), cosmosException.getActivityId(),
                 cosmosException.getRequestCharge());
         }

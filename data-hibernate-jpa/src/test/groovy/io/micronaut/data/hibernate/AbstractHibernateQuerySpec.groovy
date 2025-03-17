@@ -17,18 +17,25 @@ package io.micronaut.data.hibernate
 
 import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.hibernate.entities.Rating
+import io.micronaut.data.hibernate.entities.RelPerson
 import io.micronaut.data.hibernate.entities.UserWithWhere
 import io.micronaut.data.jpa.repository.criteria.Specification
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.EntityIdClass
 import io.micronaut.data.tck.entities.EntityWithIdClass
+import io.micronaut.data.tck.entities.Order
 import io.micronaut.data.tck.entities.Product
 import io.micronaut.data.tck.entities.Student
+import io.micronaut.data.tck.repositories.BookSpecifications
 import io.micronaut.data.tck.tests.AbstractQuerySpec
 import jakarta.inject.Inject
+import jakarta.persistence.criteria.CriteriaBuilder
+import jakarta.persistence.criteria.CriteriaQuery
 import org.hibernate.LazyInitializationException
 import spock.lang.Issue
 import spock.lang.Shared
@@ -65,6 +72,34 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
     @Inject
     ProductRepo productRepo
 
+    @Shared
+    @Inject
+    RelPersonRepository relPersonRepo
+
+    void "test where in empty list of entities"() {
+        when:
+        def found = bookRepository.findByAuthors(List.of())
+        then:
+        found.empty
+        when:
+        def author = authorRepository.findByName("Stephen King")
+        found = bookRepository.findByAuthors(List.of(author))
+        then:
+        !found.empty
+    }
+
+    void "test where in empty list of basic type"() {
+        when:
+        def found = bookRepository.findByAuthorIds(List.of())
+        then:
+        found.empty
+        when:
+        def author = authorRepository.findByName("Stephen King")
+        found = bookRepository.findByAuthorIds(List.of(author.id))
+        then:
+        !found.empty
+    }
+
     void "test @where with nullable property values"() {
         when:
             userWithWhereRepository.update(new UserWithWhere(id: UUID.randomUUID(), email: null, deleted: null))
@@ -78,6 +113,8 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
             def found = userWithWhereRepository.findById(e.id)
         then:
             found.isPresent()
+        cleanup:
+            userWithWhereRepository.deleteById(e.id)
     }
 
     void "test @where on find one deleted"() {
@@ -307,12 +344,21 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
 
     void "author dto result from native query"() {
         when:
-        def author = authorRepository.getAuthorsByNativeQuery()
+        def sort = Sort.of(Sort.Order.desc("authorName"))
+        def authors = authorRepository.getAuthorsByNativeQuery(sort)
 
         then:
-        author
-        author.authorId
-        author.authorName
+        authors
+        authors.size() == 3
+        authors[0].authorId
+        authors[0].authorName
+        authors[1].authorId
+        authors[1].authorName
+        authors[2].authorId
+        authors[2].authorName
+        // verify sorted desc by authorName
+        authors[0].authorName >= authors[1].authorName
+        authors[1].authorName >= authors[2].authorName
     }
 
     void "entity with id class"() {
@@ -365,6 +411,16 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
         e.id1 == 11
         e.id2 == 22
         e.name == "abc"
+
+        when:
+        def cnt = entityWithIdClassRepository.count()
+        def cntDistinct = entityWithIdClassRepository.countDistinct()
+        def cntDistinctName = entityWithIdClassRepository.countDistinctName()
+
+        then:
+        cnt == 3
+        cntDistinct <= cnt
+        cntDistinctName <= cntDistinctName
 
         when:
         entityWithIdClassRepository.delete(e)
@@ -521,30 +577,59 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
     }
 
     void "test custom insert"() {
+        given:
+            def book1 = new Book(title: "Abc", totalPages: 12)
+            def book2 = new Book(title: "Xyz", totalPages: 22)
+
         when:
-            def author = authorRepository.searchByName("Stephen King")
+            def books = bookRepository.findAll()
         then:
-            author.books.size() == 2
+            books.size() == 8
+
         when:
-            bookRepository.saveCustom([new Book(title: "Abc", totalPages: 12, author: author), new Book(title: "Xyz", totalPages: 22, author: author)])
-            def authorAfter = authorRepository.searchByName("Stephen King")
+            // Hibernate doesn't support updating other tables
+            bookRepository.saveCustom([book1, book2])
+            def booksAfter = bookRepository.findAll()
         then:
-            authorAfter.books.size() == 4
-            authorAfter.books.find { it.title == "Abc" }
-            authorAfter.books.find { it.title == "Xyz" }
+            !book1.id // Ids cannot be updated by a custom query
+            !book2.id
+            booksAfter.size() == 10
+            booksAfter.find { it.title == "Abc" }
+            booksAfter.find { it.title == "Xyz" }
     }
 
     void "test custom single insert"() {
+        given:
+            def book = new Book(title: "Abc", totalPages: 12)
         when:
-            def author = authorRepository.searchByName("Stephen King")
+            def books = bookRepository.findAll()
         then:
-            author.books.size() == 2
+            books.size() == 8
         when:
-            bookRepository.saveCustomSingle(new Book(title: "Abc", totalPages: 12, author: author))
-            def authorAfter = authorRepository.searchByName("Stephen King")
+            // Hibernate doesn't support updating other tables
+            bookRepository.saveCustomSingle(book)
+            def booksAfter = bookRepository.findAll()
         then:
-            authorAfter.books.size() == 3
-            authorAfter.books.find { it.title == "Abc" }
+            !book.id // Ids cannot be updated by a custom query
+            booksAfter.size() == 9
+            booksAfter.find { it.title == "Abc" }
+    }
+
+    void "test custom single insert expressions"() {
+        given:
+            def book = new Book(title: "Abc", totalPages: 12)
+        when:
+            def books = bookRepository.findAll()
+        then:
+            books.size() == 8
+        when:
+            // Hibernate doesn't support updating other tables
+            bookRepository.saveCustomSingleExpressions(book)
+            def booksAfter = bookRepository.findAll()
+        then:
+            !book.id // Ids cannot be updated by a custom query
+            booksAfter.size() == 9
+            booksAfter.find { it.title == "AbcXYZ" }
     }
 
     void "test custom update"() {
@@ -657,12 +742,27 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
             value.totalSize == 2
             value.content.size() == 2
         when:
+            value = bookRepository.findAll((Specification<Book>)null, Pageable.from(0))
+            def count = bookRepository.count((PredicateSpecification<Book>) null)
+        then:
+            count
+            value.totalSize > 2
+            value.totalSize == count
+            value.content.size() > 2
+            def optBook = value.content.stream().filter(b -> b.title == "The Stand").findFirst()
+            optBook.present
+        when:
             value = bookRepository.findAll(testJoin("Stephen King"), Pageable.from(0)
                     .order(new Sort.Order("author.name")).order(new Sort.Order("title")))
         then:
             value.totalSize == 2
             value.content.size() == 2
             value.content[0].title == "Pet Cemetery"
+
+        when:
+            def bookDtoPage = bookRepository.findByTotalPagesLessThan(1000, Pageable.from(0, 10, Sort.of(Sort.Order.asc("title"))))
+        then:
+            bookDtoPage.totalSize > 1
     }
 
     void "test loading entity with MappedProperty and alias"() {
@@ -678,6 +778,121 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
             loadedProd.longName == product.longName
         cleanup:
           productRepo.deleteAll()
+    }
+
+    void "test relations person repository and joins"() {
+        given:
+            def parent = new RelPerson()
+            parent.name = 'RelParent'
+            relPersonRepo.save(parent)
+            def child1Friend1 = new RelPerson()
+            child1Friend1.name = 'Child1Friend1'
+            relPersonRepo.save(child1Friend1)
+            def child1Friend2 = new RelPerson()
+            child1Friend2.name = 'Child1Friend2'
+            relPersonRepo.save(child1Friend2)
+            def child2Friend1 = new RelPerson()
+            child2Friend1.name = 'Child2Friend1'
+            relPersonRepo.save(child2Friend1)
+            def child1 = new RelPerson()
+            child1.name = 'Child1'
+            child1.parent = parent
+            child1.friends = [child1Friend1, child1Friend2]
+            relPersonRepo.save(child1)
+            def child2 = new RelPerson()
+            child2.name = 'Child2'
+            child2.parent = parent
+            child2.friends = [child2Friend1]
+            relPersonRepo.save(child2)
+        when:
+            def result = (List<RelPerson>) relPersonRepo.findAll(RelPersonRepository.Specifications.findRelPersonByParentAndFriends(parent.id, List.of(child1Friend1.id, child1Friend2.id)))
+        then:
+            result.size() == 1
+            result[0].id == child1.id
+        when:"findAll using null PredicateSpecification"
+            result = relPersonRepo.findAll((PredicateSpecification<RelPerson>) null)
+        then:
+            result.size() > 1
+        when:
+            result = (List<RelPerson>) relPersonRepo.findAll(RelPersonRepository.Specifications.findRelPersonByParentAndFriends(parent.id, List.of(child1Friend1.id, child1Friend2.id, child2Friend1.id)))
+        then:
+            result.size() == 2
+        when:
+            result = (List<RelPerson>) relPersonRepo.findAll(RelPersonRepository.Specifications.findRelPersonByChildren(List.of(child1.id, child2.id)))
+        then:
+            result.size() == 1
+            result[0].id == parent.id
+        when:
+            result = (List<RelPerson>) relPersonRepo.findAll(RelPersonRepository.Specifications.findRelPersonByChildren(List.of(child1Friend1.id, child1Friend2.id, child2Friend1.id)))
+        then:
+            result.size() == 0
+    }
+
+    void "test distinct count criteria"() {
+        given:
+            relPersonRepo.deleteAll()
+            10.times {
+                def person = new RelPerson()
+                person.name = 'Person'
+                relPersonRepo.save(person)
+            }
+        when:
+            def result = relPersonRepo.findOne(RelPersonRepository.Specifications.countDistinct())
+        then:
+            result == 10
+    }
+
+    void "test count criteria "() {
+        given:
+            relPersonRepo.deleteAll()
+            10.times {
+                def person = new RelPerson()
+                person.name = 'Person'
+                relPersonRepo.save(person)
+            }
+        when:
+            def result = relPersonRepo.findOne(RelPersonRepository.Specifications.countDistinct())
+        then:
+            result == 10
+    }
+
+    void "test order by embedded field"() {
+        when:
+            def e1 = userWithWhereRepository.save(new UserWithWhere(id: UUID.randomUUID(), email: "where1@somewhere.com", deleted: false))
+            def u2 = new UserWithWhere(id: UUID.randomUUID(), email: "where2@somewhere.com", deleted: false)
+            u2.audit.createdTime = u2.audit.createdTime.plusSeconds(30)
+            def e2 = userWithWhereRepository.save(u2)
+            def found1 = userWithWhereRepository.findById(e1.id)
+            def found2 = userWithWhereRepository.findById(e2.id)
+        then:
+            found1.present
+            found2.present
+        when:"Sorted by embedded field works"
+            def sortedItems = userWithWhereRepository.findAllByIdInList(List.of(e1.id, e2.id), Sort.of(Sort.Order.desc("audit.createdTime", false)))
+        then:
+            sortedItems
+            sortedItems.size() == 2
+            sortedItems[0].id == e2.id
+            sortedItems[1].id == e1.id
+        cleanup:
+            userWithWhereRepository.deleteAll(List.of(e1, e2))
+    }
+
+    void "test findBy and count with multiple parameters"() {
+        when:
+        def bookTitles = List.of("The Stand", "Pet Cemetery")
+        def books = bookRepository.findByTitleInAndTotalPagesGreaterThan(bookTitles, 1)
+        def cnt = bookRepository.countByTitleInAndTotalPagesGreaterThan(bookTitles, 1)
+        then:
+        books.size() == 2
+        cnt == 2
+    }
+
+    void "test subquery criteria"() {
+        when:
+            def book = bookRepository.findOne(BookSpecifications.findUsingASubquery("The Stand"))
+        then:
+            book.title == "The Stand"
     }
 
     private static Specification<Book> testJoin(String value) {

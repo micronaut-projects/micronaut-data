@@ -29,7 +29,6 @@ import io.micronaut.data.annotation.EntityRepresentation;
 import io.micronaut.data.annotation.IgnoreWhere;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Where;
 import io.micronaut.data.annotation.repeatable.WhereSpecifications;
@@ -42,7 +41,7 @@ import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.Sort;
-import io.micronaut.data.model.jpa.criteria.impl.LiteralExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.AssociationQuery;
 import io.micronaut.data.model.query.BindingParameter;
@@ -58,14 +57,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
@@ -78,7 +75,7 @@ import java.util.stream.Collectors;
  * @author graemerocher
  * @since 1.0.0
  */
-@SuppressWarnings("checkstyle:FileLength")
+@SuppressWarnings("FileLength")
 public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     public static final String ORDER_BY_CLAUSE = " ORDER BY ";
     protected static final String SELECT_CLAUSE = "SELECT ";
@@ -95,6 +92,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     protected static final String LOGICAL_AND = " " + AND + " ";
     protected static final String UPDATE_CLAUSE = "UPDATE ";
     protected static final String DELETE_CLAUSE = "DELETE ";
+    protected static final String RETURNING = " RETURNING ";
     protected static final String OR = "OR";
     protected static final String LOGICAL_OR = " " + OR + " ";
     protected static final String FUNCTION_COUNT = "COUNT";
@@ -116,9 +114,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     protected static final String GREATER_THAN = " > ";
     protected static final String EQUALS = " = ";
     protected static final String NOT_EQUALS = " != ";
-    protected static final String ALIAS_REPLACE = "@.";
     protected static final String ALIAS_REPLACE_QUOTED = "@\\.";
     protected static final String JSON_COLUMN = "column";
+    protected static final String CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID = "Cannot query on ID with entity that has no ID";
+
     protected final Map<Class, CriterionHandler> queryHandlers = new HashMap<>(30);
 
     {
@@ -261,8 +260,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             appendPropertyRef(whereClause, ctx.getAnnotationMetadata(), ctx.getPersistentEntity(), propertyPath);
             whereClause.append(" IN (");
             Object value = inQuery.getValue();
-            if (value instanceof BindingParameter) {
-                ctx.pushParameter((BindingParameter) value, newBindingContext(propertyPath.propertyPath).expandable());
+            if (value instanceof BindingParameter bindingParameter) {
+                ctx.pushParameter(bindingParameter, newBindingContext(propertyPath.propertyPath).expandable());
             } else {
                 asLiterals(ctx.query(), value);
             }
@@ -275,8 +274,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             appendPropertyRef(whereClause, ctx.getAnnotationMetadata(), ctx.getPersistentEntity(), propertyPath);
             whereClause.append(" NOT IN (");
             Object value = inQuery.getValue();
-            if (value instanceof BindingParameter) {
-                ctx.pushParameter((BindingParameter) value, newBindingContext(propertyPath.propertyPath).expandable());
+            if (value instanceof BindingParameter bindingParameter) {
+                ctx.pushParameter(bindingParameter, newBindingContext(propertyPath.propertyPath).expandable());
             } else {
                 asLiterals(ctx.query(), value);
             }
@@ -304,8 +303,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param value the value to be added
      */
     protected void asLiterals(StringBuilder sb, @Nullable Object value) {
-        if (value instanceof Iterable) {
-            for (Iterator iterator = ((Iterable) value).iterator(); iterator.hasNext(); ) {
+        if (value instanceof Iterable<?> iterable) {
+            for (Iterator<?> iterator = iterable.iterator(); iterator.hasNext(); ) {
                 Object o = iterator.next();
                 sb.append(asLiteral(o));
                 if (iterator.hasNext()) {
@@ -333,14 +332,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      */
     @NonNull
     protected String asLiteral(@Nullable Object value) {
-        if (value instanceof LiteralExpression) {
-            value = ((LiteralExpression<?>) value).getValue();
+        if (value instanceof LiteralExpression<?> literalExpression) {
+            value = literalExpression.getValue();
         }
         if (value == null) {
             return "NULL";
         }
-        if (value instanceof Number) {
-            return Long.toString(((Number) value).longValue());
+        if (value instanceof Number number) {
+            return Long.toString(number.longValue());
         }
         if (value instanceof Boolean) {
             return value.toString().toUpperCase(Locale.ROOT);
@@ -378,7 +377,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     }
                 }
                 return (Runnable) () -> query.append(p);
-            }).collect(Collectors.toList()));
+            }).toList());
         };
     }
 
@@ -414,7 +413,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         };
     }
 
-    private QueryPropertyPath asQueryPropertyPath(String tableAlias, PersistentProperty persistentProperty) {
+    protected final QueryPropertyPath asQueryPropertyPath(String tableAlias, PersistentProperty persistentProperty) {
         return new QueryPropertyPath(asPersistentPropertyPath(persistentProperty), tableAlias);
     }
 
@@ -552,14 +551,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     @NonNull
     protected String getPathOnlyAliasName(JoinPath joinPath) {
         return joinPath.getAlias().orElseGet(() -> {
-            String p = "";
+            var p = new StringBuilder();
             for (Association ass : joinPath.getAssociationPath()) {
-                p += ass.getAliasName();
+                p.append(ass.getAliasName());
                 if (ass.hasDeclaredAliasName() && ass != joinPath.getAssociation()) {
-                    p += "_";
+                    p.append('_');
                 }
             }
-            return p;
+            return p.toString();
         });
     }
 
@@ -623,6 +622,46 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                                                  Collection<JoinPath> allPaths,
                                                  @Nullable
                                                  Map<JoinPath, String> joinAliasOverride) {
+    }
+
+    protected final void appendProperty(StringBuilder sb,
+                                        List<Association> associations,
+                                        PersistentProperty property,
+                                        NamingStrategy namingStrategy,
+                                        String tableAlias,
+                                        boolean escape) {
+        String transformed = getDataTransformerReadValue(tableAlias, property).orElse(null);
+        String columnAlias = getColumnAlias(property);
+        boolean useAlias = StringUtils.isNotEmpty(columnAlias);
+        if (transformed != null) {
+            sb.append(transformed).append(AS_CLAUSE).append(useAlias ? columnAlias : property.getPersistedName());
+        } else {
+            String column = getMappedName(namingStrategy, associations, property);
+            column = escapeColumnIfNeeded(column, escape);
+            if (tableAlias == null) {
+                sb.append(column);
+            } else {
+                sb.append(tableAlias).append(DOT).append(column);
+            }
+            if (useAlias) {
+                sb.append(AS_CLAUSE).append(columnAlias);
+            }
+        }
+        sb.append(COMMA);
+    }
+
+    /**
+     * Returns escaped (quoted) column if escape needed.
+     *
+     * @param column the column
+     * @param escape an indicator telling whether column needs to be escaped (quoted)
+     * @return escaped (quoted) column if instructed to do so, otherwise original column value
+     */
+    private String escapeColumnIfNeeded(String column, boolean escape) {
+        if (escape) {
+            return quote(column);
+        }
+        return column;
     }
 
     /**
@@ -695,50 +734,68 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param tableAlias the table alias
      * @param entity the persistent entity
      */
-    protected void buildSelect(AnnotationMetadata annotationMetadata, QueryState queryState, StringBuilder queryString, List<QueryModel.Projection> projectionList, String tableAlias, PersistentEntity entity) {
+    protected void buildSelect(AnnotationMetadata annotationMetadata,
+                               QueryState queryState,
+                               StringBuilder queryString,
+                               List<QueryModel.Projection> projectionList,
+                               String tableAlias,
+                               PersistentEntity entity) {
         if (projectionList.isEmpty()) {
             selectAllColumns(annotationMetadata, queryState, queryString);
         } else {
-            for (Iterator i = projectionList.iterator(); i.hasNext(); ) {
-                QueryModel.Projection projection = (QueryModel.Projection) i.next();
-                if (projection instanceof QueryModel.LiteralProjection) {
-                    queryString.append(asLiteral(((QueryModel.LiteralProjection) projection).getValue()));
+            int projectionCount = projectionList.size();
+            for (Iterator<QueryModel.Projection> i = projectionList.iterator(); i.hasNext(); ) {
+                boolean appendComma = true;
+                boolean removeComma = false;
+                QueryModel.Projection projection = i.next();
+                if (projection instanceof QueryModel.RootEntityProjection) {
+                    selectAllColumns(annotationMetadata, queryState, queryString);
+                    return;
+                }
+                if (projection instanceof QueryModel.LiteralProjection literalProjection) {
+                    queryString.append(asLiteral(literalProjection.getValue()));
                 } else if (projection instanceof QueryModel.CountProjection) {
                     appendProjectionRowCount(queryString, tableAlias);
                 } else if (projection instanceof QueryModel.DistinctProjection) {
-                    queryString.append("DISTINCT(")
-                        .append(tableAlias)
-                        .append(CLOSE_BRACKET);
+                    queryString.append("DISTINCT ");
+                    if (projectionCount == 1) {
+                        queryString.append(tableAlias)
+                            .append(DOT)
+                            .append("*");
+                    }
+                    appendComma = false;
+                } else if (projection instanceof QueryModel.CountDistinctRootProjection) {
+                    appendProjectionRowCountDistinct(queryString, queryState, entity, annotationMetadata, tableAlias);
                 } else if (projection instanceof QueryModel.IdProjection) {
                     if (entity.hasCompositeIdentity()) {
                         for (PersistentProperty identity : entity.getCompositeIdentity()) {
-                            appendPropertyProjection(annotationMetadata, entity, queryString, asQueryPropertyPath(queryState.getRootAlias(), identity));
+                            appendPropertyProjection(annotationMetadata, entity, queryString, asQueryPropertyPath(queryState.getRootAlias(), identity), null);
                             queryString.append(COMMA);
                         }
                         queryString.setLength(queryString.length() - 1);
                     } else if (entity.hasIdentity()) {
-                        PersistentProperty identity = entity.getIdentity();
-                        if (identity == null) {
-                            throw new IllegalArgumentException("Cannot query on ID with entity that has no ID");
+                        List<PersistentProperty> identityProperties = entity.getIdentityProperties();
+                        if (identityProperties.isEmpty()) {
+                            throw new IllegalArgumentException(CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID);
                         }
-                        appendPropertyProjection(annotationMetadata, queryState.getEntity(), queryString, asQueryPropertyPath(queryState.getRootAlias(), identity));
+                        for (PersistentProperty identity : identityProperties) {
+                            appendPropertyProjection(annotationMetadata, queryState.getEntity(), queryString, asQueryPropertyPath(queryState.getRootAlias(), identity), null);
+                        }
                     } else {
-                        throw new IllegalArgumentException("Cannot query on ID with entity that has no ID");
+                        throw new IllegalArgumentException(CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID);
                     }
                 } else if (projection instanceof QueryModel.PropertyProjection pp) {
                     String alias = pp.getAlias().orElse(null);
                     if (projection instanceof QueryModel.AvgProjection) {
-                        appendFunctionProjection(annotationMetadata, queryState.getEntity(), AVG, pp, tableAlias, queryString);
-                    } else if (projection instanceof QueryModel.DistinctPropertyProjection) {
-                        appendFunctionProjection(annotationMetadata, queryState.getEntity(), DISTINCT, pp, tableAlias, queryString);
+                        appendFunctionProjection(annotationMetadata, queryState.getEntity(), AVG, pp, tableAlias, alias, queryString);
                     } else if (projection instanceof QueryModel.SumProjection) {
-                        appendFunctionProjection(annotationMetadata, queryState.getEntity(), SUM, pp, tableAlias, queryString);
+                        appendFunctionProjection(annotationMetadata, queryState.getEntity(), SUM, pp, tableAlias, alias, queryString);
                     } else if (projection instanceof QueryModel.MinProjection) {
-                        appendFunctionProjection(annotationMetadata, queryState.getEntity(), MIN, pp, tableAlias, queryString);
+                        appendFunctionProjection(annotationMetadata, queryState.getEntity(), MIN, pp, tableAlias, alias, queryString);
                     } else if (projection instanceof QueryModel.MaxProjection) {
-                        appendFunctionProjection(annotationMetadata, queryState.getEntity(), MAX, pp, tableAlias, queryString);
+                        appendFunctionProjection(annotationMetadata, queryState.getEntity(), MAX, pp, tableAlias, alias, queryString);
                     } else if (projection instanceof QueryModel.CountDistinctProjection) {
-                        appendFunctionProjection(annotationMetadata, queryState.getEntity(), COUNT_DISTINCT, pp, tableAlias, queryString);
+                        appendFunctionProjection(annotationMetadata, queryState.getEntity(), COUNT_DISTINCT, pp, tableAlias, alias, queryString);
                         queryString.append(CLOSE_BRACKET);
                     } else {
                         String propertyName = pp.getPropertyName();
@@ -747,27 +804,87 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                             throw new IllegalArgumentException("Cannot project on non-existent property: " + propertyName);
                         }
                         PersistentProperty property = propertyPath.getProperty();
-                        if (property instanceof Association && !(property instanceof Embedded)) {
-                            if (!appendAssociationProjection(queryState, queryString, property, propertyPath)) {
-                                continue;
+                        if (pp.isCompound()) {
+                            // Compound property which is part of a DTO
+                            if (property instanceof Association association && !(property instanceof Embedded)) {
+                                if (queryState.isJoined(propertyPath.getPath())) {
+                                    appendCompoundAssociationProjection(queryState, queryString, association, propertyPath, alias);
+                                } else {
+                                    removeComma = true;
+                                }
+                            } else {
+                                appendCompoundPropertyProjection(queryState, queryString, property, propertyPath, alias);
                             }
                         } else {
-                            appendPropertyProjection(annotationMetadata, queryState.getEntity(), queryString, findProperty(queryState, propertyName, null));
+                            if (property instanceof Association && !(property instanceof Embedded)) {
+                                if (!appendAssociationProjection(queryState, queryString, property, propertyPath, alias)) {
+                                    continue;
+                                }
+                            } else {
+                                appendPropertyProjection(annotationMetadata, queryState.getEntity(), queryString, findProperty(queryState, propertyName, null), alias);
+                            }
                         }
                     }
-                    if (alias != null) {
-                        queryString.append(AS_CLAUSE).append(alias);
-                    }
                 }
-
-                if (i.hasNext()) {
+                if (removeComma) {
+                    queryString.setLength(queryString.length() - 1);
+                }
+                if (appendComma && i.hasNext()) {
                     queryString.append(COMMA);
                 }
             }
         }
     }
 
-    private void appendPropertyProjection(AnnotationMetadata annotationMetadata, PersistentEntity entity, StringBuilder sb, QueryPropertyPath propertyPath) {
+    /**
+     * Appends the compound (part of entity or DTO) property projection.
+     *
+     * @param queryState   The query state
+     * @param queryString  The builder
+     * @param property     The property
+     * @param propertyPath The property path
+     * @param columnAlias  The column alias
+     */
+    @Internal
+    protected void appendCompoundPropertyProjection(QueryState queryState, StringBuilder queryString, PersistentProperty property, PersistentPropertyPath propertyPath, String columnAlias) {
+        PersistentEntity entity = property.getOwner();
+        boolean escape = shouldEscape(entity);
+        NamingStrategy namingStrategy = getNamingStrategy(entity);
+        int[] propertiesCount = new int[1];
+        traversePersistentProperties(propertyPath.getAssociations(), property, (associations, p) -> {
+            appendProperty(queryString, associations, p, namingStrategy, queryState.rootAlias, escape);
+            propertiesCount[0]++;
+        });
+        queryString.setLength(queryString.length() - 1);
+        if (StringUtils.isNotEmpty(columnAlias)) {
+            if (propertiesCount[0] > 1) {
+                throw new IllegalStateException("Cannot apply a column alias: " + columnAlias + " with expanded property: " + propertyPath);
+            }
+            if (propertiesCount[0] == 1) {
+                queryString.append(AS_CLAUSE).append(columnAlias);
+            }
+        }
+    }
+
+    /**
+     * Appends the compound (part of entity or DTO) association projection.
+     *
+     * @param queryState   The query state
+     * @param queryString  The builder
+     * @param association  The association
+     * @param propertyPath The property path
+     * @param columnAlias  The column alias
+     */
+    @Internal
+    protected void appendCompoundAssociationProjection(QueryState queryState, StringBuilder queryString, Association association, PersistentPropertyPath propertyPath, String columnAlias) {
+        if (!queryString.isEmpty() && queryString.charAt(queryString.length() - 1) == ',') {
+            // Strip last .
+            queryString.setLength(queryString.length() - 1);
+        }
+        selectAllColumnsFromJoinPaths(queryState, queryString, queryState.getQueryModel().getJoinPaths(), null);
+    }
+
+    protected final void appendPropertyProjection(AnnotationMetadata annotationMetadata, PersistentEntity entity, StringBuilder sb, QueryPropertyPath propertyPath, String columnAlias) {
         boolean jsonEntity = isJsonEntity(annotationMetadata, entity);
         if (!computePropertyPaths() || jsonEntity) {
             sb.append(propertyPath.getTableAlias()).append(DOT);
@@ -789,23 +906,23 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         boolean escape = propertyPath.shouldEscape();
         NamingStrategy namingStrategy = propertyPath.getNamingStrategy();
         boolean[] needsTrimming = {false};
+        int[] propertiesCount = new int[1];
 
         traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), (associations, property) -> {
-            String columnName = getMappedName(namingStrategy, associations, property);
-            if (escape) {
-                columnName = quote(columnName);
-            }
-
-            sb.append(tableAlias).append(DOT).append(columnName);
-            String columnAlias = getColumnAlias(property);
-            if (StringUtils.isNotEmpty(columnAlias)) {
-                sb.append(AS_CLAUSE).append(columnAlias);
-            }
-            sb.append(COMMA);
+            appendProperty(sb, associations, property, namingStrategy, tableAlias, escape);
             needsTrimming[0] = true;
+            propertiesCount[0]++;
         });
         if (needsTrimming[0]) {
             sb.setLength(sb.length() - 1);
+        }
+        if (StringUtils.isNotEmpty(columnAlias)) {
+            if (propertiesCount[0] > 1) {
+                throw new IllegalStateException("Cannot apply a column alias: " + columnAlias + " with expanded property: " + propertyPath);
+            }
+            if (propertiesCount[0] == 1) {
+                sb.append(AS_CLAUSE).append(columnAlias);
+            }
         }
     }
 
@@ -816,9 +933,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param queryString the query string builder
      * @param property the persistent property
      * @param propertyPath the persistent property path
+     * @param columnAlias the column alias
      * @return true if association projection is appended, otherwise false
      */
-    protected boolean appendAssociationProjection(QueryState queryState, StringBuilder queryString, PersistentProperty property, PersistentPropertyPath propertyPath) {
+    protected boolean appendAssociationProjection(QueryState queryState, StringBuilder queryString, PersistentProperty property, PersistentPropertyPath propertyPath, String columnAlias) {
         String joinedPath = propertyPath.getPath();
         if (!queryState.isJoined(joinedPath)) {
             queryString.setLength(queryString.length() - 1);
@@ -916,6 +1034,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         String functionName,
         QueryModel.PropertyProjection propertyProjection,
         String tableAlias,
+        String columnAlias,
         StringBuilder queryString) {
         PersistentPropertyPath propertyPath = entity.getPropertyPath(propertyProjection.getPropertyName());
         if (propertyPath == null) {
@@ -945,6 +1064,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             appendJsonProjection(queryString, dataType);
         }
         queryString.append(CLOSE_BRACKET);
+        if (columnAlias != null) {
+            queryString.append(AS_CLAUSE).append(columnAlias);
+        }
     }
 
     /**
@@ -973,6 +1095,19 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param logicalName The alias to the table name
      */
     protected abstract void appendProjectionRowCount(StringBuilder queryString, String logicalName);
+
+    /**
+     * Appends a row count distinct projection to the query string.
+     *
+     * @param queryString The query string
+     * @param queryState The query state
+     * @param entity The persistent entity
+     * @param annotationMetadata The query annotation metadata
+     * @param logicalName The alias to the table name
+     */
+    protected abstract void appendProjectionRowCountDistinct(StringBuilder queryString, QueryState queryState,
+                                                             PersistentEntity entity, AnnotationMetadata annotationMetadata,
+                                                             String logicalName);
 
     private void handleAssociationCriteria(CriteriaContext ctx, AssociationQuery associationQuery) {
         QueryState queryState = ctx.getQueryState();
@@ -1064,40 +1199,28 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             queryClause.append(OPEN_BRACKET);
             handleJunction(ctx, criteria);
 
-            StringBuilder additionalWhereBuff = buildAdditionalWhereClause(queryState, annotationMetadata);
-            appendAdditionalWhere(queryClause, queryState, additionalWhereBuff.toString());
+            String additionalWhere = buildAdditionalWhereClause(queryState, annotationMetadata);
+            appendAdditionalWhere(queryClause, queryState, additionalWhere);
 
         } else {
-            StringBuilder additionalWhereBuff = buildAdditionalWhereClause(queryState, annotationMetadata);
-            if (additionalWhereBuff.length() > 0) {
+            String additionalWhere = buildAdditionalWhereClause(queryState, annotationMetadata);
+            if (StringUtils.isNotEmpty(additionalWhere)) {
                 queryClause.append(WHERE_CLAUSE)
                     .append(OPEN_BRACKET);
-                appendAdditionalWhere(queryClause, queryState, additionalWhereBuff.toString());
+                appendAdditionalWhere(queryClause, queryState, additionalWhere);
             }
         }
     }
 
-    private StringBuilder buildAdditionalWhereClause(QueryState queryState, AnnotationMetadata annotationMetadata) {
-        StringBuilder additionalWhereBuff = new StringBuilder(buildAdditionalWhereString(queryState.getRootAlias(), queryState.getEntity(), annotationMetadata));
-        List<JoinPath> joinPaths = queryState.getJoinPaths();
-        if (CollectionUtils.isNotEmpty(joinPaths)) {
-            Set<String> addedJoinPaths = new HashSet<>();
-            for (JoinPath joinPath : joinPaths) {
-                String path = joinPath.getPath();
-                if (addedJoinPaths.contains(path)) {
-                    continue;
-                }
-                addedJoinPaths.add(path);
-                String joinAdditionalWhere = buildAdditionalWhereString(joinPath, annotationMetadata);
-                if (StringUtils.isNotEmpty(joinAdditionalWhere)) {
-                    if (additionalWhereBuff.length() > 0) {
-                        additionalWhereBuff.append(SPACE).append(AND).append(SPACE);
-                    }
-                    additionalWhereBuff.append(joinAdditionalWhere);
-                }
-            }
-        }
-        return additionalWhereBuff;
+    /**
+     * Builds additional where clause if there is {@link Where} annotation on the entity.
+     *
+     * @param queryState the query state
+     * @param annotationMetadata the annotation metadata
+     * @return where clause if there was {@link Where} annotation on the entity (or joins for JPA implementation)
+     */
+    protected String buildAdditionalWhereClause(QueryState queryState, AnnotationMetadata annotationMetadata) {
+        return buildAdditionalWhereString(queryState.getRootAlias(), queryState.getEntity(), annotationMetadata);
     }
 
     private void appendAdditionalWhere(StringBuilder queryClause, QueryState queryState, String additionalWhere) {
@@ -1126,7 +1249,15 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
     }
 
-    private String buildAdditionalWhereString(String alias, PersistentEntity entity, AnnotationMetadata annotationMetadata) {
+    /**
+     * Builds WHERE clause for the entity and given alias if {@link IgnoreWhere} is not present.
+     *
+     * @param alias the entity alias
+     * @param entity the entity
+     * @param annotationMetadata the entity metadata
+     * @return the WHERE clause
+     */
+    protected String buildAdditionalWhereString(String alias, PersistentEntity entity, AnnotationMetadata annotationMetadata) {
         if (annotationMetadata.hasAnnotation(IgnoreWhere.class)) {
             return "";
         }
@@ -1138,7 +1269,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
     }
 
-    private String buildAdditionalWhereString(JoinPath joinPath, AnnotationMetadata annotationMetadata) {
+    /**
+     * Builds WHERE clause based on {@link Where} annotation on the metadata.
+     *
+     * @param joinPath the join path
+     * @param annotationMetadata the annotation metadata
+     * @return WHERE clause if {@link Where} annotation is declared and {@link IgnoreWhere} is not present, otherwise empty string
+     */
+    protected final String buildAdditionalWhereString(JoinPath joinPath, AnnotationMetadata annotationMetadata) {
         if (annotationMetadata.hasAnnotation(IgnoreWhere.class)) {
             return "";
         }
@@ -1150,7 +1288,13 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         return resolveWhereForAnnotationMetadata(alias, association.getAssociatedEntity().getAnnotationMetadata());
     }
 
-    private String resolveWhereForAnnotationMetadata(String alias, AnnotationMetadata annotationMetadata) {
+    /**
+     * Resolves where clause if there is {@link Where} annotation on the entity.
+     * @param alias the entity alias
+     * @param annotationMetadata the entity annotation metadata
+     * @return where clause with entity alias if entity has declared where annotation
+     */
+    protected final String resolveWhereForAnnotationMetadata(String alias, AnnotationMetadata annotationMetadata) {
         return annotationMetadata.getAnnotationValuesByType(Where.class)
             .stream()
             .map(av -> av.stringValue().orElse(null))
@@ -1327,9 +1471,16 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 String jsonEntityColumn = getJsonEntityColumn(annotationMetadata);
                 if (jsonEntityColumn != null) {
                     sb.append(jsonEntityColumn).append(DOT);
+                    PersistentProperty property = propertyPath.getProperty();
+                    if (property == entity.getIdentity()) {
+                        sb.append("\"" + property.getPersistedName() + "\"");
+                    } else {
+                        sb.append(propertyPath.getPath());
+                    }
                 }
+            } else {
+                sb.append(propertyPath.getPath());
             }
-            sb.append(propertyPath.getPath());
         }
     }
 
@@ -1356,8 +1507,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     }
 
     private void appendPlaceholderOrLiteral(CriteriaContext ctx, QueryPropertyPath propertyPath, Object value) {
-        if (value instanceof BindingParameter) {
-            ctx.pushParameter((BindingParameter) value, newBindingContext(propertyPath.propertyPath));
+        if (value instanceof BindingParameter bindingParameter) {
+            ctx.pushParameter(bindingParameter, newBindingContext(propertyPath.propertyPath));
             return;
         }
         ctx.query().append(asLiteral(value));
@@ -1396,6 +1547,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 if (value instanceof BindingParameter) {
                     int key = 1;
                     queryState.pushParameter(new QueryParameterBinding() {
+
+                        @Override
+                        public String getName() {
+                            return String.valueOf(key);
+                        }
+
                         @Override
                         public String getKey() {
                             return String.valueOf(key);
@@ -1427,7 +1584,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         List<Map.Entry<QueryPropertyPath, Object>> update = propertiesToUpdate.entrySet().stream()
             .map(e -> {
                 QueryPropertyPath propertyPath = findProperty(queryState, e.getKey(), null);
-                if (propertyPath.getProperty() instanceof Association && ((Association) propertyPath.getProperty()).isForeignKey()) {
+                if (propertyPath.getProperty() instanceof Association association && association.isForeignKey()) {
                     throw new IllegalArgumentException("Foreign key associations cannot be updated as part of a batch update statement");
                 }
                 return new AbstractMap.SimpleEntry<>(propertyPath, e.getValue());
@@ -1453,9 +1610,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     }
                     queryString.append(propertyPath.getPath()).append('=');
                 }
-                if (entry.getValue() instanceof BindingParameter) {
+                if (entry.getValue() instanceof BindingParameter bindingParameter) {
                     appendUpdateSetParameter(queryString, tableAlias, prop, () -> {
-                        queryState.pushParameter((BindingParameter) entry.getValue(), newBindingContext(propertyPath.propertyPath));
+                        queryState.pushParameter(bindingParameter, newBindingContext(propertyPath.propertyPath));
                     });
                 } else {
                     queryString.append(asLiteral(entry.getValue()));
@@ -1472,25 +1629,20 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             NamingStrategy namingStrategy = getNamingStrategy(queryState.getEntity());
             for (Map.Entry<QueryPropertyPath, Object> entry : update) {
                 QueryPropertyPath propertyPath = entry.getKey();
-                if (entry.getValue() instanceof BindingParameter) {
+                if (entry.getValue() instanceof BindingParameter bindingParameter) {
                     traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), (associations, property) -> {
                         String tableAlias = propertyPath.getTableAlias();
                         if (tableAlias != null) {
                             queryString.append(tableAlias).append(DOT);
                         }
-                        String columnName;
-                        if (jsonEntity) {
-                            columnName = property.getName();
-                        } else {
-                            columnName = getMappedName(namingStrategy, associations, property);
-                            if (queryState.escape) {
-                                columnName = quote(columnName);
-                            }
+                        String columnName = getMappedName(namingStrategy, associations, property);
+                        if (queryState.escape) {
+                            columnName = quote(columnName);
                         }
                         queryString.append(columnName).append('=');
                         appendUpdateSetParameter(queryString, tableAlias, property, () -> {
                             queryState.pushParameter(
-                                (BindingParameter) entry.getValue(),
+                                bindingParameter,
                                 newBindingContext(
                                     propertyPath.propertyPath,
                                     PersistentPropertyPath.of(associations, property, asPath(associations, property))
@@ -1551,9 +1703,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param appendParameter The append parameter action
      */
     protected void appendTransformed(StringBuilder sb, String transformed, Runnable appendParameter) {
-        int parameterPosition = transformed.indexOf("?");
+        int parameterPosition = transformed.indexOf('?');
         if (parameterPosition > -1) {
-            if (transformed.lastIndexOf("?") != parameterPosition) {
+            if (transformed.lastIndexOf('?') != parameterPosition) {
                 throw new IllegalStateException("Only one parameter placeholder is allowed!");
             }
             sb.append(transformed, 0, parameterPosition);
@@ -1572,48 +1724,60 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     }
 
     @NonNull
-    private QueryPropertyPath findProperty(QueryState queryState, String name, Class criterionType) {
-        return findPropertyInternal(queryState, queryState.getEntity(), queryState.getRootAlias(), name, criterionType);
+    private QueryPropertyPath findProperty(QueryState queryState, String propertypath, Class criterionType) {
+        return findPropertyInternal(queryState, queryState.getEntity(), queryState.getRootAlias(), propertypath, criterionType);
     }
 
-    private QueryPropertyPath findPropertyInternal(QueryState queryState, PersistentEntity entity, String tableAlias, String name, Class criterionType) {
-        PersistentPropertyPath propertyPath = entity.getPropertyPath(name);
+    private QueryPropertyPath findPropertyInternal(QueryState queryState, PersistentEntity entity, String tableAlias, String propertypath, Class criterionType) {
+        PersistentPropertyPath propertyPath = entity.getPropertyPath(propertypath);
         if (propertyPath != null) {
             if (propertyPath.getAssociations().isEmpty()) {
                 return new QueryPropertyPath(propertyPath, tableAlias);
             }
+            PersistentProperty property = propertyPath.getProperty();
             Association joinAssociation = null;
             StringJoiner joinPathJoiner = new StringJoiner(".");
             String lastJoinAlias = null;
             for (Association association : propertyPath.getAssociations()) {
-                joinPathJoiner.add(association.getName());
                 if (association instanceof Embedded) {
+                    joinPathJoiner.add(association.getName());
                     continue;
                 }
                 if (joinAssociation == null) {
+                    joinPathJoiner.add(association.getName());
                     joinAssociation = association;
                     continue;
                 }
-                if (association != joinAssociation.getAssociatedEntity().getIdentity()) {
-                    if (!queryState.isAllowJoins()) {
-                        throw new IllegalArgumentException("Joins cannot be used in a DELETE or UPDATE operation");
-                    }
-                    String joinStringPath = joinPathJoiner.toString();
-                    if (!queryState.isJoined(joinStringPath)) {
-                        throw new IllegalArgumentException("Property is not joined at path: " + joinStringPath);
-                    }
-                    lastJoinAlias = joinInPath(queryState, joinStringPath);
-                    // Continue to look for a joined property
-                    joinAssociation = association;
-                } else {
+                if (PersistentEntityUtils.isAccessibleWithoutJoin(association, propertyPath.getProperty())) {
                     // We don't need to join to access the id of the relation
-                    joinAssociation = null;
+                    if (lastJoinAlias == null) {
+                        String joinStringPath = joinPathJoiner.toString();
+                        if (!queryState.isJoined(joinStringPath)) {
+                            throw new IllegalArgumentException("Property is not joined at path: " + joinStringPath);
+                        }
+                        lastJoinAlias = joinInPath(queryState, joinPathJoiner.toString());
+                    }
+                    return new QueryPropertyPath(
+                        new PersistentPropertyPath(Collections.emptyList(), association),
+                        lastJoinAlias
+                    );
                 }
+
+                joinPathJoiner.add(association.getName());
+                if (!queryState.isAllowJoins()) {
+                    throw new IllegalArgumentException("Joins cannot be used in a DELETE or UPDATE operation" + (association.getAssociatedEntity().getIdentity() == propertyPath.getProperty()));
+                }
+                String joinStringPath = joinPathJoiner.toString();
+                if (!queryState.isJoined(joinStringPath)) {
+                    throw new IllegalArgumentException("Property is not joined at path: " + joinStringPath);
+                }
+                lastJoinAlias = joinInPath(queryState, joinStringPath);
+                // Continue to look for a joined property
+                joinAssociation = association;
             }
-            PersistentProperty property = propertyPath.getProperty();
             if (joinAssociation != null) {
                 // We don't need to join to access the id of the relation if it is not a foreign key association
-                if (property != joinAssociation.getAssociatedEntity().getIdentity() || joinAssociation.isForeignKey()) {
+                if (!PersistentEntityUtils.isAccessibleWithoutJoin(joinAssociation, propertyPath.getProperty())) {
                     String joinStringPath = joinPathJoiner.toString();
                     if (!queryState.isJoined(joinStringPath)) {
                         throw new IllegalArgumentException("Property is not joined at path: " + joinStringPath);
@@ -1625,12 +1789,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 if (lastJoinAlias != null) {
                     // 'joinPath.prop' should be represented as a path of 'prop' with a join alias
                     return new QueryPropertyPath(
-                        new PersistentPropertyPath(Collections.emptyList(), property, property.getName()),
+                        new PersistentPropertyPath(Collections.emptyList(), property),
                         lastJoinAlias
                     );
                 }
             }
-        } else if (TypeRole.ID.equals(name) && entity.getIdentity() != null) {
+        } else if (TypeRole.ID.equals(propertypath) && entity.getIdentity() != null) {
             // special case handling for ID
             return new QueryPropertyPath(
                 new PersistentPropertyPath(Collections.emptyList(), entity.getIdentity(), entity.getIdentity().getName()),
@@ -1639,9 +1803,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
         if (propertyPath == null) {
             if (criterionType == null || criterionType == Sort.Order.class) {
-                throw new IllegalArgumentException("Cannot order on non-existent property path: " + name);
+                throw new IllegalArgumentException("Cannot order on non-existent property path: " + propertypath);
             } else {
-                throw new IllegalArgumentException("Cannot use [" + criterionType.getSimpleName() + "] criterion on non-existent property path: " + name);
+                throw new IllegalArgumentException("Cannot use [" + criterionType.getSimpleName() + "] criterion on non-existent property path: " + propertypath);
             }
         }
         return new QueryPropertyPath(propertyPath, tableAlias);
@@ -1699,6 +1863,21 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
         buildUpdateStatement(annotationMetadata, queryState, propertiesToUpdate);
         buildWhereClause(annotationMetadata, query.getCriteria(), queryState);
+
+        if (!query.getProjections().isEmpty()) {
+            if (!getDialect().supportsUpdateReturning()) {
+                throw new IllegalStateException("Dialect: " + getDialect() + " doesn't support UPDATE ... RETURNING clause");
+            }
+            queryString.append(RETURNING);
+            buildSelect(
+                annotationMetadata,
+                queryState,
+                queryString,
+                query.getProjections(),
+                tableAlias,
+                entity
+            );
+        }
         return QueryResult.of(
             queryState.getFinalQuery(),
             queryState.getQueryParts(),
@@ -1720,6 +1899,20 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             buffer.append(getTableAsKeyword()).append(tableAlias);
         }
         buildWhereClause(annotationMetadata, query.getCriteria(), queryState);
+        if (!query.getProjections().isEmpty()) {
+            if (!getDialect().supportsDeleteReturning()) {
+                throw new IllegalStateException("Dialect: " + getDialect() + " doesn't support DELETE ... RETURNING clause");
+            }
+            queryString.append(RETURNING);
+            buildSelect(
+                annotationMetadata,
+                queryState,
+                queryString,
+                query.getProjections(),
+                tableAlias,
+                entity
+            );
+        }
         return QueryResult.of(
             queryState.getFinalQuery(),
             queryState.getQueryParts(),
@@ -1752,7 +1945,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     @NonNull
     @Override
     public QueryResult buildOrderBy(@NonNull PersistentEntity entity, @NonNull Sort sort) {
-        return buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort);
+        return buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false);
     }
 
     /**
@@ -1763,9 +1956,28 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param annotationMetadata The annotation metadata
      * @param sort   The sort
      * @return The encoded query
+     *
+     * @deprecated use {@link #buildOrderBy(String, PersistentEntity, AnnotationMetadata, Sort, boolean)}
      */
     @NonNull
+    @Deprecated(forRemoval = true, since = "4.2.0")
     public QueryResult buildOrderBy(String query, @NonNull PersistentEntity entity, @NonNull AnnotationMetadata annotationMetadata, @NonNull Sort sort) {
+        return buildOrderBy(query, entity, annotationMetadata, sort, false);
+    }
+
+    /**
+     * Encode the given query into the encoded query instance.
+     *
+     * @param query  The query
+     * @param entity The root entity
+     * @param annotationMetadata The annotation metadata
+     * @param sort   The sort
+     * @param nativeQuery Whether the query is native query, in which case sort field names will be supplied by the user and not verified
+     * @return The encoded query
+     */
+    @NonNull
+    public QueryResult buildOrderBy(String query, @NonNull PersistentEntity entity, @NonNull AnnotationMetadata annotationMetadata, @NonNull Sort sort,
+                                    boolean nativeQuery) {
         ArgumentUtils.requireNonNull("entity", entity);
         ArgumentUtils.requireNonNull("sort", sort);
         List<Sort.Order> orders = sort.getOrderBy();
@@ -1776,55 +1988,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         StringBuilder buff = new StringBuilder(ORDER_BY_CLAUSE);
         Iterator<Sort.Order> i = orders.iterator();
 
-        String jsonEntityColumn = getJsonEntityColumn(annotationMetadata);
-
         while (i.hasNext()) {
             Sort.Order order = i.next();
             String property = order.getProperty();
-            PersistentPropertyPath path = entity.getPropertyPath(property);
-            if (path == null) {
-                throw new IllegalArgumentException("Cannot sort on non-existent property path: " + property);
-            }
             boolean ignoreCase = order.isIgnoreCase();
             if (ignoreCase) {
                 buff.append("LOWER(");
             }
-            if (path.getAssociations().isEmpty()) {
-                buff.append(getAliasName(entity));
-            } else {
-                StringJoiner joiner = new StringJoiner(".");
-                for (Association association : path.getAssociations()) {
-                    joiner.add(association.getName());
-                }
-                String joinAlias = getAliasName(new JoinPath(joiner.toString(), path.getAssociations().toArray(new Association[0]), Join.Type.DEFAULT, null));
-                if (!computePropertyPaths()) {
-                    if (!query.contains(" " + joinAlias + " ") && !query.endsWith(" " + joinAlias)) {
-                        // Special hack case for JPA, Hibernate can join the relation with cross join automatically when referenced by the property path
-                        // This probably should be removed in the future major version
-                        buff.append(getAliasName(entity)).append(DOT);
-                        StringJoiner pathJoiner = new StringJoiner(".");
-                        for (Association association : path.getAssociations()) {
-                            pathJoiner.add(association.getName());
-                        }
-                        buff.append(pathJoiner);
-                    } else {
-                        buff.append(joinAlias);
-                    }
-                } else {
-                    buff.append(joinAlias);
-                }
-            }
-            buff.append(DOT);
-
-            if (jsonEntityColumn != null) {
-                buff.append(jsonEntityColumn).append(DOT);
-            }
-
-            if (!computePropertyPaths() || jsonEntityColumn != null) {
-                buff.append(path.getProperty().getName());
-            } else {
-                buff.append(getColumnName(path.getProperty()));
-            }
+            buff.append(buildPropertyByName(property, query, entity, annotationMetadata, nativeQuery));
             if (ignoreCase) {
                 buff.append(")");
             }
@@ -1840,6 +2011,81 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             Collections.emptyList(),
             Collections.emptyMap()
         );
+    }
+
+    /**
+     * Encode the given property retrieval into a query instance.
+     * For example, property name might be encoded as {@code `person_.name`} using
+     * its path and table's alias.
+     *
+     * @param propertyName The name of the property
+     * @param query The query
+     * @param entity The root entity
+     * @param annotationMetadata The annotation metadata
+     * @param nativeQuery Whether the query is native query, in which case the property name will be supplied by the user and not verified
+     * @return The encoded query
+     */
+    public String buildPropertyByName(
+            @NonNull String propertyName, @NonNull String query,
+            @NonNull PersistentEntity entity, @NonNull AnnotationMetadata annotationMetadata,
+            boolean nativeQuery
+    ) {
+        if (nativeQuery) {
+            return propertyName;
+        }
+
+        PersistentPropertyPath path = entity.getPropertyPath(propertyName);
+        if (path == null) {
+            throw new IllegalArgumentException("Cannot sort on non-existent property path: " + propertyName);
+        }
+        List<Association> associations = new ArrayList<>(path.getAssociations());
+        int assocCount = associations.size();
+        // If last association is embedded, it does not need to be joined to the alias since it will be in the destination table
+        // JPA/Hibernate is special case and in that case we leave association for specific handling below
+        if (assocCount > 0 && computePropertyPaths() && associations.get(assocCount - 1) instanceof Embedded) {
+            associations.remove(assocCount - 1);
+        }
+
+        StringBuilder buff = new StringBuilder();
+        if (associations.isEmpty()) {
+            buff.append(getAliasName(entity));
+        } else {
+            StringJoiner joiner = new StringJoiner(".");
+            for (Association association : associations) {
+                joiner.add(association.getName());
+            }
+            String joinAlias = getAliasName(new JoinPath(joiner.toString(), associations.toArray(new Association[0]), Join.Type.DEFAULT, null));
+            if (!computePropertyPaths()) {
+                if (!query.contains(" " + joinAlias + " ") && !query.endsWith(" " + joinAlias)) {
+                    // Special hack case for JPA, Hibernate can join the relation with cross join automatically when referenced by the property path
+                    // This probably should be removed in the future major version
+                    buff.append(getAliasName(entity)).append(DOT);
+                    StringJoiner pathJoiner = new StringJoiner(".");
+                    for (Association association : associations) {
+                        pathJoiner.add(association.getName());
+                    }
+                    buff.append(pathJoiner);
+                } else {
+                    buff.append(joinAlias);
+                }
+            } else {
+                buff.append(joinAlias);
+            }
+        }
+        buff.append(DOT);
+
+        String jsonEntityColumn = getJsonEntityColumn(annotationMetadata);
+        if (jsonEntityColumn != null) {
+            buff.append(jsonEntityColumn).append(DOT);
+        }
+
+        if (!computePropertyPaths() || jsonEntityColumn != null) {
+            buff.append(path.getProperty().getName());
+        } else {
+            buff.append(getColumnName(path.getProperty()));
+        }
+
+        return buff.toString();
     }
 
     /**
@@ -2000,15 +2246,15 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     /**
      * Gets column alias if defined as alias field on MappedProperty annotation on the mapping field.
      *
-     * @param property the persisent propert
+     * @param property the persistent property
      * @return column alias if defined, otherwise an empty string
      */
     protected final String getColumnAlias(PersistentProperty property) {
-        return property.getAnnotationMetadata().stringValue(MappedProperty.class, MappedProperty.ALIAS).orElse("");
+        return property.getAlias();
     }
 
     /**
-     * If and when {@link io.micronaut.data.annotation.EntityRepresentation} annotation with JSON type is used for the repository method but dialect does not support
+     * If and when {@link EntityRepresentation} annotation with JSON type is used for the repository method but dialect does not support
      * JSON entity representations this will throw {@link IllegalArgumentException}.
      *
      * @param entity the persistent entity
@@ -2020,12 +2266,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     }
 
     /**
-     * Checks whether {@link io.micronaut.data.annotation.EntityRepresentation} annotation with JSON type is used for the repository method.
+     * Checks whether {@link EntityRepresentation} annotation with JSON type is used for the repository method.
      * If current dialect does not support handling JSON entity representations, {@link IllegalArgumentException} is thrown.
      *
      * @param annotationMetadata the annotation metadata
      * @param entity the persistent entity
-     * @return true if {@link io.micronaut.data.annotation.EntityRepresentation} annotation with JSON type is used for the repository method
+     * @return true if {@link EntityRepresentation} annotation with JSON type is used for the repository method
      */
     protected boolean isJsonEntity(AnnotationMetadata annotationMetadata, PersistentEntity entity) {
         boolean jsonEntity = DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(annotationMetadata);
@@ -2064,6 +2310,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         QueryPropertyPath getRequiredProperty(String name, Class<?> criterionClazz);
 
+        @Override
         default void pushParameter(@NonNull BindingParameter bindingParameter, @NonNull BindingParameter.BindingContext bindingContext) {
             getQueryState().pushParameter(bindingParameter, bindingContext);
         }
@@ -2333,8 +2580,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         /**
          * Default constructor.
          *
-         * @param name The name of the place holder
-         * @param key  The key to set the value of the place holder
+         * @param name The name of the placeholder
+         * @param key  The key to set the value of the placeholder
          */
         public Placeholder(String name, String key) {
             this.name = name;
@@ -2347,14 +2594,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         /**
-         * @return The place holder name
+         * @return The placeholder name
          */
         public String getName() {
             return name;
         }
 
         /**
-         * This the precomputed key to set the place holder. In SQL this would be the index.
+         * This the precomputed key to set the placeholder. In SQL this would be the index.
          *
          * @return The key used to set the placeholder.
          */

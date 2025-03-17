@@ -37,10 +37,3 @@ micronaut {
         version = libs.versions.micronaut.testresources.get()
     }
 }
-
-micronautBuild {
-    // New module in 4.0
-    binaryCompatibility {
-        enabled = false
-    }
-}

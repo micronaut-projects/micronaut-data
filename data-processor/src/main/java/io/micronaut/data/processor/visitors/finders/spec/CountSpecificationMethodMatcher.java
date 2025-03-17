@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.processor.visitors.finders.spec;
 
+import java.util.regex.Matcher;
+
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
@@ -23,8 +25,6 @@ import io.micronaut.data.processor.visitors.finders.FindersUtils;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
 import io.micronaut.inject.ast.ClassElement;
-
-import java.util.Map;
 
 /**
  * Implementation of {@code count(Specification)} for JPA specifications.
@@ -43,12 +43,12 @@ public class CountSpecificationMethodMatcher extends AbstractSpecificationMethod
     }
 
     @Override
-    protected MethodMatch match(MethodMatchContext matchContext, java.util.regex.Matcher matcher) {
+    protected MethodMatch match(MethodMatchContext matchContext, Matcher matcher) {
         if (TypeUtils.isValidCountReturnType(matchContext)) {
             return mc -> {
                 if (isFirstParameterMicronautDataQuerySpecification(matchContext.getMethodElement())) {
-                    Map.Entry<ClassElement, ClassElement> e = FindersUtils.pickCountSpecInterceptor(matchContext, matchContext.getReturnType());
-                    return new MethodMatchInfo(DataMethod.OperationType.COUNT, e.getKey(), e.getValue());
+                    FindersUtils.InterceptorMatch e = FindersUtils.pickCountSpecInterceptor(matchContext, matchContext.getReturnType());
+                    return new MethodMatchInfo(DataMethod.OperationType.COUNT, e.returnType(), e.interceptor());
                 }
                 if (isFirstParameterSpringJpaSpecification(mc.getMethodElement())) {
                     return new MethodMatchInfo(

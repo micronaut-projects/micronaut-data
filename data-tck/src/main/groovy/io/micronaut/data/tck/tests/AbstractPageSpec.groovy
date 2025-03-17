@@ -81,6 +81,9 @@ abstract class AbstractPageSpec extends Specification {
         page.totalPages == 130
         page.nextPageable().offset == 10
         page.nextPageable().size == 10
+        page.hasNext()
+        page.hasTotalSize()
+        !page.hasPrevious()
 
         when: "The next page is selected"
         pageable = page.nextPageable()
@@ -91,6 +94,8 @@ abstract class AbstractPageSpec extends Specification {
         page.pageNumber == 1
         page.content[0].name.startsWith("K")
         page.content.size() == 10
+        page.hasNext()
+        page.hasPrevious()
 
         when: "The previous page is selected"
         pageable = page.previousPageable()
@@ -101,6 +106,31 @@ abstract class AbstractPageSpec extends Specification {
         page.pageNumber == 0
         page.content[0].name.startsWith("A")
         page.content.size() == 10
+        page.hasNext()
+        !page.hasPrevious()
+    }
+
+    void "test pageable list without total count"() {
+        when: "10 people are paged"
+        def pageable = Pageable.from(0, 10).withoutTotal()
+        Page<Person> page = personRepository.findAll(pageable)
+
+        then: "The data is correct"
+        page.content.size() == 10
+        page.content.every() { it instanceof Person }
+        !page.hasTotalSize()
+
+        when:
+        page.getTotalPages()
+
+        then:
+        thrown(IllegalStateException)
+
+        when:
+        page.getTotalSize()
+
+        then:
+        thrown(IllegalStateException)
     }
 
     void "test pageable sort"() {

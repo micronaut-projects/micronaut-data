@@ -15,8 +15,8 @@
  */
 package io.micronaut.data.hibernate.async
 
-import io.micronaut.context.annotation.Property
 import io.micronaut.data.exceptions.EmptyResultException
+import io.micronaut.data.hibernate.H2DBProperties
 import io.micronaut.data.hibernate.entities.UserWithWhere
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.tck.entities.Person
@@ -28,8 +28,7 @@ import spock.lang.Specification
 import java.util.concurrent.ExecutionException
 
 @MicronautTest(rollback = false, packages = "io.micronaut.data.tck.entities")
-@Property(name = "datasources.default.name", value = "mydb")
-@Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
+@H2DBProperties
 class AsyncSpec extends Specification {
 
     @Inject

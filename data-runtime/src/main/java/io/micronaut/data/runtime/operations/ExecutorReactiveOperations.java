@@ -37,7 +37,6 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.Serializable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
@@ -83,7 +82,7 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
 
     @NonNull
     @Override
-    public <T> Publisher<T> findOne(@NonNull Class<T> type, @NonNull Serializable id) {
+    public <T> Publisher<T> findOne(@NonNull Class<T> type, @NonNull Object id) {
         return fromCompletableFuture(() -> asyncOperations.findOne(type, id));
     }
 
@@ -100,7 +99,7 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
 
     @NonNull
     @Override
-    public <T> Publisher<T> findOptional(@NonNull Class<T> type, @NonNull Serializable id) {
+    public <T> Publisher<T> findOptional(@NonNull Class<T> type, @NonNull Object id) {
         return fromCompletableFuture(() -> asyncOperations.findOptional(type, id));
     }
 
@@ -191,7 +190,7 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
                 .map(number -> convertNumberArgumentIfNecessary(number, operation.getResultArgument()));
     }
 
-    private <R> Mono<R> fromCompletableFuture(Supplier<CompletableFuture<R>> futureSupplier) {
+    protected final <R> Mono<R> fromCompletableFuture(Supplier<CompletableFuture<R>> futureSupplier) {
         return Mono.fromCompletionStage(PropagatedContext.wrapCurrent(futureSupplier));
     }
 

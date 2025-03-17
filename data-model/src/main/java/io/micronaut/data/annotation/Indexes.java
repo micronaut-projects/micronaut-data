@@ -24,7 +24,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * A @Join defines how a join for a particular association path should be generated.
+ * Repeatable annotation for {@link Index}.
  *
  * @author Davide Pugliese
  * @since 2.4

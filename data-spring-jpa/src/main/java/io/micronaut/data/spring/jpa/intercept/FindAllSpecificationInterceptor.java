@@ -48,19 +48,17 @@ public final class FindAllSpecificationInterceptor extends io.micronaut.data.jpa
     }
 
     @Override
-    protected io.micronaut.data.jpa.repository.criteria.Specification getSpecification(MethodInvocationContext<?, ?> context) {
+    protected io.micronaut.data.jpa.repository.criteria.Specification getSpecification(MethodInvocationContext<?, ?> context, boolean nullable) {
         final Object parameterValue = context.getParameterValues()[0];
-        if (parameterValue instanceof Specification) {
-            Specification springSpecification = (Specification) parameterValue;
+        if (parameterValue instanceof Specification springSpecification) {
             return (root, query, criteriaBuilder) -> springSpecification.toPredicate(root, query, criteriaBuilder);
         }
-        return super.getSpecification(context);
+        return super.getSpecification(context, false);
     }
 
     @Override
     protected void addSort(Object sortObject, CriteriaQuery<Object> query, Root<Object> root, CriteriaBuilder criteriaBuilder) {
-        if (sortObject instanceof Sort) {
-            Sort sort = (Sort) sortObject;
+        if (sortObject instanceof Sort sort) {
             if (sort.isSorted()) {
                 final List<Order> orders = QueryUtils.toOrders(sort, root, criteriaBuilder);
                 query.orderBy(orders);

@@ -29,7 +29,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * A match context for finding a matching method.
@@ -56,6 +55,7 @@ public class MethodMatchContext extends MatchContext {
      * @param typeRoles The type roles
      * @param parameters The parameters
      * @param entityResolver function used to resolve entities
+     * @param findInterceptors The interceptors
      */
     MethodMatchContext(
             @NonNull QueryBuilder queryBuilder,
@@ -67,8 +67,9 @@ public class MethodMatchContext extends MatchContext {
             @NonNull Map<String, Element> parametersInRole,
             @NonNull Map<String, String> typeRoles,
             @NonNull ParameterElement[] parameters,
-            @NonNull Function<ClassElement, SourcePersistentEntity> entityResolver) {
-        super(queryBuilder, repositoryClass, visitorContext, methodElement, typeRoles, returnType, parameters);
+            @NonNull Function<ClassElement, SourcePersistentEntity> entityResolver,
+            @NonNull Map<ClassElement, FindInterceptorDef> findInterceptors) {
+        super(queryBuilder, repositoryClass, visitorContext, methodElement, typeRoles, returnType, parameters, findInterceptors);
         this.entity = entity;
         this.parametersInRole = Collections.unmodifiableMap(parametersInRole);
         this.entityResolver = entityResolver;
@@ -108,7 +109,15 @@ public class MethodMatchContext extends MatchContext {
     public @NonNull List<ParameterElement> getParametersNotInRole() {
         return Arrays.stream(getParameters()).filter(p ->
             !this.parametersInRole.containsValue(p)
-        ).collect(Collectors.toList());
+        ).toList();
+    }
+
+    /**
+     * Returns a list of parameters that are not fulfilling a specific query role.
+     * @return The parameters not in role
+     */
+    public @NonNull List<ParameterElement> getParametersInRoleList() {
+        return Arrays.stream(getParameters()).filter(this.parametersInRole::containsValue).toList();
     }
 
     /**

@@ -17,6 +17,7 @@ package io.micronaut.data.processor.mappers.jpa.jx;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.data.annotation.Transient;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
 
@@ -25,7 +26,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Maps JPA's {@code Transient} annotation to {@link io.micronaut.data.annotation.Transient}.
+ * Maps JPA's {@code Transient} annotation to {@link Transient}.
  *
  * @author graemerocher
  * @since 1.0.0
@@ -40,7 +41,7 @@ public class TransientAnnotationMapper implements NamedAnnotationMapper {
 
     @Override
     public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
-        return Collections.singletonList(AnnotationValue.builder(io.micronaut.data.annotation.Transient.class)
+        return Collections.singletonList(AnnotationValue.builder(Transient.class)
                 .build());
     }
 }

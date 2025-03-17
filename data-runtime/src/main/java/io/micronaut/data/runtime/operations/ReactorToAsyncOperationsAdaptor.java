@@ -33,7 +33,7 @@ import io.micronaut.data.operations.reactive.ReactorReactiveRepositoryOperations
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.Serializable;
+import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 
@@ -63,7 +63,7 @@ public final class ReactorToAsyncOperationsAdaptor implements AsyncRepositoryOpe
 
     @NonNull
     @Override
-    public <T> CompletionStage<T> findOne(@NonNull Class<T> type, @NonNull Serializable id) {
+    public <T> CompletionStage<T> findOne(@NonNull Class<T> type, @NonNull Object id) {
         return toCompletionStage(reactiveOperations.findOne(type, id));
     }
 
@@ -80,7 +80,7 @@ public final class ReactorToAsyncOperationsAdaptor implements AsyncRepositoryOpe
 
     @NonNull
     @Override
-    public <T> CompletionStage<T> findOptional(@NonNull Class<T> type, @NonNull Serializable id) {
+    public <T> CompletionStage<T> findOptional(@NonNull Class<T> type, @NonNull Object id) {
         return toCompletionStage(reactiveOperations.findOptional(type, id));
     }
 
@@ -141,6 +141,11 @@ public final class ReactorToAsyncOperationsAdaptor implements AsyncRepositoryOpe
     @Override
     public CompletionStage<Number> executeDelete(PreparedQuery<?, Number> preparedQuery) {
         return toCompletionStage(reactiveOperations.executeDelete(preparedQuery));
+    }
+
+    @Override
+    public <R> CompletionStage<List<R>> execute(PreparedQuery<?, R> preparedQuery) {
+        return toCompletionStage(reactiveOperations.execute(preparedQuery).collectList());
     }
 
     @NonNull

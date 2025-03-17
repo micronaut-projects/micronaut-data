@@ -1,23 +1,27 @@
 package example
 
-import io.micronaut.data.annotation.*
+import io.micronaut.data.annotation.Join
+import io.micronaut.data.annotation.Repository
+import io.micronaut.data.annotation.sql.Procedure
 import io.micronaut.data.jpa.annotation.EntityGraph
 import io.micronaut.data.jpa.repository.JpaSpecificationExecutor
 import io.micronaut.data.jpa.repository.criteria.Specification
 import io.micronaut.data.repository.CrudRepository
 import io.reactivex.Maybe
 import io.reactivex.Single
-import java.util.concurrent.CompletableFuture
 import jakarta.transaction.Transactional
+import java.util.concurrent.CompletableFuture
 
 // tag::join[]
 // tag::async[]
 // tag::specifications[]
+// tag::procedure[]
 @Repository
 interface ProductRepository : CrudRepository<Product, Long>, JpaSpecificationExecutor<Product> {
 // end::join[]
 // end::async[]
 // end::specifications[]
+// end::procedure[]
 
     // tag::join[]
     @Join(value = "manufacturer", type = Join.Type.FETCH) // <1>
@@ -43,6 +47,14 @@ interface ProductRepository : CrudRepository<Product, Long>, JpaSpecificationExe
     fun countDistinctByManufacturerName(name: String): Single<Long>
     // end::reactive[]
 
+    // tag::procedure[]
+    @Procedure(named = "calculateSum")
+    fun calculateSum(productId: Long): Long
+
+    @Procedure("calculateSumInternal")
+    fun calculateSumCustom(productId: Long): Long
+    // end::procedure[]
+
     // tag::specifications[]
 
     @Transactional
@@ -62,6 +74,9 @@ interface ProductRepository : CrudRepository<Product, Long>, JpaSpecificationExe
     object Specifications {
 
         fun nameEquals(name: String) = Specification<Product> { root, _, criteriaBuilder ->
+            // end::spec[]
+            check(criteriaBuilder.javaClass.getName().startsWith("org.hibernate"))
+            // tag::spec[]
             criteriaBuilder.equal(root.get<String>("name"), name)
         }
 
@@ -76,7 +91,9 @@ interface ProductRepository : CrudRepository<Product, Long>, JpaSpecificationExe
 // tag::join[]
 // tag::async[]
 // tag::specifications[]
+// tag::procedure[]
 }
 // end::join[]
 // end::async[]
 // end::specifications[]
+// end::procedure[]

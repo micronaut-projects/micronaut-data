@@ -1,5 +1,6 @@
 introduction:
   title: Introduction
+  repository: Repository
   whatsNew: What's New?
   breaks: Breaking Changes
   releaseHistory: Release History
@@ -15,6 +16,7 @@ shared:
     title: Writing Queries
     criteria: Query Criteria
     pagination: Pagination
+    cursored-pagination: Cursored Pagination
     ordering: Ordering
     projections: Query Projections
     dto: DTO Projections
@@ -29,13 +31,23 @@ shared:
     deletes: Deleting
     timestamps: Entity Timestamps
     entityEvents: Entity Events
+  criteriaSpecifications:
+    title: Repositories with Jakarta Criteria API
+    criteriaExecuteQuery: Querying
+    criteriaExecuteUpdate: Updating
+    criteriaExecuteDelete: Deleting
+    otherRepositoryVariations: Different repository variations
+    typeSafeJava: Type-Safe Java queries
   transactions:
     title: Transactions
     programmaticTransactions: Programmatic Transactions
     transactionalEvents: Transactional Events
   kotlinCriteria: Kotlin Criteria API extensions
-  multitenancy: Multi-tenancy
-
+  multitenancy:
+    title: Multi-tenancy
+    discriminatormode: Discriminator Mode
+    datasourcemode: DataSource Mode
+    schemamode: Schema Mode
 hibernate:
   title: Micronaut Data JPA Hibernate
   hibernateJpaAnnotations: JPA Annotations
@@ -45,7 +57,7 @@ hibernate:
   hibernateJoinQueries: Join queries
   hibernateExplicitQueries: Explicit queries
   hibernateNativeQueries: Native queries
-  hibernateSpecifications: JPA specifications
+  hibernateProcedures: Procedures
 hibernateReactive: Micronaut Data Hibernate Reactive
 dbc:
   title: Micronaut Data JDBC and R2DBC
@@ -67,11 +79,6 @@ dbc:
     pessimisticLocking: Pessimistic Locking
   dbcCriteriaSpecifications:
     title: Repositories with Criteria API
-    criteriaExecuteQuery: Querying
-    criteriaExecuteUpdate: Updating
-    criteriaExecuteDelete: Deleting
-    otherRepositoryVariations: Other repository variations
-    typeSafeJava: Type-Safe Java queries
   sqlMapping:
     title: Mapping Entities
     sqlAnnotations: SQL Annotations
@@ -92,6 +99,7 @@ dbc:
   dbcAttributeConverter: Using Attribute Converter
   dbcJoinQueries: Join Queries
   dbcNativeQueries: Explicit Queries
+  dbcProcedures: Procedures
 mongo:
   title: Micronaut Data MongoDB
   mongoQuickStart: Quick Start
@@ -137,5 +145,5 @@ graal:
   title: Going Native with GraalVM
 spring:
   title: Spring Data Support
-
+dataGuides: Guides
 

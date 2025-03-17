@@ -16,3 +16,5 @@ snippet::example.Student[project-base="doc-examples/mongo-example", source="main
 It's possible to use ann:data.annotation.Version[] in a partial update or a delete method, in this case the version needs to match the version of the stored record.
 
 snippet::example.StudentRepository[project-base="doc-examples/mongo-example", source="main", tags="studentRepository", indent="0"]
+
+TIP: See the guides for https://guides.micronaut.io/latest/micronaut-data-mongodb-synchronous.html[Access a MongoDB Database with Micronaut Data MongoDB] and https://guides.micronaut.io/latest/micronaut-data-mongodb-asynchronous.html[Access a MongoDB Database Asynchronously with Micronaut Data MongoDB and Reactive Streams] to learn more.

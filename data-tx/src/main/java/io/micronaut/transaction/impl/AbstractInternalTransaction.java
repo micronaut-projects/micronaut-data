@@ -15,6 +15,7 @@
  */
 package io.micronaut.transaction.impl;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.order.OrderUtil;
 import io.micronaut.transaction.support.TransactionSynchronization;
@@ -29,6 +30,7 @@ import java.util.List;
  * @author Denis Stepanov
  * @since 4.0.0
  */
+@Internal
 public abstract class AbstractInternalTransaction<C> implements InternalTransaction<C> {
 
     protected List<TransactionSynchronization> synchronizations;
@@ -111,6 +113,11 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
 
     @Override
     public void registerSynchronization(@NonNull TransactionSynchronization synchronization) {
+        registerInvocationSynchronization(synchronization);
+    }
+
+    @Override
+    public void registerInvocationSynchronization(@NonNull TransactionSynchronization synchronization) {
         if (synchronizations == null) {
             synchronizations = new ArrayList<>(5);
         }

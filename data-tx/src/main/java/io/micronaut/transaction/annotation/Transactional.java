@@ -35,6 +35,7 @@ import java.lang.annotation.*;
 @Around
 @Type(TransactionalInterceptor.class)
 public @interface Transactional {
+
     /**
      * Alias for {@link #transactionManager}.
      *
@@ -60,7 +61,7 @@ public @interface Transactional {
 
     /**
      * The transaction propagation type.
-     * <p>Defaults to {@link io.micronaut.transaction.TransactionDefinition.Propagation#REQUIRED}.
+     * <p>Defaults to {@link TransactionDefinition.Propagation#REQUIRED}.
      *
      * @return The propagation
      */
@@ -68,7 +69,7 @@ public @interface Transactional {
 
     /**
      * The transaction isolation level.
-     * <p>Defaults to {@link io.micronaut.transaction.TransactionDefinition.Isolation#DEFAULT}.
+     * <p>Defaults to {@link TransactionDefinition.Isolation#DEFAULT}.
      *
      * @return The isolation level
      */
@@ -96,9 +97,9 @@ public @interface Transactional {
     boolean readOnly() default false;
 
     /**
-     * Defines the exceptions that will not result in a rollback.
+     * Defines the exceptions that will result in a rollback.
      *
-     * @return The exception types that will not result in a rollback.
+     * @return The exception types that will result in a rollback.
      * @since 3.5.0
      */
     Class<? extends Throwable>[] rollbackFor() default {};
@@ -111,4 +112,11 @@ public @interface Transactional {
      */
     Class<? extends Throwable>[] noRollbackFor() default {};
 
+    /**
+     * The optional name of the transaction.
+     *
+     * @return The transaction name
+     * @since 4.0.0
+     */
+    String name() default "";
 }

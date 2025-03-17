@@ -39,7 +39,7 @@ import java.lang.annotation.*;
     implicitQueries = false,
     namedParameters = false,
     typeRoles = @TypeRole(
-            role = R2dbcRepository.PARAMETER_TX_STATUS,
+            role = R2dbcRepository.PARAMETER_TX_STATUS_ROLE,
             type = ReactiveTransactionStatus.class
     )
 )
@@ -60,10 +60,9 @@ import java.lang.annotation.*;
 public @interface R2dbcRepository {
 
     /**
-     * @deprecated Transaction status key needs to be created using the data source name to allow propagating of multiple data source transactions
+     * Transaction status role that can be passed to the repository method.
      */
-    @Deprecated
-    String PARAMETER_TX_STATUS = "tx-status";
+    String PARAMETER_TX_STATUS_ROLE = "tx-status";
 
     /**
      * @return The datasource name.

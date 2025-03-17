@@ -8,6 +8,7 @@ import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.sql.JoinColumn;
 import io.micronaut.data.annotation.sql.JoinTable;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -18,9 +19,9 @@ public class Student {
     @GeneratedValue(GeneratedValue.Type.IDENTITY)
     private Long id;
     private String name;
+    private LocalDate birthDate;
     @Nullable
     private Double averageGrade;
-
 
     @Nullable
     private LocalDateTime startDateTime;
@@ -35,16 +36,18 @@ public class Student {
     @Relation(Relation.Kind.MANY_TO_ONE)
     private Address address;
 
-    public Student(String name, Double averageGrade, LocalDateTime startDateTime, Address address) {
-        this(null, name, averageGrade, startDateTime, true, address, Collections.emptyList());
+    public Student(String name, LocalDate birthDate, Double averageGrade, LocalDateTime startDateTime, Address address) {
+        this(null, name, birthDate, averageGrade, startDateTime, true, address, Collections.emptyList());
     }
 
-    public Student(Long id, String name, Double averageGrade, LocalDateTime startDateTime, boolean active, Address address, List<Class> classes) {
+    public Student(Long id, String name, LocalDate birthDate, Double averageGrade, LocalDateTime startDateTime, boolean active,
+                   Address address, List<Class> classes) {
         this.id = id;
         this.name = name;
         this.averageGrade = averageGrade;
         this.startDateTime = startDateTime;
         this.active = active;
+        this.birthDate = birthDate;
         this.address = address;
         this.classes = classes;
     }
@@ -59,6 +62,14 @@ public class Student {
 
     public String getName() {
         return name;
+    }
+
+    public LocalDate getBirthDate() {
+        return birthDate;
+    }
+
+    public void setBirthDate(LocalDate birthDate) {
+        this.birthDate = birthDate;
     }
 
     public Double getAverageGrade() {

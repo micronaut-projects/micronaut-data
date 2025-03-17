@@ -8,7 +8,7 @@ trait H2Properties implements TestPropertyProvider {
     Map<String, String> getProperties() {
         return [
                 "datasources.default.name"                     : "mydb",
-                "datasources.default.transactionManager"       : "springHibernate",
+                "datasources.default.transaction-manager"       : "springHibernate",
                 "datasources.default.schema-generate"          : "create-drop",
                 "datasources.default.dialect"                  : "h2",
                 "datasources.default.driver-class-name"        : "org.h2.Driver",

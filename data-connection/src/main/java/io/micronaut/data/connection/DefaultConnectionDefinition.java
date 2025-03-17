@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.connection;
 
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
@@ -25,10 +26,11 @@ import java.util.Optional;
 /**
  * Default implementation of the {@link ConnectionDefinition} interface.
  *
- * @param name                The connection name
- * @param propagationBehavior The propagation behaviour
- * @param timeout             The timeout
- * @param readOnlyValue       The read only
+ * @param name                   The connection name
+ * @param propagationBehavior    The propagation behaviour
+ * @param timeout                The timeout
+ * @param readOnlyValue          The read only
+ * @param annotationMetadata     The annotation metadata
  * @author Denis Stepanov
  * @since 4.0.0
  */
@@ -37,19 +39,25 @@ public record DefaultConnectionDefinition(
     @Nullable String name,
     Propagation propagationBehavior,
     @Nullable Duration timeout,
-    Boolean readOnlyValue
+    Boolean readOnlyValue,
+    @NonNull AnnotationMetadata annotationMetadata
 ) implements ConnectionDefinition {
 
     DefaultConnectionDefinition(String name) {
-        this(name, PROPAGATION_DEFAULT, null, null);
+        this(name, PROPAGATION_DEFAULT, null, null, AnnotationMetadata.EMPTY_METADATA);
     }
 
     public DefaultConnectionDefinition(Propagation propagationBehaviour) {
-        this(null, propagationBehaviour, null, null);
+        this(null, propagationBehaviour, null, null, AnnotationMetadata.EMPTY_METADATA);
     }
 
     public DefaultConnectionDefinition(String name, boolean readOnly) {
-        this(name, PROPAGATION_DEFAULT, null, readOnly);
+        this(name, PROPAGATION_DEFAULT, null, readOnly, AnnotationMetadata.EMPTY_METADATA);
+    }
+
+    public DefaultConnectionDefinition(String name, Propagation propagationBehavior, Duration timeout,
+                                       Boolean readOnlyValue) {
+        this(name, propagationBehavior, timeout, readOnlyValue, AnnotationMetadata.EMPTY_METADATA);
     }
 
     @Override
@@ -76,13 +84,22 @@ public record DefaultConnectionDefinition(
 
     @Override
     public ConnectionDefinition withPropagation(Propagation propagation) {
-        return new DefaultConnectionDefinition(name, propagation, timeout, readOnlyValue);
+        return new DefaultConnectionDefinition(name, propagation, timeout, readOnlyValue, annotationMetadata);
     }
 
     @Override
     public ConnectionDefinition withName(String name) {
-        return new DefaultConnectionDefinition(name, propagationBehavior, timeout, readOnlyValue);
+        return new DefaultConnectionDefinition(name, propagationBehavior, timeout, readOnlyValue, annotationMetadata);
     }
 
+    @Override
+    public ConnectionDefinition withAnnotationMetadata(AnnotationMetadata newAnnotationMetadata) {
+        return new DefaultConnectionDefinition(name, propagationBehavior, timeout, readOnlyValue, newAnnotationMetadata);
+    }
+
+    @Override
+    public @NonNull AnnotationMetadata getAnnotationMetadata() {
+        return annotationMetadata;
+    }
 }
 

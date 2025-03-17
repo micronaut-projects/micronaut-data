@@ -1,0 +1,23 @@
+plugins {
+    id "groovy"
+    id "io.micronaut.build.internal.data-example"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "spock"
+}
+
+dependencies {
+    compileOnly projects.micronautDataProcessor
+    compileOnly mnValidation.micronaut.validation.processor
+
+    implementation projects.micronautDataJdbc
+    implementation projects.micronautDataSpringJdbc
+    implementation mnValidation.micronaut.validation
+
+    runtimeOnly mnSql.micronaut.jdbc.tomcat
+    runtimeOnly mnLogging.logback.classic
+    runtimeOnly mnSql.h2
+}

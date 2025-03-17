@@ -95,7 +95,7 @@ public class DataConfiguration implements DataSettings {
 
         /**
          * @return the page size to use when binding {@link io.micronaut.data.model.Pageable}
-         * objects and no size parameter is used. By default is set to the same vale as {@link #maxPageSize}
+         * objects and no size parameter is used. By default, is set to the same vale as {@link #maxPageSize}
          */
         public int getDefaultPageSize() {
             return defaultPageSize == null ? maxPageSize : defaultPageSize;

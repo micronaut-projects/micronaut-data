@@ -16,7 +16,6 @@
 package io.micronaut.data.model.query;
 
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.*;
@@ -29,7 +28,9 @@ import java.util.stream.Stream;
  *
  * @author Graeme Rocher
  * @since 1.0
+ * @deprecated Replaced by JPA criteria
  */
+@Deprecated(forRemoval = true, since = "4.9")
 public class DefaultQuery implements QueryModel {
 
     private final PersistentEntity entity;
@@ -96,9 +97,8 @@ public class DefaultQuery implements QueryModel {
         return projections.getProjectionList();
     }
 
-
     /**
-     * Obtain the joint for for a given association.
+     * Obtain the joint for a given association.
      * @param path The path to the association
      * @return The join type
      */
@@ -137,12 +137,6 @@ public class DefaultQuery implements QueryModel {
         JoinPath jp = new JoinPath(path, associationPath, joinType, alias);
         joinPaths.put(path, jp);
         return jp;
-    }
-
-    @NonNull
-    @Override
-    public JoinPath join(String path, Association association, @NonNull Join.Type joinType, @Nullable String alias) {
-        return join(path, joinType, alias);
     }
 
     /**
@@ -280,8 +274,7 @@ public class DefaultQuery implements QueryModel {
      * @return This query instance
      */
     @Override
-    public @NonNull
-    DefaultQuery eq(@NonNull String property, @NonNull Object parameter) {
+    public @NonNull DefaultQuery eq(@NonNull String property, @NonNull Object parameter) {
         criteria.add(Restrictions.eq(property, parameter));
         return this;
     }
@@ -292,12 +285,11 @@ public class DefaultQuery implements QueryModel {
      * @param values The values
      * @return This query instance
      */
-    public @NonNull
-    DefaultQuery allEq(@NonNull Map<String, Object> values) {
+    @Override
+    public @NonNull DefaultQuery allEq(@NonNull Map<String, Object> values) {
         QueryModel.Junction conjunction = conjunction();
-        for (String property : values.keySet()) {
-            Object value = values.get(property);
-            conjunction.add(Restrictions.eq(property, value));
+        for (var entry : values.entrySet()) {
+            conjunction.add(Restrictions.eq(entry.getKey(), entry.getValue()));
         }
         return this;
     }

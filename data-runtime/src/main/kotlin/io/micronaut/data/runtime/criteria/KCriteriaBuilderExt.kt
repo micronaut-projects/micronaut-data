@@ -20,6 +20,7 @@ import io.micronaut.data.repository.jpa.criteria.CriteriaDeleteBuilder
 import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder
 import io.micronaut.data.repository.jpa.criteria.CriteriaUpdateBuilder
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
+import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import jakarta.persistence.criteria.*
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
@@ -42,6 +43,24 @@ fun <E, I, K : Collection<I>?> From<*, E>.joinMany(prop: KProperty1<out E, K>, j
 }
 
 @Experimental
+fun <E, I, K : List<I>?> From<*, E>.joinMany(prop: KProperty1<out E, K>, joinType: JoinType? = null): ListJoin<E, I> {
+    return if (joinType == null) {
+        this.joinList(prop.name)
+    } else {
+        this.joinList(prop.name, joinType)
+    }
+}
+
+@Experimental
+fun <E, I, K : Set<I>?> From<*, E>.joinMany(prop: KProperty1<out E, K>, joinType: JoinType? = null): SetJoin<E, I> {
+    return if (joinType == null) {
+        this.joinSet(prop.name)
+    } else {
+        this.joinSet(prop.name, joinType)
+    }
+}
+
+@Experimental
 fun <E, I> From<*, E>.joinOne(prop: KProperty1<out E, I>, joinType: JoinType? = null): Join<E, I> {
     return if (joinType == null) {
         this.join(prop.name)
@@ -54,10 +73,16 @@ fun <E, I> From<*, E>.joinOne(prop: KProperty1<out E, I>, joinType: JoinType? = 
 inline fun <reified E> where(noinline dsl: Where<E>.() -> Unit) = WherePredicate(dsl)
 
 @Experimental
+inline fun <reified E> query(noinline dsl: SelectQuery<E, *>.() -> Unit) = QueryPredicate(dsl)
+
+@Experimental
 inline fun <reified E, reified R> query(noinline dsl: SelectQuery<E, R>.() -> Unit) = QueryBuilder(dsl, E::class.java, R::class.java)
 
 @Experimental
 inline fun <reified E> update(noinline dsl: UpdateQuery<E>.() -> Unit) = UpdateQueryBuilder(dsl, E::class.java)
+
+@Experimental
+inline fun <reified E> delete(noinline dsl: Where<E>.() -> Unit) = DeleteQueryBuilder(dsl, E::class.java)
 
 @Experimental
 class QueryBuilder<E, R>(private var dsl: SelectQuery<E, R>.() -> Unit, private var entityType: Class<E>, var resultType: Class<R>) : CriteriaQueryBuilder<R> {
@@ -109,8 +134,18 @@ class WherePredicate<T>(var where: Where<T>.() -> Unit) : PredicateSpecification
 }
 
 @Experimental
-class SelectQuery<T, V>(var root: Root<T>, var query: CriteriaQuery<V>, var criteriaBuilder: CriteriaBuilder) : WhereQuery<T>(root, criteriaBuilder) {
+class QueryPredicate<T>(var query: SelectQuery<T, *>.() -> Unit) : QuerySpecification<T> {
 
+    override fun toPredicate(root: Root<T>, criteriaQuery: CriteriaQuery<*>, criteriaBuilder: CriteriaBuilder): Predicate {
+        val selectQuery = SelectQuery(root, criteriaQuery, criteriaBuilder)
+        query.invoke(selectQuery)
+        return requireNotNull(selectQuery.predicate)
+    }
+
+}
+
+@Experimental
+class SelectQuery<T, V>(var root: Root<T>, var query: CriteriaQuery<V>, var criteriaBuilder: CriteriaBuilder) : WhereQuery<T>(root, criteriaBuilder) {
 
     fun select(prop: KProperty<V>) {
         select(prop.asPath(root))
@@ -126,6 +161,10 @@ class SelectQuery<T, V>(var root: Root<T>, var query: CriteriaQuery<V>, var crit
 
     fun multiselect(vararg props: Selection<*>) {
         query.multiselect(*props)
+    }
+
+    fun distinct() {
+        query.distinct(true)
     }
 
     override fun where(dsl: Where<T>.() -> Unit) {
@@ -265,9 +304,9 @@ class Where<T>(var root: Root<T>, var criteriaBuilder: CriteriaBuilder) {
 
     infix fun <Y : Comparable<Y>> Expression<out Y?>.lessThan(other: Expression<out Y?>) = addComparablePredicate(criteriaBuilder::lessThan, other)
 
-    infix fun <Y : Comparable<Y>> Expression<out Y?>.lessThanOrEqualTo(other: Y) = addComparablePredicate(criteriaBuilder::lessThan, other)
+    infix fun <Y : Comparable<Y>> Expression<out Y?>.lessThanOrEqualTo(other: Y) = addComparablePredicate(criteriaBuilder::lessThanOrEqualTo, other)
 
-    infix fun <Y : Comparable<Y>> Expression<out Y?>.lessThanOrEqualTo(other: Expression<out Y?>) = addComparablePredicate(criteriaBuilder::lessThan, other)
+    infix fun <Y : Comparable<Y>> Expression<out Y?>.lessThanOrEqualTo(other: Expression<out Y?>) = addComparablePredicate(criteriaBuilder::lessThanOrEqualTo, other)
 
     fun <Y : Comparable<Y>> Expression<out Y?>.between(x: Y, y: Y) = addPredicate(criteriaBuilder.between(this, x, y))
 
@@ -289,6 +328,8 @@ class Where<T>(var root: Root<T>, var criteriaBuilder: CriteriaBuilder) {
     infix fun <Y : Number> Expression<out Y?>.le(other: Y) = addNumberPredicate(criteriaBuilder::le, other)
 
     infix fun <Y : Number> Expression<out Y?>.le(other: Expression<out Y?>) = addNumberPredicate(criteriaBuilder::le, other)
+
+    infix fun <Y> Expression<out Y?>.inList(other: Collection<Y>) = addInListPredicate(other)
 
     private inline fun <Y> Expression<out Y?>.addPredicate(fn: (Expression<out Y>, Y) -> Predicate, value: Y) {
         addPredicate(fn.invoke(this, value))
@@ -312,6 +353,10 @@ class Where<T>(var root: Root<T>, var criteriaBuilder: CriteriaBuilder) {
 
     private inline fun <Y : Number?, K : Number?> Expression<out Y?>.addNumberPredicate(fn: (Expression<out Y?>, Expression<out K?>) -> Predicate, value: Expression<out K?>) {
         addPredicate(fn.invoke(this, value))
+    }
+
+    private fun <Y> Expression<out Y?>.addInListPredicate(values: Collection<Y>) {
+        addPredicate(criteriaBuilder.`in`(this).apply { values.forEach { value(it) } })
     }
 
     private fun addPredicate(predicate: Predicate) {

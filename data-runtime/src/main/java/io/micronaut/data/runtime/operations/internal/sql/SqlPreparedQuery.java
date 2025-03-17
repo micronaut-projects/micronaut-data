@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.runtime.operations.internal.sql;
 
+import io.micronaut.aop.InvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
@@ -52,5 +53,15 @@ public interface SqlPreparedQuery<E, R> extends BindableParametersPreparedQuery<
      * @return the query result info
      * @since 4.0.0
      */
+    @Override
     QueryResultInfo getQueryResultInfo();
+
+    /**
+     * Returns the invocation context associated with this prepared query.
+     *
+     * @return the invocation context
+     */
+    @Nullable
+    @SuppressWarnings("java:S1452")
+    InvocationContext<?, ?> getInvocationContext();
 }

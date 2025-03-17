@@ -17,11 +17,14 @@ package io.micronaut.data.spring.tx;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.connection.ConnectionStatus;
+import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.TransactionCallback;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionStatus;
+import io.micronaut.transaction.exceptions.TransactionException;
 import io.micronaut.transaction.support.AbstractPropagatedStatusTransactionOperations;
 import io.micronaut.transaction.support.ExceptionUtil;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -41,7 +44,8 @@ import java.sql.Connection;
  */
 @Internal
 public abstract class AbstractSpringTransactionOperations
-    extends AbstractPropagatedStatusTransactionOperations<TransactionStatus<Connection>, Connection> {
+        extends AbstractPropagatedStatusTransactionOperations<TransactionStatus<Connection>, Connection>
+        implements SynchronousTransactionManager<Connection> {
 
     private final PlatformTransactionManager transactionManager;
     private final TransactionTemplate writeTransactionTemplate;
@@ -53,6 +57,36 @@ public abstract class AbstractSpringTransactionOperations
         DefaultTransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
         transactionDefinition.setReadOnly(true);
         this.readTransactionTemplate = new TransactionTemplate(transactionManager, transactionDefinition);
+    }
+
+    @Override
+    public TransactionStatus<Connection> getTransaction(TransactionDefinition definition) throws TransactionException {
+        DefaultTransactionDefinition def = asSpringTxDefinition(definition);
+        org.springframework.transaction.TransactionStatus transaction = transactionManager.getTransaction(def);
+        SpringTransactionStatus status = new SpringTransactionStatus(transaction, definition);
+        PropagatedContext propagatedContext = extendCurrentPropagatedContext(status);
+        status.propagatedScope = propagatedContext.propagate();
+        return status;
+    }
+
+    @Override
+    public void commit(TransactionStatus<Connection> status) throws TransactionException {
+        SpringTransactionStatus springTransactionStatus = (SpringTransactionStatus) status;
+        try {
+            transactionManager.commit(springTransactionStatus.springStatus);
+        } finally {
+            springTransactionStatus.propagatedScope.close();
+        }
+    }
+
+    @Override
+    public void rollback(TransactionStatus<Connection> status) throws TransactionException {
+        SpringTransactionStatus springTransactionStatus = (SpringTransactionStatus) status;
+        try {
+            transactionManager.rollback(springTransactionStatus.springStatus);
+        } finally {
+            springTransactionStatus.propagatedScope.close();
+        }
     }
 
     @Override
@@ -70,6 +104,12 @@ public abstract class AbstractSpringTransactionOperations
         ArgumentUtils.requireNonNull("callback", callback);
         ArgumentUtils.requireNonNull("definition", definition);
 
+        final DefaultTransactionDefinition def = asSpringTxDefinition(definition);
+
+        return execute(new TransactionTemplate(transactionManager, def), callback, definition);
+    }
+
+    private DefaultTransactionDefinition asSpringTxDefinition(TransactionDefinition definition) {
         final DefaultTransactionDefinition def = new DefaultTransactionDefinition();
         definition.isReadOnly().ifPresent(def::setReadOnly);
         def.setIsolationLevel(definition.getIsolationLevel().orElse(TransactionDefinition.Isolation.DEFAULT).getCode());
@@ -80,8 +120,7 @@ public abstract class AbstractSpringTransactionOperations
                 def.setTimeout((int) timeout.getSeconds());
             }
         });
-
-        return execute(new TransactionTemplate(transactionManager, def), callback, definition);
+        return def;
     }
 
     private <R> R execute(TransactionTemplate template,
@@ -115,6 +154,7 @@ public abstract class AbstractSpringTransactionOperations
 
         private final org.springframework.transaction.TransactionStatus springStatus;
         private final TransactionDefinition transactionDefinition;
+        private PropagatedContext.Scope propagatedScope;
 
         SpringTransactionStatus(org.springframework.transaction.TransactionStatus springStatus, TransactionDefinition transactionDefinition) {
             this.springStatus = springStatus;

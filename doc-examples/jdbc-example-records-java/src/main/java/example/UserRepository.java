@@ -15,4 +15,6 @@ public interface UserRepository extends CrudRepository<User, Long> {
     @Join("address.city")
     @Override
     Optional<User> findById(@NonNull Long id);
+
+    User save(String name, Address address);
 }

@@ -31,6 +31,11 @@ import io.micronaut.data.model.JsonDataType;
 public interface QueryParameterBinding {
 
     /**
+     * @return The parameter name.
+     */
+    String getName();
+
+    /**
      * @return The key represents the placeholder value in the query (usually it's ?).
      */
     String getKey();
@@ -44,7 +49,9 @@ public interface QueryParameterBinding {
      * @return The json representation data type if getDataType is {@link DataType#JSON} and is annotated with {@link JsonRepresentation}
      * annotation
      */
-    JsonDataType getJsonDataType();
+    default JsonDataType getJsonDataType() {
+        return JsonDataType.DEFAULT;
+    }
 
     /**
      * @return The converter class name
@@ -106,6 +113,39 @@ public interface QueryParameterBinding {
      */
     @Nullable
     default Object getValue() {
+        return null;
+    }
+
+    /**
+     * The constant runtime value.
+     *
+     * @return The value or null
+     * @since 4.5.0
+     */
+    @Nullable
+    default boolean isExpression() {
+        return false;
+    }
+
+    /**
+     * The role of the parameter.
+     *
+     * @return The role name or null
+     * @since 4.10
+     */
+    @Nullable
+    default String getRole() {
+        return null;
+    }
+
+    /**
+     * The table alias.
+     *
+     * @return The table alias
+     * @since 4.10
+     */
+    @Nullable
+    default String getTableAlias() {
         return null;
     }
 }

@@ -55,4 +55,12 @@ public @interface MongoUpdateOptions {
      */
     String hint() default "";
 
+    /**
+     * The array filters.
+     *
+     * @return The array filters
+     * @since 4.2.0
+     */
+    String[] arrayFilters() default {};
+
 }

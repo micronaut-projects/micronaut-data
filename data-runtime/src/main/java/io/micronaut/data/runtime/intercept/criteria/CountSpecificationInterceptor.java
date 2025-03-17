@@ -20,10 +20,8 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.ReturnType;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
-
-import java.util.Iterator;
+import jakarta.persistence.criteria.CriteriaQuery;
 
 /**
  * Interceptor that supports count specifications.
@@ -37,7 +35,7 @@ public class CountSpecificationInterceptor extends AbstractSpecificationIntercep
     /**
      * Default constructor.
      *
-     * @param operations            The operations
+     * @param operations The operations
      */
     public CountSpecificationInterceptor(@NonNull RepositoryOperations operations) {
         super(operations);
@@ -45,12 +43,8 @@ public class CountSpecificationInterceptor extends AbstractSpecificationIntercep
 
     @Override
     public Number intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Number> context) {
-        PreparedQuery<?, Long> preparedQuery = preparedQueryForCriteria(methodKey, context, Type.COUNT);
-
-        Iterable<Long> iterable = operations.findAll(preparedQuery);
-        Iterator<Long> i = iterable.iterator();
-        Long result = i.hasNext() ? i.next() : 0L;
-
+        CriteriaQuery<Long> query = buildCountQuery(methodKey, context);
+        Long result = getCriteriaRepositoryOperations(methodKey, context, null).findOne(query);
         final ReturnType<Number> rt = context.getReturnType();
         final Class<Number> returnType = rt.getType();
         if (returnType.isInstance(result)) {

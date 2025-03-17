@@ -31,7 +31,7 @@ import java.time.*;
 import java.util.*;
 
 /**
- * Enum of basic data types allowing compile time computation which can then subsequently be used at runtime for fast
+ * Enum of basic data types allowing to compile time computation which can then subsequently be used at runtime for fast
  * switching.
  *
  * @author graemerocher
@@ -40,7 +40,7 @@ import java.util.*;
  */
 public enum DataType {
     /**
-     * A big decimal such as {@link java.math.BigDecimal}.
+     * A big decimal such as {@link BigDecimal}.
      */
     BIGDECIMAL(BigDecimal.class, BigInteger.class),
     /**
@@ -60,11 +60,11 @@ public enum DataType {
      */
     CHARACTER(Character.class),
     /**
-     * A date such as {@link java.util.Date} or {@link java.time.LocalDate}.
+     * A date such as {@link java.util.Date} or {@link LocalDate}.
      */
     DATE(Date.class, java.sql.Date.class, LocalDate.class),
     /**
-     * A timestamp such as {@link java.sql.Timestamp} or {@link java.time.Instant}.
+     * A timestamp such as {@link Timestamp} or {@link Instant}.
      */
     TIMESTAMP(Timestamp.class, Instant.class, OffsetDateTime.class, ZonedDateTime.class),
     /**
@@ -146,7 +146,9 @@ public enum DataType {
 
     /**
      * Empty array of data types.
+     * @deprecated Not needed
      */
+    @Deprecated(forRemoval = true, since = "4.9")
     public static final DataType[] EMPTY_DATA_TYPE_ARRAY = new DataType[0];
     private static final Map<Class<?>, DataType> CLASS_DATA_TYPE_MAP = new HashMap<>();
 

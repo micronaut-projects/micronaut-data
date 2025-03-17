@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.hibernate
 
-import io.micronaut.context.annotation.Property
 import io.micronaut.data.hibernate.entities.Pet
 import io.micronaut.data.tck.entities.AuthorBooksDto
 import io.micronaut.data.tck.entities.BookDto
@@ -30,8 +29,7 @@ import jakarta.inject.Inject
 import java.util.stream.Collectors
 
 @MicronautTest(rollback = false, packages = ["io.micronaut.data.tck.entities", "io.micronaut.data.hibernate.entities"])
-@Property(name = "datasources.default.name", value = "mydb")
-@Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
+@H2DBProperties
 @Stepwise
 class ProjectionSpec extends Specification {
 
@@ -136,14 +134,14 @@ class ProjectionSpec extends Specification {
         types.contains(Pet.PetType.CAT)
 
         when:"a native query is used"
-        List names = petRepository.findPetNamesNative().collect(Collectors.toList())
+        List names = petRepository.findPetNamesNative().toList()
 
         then:
         names.size() == 3
         names.containsAll(["A", "B", "C"])
 
         when:"a native query is used"
-        types = petRepository.findPetTypesNative().collect(Collectors.toList())
+        types = petRepository.findPetTypesNative().toList()
 
         then:
         types.size() == 2

@@ -42,7 +42,7 @@ public class DefaultUpdateInterceptor<T> extends AbstractQueryInterceptor<T, Obj
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Object> context) {
-        PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
+        PreparedQuery<?, Number> preparedQuery = prepareQuery(methodKey, context);
         Number number = operations.executeUpdate(preparedQuery).orElse(null);
         final Argument<Object> returnType = context.getReturnType().asArgument();
         final Class<?> type = ReflectionUtils.getWrapperType(returnType.getType());

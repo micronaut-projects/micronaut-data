@@ -20,9 +20,10 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
-import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Path;
 
 import java.util.ArrayList;
@@ -38,25 +39,32 @@ import java.util.List;
  */
 @Internal
 class RuntimePersistentAssociationPath<Owner, E> extends AbstractRuntimePersistentEntityJoinSupport<Owner, E>
-        implements RuntimePersistentEntityPath<E>, PersistentAssociationPath<Owner, E> {
+    implements RuntimePersistentEntityPath<E>, PersistentAssociationPath<Owner, E> {
 
-    private final Path<?> parentPath;
+    private final PersistentEntityFrom<?, Owner> parent;
     private final RuntimeAssociation<Owner> association;
     private final List<Association> associations;
-    private io.micronaut.data.annotation.Join.Type associationJoinType;
+    private Join.Type associationJoinType;
     @Nullable
     private String alias;
 
-    RuntimePersistentAssociationPath(Path<?> parentPath,
+    RuntimePersistentAssociationPath(PersistentEntityFrom<?, Owner> parent,
                                      RuntimeAssociation<Owner> association,
                                      List<Association> associations,
                                      Join.Type associationJoinType,
-                                     @Nullable String alias) {
-        this.parentPath = parentPath;
+                                     @Nullable String alias,
+                                     CriteriaBuilder criteriaBuilder) {
+        super(criteriaBuilder);
+        this.parent = parent;
         this.association = association;
         this.associations = associations;
         this.associationJoinType = associationJoinType;
         this.alias = alias;
+    }
+
+    @Override
+    public PersistentEntityFrom<?, Owner> getParent() {
+        return parent;
     }
 
     @Override
@@ -81,13 +89,8 @@ class RuntimePersistentAssociationPath<Owner, E> extends AbstractRuntimePersiste
     }
 
     @Override
-    public void accept(SelectionVisitor selectionVisitor) {
-        selectionVisitor.visit(this);
-    }
-
-    @Override
     public Path<?> getParentPath() {
-        return parentPath;
+        return parent;
     }
 
     @Override
@@ -125,9 +128,9 @@ class RuntimePersistentAssociationPath<Owner, E> extends AbstractRuntimePersiste
     @Override
     public String toString() {
         return "RuntimePersistentAssociationPath{" +
-                "parentPath=" + parentPath +
-                ", association=" + association +
-                ", associations=" + associations +
-                '}';
+            "parent=" + parent +
+            ", association=" + association +
+            ", associations=" + associations +
+            '}';
     }
 }

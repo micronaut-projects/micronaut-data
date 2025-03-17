@@ -72,7 +72,7 @@ public class EntityEventRegistry implements EntityEventListener<Object>, Executa
         //noinspection RedundantCast
         this.allEventListeners = beanContext.getBeanDefinitions(EntityEventListener.class)
                 .stream().filter(bd -> ((Class) bd.getBeanType()) != (Class) getClass())
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override

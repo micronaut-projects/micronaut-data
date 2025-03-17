@@ -37,9 +37,9 @@ dependencies {
     implementation mnMongo.mongo.driver
     implementation mnKotlin.micronaut.kotlin.runtime
 
-    compileOnly libs.javax.persistence.api
-    implementation libs.jakarta.persistence.api
-    implementation libs.jakarta.transaction.api
+    compileOnly(libs.managed.javax.persistence.api)
+    implementation(mnSql.jakarta.persistence.api)
+    implementation(mnSql.jakarta.transaction.api)
     implementation libs.kotlin.coroutines
     implementation libs.kotlin.coroutines.reactive
 

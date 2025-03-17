@@ -12,8 +12,14 @@ When writing an explicit SQL query if you specify any joins within the query you
 
 For example:
 
-snippet::example.ProductRepository[project-base="doc-examples/jdbc-example", source="main",tags="native"]
+snippet::example.ProductRepository[project-base="doc-examples/jdbc-example", source="main", tags="native"]
 
 In the above example the query uses an alias called `m_` to query the `manufacturer` table via an `INNER JOIN`. Since the returned `Product` entity features a `manufacturer` association it may be nice to materialize this object as well. The `alias` member of the ann:data.annotation.Join[] annotation is used to specify which alias to materialize the `Manufacturer` instance from.
 
 NOTE: It is necessary to use the "logical name" of the field in the `@Join` (the name used in the `@Entity` class) and not the name used in the native query itself. In the previous example, if the name in the class were `myManufacturer`, then you would need to use `Join(value = "myManufacturer", alias = "m_")` without modifying anything on the native sql query.
+
+The above example demonstrated a custom query with a many-to-one relation whilst the following example defines a custom query with one-to-many relation:
+
+snippet::example.BookRepository[project-base="doc-examples/jdbc-example", source="main", tags="onetomanycustom"]
+
+If alias is not configured in the `@Join` annotation then default alias will be `@Join` annotation value plus underscore. In this example alias will be `reviews_`.

@@ -13,6 +13,7 @@ import io.micronaut.data.model.DataType
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
@@ -123,12 +124,34 @@ class H2EnumsMappingSpec extends Specification implements H2TestPropertyProvider
             def sql = builder.buildBatchCreateTableStatement(PersistentEntity.of(EnumEntity))
 
         then:
-            sql == 'CREATE TABLE `enum_entity` (`id` BIGINT AUTO_INCREMENT PRIMARY KEY,`as_default` VARCHAR(255) NOT NULL,`as_string` VARCHAR(255) NOT NULL,`as_int` INT NOT NULL);'
+            sql == 'CREATE TABLE `enum_entity` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`as_default` VARCHAR(255) NOT NULL,`as_string` VARCHAR(255) NOT NULL,`as_int` INT NOT NULL);'
     }
 
     void "test jpa create table with enums"() {
         given:
             SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.H2)
+
+        when:
+            def sql = builder.buildBatchCreateTableStatement(PersistentEntity.of(JpaEnumEntity))
+
+        then:
+            sql == 'CREATE TABLE `jpa_enum_entity` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`as_default` INT NOT NULL,`as_string` VARCHAR(255) NOT NULL,`as_int` INT NOT NULL);'
+    }
+
+    void "test create table with enums 2"() {
+        given:
+            SqlQueryBuilder2 builder = new SqlQueryBuilder2(Dialect.H2)
+
+        when:
+            def sql = builder.buildBatchCreateTableStatement(PersistentEntity.of(EnumEntity))
+
+        then:
+            sql == 'CREATE TABLE `enum_entity` (`id` BIGINT AUTO_INCREMENT PRIMARY KEY,`as_default` VARCHAR(255) NOT NULL,`as_string` VARCHAR(255) NOT NULL,`as_int` INT NOT NULL);'
+    }
+
+    void "test jpa create table with enums 2"() {
+        given:
+            SqlQueryBuilder2 builder = new SqlQueryBuilder2(Dialect.H2)
 
         when:
             def sql = builder.buildBatchCreateTableStatement(PersistentEntity.of(JpaEnumEntity))

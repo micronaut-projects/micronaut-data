@@ -23,7 +23,6 @@ import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 
-import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -61,11 +60,6 @@ public final class DummyPreparedQuery<E, R> implements PreparedQuery<E, R>, Dele
     @Override
     public Class<?> getRepositoryType() {
         return Object.class;
-    }
-
-    @Override
-    public Map<String, Object> getParameterValues() {
-        return Collections.emptyMap();
     }
 
     @Override

@@ -17,8 +17,9 @@ package io.micronaut.data.runtime.criteria;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Association;
-import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.DefaultPersistentPropertyPath;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Path;
 
 import java.util.List;
@@ -32,13 +33,16 @@ import java.util.List;
  * @since 3.2
  */
 @Internal
-final class RuntimePersistentPropertyPathImpl<I, T> extends AbstractPersistentPropertyPath<T> {
+final class RuntimePersistentPropertyPathImpl<I, T> extends DefaultPersistentPropertyPath<T> {
 
     private final Path<?> parentPath;
     private final RuntimePersistentProperty<I> runtimePersistentProperty;
 
-    public RuntimePersistentPropertyPathImpl(Path<?> parentPath, List<Association> path, RuntimePersistentProperty<I> persistentProperty) {
-        super(persistentProperty, path);
+    public RuntimePersistentPropertyPathImpl(Path<?> parentPath,
+                                             List<Association> path,
+                                             RuntimePersistentProperty<I> persistentProperty,
+                                             CriteriaBuilder criteriaBuilder) {
+        super(persistentProperty, path, criteriaBuilder);
         this.parentPath = parentPath;
         this.runtimePersistentProperty = persistentProperty;
     }

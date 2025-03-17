@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.Introspected;
 
 import io.micronaut.core.annotation.NonNull;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * The default pageable implementation.
@@ -31,6 +32,7 @@ import java.util.Objects;
 @Introspected
 final class DefaultPageable implements Pageable {
 
+    private final boolean requestTotal;
     private final int max;
     private final int number;
     private final Sort sort;
@@ -43,7 +45,7 @@ final class DefaultPageable implements Pageable {
      * @param sort The sort
      */
     @Creator
-    DefaultPageable(int page, int size, @Nullable Sort sort) {
+    DefaultPageable(int page, int size, @Nullable Sort sort, @Nullable Boolean requestTotal) {
         if (page < 0) {
             throw new IllegalArgumentException("Page index cannot be negative");
         }
@@ -53,6 +55,7 @@ final class DefaultPageable implements Pageable {
         this.max = size;
         this.number = page;
         this.sort = sort == null ? Sort.unsorted() : sort;
+        this.requestTotal = requestTotal == null || requestTotal;
     }
 
     @Override
@@ -65,10 +68,36 @@ final class DefaultPageable implements Pageable {
         return number;
     }
 
+    @Override
+    public Optional<Cursor> cursor() {
+        return Optional.empty();
+    }
+
+    @Override
+    public boolean requestTotal() {
+        return requestTotal;
+    }
+
     @NonNull
     @Override
     public Sort getSort() {
         return sort;
+    }
+
+    @Override
+    public Pageable withTotal() {
+        if (this.requestTotal) {
+            return this;
+        }
+        return new DefaultPageable(number, max, sort, true);
+    }
+
+    @Override
+    public Pageable withoutTotal() {
+        if (!this.requestTotal) {
+            return this;
+        }
+        return new DefaultPageable(number, max, sort, false);
     }
 
     @Override
@@ -93,7 +122,7 @@ final class DefaultPageable implements Pageable {
     public String toString() {
         return "DefaultPageable{" +
                 "max=" + max +
-                ", number=" + number +
+                ", page=" + number +
                 ", sort=" + sort +
                 '}';
     }

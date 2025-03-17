@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.runtime.operations;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.core.util.ArgumentUtils;
@@ -30,7 +31,6 @@ import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 
-import java.io.Serializable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
@@ -63,11 +63,12 @@ public class ExecutorAsyncOperations implements AsyncRepositoryOperations {
         this.executor = executor;
     }
 
-    private <T> CompletableFuture<T> supplyAsync(Supplier<T> supplier) {
+    @Internal
+    final <T> CompletableFuture<T> supplyAsync(Supplier<T> supplier) {
         CompletableFuture<T> cf = new CompletableFuture<>();
         PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
         CompletableFuture.supplyAsync(PropagatedContext.wrapCurrent(supplier), executor).whenComplete((value, throwable) -> {
-            try (PropagatedContext.Scope scope = propagatedContext.propagate()) {
+            try (PropagatedContext.Scope ignore = propagatedContext.propagate()) {
                 if (throwable != null) {
                     cf.completeExceptionally(throwable);
                 } else {
@@ -85,7 +86,7 @@ public class ExecutorAsyncOperations implements AsyncRepositoryOperations {
 
     @NonNull
     @Override
-    public <T> CompletableFuture<T> findOne(@NonNull Class<T> type, @NonNull Serializable id) {
+    public <T> CompletableFuture<T> findOne(@NonNull Class<T> type, @NonNull Object id) {
         return supplyAsync(() -> datastore.findOne(type, id)
         );
     }
@@ -103,7 +104,7 @@ public class ExecutorAsyncOperations implements AsyncRepositoryOperations {
 
     @NonNull
     @Override
-    public <T> CompletableFuture<T> findOptional(@NonNull Class<T> type, @NonNull Serializable id) {
+    public <T> CompletableFuture<T> findOptional(@NonNull Class<T> type, @NonNull Object id) {
         return supplyAsync(() -> datastore.findOne(type, id));
     }
 

@@ -15,9 +15,12 @@
  */
 package io.micronaut.data.jdbc.mapper;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.micronaut.data.model.DataType;
@@ -36,6 +39,7 @@ import java.util.Date;
 public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Integer> {
 
     private final ConversionService conversionService;
+    private final DataJdbcConfiguration jdbcConfiguration;
 
     public JdbcQueryStatement() {
         this(null);
@@ -48,8 +52,56 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
      * @since 3.1
      */
     public JdbcQueryStatement(DataConversionService conversionService) {
-        // Backwards compatibility should be removed in the next version
-        this.conversionService = conversionService == null ? ConversionService.SHARED : conversionService;
+        this(conversionService, new DataJdbcConfiguration("default"));
+    }
+
+    /**
+     * Constructs a new instance.
+     *
+     * @param conversionService The data conversion service
+     * @param jdbcConfiguration The JDBC configuration
+     * @since 4.6.1
+     */
+    public JdbcQueryStatement(DataConversionService conversionService, DataJdbcConfiguration jdbcConfiguration) {
+        this.conversionService = conversionService;
+        this.jdbcConfiguration = jdbcConfiguration;
+    }
+
+    /**
+     * Find the SQL type from {@link DataType}.
+     *
+     * @param dataType The data type
+     * @param dialect The dialect
+     * @return The SQL type
+     */
+    @Internal
+    public static int findSqlType(@NonNull DataType dataType, @NonNull Dialect dialect) {
+        return switch (dataType) {
+            case LONG -> Types.BIGINT;
+            case STRING, JSON -> Types.VARCHAR;
+            case DATE -> Types.DATE;
+            case BOOLEAN -> {
+                if (dialect == Dialect.ORACLE) {
+                    // oracle driver treats Boolean types as bits
+                    // see https://github.com/micronaut-projects/micronaut-data/issues/1259
+                    yield Types.BIT;
+                } else {
+                    yield Types.BOOLEAN;
+                }
+            }
+            case INTEGER -> Types.INTEGER;
+            case TIMESTAMP -> Types.TIMESTAMP;
+            case TIME -> Types.TIME;
+            case OBJECT -> Types.OTHER;
+            case CHARACTER -> Types.CHAR;
+            case DOUBLE -> Types.DOUBLE;
+            case BYTE_ARRAY -> Types.BINARY;
+            case FLOAT -> Types.FLOAT;
+            case BIGDECIMAL -> Types.DECIMAL;
+            case BYTE -> Types.BIT;
+            case SHORT -> Types.TINYINT;
+            default -> -1;
+        };
     }
 
     @Override
@@ -62,65 +114,22 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
         if (value == null) {
             try {
                 switch (dataType) {
-                    case ENTITY:
-                        throw new IllegalStateException("Cannot set null value as ENTITY data type!");
-                    case LONG:
-                        statement.setNull(index, Types.BIGINT);
-                        return this;
-                    case STRING:
-                    case JSON:
-                        statement.setNull(index, Types.VARCHAR);
-                        return this;
-                    case DATE:
-                        statement.setNull(index, Types.DATE);
-                        return this;
-                    case BOOLEAN:
-                        statement.setNull(index, Types.BOOLEAN);
-                        return this;
-                    case INTEGER:
-                        statement.setNull(index, Types.INTEGER);
-                        return this;
-                    case TIMESTAMP:
-                        statement.setNull(index, Types.TIMESTAMP);
-                        return this;
-                    case TIME:
-                        statement.setNull(index, Types.TIME);
-                        return this;
-                    case OBJECT:
-                        statement.setNull(index, Types.OTHER);
-                        return this;
-                    case CHARACTER:
-                        statement.setNull(index, Types.CHAR);
-                        return this;
-                    case DOUBLE:
-                        statement.setNull(index, Types.DOUBLE);
-                        return this;
-                    case BYTE_ARRAY:
-                        statement.setNull(index, Types.BINARY);
-                        return this;
-                    case FLOAT:
-                        statement.setNull(index, Types.FLOAT);
-                        return this;
-                    case BIGDECIMAL:
-                        statement.setNull(index, Types.DECIMAL);
-                        return this;
-                    case BYTE:
-                        statement.setNull(index, Types.BIT);
-                        return this;
-                    case SHORT:
-                        statement.setNull(index, Types.TINYINT);
-                        return this;
-                    case UUID:
+                    case ENTITY -> throw new IllegalStateException("Cannot set null value as ENTITY data type!");
+                    case UUID -> {
                         statement.setNull(index, Types.OTHER, "uuid");
                         return this;
-
-                    default:
-                        if (dataType.isArray()) {
+                    }
+                    default -> {
+                        int sqlType = findSqlType(dataType, jdbcConfiguration.getDialect());
+                        if (sqlType != -1) {
+                            statement.setNull(index, sqlType);
+                        } else if (dataType.isArray()) {
                             statement.setNull(index, Types.ARRAY);
                         } else {
                             statement.setNull(index, Types.NULL);
                         }
                         return this;
+                    }
                 }
             } catch (SQLException e) {
                 throw new DataAccessException("Error setting JDBC null value: " + e.getMessage(), e);
@@ -161,15 +170,15 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     @Override
     public QueryStatement<PreparedStatement, Integer> setValue(PreparedStatement statement, Integer index, Object value) throws DataAccessException {
         try {
-            if (value instanceof Clob) {
-                statement.setClob(index, (Clob) value);
-            } else if (value instanceof Blob) {
-                statement.setBlob(index, (Blob) value);
-            } else if (value instanceof Array) {
-                statement.setArray(index, (Array) value);
+            if (value instanceof Clob clob) {
+                statement.setClob(index, clob);
+            } else if (value instanceof Blob blob) {
+                statement.setBlob(index, blob);
+            } else if (value instanceof Array array) {
+                statement.setArray(index, array);
             } else if (value != null) {
                 if (value.getClass().isEnum()) {
-                    statement.setObject(index, value, java.sql.Types.OTHER);
+                    statement.setObject(index, value, Types.OTHER);
                 } else {
                     statement.setObject(index, value);
                 }
@@ -325,8 +334,8 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
         try {
             if (array == null) {
                 statement.setNull(name, Types.ARRAY);
-            } else if (array instanceof Array) {
-                statement.setArray(name, (Array) array);
+            } else if (array instanceof Array array1) {
+                statement.setArray(name, array1);
             } else {
                 statement.setObject(name, array);
             }

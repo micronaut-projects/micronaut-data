@@ -1,0 +1,16 @@
+coherence:
+  cluster: test-cluster
+  role: test
+  ttl: 0
+  distributed:
+    localstorage: true
+  sessions:
+    custom:
+      name: custom
+    default:
+      name: default
+      config: coherence-cache-config.xml
+  data:
+    book:
+    book2:
+      session: custom

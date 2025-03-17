@@ -34,7 +34,7 @@ public class BookController {
 
     @Get
     List<BookDto> findAll() {
-        return bookRepository.findAll().stream().map(BookDto::new).collect(Collectors.toList());
+        return bookRepository.findAll().stream().map(BookDto::new).toList();
     }
 
     @Delete
