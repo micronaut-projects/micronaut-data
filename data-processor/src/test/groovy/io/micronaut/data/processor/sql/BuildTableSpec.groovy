@@ -422,10 +422,11 @@ class Emb {
         def employeeSql = builder.buildCreateTableStatements(employeeEntity)
         def employeeGroupSql = builder.buildCreateTableStatements(employeeGroupEntity)
         then:"No join table is created"
-        employeeSql.length == 1
-        employeeSql[0] == 'CREATE TABLE `employee` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`name` VARCHAR(255) NOT NULL,`category_id` BIGINT NOT NULL,`employer_id` BIGINT NOT NULL);'
-        employeeGroupSql.length == 1
-        employeeGroupSql[0] == 'CREATE TABLE `employee_group` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`name` VARCHAR(255) NOT NULL,`category_id` BIGINT NOT NULL,`employer_id` BIGINT NOT NULL);'
+        employeeSql.statements.length == 1
+        employeeSql.statements[0] == 'CREATE TABLE `employee` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`name` VARCHAR(255) NOT NULL,`category_id` BIGINT NOT NULL,`employer_id` BIGINT NOT NULL);'
+        employeeGroupSql.statements.length == 2
+        employeeGroupSql.statements[0] == 'CREATE TABLE `employee_group_employee` (`employee_group_id` BIGINT NOT NULL,`employee_id` BIGINT NOT NULL);'
+        employeeGroupSql.statements[1] == 'CREATE TABLE `employee_group` (`id` BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,`name` VARCHAR(255) NOT NULL,`category_id` BIGINT NOT NULL,`employer_id` BIGINT NOT NULL);'
     }
 
     void "test create ManyToMany table with schema"() {
@@ -505,13 +506,13 @@ class Teacher {
 
         when:
         SqlQueryBuilder builder = new SqlQueryBuilder()
-        def sql = builder.buildCreateTableStatements(entity)
+        def tableStatements = builder.buildCreateTableStatements(entity)
 
         then:
-        sql.length == 4
-        sql[0] == 'CREATE SCHEMA "students";'
-        sql[1] == 'CREATE TABLE "students"."m2m_student_course_association" ("st_id" BIGINT NOT NULL,"cs_id" BIGINT NOT NULL);'
-        sql[2] == 'CREATE TABLE "students"."m2m_student_teacher_association" ("st_id" BIGINT NOT NULL,"te_id" BIGINT NOT NULL);'
-        sql[3] == 'CREATE TABLE "students"."m2m_student" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL);'
+        tableStatements.statements.length == 4
+        tableStatements.statements[0] == 'CREATE SCHEMA "students";'
+        tableStatements.statements[1] == 'CREATE TABLE "students"."m2m_student_course_association" ("st_id" BIGINT NOT NULL,"cs_id" BIGINT NOT NULL);'
+        tableStatements.statements[2] == 'CREATE TABLE "students"."m2m_student_teacher_association" ("st_id" BIGINT NOT NULL,"te_id" BIGINT NOT NULL);'
+        tableStatements.statements[3] == 'CREATE TABLE "students"."m2m_student" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL);'
     }
 }

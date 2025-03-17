@@ -33,7 +33,7 @@ import io.micronaut.data.jdbc.operations.JdbcSchemaHandler;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.TableStatements;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.config.SchemaGenerate;
@@ -155,7 +155,7 @@ public class SchemaGenerator {
             switch (configuration.getSchemaGenerate()) {
                 case CREATE_DROP:
                     try {
-                        String sql = resolveSql(builder.buildBatchDropTableStatement(handleForeignKeys, entities));
+                        String sql = resolveSql(propertyPlaceholderResolver, builder.buildBatchDropTableStatement(handleForeignKeys, entities));
                         if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                             DataSettings.QUERY_LOG.debug("Dropping Tables: \n{}", sql);
                         }
@@ -168,7 +168,7 @@ public class SchemaGenerator {
                         }
                     }
                 case CREATE:
-                    String sql = resolveSql(builder.buildBatchCreateTableStatement(handleForeignKeys, entities));
+                    String sql = resolveSql(propertyPlaceholderResolver, builder.buildBatchCreateTableStatement(handleForeignKeys, entities));
                     if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                         DataSettings.QUERY_LOG.debug("Creating Tables: \n{}", sql);
                     }

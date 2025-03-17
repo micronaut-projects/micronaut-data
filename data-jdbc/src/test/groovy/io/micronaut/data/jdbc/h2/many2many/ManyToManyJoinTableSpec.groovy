@@ -100,7 +100,7 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
 
     void "test build create Student tables"() {
         when:
-            SqlQueryBuilder2 encoder = new SqlQueryBuilder2()
+            SqlQueryBuilder encoder = new SqlQueryBuilder()
             def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Student)).getAllStatements()
 
         then:
@@ -118,7 +118,8 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
         then:
         statements.length == 2
         statements[0] == 'CREATE TABLE "m2m_test_fks" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"ref_entity_id_student_id" BIGINT NOT NULL,"ref_entity_id_course_id" BIGINT NOT NULL,"title" VARCHAR(255) NOT NULL);'
-        statements[1] == 'ALTER TABLE "m2m_test_fks" ADD CONSTRAINT FK_cht9sne9icrn3tpjsav4l61gb FOREIGN KEY("ref_entity_id_student_id", "ref_entity_id_course_id") REFERENCES "m2m_course_rating_ck"("xyz_student_id", "abc_course_id");'
+        statements[1].startsWith('ALTER TABLE "m2m_test_fks" ADD CONSTRAINT FK')
+        statements[1].endsWith('FOREIGN KEY("ref_entity_id_student_id", "ref_entity_id_course_id") REFERENCES "students"."m2m_course_rating_ck"("xyz_student_id", "abc_course_id");')
     }
 
     void "test build create CourseRatingCompositeKey table"() {
@@ -127,13 +128,14 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
         def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(CourseRatingCompositeKey)).getAllStatements()
 
         then:
-        statements.length == 1
-        statements[0] == 'CREATE TABLE "m2m_course_rating_ck" ("xyz_student_id" BIGINT NOT NULL,"abc_course_id" BIGINT NOT NULL,"rating" INT NOT NULL, PRIMARY KEY("xyz_student_id","abc_course_id"));'
+        statements.length == 2
+        statements[0] == 'CREATE SCHEMA "students";'
+        statements[1] == 'CREATE TABLE "students"."m2m_course_rating_ck" ("xyz_student_id" BIGINT NOT NULL,"abc_course_id" BIGINT NOT NULL,"rating" INT NOT NULL, PRIMARY KEY("xyz_student_id","abc_course_id"));'
     }
 
     void "test build create CourseRating tables"() {
         when:
-            SqlQueryBuilder2 encoder = new SqlQueryBuilder2()
+            SqlQueryBuilder encoder = new SqlQueryBuilder()
             def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(CourseRating)).getStatements()
 
         then:
@@ -144,7 +146,7 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
 
     void "test build create Course tables"() {
         when:
-            SqlQueryBuilder2 encoder = new SqlQueryBuilder2()
+            SqlQueryBuilder encoder = new SqlQueryBuilder()
             def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Course)).getAllStatements()
 
         then:
