@@ -34,4 +34,5 @@ dependencies {
     runtimeOnly mnSql.h2
 
     testImplementation mnTest.micronaut.test.kotest5
+    testImplementation 'org.jetbrains.kotlin:kotlin-test'
 }

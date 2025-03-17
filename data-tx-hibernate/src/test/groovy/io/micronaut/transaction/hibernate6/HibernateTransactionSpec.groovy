@@ -17,6 +17,7 @@ package io.micronaut.transaction.hibernate6
 
 import io.micronaut.core.type.Argument
 import io.micronaut.data.connection.ConnectionOperations
+import io.micronaut.data.hibernate.connection.HibernateConnectionOperations
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.tests.AbstractTransactionSpec
@@ -52,6 +53,11 @@ class HibernateTransactionSpec extends AbstractTransactionSpec implements TestRe
     @Override
     protected TransactionOperations getTransactionOperations() {
         return context.getBean(HibernateTransactionManager)
+    }
+
+    @Override
+    protected ConnectionOperations getConnectionOperations() {
+        return context.getBean(HibernateConnectionOperations)
     }
 
     @Override

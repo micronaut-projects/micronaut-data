@@ -849,19 +849,23 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     // in the case of a foreign key association the ID is not in the table,
                     // so we need to retrieve it
                     traversePersistentProperties(associatedEntity, includeIdentity, true, (propertyAssociations, prop) -> {
+                        String transformed = getDataTransformerReadValue(joinAlias, prop).orElse(null);
+                        String columnAlias = getColumnAlias(prop);
                         String columnName;
                         if (computePropertyPaths()) {
                             columnName = getMappedName(namingStrategy, propertyAssociations, prop);
                         } else {
                             columnName = asPath(propertyAssociations, prop);
                         }
-                        String columnAlias = getColumnAlias(prop);
-
-                        queryBuffer
+                        if (transformed != null) {
+                            queryBuffer.append(transformed).append(AS_CLAUSE);
+                        } else {
+                            queryBuffer
                                 .append(joinAlias)
                                 .append(DOT)
                                 .append(queryState.shouldEscape() ? quote(columnName) : columnName)
                                 .append(AS_CLAUSE);
+                        }
                         if (StringUtils.isNotEmpty(columnAlias)) {
                             queryBuffer.append(columnAlias);
                         } else {

@@ -218,12 +218,12 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
     private DefaultConnectionStatus<C> openNewConnectionInternal(@NonNull ConnectionDefinition definition) {
         C connection = openConnection(definition);
         DefaultConnectionStatus<C> status = new DefaultConnectionStatus<>(connection, definition, true);
-        PropagatedContext propagatedContext = PropagatedContext.getOrEmpty().plus(new ConnectionPropagatedContextElement<>(this, status));
-        PropagatedContext.Scope scope = propagatedContext.propagate();
+        ConnectionPropagatedContextElement<C> newConnectionContextElement = new ConnectionPropagatedContextElement<>(this, status);
+        PropagatedContext.getOrEmpty().plus(newConnectionContextElement).propagate();
         status.registerSynchronization(new ConnectionSynchronization() {
             @Override
             public void executionComplete() {
-                scope.close();
+                PropagatedContext.getOrEmpty().minus(newConnectionContextElement).propagate();
             }
         });
         return status;
@@ -235,13 +235,14 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
             existingContextElement.status.getDefinition(),
             false);
         setupConnection(status);
-        PropagatedContext.Scope scope = PropagatedContext.getOrEmpty()
-            .replace(existingContextElement, new ConnectionPropagatedContextElement<>(this, status))
+        ConnectionPropagatedContextElement<C> newConnectionElement = new ConnectionPropagatedContextElement<>(this, status);
+        PropagatedContext.getOrEmpty()
+            .replace(existingContextElement, newConnectionElement)
             .propagate();
         status.registerSynchronization(new ConnectionSynchronization() {
             @Override
             public void executionComplete() {
-                scope.close();
+                PropagatedContext.getOrEmpty().minus(newConnectionElement).plus(existingContextElement).propagate();
             }
         });
         return status;
@@ -249,12 +250,12 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
 
     private DefaultConnectionStatus<C> suspendOpenConnection(ConnectionPropagatedContextElement<C> existingConnectionContextElement,
                                                              @NonNull Supplier<DefaultConnectionStatus<C>> newStatusSupplier) {
-        PropagatedContext.Scope scope = PropagatedContext.getOrEmpty().minus(existingConnectionContextElement).propagate();
+        PropagatedContext.getOrEmpty().minus(existingConnectionContextElement).propagate();
         DefaultConnectionStatus<C> newStatus = newStatusSupplier.get();
         newStatus.registerSynchronization(new ConnectionSynchronization() {
             @Override
             public void executionComplete() {
-                scope.close();
+                PropagatedContext.getOrEmpty().plus(existingConnectionContextElement).propagate();
             }
         });
         return newStatus;

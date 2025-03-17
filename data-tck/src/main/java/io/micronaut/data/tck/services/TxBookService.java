@@ -2,22 +2,53 @@ package io.micronaut.data.tck.services;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.data.connection.ConnectionOperations;
+import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.annotation.Transactional;
+import io.micronaut.transaction.support.DefaultTransactionDefinition;
 import jakarta.inject.Singleton;
+
+import java.util.Optional;
 
 @Requires(property = AbstractBookService.BOOK_REPOSITORY_CLASS_PROPERTY)
 @Singleton
 public class TxBookService extends AbstractBookService {
 
-    private final SynchronousTransactionManager<Object> transactionManager;
+    public SynchronousTransactionManager<Object> transactionManager;
+    public ConnectionOperations<Object> connectionOperations;
 
-    public TxBookService(ApplicationContext beanContext,
-                         SynchronousTransactionManager<Object> transactionManager) {
+    public TxBookService(ApplicationContext beanContext) {
         super(beanContext);
-        this.transactionManager = transactionManager;
+    }
+
+    public void bookAddedInConnectableNestedTransaction() {
+        connectionOperations.executeWrite(connectionStatus -> {
+            ConnectionStatus<Object> outerConnection = getConnection();
+            TransactionDefinition definition = new DefaultTransactionDefinition(TransactionDefinition.Propagation.NESTED);
+            TransactionStatus<Object> status = transactionManager.getTransaction(definition);
+            ConnectionStatus<Object> txConnection = getConnection();
+            if (!txConnection.equals(outerConnection)) {
+                throw new IllegalStateException("Connection is not the same as the outer connection");
+            }
+            bookRepository.save(newBook("MandatoryBook"));
+            transactionManager.commit(status);
+            ConnectionStatus<Object> afterTxConnection = getConnection();
+            if (!afterTxConnection.equals(outerConnection)) {
+                throw new IllegalStateException("Connection is not the same as the outer connection");
+            }
+            return null;
+        });
+    }
+
+    private ConnectionStatus<Object> getConnection() {
+        Optional<ConnectionStatus<Object>> optionalConnection = connectionOperations.findConnectionStatus();
+        if (optionalConnection.isEmpty()) {
+            throw new IllegalStateException("No connection status available");
+        }
+        return optionalConnection.get();
     }
 
     @Transactional(name = "MyTx")

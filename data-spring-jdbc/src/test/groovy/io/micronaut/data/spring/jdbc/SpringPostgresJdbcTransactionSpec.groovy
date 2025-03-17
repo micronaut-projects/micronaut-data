@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.spring.jdbc
 
-
+import io.micronaut.data.connection.ConnectionOperations
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.spring.jdbc.micronaut.PostgresBookRepository
 import io.micronaut.data.tck.repositories.BookRepository
@@ -42,6 +42,11 @@ class SpringPostgresJdbcTransactionSpec extends AbstractTransactionSpec implemen
     @Override
     protected SpringJdbcTransactionOperations getTransactionOperations() {
         return context.getBean(SpringJdbcTransactionOperations)
+    }
+
+    @Override
+    protected ConnectionOperations getConnectionOperations() {
+        return context.getBean(SpringJdbcConnectionOperations)
     }
 
     @Override

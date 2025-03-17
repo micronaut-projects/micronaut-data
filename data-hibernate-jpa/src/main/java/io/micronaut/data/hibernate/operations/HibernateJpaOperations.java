@@ -71,7 +71,6 @@ import org.hibernate.graph.RootGraph;
 import org.hibernate.procedure.ProcedureCall;
 import org.hibernate.query.CommonQueryContract;
 import org.hibernate.query.MutationQuery;
-import org.hibernate.query.Order;
 import org.hibernate.query.Query;
 
 import javax.sql.DataSource;
@@ -228,11 +227,6 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     @Override
     protected void setOffset(Query<?> query, int offset) {
         query.setFirstResult(offset);
-    }
-
-    @Override
-    protected void setOrder(Query<?> query, List<Order<?>> orders) {
-        query.setOrder((List) orders);
     }
 
     @Override
