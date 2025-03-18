@@ -861,7 +861,8 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
 
             for (PersistentProperty prop : persistentProperties) {
                 PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), prop, (associations, property) -> {
-                    if (prop.isGenerated()) {
+                    boolean generated = PersistentEntityUtils.isPropertyGenerated(entity, prop, property);
+                    if (generated) {
                         String columnName = getMappedName(namingStrategy, associations, property);
                         if (escape) {
                             columnName = quote(columnName);
@@ -870,7 +871,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
                         return;
                     }
 
-                    addWriteExpression(values, prop);
+                    addWriteExpression(values, property);
 
                     String key = String.valueOf(values.size());
                     String[] path = asStringPath(associations, property);

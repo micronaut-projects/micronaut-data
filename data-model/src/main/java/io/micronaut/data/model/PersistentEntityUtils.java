@@ -236,6 +236,28 @@ public final class PersistentEntityUtils {
         return entity.getPath(path);
     }
 
+    /**
+     * Checks whether a given property is considered generated based on its annotations and relationship with its owner property.
+     *
+     * @param entity        the persistent entity that owns the property
+     * @param ownerProperty the property that owns the given property. This means
+     *                      when we are doing traversal in case it is an association. If not
+     *                      an association then ownerProperty will be the same as property.
+     * @param property      the property to check
+     * @return true if the property is considered generated, false otherwise
+     */
+    public static boolean isPropertyGenerated(PersistentEntity entity, PersistentProperty ownerProperty, PersistentProperty property) {
+        boolean generated = property.isGenerated();
+        if (generated) {
+            if (ownerProperty instanceof Association association) {
+                generated = association.isEmbedded();
+            } else if (!entity.equals(property.getOwner())) {
+                generated = false;
+            }
+        }
+        return generated;
+    }
+
     private static PersistentProperty getJoinColumnAssocIdentity(PersistentProperty property, PersistentEntity associatedEntity) {
         AnnotationMetadata propertyAnnotationMetadata = property.getAnnotationMetadata();
         AnnotationValue<JoinColumns> joinColumnsAnnotationValue = propertyAnnotationMetadata.getAnnotation(JoinColumns.class);

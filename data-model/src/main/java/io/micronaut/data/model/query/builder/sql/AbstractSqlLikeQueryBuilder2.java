@@ -791,6 +791,13 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
                 QueryPropertyPath propertyPath = entry.getKey();
                 if (entry.getValue() instanceof BindingParameter bindingParameter) {
                     PersistentEntityUtils.traversePersistentProperties(propertyPath.getPropertyPath(), traverseEmbedded(), (associations, property) -> {
+
+                        boolean generated = PersistentEntityUtils.isPropertyGenerated(entity,
+                            propertyPath.getProperty(), property);
+                        if (generated) {
+                            return;
+                        }
+
                         String tableAlias = propertyPath.getTableAlias();
                         if (tableAlias != null) {
                             queryString.append(tableAlias).append(DOT);
