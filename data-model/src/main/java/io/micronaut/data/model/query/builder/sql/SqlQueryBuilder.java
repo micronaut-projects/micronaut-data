@@ -376,12 +376,36 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 // TODO: Any other criteria for FK?
                 if (kind == Relation.Kind.MANY_TO_ONE || (kind == Relation.Kind.ONE_TO_ONE && !association.getAnnotationMetadata().stringValue(Relation.class, MAPPED_BY).isPresent())) {
                     String refTableName = getTableName(association.getAssociatedEntity());
-                    // TODO: Check if there is JoinColumns annotation present to override names
-                    // It's problematic since it's not checked during table creation
                     List<String> refColumnNames = new ArrayList<>();
-                    foreignKeysHandler(association.getAssociatedEntity().getIdentity(), refColumnNames::add);
                     List<String> columnNames = new ArrayList<>();
-                    foreignKeysHandler(prop, columnNames::add);
+
+                    boolean initializedFields = false;
+
+                    // TODO: Do better check if there is JoinColumns annotation present to override names, with fallbacks
+                    AnnotationMetadata propertyAnnotationMetadata = prop.getAnnotationMetadata();
+                    AnnotationValue<JoinColumns> joinColumnsAnnotationValue = propertyAnnotationMetadata.getAnnotation(JoinColumns.class);
+                    if (joinColumnsAnnotationValue != null) {
+
+                        List<AnnotationValue<JoinColumn>> joinColumnsAnnotationValueAnnotations = joinColumnsAnnotationValue.getAnnotations(AnnotationMetadata.VALUE_MEMBER);
+                        if (joinColumnsAnnotationValueAnnotations.size() == 1) {
+                            // we can match only by one JoinColumn
+
+                            AnnotationValue<JoinColumn> joinColumnAnnotationValue = joinColumnsAnnotationValueAnnotations.get(0);
+                            String fieldName = joinColumnAnnotationValue.stringValue("name").orElse(null);
+                            String referencedFieldName = joinColumnAnnotationValue.stringValue("referencedColumnName").orElse(null);
+                            if (fieldName != null && referencedFieldName != null) {
+                                columnNames.add(fieldName);
+                                refColumnNames.add(referencedFieldName);
+                                initializedFields = true;
+                            }
+                        }
+                    }
+
+                    if (!initializedFields) {
+                        foreignKeysHandler(association.getAssociatedEntity().getIdentity(), refColumnNames::add);
+                        foreignKeysHandler(prop, columnNames::add);
+                    }
+
                     if (columnNames.size() != refColumnNames.size()) {
                         throw new IllegalStateException("Field " + prop.getName() + " in entity " + entity.getName() + " is not mapped to valid foreign key relation as number of key fields don't match.");
                     }

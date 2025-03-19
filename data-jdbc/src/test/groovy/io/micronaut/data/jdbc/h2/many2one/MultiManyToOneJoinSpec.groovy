@@ -50,6 +50,11 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
     @Inject
     MyOtherRepository myOtherRepository
 
+    @Override
+    List<String> packages() {
+        return ["io.micronaut.data.jdbc.h2.many2one"]
+    }
+
     void 'test many-to-one hierarchy'() {
         given:
             RefA refA = new RefA(refB: new RefB(refC: new RefC(name: "TestXyz")))
