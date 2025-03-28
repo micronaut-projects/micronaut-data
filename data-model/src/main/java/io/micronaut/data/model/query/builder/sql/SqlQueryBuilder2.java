@@ -332,10 +332,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
 
         List<String> createStatements = new ArrayList<>();
         if (StringUtils.isNotEmpty(schema)) {
-            if (escape) {
-                schema = quote(schema);
-            }
-            createStatements.add("CREATE SCHEMA " + schema + ";");
+            createStatements.add("CREATE SCHEMA " + (escape ? quote(schema) : schema) + ";");
         }
 
         for (Table table : tables) {
