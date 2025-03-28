@@ -324,9 +324,6 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
     @Experimental
     @NonNull
     public String[] buildCreateTableStatements(@NonNull PersistentEntity entity) {
-        if (entity.getPersistedName().equals("pg_enumz")) {
-            int x = 1;
-        }
         List<Table> tables = getEntityTables(entity);
         assert CollectionUtils.isNotEmpty(tables);
         boolean escape = shouldEscape(entity);
