@@ -459,9 +459,9 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
 
         NamingStrategy namingStrategy = getNamingStrategy(entity);
         if (CollectionUtils.isNotEmpty(foreignKeyAssociations)) {
-            List<Column> columns = new ArrayList<>();
             for (Association association : foreignKeyAssociations) {
                 PersistentEntity associatedEntity = association.getAssociatedEntity();
+                List<Column> columns = new ArrayList<>();
 
                 Optional<Association> inverseSide = association.getInverseSide().map(Function.identity());
                 Association owningAssociation = inverseSide.orElse(association);

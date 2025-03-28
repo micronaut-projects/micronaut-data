@@ -26,7 +26,7 @@ import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.r2dbc.operations.R2dbcSchemaHandler;
 import io.micronaut.data.runtime.config.DataSettings;
@@ -93,7 +93,7 @@ public class R2dbcSchemaGenerator {
                         .filter(i -> !i.hasAnnotation(JsonView.class))
                         .map(e -> runtimeEntityRegistry.getEntity(e.getBeanType())).toArray(PersistentEntity[]::new);
                 if (ArrayUtils.isNotEmpty(entities)) {
-                    SqlQueryBuilder builder = new SqlQueryBuilder(configuration.getDialect());
+                    SqlQueryBuilder2 builder = new SqlQueryBuilder2(configuration.getDialect());
                     Mono.from(configuration.getConnectionFactory().create()).flatMap(connection -> {
                         Dialect dialect = configuration.getDialect();
                         if (configuration.getSchemaGenerateNames() != null && !configuration.getSchemaGenerateNames().isEmpty()) {
@@ -118,7 +118,7 @@ public class R2dbcSchemaGenerator {
         }
     }
 
-    private Mono<Void> generate(Connection connection, SchemaGenerate schemaGenerate, PersistentEntity[] entities, SqlQueryBuilder builder) {
+    private Mono<Void> generate(Connection connection, SchemaGenerate schemaGenerate, PersistentEntity[] entities, SqlQueryBuilder2 builder) {
         List<String> createStatements = Arrays.stream(entities)
                 .flatMap(entity -> Arrays.stream(builder.buildCreateTableStatements(entity)))
                 .toList();
