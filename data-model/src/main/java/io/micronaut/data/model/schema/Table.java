@@ -1,28 +1,18 @@
 package io.micronaut.data.model.schema;
 
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.core.annotation.Internal;
 
-import java.util.ArrayList;
 import java.util.List;
 
+@Internal
 public record Table(
     String schema,
     String name,
-    String unescapedName,
-    @Nullable
-    PrimaryKey primaryKey,
+    List<Column> primaryKeyColumns,
     List<Column> columns,
-    Dialect dialect,
-    boolean escape
+    List<Sequence> sequences
 ) {
-    public String[] buildCreateStatements() {
-        List<String> statements = new ArrayList<>();
-        if (StringUtils.isNotEmpty(schema)) {
-            statements.add(String.format("CREATE SCHEMA %s;", schema));
-        }
-        // TODO: Other statements
-        return statements.toArray(new String[0]);
+    public Table(String schema, String name, List<Column> primaryKeyColumns, List<Column> columns) {
+        this(schema, name, primaryKeyColumns, columns, null);
     }
 }

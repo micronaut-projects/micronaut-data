@@ -15,6 +15,7 @@ import java.sql.Types;
  * @author radovanradic
  * @since 4.13.0
  */
+@Internal
 public final class DbTypes {
 
     /**
@@ -300,6 +301,11 @@ public final class DbTypes {
      * A type code representing the generic SQL type {@code JSON}.
      */
     public static final int JSON = 11001;
+
+    /**
+     * A type code representing the generic SQL type {@code ENUM}.
+     */
+    public static final int ENUM = 12001;
 
     private DbTypes() {
     }
