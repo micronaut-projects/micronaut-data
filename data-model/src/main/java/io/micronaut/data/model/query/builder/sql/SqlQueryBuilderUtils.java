@@ -355,6 +355,18 @@ final class SqlQueryBuilderUtils {
         return column;
     }
 
+    /**
+     * Creates a new Column object based on the provided PersistentProperty and other mapped field attributes.
+     *
+     * @param prop         the PersistentProperty to create the Column for
+     * @param column       the name of the column
+     * @param primaryKey   whether the column is a primary key
+     * @param required     whether the column is required
+     * @param isForeign    whether the column is a foreign key
+     * @return             a new Column object representing the provided PersistentProperty
+     * @throws IllegalStateException if the provided property is an Association
+     * @throws MappingException      if the data type of the property is unknown
+     */
     static Column getColumn(PersistentProperty prop, String column, boolean primaryKey, boolean required, boolean isForeign) {
         if (prop instanceof Association) {
             throw new IllegalStateException("Association is not supported here");
