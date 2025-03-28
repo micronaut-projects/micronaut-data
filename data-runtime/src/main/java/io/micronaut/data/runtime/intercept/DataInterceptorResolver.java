@@ -22,6 +22,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
+import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -32,6 +33,7 @@ import io.micronaut.data.operations.PrimaryRepositoryOperations;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.RepositoryOperationsRegistry;
 import io.micronaut.data.runtime.multitenancy.DataSourceTenantResolver;
+import io.micronaut.inject.ArgumentInjectionPoint;
 import io.micronaut.inject.InjectionPoint;
 import jakarta.inject.Singleton;
 
@@ -49,7 +51,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Internal
 @Singleton
-final class DataInterceptorResolver {
+public final class DataInterceptorResolver {
 
     private final RepositoryOperationsRegistry repositoryOperationsRegistry;
     @Nullable
@@ -70,7 +72,10 @@ final class DataInterceptorResolver {
         } else {
             tenantDataSourceName = null;
         }
-        TenantRepositoryMethodKey theKey = new TenantRepositoryMethodKey(tenantDataSourceName, key);
+        TenantRepositoryMethodKey theKey = new TenantRepositoryMethodKey(tenantDataSourceName, key, null);
+        if (tenantDataSourceName == null && injectionPoint instanceof ArgumentInjectionPoint<?, ?> argumentInjectionPoint) {
+            theKey = new TenantRepositoryMethodKey(tenantDataSourceName, key, argumentInjectionPoint.asArgument());
+        }
         // Don't use "computeIfAbsent" to avoid "java.lang.IllegalStateException: Recursive update"
         DataInterceptor<? super Object, ? super Object> dataInterceptor = interceptors.get(theKey);
         if (dataInterceptor == null) {
@@ -143,11 +148,13 @@ final class DataInterceptorResolver {
     private static final class TenantRepositoryMethodKey {
         private final String dataSource;
         private final RepositoryMethodKey key;
+        private final Argument<?> injectionPoint;
         private final int hashCode;
 
-        TenantRepositoryMethodKey(String dataSource, RepositoryMethodKey key) {
+        TenantRepositoryMethodKey(String dataSource, RepositoryMethodKey key, @Nullable Argument<?> injectionPoint) {
             this.dataSource = dataSource;
             this.key = key;
+            this.injectionPoint = injectionPoint;
             this.hashCode = Objects.hash(dataSource, key);
         }
 
@@ -160,7 +167,7 @@ final class DataInterceptorResolver {
                 return false;
             }
             TenantRepositoryMethodKey that = (TenantRepositoryMethodKey) o;
-            return Objects.equals(dataSource, that.dataSource) && key.equals(that.key);
+            return Objects.equals(dataSource, that.dataSource) && key.equals(that.key) && Objects.equals(injectionPoint, that.injectionPoint);
         }
 
         @Override

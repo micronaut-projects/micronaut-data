@@ -28,7 +28,7 @@ import java.util.Objects;
  */
 @Internal
 public final class RepositoryMethodKey {
-    private final Object repository;
+    private final Class<?> repositoryClass;
     private final ExecutableMethod<?, ?> method;
     private final int hashCode;
 
@@ -37,35 +37,23 @@ public final class RepositoryMethodKey {
      * @param method     The method
      */
     public RepositoryMethodKey(Object repository, ExecutableMethod<?, ?> method) {
-        this.repository = repository;
+        this.repositoryClass = repository.getClass();
         this.method = method;
-        this.hashCode = Objects.hash(repository, method);
-    }
-
-    public Object repository() {
-        return repository;
-    }
-
-    public ExecutableMethod<?, ?> method() {
-        return method;
+        this.hashCode = Objects.hash(repositoryClass, method.getName(), method.getArguments().length);
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (obj == this) {
-            return true;
-        }
-        if (obj == null || obj.getClass() != this.getClass()) {
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        var that = (RepositoryMethodKey) obj;
-        return Objects.equals(this.repository, that.repository) &&
-                Objects.equals(this.method, that.method);
+        RepositoryMethodKey that = (RepositoryMethodKey) o;
+        return Objects.equals(repositoryClass, that.repositoryClass)
+            && Objects.equals(method, that.method);
     }
 
     @Override
     public int hashCode() {
         return hashCode;
     }
-
 }
