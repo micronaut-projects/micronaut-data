@@ -326,11 +326,9 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
     public String[] buildCreateTableStatements(@NonNull PersistentEntity entity) {
         List<Table> tables = getEntityTables(entity);
         assert CollectionUtils.isNotEmpty(tables);
-        Table mainTable = tables.get(0);
-        final String unescapedTableName = mainTable.name();
-        String schema = mainTable.schema();
         boolean escape = shouldEscape(entity);
-        String tableName = getTableName(schema, unescapedTableName, escape);
+        Table mainTable = tables.get(0);
+        String schema = mainTable.schema();
 
         List<String> createStatements = new ArrayList<>();
         if (StringUtils.isNotEmpty(schema)) {
@@ -391,6 +389,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
                 columns.add(column);
             }
 
+            String tableName = getTableName(schema, table.name(), escape);
             StringBuilder builder = new StringBuilder("CREATE TABLE ").append(tableName).append(" (");
             builder.append(String.join(",", columns));
             if (generatePkAfterColumns) {
@@ -430,7 +429,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
             }
         }
 
-        addIndexes(entity, tableName, createStatements);
+        addIndexes(entity, getTableName(schema, mainTable.name(), escape), createStatements);
         return createStatements.toArray(new String[0]);
     }
 
