@@ -31,6 +31,7 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.EmbeddedNonNullConstraintException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.naming.NamingStrategy;
@@ -493,7 +494,13 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                     if (prop != null) {
                         if (prop instanceof RuntimeAssociation<K> entityAssociation) {
                             if (prop instanceof Embedded embedded) {
-                                args[i] = readEntity(rs, ctx.embedded(embedded), null, null);
+                                try {
+                                    args[i] = readEntity(rs, ctx.embedded(embedded), null, null);
+                                } catch (EmbeddedNonNullConstraintException e) {
+                                    String propertyPath = prop.getName() + "." +  e.getPath();
+
+                                    throw new EmbeddedNonNullConstraintException(propertyPath, persistentEntity.getName());
+                                }
                             } else {
                                 final Relation.Kind kind = entityAssociation.getKind();
                                 final boolean isInverse = parent != null && isAssociation && ctx.association.getOwner() == entityAssociation.getAssociatedEntity();
@@ -536,7 +543,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                 if (!prop.isOptional() && !nullableEmbedded) {
                                     AnnotationMetadata entityAnnotationMetadata = ctx.persistentEntity.getAnnotationMetadata();
                                     if (entityAnnotationMetadata.hasAnnotation(Embeddable.class) || entityAnnotationMetadata.hasAnnotation(EmbeddedId.class)) {
-                                        return null;
+                                        throw new EmbeddedNonNullConstraintException(prop.getName(), persistentEntity.getName());
                                     }
                                     throw new DataAccessException("Null value read for non-null constructor argument [" + prop.getName() + "] of type: " + persistentEntity.getName());
                                 } else {
