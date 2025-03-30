@@ -1,3 +1,18 @@
+/*
+ * Copyright 2017-2025 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.micronaut.data.model.schema;
 
 import io.micronaut.core.annotation.Internal;
@@ -10,7 +25,10 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 
 
 /**
- * Represents a database column from mapped entity.
+ * Represents a database column from mapped entity persistent field.
+ *
+ * @author radovanradic
+ * @since 4.13.0
  */
 @Internal
 public final class Column {
@@ -118,51 +136,6 @@ public final class Column {
     }
 
     /**
-     * Returns the database-specific type code of the column.
-     *
-     * @return the database-specific type code
-     */
-    public int getDbTypeCode() {
-        return dbTypeCode;
-    }
-
-    /**
-     * Returns whether the column is a primary key.
-     *
-     * @return true if the column is a primary key, false otherwise
-     */
-    public boolean isPrimaryKey() {
-        return primaryKey;
-    }
-
-    /**
-     * Returns the length of the column.
-     *
-     * @return the length of the column, or null if not applicable
-     */
-    public Integer getLength() {
-        return length;
-    }
-
-    /**
-     * Returns the precision of the column.
-     *
-     * @return the precision of the column, or null if not applicable
-     */
-    public Integer getPrecision() {
-        return precision;
-    }
-
-    /**
-     * Returns the scale of the column.
-     *
-     * @return the scale of the column, or null if not applicable
-     */
-    public Integer getScale() {
-        return scale;
-    }
-
-    /**
      * Returns whether the column is required.
      *
      * @return true if the column is required, false otherwise
@@ -196,15 +169,6 @@ public final class Column {
      */
     public String getDefinition() {
         return definition;
-    }
-
-    /**
-     * Returns the JSON data type associated with this column, if any.
-     *
-     * @return the JSON data type, or null if not specified
-     */
-    public JsonDataType getJsonDataType() {
-        return jsonDataType;
     }
 
     /**
@@ -425,6 +389,12 @@ public final class Column {
         return sqlType;
     }
 
+    /**
+     * Returns the SQL type representation for JSON data type based on the provided dialect.
+     *
+     * @param dialect the SQL dialect to determine the JSON SQL type for
+     * @return the SQL type representation for JSON data type
+     */
     private String getJsonSqlType(Dialect dialect) {
         String result;
         switch (dialect) {

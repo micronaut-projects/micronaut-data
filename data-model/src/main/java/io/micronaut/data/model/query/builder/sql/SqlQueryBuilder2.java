@@ -444,6 +444,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
      *
      * @param entity The entity
      * @return The tables for the given entity
+     * @since 4.13.0
      */
     @Experimental
     @NonNull
