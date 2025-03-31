@@ -16,13 +16,19 @@
 package io.micronaut.data.model.schema.sql;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.model.DataType;
+
+import java.util.Optional;
 
 /**
  * The SQL table sequence.
  *
- * @param definition The custom definition as SQL command to be executed to create sequence
- * @param name The sequence name to be created if definition not provided
+ * @param definition The custom definition as SQL command to be executed to create sequence if present or else null
+ * @param dataType The data type of the property defining sequence
+ * @param generatedValueType The {@link Optional} of {@link GeneratedValue.Type} since type might not be explicitly declared
  */
 @Internal
-public record SqlSequenceDefinition(String definition, String name) {
+public record SqlSequenceDefinition(@Nullable String definition, DataType dataType, Optional<GeneratedValue.Type> generatedValueType) {
 }
