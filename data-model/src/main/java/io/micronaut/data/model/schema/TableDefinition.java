@@ -32,14 +32,14 @@ import java.util.List;
  * @since 4.13.0
  */
 @Internal
-public record Table(
+public record TableDefinition(
     String schema,
     String name,
-    List<Column> primaryKeyColumns,
-    List<Column> columns,
-    List<Sequence> sequences
+    List<ColumnDefinition> primaryKeyColumns,
+    List<ColumnDefinition> columns,
+    List<SequenceDefinition> sequences
 ) {
-    public Table(String schema, String name, List<Column> primaryKeyColumns, List<Column> columns) {
+    public TableDefinition(String schema, String name, List<ColumnDefinition> primaryKeyColumns, List<ColumnDefinition> columns) {
         this(schema, name, primaryKeyColumns, columns, null);
     }
 }

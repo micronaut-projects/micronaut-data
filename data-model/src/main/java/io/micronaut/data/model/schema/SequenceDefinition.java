@@ -24,5 +24,5 @@ import io.micronaut.core.annotation.Internal;
  * @param name The sequence name to be created if definition not provided
  */
 @Internal
-public record Sequence(String definition, String name) {
+public record SequenceDefinition(String definition, String name) {
 }
