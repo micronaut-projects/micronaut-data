@@ -54,9 +54,9 @@ import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
-import io.micronaut.data.model.schema.ColumnDefinition;
-import io.micronaut.data.model.schema.SequenceDefinition;
-import io.micronaut.data.model.schema.TableDefinition;
+import io.micronaut.data.model.schema.sql.SqlColumnDefinition;
+import io.micronaut.data.model.schema.sql.SqlSequenceDefinition;
+import io.micronaut.data.model.schema.sql.SqlTableDefinition;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Selection;
 
@@ -324,10 +324,10 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
     @Experimental
     @NonNull
     public String[] buildCreateTableStatements(@NonNull PersistentEntity entity) {
-        List<TableDefinition> tables = getEntityTables(entity);
+        List<SqlTableDefinition> tables = getEntityTables(entity);
         assert CollectionUtils.isNotEmpty(tables);
         boolean escape = shouldEscape(entity);
-        TableDefinition mainTable = tables.get(0);
+        SqlTableDefinition mainTable = tables.get(0);
         String schema = mainTable.schema();
 
         List<String> createStatements = new ArrayList<>();
@@ -335,13 +335,13 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
             createStatements.add("CREATE SCHEMA " + (escape ? quote(schema) : schema) + ";");
         }
 
-        for (TableDefinition table : tables) {
+        for (SqlTableDefinition table : tables) {
 
             List<String> primaryColumnsName = new ArrayList<>();
             boolean generatePkAfterColumns = false;
             List<String> columns = new ArrayList<>();
 
-            List<ColumnDefinition> identities = table.primaryKeyColumns();
+            List<SqlColumnDefinition> identities = table.primaryKeyColumns();
             if (CollectionUtils.isNotEmpty(identities)) {
                 int idFieldCount = identities.size();
                 generatePkAfterColumns = idFieldCount > 1;
@@ -353,7 +353,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
                     }
                 }
 
-                for (ColumnDefinition tableIdentity : identities) {
+                for (SqlColumnDefinition tableIdentity : identities) {
 
                     String column = tableIdentity.getName();
                     if (escape) {
@@ -375,7 +375,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
                 }
             }
 
-            for (ColumnDefinition tableColumn : table.columns()) {
+            for (SqlColumnDefinition tableColumn : table.columns()) {
                 String column = tableColumn.getName();
                 if (escape) {
                     column = quote(column);
@@ -407,9 +407,9 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
             }
             createStatements.add(builder.toString());
 
-            List<SequenceDefinition> sequences = table.sequences();
+            List<SqlSequenceDefinition> sequences = table.sequences();
             if (CollectionUtils.isNotEmpty(sequences)) {
-                for (SequenceDefinition sequence : sequences) {
+                for (SqlSequenceDefinition sequence : sequences) {
                     if (sequence.definition() != null) {
                         createStatements.add(sequence.definition());
                     } else if (sequence.name() != null) {
@@ -439,7 +439,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
     }
 
     /**
-     * Returns list of {@link TableDefinition} for persistent entity. It will contain main entity table
+     * Returns list of {@link SqlTableDefinition} for persistent entity. It will contain main entity table
      * and potentially joined tables.
      *
      * @param entity The entity
@@ -448,13 +448,13 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
      */
     @Experimental
     @NonNull
-    public List<TableDefinition> getEntityTables(@NonNull PersistentEntity entity) {
+    public List<SqlTableDefinition> getEntityTables(@NonNull PersistentEntity entity) {
         ArgumentUtils.requireNonNull("entity", entity);
 
         final String tableName = getUnescapedTableName(entity);
         String schema = getSchemaName(entity);
 
-        List<TableDefinition> tables = new ArrayList<>();
+        List<SqlTableDefinition> tables = new ArrayList<>();
 
         Collection<Association> foreignKeyAssociations = getJoinTableAssociations(entity);
 
@@ -462,7 +462,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
         if (CollectionUtils.isNotEmpty(foreignKeyAssociations)) {
             for (Association association : foreignKeyAssociations) {
                 PersistentEntity associatedEntity = association.getAssociatedEntity();
-                List<ColumnDefinition> columns = new ArrayList<>();
+                List<SqlColumnDefinition> columns = new ArrayList<>();
 
                 Optional<Association> inverseSide = association.getInverseSide().map(Function.identity());
                 Association owningAssociation = inverseSide.orElse(association);
@@ -513,13 +513,13 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
                         columns.add(SqlQueryBuilderUtils.getColumn(pp.getProperty(), columnName, false, true, true));
                     }
                 }
-                TableDefinition joinTable = new TableDefinition(joinTableSchema, joinTableName, null, columns);
+                SqlTableDefinition joinTable = new SqlTableDefinition(joinTableSchema, joinTableName, null, columns);
                 tables.add(joinTable);
             }
         }
 
-        List<ColumnDefinition> primaryKeyColumns = new ArrayList<>();
-        List<ColumnDefinition> columns = new ArrayList<>();
+        List<SqlColumnDefinition> primaryKeyColumns = new ArrayList<>();
+        List<SqlColumnDefinition> columns = new ArrayList<>();
 
         List<PersistentProperty> identities = entity.getIdentityProperties();
         for (PersistentProperty identity : identities) {
@@ -528,7 +528,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
                 -> ids.add(PersistentPropertyPath.of(associations, property, "")));
             for (PersistentPropertyPath pp : ids) {
                 String columnName = getMappedName(namingStrategy, pp.getAssociations(), pp.getProperty());
-                ColumnDefinition column = SqlQueryBuilderUtils.getColumn(pp.getProperty(), columnName, true,
+                SqlColumnDefinition column = SqlQueryBuilderUtils.getColumn(pp.getProperty(), columnName, true,
                     isRequired(pp.getAssociations(), pp.getProperty()), !isNotForeign(pp.getAssociations()));
                 primaryKeyColumns.add(column);
             }
@@ -537,13 +537,13 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
         PersistentProperty version = entity.getVersion();
         if (version != null && !version.isGenerated()) {
             String columnName = getMappedName(namingStrategy, Collections.emptyList(), version);
-            ColumnDefinition column = SqlQueryBuilderUtils.getColumn(version, columnName, false, true, false);
+            SqlColumnDefinition column = SqlQueryBuilderUtils.getColumn(version, columnName, false, true, false);
             columns.add(column);
         }
 
         BiConsumer<List<Association>, PersistentProperty> addColumn = (associations, property) -> {
             String columnName = getMappedName(namingStrategy, associations, property);
-            ColumnDefinition column = SqlQueryBuilderUtils.getColumn(property, columnName, false, isRequired(associations, property),
+            SqlColumnDefinition column = SqlQueryBuilderUtils.getColumn(property, columnName, false, isRequired(associations, property),
                 !isNotForeign(associations));
             columns.add(column);
         };
@@ -552,7 +552,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
             PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), prop, addColumn);
         }
 
-        List<SequenceDefinition> sequences = new ArrayList<>();
+        List<SqlSequenceDefinition> sequences = new ArrayList<>();
         for (PersistentProperty identity : identities) {
             if (identity.isGenerated()) {
                 GeneratedValue.Type idGeneratorType = identity.getAnnotationMetadata()
@@ -561,15 +561,15 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
                 boolean isSequence = idGeneratorType == GeneratedValue.Type.SEQUENCE;
                 final String generatedDefinition = identity.getAnnotationMetadata().stringValue(GeneratedValue.class, "definition").orElse(null);
                 if (generatedDefinition != null) {
-                    sequences.add(new SequenceDefinition(generatedDefinition, null));
+                    sequences.add(new SqlSequenceDefinition(generatedDefinition, null));
                 } else if (isSequence) {
                     final String sequenceName = tableName + SEQ_SUFFIX;
-                    sequences.add(new SequenceDefinition(null, sequenceName));
+                    sequences.add(new SqlSequenceDefinition(null, sequenceName));
                 }
             }
         }
 
-        TableDefinition table = new TableDefinition(schema, tableName, primaryKeyColumns, columns, sequences);
+        SqlTableDefinition table = new SqlTableDefinition(schema, tableName, primaryKeyColumns, columns, sequences);
         tables.add(table);
         return tables;
     }

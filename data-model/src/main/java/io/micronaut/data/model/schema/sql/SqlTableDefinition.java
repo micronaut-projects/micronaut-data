@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.model.schema;
+package io.micronaut.data.model.schema.sql;
 
 import io.micronaut.core.annotation.Internal;
 
 import java.util.List;
 
 /**
- * The table definition. The information is extracted from the {@link io.micronaut.data.model.PersistentEntity}.
+ * The SQL table definition. The information is extracted from the {@link io.micronaut.data.model.PersistentEntity}.
  *
  * @param schema The schema name, not required
  * @param name The table name
@@ -32,14 +32,14 @@ import java.util.List;
  * @since 4.13.0
  */
 @Internal
-public record TableDefinition(
+public record SqlTableDefinition(
     String schema,
     String name,
-    List<ColumnDefinition> primaryKeyColumns,
-    List<ColumnDefinition> columns,
-    List<SequenceDefinition> sequences
+    List<SqlColumnDefinition> primaryKeyColumns,
+    List<SqlColumnDefinition> columns,
+    List<SqlSequenceDefinition> sequences
 ) {
-    public TableDefinition(String schema, String name, List<ColumnDefinition> primaryKeyColumns, List<ColumnDefinition> columns) {
+    public SqlTableDefinition(String schema, String name, List<SqlColumnDefinition> primaryKeyColumns, List<SqlColumnDefinition> columns) {
         this(schema, name, primaryKeyColumns, columns, null);
     }
 }

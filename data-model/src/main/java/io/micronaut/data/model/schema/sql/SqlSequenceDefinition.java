@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.model.schema;
+package io.micronaut.data.model.schema.sql;
 
 import io.micronaut.core.annotation.Internal;
 
 /**
- * The table sequence.
+ * The SQL table sequence.
  *
  * @param definition The custom definition as SQL command to be executed to create sequence
  * @param name The sequence name to be created if definition not provided
  */
 @Internal
-public record SequenceDefinition(String definition, String name) {
+public record SqlSequenceDefinition(String definition, String name) {
 }

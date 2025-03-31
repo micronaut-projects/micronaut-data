@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.model.schema;
+package io.micronaut.data.model.schema.sql;
 
 import io.micronaut.core.annotation.Internal;
 
@@ -32,7 +32,7 @@ import java.sql.Types;
  * @since 4.13.0
  */
 @Internal
-public enum DbType {
+public enum SqlDbType {
 
     /**
      * A type code representing generic SQL type {@code BIT}.
@@ -310,22 +310,25 @@ public enum DbType {
 
     /**
      * A type code representing the generic SQL type {@code UUID}.
+     * It does not have corresponding value in {@link Types}.
      */
     UUID(10001),
 
     /**
      * A type code representing the generic SQL type {@code JSON}.
+     * It does not have corresponding value in {@link Types}.
      */
     JSON(11001),
 
     /**
      * A type code representing the generic SQL type {@code ENUM}.
+     * It does not have corresponding value in {@link Types}.
      */
     ENUM(12001);
 
     private final int type;
 
-    DbType(int type) {
+    SqlDbType(int type) {
         this.type = type;
     }
 
