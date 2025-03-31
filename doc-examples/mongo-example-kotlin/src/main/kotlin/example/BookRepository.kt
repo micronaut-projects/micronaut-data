@@ -10,10 +10,13 @@ import io.micronaut.data.model.Slice
 import io.micronaut.data.mongodb.annotation.*
 import io.micronaut.data.repository.CrudRepository
 import org.bson.types.ObjectId
+import java.util.*
 
 @MongoRepository // <1>
 interface BookRepository : CrudRepository<Book, ObjectId> { // <2>
 // end::repository[]
+
+    override fun findById(id: ObjectId): Optional<Book>
 
     // tag::simple[]
     fun findByTitle(title: String): Book

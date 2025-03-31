@@ -3,6 +3,7 @@ package example
 import io.micronaut.context.BeanContext
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.repository.CrudRepository
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import jakarta.inject.Inject
 import org.bson.types.ObjectId
@@ -85,6 +86,20 @@ class BookRepositorySpec : AbstractMongoSpec() {
         bookRepository.deleteById(id)
         // end::delete[]
         assertEquals(0, bookRepository.count())
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Test
+    fun testCrudCasting() {
+        val bookRepository2: CrudRepository<Any, Any> = bookRepository as CrudRepository<Any, Any>
+        assertNotNull(bookRepository2)
+        val book = Book(ObjectId(),"The Stand", 1000)
+        bookRepository2.save(book)
+        val id = book.id
+        assertNotNull(id)
+        assertTrue(bookRepository2.findById(id).isPresent)
+        bookRepository2.deleteById(id)
+        assertEquals(0, bookRepository2.count())
     }
 
     @Test
