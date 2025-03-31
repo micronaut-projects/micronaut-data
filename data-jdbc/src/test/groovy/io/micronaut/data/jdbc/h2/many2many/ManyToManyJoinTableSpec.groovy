@@ -104,8 +104,8 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
         then:
             statements.length == 3
             statements[0] == 'CREATE SCHEMA "students";'
-            statements[1] == 'CREATE TABLE "students"."m2m_student" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL);'
-            statements[2] == 'CREATE TABLE "students"."m2m_student_course_association" ("st_id" BIGINT NOT NULL,"cs_id" BIGINT NOT NULL);'
+            statements[1] == 'CREATE TABLE "students"."m2m_student_course_association" ("st_id" BIGINT NOT NULL,"cs_id" BIGINT NOT NULL);'
+            statements[2] == 'CREATE TABLE "students"."m2m_student" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL);'
     }
 
     void "test build create CourseRating tables"() {

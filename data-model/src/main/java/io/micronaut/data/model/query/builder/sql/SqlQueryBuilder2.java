@@ -570,7 +570,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
         }
 
         Table table = new Table(schema, tableName, primaryKeyColumns, columns, sequences);
-        tables.add(0, table);
+        tables.add(table);
         return tables;
     }
 

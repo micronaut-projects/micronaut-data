@@ -32,6 +32,10 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
  */
 @Internal
 public final class Column {
+
+    private static final String NUMERIC_TYPE = "NUMERIC";
+    private static final String NUMBER_TYPE = "NUMBER";
+
     private final String name;
     private final DataType dataType;
     private final int dbTypeCode;
@@ -241,7 +245,7 @@ public final class Column {
                 break;
             case INTEGER:
                 if (precision != null) {
-                    String numericName = dialect == Dialect.ORACLE ? "NUMBER" : "NUMERIC";
+                    String numericName = dialect == Dialect.ORACLE ? NUMBER_TYPE : NUMERIC_TYPE;
                     typeDef = numericName + "(" + precision + ")";
                 } else if (dialect == Dialect.ORACLE) {
                     typeDef = "NUMBER(10)";
@@ -254,7 +258,7 @@ public final class Column {
             case BIGDECIMAL:
                 if (precision != null) {
                     if (scale != null) {
-                        String numericName = dialect == Dialect.ORACLE ? "NUMBER" : "NUMERIC";
+                        String numericName = dialect == Dialect.ORACLE ? NUMBER_TYPE : NUMERIC_TYPE;
                         typeDef = numericName + "(" + precision + "," + scale + ")";
                     } else {
                         typeDef = "FLOAT(" + precision + ")";
@@ -268,7 +272,7 @@ public final class Column {
             case FLOAT:
                 if (precision != null) {
                     if (scale != null) {
-                        String numericName = dialect == Dialect.ORACLE ? "NUMBER" : "NUMERIC";
+                        String numericName = dialect == Dialect.ORACLE ? NUMBER_TYPE : NUMERIC_TYPE;
                         typeDef = numericName + "(" + precision + "," + scale + ")";
                     } else {
                         typeDef = "FLOAT(" + precision + ")";
@@ -295,7 +299,7 @@ public final class Column {
             case DOUBLE:
                 if (precision != null) {
                     if (scale != null) {
-                        String numericName = dialect == Dialect.ORACLE ? "NUMBER" : "NUMERIC";
+                        String numericName = dialect == Dialect.ORACLE ? NUMBER_TYPE : NUMERIC_TYPE;
                         typeDef = numericName + "(" + precision + "," + scale + ")";
                     } else {
                         typeDef = "FLOAT(" + precision + ")";
