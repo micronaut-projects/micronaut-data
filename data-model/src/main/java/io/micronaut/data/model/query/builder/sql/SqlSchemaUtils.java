@@ -63,8 +63,6 @@ import static io.micronaut.data.annotation.GeneratedValue.Type.AUTO;
 @Internal
 public final class SqlSchemaUtils {
 
-    static final String SEQ_SUFFIX = "_seq";
-
     private SqlSchemaUtils() {
     }
 

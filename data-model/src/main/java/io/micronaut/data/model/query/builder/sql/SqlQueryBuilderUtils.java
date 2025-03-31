@@ -58,6 +58,7 @@ final class SqlQueryBuilderUtils {
      */
     static final String ANN_JOIN_TABLE = "io.micronaut.data.annotation.sql.JoinTable";
     static final String ANN_JOIN_COLUMNS = "io.micronaut.data.annotation.sql.JoinColumns";
+    static final String SEQ_SUFFIX = "_seq";
 
     private SqlQueryBuilderUtils() { }
 

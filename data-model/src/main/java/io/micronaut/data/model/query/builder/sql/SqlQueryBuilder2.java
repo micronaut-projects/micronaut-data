@@ -415,7 +415,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
 
     @NonNull
     private String createSequenceStmt(String tableName) {
-        final String sequenceName = quote(tableName + SqlSchemaUtils.SEQ_SUFFIX);
+        final String sequenceName = quote(tableName + SqlQueryBuilderUtils.SEQ_SUFFIX);
         final boolean isSqlServer = dialect == Dialect.SQL_SERVER;
         String createSequenceStmt = "CREATE SEQUENCE " + sequenceName;
         if (isSqlServer) {
@@ -885,12 +885,12 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
         return identity.getAnnotationMetadata().stringValue(GeneratedValue.class, "ref")
             .map(n -> {
                 if (StringUtils.isEmpty(n)) {
-                    return unescapedTableName + SqlSchemaUtils.SEQ_SUFFIX;
+                    return unescapedTableName + SqlQueryBuilderUtils.SEQ_SUFFIX;
                 } else {
                     return n;
                 }
             })
-            .orElseGet(() -> unescapedTableName + SqlSchemaUtils.SEQ_SUFFIX);
+            .orElseGet(() -> unescapedTableName + SqlQueryBuilderUtils.SEQ_SUFFIX);
     }
 
     @Override
