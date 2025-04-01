@@ -16,6 +16,7 @@
 package io.micronaut.data.model.schema.sql;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.exceptions.MappingException;
@@ -181,7 +182,8 @@ public final class SqlColumnDefinition {
      * @param dialect the SQL dialect to generate the type for
      * @return the SQL type representation of this column
      */
-    public String getSqlType(Dialect dialect) {
+    @SuppressWarnings("java:S3776")
+    public @NonNull String getSqlType(Dialect dialect) {
         if (this.sqlType != null) {
             return this.sqlType;
         }
@@ -254,10 +256,10 @@ public final class SqlColumnDefinition {
                         String numericName = dialect == Dialect.ORACLE ? NUMBER_TYPE : NUMERIC_TYPE;
                         yield numericName + "(" + precision + "," + scale + ")";
                     } else {
-                        yield "FLOAT(" + precision + ")";
+                        yield floatType(precision);
                     }
                 } else if (dialect == Dialect.ORACLE) {
-                    yield "FLOAT(126)";
+                    yield floatType(126);
                 } else {
                     yield "DECIMAL";
                 }
@@ -268,10 +270,10 @@ public final class SqlColumnDefinition {
                         String numericName = dialect == Dialect.ORACLE ? NUMBER_TYPE : NUMERIC_TYPE;
                         yield numericName + "(" + precision + "," + scale + ")";
                     } else {
-                        yield "FLOAT(" + precision + ")";
+                        yield floatType(precision);
                     }
                 } else if (dialect == Dialect.ORACLE || dialect == Dialect.SQL_SERVER) {
-                    yield " FLOAT(53)";
+                    yield floatType(53);
                 } else if (dialect == Dialect.POSTGRES) {
                     yield "REAL";
                 } else {
@@ -295,10 +297,10 @@ public final class SqlColumnDefinition {
                         String numericName = dialect == Dialect.ORACLE ? NUMBER_TYPE : NUMERIC_TYPE;
                         yield numericName + "(" + precision + "," + scale + ")";
                     } else {
-                        yield "FLOAT(" + precision + ")";
+                        yield floatType(precision);
                     }
                 } else if (dialect == Dialect.ORACLE) {
-                    yield "FLOAT(23)";
+                    yield floatType(23);
                 } else if (dialect == Dialect.MYSQL || dialect == Dialect.H2) {
                     yield "DOUBLE";
                 } else {
@@ -322,7 +324,7 @@ public final class SqlColumnDefinition {
                 if (dialect == Dialect.POSTGRES) {
                     yield "SMALLINT ARRAY";
                 } else {
-                    yield " TINYINT ARRAY";
+                    yield "TINYINT ARRAY";
                 }
                 }
             case INTEGER_ARRAY -> {
@@ -393,5 +395,9 @@ public final class SqlColumnDefinition {
             }
             default -> "JSON";
         };
+    }
+
+    private static String floatType(Integer precision) {
+        return "FLOAT(" + precision + ")";
     }
 }

@@ -447,6 +447,7 @@ final class SqlQueryBuilderUtils {
      * @param pp the property to flatten
      * @return a stream of flattened properties
      */
+    @SuppressWarnings("java:S1452")
     static Stream<? extends PersistentProperty> flatMapEmbedded(PersistentProperty pp) {
         if (pp instanceof Embedded embedded) {
             PersistentEntity embeddedEntity = embedded.getAssociatedEntity();

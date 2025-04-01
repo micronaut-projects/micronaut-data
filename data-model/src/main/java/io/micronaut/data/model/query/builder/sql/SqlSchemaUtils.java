@@ -76,6 +76,7 @@ public final class SqlSchemaUtils {
      */
     @Experimental
     @NonNull
+    @SuppressWarnings("java:S3776")
     public static List<SqlTableDefinition> getSqlTableDefinitions(@NonNull PersistentEntity entity) {
         ArgumentUtils.requireNonNull("entity", entity);
 

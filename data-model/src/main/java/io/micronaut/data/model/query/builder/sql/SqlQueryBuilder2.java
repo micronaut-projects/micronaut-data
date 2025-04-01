@@ -104,6 +104,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
     private static final String INSERT_INTO = "INSERT INTO ";
     private static final String JDBC_REPO_ANNOTATION = "io.micronaut.data.jdbc.annotation.JdbcRepository";
     private static final String DIALECT_ATTR = "dialect";
+    private static final String REFERENCED_COLUMN_NAME = "referencedColumnName";
 
     private final Dialect dialect;
     private final Map<Dialect, DialectConfig> perDialectConfig = new EnumMap<>(Dialect.class);
@@ -506,15 +507,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
         return BLANK_SPACE;
     }
 
-    private String addGeneratedStatementToColumn(PersistentProperty prop, String column, boolean isPk) {
-        if (prop.isGenerated()) {
-            GeneratedValue.Type type = prop.getAnnotationMetadata().enumValue(GeneratedValue.class, GeneratedValue.Type.class)
-                .orElse(AUTO);
-            return addGeneratedStatementToColumn(type, prop.getDataType(), column, isPk);
-        }
-        return column;
-    }
-
+    @SuppressWarnings("java:S3776")
     private String addGeneratedStatementToColumn(GeneratedValue.Type type, DataType dataType, String column, boolean isPk) {
         if (type == AUTO) {
             if (dataType == DataType.UUID) {
@@ -589,7 +582,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
 
     @NonNull
     private List<String> resolveJoinTableAssociatedColumns(AnnotationMetadata annotationMetadata, boolean associationOwner, PersistentEntity entity, NamingStrategy namingStrategy) {
-        List<String> joinColumns = SqlQueryBuilderUtils.getJoinedColumns(annotationMetadata, associationOwner, "referencedColumnName");
+        List<String> joinColumns = SqlQueryBuilderUtils.getJoinedColumns(annotationMetadata, associationOwner, REFERENCED_COLUMN_NAME);
         if (!joinColumns.isEmpty()) {
             return joinColumns;
         }
@@ -1121,13 +1114,13 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
                 onLeftColumns.addAll(
                     joinColumnsHolder.getAnnotations(VALUE_MEMBER)
                         .stream()
-                        .flatMap(ann -> ann.stringValue(isOwner ? "name" : "referencedColumnName").stream())
+                        .flatMap(ann -> ann.stringValue(isOwner ? "name" : REFERENCED_COLUMN_NAME).stream())
                         .toList()
                 );
                 onRightColumns.addAll(
                     joinColumnsHolder.getAnnotations(VALUE_MEMBER)
                         .stream()
-                        .flatMap(ann -> ann.stringValue(isOwner ? "referencedColumnName" : "name").stream())
+                        .flatMap(ann -> ann.stringValue(isOwner ? REFERENCED_COLUMN_NAME : "name").stream())
                         .toList()
                 );
             }
