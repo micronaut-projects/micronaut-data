@@ -29,7 +29,7 @@ spring-data = "3.4.4"
 
 # Lombok
 
-lombok = "1.18.36"
+lombok = "1.18.38"
 
 # Testing and benchmarking
 
