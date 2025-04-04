@@ -18,8 +18,8 @@ micronaut-kotlin = "4.5.0"
 micronaut-multitenancy = "5.5.0"
 micronaut-validation = "4.9.0"
 micronaut-logging = "1.6.1"
-micronaut-flyway = "7.6.1"
-micronaut-coherence = "5.0.4"
+micronaut-flyway = "7.7.0"
+micronaut-coherence = "5.0.5"
 
 groovy = "4.0.26"
 
@@ -29,7 +29,7 @@ spring-data = "3.4.4"
 
 # Lombok
 
-lombok = "1.18.36"
+lombok = "1.18.38"
 
 # Testing and benchmarking
 
