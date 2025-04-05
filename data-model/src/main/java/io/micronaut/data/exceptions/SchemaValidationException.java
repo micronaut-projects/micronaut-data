@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 original authors
+ * Copyright 2017-2025 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,33 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.runtime.config;
-
-import io.micronaut.core.annotation.Experimental;
+package io.micronaut.data.exceptions;
 
 /**
- * Enum describing how to handle the schema at startup. Used for schema generation in
- * testing scenarios.
+ * A schema validation exception thrown if mapped entities don't have matching tables and columns in the database.
  *
- * @author graemerocher
- * @since 1.0.0
+ * @author radovanradic
+ * @since 4.13.0
  */
-public enum SchemaGenerate {
+public class SchemaValidationException extends RuntimeException {
+
     /**
-     * Create the schema if it doesn't exist.
+     * @param message The message
      */
-    CREATE,
+    public SchemaValidationException(String message) {
+        super(message);
+    }
+
     /**
-     * Drop and recreate the schema.
+     * @param message The message
+     * @param cause The cause
      */
-    CREATE_DROP,
-    /**
-     * Validate current schema against mapped entities.
-     */
-    @Experimental
-    VALIDATE,
-    /**
-     * Do nothing.
-     */
-    NONE
+    public SchemaValidationException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

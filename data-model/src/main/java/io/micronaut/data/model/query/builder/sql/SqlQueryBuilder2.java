@@ -52,9 +52,9 @@ import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
-import io.micronaut.data.model.schema.sql.SqlColumnDefinition;
-import io.micronaut.data.model.schema.sql.SqlSequenceDefinition;
-import io.micronaut.data.model.schema.sql.SqlTableDefinition;
+import io.micronaut.data.model.schema.sql.SqlColumnMapping;
+import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
+import io.micronaut.data.model.schema.sql.SqlTableMapping;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Selection;
 
@@ -311,10 +311,10 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
     @Experimental
     @NonNull
     public String[] buildCreateTableStatements(@NonNull PersistentEntity entity) {
-        List<SqlTableDefinition> tables = SqlSchemaUtils.getSqlTableDefinitions(entity);
+        List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(entity);
         assert CollectionUtils.isNotEmpty(tables);
         boolean escape = shouldEscape(entity);
-        SqlTableDefinition mainTable = tables.get(0);
+        SqlTableMapping mainTable = tables.get(0);
         String schema = mainTable.schema();
 
         List<String> createStatements = new ArrayList<>();
@@ -322,13 +322,13 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
             createStatements.add("CREATE SCHEMA " + (escape ? quote(schema) : schema) + ";");
         }
 
-        for (SqlTableDefinition table : tables) {
+        for (SqlTableMapping table : tables) {
 
             List<String> primaryColumnsName = new ArrayList<>();
             boolean generatePkAfterColumns = false;
             List<String> columns = new ArrayList<>();
 
-            List<SqlColumnDefinition> identities = table.primaryKeyColumns();
+            List<SqlColumnMapping> identities = table.primaryKeyColumns();
             if (CollectionUtils.isNotEmpty(identities)) {
                 int idFieldCount = identities.size();
                 generatePkAfterColumns = idFieldCount > 1;
@@ -340,7 +340,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
                     }
                 }
 
-                for (SqlColumnDefinition tableIdentity : identities) {
+                for (SqlColumnMapping tableIdentity : identities) {
 
                     String column = tableIdentity.getName();
                     if (escape) {
@@ -362,7 +362,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
                 }
             }
 
-            for (SqlColumnDefinition tableColumn : table.columns()) {
+            for (SqlColumnMapping tableColumn : table.columns()) {
                 String column = tableColumn.getName();
                 if (escape) {
                     column = quote(column);
@@ -394,9 +394,9 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
             }
             createStatements.add(builder.toString());
 
-            List<SqlSequenceDefinition> sequences = table.sequences();
+            List<SqlSequenceMapping> sequences = table.sequences();
             if (CollectionUtils.isNotEmpty(sequences)) {
-                for (SqlSequenceDefinition sequence : sequences) {
+                for (SqlSequenceMapping sequence : sequences) {
                     if (sequence.definition() != null) {
                         createStatements.add(sequence.definition());
                     } else {

@@ -77,6 +77,9 @@ public class R2dbcSchemaGenerator {
         for (DataR2dbcConfiguration configuration : configurations) {
 
             SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
+            if (schemaGenerate == SchemaGenerate.VALIDATE) {
+                throw new IllegalStateException("Micronaut Data does not currently support validation of R2dbc data sources.");
+            }
             if (schemaGenerate != null && schemaGenerate != SchemaGenerate.NONE) {
                 List<String> packages = configuration.getPackages();
 

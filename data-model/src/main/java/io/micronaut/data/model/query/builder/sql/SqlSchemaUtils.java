@@ -28,6 +28,7 @@ import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.sql.SqlMembers;
 import io.micronaut.data.exceptions.MappingException;
+import io.micronaut.data.exceptions.SchemaValidationException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentEntity;
@@ -35,10 +36,12 @@ import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.naming.NamingStrategy;
-import io.micronaut.data.model.schema.sql.SqlColumnDefinition;
+import io.micronaut.data.model.schema.sql.SqlColumnMapping;
 import io.micronaut.data.model.schema.sql.SqlDbType;
-import io.micronaut.data.model.schema.sql.SqlSequenceDefinition;
-import io.micronaut.data.model.schema.sql.SqlTableDefinition;
+import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
+import io.micronaut.data.model.schema.sql.SqlTableMapping;
+import io.micronaut.data.model.schema.sql.metadata.SqlColumnMetadata;
+import io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata;
 
 import java.lang.annotation.Annotation;
 import java.sql.Blob;
@@ -67,7 +70,7 @@ public final class SqlSchemaUtils {
     }
 
     /**
-     * Returns list of {@link SqlTableDefinition} for persistent entity. It will contain main entity table
+     * Returns list of {@link SqlTableMapping} for persistent entity. It will contain main entity table
      * and potentially joined tables.
      *
      * @param entity The entity
@@ -77,13 +80,13 @@ public final class SqlSchemaUtils {
     @Experimental
     @NonNull
     @SuppressWarnings("java:S3776")
-    public static List<SqlTableDefinition> getSqlTableDefinitions(@NonNull PersistentEntity entity) {
+    public static List<SqlTableMapping> getSqlTableMappings(@NonNull PersistentEntity entity) {
         ArgumentUtils.requireNonNull("entity", entity);
 
         final String tableName = entity.getPersistedName();
         String schema = SqlQueryBuilderUtils.getSchemaName(entity);
 
-        List<SqlTableDefinition> tables = new ArrayList<>();
+        List<SqlTableMapping> tables = new ArrayList<>();
 
         Collection<Association> foreignKeyAssociations = SqlQueryBuilderUtils.getJoinTableAssociations(entity);
 
@@ -91,7 +94,7 @@ public final class SqlSchemaUtils {
         if (CollectionUtils.isNotEmpty(foreignKeyAssociations)) {
             for (Association association : foreignKeyAssociations) {
                 PersistentEntity associatedEntity = association.getAssociatedEntity();
-                List<SqlColumnDefinition> columns = new ArrayList<>();
+                List<SqlColumnMapping> columns = new ArrayList<>();
 
                 Optional<Association> inverseSide = association.getInverseSide().map(Function.identity());
                 Association owningAssociation = inverseSide.orElse(association);
@@ -144,13 +147,13 @@ public final class SqlSchemaUtils {
                         columns.add(getColumnDefinition(pp.getProperty(), columnName, false, true, true));
                     }
                 }
-                SqlTableDefinition joinTable = new SqlTableDefinition(joinTableSchema, joinTableName, null, columns);
+                SqlTableMapping joinTable = new SqlTableMapping(joinTableSchema, joinTableName, null, columns);
                 tables.add(joinTable);
             }
         }
 
-        List<SqlColumnDefinition> primaryKeyColumns = new ArrayList<>();
-        List<SqlColumnDefinition> columns = new ArrayList<>();
+        List<SqlColumnMapping> primaryKeyColumns = new ArrayList<>();
+        List<SqlColumnMapping> columns = new ArrayList<>();
 
         List<PersistentProperty> identities = entity.getIdentityProperties();
         for (PersistentProperty identity : identities) {
@@ -159,7 +162,7 @@ public final class SqlSchemaUtils {
                 -> ids.add(PersistentPropertyPath.of(associations, property, "")));
             for (PersistentPropertyPath pp : ids) {
                 String columnName = namingStrategy.mappedName(pp.getAssociations(), pp.getProperty());
-                SqlColumnDefinition column = getColumnDefinition(pp.getProperty(), columnName, true,
+                SqlColumnMapping column = getColumnDefinition(pp.getProperty(), columnName, true,
                     isRequired(pp.getAssociations(), pp.getProperty()), !SqlQueryBuilderUtils.isNotForeign(pp.getAssociations()));
                 primaryKeyColumns.add(column);
             }
@@ -168,13 +171,13 @@ public final class SqlSchemaUtils {
         PersistentProperty version = entity.getVersion();
         if (version != null && !version.isGenerated()) {
             String columnName = namingStrategy.mappedName(Collections.emptyList(), version);
-            SqlColumnDefinition column = getColumnDefinition(version, columnName, false, true, false);
+            SqlColumnMapping column = getColumnDefinition(version, columnName, false, true, false);
             columns.add(column);
         }
 
         BiConsumer<List<Association>, PersistentProperty> addColumn = (associations, property) -> {
             String columnName = namingStrategy.mappedName(associations, property);
-            SqlColumnDefinition column = getColumnDefinition(property, columnName, false, isRequired(associations, property),
+            SqlColumnMapping column = getColumnDefinition(property, columnName, false, isRequired(associations, property),
                 !SqlQueryBuilderUtils.isNotForeign(associations));
             columns.add(column);
         };
@@ -183,20 +186,51 @@ public final class SqlSchemaUtils {
             PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), prop, addColumn);
         }
 
-        List<SqlSequenceDefinition> sequences = new ArrayList<>();
+        List<SqlSequenceMapping> sequences = new ArrayList<>();
         for (PersistentProperty identity : identities) {
             if (identity.isGenerated()) {
                 GeneratedValue.Type idGeneratorType = identity.getAnnotationMetadata()
                     .enumValue(GeneratedValue.class, GeneratedValue.Type.class)
                     .orElse(null);
                 final String generatedDefinition = identity.getAnnotationMetadata().stringValue(GeneratedValue.class, "definition").orElse(null);
-                sequences.add(new SqlSequenceDefinition(generatedDefinition, identity.getDataType(), Optional.ofNullable(idGeneratorType)));
+                sequences.add(new SqlSequenceMapping(generatedDefinition, identity.getDataType(), Optional.ofNullable(idGeneratorType)));
             }
         }
 
-        SqlTableDefinition table = new SqlTableDefinition(schema, tableName, primaryKeyColumns, columns, sequences);
+        SqlTableMapping table = new SqlTableMapping(schema, tableName, primaryKeyColumns, columns, sequences);
         tables.add(table);
         return tables;
+    }
+
+    /**
+     * Validates a table definition based on {@link PersistentEntity} mapping against its actual corresponding metadata from the database.
+     *
+     * @param tableMapping the SQL table mapping from {@link PersistentEntity} to validate
+     * @param tableMetadata   the SQL table metadata from the database to compare against
+     * @throws SchemaValidationException When expected column not found or is not matching expected type
+     */
+    public static void validateTable(SqlTableMapping tableMapping, SqlTableMetadata tableMetadata) {
+        for (SqlColumnMapping columnMapping : tableMapping.columns()) {
+            String name = columnMapping.getName();
+            SqlColumnMetadata columnMetadata = tableMetadata.getColumn(name);
+            if (columnMetadata == null) {
+                throw new SchemaValidationException("Schema validation failed. Column [" + name + "] not found in the table [" + tableMapping.name() + "]");
+            }
+        }
+    }
+
+    /**
+     * Validates a single column mapping definition against its corresponding metadata from the database.
+     *
+     * @param columnMapping     the SQL column mapping from {@link PersistentEntity} field to validate
+     * @param columnMetadata    the SQL column metadata from the database to compare against
+     * @throws SchemaValidationException when the expected column does not match the actual column metadata
+     */
+    private static void validateColumn(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata) {
+        if (columnMapping.getDbType().getType() == columnMetadata.type()) {
+            return;
+        }
+        // TODO: Validate type if something similar etc.
     }
 
     /**
@@ -211,8 +245,8 @@ public final class SqlSchemaUtils {
      * @throws IllegalStateException if the provided property is an Association
      * @throws MappingException      if the data type of the property is unknown
      */
-    private static SqlColumnDefinition getColumnDefinition(PersistentProperty prop, String column, boolean primaryKey, boolean required,
-                                                   boolean isForeign) {
+    private static SqlColumnMapping getColumnDefinition(PersistentProperty prop, String column, boolean primaryKey, boolean required,
+                                                        boolean isForeign) {
         if (prop instanceof Association) {
             throw new IllegalStateException("Association is not supported here");
         }
@@ -240,21 +274,21 @@ public final class SqlSchemaUtils {
                     .orElseGet(() -> SqlQueryBuilderUtils.findPersistenceColumnValue(annotationMetadata, "length"))
                     .orElse(255);
 
-                yield new SqlColumnDefinition(column, dataType, dbType, primaryKey, stringLength, required, autoGenerated, generatedValueType, definition);
+                yield new SqlColumnMapping(column, dataType, dbType, primaryKey, stringLength, required, autoGenerated, generatedValueType, definition);
             }
             case UUID, BOOLEAN, TIMESTAMP, DATE, TIME, LONG, SHORT, BYTE,
                 BYTE_ARRAY, STRING_ARRAY, CHARACTER_ARRAY, SHORT_ARRAY, INTEGER_ARRAY,
-                LONG_ARRAY, FLOAT_ARRAY, DOUBLE_ARRAY, BOOLEAN_ARRAY -> new SqlColumnDefinition(column, dataType, dbType, primaryKey,
+                LONG_ARRAY, FLOAT_ARRAY, DOUBLE_ARRAY, BOOLEAN_ARRAY -> new SqlColumnMapping(column, dataType, dbType, primaryKey,
                 null, required, autoGenerated, generatedValueType, definition);
-            case CHARACTER -> new SqlColumnDefinition(column, dataType, dbType, primaryKey, 1, required, autoGenerated, generatedValueType, definition);
-            case JSON -> new SqlColumnDefinition(column, dataType, dbType, primaryKey, null, precision, scale, required, autoGenerated, generatedValueType,
+            case CHARACTER -> new SqlColumnMapping(column, dataType, dbType, primaryKey, 1, required, autoGenerated, generatedValueType, definition);
+            case JSON -> new SqlColumnMapping(column, dataType, dbType, primaryKey, null, precision, scale, required, autoGenerated, generatedValueType,
                 definition, prop.getJsonDataType());
             case INTEGER -> {
                 if (optPrecision.isPresent()) {
                     // TODO: Does precision make sense for integer
                     precision = optPrecision.getAsInt();
                 }
-                yield new SqlColumnDefinition(column, dataType, dbType, primaryKey, null, precision, required, autoGenerated, generatedValueType,
+                yield new SqlColumnMapping(column, dataType, dbType, primaryKey, null, precision, required, autoGenerated, generatedValueType,
                     definition);
             }
             case BIGDECIMAL, FLOAT, DOUBLE -> {
@@ -265,12 +299,12 @@ public final class SqlSchemaUtils {
                 if (optScale.isPresent()) {
                     scale = optScale.getAsInt();
                 }
-                yield new SqlColumnDefinition(column, dataType, dbType, primaryKey, null, precision, scale, required, autoGenerated, generatedValueType,
+                yield new SqlColumnMapping(column, dataType, dbType, primaryKey, null, precision, scale, required, autoGenerated, generatedValueType,
                     definition, null);
             }
             default -> {
                 if (StringUtils.isNotEmpty(definition)) {
-                    yield new SqlColumnDefinition(column, dataType, dbType, primaryKey, null, required, autoGenerated, generatedValueType, definition);
+                    yield new SqlColumnMapping(column, dataType, dbType, primaryKey, null, required, autoGenerated, generatedValueType, definition);
                 }
                 throw new MappingException("Unable to create table column for property [" + prop.getName() + "] of entity [" + prop.getOwner().getName() + "] with unknown data type: " + dataType);
             }

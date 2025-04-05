@@ -29,11 +29,17 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.SchemaValidationException;
 import io.micronaut.data.jdbc.operations.JdbcSchemaHandler;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.IdentifierNamingStrategy;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
+import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
+import io.micronaut.data.model.schema.sql.SqlTableMapping;
+import io.micronaut.data.model.schema.sql.metadata.SqlColumnMetadata;
+import io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.config.SchemaGenerate;
 import io.micronaut.inject.qualifiers.Qualifiers;
@@ -46,11 +52,14 @@ import org.slf4j.LoggerFactory;
 import javax.sql.DataSource;
 import java.lang.reflect.Modifier;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Schema generator used for testing purposes.
@@ -58,6 +67,9 @@ import java.util.List;
 @Context
 @Internal
 public class SchemaGenerator {
+
+    private static final String MATCH_ALL = "%";
+    private static final String TABLE_TYPE = "TABLE";
 
     private static final Logger LOG = LoggerFactory.getLogger(SchemaGenerator.class);
 
@@ -81,12 +93,12 @@ public class SchemaGenerator {
     }
 
     /**
-     * Initialize the schema for the configuration.
+     * Initialize or validates the schema for the configuration.
      *
      * @param beanLocator The bean locator
      */
     @PostConstruct
-    public void createSchema(BeanLocator beanLocator) {
+    public void createOrValidateSchema(BeanLocator beanLocator) {
         RuntimeEntityRegistry runtimeEntityRegistry = beanLocator.getBean(RuntimeEntityRegistry.class);
         for (DataJdbcConfiguration configuration : configurations) {
             boolean enabled = configuration.isEnabled();
@@ -120,16 +132,28 @@ public class SchemaGenerator {
                     try (Connection connection = dataSource.getConnection()) {
                         if (configuration.getSchemaGenerateNames() != null && !configuration.getSchemaGenerateNames().isEmpty()) {
                             for (String schemaName : configuration.getSchemaGenerateNames()) {
-                                schemaHandler.createSchema(connection, dialect, schemaName);
+                                if (schemaGenerate != SchemaGenerate.VALIDATE) {
+                                    schemaHandler.createSchema(connection, dialect, schemaName);
+                                }
                                 schemaHandler.useSchema(connection, dialect, schemaName);
-                                generate(connection, configuration, propertyPlaceholderResolver, entities);
+                                if (schemaGenerate == SchemaGenerate.VALIDATE) {
+                                    validate(connection, configuration, entities);
+                                } else {
+                                    generate(connection, configuration, propertyPlaceholderResolver, entities);
+                                }
                             }
                         } else {
                             if (configuration.getSchemaGenerateName() != null) {
-                                schemaHandler.createSchema(connection, dialect, configuration.getSchemaGenerateName());
+                                if (schemaGenerate != SchemaGenerate.VALIDATE) {
+                                    schemaHandler.createSchema(connection, dialect, configuration.getSchemaGenerateName());
+                                }
                                 schemaHandler.useSchema(connection, dialect, configuration.getSchemaGenerateName());
                             }
-                            generate(connection, configuration, propertyPlaceholderResolver, entities);
+                            if (schemaGenerate == SchemaGenerate.VALIDATE) {
+                                validate(connection, configuration, entities);
+                            } else {
+                                generate(connection, configuration, propertyPlaceholderResolver, entities);
+                            }
                         }
                     } catch (SQLException e) {
                         throw new DataAccessException("Unable to create database schema: " + e.getMessage(), e);
@@ -217,13 +241,85 @@ public class SchemaGenerator {
                         }
 
                     }
-
-
                     break;
                 default:
                     // do nothing
             }
         }
+    }
+
+    private static void validate(Connection connection,
+                                 DataJdbcConfiguration configuration,
+                                 PersistentEntity[] entities) throws SQLException {
+        // TODO: Implement validation
+        Map<String, SqlTableMetadata> sqlTableMetadataMap = getSqlTableMetadataList(connection);
+        if (CollectionUtils.isEmpty(sqlTableMetadataMap)) {
+            // No tables found
+            if (entities.length > 0) {
+                throw new SchemaValidationException("No tables found for the datasource " + configuration.getName());
+            }
+            return;
+        }
+        for (PersistentEntity entity : entities) {
+            List<SqlTableMapping> sqlTableMappings = SqlSchemaUtils.getSqlTableMappings(entity);
+            for (SqlTableMapping sqlTableMapping : sqlTableMappings) {
+                String tableName = sqlTableMapping.name();
+                SqlTableMetadata sqlTableMetadata = sqlTableMetadataMap.get(tableName);
+                if (sqlTableMetadata == null) {
+                    throw new SchemaValidationException("Schema validation failed. Expected table [" + tableName + "] not found for entity [" + entity.getPersistedName() + "]");
+                }
+                SqlSchemaUtils.validateTable(sqlTableMapping, sqlTableMetadata);
+            }
+        }
+    }
+
+    private static Map<String, SqlTableMetadata> getSqlTableMetadataList(Connection connection) throws SQLException {
+        Map<String, SqlTableMetadata> sqlTableMetadataList = CollectionUtils.newHashMap(50);
+        String catalog = connection.getCatalog();
+        String schema = connection.getSchema();
+        String[] tableTypes = { TABLE_TYPE };
+        DatabaseMetaData metaData = connection.getMetaData();
+        IdentifierNamingStrategy namingStrategy = getIdentifierNamingStrategy(metaData);
+        catalog = namingStrategy.apply(catalog);
+        schema = namingStrategy.apply(schema);
+        // Some dialects won't support both catalog and schema
+        // Get tables
+        ResultSet tablesResultSet = metaData.getTables(catalog, schema, MATCH_ALL, tableTypes);
+        while (tablesResultSet.next()) {
+            String tableName = tablesResultSet.getString("TABLE_NAME");
+            SqlTableMetadata sqlTableMetadata = new SqlTableMetadata(tableName);
+            // Get columns
+            populateSqlColumnMetadata(metaData, catalog, schema, sqlTableMetadata);
+            sqlTableMetadataList.put(sqlTableMetadata.getName(), sqlTableMetadata);
+        }
+        return sqlTableMetadataList;
+    }
+
+    private static void populateSqlColumnMetadata(DatabaseMetaData metaData, String catalog, String schema,
+                                           SqlTableMetadata sqlTableMetadata) throws SQLException {
+        ResultSet columnsResultSet = metaData.getColumns(catalog, schema, sqlTableMetadata.getName(), MATCH_ALL);
+        while (columnsResultSet.next()) {
+            String columnName = columnsResultSet.getString("COLUMN_NAME");
+            int columnType = columnsResultSet.getInt("DATA_TYPE");
+            String typeName = columnsResultSet.getString("TYPE_NAME");
+            int columnSize = columnsResultSet.getInt("COLUMN_SIZE");
+            // the number of fractional digits. Null is returned for data types where DECIMAL_DIGITS is not applicable.
+            int decimalDigits = columnsResultSet.getInt("DECIMAL_DIGITS");
+            int nullable = columnsResultSet.getInt("NULLABLE");
+            sqlTableMetadata.addColumn(new SqlColumnMetadata(columnName, columnType, typeName,
+                columnSize, decimalDigits, nullable == 1));
+        }
+    }
+
+    private static IdentifierNamingStrategy getIdentifierNamingStrategy(DatabaseMetaData metaData) throws SQLException {
+        if (metaData.storesUpperCaseIdentifiers()) {
+            return IdentifierNamingStrategy.UPPER;
+        }
+        if (metaData.storesLowerCaseIdentifiers()) {
+            return IdentifierNamingStrategy.LOWER;
+        }
+        // default MIXED
+        return IdentifierNamingStrategy.MIXED;
     }
 
     /**

@@ -20,26 +20,26 @@ import io.micronaut.core.annotation.Internal;
 import java.util.List;
 
 /**
- * The SQL table definition. The information is extracted from the {@link io.micronaut.data.model.PersistentEntity}.
+ * The SQL table mapping information extracted from the {@link io.micronaut.data.model.PersistentEntity}.
  *
  * @param schema The schema name, not required
  * @param name The table name
  * @param primaryKeyColumns The list of primary key columns, can be null or empty
- * @param columns The list of columns
- * @param sequences The list of table sequences, can be null or empty
+ * @param columns The list of columns. See {@link SqlColumnMapping}
+ * @param sequences The list of table sequences, can be null or empty. See {@link SqlSequenceMapping}
  *
  * @author radovanradic
  * @since 4.13.0
  */
 @Internal
-public record SqlTableDefinition(
+public record SqlTableMapping(
     String schema,
     String name,
-    List<SqlColumnDefinition> primaryKeyColumns,
-    List<SqlColumnDefinition> columns,
-    List<SqlSequenceDefinition> sequences
+    List<SqlColumnMapping> primaryKeyColumns,
+    List<SqlColumnMapping> columns,
+    List<SqlSequenceMapping> sequences
 ) {
-    public SqlTableDefinition(String schema, String name, List<SqlColumnDefinition> primaryKeyColumns, List<SqlColumnDefinition> columns) {
+    public SqlTableMapping(String schema, String name, List<SqlColumnMapping> primaryKeyColumns, List<SqlColumnMapping> columns) {
         this(schema, name, primaryKeyColumns, columns, null);
     }
 }

@@ -30,5 +30,5 @@ import java.util.Optional;
  * @param generatedValueType The {@link Optional} of {@link GeneratedValue.Type} since type might not be explicitly declared
  */
 @Internal
-public record SqlSequenceDefinition(@Nullable String definition, DataType dataType, Optional<GeneratedValue.Type> generatedValueType) {
+public record SqlSequenceMapping(@Nullable String definition, DataType dataType, Optional<GeneratedValue.Type> generatedValueType) {
 }
