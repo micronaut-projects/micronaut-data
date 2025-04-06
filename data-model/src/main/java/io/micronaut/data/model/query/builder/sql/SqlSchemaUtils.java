@@ -212,10 +212,11 @@ public final class SqlSchemaUtils {
     public static void validateTable(SqlTableMapping tableMapping, SqlTableMetadata tableMetadata) {
         for (SqlColumnMapping columnMapping : tableMapping.columns()) {
             String name = columnMapping.getName();
-            SqlColumnMetadata columnMetadata = tableMetadata.getColumn(name);
+            SqlColumnMetadata columnMetadata = tableMetadata.getColumn(name.toLowerCase());
             if (columnMetadata == null) {
                 throw new SchemaValidationException("Schema validation failed. Column [" + name + "] not found in the table [" + tableMapping.name() + "]");
             }
+            validateColumn(columnMapping, columnMetadata, tableMetadata.getName());
         }
     }
 
@@ -224,13 +225,42 @@ public final class SqlSchemaUtils {
      *
      * @param columnMapping     the SQL column mapping from {@link PersistentEntity} field to validate
      * @param columnMetadata    the SQL column metadata from the database to compare against
+     * @param tableName         the name of the table where column is stored
      * @throws SchemaValidationException when the expected column does not match the actual column metadata
      */
-    private static void validateColumn(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata) {
-        if (columnMapping.getDbType().getType() == columnMetadata.type()) {
+    private static void validateColumn(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata, String tableName) {
+        if (matchingColumnTypes(columnMapping.getDbType(), columnMetadata.type())) {
             return;
         }
-        // TODO: Validate type if something similar etc.
+        throw new SchemaValidationException(String.format("Schema validation failed. Column [%s] in table [%s] of type [%s] is mapped to [%s].",
+            columnMetadata.name(), tableName, columnMetadata.typeName(), columnMapping.getDbType()));
+    }
+
+    private static boolean matchingColumnTypes(SqlDbType dbType, int typeCode) {
+        int mappedTypeCode = dbType.getType();
+        if (mappedTypeCode == typeCode || isCompatibleIntegralType(mappedTypeCode, typeCode)) {
+            return true;
+        }
+        // TODO: Add more checks/fallbacks
+        return false;
+    }
+
+    private static boolean isCompatibleIntegralType(int typeCode1, int typeCode2) {
+        return switch (typeCode1) {
+            case java.sql.Types.TINYINT ->
+                typeCode2 == java.sql.Types.TINYINT
+                    || typeCode2 == java.sql.Types.SMALLINT
+                    || typeCode2 == java.sql.Types.INTEGER
+                    || typeCode2 == java.sql.Types.BIGINT;
+            case java.sql.Types.SMALLINT ->
+                typeCode2 == java.sql.Types.SMALLINT
+                    || typeCode2 == java.sql.Types.INTEGER
+                    || typeCode2 == java.sql.Types.BIGINT;
+            case java.sql.Types.INTEGER ->
+                typeCode2 == java.sql.Types.INTEGER
+                    || typeCode2 == java.sql.Types.BIGINT;
+            default -> false;
+        };
     }
 
     /**

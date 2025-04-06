@@ -251,7 +251,6 @@ public class SchemaGenerator {
     private static void validate(Connection connection,
                                  DataJdbcConfiguration configuration,
                                  PersistentEntity[] entities) throws SQLException {
-        // TODO: Implement validation
         Map<String, SqlTableMetadata> sqlTableMetadataMap = getSqlTableMetadataList(connection);
         if (CollectionUtils.isEmpty(sqlTableMetadataMap)) {
             // No tables found
@@ -264,7 +263,7 @@ public class SchemaGenerator {
             List<SqlTableMapping> sqlTableMappings = SqlSchemaUtils.getSqlTableMappings(entity);
             for (SqlTableMapping sqlTableMapping : sqlTableMappings) {
                 String tableName = sqlTableMapping.name();
-                SqlTableMetadata sqlTableMetadata = sqlTableMetadataMap.get(tableName);
+                SqlTableMetadata sqlTableMetadata = sqlTableMetadataMap.get(tableName.toLowerCase());
                 if (sqlTableMetadata == null) {
                     throw new SchemaValidationException("Schema validation failed. Expected table [" + tableName + "] not found for entity [" + entity.getPersistedName() + "]");
                 }
@@ -290,7 +289,7 @@ public class SchemaGenerator {
             SqlTableMetadata sqlTableMetadata = new SqlTableMetadata(tableName);
             // Get columns
             populateSqlColumnMetadata(metaData, catalog, schema, sqlTableMetadata);
-            sqlTableMetadataList.put(sqlTableMetadata.getName(), sqlTableMetadata);
+            sqlTableMetadataList.put(sqlTableMetadata.getName().toLowerCase(), sqlTableMetadata);
         }
         return sqlTableMetadataList;
     }

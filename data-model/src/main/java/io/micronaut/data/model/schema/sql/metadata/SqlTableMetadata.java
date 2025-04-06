@@ -45,7 +45,7 @@ public final class SqlTableMetadata {
      * @param column the column metadata to add
      */
     public void addColumn(SqlColumnMetadata column) {
-        columns.put(column.name(), column);
+        columns.put(column.name().toLowerCase(), column);
     }
 
     /**
