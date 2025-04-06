@@ -316,11 +316,16 @@ public final class SqlColumnMapping {
                     yield "DOUBLE PRECISION";
                 }
             }
-            case SHORT, BYTE -> {
+            case SHORT -> {
                 if (dialect == Dialect.ORACLE) {
                     yield "NUMBER(5)";
-                } else if (dialect == Dialect.POSTGRES) {
+                } else  {
                     yield "SMALLINT";
+                }
+            }
+            case BYTE -> {
+                if (dialect == Dialect.ORACLE) {
+                    yield "NUMBER(3)";
                 } else {
                     yield "TINYINT";
                 }
