@@ -233,6 +233,11 @@ public final class SqlSchemaUtils {
      */
     private static void validateColumn(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata,
                                        Dialect dialect, String tableName) {
+        if (StringUtils.isNotEmpty(columnMapping.getDefinition())) {
+            // Don't compare columns with custom SQL definition
+            // and let user be responsible for mapping of that field
+            return;
+        }
         if (matchingColumnTypes(columnMapping.getDbType(), columnMetadata.type())) {
             return;
         }
