@@ -5,6 +5,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.tck.entities.BasicTypes;
 
 import java.net.MalformedURLException;
+import java.util.UUID;
 
 /**
  * The entity used for schema creation and validation.
@@ -18,6 +19,7 @@ public final class BasicSchemaTypes {
     private Short shortField;
 
     private Integer integerField;
+    private UUID uuidField;
 
     public Long getMyId() {
         return myId;
@@ -41,5 +43,13 @@ public final class BasicSchemaTypes {
 
     public void setIntegerField(Integer integerField) {
         this.integerField = integerField;
+    }
+
+    public UUID getUuidField() {
+        return uuidField;
+    }
+
+    public void setUuidField(UUID uuidField) {
+        this.uuidField = uuidField;
     }
 }

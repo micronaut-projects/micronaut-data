@@ -46,6 +46,7 @@ import io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata;
 import java.lang.annotation.Annotation;
 import java.sql.Blob;
 import java.sql.Clob;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -205,18 +206,19 @@ public final class SqlSchemaUtils {
     /**
      * Validates a table definition based on {@link PersistentEntity} mapping against its actual corresponding metadata from the database.
      *
-     * @param tableMapping the SQL table mapping from {@link PersistentEntity} to validate
+     * @param tableMapping    the SQL table mapping from {@link PersistentEntity} to validate
      * @param tableMetadata   the SQL table metadata from the database to compare against
+     * @param dialect         the SQL dialect of the schema
      * @throws SchemaValidationException When expected column not found or is not matching expected type
      */
-    public static void validateTable(SqlTableMapping tableMapping, SqlTableMetadata tableMetadata) {
+    public static void validateTable(SqlTableMapping tableMapping, SqlTableMetadata tableMetadata, Dialect dialect) {
         for (SqlColumnMapping columnMapping : tableMapping.columns()) {
             String name = columnMapping.getName();
             SqlColumnMetadata columnMetadata = tableMetadata.getColumn(name.toLowerCase());
             if (columnMetadata == null) {
                 throw new SchemaValidationException("Schema validation failed. Column [" + name + "] not found in the table [" + tableMapping.name() + "]");
             }
-            validateColumn(columnMapping, columnMetadata, tableMetadata.getName());
+            validateColumn(columnMapping, columnMetadata, dialect, tableMetadata.getName());
         }
     }
 
@@ -225,11 +227,17 @@ public final class SqlSchemaUtils {
      *
      * @param columnMapping     the SQL column mapping from {@link PersistentEntity} field to validate
      * @param columnMetadata    the SQL column metadata from the database to compare against
+     * @param dialect           the dialect of the schema where column belongs
      * @param tableName         the name of the table where column is stored
      * @throws SchemaValidationException when the expected column does not match the actual column metadata
      */
-    private static void validateColumn(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata, String tableName) {
+    private static void validateColumn(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata,
+                                       Dialect dialect, String tableName) {
         if (matchingColumnTypes(columnMapping.getDbType(), columnMetadata.type())) {
+            return;
+        }
+        String sqlType = columnMapping.getSqlType(dialect);
+        if (sqlType.toLowerCase().equals(columnMetadata.typeName().toLowerCase())) {
             return;
         }
         throw new SchemaValidationException(String.format("Schema validation failed. Column [%s] in table [%s] of type [%s] is mapped to [%s].",
@@ -238,29 +246,67 @@ public final class SqlSchemaUtils {
 
     private static boolean matchingColumnTypes(SqlDbType dbType, int typeCode) {
         int mappedTypeCode = dbType.getType();
-        if (mappedTypeCode == typeCode || isCompatibleIntegralType(mappedTypeCode, typeCode)) {
+        if (mappedTypeCode == typeCode
+            || isCompatibleIntegralType(mappedTypeCode, typeCode)
+            || isNumericOrDecimal(mappedTypeCode) && isNumericOrDecimal(typeCode)
+            || isFloatOrRealOrDouble(mappedTypeCode) && isFloatOrRealOrDouble(typeCode)
+            || isVarcharType(mappedTypeCode) && isVarcharType(typeCode)
+            || isVarbinaryType(mappedTypeCode) && isVarbinaryType(typeCode)
+            || isEnumType(mappedTypeCode) && isVarcharType(typeCode)) {
             return true;
         }
-        // TODO: Add more checks/fallbacks
+        // Add more checks/fallbacks during testing and/or reported issues
         return false;
     }
 
     private static boolean isCompatibleIntegralType(int typeCode1, int typeCode2) {
         return switch (typeCode1) {
-            case java.sql.Types.TINYINT ->
-                typeCode2 == java.sql.Types.TINYINT
-                    || typeCode2 == java.sql.Types.SMALLINT
-                    || typeCode2 == java.sql.Types.INTEGER
-                    || typeCode2 == java.sql.Types.BIGINT;
-            case java.sql.Types.SMALLINT ->
-                typeCode2 == java.sql.Types.SMALLINT
-                    || typeCode2 == java.sql.Types.INTEGER
-                    || typeCode2 == java.sql.Types.BIGINT;
-            case java.sql.Types.INTEGER ->
-                typeCode2 == java.sql.Types.INTEGER
-                    || typeCode2 == java.sql.Types.BIGINT;
+            case Types.TINYINT ->
+                typeCode2 == Types.TINYINT
+                    || typeCode2 == Types.SMALLINT
+                    || typeCode2 == Types.INTEGER
+                    || typeCode2 == Types.BIGINT;
+            case Types.SMALLINT ->
+                typeCode2 == Types.SMALLINT
+                    || typeCode2 == Types.INTEGER
+                    || typeCode2 == Types.BIGINT;
+            case Types.INTEGER ->
+                typeCode2 == Types.INTEGER
+                    || typeCode2 == Types.BIGINT;
             default -> false;
         };
+    }
+
+    private static boolean isNumericOrDecimal(int typeCode) {
+        return switch (typeCode) {
+            case Types.NUMERIC, Types.DECIMAL ->  true;
+            default -> false;
+        };
+    }
+
+    private static boolean isFloatOrRealOrDouble(int typeCode) {
+        return switch (typeCode) {
+            case Types.FLOAT, Types.REAL, Types.DOUBLE -> true;
+            default -> false;
+        };
+    }
+
+    private static boolean isVarcharType(int typeCode) {
+        return switch (typeCode) {
+            case Types.VARCHAR, Types.LONGVARCHAR, Types.NVARCHAR, Types.LONGNVARCHAR -> true;
+            default -> false;
+        };
+    }
+
+    private static boolean isVarbinaryType(int typeCode) {
+        return switch (typeCode) {
+            case Types.VARBINARY, Types.LONGVARBINARY -> true;
+            default -> false;
+        };
+    }
+
+    private static boolean isEnumType(int typeCode) {
+        return typeCode == SqlDbType.ENUM.getType();
     }
 
     /**

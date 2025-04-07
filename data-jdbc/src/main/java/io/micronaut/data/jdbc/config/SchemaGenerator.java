@@ -267,7 +267,7 @@ public class SchemaGenerator {
                 if (sqlTableMetadata == null) {
                     throw new SchemaValidationException("Schema validation failed. Expected table [" + tableName + "] not found for entity [" + entity.getPersistedName() + "]");
                 }
-                SqlSchemaUtils.validateTable(sqlTableMapping, sqlTableMetadata);
+                SqlSchemaUtils.validateTable(sqlTableMapping, sqlTableMetadata, configuration.getDialect());
             }
         }
     }
