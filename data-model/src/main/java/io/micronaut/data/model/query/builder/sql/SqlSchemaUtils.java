@@ -269,6 +269,12 @@ public final class SqlSchemaUtils {
             return matchOracleColumn(columnMapping, columnMetadata);
         } else if (dialect == Dialect.MYSQL) {
             return matchMySqlColumn(columnMapping, columnMetadata);
+        } else if (dialect == Dialect.H2) {
+            return matchH2Column(columnMapping, columnMetadata);
+        } else if (dialect == Dialect.POSTGRES) {
+            return matchPostgresColumn(columnMapping, columnMetadata);
+        } else if (dialect == Dialect.SQL_SERVER) {
+            return matchSqlServerColumn(columnMapping, columnMetadata);
         }
         // Add other rules for matching if needed
         return false;
@@ -295,6 +301,27 @@ public final class SqlSchemaUtils {
     private static boolean matchMySqlColumn(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata) {
         if (columnMapping.getDbType() == SqlDbType.UUID) {
             return uuidMatchesVarchar(columnMetadata);
+        }
+        return false;
+    }
+
+    private static boolean matchH2Column(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata) {
+        if (columnMapping.getDbType() == SqlDbType.BINARY) {
+            return columnMetadata.type() == Types.BLOB;
+        }
+        return false;
+    }
+
+    private static boolean matchPostgresColumn(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata) {
+        if (columnMapping.getDbType() == SqlDbType.BOOLEAN) {
+            return columnMetadata.type() == Types.BIT;
+        }
+        return false;
+    }
+
+    private static boolean matchSqlServerColumn(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata) {
+        if (columnMapping.getDbType() == SqlDbType.BINARY) {
+            return columnMetadata.type() == Types.VARBINARY;
         }
         return false;
     }
