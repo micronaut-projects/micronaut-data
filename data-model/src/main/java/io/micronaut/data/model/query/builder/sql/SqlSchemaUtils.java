@@ -160,7 +160,7 @@ public final class SqlSchemaUtils {
                         columns.add(getColumnDefinition(pp.getProperty(), columnName, false, true, true));
                     }
                 }
-                SqlTableMapping joinTable = new SqlTableMapping(joinTableSchema, joinTableName, null, columns);
+                SqlTableMapping joinTable = new SqlTableMapping(joinTableSchema, joinTableName, SqlTableMapping.TableType.JOIN, null, columns);
                 tables.add(joinTable);
             }
         }
@@ -210,7 +210,7 @@ public final class SqlSchemaUtils {
             }
         }
 
-        SqlTableMapping table = new SqlTableMapping(schema, tableName, primaryKeyColumns, columns, sequences);
+        SqlTableMapping table = new SqlTableMapping(schema, tableName, SqlTableMapping.TableType.MAIN, primaryKeyColumns, columns, sequences);
         tables.add(table);
         return tables;
     }
@@ -250,30 +250,69 @@ public final class SqlSchemaUtils {
             // and let user be responsible for mapping of that field
             return;
         }
-        if (matchingColumnTypes(columnMapping.getDbType(), columnMetadata.type())) {
-            return;
-        }
-        String sqlType = columnMapping.getSqlType(dialect);
-        if (sqlType.toLowerCase().equals(columnMetadata.typeName().toLowerCase())) {
+        if (matchingColumn(columnMapping, columnMetadata, dialect)) {
             return;
         }
         throw new SchemaValidationException(String.format("Schema validation failed. Column [%s] in table [%s] of type [%s] is mapped to [%s].",
             columnMetadata.name(), tableName, columnMetadata.typeName(), columnMapping.getDbType()));
     }
 
-    private static boolean matchingColumnTypes(SqlDbType dbType, int typeCode) {
-        int mappedTypeCode = dbType.getType();
-        if (mappedTypeCode == typeCode
-            || isCompatibleIntegralType(mappedTypeCode, typeCode)
-            || isNumericOrDecimal(mappedTypeCode) && isNumericOrDecimal(typeCode)
-            || isFloatOrRealOrDouble(mappedTypeCode) && isFloatOrRealOrDouble(typeCode)
-            || isVarcharType(mappedTypeCode) && isVarcharType(typeCode)
-            || isVarbinaryType(mappedTypeCode) && isVarbinaryType(typeCode)
-            || isEnumType(mappedTypeCode) && isVarcharType(typeCode)) {
+    private static boolean matchingColumn(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata, Dialect dialect) {
+        if (matchingColumnTypes(columnMapping.getDbType(), columnMetadata.type())) {
             return true;
         }
-        // Add more checks/fallbacks during testing and/or reported issues
+        String sqlType = columnMapping.getSqlType(dialect);
+        if (sqlType.equalsIgnoreCase(columnMetadata.typeName())) {
+            return true;
+        }
+        if (dialect == Dialect.ORACLE) {
+            return matchOracleColumn(columnMapping, columnMetadata);
+        } else if (dialect == Dialect.MYSQL) {
+            return matchMySqlColumn(columnMapping, columnMetadata);
+        }
+        // Add other rules for matching if needed
         return false;
+    }
+
+    private static boolean matchOracleColumn(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata) {
+        if (columnMetadata.type() == Types.NUMERIC) {
+            // Custom sql type name for ORACLE
+            String oracleSqlType = "NUMBER";
+            if (columnMetadata.columnSize() > 0) {
+                oracleSqlType += "(" + columnMetadata.columnSize();
+                if (columnMetadata.decimalDigits() > 0) {
+                    oracleSqlType += "," + columnMetadata.decimalDigits();
+                }
+                oracleSqlType += ")";
+            }
+            return columnMapping.getSqlType(Dialect.ORACLE).equalsIgnoreCase(oracleSqlType);
+        } else if (columnMapping.getDbType() == SqlDbType.UUID) {
+            return uuidMatchesVarchar(columnMetadata);
+        }
+        return false;
+    }
+
+    private static boolean matchMySqlColumn(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata) {
+        if (columnMapping.getDbType() == SqlDbType.UUID) {
+            return uuidMatchesVarchar(columnMetadata);
+        }
+        return false;
+    }
+
+    private static boolean uuidMatchesVarchar(SqlColumnMetadata columnMetadata) {
+        return columnMetadata.type() == Types.VARCHAR && columnMetadata.columnSize() == 36;
+    }
+
+    private static boolean matchingColumnTypes(SqlDbType dbType, int typeCode) {
+        int mappedTypeCode = dbType.getType();
+        return mappedTypeCode == typeCode
+                || isCompatibleIntegralType(mappedTypeCode, typeCode)
+                || isNumericOrDecimal(mappedTypeCode) && isNumericOrDecimal(typeCode)
+                || isFloatOrRealOrDouble(mappedTypeCode) && isFloatOrRealOrDouble(typeCode)
+                || isVarcharType(mappedTypeCode) && isVarcharType(typeCode)
+                || isVarbinaryType(mappedTypeCode) && isVarbinaryType(typeCode)
+                || isEnumType(mappedTypeCode) && isVarcharType(typeCode);
+        // Add more checks/fallbacks during testing and/or reported issues
     }
 
     private static boolean isCompatibleIntegralType(int typeCode1, int typeCode2) {

@@ -35,11 +35,17 @@ import java.util.List;
 public record SqlTableMapping(
     String schema,
     String name,
+    TableType type,
     List<SqlColumnMapping> primaryKeyColumns,
     List<SqlColumnMapping> columns,
     List<SqlSequenceMapping> sequences
 ) {
-    public SqlTableMapping(String schema, String name, List<SqlColumnMapping> primaryKeyColumns, List<SqlColumnMapping> columns) {
-        this(schema, name, primaryKeyColumns, columns, null);
+    public SqlTableMapping(String schema, String name, TableType type, List<SqlColumnMapping> primaryKeyColumns, List<SqlColumnMapping> columns) {
+        this(schema, name, type, primaryKeyColumns, columns, null);
+    }
+
+    public enum TableType {
+        MAIN,
+        JOIN
     }
 }

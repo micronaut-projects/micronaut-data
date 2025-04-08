@@ -224,7 +224,7 @@ public final class SqlColumnMapping {
                     // sql server timestamp is an internal type, use datetime instead
                     yield "DATETIME2";
                 } else if (dialect == Dialect.MYSQL) {
-                    // mysql doesn't allow timestamp without default
+                    // TODO: mysql doesn't allow timestamp without default?
                     yield "TIMESTAMP(6)";
                 } else {
                     yield "TIMESTAMP";
@@ -326,6 +326,8 @@ public final class SqlColumnMapping {
             case BYTE -> {
                 if (dialect == Dialect.ORACLE) {
                     yield "NUMBER(3)";
+                } else if (dialect == Dialect.POSTGRES) {
+                    yield "SMALLINT";
                 } else {
                     yield "TINYINT";
                 }

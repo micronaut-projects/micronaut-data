@@ -15,3 +15,4 @@ datasources:
     db-type: oracle
     dialect: oracle
     schema-generate: NONE
+    packages: io.micronaut.data.jdbc.oraclexe.jsonview
