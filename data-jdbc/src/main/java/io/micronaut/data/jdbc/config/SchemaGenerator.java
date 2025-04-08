@@ -26,6 +26,7 @@ import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -69,7 +70,6 @@ import java.util.Map;
 public class SchemaGenerator {
 
     private static final String MATCH_ALL = "%";
-    private static final String TABLE_TYPE = "TABLE";
 
     private static final Logger LOG = LoggerFactory.getLogger(SchemaGenerator.class);
 
@@ -93,7 +93,7 @@ public class SchemaGenerator {
     }
 
     /**
-     * Initialize or validates the schema for the configuration.
+     * Initializes or validates the schema for the configuration.
      *
      * @param beanLocator The bean locator
      */
@@ -276,7 +276,7 @@ public class SchemaGenerator {
         Map<String, SqlTableMetadata> sqlTableMetadataList = CollectionUtils.newHashMap(50);
         String catalog = connection.getCatalog();
         String schema = connection.getSchema();
-        String[] tableTypes = { TABLE_TYPE };
+        String[] tableTypes = { SqlSchemaUtils.TABLE_TYPE };
         DatabaseMetaData metaData = connection.getMetaData();
         IdentifierNamingStrategy namingStrategy = getIdentifierNamingStrategy(metaData);
         catalog = namingStrategy.apply(catalog);
@@ -285,29 +285,44 @@ public class SchemaGenerator {
         // Get tables
         ResultSet tablesResultSet = metaData.getTables(catalog, schema, MATCH_ALL, tableTypes);
         while (tablesResultSet.next()) {
-            String tableName = tablesResultSet.getString("TABLE_NAME");
-            SqlTableMetadata sqlTableMetadata = new SqlTableMetadata(tableName);
-            // Get columns
-            populateSqlColumnMetadata(metaData, catalog, schema, sqlTableMetadata);
+            String tableCatalog = tablesResultSet.getString(SqlSchemaUtils.TABLE_CATALOG_COLUMN);
+            String tableSchema = tablesResultSet.getString(SqlSchemaUtils.TABLE_SCHEMA_COLUMN);
+            String tableName = tablesResultSet.getString(SqlSchemaUtils.TABLE_NAME_COLUMN);
+            SqlTableMetadata sqlTableMetadata = new SqlTableMetadata(tableCatalog, tableSchema, tableName);
             sqlTableMetadataList.put(sqlTableMetadata.getName().toLowerCase(), sqlTableMetadata);
         }
+        // Get columns
+        populateSqlColumnMetadata(metaData, catalog, schema, sqlTableMetadataList);
         return sqlTableMetadataList;
     }
 
     private static void populateSqlColumnMetadata(DatabaseMetaData metaData, String catalog, String schema,
-                                           SqlTableMetadata sqlTableMetadata) throws SQLException {
-        ResultSet columnsResultSet = metaData.getColumns(catalog, schema, sqlTableMetadata.getName(), MATCH_ALL);
+                                           Map<String, SqlTableMetadata> sqlTableMetadataMap) throws SQLException {
+        ResultSet columnsResultSet = metaData.getColumns(catalog, schema, null, MATCH_ALL);
+        SqlTableMetadata sqlTableMetadata = null;
+        String currentTableName = StringUtils.EMPTY_STRING;
         while (columnsResultSet.next()) {
-            String columnName = columnsResultSet.getString("COLUMN_NAME");
-            int columnType = columnsResultSet.getInt("DATA_TYPE");
-            String typeName = columnsResultSet.getString("TYPE_NAME");
-            int columnSize = columnsResultSet.getInt("COLUMN_SIZE");
-            // the number of fractional digits. Null is returned for data types where DECIMAL_DIGITS is not applicable.
-            int decimalDigits = columnsResultSet.getInt("DECIMAL_DIGITS");
-            int nullable = columnsResultSet.getInt("NULLABLE");
-            sqlTableMetadata.addColumn(new SqlColumnMetadata(columnName, columnType, typeName,
-                columnSize, decimalDigits, nullable == 1));
+            String tableName = columnsResultSet.getString(SqlSchemaUtils.TABLE_NAME_COLUMN);
+            if (!currentTableName.equalsIgnoreCase(tableName)) {
+                currentTableName = tableName.toLowerCase();
+                sqlTableMetadata = sqlTableMetadataMap.get(currentTableName);
+            }
+            if (sqlTableMetadata != null) {
+                addExtractedColumnInformation(sqlTableMetadata, columnsResultSet);
+            }
         }
+    }
+
+    private static void addExtractedColumnInformation(SqlTableMetadata sqlTableMetadata, ResultSet columnsResultSet) throws SQLException {
+        String columnName = columnsResultSet.getString(SqlSchemaUtils.COLUMN_NAME_COLUMN);
+        int columnType = columnsResultSet.getInt(SqlSchemaUtils.DATA_TYPE_COLUMN);
+        String typeName = columnsResultSet.getString(SqlSchemaUtils.TYPE_NAME_COLUMN);
+        int columnSize = columnsResultSet.getInt(SqlSchemaUtils.COLUMN_SIZE_COLUMN);
+        // the number of fractional digits. Null is returned for data types where DECIMAL_DIGITS is not applicable.
+        int decimalDigits = columnsResultSet.getInt(SqlSchemaUtils.DECIMAL_DIGITS_COLUMN);
+        int nullable = columnsResultSet.getInt(SqlSchemaUtils.NULLABLE_COLUMN);
+        sqlTableMetadata.addColumn(new SqlColumnMetadata(columnName, columnType, typeName,
+            columnSize, decimalDigits, nullable == 1));
     }
 
     private static IdentifierNamingStrategy getIdentifierNamingStrategy(DatabaseMetaData metaData) throws SQLException {

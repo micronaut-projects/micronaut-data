@@ -67,6 +67,18 @@ import static io.micronaut.data.annotation.GeneratedValue.Type.AUTO;
 @Internal
 public final class SqlSchemaUtils {
 
+    // Table and column metadata columns
+    public static final String TABLE_TYPE = "TABLE";
+    public static final String TABLE_CATALOG_COLUMN = "TABLE_CAT";
+    public static final String TABLE_SCHEMA_COLUMN = "TABLE_SCHEM";
+    public static final String TABLE_NAME_COLUMN = "TABLE_NAME";
+    public static final String COLUMN_NAME_COLUMN = "COLUMN_NAME";
+    public static final String DATA_TYPE_COLUMN = "DATA_TYPE";
+    public static final String TYPE_NAME_COLUMN = "TYPE_NAME";
+    public static final String COLUMN_SIZE_COLUMN = "COLUMN_SIZE";
+    public static final String DECIMAL_DIGITS_COLUMN = "DECIMAL_DIGITS";
+    public static final String NULLABLE_COLUMN = "NULLABLE";
+
     private SqlSchemaUtils() {
     }
 

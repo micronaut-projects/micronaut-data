@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.model.query.builder.sql;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.StringUtils;
 
 /**
@@ -23,6 +24,7 @@ import io.micronaut.core.util.StringUtils;
  * @author radovanradic
  * @since 4.13.0
  */
+@Internal
 public enum IdentifierNamingStrategy {
 
     /**

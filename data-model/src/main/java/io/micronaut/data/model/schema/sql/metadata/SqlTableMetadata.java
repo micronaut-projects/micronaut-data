@@ -27,15 +27,21 @@ import java.util.Map;
 @Internal
 public final class SqlTableMetadata {
 
+    private final String catalog;
+    private final String schema;
     private final String name;
     private final Map<String, SqlColumnMetadata> columns = new HashMap<>();
 
     /**
      * Constructs a new instance of SqlTableMetadata with the specified table name.
      *
+     * @param catalog the catalog where table belongs, can be null
+     * @param schema the schema where table belongs. can be null
      * @param name the name of the SQL table
      */
-    public SqlTableMetadata(String name) {
+    public SqlTableMetadata(String catalog, String schema, String name) {
+        this.catalog = catalog;
+        this.schema = schema;
         this.name = name;
     }
 
