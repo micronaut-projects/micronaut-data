@@ -8,9 +8,9 @@ import java.net.MalformedURLException;
 /**
  * The entity used for schema creation and validation.
  */
-@MappedEntity("basic_schema_types")
-public final class BasicSchemaTypes extends BasicTypes {
+@MappedEntity("basic_types_schema_test")
+public final class BasicTypesSchemaTest extends BasicTypes {
 
-    public BasicSchemaTypes() throws MalformedURLException {
+    public BasicTypesSchemaTest() throws MalformedURLException {
     }
 }

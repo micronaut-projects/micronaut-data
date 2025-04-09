@@ -312,6 +312,9 @@ public final class SqlSchemaUtils {
         if (columnMapping.getDbType() == SqlDbType.BOOLEAN) {
             return columnMetadata.type() == Types.BIT;
         }
+        if (columnMapping.getDbType() == SqlDbType.JSON) {
+            return columnMetadata.type() == Types.LONGVARCHAR;
+        }
         return false;
     }
 
@@ -332,6 +335,9 @@ public final class SqlSchemaUtils {
     private static boolean matchSqlServerColumn(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata) {
         if (columnMapping.getDbType() == SqlDbType.BINARY) {
             return columnMetadata.type() == Types.VARBINARY;
+        }
+        if (columnMapping.getDbType() == SqlDbType.JSON) {
+            return columnMetadata.type() == Types.NVARCHAR;
         }
         return false;
     }
