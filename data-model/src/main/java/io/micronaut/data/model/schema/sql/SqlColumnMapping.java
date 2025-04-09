@@ -209,7 +209,7 @@ public final class SqlColumnMapping {
             }
             case BOOLEAN -> {
                 if (dialect == Dialect.ORACLE) {
-                    yield "NUMBER(3)";
+                    yield "NUMBER(1)";
                 } else if (dialect == Dialect.SQL_SERVER) {
                     // TODO: was "BIT NOT NULL";
                     yield "BIT";

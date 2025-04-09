@@ -226,8 +226,10 @@ public final class SqlSchemaUtils {
     public static void validateTable(SqlTableMapping tableMapping, SqlTableMetadata tableMetadata, Dialect dialect) {
         List<SqlColumnMapping> primaryKeyColumns = tableMapping.primaryKeyColumns();
         List<SqlColumnMapping> columns = tableMapping.columns();
-        List<SqlColumnMapping> allColumns = new ArrayList<>(primaryKeyColumns.size() + columns.size());
-        allColumns.addAll(primaryKeyColumns);
+        List<SqlColumnMapping> allColumns = new ArrayList<>(primaryKeyColumns != null ? primaryKeyColumns.size() : 0 + columns.size());
+        if (primaryKeyColumns != null) {
+            allColumns.addAll(primaryKeyColumns);
+        }
         allColumns.addAll(columns);
         for (SqlColumnMapping columnMapping : allColumns) {
             String name = columnMapping.getName();
@@ -286,7 +288,9 @@ public final class SqlSchemaUtils {
     }
 
     private static boolean matchOracleColumn(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata) {
-        if (columnMetadata.type() == Types.NUMERIC) {
+        if (columnMapping.getDbType() == SqlDbType.UUID) {
+            return uuidMatchesVarchar(columnMetadata);
+        } else if (columnMetadata.type() == Types.NUMERIC) {
             // Custom sql type name for ORACLE
             String oracleSqlType = "NUMBER";
             if (columnMetadata.columnSize() > 0) {
@@ -297,10 +301,14 @@ public final class SqlSchemaUtils {
                 oracleSqlType += ")";
             }
             return columnMapping.getSqlType(Dialect.ORACLE).equalsIgnoreCase(oracleSqlType);
-        } else if (columnMapping.getDbType() == SqlDbType.UUID) {
-            return uuidMatchesVarchar(columnMetadata);
+        } else if (isOracleBinaryDoubleOrFloat(columnMetadata.typeName())) {
+            return isFloatOrRealOrDouble(columnMapping.getDbType().getType());
         }
         return false;
+    }
+
+    private static boolean isOracleBinaryDoubleOrFloat(String typeName) {
+        return "BINARY_DOUBLE".equalsIgnoreCase(typeName) || "BINARY_FLOAT".equalsIgnoreCase(typeName);
     }
 
     private static boolean matchMySqlColumn(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata) {
