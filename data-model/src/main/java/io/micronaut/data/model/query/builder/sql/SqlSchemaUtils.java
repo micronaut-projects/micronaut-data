@@ -224,7 +224,12 @@ public final class SqlSchemaUtils {
      * @throws SchemaValidationException When expected column not found or is not matching expected type
      */
     public static void validateTable(SqlTableMapping tableMapping, SqlTableMetadata tableMetadata, Dialect dialect) {
-        for (SqlColumnMapping columnMapping : tableMapping.columns()) {
+        List<SqlColumnMapping> primaryKeyColumns = tableMapping.primaryKeyColumns();
+        List<SqlColumnMapping> columns = tableMapping.columns();
+        List<SqlColumnMapping> allColumns = new ArrayList<>(primaryKeyColumns.size() + columns.size());
+        allColumns.addAll(primaryKeyColumns);
+        allColumns.addAll(columns);
+        for (SqlColumnMapping columnMapping : allColumns) {
             String name = columnMapping.getName();
             SqlColumnMetadata columnMetadata = tableMetadata.getColumn(name.toLowerCase());
             if (columnMetadata == null) {
@@ -300,7 +305,12 @@ public final class SqlSchemaUtils {
 
     private static boolean matchMySqlColumn(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata) {
         if (columnMapping.getDbType() == SqlDbType.UUID) {
-            return uuidMatchesVarchar(columnMetadata);
+            return uuidMatchesVarchar(columnMetadata) ||
+                // For MariaDB
+                (columnMetadata.type() == Types.OTHER && columnMetadata.typeName().equalsIgnoreCase("uuid"));
+        }
+        if (columnMapping.getDbType() == SqlDbType.BOOLEAN) {
+            return columnMetadata.type() == Types.BIT;
         }
         return false;
     }
