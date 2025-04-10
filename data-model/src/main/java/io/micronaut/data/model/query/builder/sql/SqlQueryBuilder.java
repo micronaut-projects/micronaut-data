@@ -1721,7 +1721,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             case SQL_SERVER -> '[' + persistedName + ']';
             case ORACLE ->
                 // Oracle requires quoted identifiers to be in upper case
-                    '"' + persistedName.toUpperCase(Locale.ENGLISH) + '"';
+                    '"' + SqlQueryBuilderUtils.mapPersistedName(persistedName, s -> s.toUpperCase(Locale.ENGLISH)) + '"';
             default -> '"' + persistedName + '"';
         };
     }

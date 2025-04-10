@@ -15,10 +15,12 @@
  */
 package io.micronaut.data.model.query.builder.sql;
 
+import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
@@ -31,6 +33,7 @@ import java.sql.Blob;
 import java.sql.Clob;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.function.Function;
 
 /**
  * The utility methods for query builders.
@@ -38,7 +41,42 @@ import java.util.OptionalInt;
 @Internal
 final class SqlQueryBuilderUtils {
 
+    static final String PREFIX = "${";
+    static final String SUFFIX = "}";
+
     private SqlQueryBuilderUtils() { }
+
+    static String mapPersistedName(String persistedName, Function<String, String> mapFunction) {
+        if (StringUtils.isEmpty(persistedName)) {
+            return persistedName;
+        }
+        StringBuilder sb = new StringBuilder();
+
+        String value = persistedName;
+        int i = value.indexOf(PREFIX);
+        while (i > -1) {
+            //the text before the prefix
+            if (i > 0) {
+                String rawSegment = value.substring(0, i);
+                sb.append(mapFunction.apply(rawSegment));
+            }
+            // everything after the prefix
+            value = value.substring(i + PREFIX.length());
+            int suffixIdx = value.indexOf(SUFFIX);
+            if (suffixIdx > -1) {
+                String expr = value.substring(0, suffixIdx).trim();
+                sb.append(PREFIX).append(expr).append(SUFFIX);
+                value = value.substring(suffixIdx + SUFFIX.length());
+            } else {
+                throw new ConfigurationException("Incomplete placeholder definitions detected: " + persistedName);
+            }
+            i = value.indexOf(PREFIX);
+        }
+        if (!value.isEmpty()) {
+            sb.append(mapFunction.apply(value));
+        }
+        return sb.toString();
+    }
 
     /**
      * Adds column type for the column for creating table.
