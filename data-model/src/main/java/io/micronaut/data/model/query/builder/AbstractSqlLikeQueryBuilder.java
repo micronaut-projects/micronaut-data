@@ -721,6 +721,18 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @return The quoted name
      */
     protected String quote(String persistedName) {
+        return quote(persistedName, false);
+    }
+
+    /**
+     * Quote a persisted name (schema, table or column name) for the dialect.
+     *
+     * @param persistedName The persisted name.
+     * @param supportsDynamicValues Whether persisted name supports dynamic values. Schema and table can have
+     *                              dynamic value (like ${config.entry}) and columns can't.
+     * @return The quoted name
+     */
+    protected String quote(String persistedName, boolean supportsDynamicValues) {
         return "\"" + persistedName + "\"";
     }
 

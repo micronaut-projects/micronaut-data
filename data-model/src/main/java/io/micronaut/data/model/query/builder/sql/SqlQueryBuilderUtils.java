@@ -41,11 +41,21 @@ import java.util.function.Function;
 @Internal
 final class SqlQueryBuilderUtils {
 
-    static final String PREFIX = "${";
-    static final String SUFFIX = "}";
+    private static final String PREFIX = "${";
+    private static final String SUFFIX = "}";
 
     private SqlQueryBuilderUtils() { }
 
+    /**
+     * Maps the persisted name by applying the provided mapping function to each segment
+     * of the persisted name that does not contain placeholders. Placeholders are defined
+     * as strings enclosed within '${' and '}' characters.
+     *
+     * @param persistedName the persisted name to be mapped
+     * @param mapFunction the function to apply to each non-placeholder segment
+     * @return the mapped persisted name
+     * @throws ConfigurationException if incomplete placeholder definitions are detected
+     */
     static String mapPersistedName(String persistedName, Function<String, String> mapFunction) {
         if (StringUtils.isEmpty(persistedName)) {
             return persistedName;

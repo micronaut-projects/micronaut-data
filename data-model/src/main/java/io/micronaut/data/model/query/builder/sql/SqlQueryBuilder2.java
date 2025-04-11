@@ -248,7 +248,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
                 .orElseGet(() ->
                     getMappedName(namingStrategy, association)
                 );
-            dropStatements.add("DROP TABLE " + (escape ? quote(joinTableName) : joinTableName) + ";");
+            dropStatements.add("DROP TABLE " + (escape ? quote(joinTableName, true) : joinTableName) + ";");
         }
 
         dropStatements.add(sql);
@@ -276,12 +276,12 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
             .orElseGet(() ->
                 getMappedName(namingStrategy, association)
             );
-        joinTableName = quote(joinTableName);
+        joinTableName = quote(joinTableName, true);
         String joinTableSchema = annotationMetadata
             .stringValue(ANN_JOIN_TABLE, SqlMembers.SCHEMA)
             .orElse(getSchemaName(entity));
         if (StringUtils.isNotEmpty(joinTableSchema)) {
-            joinTableSchema = quote(joinTableSchema);
+            joinTableSchema = quote(joinTableSchema, true);
             joinTableName = joinTableSchema + DOT + joinTableName;
         }
         List<String> leftJoinColumns = resolveJoinTableJoinColumns(annotationMetadata, true, entity, namingStrategy);
@@ -330,7 +330,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
         String schema = getSchemaName(entity);
         if (StringUtils.isNotEmpty(schema)) {
             if (escape) {
-                schema = quote(schema);
+                schema = quote(schema, true);
             }
             createStatements.add("CREATE SCHEMA " + schema + ";");
         }
@@ -353,12 +353,12 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
                         getMappedName(namingStrategy, association)
                     );
                 if (escape) {
-                    joinTableName = quote(joinTableName);
+                    joinTableName = quote(joinTableName, true);
                 }
                 String joinTableSchema = annotationMetadata.stringValue(ANN_JOIN_TABLE, SqlMembers.SCHEMA).orElse(null);
                 if (StringUtils.isNotEmpty(joinTableSchema)) {
                     if (escape) {
-                        joinTableSchema = quote(joinTableSchema);
+                        joinTableSchema = quote(joinTableSchema, true);
                     }
                 } else {
                     joinTableSchema = schema;
@@ -517,7 +517,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
                     createStatements.add(generatedDefinition);
                 } else if (isSequence) {
                     final boolean isSqlServer = dialect == Dialect.SQL_SERVER;
-                    final String sequenceName = quote(unescapedTableName + SEQ_SUFFIX);
+                    final String sequenceName = quote(unescapedTableName + SEQ_SUFFIX, true);
                     String createSequenceStmt = "CREATE SEQUENCE " + sequenceName;
                     if (isSqlServer) {
                         createSequenceStmt += " AS BIGINT";
@@ -1051,9 +1051,9 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
     private String getSequenceStatement(String unescapedTableName, PersistentProperty property) {
         final String sequenceName = resolveSequenceName(property, unescapedTableName);
         return switch (dialect) {
-            case ORACLE -> quote(sequenceName) + ".nextval";
+            case ORACLE -> quote(sequenceName, true) + ".nextval";
             case POSTGRES -> "nextval('" + sequenceName + "')";
-            case SQL_SERVER -> "NEXT VALUE FOR " + quote(sequenceName);
+            case SQL_SERVER -> "NEXT VALUE FOR " + quote(sequenceName, true);
             default ->
                 throw new IllegalStateException("Cannot generate a sequence for dialect: " + dialect);
         };
@@ -1089,12 +1089,12 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
         String schema = getSchemaName(entity);
         if (StringUtils.isNotEmpty(schema)) {
             if (escape) {
-                return quote(schema) + '.' + quote(tableName);
+                return quote(schema, true) + '.' + quote(tableName, true);
             } else {
                 return schema + '.' + tableName;
             }
         } else {
-            return escape ? quote(tableName) : tableName;
+            return escape ? quote(tableName, true) : tableName;
         }
     }
 
@@ -1195,7 +1195,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
                 .stringValue(ANN_JOIN_TABLE, SqlMembers.SCHEMA)
                 .orElse(getSchemaName(associationOwner));
             if (StringUtils.isNotEmpty(joinTableSchema) && escape) {
-                joinTableSchema = quote(joinTableSchema);
+                joinTableSchema = quote(joinTableSchema, true);
             }
             String joinTableName = annotationMetadata
                 .stringValue(ANN_JOIN_TABLE, "name")
@@ -1203,7 +1203,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
             String joinTableAlias = annotationMetadata
                 .stringValue(ANN_JOIN_TABLE, "alias")
                 .orElseGet(() -> currentJoinAlias + joinTableName + "_");
-            String finalTableName = escape ? quote(joinTableName) : joinTableName;
+            String finalTableName = escape ? quote(joinTableName, true) : joinTableName;
             if (StringUtils.isNotEmpty(joinTableSchema)) {
                 finalTableName = joinTableSchema + DOT + finalTableName;
             }
@@ -1388,20 +1388,16 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
         return associations;
     }
 
-    /**
-     * Quote a column name for the dialect.
-     *
-     * @param persistedName The persisted name.
-     * @return The quoted name
-     */
     @Override
-    protected String quote(String persistedName) {
+    protected String quote(String persistedName, boolean supportsDynamicValues) {
         return switch (dialect) {
             case MYSQL, H2 -> '`' + persistedName + '`';
             case SQL_SERVER -> '[' + persistedName + ']';
-            case ORACLE ->
+            case ORACLE -> {
                 // Oracle requires quoted identifiers to be in upper case
-                '"' + SqlQueryBuilderUtils.mapPersistedName(persistedName, s -> s.toUpperCase(Locale.ENGLISH)) + '"';
+                String result = supportsDynamicValues ? SqlQueryBuilderUtils.mapPersistedName(persistedName, s -> s.toUpperCase(Locale.ENGLISH)) : persistedName.toUpperCase(Locale.ENGLISH);
+                yield '"' + result + '"';
+            }
             default -> '"' + persistedName + '"';
         };
     }
