@@ -547,25 +547,31 @@ implements <a href="../QueryBuilder2.html" title="interface in io.micronaut.data
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Quote a column name for the dialect.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>abstract <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#resolveJoinType(io.micronaut.data.annotation.Join.Type)" class="member-name-link">resolveJoinType</a><wbr>(<a href="../../../../annotation/Join.Type.html" title="enum class in io.micronaut.data.annotation">Join.Type</a>&nbsp;jt)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#quote(java.lang.String,boolean)" class="member-name-link">quote</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;persistedName,
+ boolean&nbsp;supportsDynamicValues)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Quote a persisted name (schema, table or column name) for the dialect.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>abstract <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#resolveJoinType(io.micronaut.data.annotation.Join.Type)" class="member-name-link">resolveJoinType</a><wbr>(<a href="../../../../annotation/Join.Type.html" title="enum class in io.micronaut.data.annotation">Join.Type</a>&nbsp;jt)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Resolves the join type.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#resolveWhereForAnnotationMetadata(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">resolveWhereForAnnotationMetadata</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;alias,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#resolveWhereForAnnotationMetadata(java.lang.String,io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">resolveWhereForAnnotationMetadata</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;alias,
  io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Resolves where clause if there is <a href="../../../../annotation/Where.html" title="annotation interface in io.micronaut.data.annotation"><code>Where</code></a> annotation on the entity.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#shouldEscape(io.micronaut.data.model.PersistentEntity)" class="member-name-link">shouldEscape</a><wbr>(@NonNull <a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#shouldEscape(io.micronaut.data.model.PersistentEntity)" class="member-name-link">shouldEscape</a><wbr>(@NonNull <a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Whether queries should be escaped for the given entity.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#traverseEmbedded()" class="member-name-link">traverseEmbedded</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#traverseEmbedded()" class="member-name-link">traverseEmbedded</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -1091,6 +1097,22 @@ implements <a href="../QueryBuilder2.html" title="interface in io.micronaut.data
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>persistedName</code> - The persisted name.</dd>
+<dt>Returns:</dt>
+<dd>The quoted name</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="quote(java.lang.String,boolean)">
+<h3>quote</h3>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">quote</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;persistedName,
+ boolean&nbsp;supportsDynamicValues)</span></div>
+<div class="block">Quote a persisted name (schema, table or column name) for the dialect.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>persistedName</code> - The persisted name.</dd>
+<dd><code>supportsDynamicValues</code> - Whether persisted name supports dynamic values. Schema and table can have
+                              dynamic value (like ${config.entry}) and columns can't.</dd>
 <dt>Returns:</dt>
 <dd>The quoted name</dd>
 </dl>
