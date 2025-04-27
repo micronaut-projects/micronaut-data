@@ -20,14 +20,17 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.model.Association;
 import io.micronaut.data.model.CursoredPageable;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Pageable.Cursor;
 import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.Sort.Order;
@@ -52,6 +55,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Implementation of {@link SqlPreparedQuery}.
@@ -222,10 +226,14 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         // sorting on the rows. Therefore, we make sure id is present in it.
         List<Order> orders = new ArrayList<>(sort.getOrderBy());
         for (PersistentProperty idProperty: persistentEntity.getIdentityProperties()) {
-            String name = idProperty.getName();
-            if (orders.stream().noneMatch(o -> o.getProperty().equals(name))) {
-                orders.add(Order.asc(name));
-            }
+            PersistentEntityUtils.traversePersistentProperties(idProperty, (associations, property) -> {
+                String prefix = String.join(".", associations.stream().map(Association::getName).collect(Collectors.toList()));
+                String propertyName = property.getName();
+                String name = StringUtils.isEmpty(prefix) ? propertyName : prefix + "." + propertyName;
+                if (orders.stream().noneMatch(o -> o.getProperty().equals(name))) {
+                    orders.add(Order.asc(name));
+                }
+            });
         }
         sort = Sort.of(orders);
         if (isBackwards) {
@@ -366,7 +374,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
             Sort sort = cursoredPageable.getSort();
             cursorProperties = new ArrayList<>(sort.getOrderBy().size());
             for (Order order : sort.getOrderBy()) {
-                cursorProperties.add(persistentEntity.getPropertyByName(order.getProperty()));
+                cursorProperties.add((RuntimePersistentProperty<Object>) persistentEntity.getPropertyPath(order.getProperty()).getProperty());
             }
         }
         return cursorProperties;

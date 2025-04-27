@@ -137,7 +137,7 @@ class H2EmbeddedIdSpec extends Specification {
         foundAllOrderByCountryCityDesc[1].field == "test4"
 
         when:
-        def foundAllOrderByDynamic = repository.findAll(Sort.of(Sort.Order.desc("country"), Sort.Order.asc( "city")))
+        def foundAllOrderByDynamic = repository.findAll(Sort.of(Sort.Order.desc("shipmentId.country"), Sort.Order.asc( "shipmentId.city")))
 
         then:
         foundAllOrderByDynamic.size() == 2
