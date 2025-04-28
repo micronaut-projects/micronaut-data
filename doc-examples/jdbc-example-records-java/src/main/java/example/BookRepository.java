@@ -11,7 +11,7 @@ import io.micronaut.data.repository.CrudRepository;
 
 import java.util.List;
 
-@JdbcRepository(dialect = Dialect.H2)
+@JdbcRepository(dialect = Dialect.ORACLE)
 public interface BookRepository extends CrudRepository<Book, Long> {
     // tag::simple[]
     Book findByTitle(String title);

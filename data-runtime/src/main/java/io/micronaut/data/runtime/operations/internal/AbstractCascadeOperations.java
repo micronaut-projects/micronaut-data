@@ -102,6 +102,10 @@ abstract class AbstractCascadeOperations {
                     case MANY_TO_MANY:
                         final PersistentAssociationPath inverse = association.getInversePathSide().orElse(null);
                         Iterable<Object> children = (Iterable<Object>) association.getProperty().get(entity);
+                        if (children != null) {
+                            // If collection is immutable then below code won't work (iterator.set(...))
+                            children = new ArrayList<>(CollectionUtils.iterableToList(children));
+                        }
                         if (children == null || !children.iterator().hasNext()) {
                             continue;
                         }
@@ -185,7 +189,7 @@ abstract class AbstractCascadeOperations {
                     }
                 }
             }
-            if (prevChildren != newChildren) {
+            if (association.getProperty().get(entity) != newChildren) {
                 entity = convertAndSetWithValue(association.getProperty(), entity, newChildren);
             }
             return entity;

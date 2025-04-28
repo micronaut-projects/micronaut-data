@@ -23,5 +23,7 @@ dependencies {
 
     runtimeOnly mnSql.micronaut.jdbc.tomcat
     runtimeOnly mnLogging.logback.classic
-    runtimeOnly mnSql.h2
+    runtimeOnly mnSql.ojdbc11
+
+    testResourcesService mnSql.ojdbc11
 }
