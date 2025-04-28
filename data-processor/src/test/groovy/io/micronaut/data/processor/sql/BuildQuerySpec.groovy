@@ -559,7 +559,7 @@ interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
             def query = getQuery(method)
 
         expect:
-            query == 'SELECT user_role_id_role_.`id`,user_role_id_role_.`name` FROM `user_role_composite` user_role_ INNER JOIN `role_composite` user_role_id_role_ ON user_role_.`id_role_id`=user_role_id_role_.`id` WHERE (user_role_.`id_user_id` = ?)'
+            query == 'SELECT user_role_id_role_.`id`,user_role_id_role_.`name` FROM `user_role_composite` user_role_ INNER JOIN `role_composite` user_role_id_role_ ON user_role_.`role_id`=user_role_id_role_.`id` WHERE (user_role_.`user_id` = ?)'
             getParameterBindingIndexes(method) == ["0"] as String[]
             getParameterBindingPaths(method) == ["id"] as String[]
             getParameterPropertyPaths(method) == ["id.user.id"] as String[]
@@ -1431,7 +1431,7 @@ interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
 
         expect:
         countQuery == 'SELECT COUNT(*) FROM `user_role_composite` user_role_'
-        countDistinctQuery == 'SELECT COUNT(DISTINCT( CONCAT(user_role_.`id_user_id`,user_role_.`id_role_id`))) FROM `user_role_composite` user_role_'
+        countDistinctQuery == 'SELECT COUNT(DISTINCT( CONCAT(user_role_.`user_id`,user_role_.`role_id`))) FROM `user_role_composite` user_role_'
     }
 
     void "test escape query"() {
@@ -1750,7 +1750,7 @@ class Zone {
         when:
             def update = repository.findPossibleMethods("update").findFirst().get()
         then:
-            getQuery(update) == "UPDATE `comp_settlement` SET `description`=?,`settlement_type_id`=?,`zone_id`=?,`is_enabled`=? WHERE (`code` = ? AND `code_id` = ? AND `id_county_id_id` = ? AND `id_county_id_state_id` = ?)"
+            getQuery(update) == "UPDATE `comp_settlement` SET `description`=?,`settlement_type_id`=?,`zone_id`=?,`is_enabled`=? WHERE (`code` = ? AND `code_id` = ? AND `county_id` = ? AND `county_state_id` = ?)"
     }
 
     void "test combined id"() {

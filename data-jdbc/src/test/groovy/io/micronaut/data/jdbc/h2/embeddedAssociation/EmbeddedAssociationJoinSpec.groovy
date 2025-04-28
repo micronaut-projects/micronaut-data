@@ -57,7 +57,7 @@ class EmbeddedAssociationJoinSpec extends Specification implements H2TestPropert
                                             `id` bigint primary key not null,
                                             `value` text,
                                             `example` text,
-                                            `part_text` text);
+                                            `text` text);
                                          """).execute()
     }
 

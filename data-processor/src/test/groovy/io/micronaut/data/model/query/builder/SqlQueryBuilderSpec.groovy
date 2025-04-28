@@ -565,12 +565,12 @@ interface MyRepository {
             query << [
                     'SELECT shipment_."sp_country",shipment_."sp_city",shipment_."field" FROM "Shipment1" shipment_ WHERE (shipment_."sp_country" = ? AND shipment_."sp_city" = ?)',
                     'SELECT shipment_."sp_country",shipment_."sp_city",shipment_."field" FROM "Shipment1" shipment_ WHERE (shipment_."sp_country" = ?)',
-                    'SELECT user_role_."id_user_id",user_role_."id_role_id" FROM "user_role_composite" user_role_ INNER JOIN "role_composite" user_role_id_role_ ON user_role_."id_role_id"=user_role_id_role_."id"',
-                    'SELECT user_role_."id_user_id",user_role_."id_role_id" FROM "user_role_composite" user_role_ INNER JOIN "user_composite" user_role_id_user_ ON user_role_."id_user_id"=user_role_id_user_."id" WHERE (user_role_."id_user_id" = ?)',
-                    'SELECT uidx."uuid",uidx."name",uidx."child_id",uidx."xyz",uidx."embedded_child_embedded_child2_id",uidx."nullable_value" FROM "uuid_entity" uidx WHERE (uidx."uuid" = ?)',
-                    'SELECT user_role_."id_user_id",user_role_."id_role_id" FROM "user_role_composite" user_role_ WHERE (user_role_."id_user_id" = ? AND user_role_."id_role_id" = ?)',
+                    'SELECT user_role_."user_id",user_role_."role_id" FROM "user_role_composite" user_role_ INNER JOIN "role_composite" user_role_id_role_ ON user_role_."role_id"=user_role_id_role_."id"',
+                    'SELECT user_role_."user_id",user_role_."role_id" FROM "user_role_composite" user_role_ INNER JOIN "user_composite" user_role_id_user_ ON user_role_."user_id"=user_role_id_user_."id" WHERE (user_role_."user_id" = ?)',
+                    'SELECT uidx."uuid",uidx."name",uidx."child_id",uidx."xyz",uidx."embedded_child2_id",uidx."nullable_value" FROM "uuid_entity" uidx WHERE (uidx."uuid" = ?)',
+                    'SELECT user_role_."user_id",user_role_."role_id" FROM "user_role_composite" user_role_ WHERE (user_role_."user_id" = ? AND user_role_."role_id" = ?)',
                     'SELECT challenge_."id",challenge_."token",challenge_."authentication_id",challenge_authentication_device_."NAME" AS authentication_device_NAME,challenge_authentication_device_."USER_ID" AS authentication_device_USER_ID,challenge_authentication_device_user_."NAME" AS authentication_device_user_NAME,challenge_authentication_."DESCRIPTION" AS authentication_DESCRIPTION,challenge_authentication_."DEVICE_ID" AS authentication_DEVICE_ID FROM "challenge" challenge_ INNER JOIN "AUTHENTICATION" challenge_authentication_ ON challenge_."authentication_id"=challenge_authentication_."ID" INNER JOIN "DEVICE" challenge_authentication_device_ ON challenge_authentication_."DEVICE_ID"=challenge_authentication_device_."ID" INNER JOIN "USER" challenge_authentication_device_user_ ON challenge_authentication_device_."USER_ID"=challenge_authentication_device_user_."ID" WHERE (challenge_."id" = ?)',
-                    'SELECT user_role_id_role_."id",user_role_id_role_."name" FROM "user_role_composite" user_role_ INNER JOIN "role_composite" user_role_id_role_ ON user_role_."id_role_id"=user_role_id_role_."id" WHERE (user_role_."id_user_id" = ?)',
+                    'SELECT user_role_id_role_."id",user_role_id_role_."name" FROM "user_role_composite" user_role_ INNER JOIN "role_composite" user_role_id_role_ ON user_role_."role_id"=user_role_id_role_."id" WHERE (user_role_."user_id" = ?)',
                     'SELECT meal_."mid",meal_."current_blood_glucose",meal_."created_on",meal_."updated_on",meal_."actual",meal_foods_."fid" AS foods_fid,meal_foods_."key" AS foods_key,meal_foods_."carbohydrates" AS foods_carbohydrates,meal_foods_."portion_grams" AS foods_portion_grams,meal_foods_."created_on" AS foods_created_on,meal_foods_."updated_on" AS foods_updated_on,meal_foods_."fk_meal_id" AS foods_fk_meal_id,meal_foods_."fk_alt_meal" AS foods_fk_alt_meal,meal_foods_."loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name" AS ln,meal_foods_."fresh" AS foods_fresh FROM "meal" meal_ INNER JOIN "food" meal_foods_ ON meal_."mid"=meal_foods_."fk_meal_id" AND meal_foods_.fresh = \'Y\' WHERE (meal_."mid" = ? AND (meal_.actual = \'Y\'))'
             ]
     }
@@ -592,8 +592,8 @@ interface MyRepository {
             ]
             query << [
                     'INSERT INTO "Shipment1" ("field","sp_country","sp_city") VALUES (?,?,?)',
-                    'INSERT INTO "uuid_entity" ("name","child_id","xyz","embedded_child_embedded_child2_id","nullable_value","uuid") VALUES (?,?,?,?,?,?)',
-                    'INSERT INTO "user_role_composite" ("id_user_id","id_role_id") VALUES (?,?)'
+                    'INSERT INTO "uuid_entity" ("name","child_id","xyz","embedded_child2_id","nullable_value","uuid") VALUES (?,?,?,?,?,?)',
+                    'INSERT INTO "user_role_composite" ("user_id","role_id") VALUES (?,?)'
             ]
     }
 
@@ -614,8 +614,8 @@ interface MyRepository {
             ]
             query << [
                     'CREATE TABLE "Shipment1" ("sp_country" VARCHAR(255) NOT NULL,"sp_city" VARCHAR(255) NOT NULL,"field" VARCHAR(255) NOT NULL, PRIMARY KEY("sp_country","sp_city"));',
-                    'CREATE TABLE "uuid_entity" ("uuid" UUID,"name" VARCHAR(255) NOT NULL,"child_id" UUID,"xyz" UUID,"embedded_child_embedded_child2_id" UUID,"nullable_value" UUID, PRIMARY KEY("uuid"));',
-                    'CREATE TABLE "user_role_composite" ("id_user_id" BIGINT NOT NULL,"id_role_id" BIGINT NOT NULL, PRIMARY KEY("id_user_id","id_role_id"));'
+                    'CREATE TABLE "uuid_entity" ("uuid" UUID,"name" VARCHAR(255) NOT NULL,"child_id" UUID,"xyz" UUID,"embedded_child2_id" UUID,"nullable_value" UUID, PRIMARY KEY("uuid"));',
+                    'CREATE TABLE "user_role_composite" ("user_id" BIGINT NOT NULL,"role_id" BIGINT NOT NULL, PRIMARY KEY("user_id","role_id"));'
             ]
     }
 
@@ -686,7 +686,7 @@ interface MyRepository {
             def q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, QueryModel.from(getRuntimePersistentEntity(Project)).idEq(new QueryParameter("projectId")))
 
         then:
-            q.query == 'SELECT project_."project_id_department_id",project_."project_id_project_id",LOWER(project_.name) AS name,project_.name AS db_name,UPPER(project_.org) AS org FROM "project" project_ WHERE (project_."project_id_department_id" = ? AND project_."project_id_project_id" = ?)'
+            q.query == 'SELECT project_."department_id",project_."project_id",LOWER(project_.name) AS name,project_.name AS db_name,UPPER(project_.org) AS org FROM "project" project_ WHERE (project_."department_id" = ? AND project_."project_id" = ?)'
             q.parameters == [
                     '1': 'projectId.departmentId',
                     '2': 'projectId.projectId'

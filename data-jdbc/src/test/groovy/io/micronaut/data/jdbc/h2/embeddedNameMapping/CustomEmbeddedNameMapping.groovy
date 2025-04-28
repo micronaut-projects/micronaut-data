@@ -70,7 +70,7 @@ class CustomEmbeddedNameMapping extends Specification implements H2TestPropertyP
             def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(MyBook))
 
         then:
-            statements.join("\n") == 'CREATE TABLE "MyBook" ("id" VARCHAR(255) NOT NULL,"authorFirstName" VARCHAR(255) NOT NULL,"authorLastName" VARCHAR(255) NOT NULL,"authorDetailsIncludedNumberAge" INT NOT NULL, PRIMARY KEY("id"));'
+            statements.join("\n") == 'CREATE TABLE "MyBook" ("id" VARCHAR(255) NOT NULL,"firstName" VARCHAR(255) NOT NULL,"lastName" VARCHAR(255) NOT NULL,"numberAge" INT NOT NULL, PRIMARY KEY("id"));'
     }
 
     void "test build insert"() {
@@ -79,7 +79,7 @@ class CustomEmbeddedNameMapping extends Specification implements H2TestPropertyP
             def res = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, getRuntimePersistentEntity(MyBook))
 
         then:
-            res.query == 'INSERT INTO "MyBook" ("authorFirstName","authorLastName","authorDetailsIncludedNumberAge","id") VALUES (?,?,?,?)'
+            res.query == 'INSERT INTO "MyBook" ("firstName","lastName","numberAge","id") VALUES (?,?,?,?)'
     }
 
     void "test update"() {
@@ -92,7 +92,7 @@ class CustomEmbeddedNameMapping extends Specification implements H2TestPropertyP
             )
 
         then:
-            res.query == 'UPDATE "MyBook" SET "id"=?,"authorFirstName"=?,"authorLastName"=?,"authorDetailsIncludedNumberAge"=? WHERE ("id" = ?)'
+            res.query == 'UPDATE "MyBook" SET "id"=?,"firstName"=?,"lastName"=?,"numberAge"=? WHERE ("id" = ?)'
             res.parameters == [
                     '1':'id',
                     '2':'author.firstName',
@@ -107,7 +107,7 @@ class CustomEmbeddedNameMapping extends Specification implements H2TestPropertyP
             QueryBuilder encoder = new SqlQueryBuilder()
             def q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, QueryModel.from(getRuntimePersistentEntity(MyBook)).idEq(new QueryParameter("xyz")))
         then:
-            q.query == 'SELECT my_book_."id",my_book_."authorFirstName",my_book_."authorLastName",my_book_."authorDetailsIncludedNumberAge" FROM "MyBook" my_book_ WHERE (my_book_."id" = ?)'
+            q.query == 'SELECT my_book_."id",my_book_."firstName",my_book_."lastName",my_book_."numberAge" FROM "MyBook" my_book_ WHERE (my_book_."id" = ?)'
     }
 
     @Shared
