@@ -8,7 +8,7 @@ import io.micronaut.data.repository.CrudRepository;
 
 import java.util.Optional;
 
-@JdbcRepository(dialect = Dialect.H2)
+@JdbcRepository(dialect = Dialect.ORACLE)
 public interface StudentRepository extends CrudRepository<Student, Long> {
 
     @Join("courses")
