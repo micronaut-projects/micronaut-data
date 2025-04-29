@@ -25,7 +25,7 @@ groovy = "4.0.26"
 
 managed-javax-persistence = "2.2"
 
-spring-data = "3.4.4"
+spring-data = "3.4.5"
 
 # Lombok
 
@@ -33,7 +33,7 @@ lombok = "1.18.38"
 
 # Testing and benchmarking
 
-benchmark-spring-data = "2024.1.4"
+benchmark-spring-data = "2024.1.5"
 spock = "2.2-groovy-4.0"
 testcontainers = "1.19.4"
 jmh = "1.37"
@@ -43,7 +43,7 @@ jmh = "1.37"
 ksp-gradle-plugin = "1.9.25-1.0.20"
 kotlin-gradle-plugin = "1.9.25"
 jmh-gradle-plugin = "0.7.3"
-spring-boot-gradle-plugin = "3.4.4"
+spring-boot-gradle-plugin = "3.4.5"
 spring-dependency-management-gradle-plugin = "1.1.7"
 shadow-gradle-plugin = "8.0.0"
 sonatype-scan = "3.0.0"
