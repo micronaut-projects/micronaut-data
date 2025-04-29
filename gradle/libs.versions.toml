@@ -3,7 +3,7 @@ micronaut = "4.8.12"
 micronaut-platform = "4.7.6"
 micronaut-docs = "2.0.0"
 micronaut-gradle-plugin = "4.5.3"
-micronaut-testresources = "2.7.3"
+micronaut-testresources = "2.8.0"
 
 micronaut-azure = "5.9.0"
 micronaut-reactor = "3.7.0"
