@@ -38,7 +38,7 @@ class BuildTableSpec extends AbstractDataSpec {
         sql.contains("\"hqaddress_street\" VARCHAR(255),")
 
         and:"regular @Embedded does include NOT NULL declaration"
-        sql.contains("\"address_street\" VARCHAR(255) NOT NULL,")
+        sql.contains("\"street\" VARCHAR(255) NOT NULL,")
     }
 
     @Unroll

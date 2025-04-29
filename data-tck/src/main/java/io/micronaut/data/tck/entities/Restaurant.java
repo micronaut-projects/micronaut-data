@@ -32,7 +32,6 @@ public class Restaurant {
     private final String name;
 
     @Relation(Relation.Kind.EMBEDDED)
-    @MappedProperty("address_")
     private final Address address;
 
     @Relation(Relation.Kind.EMBEDDED)

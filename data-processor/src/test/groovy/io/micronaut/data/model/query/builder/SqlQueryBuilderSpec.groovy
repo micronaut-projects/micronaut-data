@@ -169,7 +169,7 @@ interface MyRepository {
         def encoded = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
 
         expect:
-        encoded.query.startsWith('SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`address_street`,restaurant_.`address_zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM')
+        encoded.query.startsWith('SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`street`,restaurant_.`zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM')
 
     }
 
@@ -390,7 +390,7 @@ interface MyRepository {
         def result = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity)
 
         expect:
-        result.query == 'INSERT INTO "restaurant" ("name","address_street","address_zip_code","hqaddress_street","hqaddress_zip_code") VALUES (?,?,?,?,?)'
+        result.query == 'INSERT INTO "restaurant" ("name","street","zip_code","hqaddress_street","hqaddress_zip_code") VALUES (?,?,?,?,?)'
         result.parameters.equals('1': 'name', '2':'address.street', '3':'address.zipCode', '4':'hqAddress.street', '5':'hqAddress.zipCode')
     }
 
@@ -401,7 +401,7 @@ interface MyRepository {
         def result = encoder.buildBatchCreateTableStatement(entity)
 
         expect:
-        result == 'CREATE TABLE "restaurant" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL,"address_street" VARCHAR(255) NOT NULL,"address_zip_code" VARCHAR(255) NOT NULL,"hqaddress_street" VARCHAR(255),"hqaddress_zip_code" VARCHAR(255));'
+        result == 'CREATE TABLE "restaurant" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL,"street" VARCHAR(255) NOT NULL,"zip_code" VARCHAR(255) NOT NULL,"hqaddress_street" VARCHAR(255),"hqaddress_zip_code" VARCHAR(255));'
     }
 
     void "test encode insert statement - custom mapping strategy"() {

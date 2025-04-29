@@ -902,10 +902,10 @@ interface RestaurantRepository extends GenericRepository<Restaurant, Long> {
         def findByAddressStreetQuery = getQuery(repository.getRequiredMethod("findByAddressStreet", String))
         def getMaxAddressStreetByNameQuery = getQuery(repository.getRequiredMethod("getMaxAddressStreetByName", String))
         expect:
-        findByNameQuery == 'SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`address_street`,restaurant_.`address_zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM `restaurant` restaurant_ WHERE (restaurant_.`name` = ?)'
-        saveQuery == 'INSERT INTO `restaurant` (`name`,`address_street`,`address_zip_code`,`hqaddress_street`,`hqaddress_zip_code`) VALUES (?,?,?,?,?)'
-        findByAddressStreetQuery == 'SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`address_street`,restaurant_.`address_zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM `restaurant` restaurant_ WHERE (restaurant_.`address_street` = ?)'
-        getMaxAddressStreetByNameQuery == 'SELECT MAX(restaurant_.`address_street`) FROM `restaurant` restaurant_ WHERE (restaurant_.`name` = ?)'
+        findByNameQuery == 'SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`street`,restaurant_.`zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM `restaurant` restaurant_ WHERE (restaurant_.`name` = ?)'
+        saveQuery == 'INSERT INTO `restaurant` (`name`,`street`,`zip_code`,`hqaddress_street`,`hqaddress_zip_code`) VALUES (?,?,?,?,?)'
+        findByAddressStreetQuery == 'SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`street`,restaurant_.`zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM `restaurant` restaurant_ WHERE (restaurant_.`street` = ?)'
+        getMaxAddressStreetByNameQuery == 'SELECT MAX(restaurant_.`street`) FROM `restaurant` restaurant_ WHERE (restaurant_.`name` = ?)'
     }
 
     void "test count query with joins"() {
