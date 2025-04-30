@@ -56,7 +56,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Implementation of {@link SqlPreparedQuery}.
@@ -228,7 +227,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         List<Order> orders = new ArrayList<>(sort.getOrderBy());
         for (PersistentProperty idProperty: persistentEntity.getIdentityProperties()) {
             PersistentEntityUtils.traversePersistentProperties(idProperty, (associations, property) -> {
-                String prefix = String.join(".", associations.stream().map(Association::getName).collect(Collectors.toList()));
+                String prefix = String.join(".", associations.stream().map(Association::getName).toList());
                 String propertyName = property.getName();
                 String name = StringUtils.isEmpty(prefix) ? propertyName : prefix + "." + propertyName;
                 if (orders.stream().noneMatch(o -> o.getProperty().equals(name))) {
@@ -312,7 +311,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
     @NonNull
     private String buildCursorPagination(@NonNull CursoredPageable cursoredPageable, int paramIndex, @Nullable String tableAlias) {
         RuntimePersistentEntity<Object> persistentEntity = (RuntimePersistentEntity<Object>) getPersistentEntity();
-        List<PersistentPropertyPath> cursorProperties = getCursorProperties(cursoredPageable, persistentEntity);
+        List<PersistentPropertyPath> cursorPersistentPropertyPaths = getCursorProperties(cursoredPageable, persistentEntity);
         Optional<Cursor> optionalCursor = cursoredPageable.cursor();
         if (optionalCursor.isEmpty()) {
             return "";
@@ -330,7 +329,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         cursorQueryBindings = new ArrayList<>(orders.size() * (orders.size() + 1) / 2);
         for (int i = 0; i < orders.size(); ++i) {
             cursorBindings.add(new CursoredQueryParameterBinder(
-                "cursor_" + i, cursorProperties.get(i).getProperty().getDataType(), cursor.get(i)
+                "cursor_" + i, cursorPersistentPropertyPaths.get(i).getProperty().getDataType(), cursor.get(i)
             ));
         }
 
@@ -419,12 +418,12 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
             Collections.reverse(results);
         }
         CursoredPageable cursoredPageable = enhancePageable((CursoredPageable) pageable, runtimePersistentEntity);
-        List<PersistentPropertyPath> cursorProperties = getCursorProperties(cursoredPageable, runtimePersistentEntity);
+        List<PersistentPropertyPath> cursorPersistentPropertyPaths = getCursorProperties(cursoredPageable, runtimePersistentEntity);
         List<Cursor> cursors = new ArrayList<>(results.size());
         boolean isDto = preparedQuery.isDtoProjection();
         for (Object result : results) {
-            List<Object> cursorElements = new ArrayList<>(cursorProperties.size());
-            for (PersistentPropertyPath property : cursorProperties) {
+            List<Object> cursorElements = new ArrayList<>(cursorPersistentPropertyPaths.size());
+            for (PersistentPropertyPath property : cursorPersistentPropertyPaths) {
                 if (isDto) {
                     PersistentPropertyPath dtoProperty = runtimePersistentEntity.getPropertyPath(property.getPath());
                     if (dtoProperty == null) {

@@ -24,7 +24,6 @@ import io.micronaut.data.tck.entities.ShipmentId;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 
 import java.util.List;
-import java.util.UUID;
 
 @JdbcRepository(dialect = Dialect.H2)
 public interface ShipmentRepository extends PageableRepository<Shipment, ShipmentId> {
