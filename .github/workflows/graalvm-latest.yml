@@ -9,6 +9,7 @@ on:
     branches:
       - master
       - '[1-9]+.[0-9]+.x'
+      - cursored-embedded-sort
   pull_request:
     branches:
       - master
