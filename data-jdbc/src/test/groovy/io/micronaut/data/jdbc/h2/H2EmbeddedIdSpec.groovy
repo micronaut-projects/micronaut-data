@@ -18,6 +18,8 @@ package io.micronaut.data.jdbc.h2
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.data.annotation.*
 import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.model.CursoredPage
+import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
@@ -137,7 +139,7 @@ class H2EmbeddedIdSpec extends Specification {
         foundAllOrderByCountryCityDesc[1].field == "test4"
 
         when:
-        def foundAllOrderByDynamic = repository.findAll(Sort.of(Sort.Order.desc("country"), Sort.Order.asc( "city")))
+        def foundAllOrderByDynamic = repository.findAll(Sort.of(Sort.Order.desc("shipmentId.country"), Sort.Order.asc( "shipmentId.city")))
 
         then:
         foundAllOrderByDynamic.size() == 2
@@ -178,13 +180,51 @@ class H2EmbeddedIdSpec extends Specification {
         ShipmentId id4 = new ShipmentId("g", "h")
         repository.save(new Shipment(id4, "test4"))
 
-            Sort.Order.Direction sortDirection = Sort.Order.Direction.ASC;
-            Pageable pageable = Pageable.UNPAGED.order(new Sort.Order("shipmentId.city", sortDirection, false));
-            def page = repository.findAll(pageable)
+        Sort.Order.Direction sortDirection = Sort.Order.Direction.ASC;
+        Pageable pageable = Pageable.UNPAGED.order(new Sort.Order("shipmentId.city", sortDirection, false));
+        def page = repository.findAll(pageable)
 
         then:
         page.totalSize == 4
         page.content[0].shipmentId.city == "b"
+
+        cleanup:
+        repository.deleteAll()
+    }
+
+    void "test cursored pageable"() {
+        when:
+        ShipmentId id = new ShipmentId("c1", "a")
+        repository.save(new Shipment(id, "test"))
+
+        ShipmentId id2 = new ShipmentId("c1", "b")
+        repository.save(new Shipment(id2, "test2"))
+
+        ShipmentId id3 = new ShipmentId("c1", "c")
+        repository.save(new Shipment(id3, "test3"))
+
+        ShipmentId id4 = new ShipmentId("c1", "d")
+        repository.save(new Shipment(id4, "test4"))
+
+        ShipmentId id5 = new ShipmentId("c2", "a1")
+        repository.save(new Shipment(id5, "test5"))
+
+        CursoredPageable cursoredPageable = CursoredPageable.from(3, Sort.of());
+        CursoredPage<Shipment> page = repository.findByShipmentIdCountry("c1", cursoredPageable)
+
+        then:
+        page.content.size() == 3
+        page.hasNext()
+
+        when:
+        page = repository.findByShipmentIdCountry("c1", page.nextPageable())
+
+        then:
+        page.content.size() == 1
+        !page.hasNext()
+
+        cleanup:
+        repository.deleteAll()
     }
 }
 
