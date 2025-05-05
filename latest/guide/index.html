@@ -345,7 +345,7 @@
         <h1>Micronaut Data</h1>
         <p></p>
         <p>Data Repository Support for Micronaut</p>
-        <p><strong>Version:</strong> 4.12.0 </p>
+        <p><strong>Version:</strong> 4.12.1 </p>
     </div>
     
 <h1 id="introduction"><a class="anchor" href="#introduction"></a>1 Introduction</h1>
@@ -8470,34 +8470,49 @@ The dialect setting in configuration does <strong>not</strong> replace the need 
 </div>
 </div>
 <div class="sect2">
-<h3 id="_connection_client_info_tracing">Connection client info tracing</h3>
+<h3 id="_tracing_calls_from_java_to_oracle_database_sessions">Tracing calls from Java to Oracle Database sessions</h3>
 <div class="paragraph">
-<p>In order to trace SQL calls using <code>java.sql.Connection.setClientInfo(String, String)</code> method, you can
-annotate a repository with the <a href="../api/io/micronaut/data/connection/annotation/ClientInfo.html">@ClientInfo</a> annotation or <a href="../api/io/micronaut/data/connection/annotation/ClientInfo.Attribute.html">@Attribute</a> for individual client info.</p>
-</div>
-<div class="paragraph">
-<p>Note that the <a href="../api/io/micronaut/data/connection/annotation/ClientInfo.Attribute.html">@Attribute</a> annotation can be used on either the class or the method, thus allowing customization of the  module or action individually.</p>
-</div>
-<div class="paragraph">
-<p>For Oracle database, following attributes can be set to the connection client info: <code>OCSID.MODULE</code>, <code>OCSID.ACTION</code> and <code>OCSID.CLIENTID</code> and provided in <a href="../api/io/micronaut/data/connection/annotation/ClientInfo.Attribute.html">@Attribute</a>.
-If some of these attributes are not provided then Micronaut Data Jdbc is going to populate values automatically for Oracle connections:</p>
+<p>Specify the configuration property <code>datasources.&lt;datasource-name&gt;.enable-oracle-client-info=true</code> on a per datasource basis to link database sessions with Java thread activity. By default, this will set:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p><code>OCSID.MODULE</code> will get the value of the class name where annotation <code>@ClientInfo.Attribute</code> is added (usually Micronaut Data repository class)</p>
+<p>The value of <code>micronaut.application.name</code> as the <code>CLIENTID</code>.</p>
 </li>
 <li>
-<p><code>OCSID.ACTION</code> will get the value of the method name which is annotated with <code>@ClientInfo.Attribute</code> annotation</p>
+<p>The class/interface name of the repository as the <code>MODULE</code>, potentially with the package name shortened.</p>
 </li>
 <li>
-<p><code>OCSID.CLIENTID</code> will get the value of the Micronaut application name, if configured</p>
+<p>The method name from the repository as the <code>ACTION</code>.</p>
+</li>
+<li>
+<p>The JVM thread name as the <code>CLIENT_INFO</code>.</p>
 </li>
 </ul>
 </div>
 <div class="paragraph">
-<p>Please note this feature is currently supported only for Oracle database connections. In order to enable Oracle JDBC connection client info to be set,
-you need to specify the configuration property <code>datasources.&lt;datasource-name&gt;.enable-oracle-client-info=true</code> on a per datasource basis.</p>
+<p>This metadata appears in the <code>V$SESSION</code> view and can be used to figure out what a thread is doing inside the database. The following query is useful to see what SQL is executing:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">SELECT
+    s.sid,
+    s.serial#,
+    s.client_identifier as app_name,
+    s.client_info as thread_name,
+    s.module as repository_name,
+    s.action as repository_method,
+    q.sql_text,
+    s.event,
+    s.wait_time,
+    s.seconds_in_wait
+FROM v$session s
+LEFT JOIN v$sql q ON s.sql_id = q.sql_id
+WHERE s.username = USER</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can control the values of <code>ACTION</code>, <code>MODULE</code>, <code>CLIENTID</code> and <code>CLIENT_INFO</code> with the <a href="../api/io/micronaut/data/connection/annotation/ClientInfo.html">@ClientInfo</a> annotation on repositories. Note that the <a href="../api/io/micronaut/data/connection/annotation/ClientInfo.Attribute.html">@Attribute</a> annotation can be used on either the class or the method, thus allowing customization of the  module or action individually. You should prefix the key with <code>OCSID.</code> e.g. <code>OCSID.ACTION</code> when setting client info this way. Oracle imposes a maximum length of 64 characters for these values, therefore thread, class and method names may be shortened or truncated to fit.</p>
 </div>
 <div class="admonitionblock tip">
 <table>
