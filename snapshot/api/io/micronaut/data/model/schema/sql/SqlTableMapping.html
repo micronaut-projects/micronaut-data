@@ -81,6 +81,7 @@ loadScripts(document, 'script');</script>
 <dt>Record Components:</dt>
 <dd><code><span id="param-schema">schema</span></code> - The schema name, not required</dd>
 <dd><code><span id="param-name">name</span></code> - The table name</dd>
+<dd><code><span id="param-type">type</span></code> - The table mapping type</dd>
 <dd><code><span id="param-primaryKeyColumns">primaryKeyColumns</span></code> - The list of primary key columns, can be null or empty</dd>
 <dd><code><span id="param-columns">columns</span></code> - The list of columns. See <a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql"><code>SqlColumnMapping</code></a></dd>
 <dd><code><span id="param-sequences">sequences</span></code> - The list of table sequences, can be null or empty. See <a href="SqlSequenceMapping.html" title="class in io.micronaut.data.model.schema.sql"><code>SqlSequenceMapping</code></a></dd>
@@ -110,7 +111,9 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color"><code>static enum&nbsp;</code></div>
 <div class="col-second even-row-color"><code><a href="SqlTableMapping.TableType.html" class="type-name-link" title="enum class in io.micronaut.data.model.schema.sql">SqlTableMapping.TableType</a></code></div>
-<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-last even-row-color">
+<div class="block">The SQL table mapping table type.</div>
+</div>
 </div>
 </section>
 </li>
@@ -194,7 +197,7 @@ loadScripts(document, 'script');</script>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="SqlTableMapping.TableType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlTableMapping.TableType</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#type()" class="member-name-link">type</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Returns the value of the <code>type</code> record component.</div>
+<div class="block">Returns the value of the <a href="#param-type"><code>type</code></a> record component.</div>
 </div>
 </div>
 </div>
@@ -237,7 +240,7 @@ loadScripts(document, 'script');</script>
 <dt>Parameters:</dt>
 <dd><code>schema</code> - the value for the <a href="#param-schema"><code>schema</code></a> record component</dd>
 <dd><code>name</code> - the value for the <a href="#param-name"><code>name</code></a> record component</dd>
-<dd><code>type</code> - the value for the <code>type</code> record component</dd>
+<dd><code>type</code> - the value for the <a href="#param-type"><code>type</code></a> record component</dd>
 <dd><code>primaryKeyColumns</code> - the value for the <a href="#param-primaryKeyColumns"><code>primaryKeyColumns</code></a> record component</dd>
 <dd><code>columns</code> - the value for the <a href="#param-columns"><code>columns</code></a> record component</dd>
 <dd><code>sequences</code> - the value for the <a href="#param-sequences"><code>sequences</code></a> record component</dd>
@@ -319,10 +322,10 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="type()">
 <h3>type</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="SqlTableMapping.TableType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlTableMapping.TableType</a></span>&nbsp;<span class="element-name">type</span>()</div>
-<div class="block">Returns the value of the <code>type</code> record component.</div>
+<div class="block">Returns the value of the <a href="#param-type"><code>type</code></a> record component.</div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>the value of the <code>type</code> record component</dd>
+<dd>the value of the <a href="#param-type"><code>type</code></a> record component</dd>
 </dl>
 </section>
 </li>
