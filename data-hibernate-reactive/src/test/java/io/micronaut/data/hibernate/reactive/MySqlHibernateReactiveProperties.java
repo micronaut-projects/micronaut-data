@@ -11,7 +11,8 @@ public interface MySqlHibernateReactiveProperties extends TestPropertyProvider {
         return Map.of(
             "jpa.default.properties.hibernate.hbm2ddl.auto", "create-drop",
             "jpa.default.reactive", "true",
-            "jpa.default.properties.hibernate.connection.db-type", "mysql"
+            "jpa.default.properties.hibernate.connection.db-type", "mysql",
+            "test-resources.containers.mysql.image-name", "mysql:8.4.5"
         );
     }
 }
