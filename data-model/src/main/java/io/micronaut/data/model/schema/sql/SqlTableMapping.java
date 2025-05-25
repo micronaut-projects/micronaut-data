@@ -24,6 +24,7 @@ import java.util.List;
  *
  * @param schema The schema name, not required
  * @param name The table name
+ * @param type The table mapping type
  * @param primaryKeyColumns The list of primary key columns, can be null or empty
  * @param columns The list of columns. See {@link SqlColumnMapping}
  * @param sequences The list of table sequences, can be null or empty. See {@link SqlSequenceMapping}
@@ -44,8 +45,17 @@ public record SqlTableMapping(
         this(schema, name, type, primaryKeyColumns, columns, null);
     }
 
+    /**
+     * The SQL table mapping table type.
+     */
     public enum TableType {
+        /**
+         * Table mapping created from the actual entity.
+         */
         MAIN,
+        /**
+         * Table mapping created from the entity relations - join table.
+         */
         JOIN
     }
 }

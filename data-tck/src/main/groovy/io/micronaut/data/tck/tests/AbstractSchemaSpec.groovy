@@ -16,8 +16,7 @@ abstract class AbstractSchemaSpec extends Specification {
         props["datasources.default.packages"] = "io.micronaut.data.tck.entities.schema"
         def initialContext = ApplicationContext.run(props)
         when:
-        def schemaValidateProperties = properties
-        schemaValidateProperties = props
+        def schemaValidateProperties = props
         schemaValidateProperties["datasources.default.schema-generate"] =  "validate"
         def validationContext = ApplicationContext.run(schemaValidateProperties)
         then:

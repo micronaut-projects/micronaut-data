@@ -4,6 +4,7 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
+import io.micronaut.data.exceptions.SchemaValidationException
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
@@ -23,8 +24,7 @@ class MariaSchemaSpec extends AbstractSchemaSpec implements MariaTestPropertyPro
         connection.prepareStatement("DROP TABLE IF EXISTS uuid_maria_schema_entity").executeUpdate()
         connection.prepareStatement("CREATE TABLE uuid_maria_schema_entity (id BIGINT NOT NULL PRIMARY KEY, uuid_field uuid)").executeUpdate()
         when:"Manually created table mapped to an entity"
-        def schemaValidateProperties = properties
-        schemaValidateProperties = props
+        def schemaValidateProperties = props
         schemaValidateProperties["datasources.default.schema-generate"] =  "validate"
         schemaValidateProperties["datasources.default.packages"] = "io.micronaut.data.jdbc.mariadb"
         def validationContext = ApplicationContext.run(schemaValidateProperties)
@@ -38,8 +38,30 @@ class MariaSchemaSpec extends AbstractSchemaSpec implements MariaTestPropertyPro
         foundEntity
         foundEntity.id == 1L
         foundEntity.uuidField == uuidEntity.uuidField
+        when:"Table not found"
+        connection.prepareStatement("DROP TABLE IF EXISTS uuid_maria_schema_entity").executeUpdate()
+        connection.prepareStatement("CREATE TABLE uuid_maria_schema_entity_other (id BIGINT NOT NULL PRIMARY KEY, uuid_field uuid)").executeUpdate()
+        ApplicationContext.run(schemaValidateProperties)
+        then:"Schema validation throws an error"
+        def exception = thrown(Exception)
+        exception.message.contains('Schema validation failed. Expected table [uuid_maria_schema_entity] not found for entity [uuid_maria_schema_entity]')
+        when:"Column not found"
+        connection.prepareStatement("DROP TABLE IF EXISTS uuid_maria_schema_entity_other").executeUpdate()
+        connection.prepareStatement("CREATE TABLE uuid_maria_schema_entity (id BIGINT NOT NULL PRIMARY KEY, uuid_field_new uuid)").executeUpdate()
+        ApplicationContext.run(schemaValidateProperties)
+        then:"Schema validation throws an error"
+        exception = thrown(Exception)
+        exception.message.contains('Schema validation failed. Column [uuid_field] not found in the table [uuid_maria_schema_entity]')
+        when:"Column type not matching"
+        connection.prepareStatement("DROP TABLE IF EXISTS uuid_maria_schema_entity").executeUpdate()
+        connection.prepareStatement("CREATE TABLE uuid_maria_schema_entity (id BIGINT NOT NULL PRIMARY KEY, uuid_field VARCHAR(50))").executeUpdate()
+        validationContext = ApplicationContext.run(schemaValidateProperties)
+        then:"Schema validation throws an error"
+        exception = thrown(Exception)
+        exception.message.contains('Schema validation failed. Column [uuid_field] in table [uuid_maria_schema_entity] of type [VARCHAR] is mapped to [UUID]')
         cleanup:
-        connection.prepareStatement("DROP TABLE uuid_maria_schema_entity").executeUpdate()
+        connection.prepareStatement("DROP TABLE IF EXISTS uuid_maria_schema_entity").executeUpdate()
+        connection.prepareStatement("DROP TABLE IF EXISTS uuid_maria_schema_entity_other").executeUpdate()
         if (initialContext) {
             initialContext.close()
         }
