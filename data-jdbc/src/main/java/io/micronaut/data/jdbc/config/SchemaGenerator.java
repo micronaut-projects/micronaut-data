@@ -259,16 +259,36 @@ public class SchemaGenerator {
             }
             return;
         }
+        // Get all tables for all entities and remove (de-duplicate) if there is SqlTableMapping created from the entity
+        // that represents join and ad-hoc SqlTableMapping for the same entity based on relation mappings (to be removed/skipped)
+        Map<String, SqlTableMapping> sqlTableMappingMap = CollectionUtils.newLinkedHashMap(entities.length);
         for (PersistentEntity entity : entities) {
             List<SqlTableMapping> sqlTableMappings = SqlSchemaUtils.getSqlTableMappings(entity);
             for (SqlTableMapping sqlTableMapping : sqlTableMappings) {
                 String tableName = sqlTableMapping.name();
-                SqlTableMetadata sqlTableMetadata = sqlTableMetadataMap.get(tableName.toLowerCase());
+                String tableNameLowerCase = tableName.toLowerCase();
+                SqlTableMetadata sqlTableMetadata = sqlTableMetadataMap.get(tableNameLowerCase);
                 if (sqlTableMetadata == null) {
                     throw new SchemaValidationException("Schema validation failed. Expected table [" + tableName + "] not found for entity [" + entity.getPersistedName() + "]");
                 }
-                SqlSchemaUtils.validateTable(sqlTableMapping, sqlTableMetadata, configuration.getDialect());
+                if (sqlTableMappingMap.containsKey(tableNameLowerCase)) {
+                    SqlTableMapping existingSqlTableMapping = sqlTableMappingMap.get(tableNameLowerCase);
+                    if (existingSqlTableMapping.type() == SqlTableMapping.TableType.JOIN) {
+                        // Remove ad-hoc join table created from one of the entities relation mappings and not an actual entity
+                        sqlTableMappingMap.remove(tableNameLowerCase);
+                    } else if (sqlTableMapping.type() == SqlTableMapping.TableType.JOIN) {
+                        // Skip this table mapping ad-hoc join table created from one of the entities relation mappings and not an actual entity
+                        continue;
+                    }
+                }
+                sqlTableMappingMap.put(tableNameLowerCase, sqlTableMapping);
             }
+        }
+
+        for (Map.Entry<String, SqlTableMapping> sqlTableMappingEntry : sqlTableMappingMap.entrySet()) {
+            String tableNameLowerCase = sqlTableMappingEntry.getKey();
+            SqlTableMapping sqlTableMapping = sqlTableMappingEntry.getValue();
+            SqlSchemaUtils.validateTable(sqlTableMapping, sqlTableMetadataMap.get(tableNameLowerCase), configuration.getDialect());
         }
     }
 
