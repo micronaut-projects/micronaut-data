@@ -92,8 +92,9 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.util.List,io.micronaut.data.jdbc.operations.JdbcSchemaHandler,io.micronaut.context.env.Environment)" class="member-name-link">SchemaGenerator</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a>&gt;&nbsp;configurations,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.util.List,io.micronaut.data.jdbc.operations.JdbcSchemaHandler,java.util.List,io.micronaut.context.env.Environment)" class="member-name-link">SchemaGenerator</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a>&gt;&nbsp;configurations,
  <a href="../operations/JdbcSchemaHandler.html" title="interface in io.micronaut.data.jdbc.operations">JdbcSchemaHandler</a>&nbsp;schemaHandler,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../model/query/builder/sql/validation/SqlTableMappingValidator.html" title="interface in io.micronaut.data.model.query.builder.sql.validation">SqlTableMappingValidator</a>&gt;&nbsp;sqlTableMappingValidators,
  io.micronaut.context.env.Environment&nbsp;environment)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Constructors a schema generator for the given configurations.</div>
@@ -135,16 +136,18 @@ loadScripts(document, 'script');</script>
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(java.util.List,io.micronaut.data.jdbc.operations.JdbcSchemaHandler,io.micronaut.context.env.Environment)">
+<section class="detail" id="&lt;init&gt;(java.util.List,io.micronaut.data.jdbc.operations.JdbcSchemaHandler,java.util.List,io.micronaut.context.env.Environment)">
 <h3>SchemaGenerator</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">SchemaGenerator</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a>&gt;&nbsp;configurations,
  <a href="../operations/JdbcSchemaHandler.html" title="interface in io.micronaut.data.jdbc.operations">JdbcSchemaHandler</a>&nbsp;schemaHandler,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../model/query/builder/sql/validation/SqlTableMappingValidator.html" title="interface in io.micronaut.data.model.query.builder.sql.validation">SqlTableMappingValidator</a>&gt;&nbsp;sqlTableMappingValidators,
  io.micronaut.context.env.Environment&nbsp;environment)</span></div>
 <div class="block">Constructors a schema generator for the given configurations.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>configurations</code> - The configurations</dd>
 <dd><code>schemaHandler</code> - The schema handler</dd>
+<dd><code>sqlTableMappingValidators</code> - The list of <a href="../../model/query/builder/sql/validation/SqlTableMappingValidator.html" title="interface in io.micronaut.data.model.query.builder.sql.validation"><code>SqlTableMappingValidator</code></a> instances</dd>
 <dd><code>environment</code> - The environment</dd>
 </dl>
 </section>

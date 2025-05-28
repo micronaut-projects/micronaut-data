@@ -9896,6 +9896,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
 &nbsp;</dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/validation/SqlTableMappingValidator.html#getSupportedDialect()" class="member-name-link">getSupportedDialect()</a> - Method in interface io.micronaut.data.model.query.builder.sql.validation.<a href="io/micronaut/data/model/query/builder/sql/validation/SqlTableMappingValidator.html" title="interface in io.micronaut.data.model.query.builder.sql.validation">SqlTableMappingValidator</a></dt>
+<dd>
+<div class="block">Returns the SQL dialect supported by this validator.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPropertyPath.html#getTableAlias()" class="member-name-link">getTableAlias()</a> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPropertyPath.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryPropertyPath</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/QueryParameterBinding.html#getTableAlias()" class="member-name-link">getTableAlias()</a> - Method in interface io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/QueryParameterBinding.html" title="interface in io.micronaut.data.model.query.builder">QueryParameterBinding</a></dt>
@@ -11464,6 +11468,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Classes for SQL query building.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/validation/package-summary.html">io.micronaut.data.model.query.builder.sql.validation</a> - package io.micronaut.data.model.query.builder.sql.validation</dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/factory/package-summary.html">io.micronaut.data.model.query.factory</a> - package io.micronaut.data.model.query.factory</dt>
 <dd>
 <div class="block">Factories for projections, restrictions and so on.</div>
@@ -18961,7 +18967,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Schema generator used for testing purposes.</div>
 </dd>
-<dt><a href="io/micronaut/data/jdbc/config/SchemaGenerator.html#%3Cinit%3E(java.util.List,io.micronaut.data.jdbc.operations.JdbcSchemaHandler,io.micronaut.context.env.Environment)" class="member-name-link">SchemaGenerator(List&lt;DataJdbcConfiguration&gt;, JdbcSchemaHandler, Environment)</a> - Constructor for class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/SchemaGenerator.html" title="class in io.micronaut.data.jdbc.config">SchemaGenerator</a></dt>
+<dt><a href="io/micronaut/data/jdbc/config/SchemaGenerator.html#%3Cinit%3E(java.util.List,io.micronaut.data.jdbc.operations.JdbcSchemaHandler,java.util.List,io.micronaut.context.env.Environment)" class="member-name-link">SchemaGenerator(List&lt;DataJdbcConfiguration&gt;, JdbcSchemaHandler, List&lt;SqlTableMappingValidator&gt;, Environment)</a> - Constructor for class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/SchemaGenerator.html" title="class in io.micronaut.data.jdbc.config">SchemaGenerator</a></dt>
 <dd>
 <div class="block">Constructors a schema generator for the given configurations.</div>
 </dd>
@@ -18975,13 +18981,13 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">The tenant resolver for multi-tenancy mode SCHEMA.</div>
 </dd>
-<dt><a href="io/micronaut/data/exceptions/SchemaValidationException.html" class="type-name-link" title="class in io.micronaut.data.exceptions">SchemaValidationException</a> - Exception in <a href="io/micronaut/data/exceptions/package-summary.html">io.micronaut.data.exceptions</a></dt>
+<dt><a href="io/micronaut/data/model/query/builder/sql/validation/SchemaValidationException.html" class="type-name-link" title="class in io.micronaut.data.model.query.builder.sql.validation">SchemaValidationException</a> - Exception in <a href="io/micronaut/data/model/query/builder/sql/validation/package-summary.html">io.micronaut.data.model.query.builder.sql.validation</a></dt>
 <dd>
 <div class="block">A schema validation exception thrown if mapped entities don't have matching tables and columns in the database.</div>
 </dd>
-<dt><a href="io/micronaut/data/exceptions/SchemaValidationException.html#%3Cinit%3E(java.lang.String)" class="member-name-link">SchemaValidationException(String)</a> - Constructor for exception io.micronaut.data.exceptions.<a href="io/micronaut/data/exceptions/SchemaValidationException.html" title="class in io.micronaut.data.exceptions">SchemaValidationException</a></dt>
+<dt><a href="io/micronaut/data/model/query/builder/sql/validation/SchemaValidationException.html#%3Cinit%3E(java.lang.String)" class="member-name-link">SchemaValidationException(String)</a> - Constructor for exception io.micronaut.data.model.query.builder.sql.validation.<a href="io/micronaut/data/model/query/builder/sql/validation/SchemaValidationException.html" title="class in io.micronaut.data.model.query.builder.sql.validation">SchemaValidationException</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/exceptions/SchemaValidationException.html#%3Cinit%3E(java.lang.String,java.lang.Throwable)" class="member-name-link">SchemaValidationException(String, Throwable)</a> - Constructor for exception io.micronaut.data.exceptions.<a href="io/micronaut/data/exceptions/SchemaValidationException.html" title="class in io.micronaut.data.exceptions">SchemaValidationException</a></dt>
+<dt><a href="io/micronaut/data/model/query/builder/sql/validation/SchemaValidationException.html#%3Cinit%3E(java.lang.String,java.lang.Throwable)" class="member-name-link">SchemaValidationException(String, Throwable)</a> - Constructor for exception io.micronaut.data.model.query.builder.sql.validation.<a href="io/micronaut/data/model/query/builder/sql/validation/SchemaValidationException.html" title="class in io.micronaut.data.model.query.builder.sql.validation">SchemaValidationException</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySubquery.html#select(jakarta.persistence.criteria.Expression)" class="member-name-link">select(Expression&lt;T&gt;)</a> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySubquery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySubquery</a></dt>
 <dd>&nbsp;</dd>
@@ -20192,6 +20198,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlTableMapping.TableType.html" class="type-name-link" title="enum class in io.micronaut.data.model.schema.sql">SqlTableMapping.TableType</a> - Enum Class in <a href="io/micronaut/data/model/schema/sql/package-summary.html">io.micronaut.data.model.schema.sql</a></dt>
 <dd>
 <div class="block">The SQL table mapping table type.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/validation/SqlTableMappingValidator.html" class="type-name-link" title="interface in io.micronaut.data.model.query.builder.sql.validation">SqlTableMappingValidator</a> - Interface in <a href="io/micronaut/data/model/query/builder/sql/validation/package-summary.html">io.micronaut.data.model.query.builder.sql.validation</a></dt>
+<dd>
+<div class="block">Validates SQL table mappings against the actual table metadata from the database.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/schema/sql/metadata/SqlTableMetadata.html" class="type-name-link" title="class in io.micronaut.data.model.schema.sql.metadata">SqlTableMetadata</a> - Class in <a href="io/micronaut/data/model/schema/sql/metadata/package-summary.html">io.micronaut.data.model.schema.sql.metadata</a></dt>
 <dd>
@@ -21750,7 +21760,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/data/processor/visitors/finders/FindersUtils.InterceptorMatch.html#param-validateReturnType"><code>validateReturnType</code></a> record component.</div>
 </dd>
-<dt><a href="io/micronaut/data/model/query/builder/sql/SqlSchemaUtils.html#validateTable(io.micronaut.data.model.schema.sql.SqlTableMapping,io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata,io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">validateTable(SqlTableMapping, SqlTableMetadata, Dialect)</a> - Static method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlSchemaUtils.html" title="class in io.micronaut.data.model.query.builder.sql">SqlSchemaUtils</a></dt>
+<dt><a href="io/micronaut/data/model/query/builder/sql/validation/SqlTableMappingValidator.html#validateTable(io.micronaut.data.model.schema.sql.SqlTableMapping,io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata)" class="member-name-link">validateTable(SqlTableMapping, SqlTableMetadata)</a> - Method in interface io.micronaut.data.model.query.builder.sql.validation.<a href="io/micronaut/data/model/query/builder/sql/validation/SqlTableMappingValidator.html" title="interface in io.micronaut.data.model.query.builder.sql.validation">SqlTableMappingValidator</a></dt>
 <dd>
 <div class="block">Validates a table definition based on <a href="io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model"><code>PersistentEntity</code></a> mapping against its actual corresponding metadata from the database.</div>
 </dd>
