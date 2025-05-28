@@ -13,28 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.exceptions;
+package io.micronaut.data.model.query.builder.sql.validation;
+
+import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import jakarta.inject.Singleton;
 
 /**
- * A schema validation exception thrown if mapped entities don't have matching tables and columns in the database.
+ * An implementation of {@link SqlTableMappingValidator} that validates SQL table mappings against
+ * actual table metadata from the database, specifically for ANSI SQL compliant databases.
  *
- * @author radovanradic
  * @since 4.13.0
  */
-public class SchemaValidationException extends RuntimeException {
-
-    /**
-     * @param message The message
-     */
-    public SchemaValidationException(String message) {
-        super(message);
-    }
-
-    /**
-     * @param message The message
-     * @param cause The cause
-     */
-    public SchemaValidationException(String message, Throwable cause) {
-        super(message, cause);
+@Internal
+@Singleton
+final class AnsiSqlTableMappingValidator extends BaseSqlTableMappingValidator {
+    @Override
+    public Dialect getSupportedDialect() {
+        return Dialect.ANSI;
     }
 }

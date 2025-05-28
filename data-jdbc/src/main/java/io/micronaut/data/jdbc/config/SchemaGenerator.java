@@ -30,13 +30,14 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.exceptions.SchemaValidationException;
+import io.micronaut.data.model.query.builder.sql.validation.SchemaValidationException;
 import io.micronaut.data.jdbc.operations.JdbcSchemaHandler;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.IdentifierNamingStrategy;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
 import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils;
+import io.micronaut.data.model.query.builder.sql.validation.SqlTableMappingValidator;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
 import io.micronaut.data.model.schema.sql.metadata.SqlColumnMetadata;
@@ -76,21 +77,32 @@ public class SchemaGenerator {
 
     private final List<DataJdbcConfiguration> configurations;
     private final JdbcSchemaHandler schemaHandler;
+    private final Map<Dialect, SqlTableMappingValidator> dialectSqlTableMappingValidatorMap;
     private final PropertyPlaceholderResolver propertyPlaceholderResolver;
 
     /**
      * Constructors a schema generator for the given configurations.
      *
-     * @param configurations The configurations
-     * @param schemaHandler  The schema handler
-     * @param environment    The environment
+     * @param configurations                The configurations
+     * @param schemaHandler                 The schema handler
+     * @param sqlTableMappingValidators     The list of {@link SqlTableMappingValidator} instances
+     * @param environment                   The environment
      */
     public SchemaGenerator(List<DataJdbcConfiguration> configurations,
                            JdbcSchemaHandler schemaHandler,
+                           List<SqlTableMappingValidator> sqlTableMappingValidators,
                            Environment environment) {
         this.configurations = configurations == null ? Collections.emptyList() : configurations;
         this.schemaHandler = schemaHandler;
         this.propertyPlaceholderResolver = environment.getPlaceholderResolver();
+        this.dialectSqlTableMappingValidatorMap = CollectionUtils.newHashMap(sqlTableMappingValidators.size());
+        for (SqlTableMappingValidator sqlTableMappingValidator : sqlTableMappingValidators) {
+            Dialect dialect = sqlTableMappingValidator.getSupportedDialect();
+            if (dialectSqlTableMappingValidatorMap.containsKey(dialect)) {
+                throw new IllegalStateException("More than one SqlTableMappingValidator is declared for dialect " + dialect);
+            }
+            dialectSqlTableMappingValidatorMap.put(dialect, sqlTableMappingValidator);
+        }
     }
 
     /**
@@ -249,9 +261,14 @@ public class SchemaGenerator {
         }
     }
 
-    private static void validate(Connection connection,
+    private void validate(Connection connection,
                                  DataJdbcConfiguration configuration,
                                  PersistentEntity[] entities) throws SQLException {
+        Dialect dialect = configuration.getDialect();
+        SqlTableMappingValidator sqlTableMappingValidator = dialectSqlTableMappingValidatorMap.get(dialect);
+        if (sqlTableMappingValidator == null) {
+            throw new IllegalStateException("There is no supported SqlTableMappingValidator for dialect " + dialect);
+        }
         // Get all tables for all entities and remove (de-duplicate) if there is SqlTableMapping created from the entity
         // that represents join and ad-hoc SqlTableMapping for the same entity based on relation mappings (to be removed/skipped)
         Map<String, SqlTableMapping> sqlTableMappingByTableName = CollectionUtils.newLinkedHashMap(entities.length);
@@ -282,7 +299,7 @@ public class SchemaGenerator {
             if (dbSqlTableMetadata == null) {
                 throw new SchemaValidationException("Schema validation failed. Expected table [" + sqlTableMapping.name() + "] not found");
             }
-            SqlSchemaUtils.validateTable(sqlTableMapping, dbSqlTableMetadata, configuration.getDialect());
+            sqlTableMappingValidator.validateTable(sqlTableMapping, dbSqlTableMetadata);
         }
     }
 
