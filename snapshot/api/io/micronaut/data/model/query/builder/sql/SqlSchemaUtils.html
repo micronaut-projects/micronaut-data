@@ -148,9 +148,9 @@ loadScripts(document, 'script');</script>
 <div class="block">Returns list of <a href="../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql"><code>SqlTableMapping</code></a> for persistent entity.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#validateTable(io.micronaut.data.model.schema.sql.SqlTableMapping,io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata,io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">validateTable</a><wbr>(<a href="../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a>&nbsp;tableMapping,
- <a href="../../../schema/sql/metadata/SqlTableMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">SqlTableMetadata</a>&nbsp;tableMetadata,
- <a href="Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#validateTable(io.micronaut.data.model.schema.sql.SqlTableMapping,io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata,io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">validateTable</a><wbr>(@NonNull <a href="../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a>&nbsp;tableMapping,
+ @NonNull <a href="../../../schema/sql/metadata/SqlTableMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">SqlTableMetadata</a>&nbsp;tableMetadata,
+ @NonNull <a href="Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Validates a table definition based on <a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model"><code>PersistentEntity</code></a> mapping against its actual corresponding metadata from the database.</div>
 </div>
@@ -340,9 +340,12 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="validateTable(io.micronaut.data.model.schema.sql.SqlTableMapping,io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata,io.micronaut.data.model.query.builder.sql.Dialect)">
 <h3>validateTable</h3>
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">validateTable</span><wbr><span class="parameters">(<a href="../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a>&nbsp;tableMapping,
- <a href="../../../schema/sql/metadata/SqlTableMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">SqlTableMetadata</a>&nbsp;tableMetadata,
- <a href="Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</span></div>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">validateTable</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a>&nbsp;tableMapping,
+ @NonNull
+ @NonNull <a href="../../../schema/sql/metadata/SqlTableMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">SqlTableMetadata</a>&nbsp;tableMetadata,
+ @NonNull
+ @NonNull <a href="Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</span></div>
 <div class="block">Validates a table definition based on <a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model"><code>PersistentEntity</code></a> mapping against its actual corresponding metadata from the database.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
