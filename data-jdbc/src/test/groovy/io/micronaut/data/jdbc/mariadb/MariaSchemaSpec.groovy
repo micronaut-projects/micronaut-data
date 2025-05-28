@@ -23,6 +23,8 @@ class MariaSchemaSpec extends AbstractSchemaSpec implements MariaTestPropertyPro
         def connection = dataSource.connection
         connection.prepareStatement("DROP TABLE IF EXISTS uuid_maria_schema_entity").executeUpdate()
         connection.prepareStatement("CREATE TABLE uuid_maria_schema_entity (id BIGINT NOT NULL PRIMARY KEY, uuid_field uuid)").executeUpdate()
+        // create table which does not have mapped entity which will be just skipped
+        connection.prepareStatement("CREATE TABLE user_account_maria_schema (id BIGINT NOT NULL PRIMARY KEY, name VARCHAR(30))").executeUpdate()
         when:"Manually created table mapped to an entity"
         def schemaValidateProperties = props
         schemaValidateProperties["datasources.default.schema-generate"] =  "validate"
@@ -44,7 +46,7 @@ class MariaSchemaSpec extends AbstractSchemaSpec implements MariaTestPropertyPro
         ApplicationContext.run(schemaValidateProperties)
         then:"Schema validation throws an error"
         def exception = thrown(Exception)
-        exception.message.contains('Schema validation failed. Expected table [uuid_maria_schema_entity] not found for entity [uuid_maria_schema_entity]')
+        exception.message.contains('Schema validation failed. Expected table [uuid_maria_schema_entity] not found')
         when:"Column not found"
         connection.prepareStatement("DROP TABLE IF EXISTS uuid_maria_schema_entity_other").executeUpdate()
         connection.prepareStatement("CREATE TABLE uuid_maria_schema_entity (id BIGINT NOT NULL PRIMARY KEY, uuid_field_new uuid)").executeUpdate()
@@ -62,6 +64,7 @@ class MariaSchemaSpec extends AbstractSchemaSpec implements MariaTestPropertyPro
         cleanup:
         connection.prepareStatement("DROP TABLE IF EXISTS uuid_maria_schema_entity").executeUpdate()
         connection.prepareStatement("DROP TABLE IF EXISTS uuid_maria_schema_entity_other").executeUpdate()
+        connection.prepareStatement("DROP TABLE IF EXISTS user_account_maria_schema").executeUpdate()
         if (initialContext) {
             initialContext.close()
         }

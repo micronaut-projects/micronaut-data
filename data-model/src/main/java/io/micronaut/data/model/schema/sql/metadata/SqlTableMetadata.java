@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -30,7 +31,7 @@ public final class SqlTableMetadata {
     private final String catalog;
     private final String schema;
     private final String name;
-    private final Map<String, SqlColumnMetadata> columns = new HashMap<>();
+    private final Map<String, SqlColumnMetadata> columns = new LinkedHashMap<>();
 
     /**
      * Constructs a new instance of SqlTableMetadata with the specified table name.

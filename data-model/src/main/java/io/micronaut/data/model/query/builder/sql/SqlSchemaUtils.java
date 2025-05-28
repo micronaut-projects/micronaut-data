@@ -223,10 +223,10 @@ public final class SqlSchemaUtils {
      * @param dialect         the SQL dialect of the schema
      * @throws SchemaValidationException When expected column not found or is not matching expected type
      */
-    public static void validateTable(SqlTableMapping tableMapping, SqlTableMetadata tableMetadata, Dialect dialect) {
+    public static void validateTable(@NonNull SqlTableMapping tableMapping, @NonNull SqlTableMetadata tableMetadata, @NonNull Dialect dialect) {
         List<SqlColumnMapping> primaryKeyColumns = tableMapping.primaryKeyColumns();
         List<SqlColumnMapping> columns = tableMapping.columns();
-        List<SqlColumnMapping> allColumns = new ArrayList<>(primaryKeyColumns != null ? primaryKeyColumns.size() : 0 + columns.size());
+        List<SqlColumnMapping> allColumns = new ArrayList<>(columns.size() + (primaryKeyColumns != null ? primaryKeyColumns.size() : 0));
         if (primaryKeyColumns != null) {
             allColumns.addAll(primaryKeyColumns);
         }

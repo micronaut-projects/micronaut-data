@@ -61,6 +61,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Schema generator used for testing purposes.
@@ -251,48 +252,42 @@ public class SchemaGenerator {
     private static void validate(Connection connection,
                                  DataJdbcConfiguration configuration,
                                  PersistentEntity[] entities) throws SQLException {
-        Map<String, SqlTableMetadata> sqlTableMetadataMap = getSqlTableMetadataList(connection);
-        if (CollectionUtils.isEmpty(sqlTableMetadataMap)) {
-            // No tables found
-            if (entities.length > 0) {
-                throw new SchemaValidationException("No tables found for the datasource " + configuration.getName());
-            }
-            return;
-        }
         // Get all tables for all entities and remove (de-duplicate) if there is SqlTableMapping created from the entity
         // that represents join and ad-hoc SqlTableMapping for the same entity based on relation mappings (to be removed/skipped)
-        Map<String, SqlTableMapping> sqlTableMappingMap = CollectionUtils.newLinkedHashMap(entities.length);
+        Map<String, SqlTableMapping> sqlTableMappingByTableName = CollectionUtils.newLinkedHashMap(entities.length);
         for (PersistentEntity entity : entities) {
             List<SqlTableMapping> sqlTableMappings = SqlSchemaUtils.getSqlTableMappings(entity);
             for (SqlTableMapping sqlTableMapping : sqlTableMappings) {
                 String tableName = sqlTableMapping.name();
                 String tableNameLowerCase = tableName.toLowerCase();
-                SqlTableMetadata sqlTableMetadata = sqlTableMetadataMap.get(tableNameLowerCase);
-                if (sqlTableMetadata == null) {
-                    throw new SchemaValidationException("Schema validation failed. Expected table [" + tableName + "] not found for entity [" + entity.getPersistedName() + "]");
-                }
-                if (sqlTableMappingMap.containsKey(tableNameLowerCase)) {
-                    SqlTableMapping existingSqlTableMapping = sqlTableMappingMap.get(tableNameLowerCase);
+                if (sqlTableMappingByTableName.containsKey(tableNameLowerCase)) {
+                    SqlTableMapping existingSqlTableMapping = sqlTableMappingByTableName.get(tableNameLowerCase);
                     if (existingSqlTableMapping.type() == SqlTableMapping.TableType.JOIN) {
                         // Remove ad-hoc join table created from one of the entities relation mappings and not an actual entity
-                        sqlTableMappingMap.remove(tableNameLowerCase);
+                        sqlTableMappingByTableName.remove(tableNameLowerCase);
                     } else if (sqlTableMapping.type() == SqlTableMapping.TableType.JOIN) {
                         // Skip this table mapping ad-hoc join table created from one of the entities relation mappings and not an actual entity
                         continue;
                     }
                 }
-                sqlTableMappingMap.put(tableNameLowerCase, sqlTableMapping);
+                sqlTableMappingByTableName.put(tableNameLowerCase, sqlTableMapping);
             }
         }
 
-        for (Map.Entry<String, SqlTableMapping> sqlTableMappingEntry : sqlTableMappingMap.entrySet()) {
+        Map<String, SqlTableMetadata> dbSqlTableMetadataMap = getDbSqlTableMetadataList(connection, sqlTableMappingByTableName.keySet());
+        for (Map.Entry<String, SqlTableMapping> sqlTableMappingEntry : sqlTableMappingByTableName.entrySet()) {
             String tableNameLowerCase = sqlTableMappingEntry.getKey();
             SqlTableMapping sqlTableMapping = sqlTableMappingEntry.getValue();
-            SqlSchemaUtils.validateTable(sqlTableMapping, sqlTableMetadataMap.get(tableNameLowerCase), configuration.getDialect());
+            SqlTableMetadata dbSqlTableMetadata = dbSqlTableMetadataMap.get(tableNameLowerCase);
+            if (dbSqlTableMetadata == null) {
+                throw new SchemaValidationException("Schema validation failed. Expected table [" + sqlTableMapping.name() + "] not found");
+            }
+            SqlSchemaUtils.validateTable(sqlTableMapping, dbSqlTableMetadata, configuration.getDialect());
         }
     }
 
-    private static Map<String, SqlTableMetadata> getSqlTableMetadataList(Connection connection) throws SQLException {
+    private static Map<String, SqlTableMetadata> getDbSqlTableMetadataList(Connection connection,
+                                                                           Set<String> wantedTableNames) throws SQLException {
         Map<String, SqlTableMetadata> sqlTableMetadataList = CollectionUtils.newHashMap(50);
         String catalog = connection.getCatalog();
         String schema = connection.getSchema();
@@ -305,11 +300,16 @@ public class SchemaGenerator {
         // Get tables
         ResultSet tablesResultSet = metaData.getTables(catalog, schema, MATCH_ALL, tableTypes);
         while (tablesResultSet.next()) {
+            String tableName = tablesResultSet.getString(SqlSchemaUtils.TABLE_NAME_COLUMN);
+            String tableNameLowerCase = tableName.toLowerCase();
+            if (!wantedTableNames.contains(tableNameLowerCase)) {
+                // Skip table that does not have entity mapped
+                continue;
+            }
             String tableCatalog = tablesResultSet.getString(SqlSchemaUtils.TABLE_CATALOG_COLUMN);
             String tableSchema = tablesResultSet.getString(SqlSchemaUtils.TABLE_SCHEMA_COLUMN);
-            String tableName = tablesResultSet.getString(SqlSchemaUtils.TABLE_NAME_COLUMN);
             SqlTableMetadata sqlTableMetadata = new SqlTableMetadata(tableCatalog, tableSchema, tableName);
-            sqlTableMetadataList.put(sqlTableMetadata.getName().toLowerCase(), sqlTableMetadata);
+            sqlTableMetadataList.put(tableNameLowerCase, sqlTableMetadata);
         }
         // Get columns
         populateSqlColumnMetadata(metaData, catalog, schema, sqlTableMetadataList);
@@ -322,9 +322,13 @@ public class SchemaGenerator {
         SqlTableMetadata sqlTableMetadata = null;
         String currentTableName = StringUtils.EMPTY_STRING;
         while (columnsResultSet.next()) {
-            String tableName = columnsResultSet.getString(SqlSchemaUtils.TABLE_NAME_COLUMN);
-            if (!currentTableName.equalsIgnoreCase(tableName)) {
-                currentTableName = tableName.toLowerCase();
+            String tableName = columnsResultSet.getString(SqlSchemaUtils.TABLE_NAME_COLUMN).toLowerCase();
+            if (!sqlTableMetadataMap.containsKey(tableName)) {
+                // No need to populate columns for the table which does not have mapped entity
+                continue;
+            }
+            if (!currentTableName.equals(tableName)) {
+                currentTableName = tableName;
                 sqlTableMetadata = sqlTableMetadataMap.get(currentTableName);
             }
             if (sqlTableMetadata != null) {
