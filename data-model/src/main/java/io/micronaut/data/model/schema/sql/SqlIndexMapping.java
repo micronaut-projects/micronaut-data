@@ -17,6 +17,9 @@ package io.micronaut.data.model.schema.sql;
 
 import io.micronaut.core.annotation.Internal;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 /**
  * The SQL table index mapping.
  *
@@ -26,4 +29,30 @@ import io.micronaut.core.annotation.Internal;
  */
 @Internal
 public record SqlIndexMapping(String name, boolean unique, String[] columns) {
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (object == null || getClass() != object.getClass()) {
+            return false;
+        }
+        SqlIndexMapping that = (SqlIndexMapping) object;
+        return unique == that.unique && Objects.equals(name, that.name) && Arrays.equals(columns, that.columns);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, unique, Arrays.hashCode(columns));
+    }
+
+    @Override
+    public String toString() {
+        return "SqlIndexMapping{" +
+            "name='" + name + '\'' +
+            ", unique=" + unique +
+            ", columns=" + Arrays.toString(columns) +
+            '}';
+    }
 }
