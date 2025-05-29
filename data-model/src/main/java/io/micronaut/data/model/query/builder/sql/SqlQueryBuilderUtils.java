@@ -427,7 +427,7 @@ final class SqlQueryBuilderUtils {
      */
     @NonNull
     static List<String> resolveJoinTableJoinColumns(AnnotationMetadata annotationMetadata, boolean associationOwner, PersistentEntity entity, NamingStrategy namingStrategy) {
-        List<String> joinColumns = SqlQueryBuilderUtils.getJoinedColumns(annotationMetadata, associationOwner, "name");
+        List<String> joinColumns = getJoinedColumns(annotationMetadata, associationOwner, "name");
         if (!joinColumns.isEmpty()) {
             return joinColumns;
         }
@@ -474,7 +474,7 @@ final class SqlQueryBuilderUtils {
             .flatMap(SqlQueryBuilderUtils::flatMapEmbedded)
             .filter(p -> {
                 if (p instanceof Association a) {
-                    return SqlQueryBuilder2.isForeignKeyWithJoinTable(a);
+                    return isForeignKeyWithJoinTable(a);
                 }
                 return false;
             }).map(p -> (Association) p).toList();

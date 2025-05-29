@@ -11,6 +11,12 @@ import java.net.MalformedURLException;
 @MappedEntity("basic_types_schema_test")
 public final class BasicTypesSchemaTest extends BasicTypes {
 
+    /**
+     * Constructs a new instance of BasicTypesSchemaTest.
+     *
+     * @throws MalformedURLException if the URL in the superclass is malformed
+     */
     public BasicTypesSchemaTest() throws MalformedURLException {
+        super();
     }
 }
