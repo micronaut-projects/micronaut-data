@@ -52,7 +52,7 @@ class H2EagerContextSpec extends Specification implements H2TestPropertyProvider
 
         @PostConstruct
         void init(SchemaGenerator schemaGenerator, BeanLocator beanLocator) {
-            schemaGenerator.createSchema(beanLocator)
+            schemaGenerator.createOrValidateSchema(beanLocator)
 
             personRepository.save(new Person(name: 'a'))
             personRepository.save(new Person(name: 'c'))
