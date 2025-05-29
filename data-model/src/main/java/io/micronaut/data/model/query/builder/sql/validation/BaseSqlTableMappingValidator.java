@@ -101,7 +101,7 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
      * fails to match the column types. Implementations should provide custom logic to handle dialect-specific
      * type mappings or exceptions.
      * <p>
-     * The default implementation always returns true, indicating that the column types match. Subclasses
+     * The default implementation always returns false, indicating that the column types are not matching. Subclasses
      * can override this method to provide more specific type matching logic for their supported dialect.
      *
      * @param columnMapping  the SQL column mapping from {@link PersistentEntity} field
