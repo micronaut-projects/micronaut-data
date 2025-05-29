@@ -24,6 +24,9 @@ import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Index;
+import io.micronaut.data.annotation.Indexes;
+import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.sql.SqlMembers;
@@ -37,6 +40,7 @@ import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping;
 import io.micronaut.data.model.schema.sql.SqlDbType;
+import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
 
@@ -51,7 +55,9 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
+import static io.micronaut.core.annotation.AnnotationMetadata.VALUE_MEMBER;
 import static io.micronaut.data.annotation.GeneratedValue.Type.AUTO;
 
 /**
@@ -94,6 +100,7 @@ public final class SqlSchemaUtils {
 
         final String tableName = entity.getPersistedName();
         String schema = SqlQueryBuilderUtils.getSchemaName(entity);
+        boolean escape = entity.getAnnotationMetadata().booleanValue(MappedEntity.class, "escape").orElse(true);
 
         List<SqlTableMapping> tables = new ArrayList<>();
 
@@ -156,26 +163,15 @@ public final class SqlSchemaUtils {
                         columns.add(getColumnDefinition(pp.getProperty(), columnName, false, true, true));
                     }
                 }
-                SqlTableMapping joinTable = new SqlTableMapping(joinTableSchema, joinTableName, SqlTableMapping.TableType.JOIN, null, columns);
+                SqlTableMapping joinTable = new SqlTableMapping(joinTableSchema, joinTableName, escape, SqlTableMapping.TableType.JOIN, null, columns);
                 tables.add(joinTable);
             }
         }
 
-        List<SqlColumnMapping> primaryKeyColumns = new ArrayList<>();
-        List<SqlColumnMapping> columns = new ArrayList<>();
-
         List<PersistentProperty> identities = entity.getIdentityProperties();
-        for (PersistentProperty identity : identities) {
-            List<PersistentPropertyPath> ids = new ArrayList<>();
-            PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property)
-                -> ids.add(PersistentPropertyPath.of(associations, property, "")));
-            for (PersistentPropertyPath pp : ids) {
-                String columnName = namingStrategy.mappedName(pp.getAssociations(), pp.getProperty());
-                SqlColumnMapping column = getColumnDefinition(pp.getProperty(), columnName, true,
-                    isRequired(pp.getAssociations(), pp.getProperty()), !SqlQueryBuilderUtils.isNotForeign(pp.getAssociations()));
-                primaryKeyColumns.add(column);
-            }
-        }
+        List<SqlColumnMapping> primaryKeyColumns = getPrimaryKeyColumns(identities, namingStrategy);
+
+        List<SqlColumnMapping> columns = new ArrayList<>();
 
         PersistentProperty version = entity.getVersion();
         if (version != null && !version.isGenerated()) {
@@ -195,18 +191,11 @@ public final class SqlSchemaUtils {
             PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), prop, addColumn);
         }
 
-        List<SqlSequenceMapping> sequences = new ArrayList<>();
-        for (PersistentProperty identity : identities) {
-            if (identity.isGenerated()) {
-                GeneratedValue.Type idGeneratorType = identity.getAnnotationMetadata()
-                    .enumValue(GeneratedValue.class, GeneratedValue.Type.class)
-                    .orElse(null);
-                final String generatedDefinition = identity.getAnnotationMetadata().stringValue(GeneratedValue.class, "definition").orElse(null);
-                sequences.add(new SqlSequenceMapping(generatedDefinition, identity.getDataType(), Optional.ofNullable(idGeneratorType)));
-            }
-        }
+        List<SqlSequenceMapping> sequences = getSqlSequenceMappings(identities);
+        List<SqlIndexMapping> indexes = getSqlIndexMappings(entity);
 
-        SqlTableMapping table = new SqlTableMapping(schema, tableName, SqlTableMapping.TableType.MAIN, primaryKeyColumns, columns, sequences);
+        SqlTableMapping table = new SqlTableMapping(schema, tableName, escape, SqlTableMapping.TableType.MAIN, primaryKeyColumns, columns, sequences,
+            indexes);
         tables.add(table);
         return tables;
     }
@@ -259,7 +248,7 @@ public final class SqlSchemaUtils {
                 LONG_ARRAY, FLOAT_ARRAY, DOUBLE_ARRAY, BOOLEAN_ARRAY -> new SqlColumnMapping(column, dataType, dbType, primaryKey,
                 null, required, autoGenerated, generatedValueType, definition);
             case CHARACTER -> new SqlColumnMapping(column, dataType, dbType, primaryKey, 1, required, autoGenerated, generatedValueType, definition);
-            case JSON -> new SqlColumnMapping(column, dataType, dbType, primaryKey, null, precision, scale, required, autoGenerated, generatedValueType,
+            case JSON -> new SqlColumnMapping(column, dataType, dbType, primaryKey, null, null, null, required, autoGenerated, generatedValueType,
                 definition, prop.getJsonDataType());
             case INTEGER -> {
                 if (optPrecision.isPresent()) {
@@ -349,15 +338,61 @@ public final class SqlSchemaUtils {
             if (!association.isRequired()) {
                 return false;
             }
-            if (association.getKind() != Relation.Kind.EMBEDDED) {
-                if (foreignAssociation == null) {
-                    foreignAssociation = association;
-                }
+            if (association.getKind() != Relation.Kind.EMBEDDED && foreignAssociation == null) {
+                foreignAssociation = association;
             }
         }
         if (foreignAssociation != null) {
             return foreignAssociation.isRequired();
         }
         return property.isRequired();
+    }
+
+    private static List<SqlSequenceMapping> getSqlSequenceMappings(List<PersistentProperty> identities) {
+        List<SqlSequenceMapping> sequences = new ArrayList<>();
+        for (PersistentProperty identity : identities) {
+            if (identity.isGenerated()) {
+                GeneratedValue.Type idGeneratorType = identity.getAnnotationMetadata()
+                    .enumValue(GeneratedValue.class, GeneratedValue.Type.class)
+                    .orElse(null);
+                final String generatedDefinition = identity.getAnnotationMetadata().stringValue(GeneratedValue.class, "definition").orElse(null);
+                sequences.add(new SqlSequenceMapping(generatedDefinition, identity.getDataType(), Optional.ofNullable(idGeneratorType)));
+            }
+        }
+        return sequences;
+    }
+
+    private static List<SqlIndexMapping> getSqlIndexMappings(PersistentEntity entity) {
+        List<SqlIndexMapping> indexMappings = new ArrayList<>();
+        final Optional<List<AnnotationValue<Index>>> indexes = entity
+            .findAnnotation(Indexes.class)
+            .map(idxes -> idxes.getAnnotations(VALUE_MEMBER, Index.class));
+
+        Stream.of(indexes)
+            .flatMap(Optional::stream)
+            .flatMap(Collection::stream)
+            .forEach(index -> {
+                String name = index.stringValue("name").orElse("");
+                boolean unique = index.booleanValue("unique").orElse(false);
+                String[] columns = index.stringValues("columns");
+                indexMappings.add(new SqlIndexMapping(name, unique, columns));
+            });
+        return indexMappings;
+    }
+
+    private static List<SqlColumnMapping> getPrimaryKeyColumns(List<PersistentProperty> identities, NamingStrategy namingStrategy) {
+        List<SqlColumnMapping> primaryKeyColumns = new ArrayList<>(identities.size());
+        for (PersistentProperty identity : identities) {
+            List<PersistentPropertyPath> ids = new ArrayList<>();
+            PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property)
+                -> ids.add(PersistentPropertyPath.of(associations, property, "")));
+            for (PersistentPropertyPath pp : ids) {
+                String columnName = namingStrategy.mappedName(pp.getAssociations(), pp.getProperty());
+                SqlColumnMapping column = getColumnDefinition(pp.getProperty(), columnName, true,
+                    isRequired(pp.getAssociations(), pp.getProperty()), !SqlQueryBuilderUtils.isNotForeign(pp.getAssociations()));
+                primaryKeyColumns.add(column);
+            }
+        }
+        return primaryKeyColumns;
     }
 }

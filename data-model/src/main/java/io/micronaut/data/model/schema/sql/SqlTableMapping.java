@@ -24,10 +24,12 @@ import java.util.List;
  *
  * @param schema The schema name, not required
  * @param name The table name
+ * @param escape An indicator telling whether table and column names require escaping
  * @param type The table mapping type
  * @param primaryKeyColumns The list of primary key columns, can be null or empty
  * @param columns The list of columns. See {@link SqlColumnMapping}
  * @param sequences The list of table sequences, can be null or empty. See {@link SqlSequenceMapping}
+ * @param indexes The list of table indexes, can be null or empty. See {@link SqlIndexMapping}
  *
  * @author radovanradic
  * @since 4.13.0
@@ -36,13 +38,19 @@ import java.util.List;
 public record SqlTableMapping(
     String schema,
     String name,
+    boolean escape,
     TableType type,
     List<SqlColumnMapping> primaryKeyColumns,
     List<SqlColumnMapping> columns,
-    List<SqlSequenceMapping> sequences
+    List<SqlSequenceMapping> sequences,
+    List<SqlIndexMapping> indexes
 ) {
-    public SqlTableMapping(String schema, String name, TableType type, List<SqlColumnMapping> primaryKeyColumns, List<SqlColumnMapping> columns) {
-        this(schema, name, type, primaryKeyColumns, columns, null);
+    public SqlTableMapping(String schema, String name, boolean escape, TableType type, List<SqlColumnMapping> primaryKeyColumns, List<SqlColumnMapping> columns) {
+        this(schema, name, escape, type, primaryKeyColumns, columns, null, null);
+    }
+
+    public SqlTableMapping(String schema, String name, boolean escape, TableType type, List<SqlColumnMapping> primaryKeyColumns, List<SqlColumnMapping> columns, List<SqlSequenceMapping> sequences) {
+        this(schema, name, escape, type, primaryKeyColumns, columns, sequences, null);
     }
 
     /**

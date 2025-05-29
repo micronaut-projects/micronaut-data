@@ -150,7 +150,7 @@ public class SchemaGenerator {
                                 }
                                 schemaHandler.useSchema(connection, dialect, schemaName);
                                 if (schemaGenerate == SchemaGenerate.VALIDATE) {
-                                    validate(connection, configuration, entities);
+                                    validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap);
                                 } else {
                                     generate(connection, configuration, propertyPlaceholderResolver, entities);
                                 }
@@ -163,7 +163,7 @@ public class SchemaGenerator {
                                 schemaHandler.useSchema(connection, dialect, configuration.getSchemaGenerateName());
                             }
                             if (schemaGenerate == SchemaGenerate.VALIDATE) {
-                                validate(connection, configuration, entities);
+                                validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap);
                             } else {
                                 generate(connection, configuration, propertyPlaceholderResolver, entities);
                             }
@@ -261,9 +261,10 @@ public class SchemaGenerator {
         }
     }
 
-    private void validate(Connection connection,
+    private static void validate(Connection connection,
                                  DataJdbcConfiguration configuration,
-                                 PersistentEntity[] entities) throws SQLException {
+                                 PersistentEntity[] entities,
+                                 Map<Dialect, SqlTableMappingValidator> dialectSqlTableMappingValidatorMap) throws SQLException {
         Dialect dialect = configuration.getDialect();
         SqlTableMappingValidator sqlTableMappingValidator = dialectSqlTableMappingValidatorMap.get(dialect);
         if (sqlTableMappingValidator == null) {

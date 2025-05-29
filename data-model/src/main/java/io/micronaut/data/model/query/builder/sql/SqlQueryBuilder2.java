@@ -27,8 +27,6 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.EntityRepresentation;
 import io.micronaut.data.annotation.GeneratedValue;
-import io.micronaut.data.annotation.Index;
-import io.micronaut.data.annotation.Indexes;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Repository;
@@ -53,6 +51,7 @@ import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping;
+import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
 import jakarta.persistence.criteria.Order;
@@ -393,25 +392,63 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
                 builder.append(");");
             }
             createStatements.add(builder.toString());
+            createSequenceStatements(table, createStatements);
+            createIndexStatements(table, tableName, escape, createStatements);
+        }
 
-            List<SqlSequenceMapping> sequences = table.sequences();
-            if (CollectionUtils.isNotEmpty(sequences)) {
-                for (SqlSequenceMapping sequence : sequences) {
-                    if (sequence.definition() != null) {
-                        createStatements.add(sequence.definition());
-                    } else {
-                        GeneratedValue.Type idGeneratorType = sequence.generatedValueType().orElseGet(() -> defaultSelectAutoStrategy(sequence.dataType(), dialect));
-                        boolean isSequence = idGeneratorType == GeneratedValue.Type.SEQUENCE;
-                        if (isSequence) {
-                            createStatements.add(createSequenceStmt(table.name()));
-                        }
-                    }
+        return createStatements.toArray(new String[0]);
+    }
+
+    private void createSequenceStatements(SqlTableMapping table, List<String> createStatements) {
+        List<SqlSequenceMapping> sequences = table.sequences();
+        if (CollectionUtils.isEmpty(sequences)) {
+            return;
+        }
+        for (SqlSequenceMapping sequence : sequences) {
+            if (sequence.definition() != null) {
+                createStatements.add(sequence.definition());
+            } else {
+                GeneratedValue.Type idGeneratorType = sequence.generatedValueType().orElseGet(() -> defaultSelectAutoStrategy(sequence.dataType(), dialect));
+                boolean isSequence = idGeneratorType == GeneratedValue.Type.SEQUENCE;
+                if (isSequence) {
+                    createStatements.add(createSequenceStmt(table.name()));
                 }
             }
         }
+    }
 
-        addIndexes(entity, getTableName(schema, mainTable.name(), escape), createStatements);
-        return createStatements.toArray(new String[0]);
+    private void createIndexStatements(SqlTableMapping table, String escapedTableName, boolean escape, List<String> createStatements) {
+        List<SqlIndexMapping> indexes = table.indexes();
+        if (CollectionUtils.isEmpty(indexes)) {
+            return;
+        }
+        for (SqlIndexMapping indexMapping : indexes) {
+            createStatements.add(createIndexStatement(table, indexMapping, escapedTableName, escape));
+        }
+    }
+
+    private @NonNull String createIndexStatement(SqlTableMapping tableMapping, SqlIndexMapping indexMapping, String escapedTableName, boolean escape) {
+        // Create index name without escaped table name and then escape if needed
+        String columnNames = String.join(", ", indexMapping.columns());
+        String indexName = StringUtils.isNotEmpty(indexMapping.name()) ? indexMapping.name() :
+            String.format(
+                "idx_%s%s", prepareNames(tableMapping.name()),
+                makeTransformedColumnList(columnNames));
+        if (escape) {
+            indexName = quote(indexName);
+        }
+
+        StringBuilder indexBuilder = new StringBuilder();
+        indexBuilder.append("CREATE ").append(indexMapping.unique() ? "UNIQUE " : "")
+            .append("INDEX ");
+        indexBuilder.append(indexName).append(" ON ").append(escapedTableName).append(" (").append(columnNames);
+
+        if (dialect == Dialect.ORACLE) {
+            indexBuilder.append(")");
+        } else {
+            indexBuilder.append(");");
+        }
+        return indexBuilder.toString();
     }
 
     @NonNull
@@ -432,59 +469,6 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
             }
         }
         return createSequenceStmt;
-    }
-
-    private void addIndexes(PersistentEntity entity, String tableName, List<String> createStatements) {
-        final List<String> indexes = createIndexes(entity, tableName);
-        if (CollectionUtils.isNotEmpty(indexes)) {
-            createStatements.addAll(indexes);
-        }
-    }
-
-    private List<String> createIndexes(PersistentEntity entity, String tableName) {
-        List<String> indexStatements = new ArrayList<>();
-
-        final Optional<List<AnnotationValue<Index>>> indexes = entity
-            .findAnnotation(Indexes.class)
-            .map(idxes -> idxes.getAnnotations(VALUE_MEMBER, Index.class));
-
-        Stream.of(indexes)
-            .flatMap(Optional::stream)
-            .flatMap(Collection::stream)
-            .forEach(index -> indexStatements.add(addIndex(entity, new IndexConfiguration(index, tableName, entity.getPersistedName()))));
-
-        return indexStatements;
-
-    }
-
-    private String addIndex(PersistentEntity entity, IndexConfiguration config) {
-        // Create index name without escaped table name and then escape if needed
-        String indexName = config.index.stringValue("name")
-            .orElse(String.format(
-                "idx_%s%s", prepareNames(config.unquotedTableName),
-                makeTransformedColumnList(provideColumnList(config))));
-        if (shouldEscape(entity)) {
-            indexName = quote(indexName);
-        }
-
-        StringBuilder indexBuilder = new StringBuilder();
-        indexBuilder.append("CREATE ").append(config.index.booleanValue("unique")
-                .map(isUnique -> isUnique ? "UNIQUE " : "")
-                .orElse(""))
-            .append("INDEX ");
-        indexBuilder.append(indexName).append(" ON ").append(Optional.ofNullable(config.tableName)
-            .orElseThrow(() -> new NullPointerException("Table name cannot be null"))).append(" (").append(provideColumnList(config));
-
-        if (dialect == Dialect.ORACLE) {
-            indexBuilder.append(")");
-        } else {
-            indexBuilder.append(");");
-        }
-        return indexBuilder.toString();
-    }
-
-    private String provideColumnList(IndexConfiguration config) {
-        return String.join(", ", (String[]) config.index.getValues().get("columns"));
     }
 
     private String makeTransformedColumnList(String columnList) {
@@ -1381,18 +1365,6 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
         Boolean escapeQueries;
         String positionalFormatter;
         String positionalNameFormatter;
-    }
-
-    private static class IndexConfiguration {
-        AnnotationValue<?> index;
-        String tableName;
-        String unquotedTableName;
-
-        public IndexConfiguration(AnnotationValue<?> index, String tableName, String unquotedTableName) {
-            this.index = index;
-            this.tableName = tableName;
-            this.unquotedTableName = unquotedTableName;
-        }
     }
 
     protected class SqlSelectionVisitor extends AbstractSqlLikeQueryBuilder2.SqlSelectionVisitor {
