@@ -11,13 +11,11 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
-@MicronautTest
 @H2DBProperties
 class OneToManyHierarchicalSpec extends Specification implements H2TestPropertyProvider {
 

@@ -7,7 +7,6 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.naming.NamingStrategies
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -16,8 +15,8 @@ import spock.lang.Specification
 import java.time.LocalDateTime
 import java.time.LocalTime
 
-@MicronautTest
 class H2DtoSpec extends Specification implements H2TestPropertyProvider {
+
     @AutoCleanup
     @Shared
     ApplicationContext applicationContext = ApplicationContext.run(getProperties())

@@ -16,7 +16,6 @@ import io.micronaut.data.repository.GenericRepository
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.tck.entities.Order
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
@@ -25,7 +24,6 @@ import jakarta.inject.Inject
 
 import javax.sql.DataSource
 
-@MicronautTest
 @H2DBProperties
 class EmbeddedAssociationJoinSpec extends Specification implements H2TestPropertyProvider {
     @AutoCleanup

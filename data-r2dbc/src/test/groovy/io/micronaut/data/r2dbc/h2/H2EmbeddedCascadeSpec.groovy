@@ -1,6 +1,5 @@
 package io.micronaut.data.r2dbc.h2
 
-import io.micronaut.context.ApplicationContext
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.data.annotation.Embeddable
 import io.micronaut.data.annotation.Join
@@ -26,13 +25,10 @@ import jakarta.persistence.OneToMany
 
 @MicronautTest(transactional = false)
 class H2EmbeddedCascadeSpec extends Specification implements H2TestPropertyProvider {
-    @AutoCleanup
-    @Shared
-    ApplicationContext applicationContext = ApplicationContext.run(getProperties())
 
     @Shared
     @Inject
-    TemplateRepository templateRepository = applicationContext.getBean(TemplateRepository)
+    TemplateRepository templateRepository
 
     void "test embedded cascade"() {
         when:

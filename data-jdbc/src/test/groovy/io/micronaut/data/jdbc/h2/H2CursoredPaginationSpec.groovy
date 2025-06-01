@@ -15,32 +15,23 @@
  */
 package io.micronaut.data.jdbc.h2
 
+import groovy.transform.Memoized
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.tests.AbstractCursoredPageSpec
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import jakarta.inject.Inject
-import spock.lang.Shared
 
-@MicronautTest
-@H2DBProperties
-class H2CursoredPaginationSpec extends AbstractCursoredPageSpec {
-    @Inject
-    @Shared
-    H2PersonRepository pr
+class H2CursoredPaginationSpec extends AbstractCursoredPageSpec implements H2TestPropertyProvider {
 
-    @Inject
-    @Shared
-    H2BookRepository br
-
+    @Memoized
     @Override
     PersonRepository getPersonRepository() {
-        return pr
+        return context.getBean(H2PersonRepository)
     }
 
+    @Memoized
     @Override
     BookRepository getBookRepository() {
-        return br
+        return context.getBean(H2BookRepository)
     }
 
 }

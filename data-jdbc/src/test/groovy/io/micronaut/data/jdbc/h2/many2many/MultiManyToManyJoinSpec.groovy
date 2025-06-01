@@ -10,14 +10,12 @@ import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
 import jakarta.inject.Inject
 
-@MicronautTest
 @H2DBProperties
 class MultiManyToManyJoinSpec extends Specification implements H2TestPropertyProvider {
     @AutoCleanup
