@@ -6,7 +6,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Version;
 
-@MappedEntity
+@MappedEntity("${entity.prefix}user")
 public record User(
         @Id @GeneratedValue
         Long id,

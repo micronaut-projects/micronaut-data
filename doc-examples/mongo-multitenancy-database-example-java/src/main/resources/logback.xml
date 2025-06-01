@@ -10,7 +10,7 @@
         <appender-ref ref="STDOUT" />
     </root>
 
-    <logger name="io.micronaut.data.query" level="TRACE" />
+<!--    <logger name="io.micronaut.data.query" level="TRACE" />-->
     <logger name="io.micronaut.http.client" level="TRACE"/>
 
 </configuration>

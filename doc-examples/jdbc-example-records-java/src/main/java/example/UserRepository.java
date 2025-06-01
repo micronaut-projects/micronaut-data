@@ -8,7 +8,7 @@ import io.micronaut.data.repository.CrudRepository;
 
 import java.util.Optional;
 
-@JdbcRepository(dialect = Dialect.H2)
+@JdbcRepository(dialect = Dialect.ORACLE)
 public interface UserRepository extends CrudRepository<User, Long> {
 
     @Join("address")
@@ -17,4 +17,6 @@ public interface UserRepository extends CrudRepository<User, Long> {
     Optional<User> findById(@NonNull Long id);
 
     User save(String name, Address address);
+
+    Long countById(Long id);
 }
