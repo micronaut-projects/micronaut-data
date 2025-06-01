@@ -26,6 +26,7 @@ import javax.sql.DataSource
 
 @H2DBProperties
 class EmbeddedAssociationJoinSpec extends Specification implements H2TestPropertyProvider {
+
     @AutoCleanup
     @Shared
     ApplicationContext applicationContext = ApplicationContext.run(getProperties())
@@ -45,6 +46,11 @@ class EmbeddedAssociationJoinSpec extends Specification implements H2TestPropert
     @Shared
     @Inject
     MyMainEntityRepository myMainEntityRepository = applicationContext.getBean(MyMainEntityRepository)
+
+    @Override
+    List<String> packages() {
+        return Arrays.asList("io.micronaut.data.jdbc.h2.embeddedAssociation")
+    }
 
     void setup() {
         def dataSource = DelegatingDataSource.unwrapDataSource(applicationContext.getBean(DataSource))
@@ -286,6 +292,7 @@ class MyMainEntity {
     Long id
 
     @GeneratedValue
+    @MappedProperty(definition = "text")
     String example
 
     String value
@@ -297,6 +304,7 @@ class MyMainEntity {
 @Embeddable
 class MyPart {
     @GeneratedValue
+    @MappedProperty(definition = "text")
     String text
 }
 
