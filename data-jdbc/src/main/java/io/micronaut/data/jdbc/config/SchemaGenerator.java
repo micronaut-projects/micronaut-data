@@ -234,25 +234,21 @@ public class SchemaGenerator {
                         }
                     }
                 case CREATE:
-                    for (PersistentEntity entity : entities) {
-
-                        String[] sql = builder.buildCreateTableStatements(entity);
-                        for (String stmt : sql) {
-                            stmt = resolveSql(propertyPlaceholderResolver, stmt);
-                            if (DataSettings.QUERY_LOG.isDebugEnabled()) {
-                                DataSettings.QUERY_LOG.debug("Executing CREATE statement: \n{}", stmt);
+                    String[] sql = builder.buildCreateTableStatements(entities);
+                    for (String stmt : sql) {
+                        stmt = resolveSql(propertyPlaceholderResolver, stmt);
+                        if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                            DataSettings.QUERY_LOG.debug("Executing CREATE statement: \n{}", stmt);
+                        }
+                        try {
+                            try (PreparedStatement ps = connection.prepareStatement(stmt)) {
+                                ps.executeUpdate();
                             }
-                            try {
-                                try (PreparedStatement ps = connection.prepareStatement(stmt)) {
-                                    ps.executeUpdate();
-                                }
-                            } catch (SQLException e) {
-                                if (DataSettings.QUERY_LOG.isWarnEnabled()) {
-                                    DataSettings.QUERY_LOG.warn("CREATE Statement Unsuccessful: " + e.getMessage());
-                                }
+                        } catch (SQLException e) {
+                            if (DataSettings.QUERY_LOG.isWarnEnabled()) {
+                                DataSettings.QUERY_LOG.warn("CREATE Statement Unsuccessful: " + e.getMessage());
                             }
                         }
-
                     }
                     break;
                 default:

@@ -122,9 +122,7 @@ public class R2dbcSchemaGenerator {
     }
 
     private Mono<Void> generate(Connection connection, SchemaGenerate schemaGenerate, PersistentEntity[] entities, SqlQueryBuilder2 builder) {
-        List<String> createStatements = Arrays.stream(entities)
-                .flatMap(entity -> Arrays.stream(builder.buildCreateTableStatements(entity)))
-                .toList();
+        List<String> createStatements = Arrays.asList(builder.buildCreateTableStatements(entities));
         Flux<Void> createTablesFlow = Flux.fromIterable(createStatements)
                 .concatMap(sql -> {
                     if (DataSettings.QUERY_LOG.isDebugEnabled()) {
