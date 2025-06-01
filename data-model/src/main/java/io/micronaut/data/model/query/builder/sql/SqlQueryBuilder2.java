@@ -707,7 +707,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
                         } else {
                             column += " NOT NULL";
                         }
-                    } else {
+                    } else if (prop.getDataType().isNumeric()) {
                         column += " AUTO_INCREMENT";
                     }
             }
