@@ -324,7 +324,6 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
         }
 
         for (SqlTableMapping table : tables) {
-
            addTableCreateStatements(createStatements, table, schema, escape);
         }
 
@@ -434,7 +433,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
             columns.add(column);
         }
 
-        String tableName = getTableName(schema, table.name(), escape);
+        String tableName = getObjectName(schema, table.name(), escape);
         StringBuilder builder = new StringBuilder("CREATE TABLE ").append(tableName).append(" (");
         builder.append(String.join(",", columns));
         if (generatePkAfterColumns) {
@@ -446,11 +445,11 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
             builder.append(");");
         }
         addToCollectionIfNotContains(createStatements, builder.toString());
-        createSequenceStatements(table, createStatements);
+        createSequenceStatements(table, escape, createStatements);
         createIndexStatements(table, tableName, escape, createStatements);
     }
 
-    private void createSequenceStatements(SqlTableMapping table, List<String> createStatements) {
+    private void createSequenceStatements(SqlTableMapping table, boolean escape, List<String> createStatements) {
         List<SqlSequenceMapping> sequences = table.sequences();
         if (CollectionUtils.isEmpty(sequences)) {
             return;
@@ -462,7 +461,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
                 GeneratedValue.Type idGeneratorType = sequence.generatedValueType().orElseGet(() -> defaultSelectAutoStrategy(sequence.dataType(), dialect));
                 boolean isSequence = idGeneratorType == GeneratedValue.Type.SEQUENCE;
                 if (isSequence) {
-                    addToCollectionIfNotContains(createStatements, createSequenceStmt(table.name()));
+                    addToCollectionIfNotContains(createStatements, createSequenceStmt(table.schema(), table.name(), sequence.definedName(), escape));
                 }
             }
         }
@@ -504,8 +503,8 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
     }
 
     @NonNull
-    private String createSequenceStmt(String tableName) {
-        final String sequenceName = quote(tableName + SqlQueryBuilderUtils.SEQ_SUFFIX);
+    private String createSequenceStmt(@Nullable String schema, String tableName, String definedName, boolean escape) {
+        final String sequenceName = getObjectName(schema, StringUtils.isNotEmpty(definedName) ? definedName : tableName + SqlQueryBuilderUtils.SEQ_SUFFIX, escape);
         final boolean isSqlServer = dialect == Dialect.SQL_SERVER;
         String createSequenceStmt = "CREATE SEQUENCE " + sequenceName;
         if (isSqlServer) {
@@ -663,6 +662,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
 
         boolean escape = shouldEscape(entity);
         final String unescapedTableName = getUnescapedTableName(entity);
+        final String unescapedSchema = SqlQueryBuilderUtils.getSchemaName(entity);
 
         String builder;
         List<QueryParameterBinding> parameterBindings = new ArrayList<>();
@@ -830,7 +830,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
                     }
 
                     if (isSequence) {
-                        values.add(getSequenceStatement(unescapedTableName, property));
+                        values.add(getSequenceStatement(unescapedSchema, unescapedTableName, property));
                     } else {
                         addWriteExpression(values, property);
 
@@ -899,14 +899,13 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
         return path.toArray(new String[0]);
     }
 
-    private String getSequenceStatement(String unescapedTableName, PersistentProperty property) {
+    private String getSequenceStatement(String unescapedSchemaName, String unescapedTableName, PersistentProperty property) {
         final String sequenceName = resolveSequenceName(property, unescapedTableName);
         return switch (dialect) {
-            case ORACLE -> quote(sequenceName) + ".nextval";
-            case POSTGRES -> "nextval('" + sequenceName + "')";
-            case SQL_SERVER -> "NEXT VALUE FOR " + quote(sequenceName);
-            default ->
-                throw new IllegalStateException("Cannot generate a sequence for dialect: " + dialect);
+            case ORACLE -> (StringUtils.isEmpty(unescapedSchemaName) ? "" : quote(unescapedSchemaName) + DOT) + quote(sequenceName) + ".nextval";
+            case POSTGRES -> "nextval('" + (StringUtils.isEmpty(unescapedSchemaName) ? "" : unescapedSchemaName + DOT) + sequenceName + "')";
+            case SQL_SERVER -> "NEXT VALUE FOR " + (StringUtils.isEmpty(unescapedSchemaName) ? "" : quote(unescapedSchemaName) + DOT) + quote(sequenceName);
+            default -> throw new IllegalStateException("Cannot generate a sequence for dialect: " + dialect);
         };
     }
 
@@ -932,18 +931,18 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
         boolean escape = shouldEscape(entity);
         String tableName = entity.getPersistedName();
         String schema = SqlQueryBuilderUtils.getSchemaName(entity);
-        return getTableName(schema, tableName, escape);
+        return getObjectName(schema, tableName, escape);
     }
 
-    private String getTableName(String schema, String tableName, boolean escape) {
+    private String getObjectName(String schema, String objectName, boolean escape) {
         if (StringUtils.isNotEmpty(schema)) {
             if (escape) {
-                return quote(schema) + '.' + quote(tableName);
+                return quote(schema) + '.' + quote(objectName);
             } else {
-                return schema + '.' + tableName;
+                return schema + '.' + objectName;
             }
         } else {
-            return escape ? quote(tableName) : tableName;
+            return escape ? quote(objectName) : objectName;
         }
     }
 

@@ -356,7 +356,8 @@ public final class SqlSchemaUtils {
                     .enumValue(GeneratedValue.class, GeneratedValue.Type.class)
                     .orElse(null);
                 final String generatedDefinition = identity.getAnnotationMetadata().stringValue(GeneratedValue.class, "definition").orElse(null);
-                sequences.add(new SqlSequenceMapping(generatedDefinition, identity.getDataType(), Optional.ofNullable(idGeneratorType)));
+                final String definedSequenceName = identity.getAnnotationMetadata().stringValue(GeneratedValue.class, "ref").orElse(null);
+                sequences.add(new SqlSequenceMapping(generatedDefinition, definedSequenceName, identity.getDataType(), Optional.ofNullable(idGeneratorType)));
             }
         }
         return sequences;
