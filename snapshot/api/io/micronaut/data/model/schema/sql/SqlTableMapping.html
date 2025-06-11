@@ -81,14 +81,16 @@ loadScripts(document, 'script');</script>
 <dt>Record Components:</dt>
 <dd><code><span id="param-schema">schema</span></code> - The schema name, not required</dd>
 <dd><code><span id="param-name">name</span></code> - The table name</dd>
+<dd><code><span id="param-escape">escape</span></code> - An indicator telling whether table and column names require escaping</dd>
 <dd><code><span id="param-type">type</span></code> - The table mapping type</dd>
 <dd><code><span id="param-primaryKeyColumns">primaryKeyColumns</span></code> - The list of primary key columns, can be null or empty</dd>
 <dd><code><span id="param-columns">columns</span></code> - The list of columns. See <a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql"><code>SqlColumnMapping</code></a></dd>
 <dd><code><span id="param-sequences">sequences</span></code> - The list of table sequences, can be null or empty. See <a href="SqlSequenceMapping.html" title="class in io.micronaut.data.model.schema.sql"><code>SqlSequenceMapping</code></a></dd>
+<dd><code><span id="param-indexes">indexes</span></code> - The list of table indexes, can be null or empty. See <a href="SqlIndexMapping.html" title="class in io.micronaut.data.model.schema.sql"><code>SqlIndexMapping</code></a></dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="annotations">@Internal
-</span><span class="modifiers">public record </span><span class="element-name type-name-label">SqlTableMapping</span>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schema, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name, <a href="SqlTableMapping.TableType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlTableMapping.TableType</a>&nbsp;type, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a>&gt;&nbsp;primaryKeyColumns, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a>&gt;&nbsp;columns, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlSequenceMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlSequenceMapping</a>&gt;&nbsp;sequences)
+</span><span class="modifiers">public record </span><span class="element-name type-name-label">SqlTableMapping</span>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schema, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name, boolean&nbsp;escape, <a href="SqlTableMapping.TableType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlTableMapping.TableType</a>&nbsp;type, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a>&gt;&nbsp;primaryKeyColumns, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a>&gt;&nbsp;columns, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlSequenceMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlSequenceMapping</a>&gt;&nbsp;sequences, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlIndexMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlIndexMapping</a>&gt;&nbsp;indexes)
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Record.html" title="class or interface in java.lang" class="external-link">Record</a></span></div>
 <div class="block">The SQL table mapping information extracted from the <a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model"><code>PersistentEntity</code></a>.</div>
 <dl class="notes">
@@ -125,19 +127,30 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.String,java.lang.String,io.micronaut.data.model.schema.sql.SqlTableMapping.TableType,java.util.List,java.util.List)" class="member-name-link">SqlTableMapping</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schema,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.String,java.lang.String,boolean,io.micronaut.data.model.schema.sql.SqlTableMapping.TableType,java.util.List,java.util.List)" class="member-name-link">SqlTableMapping</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schema,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+ boolean&nbsp;escape,
  <a href="SqlTableMapping.TableType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlTableMapping.TableType</a>&nbsp;type,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a>&gt;&nbsp;primaryKeyColumns,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a>&gt;&nbsp;columns)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(java.lang.String,java.lang.String,io.micronaut.data.model.schema.sql.SqlTableMapping.TableType,java.util.List,java.util.List,java.util.List)" class="member-name-link">SqlTableMapping</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schema,
+<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(java.lang.String,java.lang.String,boolean,io.micronaut.data.model.schema.sql.SqlTableMapping.TableType,java.util.List,java.util.List,java.util.List)" class="member-name-link">SqlTableMapping</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schema,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+ boolean&nbsp;escape,
  <a href="SqlTableMapping.TableType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlTableMapping.TableType</a>&nbsp;type,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a>&gt;&nbsp;primaryKeyColumns,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a>&gt;&nbsp;columns,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlSequenceMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlSequenceMapping</a>&gt;&nbsp;sequences)</code></div>
-<div class="col-last odd-row-color">
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.String,java.lang.String,boolean,io.micronaut.data.model.schema.sql.SqlTableMapping.TableType,java.util.List,java.util.List,java.util.List,java.util.List)" class="member-name-link">SqlTableMapping</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schema,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+ boolean&nbsp;escape,
+ <a href="SqlTableMapping.TableType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlTableMapping.TableType</a>&nbsp;type,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a>&gt;&nbsp;primaryKeyColumns,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a>&gt;&nbsp;columns,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlSequenceMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlSequenceMapping</a>&gt;&nbsp;sequences,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlIndexMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlIndexMapping</a>&gt;&nbsp;indexes)</code></div>
+<div class="col-last even-row-color">
 <div class="block">Creates an instance of a <code>SqlTableMapping</code> record class.</div>
 </div>
 </div>
@@ -164,10 +177,20 @@ loadScripts(document, 'script');</script>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final int</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hashCode()" class="member-name-link">hashCode</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#escape()" class="member-name-link">escape</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Returns the value of the <a href="#param-escape"><code>escape</code></a> record component.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final int</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hashCode()" class="member-name-link">hashCode</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns a hash code value for this object.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlIndexMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlIndexMapping</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#indexes()" class="member-name-link">indexes</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Returns the value of the <a href="#param-indexes"><code>indexes</code></a> record component.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#name()" class="member-name-link">name</a>()</code></div>
@@ -217,33 +240,50 @@ loadScripts(document, 'script');</script>
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(java.lang.String,java.lang.String,io.micronaut.data.model.schema.sql.SqlTableMapping.TableType,java.util.List,java.util.List)">
+<section class="detail" id="&lt;init&gt;(java.lang.String,java.lang.String,boolean,io.micronaut.data.model.schema.sql.SqlTableMapping.TableType,java.util.List,java.util.List)">
 <h3>SqlTableMapping</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">SqlTableMapping</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schema,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+ boolean&nbsp;escape,
  <a href="SqlTableMapping.TableType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlTableMapping.TableType</a>&nbsp;type,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a>&gt;&nbsp;primaryKeyColumns,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a>&gt;&nbsp;columns)</span></div>
 </section>
 </li>
 <li>
-<section class="detail" id="&lt;init&gt;(java.lang.String,java.lang.String,io.micronaut.data.model.schema.sql.SqlTableMapping.TableType,java.util.List,java.util.List,java.util.List)">
+<section class="detail" id="&lt;init&gt;(java.lang.String,java.lang.String,boolean,io.micronaut.data.model.schema.sql.SqlTableMapping.TableType,java.util.List,java.util.List,java.util.List)">
 <h3>SqlTableMapping</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">SqlTableMapping</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schema,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+ boolean&nbsp;escape,
  <a href="SqlTableMapping.TableType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlTableMapping.TableType</a>&nbsp;type,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a>&gt;&nbsp;primaryKeyColumns,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a>&gt;&nbsp;columns,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlSequenceMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlSequenceMapping</a>&gt;&nbsp;sequences)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="&lt;init&gt;(java.lang.String,java.lang.String,boolean,io.micronaut.data.model.schema.sql.SqlTableMapping.TableType,java.util.List,java.util.List,java.util.List,java.util.List)">
+<h3>SqlTableMapping</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">SqlTableMapping</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schema,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+ boolean&nbsp;escape,
+ <a href="SqlTableMapping.TableType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlTableMapping.TableType</a>&nbsp;type,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a>&gt;&nbsp;primaryKeyColumns,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlColumnMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlColumnMapping</a>&gt;&nbsp;columns,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlSequenceMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlSequenceMapping</a>&gt;&nbsp;sequences,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlIndexMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlIndexMapping</a>&gt;&nbsp;indexes)</span></div>
 <div class="block">Creates an instance of a <code>SqlTableMapping</code> record class.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>schema</code> - the value for the <a href="#param-schema"><code>schema</code></a> record component</dd>
 <dd><code>name</code> - the value for the <a href="#param-name"><code>name</code></a> record component</dd>
+<dd><code>escape</code> - the value for the <a href="#param-escape"><code>escape</code></a> record component</dd>
 <dd><code>type</code> - the value for the <a href="#param-type"><code>type</code></a> record component</dd>
 <dd><code>primaryKeyColumns</code> - the value for the <a href="#param-primaryKeyColumns"><code>primaryKeyColumns</code></a> record component</dd>
 <dd><code>columns</code> - the value for the <a href="#param-columns"><code>columns</code></a> record component</dd>
 <dd><code>sequences</code> - the value for the <a href="#param-sequences"><code>sequences</code></a> record component</dd>
+<dd><code>indexes</code> - the value for the <a href="#param-indexes"><code>indexes</code></a> record component</dd>
 </dl>
 </section>
 </li>
@@ -285,7 +325,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="equals(java.lang.Object)">
 <h3>equals</h3>
 <div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">equals</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;o)</span></div>
-<div class="block">Indicates whether some other object is "equal to" this one. The objects are equal if the other object is of the same class and if all the record components are equal. All components in this record class are compared with <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Objects.html#equals(java.lang.Object,java.lang.Object)" title="class or interface in java.util" class="external-link"><code>Objects::equals(Object,Object)</code></a>.</div>
+<div class="block">Indicates whether some other object is "equal to" this one. The objects are equal if the other object is of the same class and if all the record components are equal. Reference components are compared with <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Objects.html#equals(java.lang.Object,java.lang.Object)" title="class or interface in java.util" class="external-link"><code>Objects::equals(Object,Object)</code></a>; primitive components are compared with '=='.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Record.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a></code>&nbsp;in class&nbsp;<code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Record.html" title="class or interface in java.lang" class="external-link">Record</a></code></dd>
@@ -315,6 +355,17 @@ loadScripts(document, 'script');</script>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the value of the <a href="#param-name"><code>name</code></a> record component</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="escape()">
+<h3>escape</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">escape</span>()</div>
+<div class="block">Returns the value of the <a href="#param-escape"><code>escape</code></a> record component.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>the value of the <a href="#param-escape"><code>escape</code></a> record component</dd>
 </dl>
 </section>
 </li>
@@ -359,6 +410,17 @@ loadScripts(document, 'script');</script>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the value of the <a href="#param-sequences"><code>sequences</code></a> record component</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="indexes()">
+<h3>indexes</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlIndexMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlIndexMapping</a>&gt;</span>&nbsp;<span class="element-name">indexes</span>()</div>
+<div class="block">Returns the value of the <a href="#param-indexes"><code>indexes</code></a> record component.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>the value of the <a href="#param-indexes"><code>indexes</code></a> record component</dd>
 </dl>
 </section>
 </li>
