@@ -26,7 +26,7 @@ import java.util.Objects;
 
 @MappedEntity
 @Index(columns = "field", unique = true)
-@Index(columns = "taxCode", unique = false)
+@Index(columns = "taxCode", name = "idx_shipment_tax")
 public class ShipmentWithIndexOnClass {
 
     @Creator
