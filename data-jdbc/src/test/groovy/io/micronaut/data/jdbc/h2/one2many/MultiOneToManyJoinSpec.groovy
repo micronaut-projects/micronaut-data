@@ -9,19 +9,14 @@ import io.micronaut.data.annotation.Relation
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.h2.H2DBProperties
 import io.micronaut.data.jdbc.h2.H2TestPropertyProvider
-import io.micronaut.data.model.query.builder.QueryBuilder
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
-import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.repository.CrudRepository
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
 import jakarta.inject.Inject
 
-@MicronautTest
 @H2DBProperties
 class MultiOneToManyJoinSpec extends Specification implements H2TestPropertyProvider {
     @AutoCleanup

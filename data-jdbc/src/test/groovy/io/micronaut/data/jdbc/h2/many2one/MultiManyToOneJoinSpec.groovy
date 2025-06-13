@@ -12,7 +12,6 @@ import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
@@ -23,7 +22,6 @@ import jakarta.persistence.ManyToOne
 
 import static io.micronaut.data.model.query.builder.sql.Dialect.H2
 
-@MicronautTest
 @H2DBProperties
 class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProvider {
     @AutoCleanup
@@ -31,24 +29,20 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
     ApplicationContext applicationContext = ApplicationContext.run(getProperties())
 
     @Shared
-    @Inject
     RefARepository refARepository = applicationContext.getBean(RefARepository)
 
     @Shared
-    @Inject
     CustomBookRepository customBookRepository = applicationContext.getBean(CustomBookRepository)
 
     @Shared
-    @Inject
     UserGroupMembershipRepository userGroupMembershipRepository = applicationContext.getBean(UserGroupMembershipRepository)
 
     @Shared
     @Inject
-    MyEntityRepository myEntityRepository
+    MyEntityRepository myEntityRepository = applicationContext.getBean(MyEntityRepository)
 
     @Shared
-    @Inject
-    MyOtherRepository myOtherRepository
+    MyOtherRepository myOtherRepository = applicationContext.getBean(MyOtherRepository)
 
     void 'test many-to-one hierarchy'() {
         given:
