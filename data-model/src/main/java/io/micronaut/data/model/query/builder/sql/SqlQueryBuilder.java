@@ -347,7 +347,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         ArgumentUtils.requireNonNull("entity", entity);
         final String unescapedTableName = getUnescapedTableName(entity);
         String tableName = getTableName(entity);
-        String unescapedSchemaName = getSchemaName(entity);
         boolean escape = shouldEscape(entity);
 
         List<String> createStatements = new ArrayList<>();
@@ -539,10 +538,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     createStatements.add(generatedDefinition);
                 } else if (isSequence) {
                     final boolean isSqlServer = dialect == Dialect.SQL_SERVER;
-                    final String sequenceName = quote(resolveSequenceName(identity, unescapedTableName), true);
-                    String sequence = StringUtils.isEmpty(unescapedSchemaName) ? StringUtils.EMPTY_STRING : quote(unescapedSchemaName, true) + DOT;
-                    sequence += sequenceName;
-                    String createSequenceStmt = "CREATE SEQUENCE " +  sequence;
+                    final String sequenceName = quote(unescapedTableName + SEQ_SUFFIX, true);
+                    String createSequenceStmt = "CREATE SEQUENCE " + sequenceName;
                     if (isSqlServer) {
                         createSequenceStmt += " AS BIGINT";
                     }
@@ -976,7 +973,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     @NonNull
     private QueryResult buildInsert(AnnotationMetadata repositoryMetadata, PersistentEntity entity, boolean isReturning) {
         boolean escape = shouldEscape(entity);
-        final String unescapedSchemaName = getSchemaName(entity);
         final String unescapedTableName = getUnescapedTableName(entity);
 
         String builder;
@@ -1148,7 +1144,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     }
 
                     if (isSequence) {
-                        values.add(getSequenceStatement(unescapedSchemaName, unescapedTableName, property));
+                        values.add(getSequenceStatement(unescapedTableName, property));
                     } else {
                         addWriteExpression(values, property);
 
@@ -1216,13 +1212,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return path.toArray(new String[0]);
     }
 
-    private String getSequenceStatement(String unescapedSchemaName, String unescapedTableName, PersistentProperty property) {
+    private String getSequenceStatement(String unescapedTableName, PersistentProperty property) {
         final String sequenceName = resolveSequenceName(property, unescapedTableName);
         return switch (dialect) {
-            case ORACLE -> (StringUtils.isEmpty(unescapedSchemaName) ? "" : quote(unescapedSchemaName, true) + DOT) + quote(sequenceName, true) + ".nextval";
-            case POSTGRES -> "nextval('" + (StringUtils.isEmpty(unescapedSchemaName) ? "" : unescapedSchemaName + DOT) + sequenceName + "')";
-            case H2 -> "nextval('" + (StringUtils.isEmpty(unescapedSchemaName) ? "" : unescapedSchemaName + DOT) + sequenceName + "')";
-            case SQL_SERVER -> "NEXT VALUE FOR " + (StringUtils.isEmpty(unescapedSchemaName) ? "" : quote(unescapedSchemaName, true) + DOT) + quote(sequenceName, true);
+            case ORACLE -> quote(sequenceName, true) + ".nextval";
+            case POSTGRES -> "nextval('" + sequenceName + "')";
+            case H2 -> "nextval('" + sequenceName + "')";
+            case SQL_SERVER -> "NEXT VALUE FOR " + quote(sequenceName, true);
             default -> throw new IllegalStateException("Cannot generate a sequence for dialect: " + dialect);
         };
     }
@@ -1895,7 +1891,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return SqlQueryConfiguration.DialectConfiguration.class;
     }
 
-    private static final class DialectConfig {
+    private static class DialectConfig {
         Boolean escapeQueries;
         String positionalFormatter;
         String positionalNameFormatter;

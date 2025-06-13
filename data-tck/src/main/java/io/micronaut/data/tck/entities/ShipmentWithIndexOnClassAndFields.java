@@ -54,7 +54,7 @@ public class ShipmentWithIndexOnClassAndFields {
 
 
     @Column(name = "field2")
-    @Index(columns = {"field2", "taxCode2"}, unique = true)
+    @Index(columns = {"field2, taxCode2"}, unique = true)
     private String field2;
 
 

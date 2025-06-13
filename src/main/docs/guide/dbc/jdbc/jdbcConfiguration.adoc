@@ -32,12 +32,6 @@ include::doc-examples/jdbc-example-java/src/main/resources/application.yml[]
 
 The `schema-generate` option is currently only recommended for simple applications, testing and demos and is not considered production-ready. The dialect set in configuration is the dialect that will be used to generate the schema.
 
-==== Schema Validation
-
-In order to validate mapped entities against current schema state set `schema-generate=validate` in the configuration.
-If mapped entity does not have corresponding table in the schema or some field does not have column in the database table or
-types are not matching then the application will report an error and stop.
-
 === Setting the Dialect
 
 As seen in the configuration above you should also configure the dialect. Although queries are precomputed in the repository some cases (like pagination) still require the dialect to specify. The following table summarizes the supported dialects:

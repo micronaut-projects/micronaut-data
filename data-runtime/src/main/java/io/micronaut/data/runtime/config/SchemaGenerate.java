@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.runtime.config;
 
-import io.micronaut.core.annotation.Experimental;
-
 /**
  * Enum describing how to handle the schema at startup. Used for schema generation in
  * testing scenarios.
@@ -33,11 +31,6 @@ public enum SchemaGenerate {
      * Drop and recreate the schema.
      */
     CREATE_DROP,
-    /**
-     * Validate current schema against mapped entities.
-     */
-    @Experimental
-    VALIDATE,
     /**
      * Do nothing.
      */

@@ -14,5 +14,4 @@ datasources:
   default:
     db-type: oracle
     dialect: oracle
-    schema-generate: VALIDATE
-    packages: io.micronaut.data.jdbc.oraclexe.jsonview
+    schema-generate: NONE
