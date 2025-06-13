@@ -18,12 +18,14 @@ package io.micronaut.data.runtime.operations.internal.sql;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.ApplicationContextProvider;
 import io.micronaut.context.BeanContext;
+import io.micronaut.context.env.PropertyPlaceholderResolver;
 import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.reflect.ReflectionUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Repository;
@@ -116,6 +118,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     protected final JsonMapper jsonMapper;
     protected final SqlJsonColumnMapperProvider<RS> sqlJsonColumnMapperProvider;
     protected final Map<Class, SqlQueryBuilder2> queryBuilders = new HashMap<>(10);
+    protected final PropertyPlaceholderResolver propertyPlaceholderResolver;
     protected final Map<Class, String> repositoriesWithHardcodedDataSource = new HashMap<>(10);
     private final Map<QueryKey, SqlStoredQuery> entityInserts = new ConcurrentHashMap<>(10);
     private final Map<QueryKey, SqlStoredQuery> entityUpdates = new ConcurrentHashMap<>(10);
@@ -167,6 +170,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 repositoriesWithHardcodedDataSource.put(beanType, targetDs);
             }
         }
+        this.propertyPlaceholderResolver = getApplicationContext().getEnvironment().getPlaceholderResolver();
     }
 
     /**
@@ -310,8 +314,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         return entityInserts.computeIfAbsent(new QueryKey(repositoryType, rootEntity), (queryKey) -> {
             final SqlQueryBuilder2 queryBuilder = findQueryBuilder(repositoryType);
             final QueryResult queryResult = queryBuilder.buildInsert(annotationMetadata, new SqlQueryBuilder2.InsertQueryDefinitionImpl(persistentEntity));
-
-            return new DefaultSqlStoredQuery<>(QueryResultStoredQuery.single(OperationType.INSERT, "Custom insert", AnnotationMetadata.EMPTY_METADATA, queryResult, rootEntity), persistentEntity, queryBuilder);
+            final QueryResult newQueryResult = replaceQueryPlaceholders(queryResult);
+            return new DefaultSqlStoredQuery<>(QueryResultStoredQuery.single(OperationType.INSERT, "Custom insert", AnnotationMetadata.EMPTY_METADATA, newQueryResult, rootEntity), persistentEntity, queryBuilder);
         });
     }
 
@@ -370,8 +374,9 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 .forEach(prop -> criteriaUpdate.set(prop.getName(), criteriaBuilder.parameter(prop.getType())));
 
             final QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaUpdate).buildQuery(annotationMetadata, queryBuilder);
+            final QueryResult newQueryResult = replaceQueryPlaceholders(queryResult);
             return new DefaultSqlStoredQuery<>(
-                QueryResultStoredQuery.single(OperationType.UPDATE, "Custom update", AnnotationMetadata.EMPTY_METADATA, queryResult, rootEntity),
+                QueryResultStoredQuery.single(OperationType.UPDATE, "Custom update", AnnotationMetadata.EMPTY_METADATA, newQueryResult, rootEntity),
                 persistentEntity,
                 queryBuilder);
         });
@@ -388,7 +393,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      * @return The operation
      */
     protected <T> SqlStoredQuery<T, ?> resolveSqlInsertAssociation(Class<?> repositoryType, RuntimeAssociation<T> association, RuntimePersistentEntity<T> persistentEntity, T entity) {
-        String sqlInsert = resolveAssociationInsert(repositoryType, persistentEntity, association);
+        String sqlInsert = resolveEnvPlaceholderValues(resolveAssociationInsert(repositoryType, persistentEntity, association));
         final SqlQueryBuilder2 queryBuilder = findQueryBuilder(repositoryType);
         List<QueryParameterBinding> parameters = new ArrayList<>();
         for (Map.Entry<PersistentProperty, Object> property : idPropertiesWithValues(persistentEntity.getIdentity(), entity).toList()) {
@@ -652,6 +657,42 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     }
 
     /**
+     * Replaces placeholders in the given query result with actual values.
+     *
+     * @param queryResult The query result to modify
+     * @return A new query result with replaced placeholders
+     */
+    protected final QueryResult replaceQueryPlaceholders(QueryResult queryResult) {
+        return new QueryResult() {
+            @NonNull
+            @Override
+            public String getQuery() {
+                return resolveEnvPlaceholderValues(queryResult.getQuery());
+            }
+
+            @Override
+            public List<String> getQueryParts() {
+                return queryResult.getQueryParts();
+            }
+
+            /**
+             * Returns the parameters binding for this query.
+             *
+             * @return the parameters binding
+             */
+            @Override
+            public List<io.micronaut.data.model.query.builder.QueryParameterBinding> getParameterBindings() {
+                return queryResult.getParameterBindings();
+            }
+
+            @Override
+            public Map<String, String> getAdditionalRequiredParameters() {
+                return queryResult.getAdditionalRequiredParameters();
+            }
+        };
+    }
+
+    /**
      * Creates {@link JsonQueryResultMapper} for JSON deserialization.
      *
      * @param sqlStoredQuery   the SQL prepared query
@@ -772,6 +813,16 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 throw new IllegalStateException("Not supported!");
             }
         };
+    }
+
+    private String resolveEnvPlaceholderValues(String value) {
+        if (StringUtils.isEmpty(value)) {
+            return value;
+        }
+        if (value.contains(propertyPlaceholderResolver.getPrefix())) {
+            value = propertyPlaceholderResolver.resolveRequiredPlaceholders(value);
+        }
+        return value;
     }
 
     /**

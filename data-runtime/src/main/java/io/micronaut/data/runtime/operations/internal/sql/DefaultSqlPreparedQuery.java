@@ -20,15 +20,19 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.model.Association;
 import io.micronaut.data.model.CursoredPageable;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Pageable.Cursor;
 import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.Sort.Order;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
@@ -65,7 +69,7 @@ import java.util.Optional;
 public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPreparedQuery<E, R> implements SqlPreparedQuery<E, R>, DelegatePreparedQuery<E, R> {
 
     protected List<QueryParameterBinding> cursorQueryBindings;
-    protected List<RuntimePersistentProperty<Object>> cursorProperties;
+    protected List<PersistentPropertyPath> cursorProperties;
     protected final SqlStoredQuery<E, R> sqlStoredQuery;
     protected String query;
     private final boolean bindPageableOrSort;
@@ -222,10 +226,14 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         // sorting on the rows. Therefore, we make sure id is present in it.
         List<Order> orders = new ArrayList<>(sort.getOrderBy());
         for (PersistentProperty idProperty: persistentEntity.getIdentityProperties()) {
-            String name = idProperty.getName();
-            if (orders.stream().noneMatch(o -> o.getProperty().equals(name))) {
-                orders.add(Order.asc(name));
-            }
+            PersistentEntityUtils.traversePersistentProperties(idProperty, (associations, property) -> {
+                String prefix = String.join(".", associations.stream().map(Association::getName).toList());
+                String propertyName = property.getName();
+                String name = StringUtils.isEmpty(prefix) ? propertyName : prefix + "." + propertyName;
+                if (orders.stream().noneMatch(o -> o.getProperty().equals(name))) {
+                    orders.add(Order.asc(name));
+                }
+            });
         }
         sort = Sort.of(orders);
         if (isBackwards) {
@@ -303,7 +311,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
     @NonNull
     private String buildCursorPagination(@NonNull CursoredPageable cursoredPageable, int paramIndex, @Nullable String tableAlias) {
         RuntimePersistentEntity<Object> persistentEntity = (RuntimePersistentEntity<Object>) getPersistentEntity();
-        List<RuntimePersistentProperty<Object>> cursorProperties = getCursorProperties(cursoredPageable, persistentEntity);
+        List<PersistentPropertyPath> cursorPersistentPropertyPaths = getCursorProperties(cursoredPageable, persistentEntity);
         Optional<Cursor> optionalCursor = cursoredPageable.cursor();
         if (optionalCursor.isEmpty()) {
             return "";
@@ -321,7 +329,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         cursorQueryBindings = new ArrayList<>(orders.size() * (orders.size() + 1) / 2);
         for (int i = 0; i < orders.size(); ++i) {
             cursorBindings.add(new CursoredQueryParameterBinder(
-                "cursor_" + i, cursorProperties.get(i).getDataType(), cursor.get(i)
+                "cursor_" + i, cursorPersistentPropertyPaths.get(i).getProperty().getDataType(), cursor.get(i)
             ));
         }
 
@@ -359,14 +367,14 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         return builder.toString();
     }
 
-    private List<RuntimePersistentProperty<Object>> getCursorProperties(CursoredPageable cursoredPageable, RuntimePersistentEntity<Object> persistentEntity) {
+    private List<PersistentPropertyPath> getCursorProperties(CursoredPageable cursoredPageable, RuntimePersistentEntity<Object> persistentEntity) {
         // Create a sort for the cursored pagination. The sort must produce a unique
         // sorting on the rows. Therefore, we make sure id is present in it.
         if (cursorProperties == null) {
             Sort sort = cursoredPageable.getSort();
             cursorProperties = new ArrayList<>(sort.getOrderBy().size());
             for (Order order : sort.getOrderBy()) {
-                cursorProperties.add(persistentEntity.getPropertyByName(order.getProperty()));
+                cursorProperties.add(persistentEntity.getPropertyPath(order.getProperty()));
             }
         }
         return cursorProperties;
@@ -410,20 +418,20 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
             Collections.reverse(results);
         }
         CursoredPageable cursoredPageable = enhancePageable((CursoredPageable) pageable, runtimePersistentEntity);
-        List<RuntimePersistentProperty<Object>> cursorProperties = getCursorProperties(cursoredPageable, runtimePersistentEntity);
+        List<PersistentPropertyPath> cursorPersistentPropertyPaths = getCursorProperties(cursoredPageable, runtimePersistentEntity);
         List<Cursor> cursors = new ArrayList<>(results.size());
         boolean isDto = preparedQuery.isDtoProjection();
         for (Object result : results) {
-            List<Object> cursorElements = new ArrayList<>(cursorProperties.size());
-            for (RuntimePersistentProperty<Object> property : cursorProperties) {
+            List<Object> cursorElements = new ArrayList<>(cursorPersistentPropertyPaths.size());
+            for (PersistentPropertyPath property : cursorPersistentPropertyPaths) {
                 if (isDto) {
-                    RuntimePersistentProperty<Object> dtoProperty = runtimePersistentEntity.getPropertyByName(property.getName());
+                    PersistentPropertyPath dtoProperty = runtimePersistentEntity.getPropertyPath(property.getPath());
                     if (dtoProperty == null) {
-                        throw new IllegalStateException("DTO projection " + runtimePersistentEntity + " must contain property " + property.getName());
+                        throw new IllegalStateException("DTO projection " + runtimePersistentEntity + " must contain property " + property.getPath());
                     }
-                    cursorElements.add(dtoProperty.getProperty().get(result));
+                    cursorElements.add(dtoProperty.getPropertyValue(result));
                 } else {
-                    cursorElements.add(property.getProperty().get(result));
+                    cursorElements.add(property.getPropertyValue(result));
                 }
             }
             cursors.add(Cursor.of(cursorElements));

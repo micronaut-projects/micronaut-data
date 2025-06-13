@@ -72,6 +72,7 @@ import io.micronaut.inject.ast.Element;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.ast.TypedElement;
+import io.micronaut.inject.ast.UnresolvedTypeKind;
 import io.micronaut.inject.processing.ProcessingException;
 import io.micronaut.inject.visitor.ElementPostponedToNextRoundException;
 import io.micronaut.inject.visitor.TypeElementVisitor;
@@ -113,6 +114,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     private final List<MethodMatcher> methodsMatchers;
     private boolean failing = false;
     private final Set<String> visitedRepositories = new HashSet<>();
+    private final Set<String> postponedRepositories = new HashSet<>();
     private Map<String, DataType> dataTypes = Collections.emptyMap();
     private final Map<String, SourcePersistentEntity> entityMap = new HashMap<>(50);
     private Function<ClassElement, SourcePersistentEntity> entityResolver;
@@ -133,6 +135,12 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         typeRoles.put(CursoredPage.class.getName(), TypeRole.CURSORED_PAGE);
         typeRoles.put(Page.class.getName(), TypeRole.PAGE);
         typeRoles.put(Slice.class.getName(), TypeRole.SLICE);
+    }
+
+    @Override
+    public void finish(VisitorContext visitorContext) {
+        postponedRepositories.clear();
+        visitedRepositories.clear();
     }
 
     @NonNull
@@ -200,6 +208,11 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         };
 
         if (element.hasDeclaredStereotype(Repository.class)) {
+            // delay visiting until the next round.
+            if (element.hasUnresolvedTypes(UnresolvedTypeKind.INTERFACE, UnresolvedTypeKind.SUPERCLASS) && !postponedRepositories.contains(interfaceName)) {
+                postponedRepositories.add(interfaceName);
+                throw new ElementPostponedToNextRoundException(element);
+            }
             visitedRepositories.add(interfaceName);
             currentRepository = element;
             queryEncoder = QueryBuilder.newQueryBuilder(element.getAnnotationMetadata());

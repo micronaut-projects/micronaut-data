@@ -16,6 +16,8 @@
 package io.micronaut.data.jdbc.h2;
 
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.CursoredPage;
+import io.micronaut.data.model.CursoredPageable;
 import io.micronaut.data.repository.PageableRepository;
 import io.micronaut.data.tck.entities.Shipment;
 import io.micronaut.data.tck.entities.ShipmentId;
@@ -33,4 +35,6 @@ public interface ShipmentRepository extends PageableRepository<Shipment, Shipmen
     List<Shipment> findAllOrderByShipmentIdCityDesc();
 
     List<Shipment> findAllOrderByShipmentIdCountryAndShipmentIdCityDesc();
+
+    CursoredPage<Shipment> findByShipmentIdCountry(String country, CursoredPageable pageable);
 }
