@@ -16,7 +16,6 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.repository.CrudRepository
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
@@ -24,7 +23,6 @@ import spock.lang.Specification
 import jakarta.inject.Inject
 import jakarta.persistence.Embedded
 
-@MicronautTest
 @H2DBProperties
 class CustomEmbeddedNameMapping extends Specification implements H2TestPropertyProvider {
     @AutoCleanup

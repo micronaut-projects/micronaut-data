@@ -10,24 +10,20 @@ import io.micronaut.data.jdbc.h2.H2DBProperties
 import io.micronaut.data.jdbc.h2.H2TestPropertyProvider
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
-import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.data.tck.entities.Document
 import io.micronaut.data.tck.entities.DocumentType
 import io.micronaut.data.tck.repositories.DocumentRepository
 import io.micronaut.data.tck.repositories.DocumentTypeRepository
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
-import jakarta.inject.Inject
 
 import jakarta.persistence.ManyToOne
 
 import static io.micronaut.data.model.query.builder.sql.Dialect.H2
 
-@MicronautTest
 @H2DBProperties
 class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProvider {
     @AutoCleanup
@@ -35,32 +31,25 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
     ApplicationContext applicationContext = ApplicationContext.run(getProperties())
 
     @Shared
-    @Inject
     RefARepository refARepository = applicationContext.getBean(RefARepository)
 
     @Shared
-    @Inject
     CustomBookRepository customBookRepository = applicationContext.getBean(CustomBookRepository)
 
     @Shared
-    @Inject
     UserGroupMembershipRepository userGroupMembershipRepository = applicationContext.getBean(UserGroupMembershipRepository)
 
     @Shared
-    @Inject
-    MyEntityRepository myEntityRepository
+    MyEntityRepository myEntityRepository = applicationContext.getBean(MyEntityRepository)
 
     @Shared
-    @Inject
-    MyOtherRepository myOtherRepository
+    MyOtherRepository myOtherRepository = applicationContext.getBean(MyOtherRepository)
 
     @Shared
-    @Inject
-    DocumentTypeRepository documentTypeRepository
+    DocumentTypeRepository documentTypeRepository = applicationContext.getBean(DocumentTypeRepository)
 
     @Shared
-    @Inject
-    DocumentRepository documentRepository
+    DocumentRepository documentRepository = applicationContext.getBean(DocumentRepository)
 
     void 'test many-to-one hierarchy'() {
         given:
@@ -158,7 +147,7 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
 
     void "test many to one join nullable"() {
         when:
-        def documentType = documentTypeRepository.save(new DocumentType(null, "PDF", false));
+        def documentType = documentTypeRepository.save(new DocumentType(null, "PDF", false))
         def document = documentRepository.save(new Document(null, "Opinion.pdf", documentType))
         then:
         def optionalDocument = documentRepository.findById(document.id())
@@ -176,7 +165,7 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
     }
 }
 
-@JdbcRepository(dialect = Dialect.H2)
+@JdbcRepository(dialect = H2)
 interface RefARepository extends CrudRepository<RefA, Long> {
 
     @Join(value = "refB", type = Join.Type.LEFT_FETCH)
@@ -219,7 +208,7 @@ class RefC {
     String name
 }
 
-@JdbcRepository(dialect = Dialect.H2)
+@JdbcRepository(dialect = H2)
 @Join("author")
 interface CustomBookRepository extends CrudRepository<CustomBook, Long> {
 }
@@ -319,7 +308,7 @@ class User {
 
     String login
 }
-@JdbcRepository(dialect = Dialect.H2)
+@JdbcRepository(dialect = H2)
 interface UserGroupMembershipRepository extends CrudRepository<UserGroupMembership, Long> {
 
     @Join(value = "userGroup.area", type = Join.Type.FETCH)
@@ -341,7 +330,7 @@ class MyEntity {
     final MyOther other
 
     MyEntity(long lid, @Nullable MyOther other) {
-        this.lid = lid;
+        this.lid = lid
         this.other = other
     }
 }

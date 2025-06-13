@@ -18,14 +18,12 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.repository.CrudRepository
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
 import jakarta.inject.Inject
 
-@MicronautTest
 @H2DBProperties
 class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyProvider {
     @AutoCleanup

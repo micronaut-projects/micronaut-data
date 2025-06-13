@@ -15,7 +15,6 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2
 import io.micronaut.data.repository.CrudRepository
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -26,7 +25,6 @@ import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.transaction.Transactional
 
-@MicronautTest
 class H2EnumsMappingSpec extends Specification implements H2TestPropertyProvider {
     @AutoCleanup
     @Shared

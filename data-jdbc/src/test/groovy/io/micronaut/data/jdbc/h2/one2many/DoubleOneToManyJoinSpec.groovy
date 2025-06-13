@@ -12,7 +12,6 @@ import io.micronaut.data.jdbc.h2.H2DBProperties
 import io.micronaut.data.jdbc.h2.H2TestPropertyProvider
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.annotation.Nullable
 import jakarta.inject.Inject
 import spock.lang.AutoCleanup
@@ -22,7 +21,6 @@ import spock.lang.Specification
 /**
  * Test for entity that has two one to many collections without mappedBy and joined using custom query.
  */
-@MicronautTest
 @H2DBProperties
 class DoubleOneToManyJoinSpec extends Specification implements H2TestPropertyProvider {
 

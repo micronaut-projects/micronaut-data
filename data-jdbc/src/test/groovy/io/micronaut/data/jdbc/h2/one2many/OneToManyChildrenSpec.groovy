@@ -7,14 +7,12 @@ import io.micronaut.data.jdbc.h2.H2DBProperties
 import io.micronaut.data.jdbc.h2.H2TestPropertyProvider
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
 import jakarta.inject.Inject
 
-@MicronautTest
 @H2DBProperties
 class OneToManyChildrenSpec extends Specification implements H2TestPropertyProvider {
     @AutoCleanup
