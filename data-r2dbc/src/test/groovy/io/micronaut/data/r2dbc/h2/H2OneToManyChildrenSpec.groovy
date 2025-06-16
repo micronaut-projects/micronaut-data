@@ -1,25 +1,20 @@
 package io.micronaut.data.r2dbc.h2
 
-import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.*
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
-import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
 @MicronautTest(transactional = false)
 class H2OneToManyChildrenSpec extends Specification implements H2TestPropertyProvider {
-    @AutoCleanup
-    @Shared
-    ApplicationContext applicationContext = ApplicationContext.run(getProperties())
 
     @Shared
     @Inject
-    ParentRepository parentRepository = applicationContext.getBean(ParentRepository)
+    ParentRepository parentRepository
 
     void 'test one-to-many hierarchy'() {
         given:

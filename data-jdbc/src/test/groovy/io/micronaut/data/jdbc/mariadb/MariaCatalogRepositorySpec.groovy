@@ -18,12 +18,10 @@ package io.micronaut.data.jdbc.mariadb
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.jdbc.mysql.MySqlCatalogRepository
 import io.micronaut.data.tck.jdbc.entities.Catalog
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
-@MicronautTest
 class MariaCatalogRepositorySpec extends Specification implements MariaTestPropertyProvider {
     @AutoCleanup
     @Shared

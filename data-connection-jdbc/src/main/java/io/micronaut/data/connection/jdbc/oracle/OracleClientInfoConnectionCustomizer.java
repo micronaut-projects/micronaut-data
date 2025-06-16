@@ -25,6 +25,7 @@ import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.connection.ConnectionDefinition;
@@ -67,26 +68,20 @@ final class OracleClientInfoConnectionCustomizer implements ConnectionCustomizer
     private static final String VALUE_MEMBER = "value";
     private static final String INTERCEPTED_SUFFIX = "$Intercepted";
 
-    /**
-     * Constant for the Oracle connection client info client ID property name.
-     */
     private static final String ORACLE_CLIENT_ID = "OCSID.CLIENTID";
-    /**
-     * Constant for the Oracle connection client info module property name.
-     */
     private static final String ORACLE_MODULE = "OCSID.MODULE";
-    /**
-     * Constant for the Oracle connection client info action property name.
-     */
     private static final String ORACLE_ACTION = "OCSID.ACTION";
-    /**
-     * Constant for the Oracle connection database product name.
-     */
+    private static final String ORACLE_CLIENT_INFO = "OCSID.CLIENT_INFO";
     private static final String ORACLE_CONNECTION_DATABASE_PRODUCT_NAME = "Oracle";
 
     private static final Logger LOG = LoggerFactory.getLogger(OracleClientInfoConnectionCustomizer.class);
 
     private static final Map<Class<?>, String> MODULE_CLASS_MAP = new ConcurrentHashMap<>(100);
+
+    // The driver is supposed to expose this via DataBaseMetadata.getClientInfoProperties() but the Oracle driver
+    // doesn't do so as of release 23.7.0.25.1, so we hard-code it here. This bug is being fixed so a future
+    // release will supply the correct information.
+    private static final int MAX_VALUE_LENGTH = 64;
 
     @Nullable
     private final String applicationName;
@@ -105,6 +100,20 @@ final class OracleClientInfoConnectionCustomizer implements ConnectionCustomizer
         }
     }
 
+    private static String truncate(String name, String value) {
+        if (value.length() > MAX_VALUE_LENGTH) {
+            LOG.trace("Truncating client info value '{}' for {} as it is longer than {} chars", value, name, MAX_VALUE_LENGTH);
+            return value.substring(0, MAX_VALUE_LENGTH);
+        } else {
+            return value;
+        }
+    }
+
+    private static String preprocessClassName(Class<?> clazz) {
+        // Oracle imposes a limit of 64 chars on class names, and we can easily blow through that.
+        return NameUtils.getShortenedName(clazz.getName().replace(INTERCEPTED_SUFFIX, ""));
+    }
+
     @Override
     public <R> Function<ConnectionStatus<Connection>, R> intercept(Function<ConnectionStatus<Connection>, R> operation) {
         return connectionStatus -> {
@@ -118,22 +127,21 @@ final class OracleClientInfoConnectionCustomizer implements ConnectionCustomizer
                 // Clear client info for connection if it was Oracle connection and client info was set previously
                 clearClientInfo(connectionStatus, connectionClientInfo);
             }
-
         };
     }
 
     private void applyClientInfo(@NonNull ConnectionStatus<Connection> connectionStatus, @NonNull Map<String, String> connectionClientInfo) {
         if (CollectionUtils.isNotEmpty(connectionClientInfo)) {
             Connection connection = connectionStatus.getConnection();
-            LOG.trace("Setting connection tracing info to the Oracle connection");
             try {
                 for (Map.Entry<String, String> additionalInfo : connectionClientInfo.entrySet()) {
                     String name = additionalInfo.getKey();
-                    String value = additionalInfo.getValue();
+                    // Oracle imposes a limit of 64 chars on class names, and we can easily blow through that.
+                    String value = truncate(name, additionalInfo.getValue());
                     connection.setClientInfo(name, value);
                 }
             } catch (SQLClientInfoException e) {
-                LOG.debug("Failed to set connection tracing info", e);
+                LOG.warn("Failed to set connection tracing info: {}", connectionClientInfo, e);
             }
         }
     }
@@ -191,11 +199,14 @@ final class OracleClientInfoConnectionCustomizer implements ConnectionCustomizer
         }
         if (annotationMetadata instanceof MethodInvocationContext<?, ?> methodInvocationContext) {
             clientInfoAttributes.putIfAbsent(ORACLE_MODULE,
-                MODULE_CLASS_MAP.computeIfAbsent(methodInvocationContext.getTarget().getClass(),
-                    clazz -> clazz.getName().replace(INTERCEPTED_SUFFIX, ""))
+                MODULE_CLASS_MAP.computeIfAbsent(
+                    methodInvocationContext.getTarget().getClass(),
+                    OracleClientInfoConnectionCustomizer::preprocessClassName
+                )
             );
             clientInfoAttributes.putIfAbsent(ORACLE_ACTION, methodInvocationContext.getName());
         }
+        clientInfoAttributes.putIfAbsent(ORACLE_CLIENT_INFO, Thread.currentThread().getName());
         return clientInfoAttributes;
     }
 }

@@ -26,7 +26,6 @@ import jakarta.persistence.CascadeType
 import jakarta.persistence.OneToMany
 
 @Ignore
-@MicronautTest
 @H2DBProperties
 class CompositeSpec extends Specification implements H2TestPropertyProvider {
     @AutoCleanup

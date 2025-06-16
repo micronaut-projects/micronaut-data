@@ -9,13 +9,11 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.data.tck.jdbc.entities.Employee
 import io.micronaut.data.tck.jdbc.entities.EmployeeGroup
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
-@MicronautTest
 @H2DBProperties
 class OneToManyJoinColumnSpec extends Specification implements H2TestPropertyProvider {
     @AutoCleanup
