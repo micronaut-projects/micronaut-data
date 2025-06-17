@@ -47,7 +47,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
 /**
@@ -77,7 +77,7 @@ final class SqlQueryBuilderUtils {
      * @return the mapped persisted name
      * @throws ConfigurationException if incomplete placeholder definitions are detected
      */
-    static String mapPersistedName(String persistedName, Function<String, String> mapFunction) {
+    static String mapPersistedName(String persistedName, UnaryOperator<String> mapFunction) {
         if (StringUtils.isEmpty(persistedName)) {
             return persistedName;
         }
