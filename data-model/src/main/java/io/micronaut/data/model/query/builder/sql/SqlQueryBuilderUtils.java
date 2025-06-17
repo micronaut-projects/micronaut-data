@@ -20,10 +20,10 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.sql.JoinColumns;
@@ -47,8 +47,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
-import java.util.function.Function;
 
 /**
  * The utility methods for query builders.
@@ -77,7 +77,7 @@ final class SqlQueryBuilderUtils {
      * @return the mapped persisted name
      * @throws ConfigurationException if incomplete placeholder definitions are detected
      */
-    static String mapPersistedName(String persistedName, Function<String, String> mapFunction) {
+    static String mapPersistedName(String persistedName, UnaryOperator<String> mapFunction) {
         if (StringUtils.isEmpty(persistedName)) {
             return persistedName;
         }

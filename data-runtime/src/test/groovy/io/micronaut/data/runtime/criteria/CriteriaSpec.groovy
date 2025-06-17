@@ -96,7 +96,7 @@ class CriteriaSpec extends AbstractCriteriaSpec {
             String query = getSqlQuery(criteriaQuery)
 
         expect:
-            query == '''SELECT book_."id",book_."author_id",book_."title",book_."pages",book_."publisher_id" FROM "book" book_ WHERE (book_."id" IN (SELECT book_book_."id" FROM "book" book_book_ INNER JOIN "author" book_book_author_ ON book_book_."author_id"=book_book_author_."id" WHERE (book_book_author_."id" = book_book_author_."id"))) ORDER BY book_."title" ASC'''
+            query == '''SELECT book_."id",book_."title",book_."pages" FROM "book" book_ WHERE (book_."id" IN (SELECT book_book_."id" FROM "book" book_book_ INNER JOIN "author" book_book_author_ ON book_book_."author_id"=book_book_author_."id" WHERE (book_book_author_."id" = book_book_author_."id"))) ORDER BY book_."title" ASC'''
     }
 
     void "test subquery IN with JOIN"() {
@@ -116,7 +116,7 @@ class CriteriaSpec extends AbstractCriteriaSpec {
 
         expect:
             // language=SQL
-            query == '''SELECT book_."id",book_."author_id",book_."title",book_."pages",book_."publisher_id",book_author_."name" AS author_name FROM "book" book_ INNER JOIN "author" book_author_ ON book_."author_id"=book_author_."id" WHERE (book_."id" IN (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."id" = ?))) ORDER BY book_."title" ASC'''
+            query == '''SELECT book_."id",book_."title",book_."pages",book_author_."id" AS author_id,book_author_."name" AS author_name FROM "book" book_ INNER JOIN "author" book_author_ ON book_."author_id"=book_author_."id" WHERE (book_."id" IN (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."id" = ?))) ORDER BY book_."title" ASC'''
     }
 
     void "test subquery IN"() {
@@ -133,7 +133,7 @@ class CriteriaSpec extends AbstractCriteriaSpec {
             String query = getSqlQuery(criteriaQuery)
 
         expect:
-            query == '''SELECT book_."id",book_."author_id",book_."title",book_."pages",book_."publisher_id" FROM "book" book_ WHERE (book_."id" IN (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."id" = ?)))'''
+            query == '''SELECT book_."id",book_."title",book_."pages" FROM "book" book_ WHERE (book_."id" IN (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."id" = ?)))'''
     }
 
     void "test subquery EQ"() {
@@ -150,7 +150,7 @@ class CriteriaSpec extends AbstractCriteriaSpec {
             String query = getSqlQuery(criteriaQuery)
 
         expect:
-            query == '''SELECT book_."id",book_."author_id",book_."title",book_."pages",book_."publisher_id" FROM "book" book_ WHERE (book_."id" = (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."id" = ?)))'''
+            query == '''SELECT book_."id",book_."title",book_."pages" FROM "book" book_ WHERE (book_."id" = (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."id" = ?)))'''
     }
 
     void "test function projection 3"() {

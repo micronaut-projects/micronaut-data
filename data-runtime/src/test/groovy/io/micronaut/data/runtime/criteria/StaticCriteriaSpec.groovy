@@ -79,7 +79,7 @@ class StaticCriteriaSpec extends AbstractCriteriaSpec {
             String query = getSqlQuery(criteriaQuery)
 
         expect:
-            query == '''SELECT book_."id",book_."author_id",book_."title",book_."pages",book_."publisher_id" FROM "book" book_ WHERE (book_."id" IN (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."id" = ?)))'''
+            query == '''SELECT book_."id",book_."title",book_."pages" FROM "book" book_ WHERE (book_."id" IN (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."id" = ?)))'''
     }
 
     void "test subquery EQ"() {
@@ -96,7 +96,7 @@ class StaticCriteriaSpec extends AbstractCriteriaSpec {
             String query = getSqlQuery(criteriaQuery)
 
         expect:
-            query == '''SELECT book_."id",book_."author_id",book_."title",book_."pages",book_."publisher_id" FROM "book" book_ WHERE (book_."id" = (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."id" = ?)))'''
+            query == '''SELECT book_."id",book_."title",book_."pages" FROM "book" book_ WHERE (book_."id" = (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."id" = ?)))'''
     }
 
     @Unroll

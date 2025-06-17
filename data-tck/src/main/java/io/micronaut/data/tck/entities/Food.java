@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Creator;
 import io.micronaut.data.annotation.*;
 
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.annotation.sql.JoinColumn;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
@@ -53,12 +54,12 @@ public class Food {
     private Date updatedOn;
 
     @Relation(value = Relation.Kind.MANY_TO_ONE, cascade = Relation.Cascade.ALL)
-    @MappedProperty("fk_meal_id")
+    @JoinColumn(name = "fk_meal_id", referencedColumnName = "mid")
     private Meal meal;
 
     @Relation(value = Relation.Kind.MANY_TO_ONE, cascade = Relation.Cascade.ALL)
     @Nullable
-    @MappedProperty("fk_alt_meal")
+    @JoinColumn(name = "fk_alt_meal", referencedColumnName = "mid")
     private Meal alternativeMeal;
 
     @Nullable

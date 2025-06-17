@@ -502,11 +502,11 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                 } else {
                                     MappingContext<K> joinCtx = ctx.join(fetchJoinPaths, entityAssociation);
                                     Object resolvedId = null;
-                                    if (!entityAssociation.isForeignKey()) {
+                                    if (!entityAssociation.isForeignKey() && !entityAssociation.isSingleEnded()) {
                                         resolvedId = readEntityId(rs, ctx.path(entityAssociation));
                                     }
                                     if (kind.isSingleEnded()) {
-                                        if (joinCtx.jp == null || resolvedId == null && !entityAssociation.isForeignKey()) {
+                                        if (joinCtx.jp == null || resolvedId == null && !entityAssociation.isForeignKey() && !entityAssociation.isSingleEnded()) {
                                             args[i] = buildIdOnlyEntity(rs, ctx.path(entityAssociation), resolvedId);
                                         } else {
                                             args[i] = readEntity(rs, joinCtx, null, resolvedId);
@@ -520,7 +520,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                                 resolvedId = readEntityId(rs, associatedCtx);
                                             }
                                             Object associatedEntity = null;
-                                            if (resolvedId != null || entityAssociation.isForeignKey()) {
+                                            if (resolvedId != null || entityAssociation.isForeignKey() || entityAssociation.isSingleEnded()) {
                                                 associatedEntity = readEntity(rs, associatedCtx, null, resolvedId);
                                             }
                                             if (associatedEntity != null) {
@@ -602,7 +602,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                         } else {
                             MappingContext<K> joinCtx = ctx.join(fetchJoinPaths, entityAssociation);
                             Object associatedId = null;
-                            if (!entityAssociation.isForeignKey()) {
+                            if (!entityAssociation.isForeignKey() && !entityAssociation.isSingleEnded()) {
                                 associatedId = readEntityId(rs, ctx.path(entityAssociation));
                                 if (associatedId == null) {
                                     continue;
@@ -625,7 +625,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                         joinCtx.manyAssociations = new LinkedHashMap<>();
                                     }
                                 }
-                            } else if (entityAssociation.getKind().isSingleEnded() && !entityAssociation.isForeignKey()) {
+                            } else if (entityAssociation.getKind().isSingleEnded() && !entityAssociation.isForeignKey() && !entityAssociation.isSingleEnded()) {
                                 Object value = buildIdOnlyEntity(rs, ctx.path(entityAssociation), associatedId);
                                 entity = setProperty(property, entity, value);
                             }
