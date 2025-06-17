@@ -24,7 +24,6 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.sql.JoinColumns;
@@ -67,9 +66,6 @@ final class SqlQueryBuilderUtils {
     private static final String PREFIX = "${";
     private static final String SUFFIX = "}";
 
-    private static final String PREFIX = "${";
-    private static final String SUFFIX = "}";
-    
     private SqlQueryBuilderUtils() { }
 
     /**
