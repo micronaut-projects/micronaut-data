@@ -26,6 +26,10 @@ public interface MongoPersonRepository extends PersonRepository {
 
     List<BsonDocument> queryAll();
 
+    List<Person> findAllByNameBetween(String from, String to);
+
+    List<Person> findAllByNameNotBetween(String from, String to);
+
     @MongoFindQuery(filter = "{name:{$regex: :t}}", sort = "{ name : 1 }", project = "{ name: 1}")
     List<Person> customFind(String t);
 

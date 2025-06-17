@@ -53,7 +53,7 @@ class ProductRepositorySpec {
     @Test
     void testAsync() throws Exception {
         // tag::async[]
-        long total = productRepository.findByNameRegex(".*o.*")
+        long total = productRepository.findFirstByNameRegex(".*o.*")
                 .thenCompose(product -> productRepository.countByManufacturerName(product.getManufacturer().getName()))
                 .get(1000, TimeUnit.SECONDS);
 
@@ -67,7 +67,7 @@ class ProductRepositorySpec {
     @Test
     void testReactive() {
         // tag::reactive[]
-        long total = productRepository.queryByNameRegex(".*o.*")
+        long total = productRepository.queryFirstByNameRegex(".*o.*")
                 .flatMap(product -> productRepository.countDistinctByManufacturerName(product.getManufacturer().getName()))
                 .defaultIfEmpty(0L)
                 .block();

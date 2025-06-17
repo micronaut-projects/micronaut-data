@@ -86,7 +86,13 @@ public class TypeUtils {
      * @return True if is
      */
     public static boolean isIterableOfEntity(@Nullable ClassElement type) {
-        return type != null && isIterableOfDto(type) && hasPersistedTypeArgument(type);
+        if (type == null) {
+            return false;
+        }
+        if (type.isArray() && isEntity(type.fromArray())) {
+            return true;
+        }
+        return isIterableOfDto(type) && hasPersistedTypeArgument(type);
     }
 
     /**
@@ -127,8 +133,20 @@ public class TypeUtils {
         if (type == null) {
             return false;
         }
-        return type.hasStereotype(MappedEntity.class);
+        return !type.isArray() && type.hasStereotype(MappedEntity.class);
     }
+
+//    /**
+//     * Does the given type have an {@link MappedEntity}.
+//     * @param parameterElement The type
+//     * @return True if it does
+//     */
+//    public static boolean isEntity(@Nullable ParameterElement parameterElement) {
+//        if (parameterElement == null || parameterElement.getGenericType().isArray()) {
+//            return false;
+//        }
+//        return
+//    }
 
     /**
      * Does the given type have an {@link Introspected}.

@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.OrderBy;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.Embedded;
@@ -29,7 +30,6 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
-import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityQuery;
 import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
@@ -53,13 +53,16 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.Element;
 import io.micronaut.inject.ast.ParameterElement;
 import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.Order;
+import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Selection;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -93,7 +96,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
     protected PersistentEntityCriteriaQuery<Object> createQuery(MethodMatchContext matchContext,
                                                                 PersistentEntityCriteriaBuilder cb,
                                                                 List<AnnotationValue<Join>> joinSpecs) {
-        Element paginationParameter = matchContext.getParametersInRole().get(TypeRole.PAGEABLE);
+        Element paginationParameter = matchContext.findParameterInRole(TypeRole.PAGEABLE);
         boolean isPageable = matchContext.hasParameterInRole(TypeRole.PAGEABLE);
         SourcePersistentEntity persistentEntity = matchContext.getRootEntity();
         PersistentEntityCriteriaQuery<Object> criteriaQuery;
@@ -104,11 +107,15 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             criteriaQuery = createDefaultQuery(matchContext, cb, joinSpecs);
             if (isPageable) {
                 AbstractPersistentEntityQuery<?, ?> abstractPersistentEntityQuery = (AbstractPersistentEntityQuery<?, ?>) criteriaQuery;
-                abstractPersistentEntityQuery.getParametersInRole().put(TypeRole.PAGEABLE, List.of(matchContext.getParameters()).indexOf(paginationParameter));
+                abstractPersistentEntityQuery.getParametersInRole().put(List.of(matchContext.getParameters()).indexOf(paginationParameter), TypeRole.PAGEABLE);
             } else if (matchContext.hasParameterInRole(TypeRole.SORT)) {
-                Element sortParameter = matchContext.getParametersInRole().get(TypeRole.SORT);
+                Element sortParameter = matchContext.findParameterInRole(TypeRole.SORT);
                 AbstractPersistentEntityQuery<?, ?> abstractPersistentEntityQuery = (AbstractPersistentEntityQuery<?, ?>) criteriaQuery;
-                abstractPersistentEntityQuery.getParametersInRole().put(TypeRole.SORT, List.of(matchContext.getParameters()).indexOf(sortParameter));
+                abstractPersistentEntityQuery.getParametersInRole().put(List.of(matchContext.getParameters()).indexOf(sortParameter), TypeRole.SORT);
+            } else if (matchContext.hasParameterInRole(TypeRole.LIMIT)) {
+                Element limitParameter = matchContext.findParameterInRole(TypeRole.LIMIT);
+                AbstractPersistentEntityQuery<?, ?> abstractPersistentEntityQuery = (AbstractPersistentEntityQuery<?, ?>) criteriaQuery;
+                abstractPersistentEntityQuery.getParametersInRole().put(List.of(matchContext.getParameters()).indexOf(limitParameter), TypeRole.LIMIT);
             }
         }
         return criteriaQuery;
@@ -134,6 +141,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         applyProjection(matchContext, cb, root, query);
         applyPredicate(matchContext, cb, root, query);
         applyOrder(cb, root, query);
+        applyOrderByAnnotation(cb, root, query, matchContext.getMethodElement());
         applyForUpdate(query);
         applyLimit(query);
         applyJoinSpecs(root, joinSpecs);
@@ -174,7 +182,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         // Apply pagination and sort to do subquery
         // NOTE: Sort shouldn't be applied if unpaged
         AbstractPersistentEntityQuery<?, ?> abstractPersistentEntityQuery = (AbstractPersistentEntityQuery<?, ?>) paginationSubquery;
-        abstractPersistentEntityQuery.getParametersInRole().put(TypeRole.PAGEABLE_REQUIRED, pageableParameterIndex);
+        abstractPersistentEntityQuery.getParametersInRole().put(pageableParameterIndex, TypeRole.PAGEABLE_REQUIRED);
 
         PersistentEntitySubquery<Object> filteredSubquery = paginationSubquery.subquery(mainRoot.getExpressionType());
         PersistentEntityRoot<Object> filteredRoot = filteredSubquery.from(matchContext.getRootEntity());
@@ -185,8 +193,10 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
         applyProjection(matchContext, cb, mainRoot, mainQuery);
         applyPredicate(matchContext, cb, filteredRoot, filteredSubquery);
-        applyOrder(cb, filteredRoot, filteredSubquery);
+//        applyOrder(cb, filteredRoot, filteredSubquery);
+//        applyOrderByAnnotation(cb, filteredRoot, filteredSubquery, matchContext.getMethodElement());
         applyOrder(cb, mainRoot, mainQuery);
+        applyOrderByAnnotation(cb, mainRoot, mainQuery, matchContext.getMethodElement());
 
         applyForUpdate(mainQuery);
 
@@ -199,7 +209,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
         // Sort last query
         AbstractPersistentEntityQuery<?, ?> mainEntityQuery = (AbstractPersistentEntityQuery<?, ?>) mainQuery;
-        mainEntityQuery.getParametersInRole().put(TypeRole.SORT, pageableParameterIndex);
+        mainEntityQuery.getParametersInRole().put(pageableParameterIndex, TypeRole.SORT);
 
         return mainQuery;
     }
@@ -247,8 +257,53 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
     private void applyOrder(PersistentEntityCriteriaBuilder cb,
                             PersistentEntityRoot<Object> root,
                             PersistentEntityQuery<Object> query) {
-        findMatchPart(matches, QueryMatchId.ORDER)
-            .ifPresent(text -> applyOrderBy(text, root, query, cb));
+        findMatchPart(matches, QueryMatchId.ORDER).ifPresent(text -> applyOrderBy(text, root, query, cb));
+    }
+
+    private void applyOrderByAnnotation(PersistentEntityCriteriaBuilder cb,
+                                                PersistentEntityRoot<Object> root,
+                                                PersistentEntityQuery<Object> query,
+                                                AnnotationMetadata annotationMetadata) {
+        List<Order> orders = new ArrayList<>();
+        for (AnnotationValue<?> av : annotationMetadata.getAnnotationValuesByStereotype(OrderBy.class.getName())) {
+            orders.add(cb.sort(
+                findOrderProperty(root, av.stringValue().orElseThrow()),
+                !av.booleanValue("descending").orElse(false),
+                av.booleanValue("ignoreCase").orElse(false)
+            ));
+        }
+        if (!orders.isEmpty()) {
+            query.orderBy(orders);
+        }
+    }
+
+    private <T> Expression<?> findOrderProperty(PersistentEntityRoot<T> root, String propertyName) {
+        if (root.getPersistentEntity().getPropertyByName(propertyName) != null) {
+            return root.get(propertyName);
+        }
+        // Look at association paths
+        io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> property = findProperty(root, propertyName);
+        if (property != null) {
+            return property;
+        }
+        Path<?> path = root;
+        for (Iterator<String> iterator = StringUtils.splitOmitEmptyStrings(propertyName, '.').iterator(); path != null && iterator.hasNext(); ) {
+            String next = iterator.next();
+            if (iterator.hasNext()) {
+                path = ((From<?, ?>) path).join(next);
+            } else {
+                try {
+                    path = path.get(next);
+                } catch (Exception e) {
+                    // Ignore
+                    path = null;
+                }
+            }
+        }
+        if (path == null) {
+            throw new MatchFailedException("Cannot order by non-existent property: " + propertyName);
+        }
+        return path;
     }
 
     private void applyDistinct(PersistentEntityCriteriaQuery<Object> mainQuery) {
@@ -427,18 +482,6 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         if (!orders.isEmpty()) {
             query.orderBy(orders);
         }
-    }
-
-    private <T> PersistentPropertyPath<?> findOrderProperty(PersistentEntityRoot<T> root, String propertyName) {
-        if (root.getPersistentEntity().getPropertyByName(propertyName) != null) {
-            return root.get(propertyName);
-        }
-        // Look at association paths
-        PersistentPropertyPath<?> property = findProperty(root, propertyName);
-        if (property != null) {
-            return property;
-        }
-        throw new MatchFailedException("Cannot order by non-existent property: " + propertyName);
     }
 
     /**

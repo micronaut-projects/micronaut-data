@@ -370,6 +370,8 @@ public interface FindersUtils {
             return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindSliceInterceptor.class);
         } else if (isContainer(returnType, Iterable.class)) {
             return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindAllInterceptor.class);
+        } else if (returnType.isArray()) {
+            return typeAndInterceptorEntry(matchContext, returnType.fromArray(), FindAllInterceptor.class);
         } else if (isContainer(returnType, Publisher.class)) {
             return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindAllReactiveInterceptor.class);
         } else {

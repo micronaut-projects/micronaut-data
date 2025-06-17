@@ -23,13 +23,13 @@ public interface ProductRepository extends CrudRepository<Product, ObjectId> {
 
     // tag::async[]
     @Join("manufacturer")
-    CompletableFuture<Product> findByNameRegex(String str);
+    CompletableFuture<Product> findFirstByNameRegex(String str);
 
     CompletableFuture<Long> countByManufacturerName(String name);
     // end::async[]
     // tag::reactive[]
     @Join("manufacturer")
-    Mono<Product> queryByNameRegex(String str);
+    Mono<Product> queryFirstByNameRegex(String str);
 
     Mono<Long> countDistinctByManufacturerName(String name);
     // end::reactive[]

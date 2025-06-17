@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
-import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Experimental;
@@ -26,6 +25,7 @@ import io.micronaut.core.expressions.EvaluatedExpressionReference;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.By;
 import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
@@ -165,15 +165,15 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         ParameterElement entitiesParameter = getEntitiesParameter();
         ParameterElement idParameter = Arrays.stream(matchContext.getParameters()).filter(p -> p.hasAnnotation(Id.class)).findFirst().orElse(null);
         if (idParameter != null) {
-            methodMatchInfo.addParameterRole(TypeRole.ID, idParameter.stringValue(Parameter.class).orElse(idParameter.getName()));
+            methodMatchInfo.addParameterRole(idParameter, TypeRole.ID);
         }
         boolean encodeEntityParameters = !DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(matchContext.getAnnotationMetadata());
         if (entityParameter != null) {
             methodMatchInfo.encodeEntityParameters(encodeEntityParameters);
-            methodMatchInfo.addParameterRole(TypeRole.ENTITY, entityParameter.getName());
+            methodMatchInfo.addParameterRole(entityParameter, TypeRole.ENTITY);
         } else if (entitiesParameter != null) {
             methodMatchInfo.encodeEntityParameters(encodeEntityParameters);
-            methodMatchInfo.addParameterRole(TypeRole.ENTITIES, entitiesParameter.getName());
+            methodMatchInfo.addParameterRole(entitiesParameter, TypeRole.ENTITIES);
         }
         return methodMatchInfo;
     }
@@ -204,13 +204,23 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             List<Predicate> predicates = new ArrayList<>(queryParams.size());
             for (ParameterElement queryParam : queryParams) {
                 String paramName = queryParam.getName();
-                PersistentPropertyPath propPath = rootEntity.getPropertyPath(rootEntity.getPath(paramName).orElse(paramName));
+                boolean isId = TypeRole.ID.equals(paramName);
+                if (queryParam.hasAnnotation(By.class)) {
+                    paramName = queryParam.stringValue(By.class).orElseThrow();
+                    isId = By.ID.equals(paramName);
+                }
+                PersistentPropertyPath propPath;
+                if (isId && rootEntity.hasIdentity()) {
+                    propPath = new PersistentPropertyPath(rootEntity.getIdentity());
+                } else {
+                    propPath = rootEntity.getPropertyPath(rootEntity.getPath(paramName).orElse(paramName));
+                }
                 ParameterExpression<Object> param = ((SourcePersistentEntityCriteriaBuilder) cb).parameter(queryParam, propPath);
                 if (propPath == null) {
-                    if (TypeRole.ID.equals(paramName) && (rootEntity.hasIdentity() || rootEntity.hasCompositeIdentity())) {
+                    if (isId && (rootEntity.hasIdentity() || rootEntity.hasCompositeIdentity())) {
                         predicates.add(cb.equal(root.id(), param));
                     } else {
-                        throw new MatchFailedException("Cannot query persistentEntity [" + rootEntity.getSimpleName() + "] on non-existent property: " + paramName);
+                        throw new MatchFailedException("Cannot query entity [" + rootEntity.getSimpleName() + "] on non-existent property: " + paramName);
                     }
                 } else {
                     PersistentProperty property = propPath.getProperty();
@@ -528,7 +538,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         if (property != null) {
             return property;
         }
-        throw new MatchFailedException("Cannot query entity [" + root.getPersistentEntity().getSimpleName() + "] on non-existent property: " + propertyName);
+        throw new MatchFailedException("Cannot query entity [" + root.getPersistentEntity().getSimpleName() + "] on non-existent property: " + propertyName + " " + root.getPersistentEntity().getPersistentProperties().stream().map(PersistentProperty::getName).toList());
     }
 
     @Nullable

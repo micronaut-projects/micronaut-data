@@ -18,6 +18,7 @@ package io.micronaut.data.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.core.annotation.Creator;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.data.model.Pageable.Cursor;
 import io.micronaut.serde.annotation.Serdeable;
@@ -34,7 +35,8 @@ import java.util.Optional;
  * @param <T> The generic type
  */
 @Serdeable
-class DefaultCursoredPage<T> extends DefaultPage<T> implements CursoredPage<T> {
+@Internal
+final class DefaultCursoredPage<T> extends DefaultPage<T> implements CursoredPage<T> {
 
     private final List<Cursor> cursors;
 

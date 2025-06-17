@@ -27,10 +27,14 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
 import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.inject.ast.EnumConstantElement;
+import io.micronaut.inject.ast.EnumElement;
 import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.ast.TypedElement;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -98,6 +102,32 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
     @Override
     public boolean isEnum() {
         return type.isEnum();
+    }
+
+    @Override
+    public List<EnumConstant> getEnumConstants() {
+        if (type instanceof EnumElement enumElement) {
+            List<EnumConstant> list = new ArrayList<>();
+            int i = 0;
+            for (EnumConstantElement e : enumElement.elements()) {
+                int finalI = i;
+                EnumConstant enumConstant = new EnumConstant() {
+                    @Override
+                    public String name() {
+                        return e.getName();
+                    }
+
+                    @Override
+                    public int ordinal() {
+                        return finalI;
+                    }
+                };
+                list.add(enumConstant);
+                i++;
+            }
+            return list;
+        }
+        return List.of();
     }
 
     @Override

@@ -23,7 +23,6 @@ import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
 import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
-import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.query.QueryModelPredicateVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.query.QueryModelSelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.util.Joiner;
@@ -31,13 +30,9 @@ import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder2;
 import io.micronaut.data.model.query.builder.QueryResult;
-import jakarta.persistence.criteria.Order;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
-import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requireProperty;
 
 /**
  * The Legacy query builder wrapper.
@@ -81,18 +76,9 @@ final class LegacyQueryModelQueryBuilder implements QueryBuilder2 {
             entityRoot.visitSelection(new QueryModelSelectionVisitor(qm, definition.isDistinct()));
             entityRoot.visitSelection(joiner);
         }
-        List<Order> orders = definition.order();
-        if (orders != null && !orders.isEmpty()) {
-            List<Sort.Order> sortOrders = orders.stream().map(o -> {
-                PersistentPropertyPath<?> propertyPath = requireProperty(o.getExpression());
-                joiner.joinIfNeeded(propertyPath);
-                String name = propertyPath.getPathAsString();
-                if (o.isAscending()) {
-                    return Sort.Order.asc(name);
-                }
-                return Sort.Order.desc(name);
-            }).toList();
-            qm.sort(Sort.of(sortOrders));
+        Sort sort = definition.asSort();
+        if (sort.isSorted()) {
+            qm.sort(sort);
         }
         for (Map.Entry<String, Joiner.Joined> e : joiner.getJoins().entrySet()) {
             qm.join(e.getKey(), Optional.ofNullable(e.getValue().getType()).orElse(Join.Type.DEFAULT), e.getValue().getAlias());

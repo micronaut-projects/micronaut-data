@@ -1,0 +1,198 @@
+Micronaut Data implements Jakarta Data 1.0 specification.
+
+Micronaut Data provides implementation support for the Jakarta Data 1.0 specification (https://jakarta.ee/specifications/data/1.0/jakarta-data-1.0), allowing developers to leverage Jakarta Data's standardized approach to data access within Micronaut applications. This integration combines Micronaut's efficient Ahead of Time (AoT) compilation capabilities with Jakarta Data's standardized repository pattern. The Jakarta Data specification provides an API to simplify data access. It enables the Java developer to focus on the data model, while delegating away the complexities of data persistence. To make this possible, Jakarta Data includes a variety of features such as pre-built interfaces for data access, offset and cursor based pagination strategies, and the ability to compose custom query methods that the framework implements.
+
+## Configuration
+To use Jakarta Data annotations in your Micronaut project, ensure you have the following dependency:
+
+dependency:jakarta.data:jakarta-data-api[]
+
+## Key features
+
+Micronaut Data supports a combination of Jakarta Data annotations and repositories with Micronaut annotations.
+It's still required to use `@JdbcRepository`, `@MongoRepository` etc to specify which data implementation should be used.
+
+### Core Repository Features
+- Repository pattern with annotation `@Repository`
+- Standard CRUD operations out of the box
+- Type-safe query methods
+- Automatic query derivation from method names
+
+### Query Capabilities
+- Method name-based query generation
+- Custom queries with annotation `@Query`
+- Dynamic finder methods with `@Find`
+- Result ordering with `@OrderBy`
+- Pagination support via `@Limit` and `@Offset`
+
+### Data Modification
+- Entity insertion with `@Insert`
+- Updates with `@Update`
+- Persistence with `@Save`
+- Deletion with `@Delete`
+
+## Repository Mapping
+
+The implementation combines the benefits of Micronaut's efficient compilation and runtime characteristics with Jakarta Data's standardized approach to data access.
+
+For more detailed information about individual features and capabilities, please refer to the official Micronaut Data documentation and the Jakarta Data 1.0 specification.
+
+## Jakarta Data Annotations
+
+### @Repository
+The core annotation that marks an interface as a Jakarta Data repository.
+``` java
+@Repository
+public interface UserRepository {
+    // repository methods
+}
+```
+
+NOTE: The default implementation is for JPA, add `@JdbcRepository`, `@MongoRepository` etc. for correct implementation
+
+### @OrderBy
+Specifies the ordering of query results.
+``` java
+@Repository
+public interface UserRepository {
+    @OrderBy("lastName ASC, firstName ASC")
+    List<User> findAll();
+}
+```
+
+## Query Annotations
+
+### @Find
+Defines custom finder queries.
+``` java
+@Repository
+public interface UserRepository {
+    @Find
+    List<User> findByEmailContaining(String email);
+}
+```
+
+### @Query
+Specifies a custom query string.
+``` java
+@Repository
+public interface UserRepository {
+    @Query("SELECT u FROM User u WHERE u.status = :status")
+    List<User> findByCustomQuery(String status);
+}
+```
+
+### @Save
+Conditionally performs insert or update operations on entities. Acts as insert for new entities and update for existing ones.
+``` java
+@Repository
+public interface UserRepository {
+    @Save
+    User save(User user);
+}
+```
+
+### @Update
+Updates the state of existing entities in the database. Throws an exception if entity doesn't exist.
+``` java
+@Repository
+public interface UserRepository {
+    @Update
+    User update(User user);
+}
+
+```
+
+### @Insert
+Adds new entities to the database. Throws an exception if entity with same ID already exists.
+``` java
+@Repository
+public interface UserRepository {
+    @Insert
+    User insert(User user);
+}
+```
+
+### @Delete
+Removes entities from the database.
+``` java
+@Repository
+public interface UserRepository {
+    @Delete
+    void delete(User user);
+}
+```
+
+## Method Parameter Annotations
+
+### @Param
+Names a method parameter for use in queries.
+``` java
+@Repository
+public interface UserRepository {
+    @Query("SELECT u FROM User u WHERE u.department = :dept")
+    List<User> findByDepartment(@Param("dept") String department);
+}
+```
+
+### @Limit
+Specifies the maximum number of results to return.
+``` java
+@Repository
+public interface UserRepository {
+    List<User> findByLastName(String lastName, @Limit int maxResults);
+}
+```
+
+### @Offset
+Specifies the starting position in the result set.
+``` java
+@Repository
+public interface UserRepository {
+    List<User> findAll(@Offset int startPosition, @Limit int maxResults);
+}
+```
+
+## Repository Method Conventions
+Besides annotations, Jakarta Data also supports method name conventions for common queries:
+``` java
+@Repository
+public interface UserRepository {
+    // Derived finder methods
+    List<User> findByLastName(String lastName);
+    Optional<User> findByEmail(String email);
+    List<User> findByAgeGreaterThan(int age);
+
+    // Count methods
+    long countByStatus(String status);
+
+    // Existence checks
+    boolean existsByEmail(String email);
+
+    // Delete methods
+    void deleteByLastName(String lastName);
+}
+```
+
+== Pagination
+
+=== Offset Pagination
+
+Example of different pagination approaches:
+
+snippet::example.BookRepositoryJakartaTest[project-base="doc-examples/jdbc-jakarta-data-example", tags="pageable", indent="0"]
+
+=== Cursor-based Pagination
+
+Advanced pagination with cursors and sorting:
+
+snippet::example.BookRepositoryJakartaTest[project-base="doc-examples/jdbc-jakarta-data-example", tags="cursored-pageable", indent="0"]
+
+<1> Create a page with sorting by title
+<2> Get the next page using cursor
+<3> Find books with pages between specific values
+<4> Find books with titles starting with a specific string
+
+=== Jakarta Data Exceptions
+
+Micronaut Data will convert exceptions to Jakarta Data variations only if the repository is annotated with `@jakarta.data.repository.Repository` or the method is using any other Jakarta Data annotations `@jakarta.data.repository.Find`, `@jakarta.data.repository.Save` etc.

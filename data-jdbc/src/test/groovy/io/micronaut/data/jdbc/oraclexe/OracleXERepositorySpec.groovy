@@ -16,6 +16,7 @@
 package io.micronaut.data.jdbc.oraclexe
 
 import groovy.transform.Memoized
+import io.micronaut.data.model.Pageable
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.Face
 import io.micronaut.data.tck.repositories.*

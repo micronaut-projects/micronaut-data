@@ -202,6 +202,16 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
 
     @Override
     public <R> Mono<Page<R>> findPage(PagedQuery<R> pagedQuery) {
+        if (pagedQuery instanceof PreparedQuery<?, ?> pg) {
+            PreparedQuery<R, R> preparedQuery = (PreparedQuery<R, R>) pg;
+            return findAll(preparedQuery)
+                .collectList()
+                .map(content -> Page.of(
+                    content,
+                    pagedQuery.getPageable(),
+                    -1L
+                ));
+        }
         throw new DataAccessException("Not supported!");
     }
 

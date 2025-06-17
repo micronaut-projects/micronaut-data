@@ -18,6 +18,7 @@ package io.micronaut.data.runtime.operations.internal.sql;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanWrapper;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.QueryResult;
 import io.micronaut.data.model.JsonDataType;
@@ -55,9 +56,13 @@ public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStored
      * @param storedQuery             The stored query
      * @param runtimePersistentEntity The persistent entity
      * @param queryBuilder            The query builder
+     * @param conversionService       The conversion service
      */
-    public DefaultSqlStoredQuery(StoredQuery<E, R> storedQuery, RuntimePersistentEntity<E> runtimePersistentEntity, SqlQueryBuilder2 queryBuilder) {
-        super(storedQuery, runtimePersistentEntity);
+    public DefaultSqlStoredQuery(StoredQuery<E, R> storedQuery,
+                                 RuntimePersistentEntity<E> runtimePersistentEntity,
+                                 SqlQueryBuilder2 queryBuilder,
+                                 ConversionService conversionService) {
+        super(storedQuery, runtimePersistentEntity, conversionService);
         this.queryBuilder = queryBuilder;
         Objects.requireNonNull(storedQuery, "Query cannot be null");
         Objects.requireNonNull(queryBuilder, "Builder cannot be null");

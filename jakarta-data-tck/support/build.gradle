@@ -1,0 +1,32 @@
+plugins {
+    id "java-library"
+    id "io.micronaut.build.internal.data-base"
+    id "io.micronaut.build.internal.data-dependencies"
+}
+
+dependencies {
+    api mn.micronaut.inject.java
+    api mn.micronaut.inject
+    api mn.micronaut.aop
+    api mn.micronaut.context
+
+    api libs.jakarta.data.tck
+    api(libs.jakarta.data.tck) {
+        artifact {
+            classifier = "sources"
+        }
+    }
+    api libs.managed.jakarta.data.api
+
+    api mnLogging.slf4j.jul.to.slf4j
+    api("jakarta.servlet:jakarta.servlet-api:6.1.0")
+    api mnSql.jakarta.persistence.api
+
+    runtimeOnly(mnLogging.logback.classic)
+
+    api mnTest.junit.jupiter.api
+    api libs.junit.platform.suite.engine
+
+    compileOnly projects.micronautDataJdbc
+    compileOnly projects.micronautDataMongodb
+}

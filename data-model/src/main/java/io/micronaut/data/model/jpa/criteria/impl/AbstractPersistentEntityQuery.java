@@ -73,7 +73,7 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requirePro
 public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEntityQuery<T>> implements AbstractQuery<T>,
     QueryResultPersistentEntityCriteriaQuery, PersistentEntityQuery<T> {
 
-    protected Map<String, Integer> parametersInRole = new LinkedHashMap<>();
+    protected Map<Integer, String> parametersInRole = new LinkedHashMap<>();
     protected final CriteriaBuilder criteriaBuilder;
     protected final ExpressionType<T> resultType;
     protected Predicate predicate;
@@ -90,7 +90,12 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
         this.criteriaBuilder = criteriaBuilder;
     }
 
-    public final Map<String, Integer> getParametersInRole() {
+    @Override
+    public PersistentEntity getPersistentEntity() {
+        return entityRoot.getPersistentEntity();
+    }
+
+    public final Map<Integer, String> getParametersInRole() {
         return parametersInRole;
     }
 
@@ -386,7 +391,7 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
         private final List<Order> order;
         private final int limit;
         private final int offset;
-        private final Map<String, Integer> parametersInRole;
+        private final Map<Integer, String> parametersInRole;
 
         public SelectQueryDefinitionImpl(Root<?> root,
                                          PersistentEntity persistentEntity,
@@ -398,7 +403,7 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
                                          List<Order> order,
                                          int limit,
                                          int offset,
-                                         Map<String, Integer> parametersInRole) {
+                                         Map<Integer, String> parametersInRole) {
             super(persistentEntity, predicate, joinPaths);
             this.root = root;
             this.selection = selection;
@@ -411,7 +416,7 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
         }
 
         @Override
-        public Map<String, Integer> parametersInRole() {
+        public Map<Integer, String> parametersInRole() {
             return parametersInRole;
         }
 

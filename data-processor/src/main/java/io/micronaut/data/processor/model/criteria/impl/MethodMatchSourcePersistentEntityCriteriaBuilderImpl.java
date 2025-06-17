@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.processor.model.criteria.impl;
 
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.DataType;
@@ -66,7 +67,7 @@ public final class MethodMatchSourcePersistentEntityCriteriaBuilderImpl extends 
     }
 
     @Override
-    public <T> PersistentEntityCriteriaQuery<T> createQuery(Class<T> resultClass) {
+    public <T> SourcePersistentEntityCriteriaQuery<T> createQuery(Class<T> resultClass) {
         return new SourcePersistentEntityCriteriaQueryImpl<>(resultClass, methodMatchContext::getEntity, this);
     }
 
@@ -89,6 +90,24 @@ public final class MethodMatchSourcePersistentEntityCriteriaBuilderImpl extends 
     public ParameterExpression<Object> parameter(ParameterElement parameterElement,
                                                  PersistentPropertyPath propertyPath) {
         return new SourceParameterExpressionImpl(dataTypes, methodMatchContext.getParameters(), parameterElement, false, propertyPath);
+    }
+
+    @Override
+    public ParameterExpression<Object> parameterReferencingMethodParameter(int parameterIndex) {
+        return new SourceParameterExpressionImpl(dataTypes, methodMatchContext.getParameters(), methodMatchContext.getParameters()[parameterIndex], false, null);
+    }
+
+    @Override
+    public ParameterExpression<Object> parameterReferencingMethodParameter(String parameterName) {
+        ParameterElement parameterElement = null;
+        ParameterElement[] parameters = methodMatchContext.getParameters();
+        for (ParameterElement parameter : parameters) {
+            if (parameter.stringValue(Parameter.class).orElse(parameter.getName()).equals(parameterName)) {
+                parameterElement = parameter;
+                break;
+            }
+        }
+        return new SourceParameterExpressionImpl(dataTypes, methodMatchContext.getParameters(), parameterElement, false, null);
     }
 
     @Override

@@ -29,7 +29,8 @@ import jakarta.inject.Singleton;
  */
 @Internal
 @Singleton
-final class DefaultIdPropertyNamingStrategy implements IdPropertyNamingStrategy {
+final class
+DefaultIdPropertyNamingStrategy implements IdPropertyNamingStrategy {
     @Override
     public String translate(AnnotatedElement element) {
         return element.getName();

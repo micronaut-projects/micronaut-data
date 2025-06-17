@@ -21,6 +21,9 @@ import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.DefaultOrder;
 import io.micronaut.data.model.query.JoinPath;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
@@ -31,6 +34,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requireProperty;
 
 /**
  * An interface capable of encoding a query into a string and a set of named parameters.
@@ -115,6 +120,28 @@ public interface QueryBuilder2 {
         List<Order> order();
 
         /**
+         * @return Return the order as sort
+         */
+        default Sort asSort() {
+            List<Order> orders = order();
+            if (orders == null || orders.isEmpty()) {
+                return Sort.unsorted();
+            }
+            List<Sort.Order> sortOrders = orders.stream().map(o -> {
+                PersistentPropertyPath<?> propertyPath = requireProperty(o.getExpression());
+                String name = propertyPath.getPathAsString();
+                if (o instanceof DefaultOrder<?> order) {
+                    return new Sort.Order(name, order.isAscending() ? Sort.Order.Direction.ASC : Sort.Order.Direction.DESC, order.isIgnoreCase());
+                }
+                if (o.isAscending()) {
+                    return Sort.Order.asc(name);
+                }
+                return Sort.Order.desc(name);
+            }).toList();
+            return Sort.of(sortOrders);
+        }
+
+        /**
          * @return Is the query marked for update
          */
         default boolean isForUpdate() {
@@ -131,7 +158,7 @@ public interface QueryBuilder2 {
         /**
          * @return The parameters in role
          */
-        default Map<String, Integer> parametersInRole() {
+        default Map<Integer, String> parametersInRole() {
             return Map.of();
         }
 

@@ -15,12 +15,8 @@
  */
 package io.micronaut.data.runtime.intercept;
 
-import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.intercept.FindCursoredPageInterceptor;
-import io.micronaut.data.model.CursoredPageable;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.operations.RepositoryOperations;
 
 /**
@@ -42,16 +38,4 @@ public class DefaultFindCursoredPageInterceptor<T, R> extends DefaultAbstractFin
         super(datastore);
     }
 
-    @Override
-    protected Pageable getPageable(MethodInvocationContext<?, ?> context) {
-        Pageable pageable = super.getPageable(context);
-        if (pageable.getMode() == Mode.OFFSET) {
-            if (pageable.getNumber() == 0) {
-                pageable = CursoredPageable.from(pageable.getSize(), pageable.getSort());
-            } else {
-                throw new IllegalArgumentException("Pageable with offset mode provided, but method must return a cursored page");
-            }
-        }
-        return pageable;
-    }
 }
