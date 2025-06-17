@@ -27,7 +27,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 /**
  * Execute tests with a Persistence specific entity with a repository that requires read and writes (AKA not read-only)
  */
-@Property(name = "jpa.default.properties.hibernate.show_sql", value = "true")
 @H2DBProperties
 @MicronautTest(transactional = false)
 public class PersistenceEntityTests {
