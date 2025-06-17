@@ -272,7 +272,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
 
     /**
      * @return The query limit
-     * @since 4.12
+     * @since 4.13
      */
     @NonNull
     default Limit getQueryLimit() {
@@ -281,7 +281,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
 
     /**
      * @return The runtime sort
-     * @since 4.12
+     * @since 4.13
      */
     @NonNull
     default Sort getSort() {

@@ -248,12 +248,18 @@ public interface PersistentProperty extends PersistentElement {
     /**
      * The enum constant.
      *
-     * @since 4.12
+     * @since 4.13
      */
     interface EnumConstant {
 
+        /**
+         * @return The name of the enum constant.
+         */
         String name();
 
+        /**
+         * @return The ordinal of the enum constant.
+         */
         int ordinal();
 
     }

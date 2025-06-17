@@ -68,7 +68,7 @@ import java.util.function.Function;
  * The utils to generate Criteria queries from Jakarta Data Query Language statements.
  *
  * @author Denis Stepanov
- * @since 4.12
+ * @since 4.13
  */
 @Internal
 public final class JDQLCriteriaBuilderUtils {

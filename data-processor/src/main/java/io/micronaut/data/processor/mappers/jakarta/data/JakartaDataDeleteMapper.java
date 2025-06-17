@@ -31,7 +31,7 @@ import java.util.List;
  * Maps Jakarta Data @Delete annotation.
  *
  * @author Denis Stepanov
- * @since 4.12
+ * @since 4.13
  */
 @Internal
 public final class JakartaDataDeleteMapper implements NamedAnnotationMapper {

@@ -31,7 +31,7 @@ import jakarta.inject.Singleton;
  * The Micronaut Data to Jakarta Data exception converter.
  *
  * @author Denis Stepanov
- * @since 4.12
+ * @since 4.13
  */
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @Singleton

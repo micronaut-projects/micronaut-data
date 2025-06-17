@@ -16,6 +16,7 @@
 package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
+import io.micronaut.core.annotation.NonNull;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
@@ -54,7 +55,8 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @param ignoreCase If ignore case should be used
      * @return ascending ordering corresponding to the expression
      */
-    Order sort(Expression<?> x, boolean ascending, boolean ignoreCase);
+    @NonNull
+    Order sort(@NonNull Expression<?> x, boolean ascending, boolean ignoreCase);
 
     /**
      * OR restriction predicate.

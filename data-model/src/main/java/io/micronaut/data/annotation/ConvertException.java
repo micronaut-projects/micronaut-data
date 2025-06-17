@@ -29,7 +29,7 @@ import java.lang.annotation.Target;
  * The exception converter definition for the data method.
  *
  * @author Denis Stepanov
- * @since 4.12
+ * @since 4.13
  */
 @Introduction
 @Retention(RetentionPolicy.RUNTIME)

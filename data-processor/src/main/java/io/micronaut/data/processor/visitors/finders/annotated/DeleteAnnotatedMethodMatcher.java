@@ -33,7 +33,7 @@ import java.util.List;
  * The Delete annotation matcher.
  *
  * @author Denis Stepanov
- * @since 4.12
+ * @since 4.13
  */
 @Internal
 public final class DeleteAnnotatedMethodMatcher implements MethodMatcher {

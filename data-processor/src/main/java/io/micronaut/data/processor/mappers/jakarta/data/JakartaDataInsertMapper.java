@@ -31,7 +31,7 @@ import java.util.List;
  * Maps Jakarta Data @Insert annotation.
  *
  * @author Denis Stepanov
- * @since 4.12
+ * @since 4.13
  */
 @Internal
 public final class JakartaDataInsertMapper implements NamedAnnotationMapper {

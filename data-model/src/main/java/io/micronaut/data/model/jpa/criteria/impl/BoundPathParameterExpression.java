@@ -24,7 +24,7 @@ import io.micronaut.data.model.query.builder.QueryParameterBinding;
  *
  * @param <T> The parameter type
  * @author Denis Stepanov
- * @since 4.12.0
+ * @since 4.13
  */
 @Internal
 public final class BoundPathParameterExpression<T> extends IParameterExpression<T> {

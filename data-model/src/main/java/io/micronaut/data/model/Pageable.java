@@ -307,7 +307,7 @@ public interface Pageable extends Sort {
      * @param sort         the sort
      * @param requestTotal The request total
      * @return The pageable
-     * @since 4.12
+     * @since 4.13
      */
     static @NonNull Pageable from(
         int page,

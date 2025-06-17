@@ -30,7 +30,7 @@ import io.micronaut.inject.processing.ProcessingException;
  * The Insert annotation matcher.
  *
  * @author Denis Stepanov
- * @since 4.12
+ * @since 4.13
  */
 @Internal
 public final class InsertAnnotatedMethodMatcher implements MethodMatcher {

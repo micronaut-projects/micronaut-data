@@ -22,7 +22,7 @@ import io.micronaut.core.annotation.NonNull;
  * The exception converter.
  *
  * @author Denis Stepanov
- * @since 4.12
+ * @since 4.13
  */
 @Experimental
 public interface ExceptionConverter {

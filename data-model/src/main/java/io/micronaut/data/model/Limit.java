@@ -21,7 +21,7 @@ import io.micronaut.core.annotation.Internal;
 /**
  * The query limit.
  *
- * @since 4.12
+ * @since 4.13
  */
 @Experimental
 public interface Limit {

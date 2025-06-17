@@ -22,7 +22,7 @@ import io.micronaut.data.exceptions.ExceptionConverter;
  * The Jakarta Data exception converter.
  *
  * @author Denis Stepanov
- * @since 4.12
+ * @since 4.13
  */
 @Internal
 public interface JakartaDataExceptionConverter extends ExceptionConverter {

@@ -49,7 +49,7 @@ import java.util.function.Function;
  * The Jakarta Data Query annotation matcher.
  *
  * @author Denis Stepanov
- * @since 4.12
+ * @since 4.13
  */
 @Internal
 public final class JakartaDataQueryAnnotatedMethodMatcher implements MethodMatcher {

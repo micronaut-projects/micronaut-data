@@ -30,7 +30,7 @@ import java.util.List;
  * Maps Jakarta Data @OrderBy.List annotation.
  *
  * @author Denis Stepanov
- * @since 4.12
+ * @since 4.13
  */
 @Internal
 public final class JakartaDataOrderByListMapper implements NamedAnnotationMapper {

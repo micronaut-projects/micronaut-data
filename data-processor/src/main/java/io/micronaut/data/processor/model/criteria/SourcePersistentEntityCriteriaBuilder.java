@@ -62,7 +62,7 @@ public interface SourcePersistentEntityCriteriaBuilder extends PersistentEntityC
      * @param parameterIndex The parameter index
      * @param <T>            The expression type
      * @return new parameter
-     * @since 4.12
+     * @since 4.13
      */
     @NonNull
     <T> ParameterExpression<T> parameterReferencingMethodParameter(int parameterIndex);
@@ -73,7 +73,7 @@ public interface SourcePersistentEntityCriteriaBuilder extends PersistentEntityC
      * @param parameterName The parameter name
      * @param <T>           The expression type
      * @return new parameter
-     * @since 4.12
+     * @since 4.13
      */
     @NonNull
     <T> ParameterExpression<T> parameterReferencingMethodParameter(String parameterName);

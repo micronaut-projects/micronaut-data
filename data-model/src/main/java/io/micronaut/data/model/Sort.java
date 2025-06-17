@@ -255,6 +255,7 @@ public interface Sort {
          * @param property The property
          * @param ignoreCase  Whether to ignore case
          * @return The order instance
+         * @since 4.13
          */
         public static Order of(String property, boolean ignoreCase) {
             return new Order(property, Direction.ASC, ignoreCase);

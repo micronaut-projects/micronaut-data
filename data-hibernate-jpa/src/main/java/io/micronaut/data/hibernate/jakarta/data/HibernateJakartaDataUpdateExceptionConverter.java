@@ -32,7 +32,7 @@ import org.hibernate.StaleStateException;
  * The Hibernate to Jakarta Data exception converter.
  *
  * @author Denis Stepanov
- * @since 4.12
+ * @since 4.13
  */
 @Internal
 @Singleton
