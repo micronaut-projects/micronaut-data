@@ -21,14 +21,14 @@ interface ProductRepository : CrudRepository<Product, ObjectId> {
 
     // tag::async[]
     @Join("manufacturer")
-    fun findByNameRegex(str: String): CompletableFuture<Product>
+    fun findFirstByNameRegex(str: String): CompletableFuture<Product>
 
     fun countByManufacturerName(name: String?): CompletableFuture<Long>
     // end::async[]
 
     // tag::reactive[]
     @Join("manufacturer")
-    fun queryByNameRegex(str: String): Mono<Product>
+    fun queryFirstByNameRegex(str: String): Mono<Product>
 
     fun countDistinctByManufacturerName(name: String?): Mono<Long>
     // end::reactive[]
