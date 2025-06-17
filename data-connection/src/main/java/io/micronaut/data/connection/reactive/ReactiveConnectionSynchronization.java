@@ -38,6 +38,7 @@ public interface ReactiveConnectionSynchronization {
     /**
      * Invoked when the connection operation execution throws an exception.
      *
+     * @param throwable The throwable resolved when error occurs
      * @return The publisher
      */
     default Publisher<Void> onError(Throwable throwable) {
