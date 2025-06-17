@@ -49,7 +49,6 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.function.Function;
 import java.util.stream.Stream;
-import java.util.function.Function;
 
 /**
  * The utility methods for query builders.
