@@ -122,6 +122,6 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
             synchronizations = new ArrayList<>(5);
         }
         synchronizations.add(synchronization);
-        OrderUtil.sort(synchronization);
+        OrderUtil.sort(synchronizations);
     }
 }
