@@ -24,6 +24,7 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.sql.JoinColumns;
@@ -49,6 +50,7 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.function.Function;
 import java.util.stream.Stream;
+import java.util.function.Function;
 
 /**
  * The utility methods for query builders.
@@ -62,6 +64,8 @@ final class SqlQueryBuilderUtils {
     static final String ANN_JOIN_TABLE = "io.micronaut.data.annotation.sql.JoinTable";
     static final String ANN_JOIN_COLUMNS = "io.micronaut.data.annotation.sql.JoinColumns";
     static final String SEQ_SUFFIX = "_seq";
+    private static final String PREFIX = "${";
+    private static final String SUFFIX = "}";
 
     private static final String PREFIX = "${";
     private static final String SUFFIX = "}";

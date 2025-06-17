@@ -934,15 +934,15 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
         return getObjectName(schema, tableName, escape, true);
     }
 
-    private String getObjectName(String schema, String objectName, boolean escape, boolean supportDynamicValues) {
+    private String getObjectName(String schema, String objectName, boolean escape, boolean objectSupportsDynamicValues) {
         if (StringUtils.isNotEmpty(schema)) {
             if (escape) {
-                return quote(schema, supportDynamicValues) + '.' + quote(objectName, supportDynamicValues);
+                return quote(schema, true) + '.' + quote(objectName, objectSupportsDynamicValues);
             } else {
                 return schema + '.' + objectName;
             }
         } else {
-            return escape ? quote(objectName, supportDynamicValues) : objectName;
+            return escape ? quote(objectName, objectSupportsDynamicValues) : objectName;
         }
     }
 
