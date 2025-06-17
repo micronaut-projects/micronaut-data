@@ -98,7 +98,7 @@ loadScripts(document, 'script');</script>
 </li>
 <li>
 <div id="class-summary">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="class-summary-tab0" role="tab" aria-selected="true" aria-controls="class-summary.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary', 2)" class="active-table-tab">All Classes and Interfaces</button><button id="class-summary-tab1" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab1', 2)" class="table-tab">Interfaces</button><button id="class-summary-tab2" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab2', 2)" class="table-tab">Classes</button><button id="class-summary-tab3" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab3', 2)" class="table-tab">Enum Classes</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="class-summary-tab0" role="tab" aria-selected="true" aria-controls="class-summary.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary', 2)" class="active-table-tab">All Classes and Interfaces</button><button id="class-summary-tab1" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab1', 2)" class="table-tab">Interfaces</button><button id="class-summary-tab2" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab2', 2)" class="table-tab">Classes</button><button id="class-summary-tab3" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab3', 2)" class="table-tab">Enum Classes</button><button id="class-summary-tab4" role="tab" aria-selected="false" aria-controls="class-summary.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('class-summary', 'class-summary-tab4', 2)" class="table-tab">Record Classes</button></div>
 <div id="class-summary.tabpanel" role="tabpanel">
 <div class="summary-table two-column-summary" aria-labelledby="class-summary-tab0">
 <div class="table-header col-first">Class</div>
@@ -136,6 +136,14 @@ loadScripts(document, 'script');</script>
 <div class="col-first odd-row-color class-summary class-summary-tab3"><a href="JsonDataType.html" title="enum class in io.micronaut.data.model">JsonDataType</a></div>
 <div class="col-last odd-row-color class-summary class-summary-tab3">
 <div class="block">Enum of JSON data type representations or actually storage types.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab1"><a href="Limit.html" title="interface in io.micronaut.data.model">Limit</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab1">
+<div class="block">The query limit.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab4"><a href="Limit.DefaultLimit.html" title="class in io.micronaut.data.model">Limit.DefaultLimit</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab4">
+<div class="block">The default implementation.</div>
 </div>
 <div class="col-first even-row-color class-summary class-summary-tab1"><a href="Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;T&gt;</div>
 <div class="col-last even-row-color class-summary class-summary-tab1">
@@ -175,25 +183,29 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color class-summary class-summary-tab1">
 <div class="block">Models a persistent property.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="PersistentProperty.EnumConstant.html" title="interface in io.micronaut.data.model">PersistentProperty.EnumConstant</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab1">
+<div class="block">The enum constant.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">The property path representation.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab1"><a href="Slice.html" title="interface in io.micronaut.data.model">Slice</a>&lt;T&gt;</div>
-<div class="col-last even-row-color class-summary class-summary-tab1">
+<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="Slice.html" title="interface in io.micronaut.data.model">Slice</a>&lt;T&gt;</div>
+<div class="col-last odd-row-color class-summary class-summary-tab1">
 <div class="block">Inspired by the Spring Data's <code>Slice</code> and GORM's <code>PagedResultList</code>, this models a type that supports
  pagination operations.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab1"><a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab1">
+<div class="col-first even-row-color class-summary class-summary-tab1"><a href="Sort.html" title="interface in io.micronaut.data.model">Sort</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab1">
 <div class="block">An interface for objects that can be sorted.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab2"><a href="Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">The ordering of results.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab3"><a href="Sort.Order.Direction.html" title="enum class in io.micronaut.data.model">Sort.Order.Direction</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab3">
+<div class="col-first even-row-color class-summary class-summary-tab3"><a href="Sort.Order.Direction.html" title="enum class in io.micronaut.data.model">Sort.Order.Direction</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab3">
 <div class="block">Represents the direction of the ordering.</div>
 </div>
 </div>

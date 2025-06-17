@@ -44,7 +44,7 @@ loadScripts(document, 'script');</script>
 <div>
 <ul class="sub-nav-list">
 <li>Summary:&nbsp;</li>
-<li>Nested&nbsp;|&nbsp;</li>
+<li><a href="#nested-class-summary">Nested</a>&nbsp;|&nbsp;</li>
 <li><a href="#field-summary">Field</a>&nbsp;|&nbsp;</li>
 <li>Constr&nbsp;|&nbsp;</li>
 <li><a href="#method-summary">Method</a></li>
@@ -97,6 +97,15 @@ extends <a href="PersistentProperty.html" title="interface in io.micronaut.data.
 </section>
 <section class="summary">
 <ul class="summary-list">
+<!-- ======== NESTED CLASS SUMMARY ======== -->
+<li>
+<section class="nested-class-summary" id="nested-class-summary">
+<h2>Nested Class Summary</h2>
+<div class="inherited-list">
+<h2 id="nested-classes-inherited-from-class-io.micronaut.data.model.PersistentProperty">Nested classes/interfaces inherited from interface&nbsp;io.micronaut.data.model.<a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a></h2>
+<code><a href="PersistentProperty.EnumConstant.html" title="interface in io.micronaut.data.model">PersistentProperty.EnumConstant</a></code></div>
+</section>
+</li>
 <!-- =========== FIELD SUMMARY =========== -->
 <li>
 <section class="field-summary" id="field-summary">
@@ -157,6 +166,11 @@ extends <a href="PersistentProperty.html" title="interface in io.micronaut.data.
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#isForeignKey()" class="member-name-link">isForeignKey</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#isSingleEnded()" class="member-name-link">isSingleEnded</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Determines whether this association is single-ended, meaning it only has one end point.</div>
+</div>
 </div>
 </div>
 </div>
@@ -171,7 +185,7 @@ extends <a href="PersistentProperty.html" title="interface in io.micronaut.data.
 <code><a href="PersistentElement.html#getPersistedName()">getPersistedName</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.model.PersistentProperty">Methods inherited from interface&nbsp;io.micronaut.data.model.<a href="PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a></h3>
-<code><a href="PersistentProperty.html#getAlias()">getAlias</a>, <a href="PersistentProperty.html#getCapitalizedName()">getCapitalizedName</a>, <a href="PersistentProperty.html#getCapitilizedName()">getCapitilizedName</a>, <a href="PersistentProperty.html#getConverter()">getConverter</a>, <a href="PersistentProperty.html#getDataType()">getDataType</a>, <a href="PersistentProperty.html#getJsonDataType()">getJsonDataType</a>, <a href="PersistentProperty.html#getName()">getName</a>, <a href="PersistentProperty.html#getOwner()">getOwner</a>, <a href="PersistentProperty.html#getTypeName()">getTypeName</a>, <a href="PersistentProperty.html#isAssignable(java.lang.Class)">isAssignable</a>, <a href="PersistentProperty.html#isAssignable(java.lang.String)">isAssignable</a>, <a href="PersistentProperty.html#isAutoPopulated()">isAutoPopulated</a>, <a href="PersistentProperty.html#isConstructorArgument()">isConstructorArgument</a>, <a href="PersistentProperty.html#isEmbedded()">isEmbedded</a>, <a href="PersistentProperty.html#isEnum()">isEnum</a>, <a href="PersistentProperty.html#isGenerated()">isGenerated</a>, <a href="PersistentProperty.html#isOptional()">isOptional</a>, <a href="PersistentProperty.html#isReadOnly()">isReadOnly</a>, <a href="PersistentProperty.html#isRequired()">isRequired</a></code></div>
+<code><a href="PersistentProperty.html#getAlias()">getAlias</a>, <a href="PersistentProperty.html#getCapitalizedName()">getCapitalizedName</a>, <a href="PersistentProperty.html#getCapitilizedName()">getCapitilizedName</a>, <a href="PersistentProperty.html#getConverter()">getConverter</a>, <a href="PersistentProperty.html#getDataType()">getDataType</a>, <a href="PersistentProperty.html#getEnumConstants()">getEnumConstants</a>, <a href="PersistentProperty.html#getJsonDataType()">getJsonDataType</a>, <a href="PersistentProperty.html#getName()">getName</a>, <a href="PersistentProperty.html#getOwner()">getOwner</a>, <a href="PersistentProperty.html#getTypeName()">getTypeName</a>, <a href="PersistentProperty.html#isAssignable(java.lang.Class)">isAssignable</a>, <a href="PersistentProperty.html#isAssignable(java.lang.String)">isAssignable</a>, <a href="PersistentProperty.html#isAutoPopulated()">isAutoPopulated</a>, <a href="PersistentProperty.html#isConstructorArgument()">isConstructorArgument</a>, <a href="PersistentProperty.html#isEmbedded()">isEmbedded</a>, <a href="PersistentProperty.html#isEnum()">isEnum</a>, <a href="PersistentProperty.html#isGenerated()">isGenerated</a>, <a href="PersistentProperty.html#isOptional()">isOptional</a>, <a href="PersistentProperty.html#isReadOnly()">isReadOnly</a>, <a href="PersistentProperty.html#isRequired()">isRequired</a></code></div>
 </section>
 </li>
 </ul>
@@ -268,6 +282,19 @@ extends <a href="PersistentProperty.html" title="interface in io.micronaut.data.
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>Whether the association is a foreign key association</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="isSingleEnded()">
+<h3>isSingleEnded</h3>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isSingleEnded</span>()</div>
+<div class="block">Determines whether this association is single-ended, meaning it only has one end point.
+ An association is considered single-ended if its kind is either ONE_TO_ONE or MANY_TO_ONE,
+ but not EMBEDDED.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>True if the association is single-ended, false otherwise.</dd>
 </dl>
 </section>
 </li>

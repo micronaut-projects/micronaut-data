@@ -110,7 +110,7 @@ loadScripts(document, 'script');</script>
 <h2>Field Summary</h2>
 <div class="inherited-list">
 <h3 id="fields-inherited-from-class-io.micronaut.data.processor.visitors.finders.AbstractMethodMatcher">Fields inherited from class&nbsp;io.micronaut.data.processor.visitors.finders.<a href="AbstractMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractMethodMatcher</a></h3>
-<code><a href="AbstractMethodMatcher.html#ALL_OR_ONE">ALL_OR_ONE</a>, <a href="AbstractMethodMatcher.html#BY">BY</a>, <a href="AbstractMethodMatcher.html#DISTINCT">DISTINCT</a>, <a href="AbstractMethodMatcher.html#FIRST">FIRST</a>, <a href="AbstractMethodMatcher.html#FOR_UPDATE">FOR_UPDATE</a>, <a href="AbstractMethodMatcher.html#ORDER_VARIATIONS">ORDER_VARIATIONS</a>, <a href="AbstractMethodMatcher.html#RETURNING">RETURNING</a>, <a href="AbstractMethodMatcher.html#TOP_OR_FIRST">TOP_OR_FIRST</a></code></div>
+<code><a href="AbstractMethodMatcher.html#ALL">ALL</a>, <a href="AbstractMethodMatcher.html#ALL_OR_ONE">ALL_OR_ONE</a>, <a href="AbstractMethodMatcher.html#BY">BY</a>, <a href="AbstractMethodMatcher.html#DISTINCT">DISTINCT</a>, <a href="AbstractMethodMatcher.html#FIRST">FIRST</a>, <a href="AbstractMethodMatcher.html#FOR_UPDATE">FOR_UPDATE</a>, <a href="AbstractMethodMatcher.html#ORDER_VARIATIONS">ORDER_VARIATIONS</a>, <a href="AbstractMethodMatcher.html#RETURNING">RETURNING</a>, <a href="AbstractMethodMatcher.html#TOP_OR_FIRST">TOP_OR_FIRST</a></code></div>
 <div class="inherited-list">
 <h3 id="fields-inherited-from-class-io.micronaut.data.processor.visitors.finders.MethodMatcher">Fields inherited from interface&nbsp;io.micronaut.data.processor.visitors.finders.<a href="MethodMatcher.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher</a></h3>
 <code><a href="MethodMatcher.html#DEFAULT_POSITION">DEFAULT_POSITION</a></code></div>
@@ -137,16 +137,22 @@ loadScripts(document, 'script');</script>
 <section class="method-summary" id="method-summary">
 <h2>Method Summary</h2>
 <div id="method-summary-table">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab1" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab1', 3)" class="table-tab">Static Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
 <div id="method-summary-table.tabpanel" role="tabpanel">
 <div class="summary-table three-column-summary" aria-labelledby="method-summary-table-tab0">
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="MethodMatcher.MethodMatch.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher.MethodMatch</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#match(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.List)" class="member-name-link">match</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="criteria/UpdateCriteriaMethodMatch.html" title="class in io.micronaut.data.processor.visitors.finders.criteria">UpdateCriteriaMethodMatch</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#entityUpdate(java.util.List,io.micronaut.inject.ast.ParameterElement,io.micronaut.inject.ast.ParameterElement,boolean)" class="member-name-link">entityUpdate</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="MethodNameParser.Match.html" title="class in io.micronaut.data.processor.visitors.finders">MethodNameParser.Match</a>&gt;&nbsp;matches,
+ io.micronaut.inject.ast.ParameterElement&nbsp;entityParameter,
+ io.micronaut.inject.ast.ParameterElement&nbsp;entitiesParameter,
+ boolean&nbsp;isReturning)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="MethodMatcher.MethodMatch.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher.MethodMatch</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#match(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.List)" class="member-name-link">match</a><wbr>(<a href="../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="MethodNameParser.Match.html" title="class in io.micronaut.data.processor.visitors.finders">MethodNameParser.Match</a>&gt;&nbsp;matches)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Matched the method.</div>
 </div>
 </div>
@@ -202,6 +208,15 @@ loadScripts(document, 'script');</script>
 <dt>Returns:</dt>
 <dd>The method match</dd>
 </dl>
+</section>
+</li>
+<li>
+<section class="detail" id="entityUpdate(java.util.List,io.micronaut.inject.ast.ParameterElement,io.micronaut.inject.ast.ParameterElement,boolean)">
+<h3>entityUpdate</h3>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="criteria/UpdateCriteriaMethodMatch.html" title="class in io.micronaut.data.processor.visitors.finders.criteria">UpdateCriteriaMethodMatch</a></span>&nbsp;<span class="element-name">entityUpdate</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="MethodNameParser.Match.html" title="class in io.micronaut.data.processor.visitors.finders">MethodNameParser.Match</a>&gt;&nbsp;matches,
+ io.micronaut.inject.ast.ParameterElement&nbsp;entityParameter,
+ io.micronaut.inject.ast.ParameterElement&nbsp;entitiesParameter,
+ boolean&nbsp;isReturning)</span></div>
 </section>
 </li>
 </ul>

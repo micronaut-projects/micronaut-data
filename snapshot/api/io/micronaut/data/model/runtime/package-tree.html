@@ -87,7 +87,7 @@ loadScripts(document, 'script');</script>
 <ul>
 <li class="circle">io.micronaut.data.model.runtime.<a href="PagedQuery.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;E&gt; (also extends io.micronaut.core.naming.Named)
 <ul>
-<li class="circle">io.micronaut.data.model.runtime.<a href="PreparedQuery.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt; (also extends io.micronaut.data.model.runtime.<a href="PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime">PreparedDataOperation</a>&lt;R&gt;, io.micronaut.data.model.runtime.<a href="StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;)</li>
+<li class="circle">io.micronaut.data.model.runtime.<a href="PreparedQuery.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt; (also extends io.micronaut.core.convert.ConversionServiceProvider, io.micronaut.data.model.runtime.<a href="PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime">PreparedDataOperation</a>&lt;R&gt;, io.micronaut.data.model.runtime.<a href="StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;)</li>
 </ul>
 </li>
 <li class="circle">io.micronaut.data.model.runtime.<a href="StoredDataOperation.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime">StoredDataOperation</a>&lt;R&gt;
@@ -132,12 +132,12 @@ loadScripts(document, 'script');</script>
 </ul>
 </li>
 <li class="circle">io.micronaut.data.model.runtime.<a href="InsertOperation.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime">InsertOperation</a>&lt;E&gt; (also extends io.micronaut.data.model.runtime.<a href="EntityInstanceOperation.html" title="interface in io.micronaut.data.model.runtime">EntityInstanceOperation</a>&lt;E&gt;)</li>
-<li class="circle">io.micronaut.data.model.runtime.<a href="PreparedQuery.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt; (also extends io.micronaut.data.model.runtime.<a href="PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;E&gt;, io.micronaut.data.model.runtime.<a href="StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;)</li>
+<li class="circle">io.micronaut.data.model.runtime.<a href="PreparedQuery.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt; (also extends io.micronaut.core.convert.ConversionServiceProvider, io.micronaut.data.model.runtime.<a href="PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;E&gt;, io.micronaut.data.model.runtime.<a href="StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;)</li>
 </ul>
 </li>
 <li class="circle">io.micronaut.data.model.runtime.<a href="StoredQuery.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt; (also extends io.micronaut.core.naming.Named)
 <ul>
-<li class="circle">io.micronaut.data.model.runtime.<a href="PreparedQuery.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt; (also extends io.micronaut.data.model.runtime.<a href="PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;E&gt;, io.micronaut.data.model.runtime.<a href="PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime">PreparedDataOperation</a>&lt;R&gt;)</li>
+<li class="circle">io.micronaut.data.model.runtime.<a href="PreparedQuery.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt; (also extends io.micronaut.core.convert.ConversionServiceProvider, io.micronaut.data.model.runtime.<a href="PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;E&gt;, io.micronaut.data.model.runtime.<a href="PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime">PreparedDataOperation</a>&lt;R&gt;)</li>
 </ul>
 </li>
 </ul>
@@ -194,9 +194,14 @@ loadScripts(document, 'script');</script>
 </ul>
 </li>
 <li class="circle">io.micronaut.data.model.runtime.<a href="InsertOperation.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime">InsertOperation</a>&lt;E&gt; (also extends io.micronaut.data.model.runtime.<a href="EntityInstanceOperation.html" title="interface in io.micronaut.data.model.runtime">EntityInstanceOperation</a>&lt;E&gt;)</li>
-<li class="circle">io.micronaut.data.model.runtime.<a href="PreparedQuery.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt; (also extends io.micronaut.data.model.runtime.<a href="PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;E&gt;, io.micronaut.data.model.runtime.<a href="StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;)</li>
+<li class="circle">io.micronaut.data.model.runtime.<a href="PreparedQuery.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt; (also extends io.micronaut.core.convert.ConversionServiceProvider, io.micronaut.data.model.runtime.<a href="PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;E&gt;, io.micronaut.data.model.runtime.<a href="StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;)</li>
 </ul>
 </li>
+</ul>
+</li>
+<li class="circle">io.micronaut.core.convert.ConversionServiceProvider
+<ul>
+<li class="circle">io.micronaut.data.model.runtime.<a href="PreparedQuery.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt; (also extends io.micronaut.data.model.runtime.<a href="PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;E&gt;, io.micronaut.data.model.runtime.<a href="PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime">PreparedDataOperation</a>&lt;R&gt;, io.micronaut.data.model.runtime.<a href="StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;)</li>
 </ul>
 </li>
 <li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Iterable.html" class="type-name-link external-link" title="class or interface in java.lang">Iterable</a>&lt;T&gt;
@@ -244,12 +249,12 @@ loadScripts(document, 'script');</script>
 </li>
 <li class="circle">io.micronaut.data.model.runtime.<a href="PagedQuery.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;E&gt; (also extends io.micronaut.core.annotation.AnnotationMetadataProvider)
 <ul>
-<li class="circle">io.micronaut.data.model.runtime.<a href="PreparedQuery.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt; (also extends io.micronaut.data.model.runtime.<a href="PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime">PreparedDataOperation</a>&lt;R&gt;, io.micronaut.data.model.runtime.<a href="StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;)</li>
+<li class="circle">io.micronaut.data.model.runtime.<a href="PreparedQuery.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt; (also extends io.micronaut.core.convert.ConversionServiceProvider, io.micronaut.data.model.runtime.<a href="PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime">PreparedDataOperation</a>&lt;R&gt;, io.micronaut.data.model.runtime.<a href="StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;)</li>
 </ul>
 </li>
 <li class="circle">io.micronaut.data.model.runtime.<a href="StoredQuery.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt; (also extends io.micronaut.data.model.runtime.<a href="StoredDataOperation.html" title="interface in io.micronaut.data.model.runtime">StoredDataOperation</a>&lt;R&gt;)
 <ul>
-<li class="circle">io.micronaut.data.model.runtime.<a href="PreparedQuery.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt; (also extends io.micronaut.data.model.runtime.<a href="PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;E&gt;, io.micronaut.data.model.runtime.<a href="PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime">PreparedDataOperation</a>&lt;R&gt;)</li>
+<li class="circle">io.micronaut.data.model.runtime.<a href="PreparedQuery.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt; (also extends io.micronaut.core.convert.ConversionServiceProvider, io.micronaut.data.model.runtime.<a href="PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;E&gt;, io.micronaut.data.model.runtime.<a href="PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime">PreparedDataOperation</a>&lt;R&gt;)</li>
 </ul>
 </li>
 </ul>

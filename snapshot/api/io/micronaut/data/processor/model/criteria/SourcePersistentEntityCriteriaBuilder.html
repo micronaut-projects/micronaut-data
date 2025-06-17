@@ -113,6 +113,18 @@ extends <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.htm
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;T&gt;&nbsp;<a href="SourcePersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaDelete</a>&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createCriteriaDelete(java.lang.Class)" class="member-name-link">createCriteriaDelete</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;targetEntity)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;T&gt;&nbsp;<a href="SourcePersistentEntityCriteriaUpdate.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaUpdate</a>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createCriteriaUpdate(java.lang.Class)" class="member-name-link">createCriteriaUpdate</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;targetEntity)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="SourcePersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaQuery</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createQuery()" class="member-name-link">createQuery</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;T&gt;&nbsp;<a href="SourcePersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaQuery</a>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createQuery(java.lang.Class)" class="member-name-link">createQuery</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;resultClass)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;T&gt;&nbsp;@NonNull jakarta.persistence.criteria.ParameterExpression&lt;T&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#entityPropertyParameter(io.micronaut.inject.ast.ParameterElement,io.micronaut.data.model.PersistentPropertyPath)" class="member-name-link">entityPropertyParameter</a><wbr>(@NonNull io.micronaut.inject.ast.ParameterElement&nbsp;entityParameter,
  @Nullable <a href="../../../model/PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a>&nbsp;propertyPath)</code></div>
@@ -131,6 +143,16 @@ extends <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.htm
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Create parameter expression from <code>ParameterElement</code>.</div>
 </div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;T&gt;&nbsp;@NonNull jakarta.persistence.criteria.ParameterExpression&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#parameterReferencingMethodParameter(int)" class="member-name-link">parameterReferencingMethodParameter</a><wbr>(int&nbsp;parameterIndex)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Create parameter expression from <code>ParameterElement</code>.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;T&gt;&nbsp;@NonNull jakarta.persistence.criteria.ParameterExpression&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#parameterReferencingMethodParameter(java.lang.String)" class="member-name-link">parameterReferencingMethodParameter</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;parameterName)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Create parameter expression from <code>ParameterElement</code>.</div>
+</div>
 </div>
 </div>
 </div>
@@ -139,7 +161,7 @@ extends <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.htm
 <code>abs, all, and, and, any, array, asc, avg, between, between, ceiling, coalesce, coalesce, coalesce, concat, concat, concat, conjunction, construct, count, countDistinct, currentDate, currentTime, currentTimestamp, desc, diff, diff, diff, disjunction, equal, equal, exists, exp, floor, function, ge, ge, greaterThan, greaterThan, greaterThanOrEqualTo, greaterThanOrEqualTo, greatest, gt, gt, in, isEmpty, isFalse, isMember, isMember, isNotEmpty, isNotMember, isNotMember, isNotNull, isNull, isTrue, keys, le, le, least, length, lessThan, lessThan, lessThanOrEqualTo, lessThanOrEqualTo, like, like, like, like, like, like, literal, ln, localDate, localDateTime, localTime, locate, locate, locate, locate, lower, lt, lt, max, min, mod, mod, mod, neg, not, notEqual, notEqual, notLike, notLike, notLike, notLike, notLike, notLike, nullif, nullif, nullLiteral, or, or, parameter, parameter, power, power, prod, prod, prod, quot, quot, quot, round, selectCase, selectCase, sign, size, size, some, sqrt, substring, substring, substring, substring, sum, sum, sum, sum, sumAsDouble, sumAsLong, toBigDecimal, toBigInteger, toDouble, toFloat, toInteger, toLong, toString, treat, treat, treat, treat, treat, treat, treat, trim, trim, trim, trim, trim, trim, tuple, upper, values</code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder">Methods inherited from interface&nbsp;io.micronaut.data.model.jpa.criteria.<a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaBuilder</a></h3>
-<code><a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#and(java.lang.Iterable)">and</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#arrayContains(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">arrayContains</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#containsString(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">containsString</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#containsStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">containsStringIgnoreCase</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#createCriteriaDelete(java.lang.Class)">createCriteriaDelete</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#createCriteriaUpdate(java.lang.Class)">createCriteriaUpdate</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#createQuery()">createQuery</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#createQuery(java.lang.Class)">createQuery</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#createTupleQuery()">createTupleQuery</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#endingWithString(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">endingWithString</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#endingWithStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">endingWithStringIgnoreCase</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#equalStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">equalStringIgnoreCase</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#equalStringIgnoreCase(jakarta.persistence.criteria.Expression,java.lang.String)">equalStringIgnoreCase</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#ilike(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">ilike</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#ilike(jakarta.persistence.criteria.Expression,java.lang.String)">ilike</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#isEmptyString(jakarta.persistence.criteria.Expression)">isEmptyString</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#isNotEmptyString(jakarta.persistence.criteria.Expression)">isNotEmptyString</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#notEqualStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">notEqualStringIgnoreCase</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#notEqualStringIgnoreCase(jakarta.persistence.criteria.Expression,java.lang.String)">notEqualStringIgnoreCase</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#or(java.lang.Iterable)">or</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#regex(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">regex</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#startsWithString(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">startsWithString</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#startsWithStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">startsWithStringIgnoreCase</a></code></div>
+<code><a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#and(java.lang.Iterable)">and</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#arrayContains(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">arrayContains</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#containsString(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">containsString</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#containsStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">containsStringIgnoreCase</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#createTupleQuery()">createTupleQuery</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#endingWithString(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">endingWithString</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#endingWithStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">endingWithStringIgnoreCase</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#equalStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">equalStringIgnoreCase</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#equalStringIgnoreCase(jakarta.persistence.criteria.Expression,java.lang.String)">equalStringIgnoreCase</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#ilike(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">ilike</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#ilike(jakarta.persistence.criteria.Expression,java.lang.String)">ilike</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#isEmptyString(jakarta.persistence.criteria.Expression)">isEmptyString</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#isNotEmptyString(jakarta.persistence.criteria.Expression)">isNotEmptyString</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#notEqualStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">notEqualStringIgnoreCase</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#notEqualStringIgnoreCase(jakarta.persistence.criteria.Expression,java.lang.String)">notEqualStringIgnoreCase</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#or(java.lang.Iterable)">or</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#regex(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">regex</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#sort(jakarta.persistence.criteria.Expression,boolean,boolean)">sort</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#startsWithString(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">startsWithString</a>, <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#startsWithStringIgnoreCase(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)">startsWithStringIgnoreCase</a></code></div>
 </section>
 </li>
 </ul>
@@ -194,6 +216,44 @@ extends <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.htm
 </section>
 </li>
 <li>
+<section class="detail" id="parameterReferencingMethodParameter(int)">
+<h3>parameterReferencingMethodParameter</h3>
+<div class="member-signature"><span class="annotations">@NonNull
+</span><span class="type-parameters">&lt;T&gt;</span>
+<span class="return-type">@NonNull jakarta.persistence.criteria.ParameterExpression&lt;T&gt;</span>&nbsp;<span class="element-name">parameterReferencingMethodParameter</span><wbr><span class="parameters">(int&nbsp;parameterIndex)</span></div>
+<div class="block">Create parameter expression from <code>ParameterElement</code>.</div>
+<dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><code>T</code> - The expression type</dd>
+<dt>Parameters:</dt>
+<dd><code>parameterIndex</code> - The parameter index</dd>
+<dt>Returns:</dt>
+<dd>new parameter</dd>
+<dt>Since:</dt>
+<dd>4.13</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="parameterReferencingMethodParameter(java.lang.String)">
+<h3>parameterReferencingMethodParameter</h3>
+<div class="member-signature"><span class="annotations">@NonNull
+</span><span class="type-parameters">&lt;T&gt;</span>
+<span class="return-type">@NonNull jakarta.persistence.criteria.ParameterExpression&lt;T&gt;</span>&nbsp;<span class="element-name">parameterReferencingMethodParameter</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;parameterName)</span></div>
+<div class="block">Create parameter expression from <code>ParameterElement</code>.</div>
+<dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><code>T</code> - The expression type</dd>
+<dt>Parameters:</dt>
+<dd><code>parameterName</code> - The parameter name</dd>
+<dt>Returns:</dt>
+<dd>new parameter</dd>
+<dt>Since:</dt>
+<dd>4.13</dd>
+</dl>
+</section>
+</li>
+<li>
 <section class="detail" id="entityPropertyParameter(io.micronaut.inject.ast.ParameterElement,io.micronaut.data.model.PersistentPropertyPath)">
 <h3>entityPropertyParameter</h3>
 <div class="member-signature"><span class="annotations">@NonNull
@@ -211,6 +271,54 @@ extends <a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.htm
 <dd><code>propertyPath</code> - The property path this parameter is representing</dd>
 <dt>Returns:</dt>
 <dd>new parameter</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="createCriteriaDelete(java.lang.Class)">
+<h3>createCriteriaDelete</h3>
+<div class="member-signature"><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type"><a href="SourcePersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaDelete</a>&lt;T&gt;</span>&nbsp;<span class="element-name">createCriteriaDelete</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;targetEntity)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>createCriteriaDelete</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
+<dt>Specified by:</dt>
+<dd><code><a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#createCriteriaDelete(java.lang.Class)">createCriteriaDelete</a></code>&nbsp;in interface&nbsp;<code><a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaBuilder</a></code></dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="createCriteriaUpdate(java.lang.Class)">
+<h3>createCriteriaUpdate</h3>
+<div class="member-signature"><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type"><a href="SourcePersistentEntityCriteriaUpdate.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaUpdate</a>&lt;T&gt;</span>&nbsp;<span class="element-name">createCriteriaUpdate</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;targetEntity)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>createCriteriaUpdate</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
+<dt>Specified by:</dt>
+<dd><code><a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#createCriteriaUpdate(java.lang.Class)">createCriteriaUpdate</a></code>&nbsp;in interface&nbsp;<code><a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaBuilder</a></code></dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="createQuery()">
+<h3>createQuery</h3>
+<div class="member-signature"><span class="return-type"><a href="SourcePersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaQuery</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</span>&nbsp;<span class="element-name">createQuery</span>()</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>createQuery</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
+<dt>Specified by:</dt>
+<dd><code><a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#createQuery()">createQuery</a></code>&nbsp;in interface&nbsp;<code><a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaBuilder</a></code></dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="createQuery(java.lang.Class)">
+<h3>createQuery</h3>
+<div class="member-signature"><span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type"><a href="SourcePersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaQuery</a>&lt;T&gt;</span>&nbsp;<span class="element-name">createQuery</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;resultClass)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>createQuery</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CriteriaBuilder</code></dd>
+<dt>Specified by:</dt>
+<dd><code><a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#createQuery(java.lang.Class)">createQuery</a></code>&nbsp;in interface&nbsp;<code><a href="../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaBuilder</a></code></dd>
 </dl>
 </section>
 </li>

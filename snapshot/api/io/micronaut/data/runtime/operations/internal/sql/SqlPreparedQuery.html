@@ -79,7 +79,7 @@ loadScripts(document, 'script');</script>
 </dl>
 <dl class="notes">
 <dt>All Superinterfaces:</dt>
-<dd><code>io.micronaut.core.annotation.AnnotationMetadataProvider</code>, <code>io.micronaut.core.annotation.AnnotationSource</code>, <code>io.micronaut.core.attr.AttributeHolder</code>, <code><a href="../query/BindableParametersPreparedQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.query">BindableParametersPreparedQuery</a>&lt;E,<wbr>R&gt;</code>, <code><a href="../query/BindableParametersStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.query">BindableParametersStoredQuery</a>&lt;E,<wbr>R&gt;</code>, <code>io.micronaut.core.naming.Named</code>, <code><a href="../../../../model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;E&gt;</code>, <code><a href="../query/PersistentEntityAwareQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.query">PersistentEntityAwareQuery</a>&lt;E&gt;</code>, <code><a href="../../../../model/runtime/PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime">PreparedDataOperation</a>&lt;R&gt;</code>, <code><a href="../../../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt;</code>, <code><a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;E,<wbr>R&gt;</code>, <code><a href="../../../../model/runtime/StoredDataOperation.html" title="interface in io.micronaut.data.model.runtime">StoredDataOperation</a>&lt;R&gt;</code>, <code><a href="../../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;</code></dd>
+<dd><code>io.micronaut.core.annotation.AnnotationMetadataProvider</code>, <code>io.micronaut.core.annotation.AnnotationSource</code>, <code>io.micronaut.core.attr.AttributeHolder</code>, <code><a href="../query/BindableParametersPreparedQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.query">BindableParametersPreparedQuery</a>&lt;E,<wbr>R&gt;</code>, <code><a href="../query/BindableParametersStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.query">BindableParametersStoredQuery</a>&lt;E,<wbr>R&gt;</code>, <code>io.micronaut.core.convert.ConversionServiceProvider</code>, <code>io.micronaut.core.naming.Named</code>, <code><a href="../../../../model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;E&gt;</code>, <code><a href="../query/PersistentEntityAwareQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.query">PersistentEntityAwareQuery</a>&lt;E&gt;</code>, <code><a href="../../../../model/runtime/PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime">PreparedDataOperation</a>&lt;R&gt;</code>, <code><a href="../../../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt;</code>, <code><a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;E,<wbr>R&gt;</code>, <code><a href="../../../../model/runtime/StoredDataOperation.html" title="interface in io.micronaut.data.model.runtime">StoredDataOperation</a>&lt;R&gt;</code>, <code><a href="../../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;</code></dd>
 </dl>
 <dl class="notes">
 <dt>All Known Implementing Classes:</dt>
@@ -126,23 +126,35 @@ extends <a href="../query/BindableParametersPreparedQuery.html" title="interface
 <section class="method-summary" id="method-summary">
 <h2>Method Summary</h2>
 <div id="method-summary-table">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab3" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab3', 3)" class="table-tab">Abstract Methods</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab3" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab3', 3)" class="table-tab">Abstract Methods</button><button id="method-summary-table-tab5" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab5', 3)" class="table-tab">Default Methods</button></div>
 <div id="method-summary-table.tabpanel" role="tabpanel">
 <div class="summary-table three-column-summary" aria-labelledby="method-summary-table-tab0">
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#attachPageable(io.micronaut.data.model.Pageable,boolean)" class="member-name-link">attachPageable</a><wbr>(<a href="../../../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable,
- boolean&nbsp;isSingleResult)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#attachPageable(io.micronaut.data.model.Pageable,io.micronaut.data.model.Limit,io.micronaut.data.model.Sort)" class="member-name-link">attachPageable</a><wbr>(<a href="../../../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable,
+ <a href="../../../../model/Limit.html" title="interface in io.micronaut.data.model">Limit</a>&nbsp;limit,
+ <a href="../../../../model/Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Modify the query according to the pageable.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@Nullable io.micronaut.aop.InvocationContext&lt;?,<wbr>?&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getInvocationContext()" class="member-name-link">getInvocationContext</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#attachPageable(io.micronaut.data.model.Pageable,io.micronaut.data.model.Limit,io.micronaut.data.model.Sort,boolean)" class="member-name-link">attachPageable</a><wbr>(<a href="../../../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable,
+ <a href="../../../../model/Limit.html" title="interface in io.micronaut.data.model">Limit</a>&nbsp;limit,
+ <a href="../../../../model/Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort,
+ boolean&nbsp;isSingleResult)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Modify the query according to the pageable.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@Nullable io.micronaut.aop.InvocationContext&lt;?,<wbr>?&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getInvocationContext()" class="member-name-link">getInvocationContext</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Returns the invocation context associated with this prepared query.</div>
 </div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@Nullable <a href="../../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="SqlPreparedQuery.html" title="type parameter in SqlPreparedQuery">E</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getPersistentEntity()" class="member-name-link">getPersistentEntity</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="../../../../model/runtime/QueryResultInfo.html" title="class in io.micronaut.data.model.runtime">QueryResultInfo</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getQueryResultInfo()" class="member-name-link">getQueryResultInfo</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
@@ -176,20 +188,17 @@ extends <a href="../query/BindableParametersPreparedQuery.html" title="interface
 <h3 id="methods-inherited-from-class-io.micronaut.data.model.runtime.PagedQuery">Methods inherited from interface&nbsp;io.micronaut.data.model.runtime.<a href="../../../../model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a></h3>
 <code><a href="../../../../model/runtime/PagedQuery.html#getPageable()">getPageable</a>, <a href="../../../../model/runtime/PagedQuery.html#getRootEntity()">getRootEntity</a></code></div>
 <div class="inherited-list">
-<h3 id="methods-inherited-from-class-io.micronaut.data.runtime.operations.internal.query.PersistentEntityAwareQuery">Methods inherited from interface&nbsp;io.micronaut.data.runtime.operations.internal.query.<a href="../query/PersistentEntityAwareQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.query">PersistentEntityAwareQuery</a></h3>
-<code><a href="../query/PersistentEntityAwareQuery.html#getPersistentEntity()">getPersistentEntity</a></code></div>
-<div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.model.runtime.PreparedDataOperation">Methods inherited from interface&nbsp;io.micronaut.data.model.runtime.<a href="../../../../model/runtime/PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime">PreparedDataOperation</a></h3>
-<code><a href="../../../../model/runtime/PreparedDataOperation.html#getParameterInRole(java.lang.String,java.lang.Class)">getParameterInRole</a></code></div>
+<code><a href="../../../../model/runtime/PreparedDataOperation.html#getParameterInRole(java.lang.String,java.lang.Class)">getParameterInRole</a>, <a href="../../../../model/runtime/PreparedDataOperation.html#getParametersInRole(java.lang.String,java.lang.Class)">getParametersInRole</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.model.runtime.PreparedQuery">Methods inherited from interface&nbsp;io.micronaut.data.model.runtime.<a href="../../../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a></h3>
-<code><a href="../../../../model/runtime/PreparedQuery.html#getArguments()">getArguments</a>, <a href="../../../../model/runtime/PreparedQuery.html#getParameterArray()">getParameterArray</a>, <a href="../../../../model/runtime/PreparedQuery.html#getQueryHints()">getQueryHints</a>, <a href="../../../../model/runtime/PreparedQuery.html#getRepositoryType()">getRepositoryType</a>, <a href="../../../../model/runtime/PreparedQuery.html#isRawQuery()">isRawQuery</a></code></div>
+<code><a href="../../../../model/runtime/PreparedQuery.html#getArguments()">getArguments</a>, <a href="../../../../model/runtime/PreparedQuery.html#getConversionService()">getConversionService</a>, <a href="../../../../model/runtime/PreparedQuery.html#getParameterArray()">getParameterArray</a>, <a href="../../../../model/runtime/PreparedQuery.html#getQueryHints()">getQueryHints</a>, <a href="../../../../model/runtime/PreparedQuery.html#getQueryLimit()">getQueryLimit</a>, <a href="../../../../model/runtime/PreparedQuery.html#getRepositoryType()">getRepositoryType</a>, <a href="../../../../model/runtime/PreparedQuery.html#getSort()">getSort</a>, <a href="../../../../model/runtime/PreparedQuery.html#isRawQuery()">isRawQuery</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery">Methods inherited from interface&nbsp;io.micronaut.data.runtime.operations.internal.sql.<a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a></h3>
 <code><a href="SqlStoredQuery.html#collectAutoPopulatedPreviousValues(E)">collectAutoPopulatedPreviousValues</a>, <a href="SqlStoredQuery.html#getDialect()">getDialect</a>, <a href="SqlStoredQuery.html#getQueryBuilder()">getQueryBuilder</a>, <a href="SqlStoredQuery.html#isExpandableQuery()">isExpandableQuery</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.model.runtime.StoredQuery">Methods inherited from interface&nbsp;io.micronaut.data.model.runtime.<a href="../../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a></h3>
-<code><a href="../../../../model/runtime/StoredQuery.html#getArgumentTypes()">getArgumentTypes</a>, <a href="../../../../model/runtime/StoredQuery.html#getEntityIdentifierType()">getEntityIdentifierType</a>, <a href="../../../../model/runtime/StoredQuery.html#getExpandableQueryParts()">getExpandableQueryParts</a>, <a href="../../../../model/runtime/StoredQuery.html#getJoinFetchPaths()">getJoinFetchPaths</a>, <a href="../../../../model/runtime/StoredQuery.html#getJoinPaths()">getJoinPaths</a>, <a href="../../../../model/runtime/StoredQuery.html#getLimit()">getLimit</a>, <a href="../../../../model/runtime/StoredQuery.html#getOffset()">getOffset</a>, <a href="../../../../model/runtime/StoredQuery.html#getOperationType()">getOperationType</a>, <a href="../../../../model/runtime/StoredQuery.html#getParameterExpressions()">getParameterExpressions</a>, <a href="../../../../model/runtime/StoredQuery.html#getQuery()">getQuery</a>, <a href="../../../../model/runtime/StoredQuery.html#getQueryBindings()">getQueryBindings</a>, <a href="../../../../model/runtime/StoredQuery.html#getQueryHints()">getQueryHints</a>, <a href="../../../../model/runtime/StoredQuery.html#getResultArgument()">getResultArgument</a>, <a href="../../../../model/runtime/StoredQuery.html#getResultDataType()">getResultDataType</a>, <a href="../../../../model/runtime/StoredQuery.html#getResultType()">getResultType</a>, <a href="../../../../model/runtime/StoredQuery.html#getRootEntity()">getRootEntity</a>, <a href="../../../../model/runtime/StoredQuery.html#hasPageable()">hasPageable</a>, <a href="../../../../model/runtime/StoredQuery.html#hasResultConsumer()">hasResultConsumer</a>, <a href="../../../../model/runtime/StoredQuery.html#isCount()">isCount</a>, <a href="../../../../model/runtime/StoredQuery.html#isDtoProjection()">isDtoProjection</a>, <a href="../../../../model/runtime/StoredQuery.html#isJsonEntity()">isJsonEntity</a>, <a href="../../../../model/runtime/StoredQuery.html#isNative()">isNative</a>, <a href="../../../../model/runtime/StoredQuery.html#isOptimisticLock()">isOptimisticLock</a>, <a href="../../../../model/runtime/StoredQuery.html#isProcedure()">isProcedure</a>, <a href="../../../../model/runtime/StoredQuery.html#isSingleResult()">isSingleResult</a>, <a href="../../../../model/runtime/StoredQuery.html#useNumericPlaceholders()">useNumericPlaceholders</a></code></div>
+<code><a href="../../../../model/runtime/StoredQuery.html#getArgumentTypes()">getArgumentTypes</a>, <a href="../../../../model/runtime/StoredQuery.html#getEntityIdentifierType()">getEntityIdentifierType</a>, <a href="../../../../model/runtime/StoredQuery.html#getExpandableQueryParts()">getExpandableQueryParts</a>, <a href="../../../../model/runtime/StoredQuery.html#getJoinFetchPaths()">getJoinFetchPaths</a>, <a href="../../../../model/runtime/StoredQuery.html#getJoinPaths()">getJoinPaths</a>, <a href="../../../../model/runtime/StoredQuery.html#getLimit()">getLimit</a>, <a href="../../../../model/runtime/StoredQuery.html#getOffset()">getOffset</a>, <a href="../../../../model/runtime/StoredQuery.html#getOperationType()">getOperationType</a>, <a href="../../../../model/runtime/StoredQuery.html#getParameterExpressions()">getParameterExpressions</a>, <a href="../../../../model/runtime/StoredQuery.html#getQuery()">getQuery</a>, <a href="../../../../model/runtime/StoredQuery.html#getQueryBindings()">getQueryBindings</a>, <a href="../../../../model/runtime/StoredQuery.html#getQueryHints()">getQueryHints</a>, <a href="../../../../model/runtime/StoredQuery.html#getQueryLimit()">getQueryLimit</a>, <a href="../../../../model/runtime/StoredQuery.html#getResultArgument()">getResultArgument</a>, <a href="../../../../model/runtime/StoredQuery.html#getResultDataType()">getResultDataType</a>, <a href="../../../../model/runtime/StoredQuery.html#getResultType()">getResultType</a>, <a href="../../../../model/runtime/StoredQuery.html#getRootEntity()">getRootEntity</a>, <a href="../../../../model/runtime/StoredQuery.html#getSort()">getSort</a>, <a href="../../../../model/runtime/StoredQuery.html#hasPageable()">hasPageable</a>, <a href="../../../../model/runtime/StoredQuery.html#hasResultConsumer()">hasResultConsumer</a>, <a href="../../../../model/runtime/StoredQuery.html#isCount()">isCount</a>, <a href="../../../../model/runtime/StoredQuery.html#isDtoProjection()">isDtoProjection</a>, <a href="../../../../model/runtime/StoredQuery.html#isJsonEntity()">isJsonEntity</a>, <a href="../../../../model/runtime/StoredQuery.html#isNative()">isNative</a>, <a href="../../../../model/runtime/StoredQuery.html#isOptimisticLock()">isOptimisticLock</a>, <a href="../../../../model/runtime/StoredQuery.html#isProcedure()">isProcedure</a>, <a href="../../../../model/runtime/StoredQuery.html#isSingleResult()">isSingleResult</a>, <a href="../../../../model/runtime/StoredQuery.html#useNumericPlaceholders()">useNumericPlaceholders</a></code></div>
 </section>
 </li>
 </ul>
@@ -214,15 +223,34 @@ extends <a href="../query/BindableParametersPreparedQuery.html" title="interface
 </section>
 </li>
 <li>
-<section class="detail" id="attachPageable(io.micronaut.data.model.Pageable,boolean)">
+<section class="detail" id="attachPageable(io.micronaut.data.model.Pageable,io.micronaut.data.model.Limit,io.micronaut.data.model.Sort,boolean)">
 <h3>attachPageable</h3>
-<div class="member-signature"><span class="return-type">void</span>&nbsp;<span class="element-name">attachPageable</span><wbr><span class="parameters">(<a href="../../../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable,
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">attachPageable</span><wbr><span class="parameters">(<a href="../../../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable,
+ <a href="../../../../model/Limit.html" title="interface in io.micronaut.data.model">Limit</a>&nbsp;limit,
+ <a href="../../../../model/Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort,
  boolean&nbsp;isSingleResult)</span></div>
 <div class="block">Modify the query according to the pageable.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>pageable</code> - The pageable</dd>
+<dd><code>limit</code> - The limit</dd>
+<dd><code>sort</code> - The sort</dd>
 <dd><code>isSingleResult</code> - is single result</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="attachPageable(io.micronaut.data.model.Pageable,io.micronaut.data.model.Limit,io.micronaut.data.model.Sort)">
+<h3>attachPageable</h3>
+<div class="member-signature"><span class="return-type">void</span>&nbsp;<span class="element-name">attachPageable</span><wbr><span class="parameters">(<a href="../../../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable,
+ <a href="../../../../model/Limit.html" title="interface in io.micronaut.data.model">Limit</a>&nbsp;limit,
+ <a href="../../../../model/Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</span></div>
+<div class="block">Modify the query according to the pageable.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>pageable</code> - The pageable</dd>
+<dd><code>limit</code> - The limit</dd>
+<dd><code>sort</code> - The sort</dd>
 </dl>
 </section>
 </li>
@@ -249,6 +277,21 @@ extends <a href="../query/BindableParametersPreparedQuery.html" title="interface
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the invocation context</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="getPersistentEntity()">
+<h3>getPersistentEntity</h3>
+<div class="member-signature"><span class="annotations">@Nullable
+</span><span class="return-type">@Nullable <a href="../../../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="SqlPreparedQuery.html" title="type parameter in SqlPreparedQuery">E</a>&gt;</span>&nbsp;<span class="element-name">getPersistentEntity</span>()</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../query/PersistentEntityAwareQuery.html#getPersistentEntity()">getPersistentEntity</a></code>&nbsp;in interface&nbsp;<code><a href="../query/PersistentEntityAwareQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.query">PersistentEntityAwareQuery</a>&lt;<a href="SqlPreparedQuery.html" title="type parameter in SqlPreparedQuery">E</a>&gt;</code></dd>
+<dt>Specified by:</dt>
+<dd><code><a href="SqlStoredQuery.html#getPersistentEntity()">getPersistentEntity</a></code>&nbsp;in interface&nbsp;<code><a href="SqlStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.sql">SqlStoredQuery</a>&lt;<a href="SqlPreparedQuery.html" title="type parameter in SqlPreparedQuery">E</a>,<wbr><a href="SqlPreparedQuery.html" title="type parameter in SqlPreparedQuery">R</a>&gt;</code></dd>
+<dt>Returns:</dt>
+<dd>The persistent entity</dd>
 </dl>
 </section>
 </li>

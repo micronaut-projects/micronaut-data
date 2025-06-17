@@ -82,7 +82,7 @@ loadScripts(document, 'script');</script>
 </dl>
 <dl class="notes">
 <dt>All Implemented Interfaces:</dt>
-<dd><code>io.micronaut.core.annotation.AnnotationMetadataProvider</code>, <code>io.micronaut.core.annotation.AnnotationSource</code>, <code>io.micronaut.core.attr.AttributeHolder</code>, <code>io.micronaut.core.naming.Named</code>, <code><a href="../../../../model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;E&gt;</code>, <code><a href="../../../../model/runtime/PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime">PreparedDataOperation</a>&lt;R&gt;</code>, <code><a href="../../../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt;</code>, <code><a href="../../../../model/runtime/StoredDataOperation.html" title="interface in io.micronaut.data.model.runtime">StoredDataOperation</a>&lt;R&gt;</code>, <code><a href="../../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;</code>, <code><a href="../../../query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a>&lt;E,<wbr>R&gt;</code></dd>
+<dd><code>io.micronaut.core.annotation.AnnotationMetadataProvider</code>, <code>io.micronaut.core.annotation.AnnotationSource</code>, <code>io.micronaut.core.attr.AttributeHolder</code>, <code>io.micronaut.core.convert.ConversionServiceProvider</code>, <code>io.micronaut.core.naming.Named</code>, <code><a href="../../../../model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;E&gt;</code>, <code><a href="../../../../model/runtime/PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime">PreparedDataOperation</a>&lt;R&gt;</code>, <code><a href="../../../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt;</code>, <code><a href="../../../../model/runtime/StoredDataOperation.html" title="interface in io.micronaut.data.model.runtime">StoredDataOperation</a>&lt;R&gt;</code>, <code><a href="../../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;</code>, <code><a href="../../../query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a>&lt;E,<wbr>R&gt;</code></dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="annotations">@Internal
@@ -158,14 +158,20 @@ implements <a href="../../../../model/runtime/PreparedQuery.html" title="interfa
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The parameter binding.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRepositoryType()" class="member-name-link">getRepositoryType</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../../model/Limit.html" title="interface in io.micronaut.data.model">Limit</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getQueryLimit()" class="member-name-link">getQueryLimit</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="DummyPreparedQuery.html" title="type parameter in DummyPreparedQuery">E</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRootEntity()" class="member-name-link">getRootEntity</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRepositoryType()" class="member-name-link">getRepositoryType</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="DummyPreparedQuery.html" title="type parameter in DummyPreparedQuery">E</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRootEntity()" class="member-name-link">getRootEntity</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The root entity type.</div>
 </div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../../model/Sort.html" title="interface in io.micronaut.data.model">Sort</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getSort()" class="member-name-link">getSort</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="DummyPreparedQuery.html" title="type parameter in DummyPreparedQuery">E</a>,<wbr><a href="DummyPreparedQuery.html" title="type parameter in DummyPreparedQuery">R</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getStoredQueryDelegate()" class="member-name-link">getStoredQueryDelegate</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
@@ -194,7 +200,10 @@ implements <a href="../../../../model/runtime/PreparedQuery.html" title="interfa
 <code><a href="../../../query/internal/DelegateStoredQuery.html#getAnnotationMetadata()">getAnnotationMetadata</a>, <a href="../../../query/internal/DelegateStoredQuery.html#getArgumentTypes()">getArgumentTypes</a>, <a href="../../../query/internal/DelegateStoredQuery.html#getEntityIdentifierType()">getEntityIdentifierType</a>, <a href="../../../query/internal/DelegateStoredQuery.html#getExpandableQueryParts()">getExpandableQueryParts</a>, <a href="../../../query/internal/DelegateStoredQuery.html#getJoinFetchPaths()">getJoinFetchPaths</a>, <a href="../../../query/internal/DelegateStoredQuery.html#getJoinPaths()">getJoinPaths</a>, <a href="../../../query/internal/DelegateStoredQuery.html#getLimit()">getLimit</a>, <a href="../../../query/internal/DelegateStoredQuery.html#getName()">getName</a>, <a href="../../../query/internal/DelegateStoredQuery.html#getOffset()">getOffset</a>, <a href="../../../query/internal/DelegateStoredQuery.html#getOperationType()">getOperationType</a>, <a href="../../../query/internal/DelegateStoredQuery.html#getParameterExpressions()">getParameterExpressions</a>, <a href="../../../query/internal/DelegateStoredQuery.html#getQuery()">getQuery</a>, <a href="../../../query/internal/DelegateStoredQuery.html#getQueryBindings()">getQueryBindings</a>, <a href="../../../query/internal/DelegateStoredQuery.html#getResultArgument()">getResultArgument</a>, <a href="../../../query/internal/DelegateStoredQuery.html#getResultDataType()">getResultDataType</a>, <a href="../../../query/internal/DelegateStoredQuery.html#getResultType()">getResultType</a>, <a href="../../../query/internal/DelegateStoredQuery.html#hasPageable()">hasPageable</a>, <a href="../../../query/internal/DelegateStoredQuery.html#hasResultConsumer()">hasResultConsumer</a>, <a href="../../../query/internal/DelegateStoredQuery.html#isCount()">isCount</a>, <a href="../../../query/internal/DelegateStoredQuery.html#isDtoProjection()">isDtoProjection</a>, <a href="../../../query/internal/DelegateStoredQuery.html#isJsonEntity()">isJsonEntity</a>, <a href="../../../query/internal/DelegateStoredQuery.html#isNative()">isNative</a>, <a href="../../../query/internal/DelegateStoredQuery.html#isOptimisticLock()">isOptimisticLock</a>, <a href="../../../query/internal/DelegateStoredQuery.html#isProcedure()">isProcedure</a>, <a href="../../../query/internal/DelegateStoredQuery.html#isSingleResult()">isSingleResult</a>, <a href="../../../query/internal/DelegateStoredQuery.html#useNumericPlaceholders()">useNumericPlaceholders</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.model.runtime.PreparedDataOperation">Methods inherited from interface&nbsp;io.micronaut.data.model.runtime.<a href="../../../../model/runtime/PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime">PreparedDataOperation</a></h3>
-<code><a href="../../../../model/runtime/PreparedDataOperation.html#getParameterInRole(java.lang.String,java.lang.Class)">getParameterInRole</a></code></div>
+<code><a href="../../../../model/runtime/PreparedDataOperation.html#getParameterInRole(java.lang.String,java.lang.Class)">getParameterInRole</a>, <a href="../../../../model/runtime/PreparedDataOperation.html#getParametersInRole(java.lang.String,java.lang.Class)">getParametersInRole</a></code></div>
+<div class="inherited-list">
+<h3 id="methods-inherited-from-class-io.micronaut.data.model.runtime.PreparedQuery">Methods inherited from interface&nbsp;io.micronaut.data.model.runtime.<a href="../../../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a></h3>
+<code><a href="../../../../model/runtime/PreparedQuery.html#getConversionService()">getConversionService</a></code></div>
 </section>
 </li>
 </ul>
@@ -267,6 +276,42 @@ implements <a href="../../../../model/runtime/PreparedQuery.html" title="interfa
 <dd><code><a href="../../../../model/runtime/StoredQuery.html#isRawQuery()">isRawQuery</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="DummyPreparedQuery.html" title="type parameter in DummyPreparedQuery">E</a>,<wbr><a href="DummyPreparedQuery.html" title="type parameter in DummyPreparedQuery">R</a>&gt;</code></dd>
 <dt>Returns:</dt>
 <dd>true if it is raw query</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="getSort()">
+<h3>getSort</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../../../model/Sort.html" title="interface in io.micronaut.data.model">Sort</a></span>&nbsp;<span class="element-name">getSort</span>()</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../../../query/internal/DelegateStoredQuery.html#getSort()">getSort</a></code>&nbsp;in interface&nbsp;<code><a href="../../../query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a>&lt;<a href="DummyPreparedQuery.html" title="type parameter in DummyPreparedQuery">E</a>,<wbr><a href="DummyPreparedQuery.html" title="type parameter in DummyPreparedQuery">R</a>&gt;</code></dd>
+<dt>Specified by:</dt>
+<dd><code><a href="../../../../model/runtime/PagedQuery.html#getSort()">getSort</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;<a href="DummyPreparedQuery.html" title="type parameter in DummyPreparedQuery">E</a>&gt;</code></dd>
+<dt>Specified by:</dt>
+<dd><code><a href="../../../../model/runtime/PreparedQuery.html#getSort()">getSort</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;<a href="DummyPreparedQuery.html" title="type parameter in DummyPreparedQuery">E</a>,<wbr><a href="DummyPreparedQuery.html" title="type parameter in DummyPreparedQuery">R</a>&gt;</code></dd>
+<dt>Specified by:</dt>
+<dd><code><a href="../../../../model/runtime/StoredQuery.html#getSort()">getSort</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="DummyPreparedQuery.html" title="type parameter in DummyPreparedQuery">E</a>,<wbr><a href="DummyPreparedQuery.html" title="type parameter in DummyPreparedQuery">R</a>&gt;</code></dd>
+<dt>Returns:</dt>
+<dd>The sort</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="getQueryLimit()">
+<h3>getQueryLimit</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../../../model/Limit.html" title="interface in io.micronaut.data.model">Limit</a></span>&nbsp;<span class="element-name">getQueryLimit</span>()</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../../../query/internal/DelegateStoredQuery.html#getQueryLimit()">getQueryLimit</a></code>&nbsp;in interface&nbsp;<code><a href="../../../query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a>&lt;<a href="DummyPreparedQuery.html" title="type parameter in DummyPreparedQuery">E</a>,<wbr><a href="DummyPreparedQuery.html" title="type parameter in DummyPreparedQuery">R</a>&gt;</code></dd>
+<dt>Specified by:</dt>
+<dd><code><a href="../../../../model/runtime/PagedQuery.html#getQueryLimit()">getQueryLimit</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;<a href="DummyPreparedQuery.html" title="type parameter in DummyPreparedQuery">E</a>&gt;</code></dd>
+<dt>Specified by:</dt>
+<dd><code><a href="../../../../model/runtime/PreparedQuery.html#getQueryLimit()">getQueryLimit</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;<a href="DummyPreparedQuery.html" title="type parameter in DummyPreparedQuery">E</a>,<wbr><a href="DummyPreparedQuery.html" title="type parameter in DummyPreparedQuery">R</a>&gt;</code></dd>
+<dt>Specified by:</dt>
+<dd><code><a href="../../../../model/runtime/StoredQuery.html#getQueryLimit()">getQueryLimit</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;<a href="DummyPreparedQuery.html" title="type parameter in DummyPreparedQuery">E</a>,<wbr><a href="DummyPreparedQuery.html" title="type parameter in DummyPreparedQuery">R</a>&gt;</code></dd>
+<dt>Returns:</dt>
+<dd>The limit</dd>
 </dl>
 </section>
 </li>

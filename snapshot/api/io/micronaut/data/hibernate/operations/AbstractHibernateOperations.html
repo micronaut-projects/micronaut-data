@@ -158,7 +158,7 @@ implements <a href="../../operations/HintsCapableRepository.html" title="interfa
 <section class="method-summary" id="method-summary">
 <h2>Method Summary</h2>
 <div id="method-summary-table">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab3" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab3', 3)" class="table-tab">Abstract Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab1" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab1', 3)" class="table-tab">Static Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab3" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab3', 3)" class="table-tab">Abstract Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
 <div id="method-summary-table.tabpanel" role="tabpanel">
 <div class="summary-table three-column-summary" aria-labelledby="method-summary-table-tab0">
 <div class="table-header col-first">Modifier and Type</div>
@@ -182,10 +182,10 @@ R&gt;&nbsp;void</code></div>
 <div class="block">Bind parameters into query.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;R&gt;&nbsp;void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#collectCountOf(jakarta.persistence.criteria.CriteriaBuilder,S,java.lang.Class,io.micronaut.data.model.Pageable,io.micronaut.data.hibernate.operations.AbstractHibernateOperations.ResultCollector)" class="member-name-link">collectCountOf</a><wbr>(jakarta.persistence.criteria.CriteriaBuilder&nbsp;criteriaBuilder,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#collectCountOf(jakarta.persistence.criteria.CriteriaBuilder,S,java.lang.Class,io.micronaut.data.model.Limit,io.micronaut.data.hibernate.operations.AbstractHibernateOperations.ResultCollector)" class="member-name-link">collectCountOf</a><wbr>(jakarta.persistence.criteria.CriteriaBuilder&nbsp;criteriaBuilder,
  <a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;R&gt;&nbsp;entity,
- @Nullable <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable,
+ @NonNull <a href="../../model/Limit.html" title="interface in io.micronaut.data.model">Limit</a>&nbsp;limit,
  <a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a>&gt;.<a href="AbstractHibernateOperations.ResultCollector.html" title="class in io.micronaut.data.hibernate.operations">ResultCollector</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;&nbsp;resultCollector)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;R&gt;&nbsp;void</code></div>
@@ -208,65 +208,78 @@ R&gt;&nbsp;void</code></div>
  <a href="../../model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a>&lt;T&gt;&nbsp;pagedQuery,
  <a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a>&gt;.<a href="AbstractHibernateOperations.ResultCollector.html" title="class in io.micronaut.data.hibernate.operations">ResultCollector</a>&lt;T&gt;&nbsp;resultCollector)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract &lt;T&gt;&nbsp;jakarta.persistence.EntityGraph&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createEntityGraph(S,java.lang.Class)" class="member-name-link">createEntityGraph</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final &lt;T,<wbr>
+R&gt;&nbsp;void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#collectResults(S,java.lang.String,io.micronaut.data.model.runtime.PreparedQuery,io.micronaut.data.model.Limit,io.micronaut.data.model.Sort,io.micronaut.data.hibernate.operations.AbstractHibernateOperations.ResultCollector)" class="member-name-link">collectResults</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;queryStr,
+ <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,<wbr>R&gt;&nbsp;preparedQuery,
+ <a href="../../model/Limit.html" title="interface in io.micronaut.data.model">Limit</a>&nbsp;limit,
+ <a href="../../model/Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort,
+ <a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a>&gt;.<a href="AbstractHibernateOperations.ResultCollector.html" title="class in io.micronaut.data.hibernate.operations">ResultCollector</a>&lt;R&gt;&nbsp;resultCollector)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract &lt;T&gt;&nbsp;jakarta.persistence.EntityGraph&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createEntityGraph(S,java.lang.Class)" class="member-name-link">createEntityGraph</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;entityType)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Creates an entity graph.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createNativeQuery(S,java.lang.String,java.lang.Class)" class="member-name-link">createNativeQuery</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createNativeQuery(S,java.lang.String,java.lang.Class)" class="member-name-link">createNativeQuery</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;query,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;resultType)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Create a new native query.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createQuery(S,jakarta.persistence.criteria.CriteriaQuery)" class="member-name-link">createQuery</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createQuery(S,jakarta.persistence.criteria.CriteriaQuery)" class="member-name-link">createQuery</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
  jakarta.persistence.criteria.CriteriaQuery&lt;?&gt;&nbsp;criteriaQuery)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Create a native query.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createQuery(S,java.lang.String,java.lang.Class)" class="member-name-link">createQuery</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createQuery(S,java.lang.String,java.lang.Class)" class="member-name-link">createQuery</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;query,
  @Nullable <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;resultType)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Create a new query.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;E,<wbr>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;E,<wbr>
 R&gt;&nbsp;<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#decorate(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">decorate</a><wbr>(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt;&nbsp;preparedQuery)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#decorate(io.micronaut.data.model.runtime.PreparedQuery)" class="member-name-link">decorate</a><wbr>(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;E,<wbr>R&gt;&nbsp;preparedQuery)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Decorate prepared query.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;E,<wbr>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;E,<wbr>
 R&gt;&nbsp;<a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#decorate(io.micronaut.data.model.runtime.StoredQuery)" class="member-name-link">decorate</a><wbr>(<a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;&nbsp;storedQuery)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#decorate(io.micronaut.data.model.runtime.StoredQuery)" class="member-name-link">decorate</a><wbr>(<a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;E,<wbr>R&gt;&nbsp;storedQuery)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Decorate stored query.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected io.micronaut.context.ApplicationContext</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getApplicationContext()" class="member-name-link">getApplicationContext</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected io.micronaut.core.convert.ConversionService</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getConversionService()" class="member-name-link">getConversionService</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected io.micronaut.context.ApplicationContext</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getApplicationContext()" class="member-name-link">getApplicationContext</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract &lt;T&gt;&nbsp;@NonNull <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getEntity(java.lang.Class)" class="member-name-link">getEntity</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected io.micronaut.core.convert.ConversionService</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getConversionService()" class="member-name-link">getConversionService</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract &lt;T&gt;&nbsp;@NonNull <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getEntity(java.lang.Class)" class="member-name-link">getEntity</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Gets the persistence entity.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract &lt;T&gt;&nbsp;jakarta.persistence.EntityGraph&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getEntityGraph(S,java.lang.Class,java.lang.String)" class="member-name-link">getEntityGraph</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract &lt;T&gt;&nbsp;jakarta.persistence.EntityGraph&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getEntityGraph(S,java.lang.Class,java.lang.String)" class="member-name-link">getEntityGraph</a><wbr>(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;entityType,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;graphName)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Gets an entity graph.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final jakarta.persistence.FlushModeType</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getFlushModeType(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">getFlushModeType</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final jakarta.persistence.FlushModeType</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getFlushModeType(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">getFlushModeType</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>protected static &lt;T&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;org.hibernate.query.Order&lt;? super T&gt;&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#getOrders(io.micronaut.data.model.Sort,java.lang.Class)" class="member-name-link">getOrders</a><wbr>(<a href="../../model/Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;entityClass)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getQueryHints(io.micronaut.data.model.runtime.StoredQuery)" class="member-name-link">getQueryHints</a><wbr>(@NonNull <a href="../../model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;?,<wbr>?&gt;&nbsp;storedQuery)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
@@ -797,6 +810,18 @@ R&gt;</span>&nbsp;<span class="return-type"><a href="../../model/runtime/StoredQ
 </section>
 </li>
 <li>
+<section class="detail" id="collectResults(S,java.lang.String,io.micronaut.data.model.runtime.PreparedQuery,io.micronaut.data.model.Limit,io.micronaut.data.model.Sort,io.micronaut.data.hibernate.operations.AbstractHibernateOperations.ResultCollector)">
+<h3 id="collectResults(java.lang.Object,java.lang.String,io.micronaut.data.model.runtime.PreparedQuery,io.micronaut.data.model.Limit,io.micronaut.data.model.Sort,io.micronaut.data.hibernate.operations.AbstractHibernateOperations.ResultCollector)">collectResults</h3>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="type-parameters">&lt;T,<wbr>
+R&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">collectResults</span><wbr><span class="parameters">(<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;queryStr,
+ <a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,<wbr>R&gt;&nbsp;preparedQuery,
+ <a href="../../model/Limit.html" title="interface in io.micronaut.data.model">Limit</a>&nbsp;limit,
+ <a href="../../model/Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort,
+ <a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a>&gt;.<a href="AbstractHibernateOperations.ResultCollector.html" title="class in io.micronaut.data.hibernate.operations">ResultCollector</a>&lt;R&gt;&nbsp;resultCollector)</span></div>
+</section>
+</li>
+<li>
 <section class="detail" id="bindParameters(Q,io.micronaut.data.model.runtime.PreparedQuery,boolean)">
 <h3 id="bindParameters(java.lang.Object,io.micronaut.data.model.runtime.PreparedQuery,boolean)">bindParameters</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;T,<wbr>
@@ -845,6 +870,14 @@ R&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="elemen
 </section>
 </li>
 <li>
+<section class="detail" id="getOrders(io.micronaut.data.model.Sort,java.lang.Class)">
+<h3>getOrders</h3>
+<div class="member-signature"><span class="modifiers">protected static</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>
+<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;org.hibernate.query.Order&lt;? super T&gt;&gt;</span>&nbsp;<span class="element-name">getOrders</span><wbr><span class="parameters">(<a href="../../model/Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;entityClass)</span></div>
+</section>
+</li>
+<li>
 <section class="detail" id="collectPagedResults(jakarta.persistence.criteria.CriteriaBuilder,S,io.micronaut.data.model.runtime.PagedQuery,io.micronaut.data.hibernate.operations.AbstractHibernateOperations.ResultCollector)">
 <h3 id="collectPagedResults(jakarta.persistence.criteria.CriteriaBuilder,java.lang.Object,io.micronaut.data.model.runtime.PagedQuery,io.micronaut.data.hibernate.operations.AbstractHibernateOperations.ResultCollector)">collectPagedResults</h3>
 <div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">collectPagedResults</span><wbr><span class="parameters">(jakarta.persistence.criteria.CriteriaBuilder&nbsp;criteriaBuilder,
@@ -854,13 +887,13 @@ R&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="elemen
 </section>
 </li>
 <li>
-<section class="detail" id="collectCountOf(jakarta.persistence.criteria.CriteriaBuilder,S,java.lang.Class,io.micronaut.data.model.Pageable,io.micronaut.data.hibernate.operations.AbstractHibernateOperations.ResultCollector)">
-<h3 id="collectCountOf(jakarta.persistence.criteria.CriteriaBuilder,java.lang.Object,java.lang.Class,io.micronaut.data.model.Pageable,io.micronaut.data.hibernate.operations.AbstractHibernateOperations.ResultCollector)">collectCountOf</h3>
+<section class="detail" id="collectCountOf(jakarta.persistence.criteria.CriteriaBuilder,S,java.lang.Class,io.micronaut.data.model.Limit,io.micronaut.data.hibernate.operations.AbstractHibernateOperations.ResultCollector)">
+<h3 id="collectCountOf(jakarta.persistence.criteria.CriteriaBuilder,java.lang.Object,java.lang.Class,io.micronaut.data.model.Limit,io.micronaut.data.hibernate.operations.AbstractHibernateOperations.ResultCollector)">collectCountOf</h3>
 <div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">collectCountOf</span><wbr><span class="parameters">(jakarta.persistence.criteria.CriteriaBuilder&nbsp;criteriaBuilder,
  <a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>&nbsp;session,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;R&gt;&nbsp;entity,
- @Nullable
- @Nullable <a href="../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable,
+ @NonNull
+ @NonNull <a href="../../model/Limit.html" title="interface in io.micronaut.data.model">Limit</a>&nbsp;limit,
  <a href="AbstractHibernateOperations.html" title="class in io.micronaut.data.hibernate.operations">AbstractHibernateOperations</a>&lt;<a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">S</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">Q</a>,<wbr><a href="AbstractHibernateOperations.html" title="type parameter in AbstractHibernateOperations">P</a>&gt;.<a href="AbstractHibernateOperations.ResultCollector.html" title="class in io.micronaut.data.hibernate.operations">ResultCollector</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;&nbsp;resultCollector)</span></div>
 </section>
 </li>

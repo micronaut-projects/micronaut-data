@@ -129,11 +129,17 @@ extends io.micronaut.core.naming.Named, io.micronaut.core.annotation.AnnotationM
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">The parameter binding.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="PagedQuery.html" title="type parameter in PagedQuery">E</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getRootEntity()" class="member-name-link">getRootEntity</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="../Limit.html" title="interface in io.micronaut.data.model">Limit</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getQueryLimit()" class="member-name-link">getQueryLimit</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;<a href="PagedQuery.html" title="type parameter in PagedQuery">E</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getRootEntity()" class="member-name-link">getRootEntity</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">The root entity type.</div>
 </div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default @NonNull <a href="../Sort.html" title="interface in io.micronaut.data.model">Sort</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getSort()" class="member-name-link">getSort</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -177,6 +183,32 @@ extends io.micronaut.core.naming.Named, io.micronaut.core.annotation.AnnotationM
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The pageable object. Defaults to <a href="../Pageable.html#UNPAGED"><code>Pageable.UNPAGED</code></a></dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="getQueryLimit()">
+<h3>getQueryLimit</h3>
+<div class="member-signature"><span class="annotations">@NonNull
+</span><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="../Limit.html" title="interface in io.micronaut.data.model">Limit</a></span>&nbsp;<span class="element-name">getQueryLimit</span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>The limit</dd>
+<dt>Since:</dt>
+<dd>4.13</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="getSort()">
+<h3>getSort</h3>
+<div class="member-signature"><span class="annotations">@NonNull
+</span><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="../Sort.html" title="interface in io.micronaut.data.model">Sort</a></span>&nbsp;<span class="element-name">getSort</span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>The sort</dd>
+<dt>Since:</dt>
+<dd>4.13</dd>
 </dl>
 </section>
 </li>

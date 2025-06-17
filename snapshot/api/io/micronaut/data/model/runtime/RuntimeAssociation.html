@@ -44,7 +44,7 @@ loadScripts(document, 'script');</script>
 <div>
 <ul class="sub-nav-list">
 <li>Summary:&nbsp;</li>
-<li>Nested&nbsp;|&nbsp;</li>
+<li><a href="#nested-class-summary">Nested</a>&nbsp;|&nbsp;</li>
 <li><a href="#field-summary">Field</a>&nbsp;|&nbsp;</li>
 <li>Constr&nbsp;|&nbsp;</li>
 <li><a href="#method-summary">Method</a></li>
@@ -99,6 +99,15 @@ implements <a href="../Association.html" title="interface in io.micronaut.data.m
 </section>
 <section class="summary">
 <ul class="summary-list">
+<!-- ======== NESTED CLASS SUMMARY ======== -->
+<li>
+<section class="nested-class-summary" id="nested-class-summary">
+<h2>Nested Class Summary</h2>
+<div class="inherited-list">
+<h2 id="nested-classes-inherited-from-class-io.micronaut.data.model.PersistentProperty">Nested classes/interfaces inherited from interface&nbsp;io.micronaut.data.model.<a href="../PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a></h2>
+<code><a href="../PersistentProperty.EnumConstant.html" title="interface in io.micronaut.data.model">PersistentProperty.EnumConstant</a></code></div>
+</section>
+</li>
 <!-- =========== FIELD SUMMARY =========== -->
 <li>
 <section class="field-summary" id="field-summary">
@@ -146,12 +155,17 @@ implements <a href="../Association.html" title="interface in io.micronaut.data.m
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Whether a property is required to be specified.</div>
 </div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isSingleEnded()" class="member-name-link">isSingleEnded</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Determines whether this association is single-ended, meaning it only has one end point.</div>
+</div>
 </div>
 </div>
 </div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.model.runtime.RuntimePersistentProperty">Methods inherited from class&nbsp;io.micronaut.data.model.runtime.<a href="RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a></h3>
-<code><a href="RuntimePersistentProperty.html#equals(java.lang.Object)">equals</a>, <a href="RuntimePersistentProperty.html#getAlias()">getAlias</a>, <a href="RuntimePersistentProperty.html#getAnnotationMetadata()">getAnnotationMetadata</a>, <a href="RuntimePersistentProperty.html#getArgument()">getArgument</a>, <a href="RuntimePersistentProperty.html#getConverter()">getConverter</a>, <a href="RuntimePersistentProperty.html#getDataType()">getDataType</a>, <a href="RuntimePersistentProperty.html#getJsonDataType()">getJsonDataType</a>, <a href="RuntimePersistentProperty.html#getName()">getName</a>, <a href="RuntimePersistentProperty.html#getOwner()">getOwner</a>, <a href="RuntimePersistentProperty.html#getPersistedName()">getPersistedName</a>, <a href="RuntimePersistentProperty.html#getProperty()">getProperty</a>, <a href="RuntimePersistentProperty.html#getType()">getType</a>, <a href="RuntimePersistentProperty.html#getTypeName()">getTypeName</a>, <a href="RuntimePersistentProperty.html#hashCode()">hashCode</a>, <a href="RuntimePersistentProperty.html#isAssignable(java.lang.Class)">isAssignable</a>, <a href="RuntimePersistentProperty.html#isAssignable(java.lang.String)">isAssignable</a>, <a href="RuntimePersistentProperty.html#isConstructorArgument()">isConstructorArgument</a>, <a href="RuntimePersistentProperty.html#isEnum()">isEnum</a>, <a href="RuntimePersistentProperty.html#isOptional()">isOptional</a>, <a href="RuntimePersistentProperty.html#isReadOnly()">isReadOnly</a>, <a href="RuntimePersistentProperty.html#toString()">toString</a></code></div>
+<code><a href="RuntimePersistentProperty.html#equals(java.lang.Object)">equals</a>, <a href="RuntimePersistentProperty.html#getAlias()">getAlias</a>, <a href="RuntimePersistentProperty.html#getAnnotationMetadata()">getAnnotationMetadata</a>, <a href="RuntimePersistentProperty.html#getArgument()">getArgument</a>, <a href="RuntimePersistentProperty.html#getConverter()">getConverter</a>, <a href="RuntimePersistentProperty.html#getDataType()">getDataType</a>, <a href="RuntimePersistentProperty.html#getEnumConstants()">getEnumConstants</a>, <a href="RuntimePersistentProperty.html#getJsonDataType()">getJsonDataType</a>, <a href="RuntimePersistentProperty.html#getName()">getName</a>, <a href="RuntimePersistentProperty.html#getOwner()">getOwner</a>, <a href="RuntimePersistentProperty.html#getPersistedName()">getPersistedName</a>, <a href="RuntimePersistentProperty.html#getProperty()">getProperty</a>, <a href="RuntimePersistentProperty.html#getType()">getType</a>, <a href="RuntimePersistentProperty.html#getTypeName()">getTypeName</a>, <a href="RuntimePersistentProperty.html#hashCode()">hashCode</a>, <a href="RuntimePersistentProperty.html#isAssignable(java.lang.Class)">isAssignable</a>, <a href="RuntimePersistentProperty.html#isAssignable(java.lang.String)">isAssignable</a>, <a href="RuntimePersistentProperty.html#isConstructorArgument()">isConstructorArgument</a>, <a href="RuntimePersistentProperty.html#isEnum()">isEnum</a>, <a href="RuntimePersistentProperty.html#isOptional()">isOptional</a>, <a href="RuntimePersistentProperty.html#isReadOnly()">isReadOnly</a>, <a href="RuntimePersistentProperty.html#toString()">toString</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-java.lang.Object">Methods inherited from class&nbsp;java.lang.<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></h3>
 <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
@@ -169,7 +183,7 @@ implements <a href="../Association.html" title="interface in io.micronaut.data.m
 <code><a href="../PersistentElement.html#getPersistedName()">getPersistedName</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.model.PersistentProperty">Methods inherited from interface&nbsp;io.micronaut.data.model.<a href="../PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a></h3>
-<code><a href="../PersistentProperty.html#getAlias()">getAlias</a>, <a href="../PersistentProperty.html#getCapitalizedName()">getCapitalizedName</a>, <a href="../PersistentProperty.html#getCapitilizedName()">getCapitilizedName</a>, <a href="../PersistentProperty.html#getConverter()">getConverter</a>, <a href="../PersistentProperty.html#getDataType()">getDataType</a>, <a href="../PersistentProperty.html#getJsonDataType()">getJsonDataType</a>, <a href="../PersistentProperty.html#getName()">getName</a>, <a href="../PersistentProperty.html#getOwner()">getOwner</a>, <a href="../PersistentProperty.html#getTypeName()">getTypeName</a>, <a href="../PersistentProperty.html#isAssignable(java.lang.Class)">isAssignable</a>, <a href="../PersistentProperty.html#isAssignable(java.lang.String)">isAssignable</a>, <a href="../PersistentProperty.html#isAutoPopulated()">isAutoPopulated</a>, <a href="../PersistentProperty.html#isConstructorArgument()">isConstructorArgument</a>, <a href="../PersistentProperty.html#isEmbedded()">isEmbedded</a>, <a href="../PersistentProperty.html#isEnum()">isEnum</a>, <a href="../PersistentProperty.html#isGenerated()">isGenerated</a>, <a href="../PersistentProperty.html#isOptional()">isOptional</a>, <a href="../PersistentProperty.html#isReadOnly()">isReadOnly</a></code></div>
+<code><a href="../PersistentProperty.html#getAlias()">getAlias</a>, <a href="../PersistentProperty.html#getCapitalizedName()">getCapitalizedName</a>, <a href="../PersistentProperty.html#getCapitilizedName()">getCapitilizedName</a>, <a href="../PersistentProperty.html#getConverter()">getConverter</a>, <a href="../PersistentProperty.html#getDataType()">getDataType</a>, <a href="../PersistentProperty.html#getEnumConstants()">getEnumConstants</a>, <a href="../PersistentProperty.html#getJsonDataType()">getJsonDataType</a>, <a href="../PersistentProperty.html#getName()">getName</a>, <a href="../PersistentProperty.html#getOwner()">getOwner</a>, <a href="../PersistentProperty.html#getTypeName()">getTypeName</a>, <a href="../PersistentProperty.html#isAssignable(java.lang.Class)">isAssignable</a>, <a href="../PersistentProperty.html#isAssignable(java.lang.String)">isAssignable</a>, <a href="../PersistentProperty.html#isAutoPopulated()">isAutoPopulated</a>, <a href="../PersistentProperty.html#isConstructorArgument()">isConstructorArgument</a>, <a href="../PersistentProperty.html#isEmbedded()">isEmbedded</a>, <a href="../PersistentProperty.html#isEnum()">isEnum</a>, <a href="../PersistentProperty.html#isGenerated()">isGenerated</a>, <a href="../PersistentProperty.html#isOptional()">isOptional</a>, <a href="../PersistentProperty.html#isReadOnly()">isReadOnly</a></code></div>
 </section>
 </li>
 </ul>
@@ -190,6 +204,22 @@ implements <a href="../Association.html" title="interface in io.micronaut.data.m
 <dd><code><a href="../Association.html#isForeignKey()">isForeignKey</a></code>&nbsp;in interface&nbsp;<code><a href="../Association.html" title="interface in io.micronaut.data.model">Association</a></code></dd>
 <dt>Returns:</dt>
 <dd>Whether the association is a foreign key association</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="isSingleEnded()">
+<h3>isSingleEnded</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isSingleEnded</span>()</div>
+<div class="block"><span class="descfrm-type-label">Description copied from interface:&nbsp;<code><a href="../Association.html#isSingleEnded()">Association</a></code></span></div>
+<div class="block">Determines whether this association is single-ended, meaning it only has one end point.
+ An association is considered single-ended if its kind is either ONE_TO_ONE or MANY_TO_ONE,
+ but not EMBEDDED.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../Association.html#isSingleEnded()">isSingleEnded</a></code>&nbsp;in interface&nbsp;<code><a href="../Association.html" title="interface in io.micronaut.data.model">Association</a></code></dd>
+<dt>Returns:</dt>
+<dd>True if the association is single-ended, false otherwise.</dd>
 </dl>
 </section>
 </li>

@@ -45,6 +45,7 @@ io.micronaut.data.jdbc.convert
 io.micronaut.data.jdbc.mapper
 io.micronaut.data.jdbc.operations
 io.micronaut.data.jdbc.runtime
+io.micronaut.data.jdql
 io.micronaut.data.jpa.annotation
 io.micronaut.data.jpa.operations
 io.micronaut.data.jpa.repository
@@ -63,10 +64,13 @@ io.micronaut.data.model.query
 io.micronaut.data.model.query.builder
 io.micronaut.data.model.query.builder.jpa
 io.micronaut.data.model.query.builder.sql
+io.micronaut.data.model.query.builder.sql.validation
 io.micronaut.data.model.query.factory
 io.micronaut.data.model.query.impl
 io.micronaut.data.model.runtime
 io.micronaut.data.model.runtime.convert
+io.micronaut.data.model.schema.sql
+io.micronaut.data.model.schema.sql.metadata
 io.micronaut.data.mongodb.advice
 io.micronaut.data.mongodb.annotation
 io.micronaut.data.mongodb.conf
@@ -79,7 +83,9 @@ io.micronaut.data.mongodb.transaction
 io.micronaut.data.operations
 io.micronaut.data.operations.async
 io.micronaut.data.operations.reactive
+io.micronaut.data.processor.jdql
 io.micronaut.data.processor.mappers
+io.micronaut.data.processor.mappers.jakarta.data
 io.micronaut.data.processor.mappers.jpa.jakarta
 io.micronaut.data.processor.mappers.jpa.jakarta.event
 io.micronaut.data.processor.mappers.jpa.jx
@@ -91,6 +97,7 @@ io.micronaut.data.processor.model.criteria
 io.micronaut.data.processor.model.criteria.impl
 io.micronaut.data.processor.visitors
 io.micronaut.data.processor.visitors.finders
+io.micronaut.data.processor.visitors.finders.annotated
 io.micronaut.data.processor.visitors.finders.criteria
 io.micronaut.data.processor.visitors.finders.spec
 io.micronaut.data.r2dbc.annotation
@@ -133,6 +140,7 @@ io.micronaut.data.runtime.query
 io.micronaut.data.runtime.query.internal
 io.micronaut.data.runtime.support
 io.micronaut.data.runtime.support.convert
+io.micronaut.data.runtime.support.exceptions.jakarta.data
 io.micronaut.data.spring.jdbc
 io.micronaut.data.spring.jpa.hibernate
 io.micronaut.data.spring.jpa.intercept

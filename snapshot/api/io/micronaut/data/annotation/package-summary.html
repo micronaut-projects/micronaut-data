@@ -105,6 +105,15 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color class-summary class-summary-tab7">
 <div class="block">Meta annotation to identity annotations that are auto-populated by the Micronaut Data.</div>
 </div>
+<div class="col-first odd-row-color class-summary class-summary-tab7"><a href="By.html" title="annotation interface in io.micronaut.data.annotation">By</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab7">
+<div class="block">Annotates a parameter of a repository method, specifying a mapping to
+ a persistent field:</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab7"><a href="ConvertException.html" title="annotation interface in io.micronaut.data.annotation">ConvertException</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab7">
+<div class="block">The exception converter definition for the data method.</div>
+</div>
 <div class="col-first odd-row-color class-summary class-summary-tab2"><a href="DataAnnotationUtils.html" title="class in io.micronaut.data.annotation">DataAnnotationUtils</a></div>
 <div class="col-last odd-row-color class-summary class-summary-tab2">
 <div class="block">The util class for annotations for micronaut-data module.</div>
@@ -122,29 +131,38 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color class-summary class-summary-tab7">
 <div class="block">Can be applied to date type to indicate the property should be populated when it was last updated.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab7"><a href="Embeddable.html" title="annotation interface in io.micronaut.data.annotation">Embeddable</a></div>
+<div class="col-first odd-row-color class-summary class-summary-tab7"><a href="Delete.html" title="annotation interface in io.micronaut.data.annotation">Delete</a></div>
 <div class="col-last odd-row-color class-summary class-summary-tab7">
+<div class="block">Lifecycle annotation for repository methods which perform delete operations; alternatively, annotates a repository
+ method as a parameter-based automatic query method which deletes entities.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab7"><a href="Embeddable.html" title="annotation interface in io.micronaut.data.annotation">Embeddable</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab7">
 <div class="block">Annotation to be used on POJOs that are embeddable in <a href="MappedEntity.html" title="annotation interface in io.micronaut.data.annotation"><code>MappedEntity</code></a> types.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab7"><a href="EmbeddedId.html" title="annotation interface in io.micronaut.data.annotation">EmbeddedId</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab7">
+<div class="col-first odd-row-color class-summary class-summary-tab7"><a href="EmbeddedId.html" title="annotation interface in io.micronaut.data.annotation">EmbeddedId</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab7">
 <div class="block">Annotation that specifies the embedded ID.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab7"><a href="EntityRepresentation.html" title="annotation interface in io.micronaut.data.annotation">EntityRepresentation</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab7">
+<div class="col-first even-row-color class-summary class-summary-tab7"><a href="EntityRepresentation.html" title="annotation interface in io.micronaut.data.annotation">EntityRepresentation</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab7">
 <div class="block">Defines entity representation for database operations.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab3"><a href="EntityRepresentation.ColumnType.html" title="enum class in io.micronaut.data.annotation">EntityRepresentation.ColumnType</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab3">
+<div class="col-first odd-row-color class-summary class-summary-tab3"><a href="EntityRepresentation.ColumnType.html" title="enum class in io.micronaut.data.annotation">EntityRepresentation.ColumnType</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab3">
 <div class="block">The column type.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab3"><a href="EntityRepresentation.Type.html" title="enum class in io.micronaut.data.annotation">EntityRepresentation.Type</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab3">
+<div class="col-first even-row-color class-summary class-summary-tab3"><a href="EntityRepresentation.Type.html" title="enum class in io.micronaut.data.annotation">EntityRepresentation.Type</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab3">
 <div class="block">Supported entity representation types.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab7"><a href="Expandable.html" title="annotation interface in io.micronaut.data.annotation">Expandable</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab7">
+<div class="col-first odd-row-color class-summary class-summary-tab7"><a href="Expandable.html" title="annotation interface in io.micronaut.data.annotation">Expandable</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab7">
 <div class="block">Marks parameter as expandable, which means that the query will be altered during runtime to accommodate additional values.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab7"><a href="Find.html" title="annotation interface in io.micronaut.data.annotation">Find</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab7">
+<div class="block">Annotates a repository method returning entities as a parameter-based automatic query method.</div>
 </div>
 <div class="col-first odd-row-color class-summary class-summary-tab7"><a href="FindInterceptorDef.html" title="annotation interface in io.micronaut.data.annotation">FindInterceptorDef</a></div>
 <div class="col-last odd-row-color class-summary class-summary-tab7">
@@ -174,73 +192,89 @@ loadScripts(document, 'script');</script>
 <div class="col-last odd-row-color class-summary class-summary-tab7">
 <div class="block">Repeatable annotation for <a href="Index.html" title="annotation interface in io.micronaut.data.annotation"><code>Index</code></a>.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab7"><a href="Join.html" title="annotation interface in io.micronaut.data.annotation">Join</a></div>
+<div class="col-first even-row-color class-summary class-summary-tab7"><a href="Insert.html" title="annotation interface in io.micronaut.data.annotation">Insert</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab7">
+<div class="block">Lifecycle annotation for repository methods which perform insert operations.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab7"><a href="Join.html" title="annotation interface in io.micronaut.data.annotation">Join</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab7">
 <div class="block">A @Join defines how a join for a particular association path should be generated.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab3"><a href="Join.Type.html" title="enum class in io.micronaut.data.annotation">Join.Type</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab3">
+<div class="col-first even-row-color class-summary class-summary-tab3"><a href="Join.Type.html" title="enum class in io.micronaut.data.annotation">Join.Type</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab3">
 <div class="block">The type of join.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab7"><a href="JsonRepresentation.html" title="annotation interface in io.micronaut.data.annotation">JsonRepresentation</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab7">
+<div class="col-first odd-row-color class-summary class-summary-tab7"><a href="JsonRepresentation.html" title="annotation interface in io.micronaut.data.annotation">JsonRepresentation</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab7">
 <div class="block">The custom annotation used for <a href="../model/DataType.html#JSON"><code>DataType.JSON</code></a> fields that can help us determing how to store and retrieve json fields.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab7"><a href="JsonView.html" title="annotation interface in io.micronaut.data.annotation">JsonView</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab7">
+<div class="col-first even-row-color class-summary class-summary-tab7"><a href="JsonView.html" title="annotation interface in io.micronaut.data.annotation">JsonView</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab7">
 <div class="block">The annotation defining Json Duality View.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab7"><a href="MappedEntity.html" title="annotation interface in io.micronaut.data.annotation">MappedEntity</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab7">
+<div class="col-first odd-row-color class-summary class-summary-tab7"><a href="MappedEntity.html" title="annotation interface in io.micronaut.data.annotation">MappedEntity</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab7">
 <div class="block">Designates a class as being persisted.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab7"><a href="MappedProperty.html" title="annotation interface in io.micronaut.data.annotation">MappedProperty</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab7">
+<div class="col-first even-row-color class-summary class-summary-tab7"><a href="MappedProperty.html" title="annotation interface in io.micronaut.data.annotation">MappedProperty</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab7">
 <div class="block">Designates a method or field that is mapped as a persistent property.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab7"><a href="NamingStrategy.html" title="annotation interface in io.micronaut.data.annotation">NamingStrategy</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab7">
+<div class="col-first odd-row-color class-summary class-summary-tab7"><a href="NamingStrategy.html" title="annotation interface in io.micronaut.data.annotation">NamingStrategy</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab7">
 <div class="block">Override default naming strategy.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab7"><a href="ParameterExpression.html" title="annotation interface in io.micronaut.data.annotation">ParameterExpression</a></div>
+<div class="col-first even-row-color class-summary class-summary-tab7"><a href="OrderBy.html" title="annotation interface in io.micronaut.data.annotation">OrderBy</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab7">
+<div class="block">Annotates a repository method to request sorting of results.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab7"><a href="OrderBy.List.html" title="annotation interface in io.micronaut.data.annotation">OrderBy.List</a></div>
 <div class="col-last odd-row-color class-summary class-summary-tab7">
+<div class="block">Enables multiple <code>OrderBy</code> annotations on the method.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab7"><a href="ParameterExpression.html" title="annotation interface in io.micronaut.data.annotation">ParameterExpression</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab7">
 <div class="block">The definition of the query's parameter value that should be represented as an expression.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab7"><a href="Query.html" title="annotation interface in io.micronaut.data.annotation">Query</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab7">
+<div class="col-first odd-row-color class-summary class-summary-tab7"><a href="Query.html" title="annotation interface in io.micronaut.data.annotation">Query</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab7">
 <div class="block">Defines the query string such as SQL, JPA-QL, Cypher etc.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab7"><a href="QueryHint.html" title="annotation interface in io.micronaut.data.annotation">QueryHint</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab7">
+<div class="col-first even-row-color class-summary class-summary-tab7"><a href="QueryHint.html" title="annotation interface in io.micronaut.data.annotation">QueryHint</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab7">
 <div class="block">Provides a query hint to the underlying query implementation.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab7"><a href="QueryResult.html" title="annotation interface in io.micronaut.data.annotation">QueryResult</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab7">
+<div class="col-first odd-row-color class-summary class-summary-tab7"><a href="QueryResult.html" title="annotation interface in io.micronaut.data.annotation">QueryResult</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab7">
 <div class="block">Defines query result for database query execution.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab3"><a href="QueryResult.Type.html" title="enum class in io.micronaut.data.annotation">QueryResult.Type</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab3">
+<div class="col-first even-row-color class-summary class-summary-tab3"><a href="QueryResult.Type.html" title="enum class in io.micronaut.data.annotation">QueryResult.Type</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab3">
 <div class="block">Supported query result types.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab7"><a href="Relation.html" title="annotation interface in io.micronaut.data.annotation">Relation</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab7">
+<div class="col-first odd-row-color class-summary class-summary-tab7"><a href="Relation.html" title="annotation interface in io.micronaut.data.annotation">Relation</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab7">
 <div class="block">Annotation used to indicate a field or method is a relation to another type.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab3"><a href="Relation.Cascade.html" title="enum class in io.micronaut.data.annotation">Relation.Cascade</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab3">
+<div class="col-first even-row-color class-summary class-summary-tab3"><a href="Relation.Cascade.html" title="enum class in io.micronaut.data.annotation">Relation.Cascade</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab3">
 <div class="block">Cascade type handling for different associations.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab3"><a href="Relation.Kind.html" title="enum class in io.micronaut.data.annotation">Relation.Kind</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab3">
+<div class="col-first odd-row-color class-summary class-summary-tab3"><a href="Relation.Kind.html" title="enum class in io.micronaut.data.annotation">Relation.Kind</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab3">
 <div class="block">The relation kind.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab7"><a href="Repository.html" title="annotation interface in io.micronaut.data.annotation">Repository</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab7">
+<div class="col-first even-row-color class-summary class-summary-tab7"><a href="Repository.html" title="annotation interface in io.micronaut.data.annotation">Repository</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab7">
 <div class="block">Designates a type of data repository.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab7"><a href="RepositoryConfiguration.html" title="annotation interface in io.micronaut.data.annotation">RepositoryConfiguration</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab7">
+<div class="col-first odd-row-color class-summary class-summary-tab7"><a href="RepositoryConfiguration.html" title="annotation interface in io.micronaut.data.annotation">RepositoryConfiguration</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab7">
 <div class="block">Models compilation time configuration for the repository.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab7"><a href="Save.html" title="annotation interface in io.micronaut.data.annotation">Save</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab7">
+<div class="block">Lifecycle annotation for repository methods which conditionally perform insert or update operations.</div>
 </div>
 <div class="col-first odd-row-color class-summary class-summary-tab7"><a href="TenantId.html" title="annotation interface in io.micronaut.data.annotation">TenantId</a></div>
 <div class="col-last odd-row-color class-summary class-summary-tab7">
@@ -259,21 +293,25 @@ loadScripts(document, 'script');</script>
 <div class="block">A type role indicates a method element in a repository that plays a role in query execution and should
  not be factored into query calculation but instead made available at runtime using the specified role name.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab7"><a href="Version.html" title="annotation interface in io.micronaut.data.annotation">Version</a></div>
+<div class="col-first odd-row-color class-summary class-summary-tab7"><a href="Update.html" title="annotation interface in io.micronaut.data.annotation">Update</a></div>
 <div class="col-last odd-row-color class-summary class-summary-tab7">
+<div class="block">Lifecycle annotation for repository methods which perform update operations.</div>
+</div>
+<div class="col-first even-row-color class-summary class-summary-tab7"><a href="Version.html" title="annotation interface in io.micronaut.data.annotation">Version</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab7">
 <div class="block">Designates a field or method that is used to version an entity.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab7"><a href="Where.html" title="annotation interface in io.micronaut.data.annotation">Where</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab7">
+<div class="col-first odd-row-color class-summary class-summary-tab7"><a href="Where.html" title="annotation interface in io.micronaut.data.annotation">Where</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab7">
 <div class="block">There <code>Where</code> annotation allows augmenting the <code>WHERE</code> statement of generated
  queries with additional criterion.</div>
 </div>
-<div class="col-first odd-row-color class-summary class-summary-tab7"><a href="WithoutTenantId.html" title="annotation interface in io.micronaut.data.annotation">WithoutTenantId</a></div>
-<div class="col-last odd-row-color class-summary class-summary-tab7">
+<div class="col-first even-row-color class-summary class-summary-tab7"><a href="WithoutTenantId.html" title="annotation interface in io.micronaut.data.annotation">WithoutTenantId</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab7">
 <div class="block">Mark the repository method to exclude implicit tenant id check.</div>
 </div>
-<div class="col-first even-row-color class-summary class-summary-tab7"><a href="WithTenantId.html" title="annotation interface in io.micronaut.data.annotation">WithTenantId</a></div>
-<div class="col-last even-row-color class-summary class-summary-tab7">
+<div class="col-first odd-row-color class-summary class-summary-tab7"><a href="WithTenantId.html" title="annotation interface in io.micronaut.data.annotation">WithTenantId</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab7">
 <div class="block">Mark the repository method to include the tenant id supplied by this annotation.</div>
 </div>
 </div>
