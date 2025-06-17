@@ -70,8 +70,6 @@ public interface Page<T> extends Slice<T> {
 
     /**
      * Get the total count of pages that can be given by this query.
-     * The method may produce a {@link IllegalStateException} if the {@link Pageable} request
-     * did not ask for total size.
      *
      * @return The total page of pages
      */

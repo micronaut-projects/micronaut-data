@@ -95,7 +95,7 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
         return saveProperties();
     }
 
-    private MethodMatch saveEntity(DataMethod.OperationType operationType) {
+    public static MethodMatch saveEntity(DataMethod.OperationType operationType) {
         return mc -> {
             ParameterElement[] parameters = mc.getParameters();
             ParameterElement entityParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isEntity(p.getGenericType())).findFirst().orElse(null);
@@ -132,10 +132,10 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
                     );
             }
             if (entitiesParameter != null) {
-                methodMatchInfo.addParameterRole(TypeRole.ENTITIES, entitiesParameter.getName());
+                methodMatchInfo.addParameterRole(entitiesParameter, TypeRole.ENTITIES);
             }
             if (entityParameter != null) {
-                methodMatchInfo.addParameterRole(TypeRole.ENTITY, entityParameter.getName());
+                methodMatchInfo.addParameterRole(entityParameter, TypeRole.ENTITY);
             }
             return methodMatchInfo;
         };

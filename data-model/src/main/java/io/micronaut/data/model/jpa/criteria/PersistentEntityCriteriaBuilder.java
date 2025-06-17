@@ -16,9 +16,11 @@
 package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
+import io.micronaut.core.annotation.NonNull;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
 
 /**
@@ -44,6 +46,17 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
 
     @Override
     <T> PersistentEntityCriteriaDelete<T> createCriteriaDelete(Class<T> targetEntity);
+
+    /**
+     * Create an ordering.
+     *
+     * @param x          expression used to define the ordering
+     * @param ascending  If ascending should be use
+     * @param ignoreCase If ignore case should be used
+     * @return ascending ordering corresponding to the expression
+     */
+    @NonNull
+    Order sort(@NonNull Expression<?> x, boolean ascending, boolean ignoreCase);
 
     /**
      * OR restriction predicate.

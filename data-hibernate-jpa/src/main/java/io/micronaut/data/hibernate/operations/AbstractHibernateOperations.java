@@ -29,8 +29,8 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.jpa.annotation.EntityGraph;
+import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
 import io.micronaut.data.model.runtime.PagedQuery;
@@ -62,6 +62,7 @@ import org.hibernate.graph.AttributeNode;
 import org.hibernate.graph.Graph;
 import org.hibernate.graph.RootGraph;
 import org.hibernate.graph.SubGraph;
+import org.hibernate.query.SortDirection;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -116,7 +117,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
     @Override
     public <E, R> StoredQuery<E, R> decorate(StoredQuery<E, R> storedQuery) {
         RuntimePersistentEntity<E> runtimePersistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
-        return new DefaultBindableParametersStoredQuery<>(storedQuery, runtimePersistentEntity);
+        return new DefaultBindableParametersStoredQuery<>(storedQuery, runtimePersistentEntity, dataConversionService);
     }
 
     /**
@@ -321,8 +322,11 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
      * @param <R>           The result type
      */
     protected <R> void collectFindOne(S session, PreparedQuery<?, R> preparedQuery, ResultCollector<R> collector) {
-        String query = preparedQuery.getQuery();
-        collectResults(session, query, preparedQuery, preparedQuery.getPageable(), collector);
+        Limit limit = preparedQuery.getQueryLimit();
+        if (!limit.isLimited()) {
+            limit = preparedQuery.getPageable().getLimit();
+        }
+        collectResults(session, preparedQuery.getQuery(), preparedQuery, limit, preparedQuery.getSort(), collector);
     }
 
     /**
@@ -336,28 +340,23 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
     protected <R> void collectFindAll(S session, PreparedQuery<?, R> preparedQuery, ResultCollector<R> collector) {
         String queryStr = preparedQuery.getQuery();
         Pageable pageable = preparedQuery.getPageable();
-        if (pageable != Pageable.UNPAGED) {
-            if (pageable.getMode() != Mode.OFFSET) {
-                throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported by hibernate operations");
-            }
-            Sort sort = pageable.getSort();
-            if (sort.isSorted()) {
-                queryStr += QUERY_BUILDER.buildOrderBy(queryStr, getEntity(preparedQuery.getRootEntity()), AnnotationMetadata.EMPTY_METADATA, sort,
-                    preparedQuery.isNative()).getQuery();
-            }
-            if (preparedQuery.isNative()) {
-                // Native queries don't support setting the order
-                pageable = pageable.withoutSort();
-            }
+        Limit limit = preparedQuery.getQueryLimit();
+        if (!limit.isLimited()) {
+            limit = pageable.getLimit();
         }
-        collectResults(session, queryStr, preparedQuery, pageable, collector);
+        collectResults(session, queryStr, preparedQuery, limit, pageable.getSort(), collector);
     }
 
-    private <T, R> void collectResults(S session,
-                                       String queryStr,
-                                       PreparedQuery<T, R> preparedQuery,
-                                       Pageable pageable,
-                                       ResultCollector<R> resultCollector) {
+    protected final <T, R> void collectResults(S session,
+                                               String queryStr,
+                                               PreparedQuery<T, R> preparedQuery,
+                                               Limit limit,
+                                               Sort sort,
+                                               ResultCollector<R> resultCollector) {
+        if (sort != null && sort.isSorted()) {
+            queryStr += QUERY_BUILDER.buildOrderBy(queryStr, getEntity(preparedQuery.getRootEntity()), AnnotationMetadata.EMPTY_METADATA, sort,
+                preparedQuery.isNative()).getQuery();
+        }
         if (preparedQuery.isDtoProjection()) {
             P q;
             if (preparedQuery.isNative()) {
@@ -365,13 +364,13 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
             } else if (queryStr.toLowerCase(Locale.ENGLISH).startsWith("select new ")) {
                 @SuppressWarnings("unchecked") Class<R> wrapperType = (Class<R>) ReflectionUtils.getWrapperType(preparedQuery.getResultType());
                 P query = createQuery(session, queryStr, wrapperType);
-                bindPreparedQuery(query, preparedQuery, pageable, session);
+                bindPreparedQuery(query, preparedQuery, limit, session);
                 resultCollector.collect(query);
                 return;
             } else {
                 q = createQuery(session, queryStr, Tuple.class);
             }
-            bindPreparedQuery(q, preparedQuery, pageable, session);
+            bindPreparedQuery(q, preparedQuery, limit, session);
             resultCollector.collectTuple(q, tuple -> {
                 Set<String> properties = tuple.getElements().stream().map(TupleElement::getAlias).collect(Collectors.toCollection(() -> new TreeSet<>(String.CASE_INSENSITIVE_ORDER)));
                 return (new BeanIntrospectionMapper<Tuple, R>() {
@@ -397,7 +396,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
                 Class<T> rootEntity = preparedQuery.getRootEntity();
                 if (wrapperType != rootEntity) {
                     P nativeQuery = createNativeQuery(session, queryStr, Tuple.class);
-                    bindPreparedQuery(nativeQuery, preparedQuery, pageable, session);
+                    bindPreparedQuery(nativeQuery, preparedQuery, limit, session);
                     resultCollector.collectTuple(nativeQuery, tuple -> {
                         Object o = tuple.get(0);
                         if (wrapperType.isInstance(o)) {
@@ -412,7 +411,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
             } else {
                 q = createQuery(session, queryStr, wrapperType);
             }
-            bindPreparedQuery(q, preparedQuery, pageable, session);
+            bindPreparedQuery(q, preparedQuery, limit, session);
             resultCollector.collect(q);
         }
     }
@@ -518,9 +517,12 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
         };
     }
 
-    private <T, R> void bindPreparedQuery(P q, @NonNull PreparedQuery<T, R> preparedQuery, Pageable pageable, S currentSession) {
+    private <T, R> void bindPreparedQuery(P q,
+                                          @NonNull PreparedQuery<T, R> preparedQuery,
+                                          @NonNull Limit limit,
+                                          S currentSession) {
         bindParameters(q, preparedQuery, true);
-        bindPageable(q, pageable);
+        bindLimit(q, limit);
         bindQueryHints(q, preparedQuery, currentSession);
     }
 
@@ -602,44 +604,48 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
         return annotationMetadata.getAnnotationValuesByType(QueryHint.class).stream().filter(av -> FlushModeType.class.getName().equals(av.stringValue("name").orElse(null))).map(av -> av.enumValue("value", FlushModeType.class)).findFirst().orElse(Optional.empty()).orElse(null);
     }
 
-    private void bindPageable(P q, @NonNull Pageable pageable) {
-        if (pageable == Pageable.UNPAGED) {
-            // no pagination
-            return;
-        }
-        if (pageable.getMode() != Mode.OFFSET) {
-            throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported by hibernate operations");
-        }
-
-        int max = pageable.getSize();
-        if (max > 0) {
-            setMaxResults(q, max);
-        }
-        long offset = pageable.getOffset();
-        if (offset > 0) {
-            setOffset(q, (int) offset);
+    private void bindLimit(@NonNull P q, @NonNull Limit limit) {
+        if (limit.isLimited()) {
+            int max = limit.maxResults();
+            if (max >= 0) {
+                setMaxResults(q, max);
+            }
+            long offset = limit.offset();
+            if (offset > 0) {
+                setOffset(q, (int) offset);
+            }
         }
     }
 
+    protected static <T> List<org.hibernate.query.Order<? super T>> getOrders(Sort sort, Class<T> entityClass) {
+        List<Sort.Order> orderBy = sort.getOrderBy();
+        List<org.hibernate.query.Order<? super T>> orders = new ArrayList<>(orderBy.size());
+        for (Sort.Order order : orderBy) {
+            orders.add(org.hibernate.query.Order.by(
+                entityClass,
+                order.getProperty(),
+                order.isAscending() ? SortDirection.ASCENDING : SortDirection.DESCENDING, order.isIgnoreCase())
+            );
+        }
+        return orders;
+    }
+
     protected final <T> void collectPagedResults(CriteriaBuilder criteriaBuilder, S session, PagedQuery<T> pagedQuery, ResultCollector<T> resultCollector) {
-        Pageable pageable = pagedQuery.getPageable();
         Class<T> entity = pagedQuery.getRootEntity();
         CriteriaQuery<T> query = criteriaBuilder.createQuery(pagedQuery.getRootEntity());
         Root<T> root = query.from(entity);
-        bindCriteriaSort(query, root, criteriaBuilder, pageable);
+        bindCriteriaSort(query, root, criteriaBuilder, pagedQuery.getSort());
         P q = createQuery(session, query);
-        bindPageable(q, pageable.withoutSort());
+        bindLimit(q, pagedQuery.getQueryLimit());
         bindQueryHints(q, pagedQuery, session);
         resultCollector.collect(q);
     }
 
-    protected final <R> void collectCountOf(CriteriaBuilder criteriaBuilder, S session, Class<R> entity, @Nullable Pageable pageable, ResultCollector<Long> resultCollector) {
+    protected final <R> void collectCountOf(CriteriaBuilder criteriaBuilder, S session, Class<R> entity, @NonNull Limit limit, ResultCollector<Long> resultCollector) {
         CriteriaQuery<Long> countQuery = criteriaBuilder.createQuery(Long.class);
         countQuery.select(criteriaBuilder.count(countQuery.from(entity)));
         P countQ = createQuery(session, countQuery);
-        if (pageable != null) {
-            bindPageable(countQ, pageable.withoutSort());
-        }
+        bindLimit(countQ, limit);
         resultCollector.collect(countQ);
     }
 

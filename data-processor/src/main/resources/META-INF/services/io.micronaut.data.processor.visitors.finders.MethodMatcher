@@ -13,5 +13,10 @@ io.micronaut.data.processor.visitors.finders.FindMethodMatcher
 io.micronaut.data.processor.visitors.finders.CountMethodMatcher
 io.micronaut.data.processor.visitors.finders.UpdateMethodMatcher
 io.micronaut.data.processor.visitors.finders.SaveMethodMatcher
-io.micronaut.data.processor.visitors.finders.SaveOneMethodMatcher
 io.micronaut.data.processor.visitors.finders.ProcedureMethodMatcher
+io.micronaut.data.processor.visitors.finders.annotated.InsertAnnotatedMethodMatcher
+io.micronaut.data.processor.visitors.finders.annotated.UpdateAnnotatedMethodMatcher
+io.micronaut.data.processor.visitors.finders.annotated.DeleteAnnotatedMethodMatcher
+io.micronaut.data.processor.visitors.finders.annotated.FindAnnotatedMethodMatcher
+io.micronaut.data.processor.visitors.finders.annotated.SaveAnnotatedMethodMatcher
+io.micronaut.data.processor.visitors.finders.annotated.JakartaDataQueryAnnotatedMethodMatcher

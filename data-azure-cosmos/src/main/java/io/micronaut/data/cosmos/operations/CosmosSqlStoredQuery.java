@@ -16,6 +16,7 @@
 package io.micronaut.data.cosmos.operations;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.StoredQuery;
@@ -40,10 +41,12 @@ final class CosmosSqlStoredQuery<E, R> extends DefaultSqlStoredQuery<E, R> {
      * @param runtimePersistentEntity The persistent entity
      * @param queryBuilder            The query builder
      * @param update                  The update statement. In this case list of properties to update via API.
+     * @param conversionService       The conversion service
      */
     public CosmosSqlStoredQuery(StoredQuery<E, R> storedQuery, RuntimePersistentEntity<E> runtimePersistentEntity, SqlQueryBuilder2 queryBuilder,
-                                String update) {
-        super(storedQuery, runtimePersistentEntity, queryBuilder);
+                                String update,
+                                ConversionService conversionService) {
+        super(storedQuery, runtimePersistentEntity, queryBuilder, conversionService);
         this.update = update;
     }
 

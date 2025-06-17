@@ -33,9 +33,9 @@ graalvmNative {
         enabled = true
     }
     binaries {
-        all {
-            logger.quiet("GRAALVM_HOME:  {}", (String) System.getenv("GRAALVM_HOME"))
+        configureEach {
             if (System.getenv("GRAALVM_HOME")?.contains("graal") && System.getenv("GRAALVM_HOME")?.contains("21")) {
+                logger.quiet("GRAALVM_HOME:  {}", (String) System.getenv("GRAALVM_HOME"))
                 logger.quiet("Enabling strict image heap!")
                 buildArgs.add("--strict-image-heap")
             }

@@ -35,6 +35,7 @@ dependencies {
     compileOnly mnMongo.mongo.driver
     compileOnly mnMongo.mongo.reactive
     compileOnly mnReactor.micronaut.reactor
+    compileOnly libs.managed.jakarta.data.api
 
     testAnnotationProcessor projects.micronautDataDocumentProcessor
     testAnnotationProcessor mn.micronaut.inject.java

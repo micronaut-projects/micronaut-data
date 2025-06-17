@@ -120,17 +120,9 @@ abstract class AbstractPageSpec extends Specification {
         page.content.every() { it instanceof Person }
         !page.hasTotalSize()
 
-        when:
-        page.getTotalPages()
-
-        then:
-        thrown(IllegalStateException)
-
-        when:
-        page.getTotalSize()
-
-        then:
-        thrown(IllegalStateException)
+        and:
+        page.getTotalPages() == 0
+        page.getTotalSize() == -1
     }
 
     void "test pageable sort"() {

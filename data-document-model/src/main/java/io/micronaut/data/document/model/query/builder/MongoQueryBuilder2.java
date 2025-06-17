@@ -28,6 +28,7 @@ import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.document.mongo.MongoAnnotations;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
@@ -40,16 +41,19 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpressionType;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpressionType;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.naming.NamingStrategy;
@@ -107,6 +111,8 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
      * An object with this property is replaced with an actual query parameter at the runtime.
      */
     public static final String QUERY_PARAMETER_PLACEHOLDER = "$mn_qp";
+    public static final String NEGATE = "$mn_negate"; // -vale
+    public static final String RECIPROCATE = "$mn_reciprocate"; // 1/value
     public static final String MONGO_DATE_IDENTIFIER = "$date";
     public static final String MONGO_ID_FIELD = "_id";
     private static final String REGEX = "$regex";
@@ -161,7 +167,14 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
             Map<String, Object> sortObj = new LinkedHashMap<>();
             orders.forEach(order -> {
                 io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath = requireProperty(order.getExpression());
-                sortObj.put(persistentPropertyPath.getPathAsString(), order.isAscending() ? 1 : -1);
+                PersistentProperty property = persistentPropertyPath.getProperty();
+                PersistentEntity owner = property.getOwner();
+                PersistentProperty identity = owner.getIdentity();
+                if (identity != null && identity.equals(property)) {
+                    sortObj.put(MONGO_ID_FIELD, order.isAscending() ? 1 : -1);
+                } else {
+                    sortObj.put(persistentPropertyPath.getPathAsString(), order.isAscending() ? 1 : -1);
+                }
             });
             pipeline.add(Map.of("$sort", sortObj));
         } else {
@@ -550,21 +563,60 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
 
         Map<String, Object> propertiesToUpdate = updateQueryDefinition.propertiesToUpdate();
         Map<String, Object> sets = CollectionUtils.newLinkedHashMap(propertiesToUpdate.size());
+        Map<String, Object> incs = CollectionUtils.newLinkedHashMap(propertiesToUpdate.size());
+        Map<String, Object> muls = CollectionUtils.newLinkedHashMap(propertiesToUpdate.size());
         for (Map.Entry<String, Object> e : propertiesToUpdate.entrySet()) {
             PersistentPropertyPath propertyPath = findProperty(queryState, e.getKey());
             String propertyPersistName = getPropertyPersistName(propertyPath);
-            if (e.getValue() instanceof BindingParameter bindingParameter) {
+            Object value = e.getValue();
+            if (value instanceof BindingParameter bindingParameter) {
                 int index = queryState.pushParameter(
                     bindingParameter,
                     newBindingContext(propertyPath)
                 );
                 sets.put(propertyPersistName, Map.of(QUERY_PARAMETER_PLACEHOLDER, index));
-            } else {
-                sets.put(propertyPersistName, e.getValue());
+            } else if (value instanceof LiteralExpression<?> literalExpression) {
+                sets.put(propertyPersistName, literalExpression.getValue());
+            } else if (value instanceof BinaryExpression<?> binaryExpression) {
+                io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> leftProp = requireProperty(binaryExpression.getLeft());
+                if (!leftProp.getProperty().equals(propertyPath.getProperty())) {
+                    throw new IllegalStateException("Left property path does not match property path");
+                }
+                if (binaryExpression.getRight() instanceof BindingParameter bindingParameter) {
+                    int index = queryState.pushParameter(
+                        bindingParameter,
+                        newBindingContext(propertyPath)
+                    );
+                    switch (binaryExpression.getType()) {
+                        case CONCAT -> {
+                        }
+                        case SUM ->
+                            incs.put(propertyPersistName, Map.of(QUERY_PARAMETER_PLACEHOLDER, index));
+                        case PROD ->
+                            muls.put(propertyPersistName, Map.of(QUERY_PARAMETER_PLACEHOLDER, index));
+                        case QUOT ->
+                            muls.put(propertyPersistName, Map.of(QUERY_PARAMETER_PLACEHOLDER, index, RECIPROCATE, true));
+                        case DIFF ->
+                            incs.put(propertyPersistName, Map.of(QUERY_PARAMETER_PLACEHOLDER, index, NEGATE, true));
+                        default -> throw new IllegalStateException("Unsupported binary expression type: " + binaryExpression.getType());
+                    }
+                    continue;
+                }
+                throw new IllegalArgumentException("Unsupported expression type: " + value.getClass().getName() + " " + value);
             }
         }
 
-        String update = toJsonString(Map.of("$set", sets));
+        Map<String, Map<String, Object>> map = new LinkedHashMap<>();
+        if (!sets.isEmpty()) {
+            map.put("$set", sets);
+        }
+        if (!incs.isEmpty()) {
+            map.put("$inc", incs);
+        }
+        if (!muls.isEmpty()) {
+            map.put("$mul", muls);
+        }
+        String update = toJsonString(map);
 
         return new QueryResult() {
 
@@ -690,7 +742,7 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
         } else if (obj instanceof Number) {
             sb.append(obj);
         } else {
-            sb.append('\'').append(obj).append('\'');
+            sb.append('\'').append(obj.toString().replace("'", "\\'")).append('\'');
         }
     }
 
@@ -864,12 +916,53 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
             persistentEntity = queryState.getEntity();
         }
 
-        private void appendOperatorExpression(Expression<?> leftExpression, String op, Object value) {
+        private void appendOperatorExpression(Expression<?> leftExpression, String op, Expression<?> value) {
+            if (leftExpression instanceof BinaryExpression<?> binaryExpression) {
+                PersistentPropertyPath propertyPath;
+                Expression<?> otherExpression;
+                if (binaryExpression.getLeft() instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> leftProp) {
+                    propertyPath = leftProp.getPropertyPath();
+                    otherExpression = binaryExpression.getRight();
+                } else if (binaryExpression.getRight() instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> rightProp) {
+                    propertyPath = rightProp.getPropertyPath();
+                    otherExpression = binaryExpression.getLeft();
+                } else {
+                    throw new IllegalStateException("Unsupported expression type: " + binaryExpression);
+                }
+                if (binaryExpression.getType() == BinaryExpressionType.PROD) {
+                    query.put("$expr", Map.of(
+                        op,
+                        asList(
+                            Map.of("$multiply", List.of(
+                                "$" + propertyPath.getPath(),
+                                valueRepresentation(queryState, propertyPath, propertyPath, otherExpression)
+                            )),
+                            valueRepresentation(queryState, propertyPath, propertyPath, value)
+                        )
+                    ));
+                    return;
+                }
+                throw new IllegalStateException("Unsupported binary expression type: " + binaryExpression.getType());
+            }
+            if (leftExpression instanceof UnaryExpression<?> unaryExpression) {
+                PersistentPropertyPath propertyPath = CriteriaUtils.requireProperty(unaryExpression.getExpression()).getPropertyPath();
+                if (unaryExpression.getType() == UnaryExpressionType.LENGTH) {
+                    query.put("$expr", Map.of(
+                        op,
+                        asList(
+                            Map.of("$strLenCP", "$" + propertyPath.getPath()),
+                            valueRepresentation(queryState, propertyPath, propertyPath, value)
+                        )
+                    ));
+                    return;
+                }
+                throw new IllegalStateException("Unsupported unary expression type: " + unaryExpression.getType());
+            }
             PersistentPropertyPath propertyPath = CriteriaUtils.requireProperty(leftExpression).getPropertyPath();
             appendOperatorExpression(op, value, propertyPath);
         }
 
-        private void appendOperatorExpression(String op, Object value, PersistentPropertyPath propertyPath) {
+        private void appendOperatorExpression(String op, Expression<?> value, PersistentPropertyPath propertyPath) {
             if (value instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
                 PersistentPropertyPath p2 = getRequiredProperty(persistentPropertyPath);
                 query.put("$expr", Map.of(
@@ -961,6 +1054,10 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
                 visitIn(p.getExpression(), p.getValues(), true);
                 return;
             }
+            if (negated instanceof BetweenPredicate betweenPredicate) {
+                visitInBetween(betweenPredicate.getValue(), betweenPredicate.getFrom(), betweenPredicate.getTo(), true);
+                return;
+            }
             Map<String, Object> preQuery = query;
             query = new LinkedHashMap<>();
             visitPredicate(negate.getNegated());
@@ -988,37 +1085,41 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
 
         @Override
         public void visitRegexp(Expression<?> leftExpression, Expression<?> expression) {
-            Object value = expression;
+            Expression<?> value = expression;
             if (expression instanceof LiteralExpression<?> literalExpression) {
-                value = new RegexPattern((String) literalExpression.getValue());
+                value = new LiteralExpression<Object>(new RegexPattern((String) literalExpression.getValue()));
             }
             appendOperatorExpression(leftExpression, REGEX, value);
         }
 
         @Override
         public void visitContains(Expression<?> leftExpression, Expression<?> rightExpression, boolean ignoreCase) {
-            handleRegexExpression(leftExpression, ignoreCase, false, false, false, rightExpression);
+            handleRegexExpression(leftExpression, ignoreCase, false, false, false, rightExpression, false);
         }
 
         @Override
         public void visitEndsWith(Expression<?> leftExpression, Expression<?> rightExpression, boolean ignoreCase) {
-            handleRegexExpression(leftExpression, ignoreCase, false, false, true, rightExpression);
+            handleRegexExpression(leftExpression, ignoreCase, false, false, true, rightExpression, false);
         }
 
         @Override
         public void visitStartsWith(Expression<?> leftExpression, Expression<?> rightExpression, boolean ignoreCase) {
-            handleRegexExpression(leftExpression, ignoreCase, false, true, false, rightExpression);
+            handleRegexExpression(leftExpression, ignoreCase, false, true, false, rightExpression, false);
         }
 
         @Override
         public void visit(LikePredicate likePredicate) {
-            if (likePredicate.isCaseInsensitive()) {
-                throw new UnsupportedOperationException("ILike is not supported by this implementation.");
+            Expression<String> pattern = likePredicate.getPattern();
+            if (pattern instanceof LiteralExpression<?> literalExpression && literalExpression.getValue() instanceof String patternString) {
+                patternString = patternString
+                    .replace("_", ".")
+                    .replace("%", ".*");
+                pattern = new LiteralExpression<>(patternString);
             }
             handleRegexExpression(
                 likePredicate.getExpression(),
-                false, false, false, false,
-                likePredicate.getPattern());
+                likePredicate.isCaseInsensitive(), likePredicate.isNegated(), false, false,
+                pattern, true);
         }
 
         @Override
@@ -1028,27 +1129,48 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
 
         @Override
         public void visitEquals(Expression<?> leftExpression, Expression<?> rightExpression, boolean ignoreCase) {
+            if (leftExpression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
+                PersistentPropertyPath propertyPath = persistentPropertyPath.getPropertyPath();
+                PersistentProperty property = propertyPath.getProperty();
+                if (property.isEnum() && rightExpression instanceof LiteralExpression<?> literalExpression
+                    && literalExpression.getValue() instanceof String stringValue) {
+                    String typeName = property.getTypeName().replace("$", ".");
+                    if (stringValue.startsWith(typeName)) {
+                        for (PersistentProperty.EnumConstant enumConstant : property.getEnumConstants()) {
+                            if (stringValue.equals(typeName + "." + enumConstant.name())) {
+                                if (property.getDataType() == DataType.STRING) {
+                                    rightExpression = new LiteralExpression<Object>(enumConstant.name());
+                                }
+                                if (property.getDataType() == DataType.INTEGER) {
+                                    rightExpression = new LiteralExpression<Object>(enumConstant.ordinal());
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
             if (ignoreCase) {
-                handleRegexExpression(leftExpression, true, false, true, true, rightExpression);
+                handleRegexExpression(leftExpression, true, false, true, true, rightExpression, false);
                 return;
             }
             appendEquals(leftExpression, rightExpression);
         }
 
-        private void appendEquals(Expression<?> leftExpression, Object value) {
+        private void appendEquals(Expression<?> leftExpression, Expression<?> value) {
             appendOperatorExpression(leftExpression, "$eq", value);
         }
 
         @Override
         public void visitNotEquals(Expression<?> leftExpression, Expression<?> rightExpression, boolean ignoreCase) {
             if (ignoreCase) {
-                handleRegexExpression(leftExpression, true, true, true, true, rightExpression);
+                handleRegexExpression(leftExpression, true, true, true, true, rightExpression, false);
                 return;
             }
             appendPropertyNotEquals(leftExpression, rightExpression);
         }
 
-        private void appendPropertyNotEquals(Expression<?> leftExpression, Object value) {
+        private void appendPropertyNotEquals(Expression<?> leftExpression, Expression<?> value) {
             appendOperatorExpression(leftExpression, "$ne", value);
         }
 
@@ -1073,33 +1195,55 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
         }
 
         @Override
-        public void visitInBetween(Expression<?> value, Expression<?> from, Expression<?> to) {
-            PersistentPropertyPath propertyPath = requireProperty(value).getPropertyPath();
-            String propertyName = getPropertyPersistName(propertyPath);
-            query.put("$and", asList(
-                Map.of(propertyName, Map.of("$gte", valueRepresentation(queryState, propertyPath, from))),
-                Map.of(propertyName, Map.of("$lte", valueRepresentation(queryState, propertyPath, to)))
-            ));
+        public void visitInBetween(Expression<?> value, Expression<?> from, Expression<?> to, boolean negated) {
+            String propertyName;
+            Object firstCondition;
+            Object secondCondition;
+            if (value instanceof UnaryExpression<?> valueExp && valueExp.getType() == UnaryExpressionType.LOWER
+                && from instanceof UnaryExpression<?> fromExp && fromExp.getType() == UnaryExpressionType.LOWER
+                && to instanceof UnaryExpression<?> toExp && toExp.getType() == UnaryExpressionType.LOWER) {
+                PersistentPropertyPath propertyPath = requireProperty(valueExp.getExpression()).getPropertyPath();
+                propertyName = getPropertyPersistName(propertyPath);
+                firstCondition = Map.of("$toLower", valueRepresentation(queryState, propertyPath, fromExp.getExpression()));
+                secondCondition = Map.of("$toLower", valueRepresentation(queryState, propertyPath, toExp.getExpression()));
+            } else {
+                PersistentPropertyPath propertyPath = requireProperty(value).getPropertyPath();
+                propertyName = getPropertyPersistName(propertyPath);
+                firstCondition = valueRepresentation(queryState, propertyPath, from);
+                secondCondition = valueRepresentation(queryState, propertyPath, to);
+            }
+            LinkedHashMap<String, Object> map = new LinkedHashMap<>();
+            map.put("$gte", firstCondition);
+            map.put("$lte", secondCondition);
+            if (negated) {
+                query.put(
+                    propertyName, Map.of("$not", map)
+                );
+            } else {
+                query.put(
+                    propertyName, map
+                );
+            }
         }
 
         @Override
         public void visitIsFalse(Expression<?> expression) {
-            appendEquals(expression, false);
+            appendEquals(expression, new LiteralExpression<>(false));
         }
 
         @Override
         public void visitIsNotNull(Expression<?> expression) {
-            appendPropertyNotEquals(expression, null);
+            appendPropertyNotEquals(expression, new LiteralExpression<>(null));
         }
 
         @Override
         public void visitIsNull(Expression<?> expression) {
-            appendEquals(expression, null);
+            appendEquals(expression, new LiteralExpression<>(null));
         }
 
         @Override
         public void visitIsTrue(Expression<?> expression) {
-            appendEquals(expression, true);
+            appendEquals(expression, new LiteralExpression<>(true));
         }
 
         @Override
@@ -1156,11 +1300,16 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
                                            boolean negate,
                                            boolean startsWith,
                                            boolean endsWith,
-                                           Object value) {
+                                           Expression<?> value,
+                                           boolean isLike) {
             PersistentPropertyPath propertyPath = CriteriaUtils.requireProperty(leftExpression).getPropertyPath();
             Object filterValue;
             Map<String, Object> regexCriteria = new LinkedHashMap<>(2);
-            regexCriteria.put(OPTIONS, ignoreCase ? "i" : "");
+            String options = ignoreCase ? "i" : "";
+            if (isLike) {
+                options += "l";
+            }
+            regexCriteria.put(OPTIONS, options);
             String regexValue;
             if (value instanceof BindingParameter bindingParameter) {
                 int index = queryState.pushParameter(
@@ -1168,6 +1317,8 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
                     newBindingContext(propertyPath, propertyPath)
                 );
                 regexValue = QUERY_PARAMETER_PLACEHOLDER + ":" + index;
+            } else if (value instanceof LiteralExpression<?> literalExpression) {
+                regexValue = (String) literalExpression.getValue();
             } else {
                 regexValue = value.toString();
             }
@@ -1201,6 +1352,12 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
                                            PersistentPropertyPath inPropertyPath,
                                            PersistentPropertyPath outPropertyPath,
                                            Object value) {
+            if (value instanceof LiteralExpression<?> literalExpression) {
+                value = literalExpression.getValue();
+            }
+            if (value instanceof RegexPattern regexPattern) {
+                return "'" + Pattern.quote(regexPattern.value) + "'";
+            }
             if (value instanceof LocalDate localDate) {
                 return Map.of(MONGO_DATE_IDENTIFIER, formatDate(localDate));
             }
@@ -1213,9 +1370,8 @@ public final class MongoQueryBuilder2 implements QueryBuilder2 {
                     newBindingContext(inPropertyPath, outPropertyPath)
                 );
                 return Map.of(QUERY_PARAMETER_PLACEHOLDER, index);
-            } else {
-                return asLiteral(value);
             }
+            return value;
         }
 
         private String formatDate(LocalDate localDate) {

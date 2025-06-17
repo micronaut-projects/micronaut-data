@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.config;
 
 import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
+import io.micronaut.core.annotation.NextMajorVersion;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.naming.Named;
@@ -55,6 +56,12 @@ public class DataJdbcConfiguration implements Named, Toggleable {
      */
     private boolean allowConnectionPerOperation = true;
     private boolean enabled = true;
+
+    /**
+     * Fail on multiple results for findOne.
+     */
+    @NextMajorVersion("Make the default")
+    private boolean uniqueResultOnFindOne;
 
     /**
      * The configuration.
@@ -189,5 +196,19 @@ public class DataJdbcConfiguration implements Named, Toggleable {
      */
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    /**
+     * @return Is unique result required on find one
+     */
+    public boolean isUniqueResultOnFindOne() {
+        return uniqueResultOnFindOne;
+    }
+
+    /**
+     * @param uniqueResultOnFindOne Is unique result required on find one
+     */
+    public void setUniqueResultOnFindOne(boolean uniqueResultOnFindOne) {
+        this.uniqueResultOnFindOne = uniqueResultOnFindOne;
     }
 }

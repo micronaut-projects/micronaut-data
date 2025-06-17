@@ -32,6 +32,8 @@ import io.micronaut.data.intercept.annotation.DataMethodQueryParameter;
 import io.micronaut.data.model.AssociationUtils;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
+import io.micronaut.data.model.Limit;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.DefaultStoredDataOperation;
@@ -91,8 +93,8 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     private final boolean jsonEntity;
     private final OperationType operationType;
     private final Map<String, AnnotationValue<?>> parameterExpressions;
-    private final int limit;
-    private final int offset;
+    private final Limit limit;
+    private final Sort sort;
     private final Function<Object, Object> stringsEnvResolverValueMapper;
 
     /**
@@ -236,8 +238,18 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
         this.jsonEntity = DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(annotationMetadata);
         this.parameterExpressions = annotationMetadata.getAnnotationValuesByType(ParameterExpression.class).stream()
             .collect(Collectors.toMap(av -> av.stringValue("name").orElseThrow(), av -> av));
-        this.limit = dataMethodQuery.intValue(DataMethodQuery.META_MEMBER_LIMIT).orElse(-1);
-        this.offset = dataMethodQuery.intValue(DataMethodQuery.META_MEMBER_OFFSET).orElse(0);
+        this.limit = Limit.of(
+            dataMethodQuery.intValue(DataMethodQuery.META_MEMBER_LIMIT).orElse(-1),
+            dataMethodQuery.intValue(DataMethodQuery.META_MEMBER_OFFSET).orElse(0)
+        );
+        this.sort = Sort.of(
+            dataMethodQuery.getAnnotations(DataMethodQuery.META_MEMBER_SORT).stream()
+                .map(av ->  new Sort.Order(
+                    av.stringValue().orElseThrow(),
+                    av.enumValue("direction", Sort.Order.Direction.class).orElse(Sort.Order.Direction.ASC),
+                    av.booleanValue("ignoreCase").orElse(false))
+                ).toList()
+        );
     }
 
     private static <E> Class<E> getRequiredRootEntity(ExecutableMethod<?, ?> context) {
@@ -299,13 +311,13 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     }
 
     @Override
-    public int getLimit() {
+    public Limit getQueryLimit() {
         return limit;
     }
 
     @Override
-    public int getOffset() {
-        return offset;
+    public Sort getSort() {
+        return sort;
     }
 
     @Override

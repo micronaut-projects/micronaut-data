@@ -3,9 +3,36 @@ package io.micronaut.data.document.processor
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.document.mongo.MongoAnnotations
 import io.micronaut.data.intercept.annotation.DataMethod
+import io.micronaut.data.model.Pageable
 import io.micronaut.data.mongodb.annotation.MongoSort
+import org.bson.conversions.Bson
 
 class BuildMongoQuerySpec extends AbstractDataSpec {
+
+    void "test findALL"() {
+        given:
+            def repository = buildRepository('test.MyInterface2', """
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.mongodb.annotation.MongoRepository;
+import io.micronaut.data.mongodb.annotation.MongoFindQuery;
+import io.micronaut.data.document.tck.entities.Book;
+import org.bson.conversions.Bson;
+
+@MongoRepository
+interface MyInterface2 extends GenericRepository<Book, String> {
+
+    Page<Book> findAll(Bson filter, Pageable pageable);
+
+}
+"""
+            )
+
+        when:
+            String q = TestUtils.getQuery(repository.getRequiredMethod("findAll", Bson, Pageable))
+        then:
+            q == "{}"
+    }
 
     void "test custom method"() {
         given:

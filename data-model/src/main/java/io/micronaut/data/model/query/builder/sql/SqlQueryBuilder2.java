@@ -30,7 +30,6 @@ import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.sql.JoinColumn;
 import io.micronaut.data.annotation.sql.JoinColumns;
 import io.micronaut.data.annotation.sql.SqlMembers;
@@ -45,7 +44,7 @@ import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.DefaultPersistentPropertyPath;
-import io.micronaut.data.model.jpa.criteria.impl.PersistentPropertyOrder;
+import io.micronaut.data.model.jpa.criteria.impl.DefaultOrder;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
@@ -204,7 +203,8 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
     @Experimental
     @NonNull
     public String buildBatchCreateTableStatement(@NonNull PersistentEntity... entities) {
-        return Arrays.stream(buildCreateTableStatements(entities)).collect(Collectors.joining(System.lineSeparator()));
+        return Arrays.stream(entities).flatMap(entity -> Stream.of(buildCreateTableStatements(entity)))
+            .collect(Collectors.joining(System.lineSeparator()));
     }
 
     /**
@@ -1325,40 +1325,24 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
     }
 
     @Override
-    public QueryResult buildSelect(@NonNull AnnotationMetadata annotationMetadata, @NonNull SelectQueryDefinition definition) {
-        if (definition.parametersInRole().isEmpty()) {
-            // We can directly generate the query with limit and offset and omit the runtime modification
-            QueryState queryState = buildQuery(annotationMetadata, definition, new QueryBuilder(), true, null);
-
-            return QueryResult.of(
-                queryState.getFinalQuery(),
-                queryState.getQueryParts(),
-                queryState.getParameterBindings(),
-                queryState.getJoinPaths()
-            );
-        }
-
-        return super.buildSelect(annotationMetadata, definition);
-    }
-
-    @Override
-    protected void appendPaginationAndOrder(AnnotationMetadata annotationMetadata,
-                                            SelectQueryDefinition definition,
-                                            boolean pagination,
-                                            QueryState queryState) {
-        Map<String, Integer> parametersInRole = definition.parametersInRole();
-        if (parametersInRole.isEmpty()) {
-            // Directly create a query with LIMIT and ORDER
+    protected void appendLimitAndOrder(AnnotationMetadata annotationMetadata,
+                                       SelectQueryDefinition definition,
+                                       boolean appendLimit,
+                                       boolean appendOrder,
+                                       QueryState queryState) {
+        if (appendOrder) {
             appendOrder(annotationMetadata, definition, queryState);
-            if (pagination) {
-                appendLimitAndOffset(getDialect(), definition.limit(), definition.offset(), queryState.getQuery());
-            }
-        } else if (parametersInRole.containsKey(TypeRole.SORT) || parametersInRole.containsKey(TypeRole.PAGEABLE) || parametersInRole.containsKey(TypeRole.PAGEABLE_REQUIRED)) {
-            Map.Entry<String, Integer> e = parametersInRole.entrySet().iterator().next();
+        }
+        if (appendLimit) {
+            appendLimitAndOffset(getDialect(), definition.limit(), definition.offset(), queryState.getQuery());
+        }
+        Map<Integer, String> parametersInRole = definition.parametersInRole();
+       if (parameterInRoleModifiesOrder(parametersInRole) || parameterInRoleModifiesLimit(parametersInRole)) {
+            Map.Entry<Integer, String> e = parametersInRole.entrySet().iterator().next();
             queryState.pushParameter(new QueryParameterBinding() {
                 @Override
                 public String getName() {
-                    return e.getKey();
+                    return e.getValue();
                 }
 
                 @Override
@@ -1368,7 +1352,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
 
                 @Override
                 public int getParameterIndex() {
-                    return e.getValue();
+                    return e.getKey();
                 }
 
                 @Override
@@ -1383,7 +1367,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
 
                 @Override
                 public String getRole() {
-                    return e.getKey();
+                    return e.getValue();
                 }
 
                 @Override
@@ -1403,7 +1387,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
             if (identity == null) {
                 throw new DataAccessException("Pagination requires an entity ID on SQL Server");
             }
-            orders = List.of(new PersistentPropertyOrder<>(new DefaultPersistentPropertyPath<>(identity, List.of(), null), true));
+            orders = List.of(new DefaultOrder<>(new DefaultPersistentPropertyPath<>(identity, List.of(), null), true, false));
         }
         appendOrder(annotationMetadata, orders, queryState);
     }

@@ -145,9 +145,9 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
                 buildRawQuery(matchContext, methodMatchInfo, entityParameter, entitiesParameter, operationType);
 
                 if (entityParameter != null) {
-                    methodMatchInfo.addParameterRole(TypeRole.ENTITY, entityParameter.getName());
+                    methodMatchInfo.addParameterRole(entityParameter, TypeRole.ENTITY);
                 } else if (entitiesParameter != null) {
-                    methodMatchInfo.addParameterRole(TypeRole.ENTITIES, entitiesParameter.getName());
+                    methodMatchInfo.addParameterRole(entitiesParameter, TypeRole.ENTITIES);
                 }
                 return methodMatchInfo;
             }

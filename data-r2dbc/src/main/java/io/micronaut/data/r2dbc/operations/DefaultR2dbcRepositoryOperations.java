@@ -35,9 +35,11 @@ import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
+import io.micronaut.data.model.CursoredPage;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
@@ -81,6 +83,7 @@ import io.micronaut.data.runtime.operations.internal.OperationContext;
 import io.micronaut.data.runtime.operations.internal.ReactiveCascadeOperations;
 import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery;
 import io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOperations;
+import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlJsonColumnMapperProvider;
 import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
@@ -807,6 +810,31 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         @NonNull
         @Override
         public <R> Mono<Page<R>> findPage(@NonNull PagedQuery<R> pagedQuery) {
+            if (pagedQuery instanceof PreparedQuery<?, ?> pg) {
+                PreparedQuery<R, R> preparedQuery = (PreparedQuery<R, R>) pg;
+                Pageable pageable = preparedQuery.getPageable();
+                return findAll(preparedQuery)
+                    .collectList()
+                    .map(results -> {
+                        if (pageable.getMode() == Pageable.Mode.OFFSET) {
+                            return Page.of(results, pageable, -1L);
+                        }
+                        if (preparedQuery instanceof DefaultSqlPreparedQuery<?, ?> sqlPreparedQuery) {
+                            List<Pageable.Cursor> cursors;
+                            List<Object> resultList = (List<Object>) results;
+                            if (preparedQuery.getResultDataType() == DataType.ENTITY) {
+                                cursors = sqlPreparedQuery.createCursors(resultList, pageable);
+                            } else if (sqlPreparedQuery.isDtoProjection()) {
+                                RuntimePersistentEntity<Object> runtimePersistentEntity = (RuntimePersistentEntity<Object>) getEntity(sqlPreparedQuery.getResultType());
+                                cursors = sqlPreparedQuery.createCursors(resultList, pageable, runtimePersistentEntity);
+                            } else {
+                                throw new IllegalStateException("CursoredPage cannot produce projection result");
+                            }
+                            return CursoredPage.of(results, pageable, cursors, -1L);
+                        }
+                        throw new UnsupportedOperationException("Only offset pageable mode is supported by this query implementation");
+                    });
+            }
             throw new UnsupportedOperationException("The findPage method is not supported. Execute the SQL query directly");
         }
 

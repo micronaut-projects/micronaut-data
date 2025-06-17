@@ -176,8 +176,8 @@ class MongoCriteriaSpec extends Specification {
                     } as Specification,
             ]
             expectedWhereQuery << [
-                    '{$and:[{enabled:{$gte:{$mn_qp:0}}},{enabled:{$lte:{$mn_qp:1}}}]}',
-                    '{$and:[{amount:{$gte:{$mn_qp:0}}},{amount:{$lte:{$mn_qp:1}}}]}',
+                    '{enabled:{$gte:{$mn_qp:0},$lte:{$mn_qp:1}}}',
+                    '{amount:{$gte:{$mn_qp:0},$lte:{$mn_qp:1}}}',
                     '{enabled:{$eq:true}}',
                     '[{$match:{enabled:{$eq:true}}},{$sort:{amount:-1,budget:1}}]',
                     '{enabled:{$eq:true}}',

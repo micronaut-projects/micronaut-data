@@ -14,8 +14,9 @@ dependencies {
 	api projects.micronautDataTx
 
 	compileOnly mn.micronaut.json.core
+	compileOnly libs.managed.jakarta.data.api
 
-	implementation mn.reactor
+    implementation mn.reactor
     implementation mnSql.jakarta.persistence.api
 
 	compileOnly(libs.managed.javax.persistence.api)

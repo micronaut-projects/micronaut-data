@@ -42,7 +42,7 @@ public interface QueryResultPersistentEntityCriteriaQuery {
     QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder2 queryBuilder);
 
     @NonNull
-    private static QueryBuilder2 asQueryBuilder2(QueryBuilder queryBuilder) {
+    static QueryBuilder2 asQueryBuilder2(QueryBuilder queryBuilder) {
         Class<? extends QueryBuilder> queryBuilderClass = queryBuilder.getClass();
         if (queryBuilderClass.getSimpleName().equals("CosmosSqlQueryBuilder")) {
             // Use new implementation

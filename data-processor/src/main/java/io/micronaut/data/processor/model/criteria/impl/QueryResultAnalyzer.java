@@ -80,6 +80,7 @@ final class QueryResultAnalyzer implements SelectionVisitor {
         switch (unaryExpression.getType()) {
             case COUNT:
             case COUNT_DISTINCT:
+            case LENGTH:
                 queryResultTypeName = Long.class.getName();
                 break;
             case MAX:

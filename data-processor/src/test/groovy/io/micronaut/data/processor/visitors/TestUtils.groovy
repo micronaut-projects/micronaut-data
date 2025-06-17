@@ -99,6 +99,10 @@ class TestUtils {
         return getParameterValues(metadata.getAnnotation(DataMethod))
     }
 
+    static String[] getParameterRoles(AnnotationMetadataProvider metadata) {
+        return getParameterRoles(metadata.getAnnotation(DataMethod))
+    }
+
     static DataType[] getDataTypes(AnnotationMetadataProvider metadata) {
         return getDataTypes(metadata.getAnnotation(DataMethod))
     }
@@ -126,6 +130,15 @@ class TestUtils {
                     return Stream.empty()
                 })
                 .toArray(DataType[]::new)
+    }
+
+    static String[] getParameterRoles(AnnotationValue<DataMethod> annotationValue) {
+        return annotationValue.getAnnotations(DataMethod.META_MEMBER_PARAMETERS, DataMethodQueryParameter)
+                .stream()
+                .map(p -> {
+                    p.stringValue(DataMethodQueryParameter.META_MEMBER_ROLE).orElse(null)
+                })
+                .toArray(String[]::new)
     }
 
     static boolean anyParameterExpandable(AnnotationMetadataProvider metadata) {

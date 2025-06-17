@@ -29,11 +29,13 @@ import io.micronaut.data.model.PersistentAssociationPath;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.DefaultOrder;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder2;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import jakarta.persistence.criteria.Order;
 
 import java.util.HashSet;
 import java.util.List;
@@ -240,8 +242,29 @@ public final class JpaQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
     }
 
     @Override
-    protected void appendPaginationAndOrder(AnnotationMetadata annotationMetadata, SelectQueryDefinition definition, boolean pagination, QueryState queryState) {
-        appendOrder(annotationMetadata, definition.order(), queryState);
+    protected boolean supportsLimitQuery() {
+        return false;
+    }
+
+    @Override
+    protected void appendLimitAndOrder(AnnotationMetadata annotationMetadata, SelectQueryDefinition definition, boolean appendLimit, boolean appendOrder, QueryState queryState) {
+        if (appendOrder) {
+            appendOrder(annotationMetadata, definition.order(), queryState);
+        }
+    }
+
+    @Override
+    protected boolean shouldAppendOrder(SelectQueryDefinition definition) {
+        for (Order order : definition.order()) {
+            if (order instanceof DefaultOrder<?> defaultOrder) {
+                if (defaultOrder.isIgnoreCase()) {
+                    // JPA Query doesn't support ignore case order
+                    // Append order at the runtime
+                    return false;
+                }
+            }
+        }
+        return super.shouldAppendOrder(definition);
     }
 
     @Override

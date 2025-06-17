@@ -49,6 +49,11 @@ public @interface TypeRole {
     String PAGEABLE = "pageable";
 
     /**
+     * The parameter that is used for limit.
+     */
+    String LIMIT = "querylimit";
+
+    /**
      * The parameter that is used for sorting.
      */
     String SORT = "sort";

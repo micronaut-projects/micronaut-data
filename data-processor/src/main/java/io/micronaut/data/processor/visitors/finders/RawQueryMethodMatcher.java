@@ -156,9 +156,9 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                     buildRawQuery(matchContext, methodMatchInfo, entityParameter, entitiesParameter, operationType, implicitQueries);
 
                     if (entityParameter != null) {
-                        methodMatchInfo.addParameterRole(TypeRole.ENTITY, entityParameter.getName());
+                        methodMatchInfo.addParameterRole(entityParameter, TypeRole.ENTITY);
                     } else if (entitiesParameter != null) {
-                        methodMatchInfo.addParameterRole(TypeRole.ENTITIES, entitiesParameter.getName());
+                        methodMatchInfo.addParameterRole(entitiesParameter, TypeRole.ENTITIES);
                     }
                     return methodMatchInfo;
                 }
@@ -338,7 +338,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             .filter(p -> p.stringValue(Parameter.class).orElse(p.getName()).equals(name))
             .findFirst();
         if (element.isPresent()) {
-            PersistentPropertyPath propertyPath = matchContext.getRootEntity().getPropertyPath(name);
+            PersistentPropertyPath propertyPath = matchContext.getRootEntity() == null ? null : matchContext.getRootEntity().getPropertyPath(name);
             bindingContext = bindingContext
                 .incomingMethodParameterProperty(propertyPath)
                 .outgoingQueryParameterProperty(propertyPath);

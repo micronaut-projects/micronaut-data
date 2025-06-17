@@ -23,8 +23,6 @@ import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 
-import java.util.Collections;
-
 /**
  * The default implementation of {@link FindAllInterceptor}.
  * @param <T> The declaring type
@@ -32,7 +30,7 @@ import java.util.Collections;
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultFindAllInterceptor<T, R> extends AbstractQueryInterceptor<T, Iterable<R>> implements FindAllInterceptor<T, R> {
+public class DefaultFindAllInterceptor<T, R> extends AbstractQueryInterceptor<T, R> implements FindAllInterceptor<T, R> {
 
     /**
      * Default constructor.
@@ -44,30 +42,28 @@ public class DefaultFindAllInterceptor<T, R> extends AbstractQueryInterceptor<T,
     }
 
     @Override
-    public Iterable<R> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Iterable<R>> context) {
-        Class<Iterable<R>> rt = context.getReturnType().getType();
+    public R intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
+        Class<R> rt = context.getReturnType().getType();
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context);
             Iterable<?> iterable = operations.findAll(preparedQuery);
             if (rt.isInstance(iterable)) {
-                return (Iterable<R>) iterable;
-            } else {
-                return operations.getConversionService().convert(
-                        iterable,
-                        context.getReturnType().asArgument()
-                ).orElse(Collections.emptyList());
+                return (R) iterable;
             }
+            return operations.getConversionService().convertRequired(
+                    iterable,
+                    context.getReturnType().asArgument()
+            );
         } else {
             PagedQuery<R> pagedQuery = getPagedQuery(context);
             Iterable<R> iterable = operations.findAll(pagedQuery);
             if (rt.isInstance(iterable)) {
-                return iterable;
-            } else {
-                return operations.getConversionService().convert(
-                        iterable,
-                        context.getReturnType().asArgument()
-                ).orElse(Collections.emptyList());
+                return (R) iterable;
             }
+            return operations.getConversionService().convertRequired(
+                    iterable,
+                    context.getReturnType().asArgument()
+            );
         }
     }
 }

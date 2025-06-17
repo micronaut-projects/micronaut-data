@@ -88,7 +88,7 @@ public final class CriteriaUtils {
 
     public static IExpression<String> requireNumericExpression(Expression<?> exp) {
         IExpression expression = requireIExpression(exp);
-        if (expression.getExpressionType().isNumeric()) {
+        if (expression instanceof ParameterExpression ||  expression.getExpressionType().isNumeric()) {
             return expression;
         }
         throw new IllegalStateException("Expected a numeric expression! Got: " + expression.getExpressionType().getName());
@@ -96,7 +96,7 @@ public final class CriteriaUtils {
 
     public static IExpression<String> requireStringExpression(Expression<?> exp) {
         IExpression expression = requireIExpression(exp);
-        if (expression.getExpressionType().isTextual()) {
+        if (expression instanceof ParameterExpression || expression.getExpressionType().isTextual()) {
             return expression;
         }
         throw new IllegalStateException("Expected a string expression! Got: " + expression.getExpressionType().getName());
@@ -104,7 +104,7 @@ public final class CriteriaUtils {
 
     public static <T> Expression<T> requireComparableExpression(Expression<T> exp) {
         IExpression expression = requireIExpression(exp);
-        if (expression.getExpressionType().isComparable()) {
+        if (expression instanceof ParameterExpression || expression.getExpressionType().isComparable()) {
             return expression;
         }
         throw new IllegalStateException("Expected a comparable expression! Got: " + expression.getExpressionType().getName());
@@ -112,7 +112,7 @@ public final class CriteriaUtils {
 
     public static IExpression<Boolean> requireBoolExpression(Expression<?> exp) {
         IExpression expression = requireIExpression(exp);
-        if (expression.getExpressionType().isBoolean()) {
+        if (expression instanceof ParameterExpression ||  expression.getExpressionType().isBoolean()) {
             return expression;
         }
         throw new IllegalStateException("Expected a boolean expression! Got: " + expression.getExpressionType().getName());

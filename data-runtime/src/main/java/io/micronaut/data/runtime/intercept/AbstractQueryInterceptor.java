@@ -30,7 +30,6 @@ import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
-import io.micronaut.core.type.MutableArgumentValue;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.annotation.Query;
@@ -70,6 +69,7 @@ import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryResolver;
 import io.micronaut.data.runtime.query.StoredQueryDecorator;
 import io.micronaut.data.runtime.query.StoredQueryResolver;
+import io.micronaut.data.runtime.query.internal.DefaultPreparedQuery;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -371,24 +371,21 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @return An optional result
      */
     protected <RT> Optional<RT> getParameterInRole(MethodInvocationContext<?, ?> context, @NonNull String role, @NonNull Class<RT> type) {
-        return context.stringValue(DataMethod.NAME, role).flatMap(name -> {
-            RT parameterValue = null;
-            Map<String, MutableArgumentValue<?>> params = context.getParameters();
-            MutableArgumentValue<?> arg = params.get(name);
-            if (arg != null) {
-                Object o = arg.getValue();
-                if (o != null) {
-                    if (type.isInstance(o)) {
-                        //noinspection unchecked
-                        parameterValue = (RT) o;
-                    } else {
-                        parameterValue = operations.getConversionService()
-                                .convert(o, type).orElse(null);
-                    }
-                }
-            }
-            return Optional.ofNullable(parameterValue);
-        });
+        return DefaultPreparedQuery.getParameterInRole(role, type, context, conversionService);
+    }
+
+    /**
+     * Retrieve a parameter in the given role for the given type.
+     *
+     * @param context The context
+     * @param role    The role
+     * @param type    The type
+     * @param <RT>    The generic type
+     * @return An optional result
+     */
+    @NonNull
+    protected <RT> List<RT> getParametersInRole(@NonNull MethodInvocationContext<?, ?> context, @NonNull String role, @NonNull Class<RT> type) {
+        return DefaultPreparedQuery.getParametersInRole(role, type, context, conversionService);
     }
 
     /**
@@ -407,9 +404,10 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             if (limit > 0) {
                 pageable = Pageable.from(0, limit);
             }
-            Sort sort = getParameterInRole(context, TypeRole.SORT, Sort.class).orElse(null);
-            if (sort != null) {
-                return pageable.orders(sort.getOrderBy());
+        }
+        for (Sort sort : getParametersInRole(context, TypeRole.SORT, Sort.class)) {
+            if (pageable != sort) {
+                pageable = pageable.orders(sort.getOrderBy());
             }
         }
         return pageable;
@@ -941,6 +939,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         @Override
         public <RT1> Optional<RT1> getParameterInRole(@NonNull String role, @NonNull Class<RT1> type) {
             return AbstractQueryInterceptor.this.getParameterInRole(method, role, type);
+        }
+
+        @Override
+        public <RT> List<RT> getParametersInRole(String role, Class<RT> type) {
+            return AbstractQueryInterceptor.this.getParametersInRole(method, role, type);
         }
 
         @NonNull
