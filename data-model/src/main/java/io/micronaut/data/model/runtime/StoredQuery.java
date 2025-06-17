@@ -255,7 +255,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      * @since 4.10
      * @deprecated Replaced by {@link #getQueryLimit()} ()}
      */
-    @Deprecated(forRemoval = true, since = "4.12")
+    @Deprecated(forRemoval = true, since = "4.13")
     default int getLimit() {
         return getQueryLimit().maxResults();
     }
@@ -265,7 +265,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      * @since 4.10
      * @deprecated Replaced by {@link #getQueryLimit()} ()}
      */
-    @Deprecated(forRemoval = true, since = "4.12")
+    @Deprecated(forRemoval = true, since = "4.13")
     default int getOffset() {
         return (int) getQueryLimit().offset();
     }

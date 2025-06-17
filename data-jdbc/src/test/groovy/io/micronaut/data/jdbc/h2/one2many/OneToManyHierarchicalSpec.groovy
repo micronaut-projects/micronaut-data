@@ -51,7 +51,7 @@ class OneToManyHierarchicalSpec extends Specification implements H2TestPropertyP
         loadedTestEntity.children.size() == 1
         optTestHierarchyEntity.present
         def loadedTestHierarchyEntity = optTestHierarchyEntity.get()
-        loadedTestHierarchyEntity.parent
+        !loadedTestHierarchyEntity.parent
         !loadedTestHierarchyEntity.child
         when:
         def testEntities = testEntityRepository.findAll(Specifications.getChildrenByParentCodeSpecification("code2"))

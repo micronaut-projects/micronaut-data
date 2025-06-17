@@ -265,10 +265,10 @@ interface MyInterface extends CrudRepository<AliasBook, Long> {
         where:
         method                  | sql
         'findAuthorById'        | 'SELECT au.`id`,au.`name`,au.`nick_name` FROM `alias_book` alias_book_ INNER JOIN `alias_author` au ON alias_book_.`author_id`=au.`id` WHERE (alias_book_.`id` = ?)'
-        'findAliasBookById'     | 'SELECT alias_book_.`id`,alias_book_.`title`,alias_book_.`total_pages`,alias_book_.`last_updated`,alias_book_.`author_id`,alias_book_.`co_author_id`,au.`name` AS auname,au.`nick_name` AS aunick_name FROM `alias_book` alias_book_ INNER JOIN `alias_author` au ON alias_book_.`author_id`=au.`id` WHERE (alias_book_.`id` = ?)'
-        'findOneById'           | 'SELECT alias_book_.`id`,alias_book_.`title`,alias_book_.`total_pages`,alias_book_.`last_updated`,alias_book_.`author_id`,alias_book_.`co_author_id`,alias_book_co_author_.`name` AS co_author_name,alias_book_co_author_.`nick_name` AS co_author_nick_name,au.`name` AS auname,au.`nick_name` AS aunick_name FROM `alias_book` alias_book_ INNER JOIN `alias_author` au ON alias_book_.`author_id`=au.`id` INNER JOIN `alias_author` alias_book_co_author_ ON alias_book_.`co_author_id`=alias_book_co_author_.`id` WHERE (alias_book_.`id` = ?)'
-        'findOne'               | 'SELECT alias_book_.`id`,alias_book_.`title`,alias_book_.`total_pages`,alias_book_.`last_updated`,alias_book_.`author_id`,alias_book_.`co_author_id`,alias_book_co_author_ob.`id` AS co_author_obid,alias_book_co_author_ob.`title` AS co_author_obtitle,alias_book_co_author_ob.`total_pages` AS co_author_obtotal_pages,alias_book_co_author_ob.`last_updated` AS co_author_oblast_updated,alias_book_co_author_ob.`author_id` AS co_author_obauthor_id,alias_book_co_author_ob.`co_author_id` AS co_author_obco_author_id,alias_book_co_author_.`name` AS co_author_name,alias_book_co_author_.`nick_name` AS co_author_nick_name,au.`name` AS auname,au.`nick_name` AS aunick_name FROM `alias_book` alias_book_ INNER JOIN `alias_author` au ON alias_book_.`author_id`=au.`id` INNER JOIN `alias_author` alias_book_co_author_ ON alias_book_.`co_author_id`=alias_book_co_author_.`id` INNER JOIN `alias_book` alias_book_co_author_ob ON alias_book_co_author_.`id`=alias_book_co_author_ob.`author_id` WHERE (alias_book_.`id` = ?)'
-        'findAliasBook'         | 'SELECT alias_book_.`id`,alias_book_.`title`,alias_book_.`total_pages`,alias_book_.`last_updated`,alias_book_.`author_id`,alias_book_.`co_author_id`,au_ob.`id` AS au_obid,au_ob.`title` AS au_obtitle,au_ob.`total_pages` AS au_obtotal_pages,au_ob.`last_updated` AS au_oblast_updated,au_ob.`author_id` AS au_obauthor_id,au_ob.`co_author_id` AS au_obco_author_id,au.`name` AS auname,au.`nick_name` AS aunick_name FROM `alias_book` alias_book_ INNER JOIN `alias_author` au ON alias_book_.`author_id`=au.`id` INNER JOIN `alias_book` au_ob ON au.`id`=au_ob.`author_id` WHERE (alias_book_.`id` = ?)'
+        'findAliasBookById'     | 'SELECT alias_book_.`id`,alias_book_.`title`,alias_book_.`total_pages`,alias_book_.`last_updated`,au.`id` AS auid,au.`name` AS auname,au.`nick_name` AS aunick_name FROM `alias_book` alias_book_ INNER JOIN `alias_author` au ON alias_book_.`author_id`=au.`id` WHERE (alias_book_.`id` = ?)'
+        'findOneById'           | 'SELECT alias_book_.`id`,alias_book_.`title`,alias_book_.`total_pages`,alias_book_.`last_updated`,alias_book_co_author_.`id` AS co_author_id,alias_book_co_author_.`name` AS co_author_name,alias_book_co_author_.`nick_name` AS co_author_nick_name,au.`id` AS auid,au.`name` AS auname,au.`nick_name` AS aunick_name FROM `alias_book` alias_book_ INNER JOIN `alias_author` au ON alias_book_.`author_id`=au.`id` INNER JOIN `alias_author` alias_book_co_author_ ON alias_book_.`co_author_id`=alias_book_co_author_.`id` WHERE (alias_book_.`id` = ?)'
+        'findOne'               | 'SELECT alias_book_.`id`,alias_book_.`title`,alias_book_.`total_pages`,alias_book_.`last_updated`,alias_book_co_author_ob.`id` AS co_author_obid,alias_book_co_author_ob.`title` AS co_author_obtitle,alias_book_co_author_ob.`total_pages` AS co_author_obtotal_pages,alias_book_co_author_ob.`last_updated` AS co_author_oblast_updated,alias_book_co_author_ob.`author_id` AS co_author_obauthor_id,alias_book_co_author_ob.`co_author_id` AS co_author_obco_author_id,alias_book_co_author_.`id` AS co_author_id,alias_book_co_author_.`name` AS co_author_name,alias_book_co_author_.`nick_name` AS co_author_nick_name,au.`id` AS auid,au.`name` AS auname,au.`nick_name` AS aunick_name FROM `alias_book` alias_book_ INNER JOIN `alias_author` au ON alias_book_.`author_id`=au.`id` INNER JOIN `alias_author` alias_book_co_author_ ON alias_book_.`co_author_id`=alias_book_co_author_.`id` INNER JOIN `alias_book` alias_book_co_author_ob ON alias_book_co_author_.`id`=alias_book_co_author_ob.`author_id` WHERE (alias_book_.`id` = ?)'
+        'findAliasBook'         | 'SELECT alias_book_.`id`,alias_book_.`title`,alias_book_.`total_pages`,alias_book_.`last_updated`,au_ob.`id` AS au_obid,au_ob.`title` AS au_obtitle,au_ob.`total_pages` AS au_obtotal_pages,au_ob.`last_updated` AS au_oblast_updated,au_ob.`author_id` AS au_obauthor_id,au_ob.`co_author_id` AS au_obco_author_id,au.`id` AS auid,au.`name` AS auname,au.`nick_name` AS aunick_name FROM `alias_book` alias_book_ INNER JOIN `alias_author` au ON alias_book_.`author_id`=au.`id` INNER JOIN `alias_book` au_ob ON au.`id`=au_ob.`author_id` WHERE (alias_book_.`id` = ?)'
     }
 
     void "test join on repository type that inherits from CrudRepository 2"() {
@@ -301,7 +301,7 @@ interface MyInterface extends GenericRepository<AliasBook, Long> {
 
         where:
         method                  | sql
-        'findOne'               | 'SELECT alias_book_.`id`,alias_book_.`title`,alias_book_.`total_pages`,alias_book_.`last_updated`,alias_book_.`author_id`,alias_book_.`co_author_id`,alias_book_co_author_ob.`id` AS co_author_obid,alias_book_co_author_ob.`title` AS co_author_obtitle,alias_book_co_author_ob.`total_pages` AS co_author_obtotal_pages,alias_book_co_author_ob.`last_updated` AS co_author_oblast_updated,alias_book_co_author_ob.`author_id` AS co_author_obauthor_id,alias_book_co_author_ob.`co_author_id` AS co_author_obco_author_id,alias_book_co_author_.`name` AS co_author_name,alias_book_co_author_.`nick_name` AS co_author_nick_name,au.`name` AS auname,au.`nick_name` AS aunick_name FROM `alias_book` alias_book_ INNER JOIN `alias_author` au ON alias_book_.`author_id`=au.`id` INNER JOIN `alias_author` alias_book_co_author_ ON alias_book_.`co_author_id`=alias_book_co_author_.`id` INNER JOIN `alias_book` alias_book_co_author_ob ON alias_book_co_author_.`id`=alias_book_co_author_ob.`author_id` WHERE (alias_book_.`id` = ?)'
+        'findOne'               | 'SELECT alias_book_.`id`,alias_book_.`title`,alias_book_.`total_pages`,alias_book_.`last_updated`,alias_book_co_author_ob.`id` AS co_author_obid,alias_book_co_author_ob.`title` AS co_author_obtitle,alias_book_co_author_ob.`total_pages` AS co_author_obtotal_pages,alias_book_co_author_ob.`last_updated` AS co_author_oblast_updated,alias_book_co_author_ob.`author_id` AS co_author_obauthor_id,alias_book_co_author_ob.`co_author_id` AS co_author_obco_author_id,alias_book_co_author_.`id` AS co_author_id,alias_book_co_author_.`name` AS co_author_name,alias_book_co_author_.`nick_name` AS co_author_nick_name,au.`id` AS auid,au.`name` AS auname,au.`nick_name` AS aunick_name FROM `alias_book` alias_book_ INNER JOIN `alias_author` au ON alias_book_.`author_id`=au.`id` INNER JOIN `alias_author` alias_book_co_author_ ON alias_book_.`co_author_id`=alias_book_co_author_.`id` INNER JOIN `alias_book` alias_book_co_author_ob ON alias_book_co_author_.`id`=alias_book_co_author_ob.`author_id` WHERE (alias_book_.`id` = ?)'
     }
 
       void "test to-one join on repository type that inherits from CrudRepository"() {
@@ -367,8 +367,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository(value = "secondary")
-@JdbcRepository(dialect= Dialect.MYSQL)
-@io.micronaut.context.annotation.Executable
+@JdbcRepository(dialect = Dialect.H2)
 interface FoodRepository extends GenericRepository<Food, UUID> {
 
     @Join("meal")
@@ -383,8 +382,8 @@ interface FoodRepository extends GenericRepository<Food, UUID> {
         def queryFind = getQuery(repository.getRequiredMethod("findById", UUID))
 
         expect:
-        query == 'SELECT food_.`fid`,food_.`key`,food_.`carbohydrates`,food_.`portion_grams`,food_.`created_on`,food_.`updated_on`,food_.`fk_meal_id`,food_.`fk_alt_meal`,food_.`loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name` AS ln,food_.`fresh`,food_meal_.`current_blood_glucose` AS meal_current_blood_glucose,food_meal_.`created_on` AS meal_created_on,food_meal_.`updated_on` AS meal_updated_on,food_meal_.`actual` AS meal_actual FROM `food` food_ INNER JOIN `meal` food_meal_ ON food_.`fk_meal_id`=food_meal_.`mid` AND food_meal_.actual = \'Y\' WHERE (food_.`fid` = ? AND food_.fresh = \'Y\')'
-        queryFind == 'SELECT food_.`fid`,food_.`key`,food_.`carbohydrates`,food_.`portion_grams`,food_.`created_on`,food_.`updated_on`,food_.`fk_meal_id`,food_.`fk_alt_meal`,food_.`loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name` AS ln,food_.`fresh` FROM `food` food_ WHERE (food_.`fid` = ? AND food_.fresh = \'Y\')'
+        query == 'SELECT food_.`fid`,food_.`key`,food_.`carbohydrates`,food_.`portion_grams`,food_.`created_on`,food_.`updated_on`,food_.`loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name` AS ln,food_.`fresh`,food_meal_.`mid` AS meal_mid,food_meal_.`current_blood_glucose` AS meal_current_blood_glucose,food_meal_.`created_on` AS meal_created_on,food_meal_.`updated_on` AS meal_updated_on,food_meal_.`actual` AS meal_actual FROM `food` food_ INNER JOIN `meal` food_meal_ ON food_.`fk_meal_id`=food_meal_.`mid` AND food_meal_.actual = \'Y\' WHERE (food_.`fid` = ? AND food_.fresh = \'Y\')'
+        queryFind == 'SELECT food_.`fid`,food_.`key`,food_.`carbohydrates`,food_.`portion_grams`,food_.`created_on`,food_.`updated_on`,food_.`loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name` AS ln,food_.`fresh` FROM `food` food_ WHERE (food_.`fid` = ? AND food_.fresh = \'Y\')'
     }
 
     void "test query with an entity with custom id and id field"() {
@@ -696,8 +695,8 @@ interface PurchaseRepository extends CrudRepository<Purchase, Long> {
         def query3 = getQuery(repository.getRequiredMethod("findByCustomerIdOrInvoiceAndShouldReceiveCopyOfInvoiceTrue", Long, Invoice))
 
         expect:
-        query1 == 'SELECT purchase_.`id`,purchase_.`version`,purchase_.`name`,purchase_.`invoice_id`,purchase_.`customer_id`,purchase_.`should_receive_copy_of_invoice`,purchase_invoice_.`version` AS invoice_version,purchase_invoice_.`name` AS invoice_name FROM `purchase` purchase_ INNER JOIN `invoice` purchase_invoice_ ON purchase_.`invoice_id`=purchase_invoice_.`id` WHERE (purchase_.`name` = ? AND purchase_.`invoice_id` = ?)'
-        query2 == 'SELECT purchase_.`id`,purchase_.`version`,purchase_.`name`,purchase_.`invoice_id`,purchase_.`customer_id`,purchase_.`should_receive_copy_of_invoice` FROM `purchase` purchase_ WHERE (purchase_.`customer_id` = ? AND purchase_.`should_receive_copy_of_invoice` = TRUE)'
+        query1 == 'SELECT purchase_.`id`,purchase_.`version`,purchase_.`name`,purchase_.`customer_id`,purchase_.`should_receive_copy_of_invoice`,purchase_invoice_.`id` AS invoice_id,purchase_invoice_.`version` AS invoice_version,purchase_invoice_.`name` AS invoice_name FROM `purchase` purchase_ INNER JOIN `invoice` purchase_invoice_ ON purchase_.`invoice_id`=purchase_invoice_.`id` WHERE (purchase_.`name` = ? AND purchase_.`invoice_id` = ?)'
+        query2 == 'SELECT purchase_.`id`,purchase_.`version`,purchase_.`name`,purchase_.`customer_id`,purchase_.`should_receive_copy_of_invoice` FROM `purchase` purchase_ WHERE (purchase_.`customer_id` = ? AND purchase_.`should_receive_copy_of_invoice` = TRUE)'
         query3.endsWith('WHERE ((purchase_.`customer_id` = ? OR purchase_.`invoice_id` = ?) AND purchase_.`should_receive_copy_of_invoice` = TRUE)')
 
     }
@@ -784,11 +783,11 @@ interface PageRepository extends GenericRepository<Page, Long> {
         def chaptersBookJoinJoins = getJoins(chaptersBookJoinMethod)
 
         expect:
-        query == "SELECT page_book_.`id`,page_book_.`author_id`,page_book_.`genre_id`,page_book_.`title`,page_book_.`total_pages`,page_book_.`publisher_id`,page_book_.`last_updated`,page_book_chapters_.`id` AS chapters_id,page_book_chapters_.`pages` AS chapters_pages,page_book_chapters_.`book_id` AS chapters_book_id,page_book_chapters_.`title` AS chapters_title FROM `page` page_ LEFT JOIN `book` page_book_ ON page_.`book_id`=page_book_.`id` LEFT JOIN `chapter` page_book_chapters_ ON page_book_.`id`=page_book_chapters_.`book_id` WHERE (page_.`id` = ?)"
+        query == "SELECT page_book_.`id`,page_book_.`title`,page_book_.`total_pages`,page_book_.`last_updated`,page_book_chapters_.`id` AS chapters_id,page_book_chapters_.`pages` AS chapters_pages,page_book_chapters_.`book_id` AS chapters_book_id,page_book_chapters_.`title` AS chapters_title FROM `page` page_ LEFT JOIN `book` page_book_ ON page_.`book_id`=page_book_.`id` LEFT JOIN `chapter` page_book_chapters_ ON page_book_.`id`=page_book_chapters_.`book_id` WHERE (page_.`id` = ?)"
         joins.size() == 1
         joins.keySet() == ["chapters"] as Set
-        chaptersQuery == "SELECT page_book_chapters_.`id`,page_book_chapters_.`pages`,page_book_chapters_.`book_id`,page_book_chapters_.`title` FROM `page` page_ INNER JOIN `book` page_book_ ON page_.`book_id`=page_book_.`id` INNER JOIN `chapter` page_book_chapters_ ON page_book_.`id`=page_book_chapters_.`book_id` WHERE (page_.`id` = ?)"
-        chaptersBookJoinQuery == "SELECT page_book_chapters_.`id`,page_book_chapters_.`pages`,page_book_chapters_.`book_id`,page_book_chapters_.`title`,page_book_chapters_book_.`author_id` AS book_author_id,page_book_chapters_book_.`genre_id` AS book_genre_id,page_book_chapters_book_.`title` AS book_title,page_book_chapters_book_.`total_pages` AS book_total_pages,page_book_chapters_book_.`publisher_id` AS book_publisher_id,page_book_chapters_book_.`last_updated` AS book_last_updated FROM `page` page_ INNER JOIN `book` page_book_ ON page_.`book_id`=page_book_.`id` INNER JOIN `chapter` page_book_chapters_ ON page_book_.`id`=page_book_chapters_.`book_id` INNER JOIN `book` page_book_chapters_book_ ON page_book_chapters_.`book_id`=page_book_chapters_book_.`id` WHERE (page_.`id` = ? AND page_.`num` = ?)"
+        chaptersQuery == "SELECT page_book_chapters_.`id`,page_book_chapters_.`pages`,page_book_chapters_.`title` FROM `page` page_ INNER JOIN `book` page_book_ ON page_.`book_id`=page_book_.`id` INNER JOIN `chapter` page_book_chapters_ ON page_book_.`id`=page_book_chapters_.`book_id` WHERE (page_.`id` = ?)"
+        chaptersBookJoinQuery == "SELECT page_book_chapters_.`id`,page_book_chapters_.`pages`,page_book_chapters_.`title`,page_book_chapters_book_.`id` AS book_id,page_book_chapters_book_.`author_id` AS book_author_id,page_book_chapters_book_.`genre_id` AS book_genre_id,page_book_chapters_book_.`title` AS book_title,page_book_chapters_book_.`total_pages` AS book_total_pages,page_book_chapters_book_.`publisher_id` AS book_publisher_id,page_book_chapters_book_.`last_updated` AS book_last_updated FROM `page` page_ INNER JOIN `book` page_book_ ON page_.`book_id`=page_book_.`id` INNER JOIN `chapter` page_book_chapters_ ON page_book_.`id`=page_book_chapters_.`book_id` INNER JOIN `book` page_book_chapters_book_ ON page_book_chapters_.`book_id`=page_book_chapters_book_.`id` WHERE (page_.`id` = ? AND page_.`num` = ?)"
         chaptersBookJoinJoins.size() == 1
         chaptersBookJoinJoins.keySet() == ["book"] as Set
         getResultDataType(method) == DataType.ENTITY
@@ -1126,8 +1125,34 @@ class CustomBook {
         def findAllQuery = getQuery(findAllMethod)
 
         expect:
-        findAllQuery == 'SELECT custom_book_.`id`,custom_book_.`title`,custom_book_.`pages`,custom_book_.`author_id2`,custom_book_author_.`id2` AS author_id2,custom_book_author_.`name` AS author_name FROM `custom_book` custom_book_ INNER JOIN `custom_author` custom_book_author_ ON custom_book_.`author_id2`=custom_book_author_.`id2`'
+        findAllQuery == 'SELECT custom_book_.`id`,custom_book_.`title`,custom_book_.`pages`,custom_book_author_.`id` AS author_id,custom_book_author_.`id2` AS author_id2,custom_book_author_.`name` AS author_name FROM `custom_book` custom_book_ INNER JOIN `custom_author` custom_book_author_ ON custom_book_.`author_id2`=custom_book_author_.`id2`'
         getResultDataType(findAllMethod) == DataType.ENTITY
+    }
+
+    void "test many-to-one foreign key join"() {
+        given:
+        def repository = buildRepository('test.DocumentRepository', """
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Document;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface DocumentRepository extends GenericRepository<Document, Long> {
+    @Join(value = "type", type = Join.Type.LEFT_FETCH)
+    Optional<Document> findById(UUID id);
+}
+""")
+
+        def findByIdMethod = repository.getRequiredMethod("findById", UUID)
+        def findByIdQuery = getQuery(findByIdMethod)
+
+        expect:
+        findByIdQuery == 'SELECT document_.`id`,document_.`name`,document_type_.`id` AS type_id,document_type_.`name` AS type_name,document_type_.`deleted` AS type_deleted' +
+                ' FROM `document` document_ LEFT JOIN `document_type` document_type_ ON document_.`type_id`=document_type_.`id` AND document_type_.deleted = false WHERE (document_.`id` = ?)'
+        getResultDataType(findByIdMethod) == DataType.ENTITY
     }
 
     void "test DTO with association and join"() {
@@ -1157,6 +1182,31 @@ interface AuthorRepository extends GenericRepository<Author, Long> {
         expect:
             queryAllQuery == 'SELECT author_.`id`,author_books_.`id` AS books_id,author_books_.`author_id` AS books_author_id,author_books_.`genre_id` AS books_genre_id,author_books_.`title` AS books_title,author_books_.`total_pages` AS books_total_pages,author_books_.`publisher_id` AS books_publisher_id,author_books_.`last_updated` AS books_last_updated FROM `author` author_ INNER JOIN `book` author_books_ ON author_.`id`=author_books_.`author_id`'
             getResultDataType(queryAllMethod) == DataType.OBJECT
+    }
+
+    void "test embedded id with many-to-one counts"() {
+        given:
+        def repository = buildRepository('test.UserRoleRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.jdbc.entities.UserRole;
+import io.micronaut.data.tck.jdbc.entities.UserRoleId;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
+
+    long count();
+
+    long countDistinct();
+}
+
+""")
+        def countQuery = getQuery(repository.getRequiredMethod("count"))
+        def countDistinctQuery = getQuery(repository.getRequiredMethod("countDistinct"))
+        expect:
+        countQuery == 'SELECT COUNT(*) FROM `user_role_composite` user_role_'
+        countDistinctQuery == 'SELECT COUNT(DISTINCT( CONCAT(user_role_.`id_user_id`,user_role_.`id_role_id`))) FROM `user_role_composite` user_role_'
     }
 
     void "test many-to-one with properties starting with the same prefix"() {
@@ -1273,11 +1323,11 @@ interface UserGroupMembershipRepository extends GenericRepository<UserGroupMembe
         def queryByUserAddressZipCode2 = getQuery(repository.getRequiredMethod("findAllByUserAddress_ZipCode", String))
         then:
         queryByUserLoginAndAreaId != ''
-        queryByUserLogin == 'SELECT ugm_.`id`,ugm_.`user_group_id`,ugm_.`user_id`,ugm_.`user_address_id` FROM `ugm` ugm_ INNER JOIN `u` ugm_user_ ON ugm_.`user_id`=ugm_user_.`id` WHERE (ugm_user_.`login` = ?)'
+        queryByUserLogin == 'SELECT ugm_.`id` FROM `ugm` ugm_ INNER JOIN `u` ugm_user_ ON ugm_.`user_id`=ugm_user_.`id` WHERE (ugm_user_.`login` = ?)'
         // Queries by user.addressZipCode
-        queryByUserAddressZipCode == 'SELECT ugm_.`id`,ugm_.`user_group_id`,ugm_.`user_id`,ugm_.`user_address_id` FROM `ugm` ugm_ INNER JOIN `u` ugm_user_ ON ugm_.`user_id`=ugm_user_.`id` WHERE (ugm_user_.`address_zip_code` = ?)'
+        queryByUserAddressZipCode == 'SELECT ugm_.`id` FROM `ugm` ugm_ INNER JOIN `u` ugm_user_ ON ugm_.`user_id`=ugm_user_.`id` WHERE (ugm_user_.`address_zip_code` = ?)'
         // Queries by userAddress.zipCode
-        queryByUserAddressZipCode2 == 'SELECT ugm_.`id`,ugm_.`user_group_id`,ugm_.`user_id`,ugm_.`user_address_id` FROM `ugm` ugm_ INNER JOIN `ua` ugm_user_address_ ON ugm_.`user_address_id`=ugm_user_address_.`id` WHERE (ugm_user_address_.`zip_code` = ?)'
+        queryByUserAddressZipCode2 == 'SELECT ugm_.`id` FROM `ugm` ugm_ INNER JOIN `ua` ugm_user_address_ ON ugm_.`user_address_id`=ugm_user_address_.`id` WHERE (ugm_user_address_.`zip_code` = ?)'
     }
 
     void "test repo method with underscore and not matching property"() {
@@ -1802,7 +1852,7 @@ interface BookRepository extends GenericRepository<Book, Long> {
         when:
             def queryTop3ByAuthorNameOrderByTitle = repository.findPossibleMethods("queryTop3ByAuthorNameOrderByTitle").findFirst().get()
         then:
-            getQuery(queryTop3ByAuthorNameOrderByTitle) == '''SELECT book_."id",book_."author_id",book_."genre_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated" FROM "book" book_ INNER JOIN "author" book_author_ ON book_."author_id"=book_author_."id" WHERE (book_author_."name" = ?) ORDER BY book_."title" ASC LIMIT 3'''
+            getQuery(queryTop3ByAuthorNameOrderByTitle) == '''SELECT book_."id",book_."title",book_."total_pages",book_."last_updated" FROM "book" book_ INNER JOIN "author" book_author_ ON book_."author_id"=book_author_."id" WHERE (book_author_."name" = ?) ORDER BY book_."title" ASC LIMIT 3'''
             getParameterBindingPaths(queryTop3ByAuthorNameOrderByTitle) == [""] as String[]
             getParameterPropertyPaths(queryTop3ByAuthorNameOrderByTitle) == ["author.name"] as String[]
     }
@@ -1826,7 +1876,7 @@ abstract class BookRepository extends io.micronaut.data.tck.repositories.BookRep
         when:
             def method =  repository.findPossibleMethods("findByAuthorIsNull").findFirst().get()
         then:
-            getQuery(method) == '''SELECT book_."id",book_."author_id",book_."genre_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated" FROM "book" book_ WHERE (book_."author_id" IS NULL)'''
+            getQuery(method) == '''SELECT book_."id",book_."title",book_."total_pages",book_."last_updated" FROM "book" book_ WHERE (book_."author_id" IS NULL)'''
 
     }
 
@@ -1903,7 +1953,7 @@ class User {
 """)
             def findAllByUserLoginAndUserGroup_AreaIdMethod = repository.findPossibleMethods("findAllByUserLoginAndUserGroup_AreaId").findFirst().get()
         expect:
-            getQuery(findAllByUserLoginAndUserGroup_AreaIdMethod) == 'SELECT ugm_.`id`,ugm_.`user_group_id`,ugm_.`user_id`,ugm_user_group_area_.`name` AS user_group_area_name,ugm_user_group_.`area_id` AS user_group_area_id FROM `ugm` ugm_ INNER JOIN `u` ugm_user_ ON ugm_.`user_id`=ugm_user_.`id` INNER JOIN `ug` ugm_user_group_ ON ugm_.`user_group_id`=ugm_user_group_.`id` INNER JOIN `a` ugm_user_group_area_ ON ugm_user_group_.`area_id`=ugm_user_group_area_.`id` WHERE (ugm_user_.`login` = ? AND ugm_user_group_.`area_id` = ?)'
+            getQuery(findAllByUserLoginAndUserGroup_AreaIdMethod) == 'SELECT ugm_.`id`,ugm_user_group_area_.`id` AS user_group_area_id,ugm_user_group_area_.`name` AS user_group_area_name,ugm_user_group_.`id` AS user_group_id,ugm_user_group_.`area_id` AS user_group_area_id FROM `ugm` ugm_ INNER JOIN `u` ugm_user_ ON ugm_.`user_id`=ugm_user_.`id` INNER JOIN `ug` ugm_user_group_ ON ugm_.`user_group_id`=ugm_user_group_.`id` INNER JOIN `a` ugm_user_group_area_ ON ugm_user_group_.`area_id`=ugm_user_group_area_.`id` WHERE (ugm_user_.`login` = ? AND ugm_user_group_.`area_id` = ?)'
             getParameterPropertyPaths(findAllByUserLoginAndUserGroup_AreaIdMethod) == ["user.login", "userGroup.area.id"] as String[]
             getParameterBindingIndexes(findAllByUserLoginAndUserGroup_AreaIdMethod) == ["0", "1"] as String[]
             getParameterBindingPaths(findAllByUserLoginAndUserGroup_AreaIdMethod) == ["", ""] as String[]
@@ -2027,7 +2077,7 @@ interface TestRepository extends GenericRepository<Book, Long> {
 """)
         def findByAuthorInListMethod = repository.findPossibleMethods("findByAuthorInList").findFirst().get()
         expect:
-            getQuery(findByAuthorInListMethod) == "SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated` FROM `book` book_ WHERE (book_.`author_id` IN (?))"
+            getQuery(findByAuthorInListMethod) == "SELECT book_.`id`,book_.`title`,book_.`total_pages`,book_.`last_updated` FROM `book` book_ WHERE (book_.`author_id` IN (?))"
     }
 
     void "test JOIN pagination"() {
@@ -2053,7 +2103,7 @@ interface TestRepository extends GenericRepository<Book, Long> {
         def findByAuthorInListMethod = repository.findPossibleMethods("findAll").findFirst().get()
         def countQueryAnnotation = findByAuthorInListMethod.getAnnotation(DataMethod).getAnnotation(DataMethod.META_MEMBER_COUNT_QUERY).get()
         expect:
-            getQuery(findByAuthorInListMethod) == """SELECT book_."id",book_."author_id",book_."genre_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated" FROM "book" book_ LEFT JOIN "book_student" book_students_book_student_ ON book_."id"=book_students_book_student_."book_id"  LEFT JOIN "student" book_students_ ON book_students_book_student_."student_id"=book_students_."id" WHERE (book_."id" IN (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."id" IN (SELECT book_book_book_."id" FROM "book" book_book_book_ LEFT JOIN "book_student" book_book_book_students_book_student_ ON book_book_book_."id"=book_book_book_students_book_student_."book_id"  LEFT JOIN "student" book_book_book_students_ ON book_book_book_students_book_student_."student_id"=book_book_book_students_."id"))"""
+            getQuery(findByAuthorInListMethod) == """SELECT book_."id",book_."title",book_."total_pages",book_."last_updated" FROM "book" book_ LEFT JOIN "book_student" book_students_book_student_ ON book_."id"=book_students_book_student_."book_id"  LEFT JOIN "student" book_students_ ON book_students_book_student_."student_id"=book_students_."id" WHERE (book_."id" IN (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."id" IN (SELECT book_book_book_."id" FROM "book" book_book_book_ LEFT JOIN "book_student" book_book_book_students_book_student_ ON book_book_book_."id"=book_book_book_students_book_student_."book_id"  LEFT JOIN "student" book_book_book_students_ ON book_book_book_students_book_student_."student_id"=book_book_book_students_."id"))"""
             countQueryAnnotation.stringValue().get() == """SELECT COUNT(DISTINCT(book_."id")) FROM "book" book_ LEFT JOIN "book_student" book_students_book_student_ ON book_."id"=book_students_book_student_."book_id"  LEFT JOIN "student" book_students_ ON book_students_book_student_."student_id"=book_students_."id\""""
     }
 
@@ -2080,7 +2130,7 @@ interface TestRepository extends GenericRepository<Book, Long> {
         def findAllByStudentsNameIn = repository.findPossibleMethods("findAllByStudentsNameIn").findFirst().get()
         def countQueryAnnotation = findAllByStudentsNameIn.getAnnotation(DataMethod).getAnnotation(DataMethod.META_MEMBER_COUNT_QUERY).get()
         expect:
-            getQuery(findAllByStudentsNameIn) == """SELECT book_."id",book_."author_id",book_."genre_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated",book_students_."id" AS students_id,book_students_."version" AS students_version,book_students_."name" AS students_name,book_students_."creation_time" AS students_creation_time,book_students_."last_updated_time" AS students_last_updated_time FROM "book" book_ LEFT JOIN "book_student" book_students_book_student_ ON book_."id"=book_students_book_student_."book_id"  LEFT JOIN "student" book_students_ ON book_students_book_student_."student_id"=book_students_."id" WHERE (book_."id" IN (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."id" IN (SELECT book_book_book_."id" FROM "book" book_book_book_ LEFT JOIN "book_student" book_book_book_students_book_student_ ON book_book_book_."id"=book_book_book_students_book_student_."book_id"  LEFT JOIN "student" book_book_book_students_ ON book_book_book_students_book_student_."student_id"=book_book_book_students_."id" WHERE (book_book_book_students_."name" IN (?))))"""
+            getQuery(findAllByStudentsNameIn) == """SELECT book_."id",book_."title",book_."total_pages",book_."last_updated",book_students_."id" AS students_id,book_students_."version" AS students_version,book_students_."name" AS students_name,book_students_."creation_time" AS students_creation_time,book_students_."last_updated_time" AS students_last_updated_time FROM "book" book_ LEFT JOIN "book_student" book_students_book_student_ ON book_."id"=book_students_book_student_."book_id"  LEFT JOIN "student" book_students_ ON book_students_book_student_."student_id"=book_students_."id" WHERE (book_."id" IN (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."id" IN (SELECT book_book_book_."id" FROM "book" book_book_book_ LEFT JOIN "book_student" book_book_book_students_book_student_ ON book_book_book_."id"=book_book_book_students_book_student_."book_id"  LEFT JOIN "student" book_book_book_students_ ON book_book_book_students_book_student_."student_id"=book_book_book_students_."id" WHERE (book_book_book_students_."name" IN (?))))"""
             countQueryAnnotation.stringValue().get() == """SELECT COUNT(DISTINCT(book_."id")) FROM "book" book_ LEFT JOIN "book_student" book_students_book_student_ ON book_."id"=book_students_book_student_."book_id"  LEFT JOIN "student" book_students_ ON book_students_book_student_."student_id"=book_students_."id" WHERE (book_students_."name" IN (?))"""
             countQueryAnnotation.getAnnotations("parameters").size() == 1
     }
@@ -2106,7 +2156,7 @@ interface TestRepository extends GenericRepository<Book, Long> {
 """)
         def findAll = repository.findPossibleMethods("findAll").findFirst().get()
         expect:
-            getQuery(findAll) == """SELECT book_."id",book_."author_id",book_."genre_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated" FROM "book" book_"""
+            getQuery(findAll) == """SELECT book_."id",book_."title",book_."total_pages",book_."last_updated" FROM "book" book_"""
             isExpandableQuery(findAll)
             getParameterRoles(findAll) == ["querylimit"]
     }
@@ -2135,7 +2185,7 @@ interface TestRepository extends GenericRepository<Book, Long> {
 """)
         def findAll = repository.findPossibleMethods("findAll").findFirst().get()
         expect:
-            getQuery(findAll) == """SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated`,book_author_.`name` AS author_name,book_author_.`nick_name` AS author_nick_name FROM `book` book_ INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` IN (SELECT book_book_.`id` FROM `book` book_book_ WHERE (book_book_.`id` IN (SELECT book_book_book_.`id` FROM `book` book_book_book_ INNER JOIN `author` book_book_book_author_ ON book_book_book_.`author_id`=book_book_book_author_.`id`))"""
+            getQuery(findAll) == """SELECT book_.`id`,book_.`title`,book_.`total_pages`,book_.`last_updated`,book_author_.`id` AS author_id,book_author_.`name` AS author_name,book_author_.`nick_name` AS author_nick_name FROM `book` book_ INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` IN (SELECT book_book_.`id` FROM `book` book_book_ WHERE (book_book_.`id` IN (SELECT book_book_book_.`id` FROM `book` book_book_book_ INNER JOIN `author` book_book_book_author_ ON book_book_book_.`author_id`=book_book_book_author_.`id`))"""
             getParameterRoles(findAll) == ["pageableRequired", "sort"]
     }
 

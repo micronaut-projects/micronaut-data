@@ -411,7 +411,7 @@ interface TestRepository extends CrudRepository<Book, Long> {
         when:
             def method = repository.findPossibleMethods("findTop30OrderByTitle").findFirst().get()
         then:
-            method.stringValue(Query).get() == 'SELECT book_."id",book_."author_id",book_."genre_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated" FROM "book" book_ ORDER BY book_."title" ASC LIMIT 30'
+            method.stringValue(Query).get() == 'SELECT book_."id",book_."title",book_."total_pages",book_."last_updated" FROM "book" book_ ORDER BY book_."title" ASC LIMIT 30'
             method.intValue(DataMethod, DataMethod.META_MEMBER_PAGE_SIZE).isEmpty()
             method.intValue(DataMethod, DataMethod.META_MEMBER_LIMIT).isEmpty()
     }
@@ -436,7 +436,7 @@ interface TestRepository extends CrudRepository<Book, Long> {
         when:
             def method = repository.findPossibleMethods("findTop30OrderByTitle").findFirst().get()
         then:
-            method.stringValue(Query).get() == 'SELECT book_."id",book_."author_id",book_."genre_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated" FROM "book" book_'
+            method.stringValue(Query).get() == 'SELECT book_."id",book_."title",book_."total_pages",book_."last_updated" FROM "book" book_'
             method.intValue(DataMethod, DataMethod.META_MEMBER_LIMIT).isPresent()
     }
 
