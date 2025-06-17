@@ -28,7 +28,6 @@ import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
-import javax.sql.DataSource
 import java.sql.Connection
 
 class PostgresSequenceSpec extends Specification implements PostgresTestPropertyProvider {
@@ -41,10 +40,12 @@ class PostgresSequenceSpec extends Specification implements PostgresTestProperty
     TestSequenceRepo testSequenceRepo = applicationContext.getBean(TestSequenceRepo)
 
     @Shared
-    DataSource dataSource = applicationContext.getBean(DataSource)
-
-    @Shared
     SynchronousTransactionManager<Connection> transactionManager = applicationContext.getBean(SynchronousTransactionManager)
+
+    @Override
+    List<String> packages() {
+        return List.of("io.micronaut.data.jdbc.postgres")
+    }
 
     void "test postgres sequence handling"() {
         when:
@@ -57,7 +58,7 @@ class PostgresSequenceSpec extends Specification implements PostgresTestProperty
         when:
         def currentValue = transactionManager.executeRead({ TransactionStatus status ->
             Connection it = status.connection
-            it.prepareStatement("select last_value from test_sequence_id_seq").withCloseable { ps ->
+            it.prepareStatement("select last_value from seqschema.test_sequence_id_seq").withCloseable { ps ->
                 ps.executeQuery().withCloseable { rs ->
                     rs.next()
                     return rs.getLong(1)
@@ -67,7 +68,7 @@ class PostgresSequenceSpec extends Specification implements PostgresTestProperty
 
         def name = transactionManager.executeRead({ TransactionStatus status ->
             Connection it = status.connection
-            it.prepareStatement("select \"name\" from test_sequence_id").withCloseable { ps ->
+            it.prepareStatement("select \"name\" from seqschema.test_sequence_id").withCloseable { ps ->
                 ps.executeQuery().withCloseable { rs ->
                     if (rs.next()) {
                         return rs.getString(1)
@@ -83,7 +84,7 @@ class PostgresSequenceSpec extends Specification implements PostgresTestProperty
 
 }
 
-@MappedEntity
+@MappedEntity(schema = "seqschema")
 class TestSequenceId {
 
     @GeneratedValue(GeneratedValue.Type.SEQUENCE)

@@ -43,7 +43,7 @@ public class ShipmentWithIndexOnFieldsCompositeIndexes {
     private Long shipmentId;
 
     @Column(name = "field")
-    @Index(columns = {"field, taxCode"}, unique = true)
+    @Index(columns = {"field", "taxCode"}, unique = true)
     private String field;
 
 

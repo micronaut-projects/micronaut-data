@@ -663,7 +663,7 @@ interface MyRepository {
         then:
         statements[0] == 'CREATE TABLE "shipment_with_index_on_class" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
         statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_on_class_field" ON "shipment_with_index_on_class" (field);'
-        statements[2] == 'CREATE INDEX "idx_shipment_with_index_on_class_taxcode" ON "shipment_with_index_on_class" (taxCode);'
+        statements[2] == 'CREATE INDEX "idx_shipment_tax" ON "shipment_with_index_on_class" (taxCode);'
     }
 
     void "test build create index from index class annotation and field annotation"() {

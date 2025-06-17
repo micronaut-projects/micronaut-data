@@ -56,6 +56,8 @@ include::doc-examples/r2dbc-example-java/src/main/resources/application.yml[]
 
 The `schema-generate` option is currently only recommended for simple applications, testing and demos and is not considered production-ready. The dialect set in configuration is the dialect that will be used to generate the schema.
 
+Please note that currently schema validation is not supported for Micronaut Data R2DBC.
+
 === Setting the Dialect
 
 As seen in the configuration above you should also configure the dialect. Although queries are precomputed in the repository some cases (like pagination) still require the dialect to specify. The following table summarizes the supported dialects:
