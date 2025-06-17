@@ -114,7 +114,7 @@ public interface Pageable extends Sort {
 
     /**
      * @return The limit
-     * @see 4.12
+     * @since 4.13
      */
     @NonNull
     @JsonIgnore

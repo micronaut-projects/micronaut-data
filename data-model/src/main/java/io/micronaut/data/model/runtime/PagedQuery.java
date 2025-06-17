@@ -48,7 +48,7 @@ public interface PagedQuery<E> extends Named, AnnotationMetadataProvider {
 
     /**
      * @return The limit
-     * @see 4.12
+     * @since 4.13
      */
     @NonNull
     default Limit getQueryLimit() {
@@ -57,7 +57,7 @@ public interface PagedQuery<E> extends Named, AnnotationMetadataProvider {
 
     /**
      * @return The sort
-     * @see 4.12
+     * @since 4.13
      */
     @NonNull
     default Sort getSort() {

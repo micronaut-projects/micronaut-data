@@ -2156,7 +2156,7 @@ interface TestRepository extends GenericRepository<Book, Long> {
 """)
         def findAll = repository.findPossibleMethods("findAll").findFirst().get()
         expect:
-            getQuery(findAll) == """SELECT book_."id",book_."author_id",book_."genre_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated" FROM "book" book_"""
+            getQuery(findAll) == """SELECT book_."id",book_."title",book_."total_pages",book_."last_updated" FROM "book" book_"""
             isExpandableQuery(findAll)
             getParameterRoles(findAll) == ["querylimit"]
     }
@@ -2185,7 +2185,7 @@ interface TestRepository extends GenericRepository<Book, Long> {
 """)
         def findAll = repository.findPossibleMethods("findAll").findFirst().get()
         expect:
-            getQuery(findAll) == """SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated`,book_author_.`name` AS author_name,book_author_.`nick_name` AS author_nick_name FROM `book` book_ INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` IN (SELECT book_book_.`id` FROM `book` book_book_ WHERE (book_book_.`id` IN (SELECT book_book_book_.`id` FROM `book` book_book_book_ INNER JOIN `author` book_book_book_author_ ON book_book_book_.`author_id`=book_book_book_author_.`id`))"""
+            getQuery(findAll) == """SELECT book_.`id`,book_.`title`,book_.`total_pages`,book_.`last_updated`,book_author_.`id` AS author_id,book_author_.`name` AS author_name,book_author_.`nick_name` AS author_nick_name FROM `book` book_ INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` IN (SELECT book_book_.`id` FROM `book` book_book_ WHERE (book_book_.`id` IN (SELECT book_book_book_.`id` FROM `book` book_book_book_ INNER JOIN `author` book_book_book_author_ ON book_book_book_.`author_id`=book_book_book_author_.`id`))"""
             getParameterRoles(findAll) == ["pageableRequired", "sort"]
     }
 
