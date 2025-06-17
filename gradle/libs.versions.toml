@@ -6,7 +6,7 @@ micronaut-gradle-plugin = "4.5.3"
 micronaut-testresources = "2.8.0"
 
 micronaut-azure = "5.10.0"
-micronaut-reactor = "3.7.0"
+micronaut-reactor = "3.8.0"
 micronaut-rxjava2 = "2.8.0"
 micronaut-r2dbc = "6.0.0"
 micronaut-sql = "6.2.0"
@@ -14,7 +14,7 @@ micronaut-serde = "2.15.0"
 micronaut-spring = "5.11.0"
 micronaut-test = "4.7.0"
 micronaut-mongo = "5.6.0"
-micronaut-kotlin = "4.6.0"
+micronaut-kotlin = "4.7.0"
 micronaut-multitenancy = "5.7.0"
 micronaut-validation = "4.9.0"
 micronaut-logging = "1.7.0"
@@ -25,7 +25,7 @@ groovy = "4.0.27"
 
 managed-javax-persistence = "2.2"
 
-spring-data = "3.4.5"
+spring-data = "3.5.1"
 
 # Lombok
 
@@ -33,7 +33,7 @@ lombok = "1.18.38"
 
 # Testing and benchmarking
 
-benchmark-spring-data = "2024.1.5"
+benchmark-spring-data = "2024.1.7"
 spock = "2.2-groovy-4.0"
 testcontainers = "1.19.4"
 jmh = "1.37"
