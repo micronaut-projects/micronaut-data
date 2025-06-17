@@ -121,7 +121,7 @@ abstract class AbstractPageSpec extends Specification {
         !page.hasTotalSize()
 
         and:
-        page.getTotalPages() == -1
+        page.getTotalPages() == 0
         page.getTotalSize() == -1
     }
 
