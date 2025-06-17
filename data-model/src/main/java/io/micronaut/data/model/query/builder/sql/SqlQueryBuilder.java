@@ -849,7 +849,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
                     queryBuffer.append(COMMA);
 
-                    boolean includeIdentity = association.isForeignKey();
+                    boolean includeIdentity = association.isForeignKey() || association.isSingleEnded();
                     // in the case of a foreign key association the ID is not in the table,
                     // so we need to retrieve it
                     traversePersistentProperties(associatedEntity, includeIdentity, true, (propertyAssociations, prop) -> {
