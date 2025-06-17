@@ -28,7 +28,8 @@ dependencies {
     antlr libs.antlr
 }
 
-generateGrammarSource {
+tasks.named("generateGrammarSource") {
+    dependsOn "sourcesJar"
     outputDirectory = file("$outputDirectory/io/micronaut/data/jdql")
     arguments += ["-package", "io.micronaut.data.jdql"]
 }
