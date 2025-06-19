@@ -55,6 +55,8 @@ import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Selection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -103,6 +105,8 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
     private static final String JDBC_REPO_ANNOTATION = "io.micronaut.data.jdbc.annotation.JdbcRepository";
     private static final String DIALECT_ATTR = "dialect";
     private static final String REFERENCED_COLUMN_NAME = "referencedColumnName";
+
+    private static final Logger LOG = LoggerFactory.getLogger(SqlQueryBuilder2.class);
 
     private final Dialect dialect;
     private final Map<Dialect, DialectConfig> perDialectConfig = new EnumMap<>(Dialect.class);
@@ -352,17 +356,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
                 addToCollectionIfNotContains(createStatements, createSchemaStatement);
             }
             for (SqlTableMapping table : tables) {
-                if (sqlTableMappingByTableName.containsKey(table.name())) {
-                    SqlTableMapping existingSqlTableMapping = sqlTableMappingByTableName.get(table.name());
-                    if (existingSqlTableMapping.type() == SqlTableMapping.TableType.JOIN) {
-                        // Remove ad-hoc join table created from one of the entities relation mappings and not an actual entity
-                        sqlTableMappingByTableName.remove(table.name());
-                    } else if (table.type() == SqlTableMapping.TableType.JOIN) {
-                        // Skip this table mapping ad-hoc join table created from one of the entities relation mappings and not an actual entity
-                        continue;
-                    }
-                }
-                sqlTableMappingByTableName.put(table.name(), table);
+                addTable(table, sqlTableMappingByTableName);
             }
         }
 
@@ -373,6 +367,28 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
         }
 
         return createStatements.toArray(new String[0]);
+    }
+
+    private void addTable(SqlTableMapping table, Map<String, SqlTableMapping> sqlTableMappingByTableName) {
+        boolean addTable = true;
+        if (sqlTableMappingByTableName.containsKey(table.name())) {
+            SqlTableMapping existingSqlTableMapping = sqlTableMappingByTableName.get(table.name());
+            if (table.type() == existingSqlTableMapping.type()) {
+                if (LOG.isWarnEnabled() && table.type() == SqlTableMapping.TableType.MAIN) {
+                    LOG.warn("Table with name {} has more than one mapped entity. Will use table {}", table.name(), existingSqlTableMapping);
+                }
+                addTable = false;
+            } else if (existingSqlTableMapping.type() == SqlTableMapping.TableType.JOIN) {
+                // Remove ad-hoc join table created from one of the entities relation mappings and not an actual entity
+                sqlTableMappingByTableName.remove(table.name());
+            } else if (table.type() == SqlTableMapping.TableType.JOIN) {
+                // Skip this table mapping ad-hoc join table created from one of the entities relation mappings and not an actual entity
+                addTable = false;
+            }
+        }
+        if (addTable) {
+            sqlTableMappingByTableName.put(table.name(), table);
+        }
     }
 
     private void addTableCreateStatements(List<String> createStatements, SqlTableMapping table, String schema, boolean escape) {
