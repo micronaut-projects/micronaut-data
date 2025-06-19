@@ -129,7 +129,7 @@ public interface CursoredPage<T> extends Page<T> {
             return (CursoredPage<T2>) EMPTY;
         }
         List<T2> content = getContent().stream().map(function).collect(Collectors.toList());
-        return new DefaultCursoredPage<>(content, getPageable(), getCursors(), hasTotalSize() ? getTotalSize() : null);
+        return new DefaultCursoredPage<>(content, getPageable(), getCursors(), hasTotalSize() ? getTotalSize() : -1);
     }
 
     /**

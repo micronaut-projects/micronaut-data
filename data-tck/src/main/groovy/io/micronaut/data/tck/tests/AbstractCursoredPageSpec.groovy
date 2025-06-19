@@ -280,6 +280,20 @@ abstract class AbstractCursoredPageSpec extends Specification {
         then:
         page.getContent().size() == books.size()
         page.getTotalSize() == books.size()
+        def pageOfTitles = page.map { it.title }
+        pageOfTitles.hasTotalSize()
+        def titles = pageOfTitles.content
+        titles.contains("Book 1") && titles.contains("Book 2")
+
+        when:"Try to fetch next (last) page"
+        page = bookRepository.findAll(page.nextPageable().withoutTotal())
+        pageOfTitles = page.map { it.title }
+        !pageOfTitles.hasTotalSize()
+        titles = pageOfTitles.content
+
+        then:"Next page fetch returns empty result"
+        noExceptionThrown()
+        titles.empty
 
         cleanup:
         bookRepository.deleteAll()
