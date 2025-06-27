@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.intercept.FindAllInterceptor
 import io.micronaut.data.intercept.FindOneInterceptor
+import io.micronaut.data.intercept.InsertReturningOneInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.DataType
@@ -2255,5 +2256,28 @@ interface PersonRepository extends CrudRepository<Person, Long> {
         type                                          | interceptor
         'java.util.List<Person>'                      | FindAllInterceptor
         'Person'                                      | FindOneInterceptor
+    }
+
+    void "test build insert returning update on conflict"() {
+        given:
+        def repository = buildRepository('test.BookRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface BookRepository extends CrudRepository<Book, Long> {
+
+    @Query("insert into book (id, title, total_pages) values (:id, :title, :totalPages) on conflict do update set title = :title returning id, title, total_pages")
+    Book insertCustom(Long id, String title, int totalPages);
+
+}
+""")
+        def insertCustomMethod = repository.findPossibleMethods("insertCustom").findFirst().get()
+        def insertCustomQuery = getQuery(insertCustomMethod)
+
+        expect:
+        insertCustomMethod.classValue(DataMethod, "interceptor").get() == InsertReturningOneInterceptor
+        insertCustomQuery == 'insert into book (id, title, total_pages) values (:id, :title, :totalPages) on conflict do update set title = :title returning id, title, total_pages'
     }
 }
