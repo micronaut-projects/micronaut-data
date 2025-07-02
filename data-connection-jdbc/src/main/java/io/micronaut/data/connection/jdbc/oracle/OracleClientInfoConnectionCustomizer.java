@@ -42,17 +42,14 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 /**
  * A customizer for Oracle database connections that sets client information after opening and clears before closing.
  *
- * This customizer checks if the connection is an Oracle database connection and then sets the client information
+ * <p>This customizer checks if the connection is an Oracle database connection and then sets the client information
  * (client ID, module, and action) after opening the connection. It also clears these properties before closing the connection.
  *
  * @author radovanradic
@@ -118,16 +115,32 @@ final class OracleClientInfoConnectionCustomizer implements ConnectionCustomizer
     public <R> Function<ConnectionStatus<Connection>, R> intercept(Function<ConnectionStatus<Connection>, R> operation) {
         return connectionStatus -> {
             ConnectionDefinition connectionDefinition = connectionStatus.getDefinition();
-            // Set client info for connection if Oracle before issue JDBC call
-            Map<String, String> connectionClientInfo = getConnectionClientInfo(connectionDefinition);
-            applyClientInfo(connectionStatus, connectionClientInfo);
+            Properties oldInfo = readCurrentClientInfo(connectionStatus);
+            Map<String, String> newInfo = newConnectionClientInfo(connectionDefinition);
             try {
+                applyClientInfo(connectionStatus, newInfo);
                 return operation.apply(connectionStatus);
             } finally {
-                // Clear client info for connection if it was Oracle connection and client info was set previously
-                clearClientInfo(connectionStatus, connectionClientInfo);
+                setOldInfo(connectionStatus, oldInfo);
             }
         };
+    }
+
+    private void setOldInfo(ConnectionStatus<Connection> connectionStatus, Properties oldInfo) {
+        try {
+            connectionStatus.getConnection().setClientInfo(oldInfo);
+        } catch (SQLClientInfoException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static Properties readCurrentClientInfo(ConnectionStatus<Connection> connectionStatus) {
+        try {
+            return connectionStatus.getConnection().getClientInfo();
+        } catch (SQLException e) {
+            // This just clones an internal Properties instance so it can't really throw.
+            throw new RuntimeException(e);
+        }
     }
 
     private void applyClientInfo(@NonNull ConnectionStatus<Connection> connectionStatus, @NonNull Map<String, String> connectionClientInfo) {
@@ -142,19 +155,6 @@ final class OracleClientInfoConnectionCustomizer implements ConnectionCustomizer
                 }
             } catch (SQLClientInfoException e) {
                 LOG.warn("Failed to set connection tracing info: {}", connectionClientInfo, e);
-            }
-        }
-    }
-
-    private void clearClientInfo(@NonNull ConnectionStatus<Connection> connectionStatus, @NonNull Map<String, String> connectionClientInfo) {
-        if (CollectionUtils.isNotEmpty(connectionClientInfo)) {
-            try {
-                Connection connection = connectionStatus.getConnection();
-                for (String key : connectionClientInfo.keySet()) {
-                    connection.setClientInfo(key, null);
-                }
-            } catch (SQLClientInfoException e) {
-                LOG.debug("Failed to clear connection tracing info", e);
             }
         }
     }
@@ -181,7 +181,7 @@ final class OracleClientInfoConnectionCustomizer implements ConnectionCustomizer
      * @param connectionDefinition The connection definition info
      * @return The connection client info or null if not configured to be used
      */
-    private @NonNull Map<String, String> getConnectionClientInfo(@NonNull ConnectionDefinition connectionDefinition) {
+    private @NonNull Map<String, String> newConnectionClientInfo(@NonNull ConnectionDefinition connectionDefinition) {
         AnnotationMetadata annotationMetadata = connectionDefinition.getAnnotationMetadata();
         AnnotationValue<ClientInfo> annotation = annotationMetadata.getAnnotation(ClientInfo.class);
         List<AnnotationValue<ClientInfo.Attribute>> clientInfoValues = annotation != null ? annotation.getAnnotations(VALUE_MEMBER) : Collections.emptyList();
