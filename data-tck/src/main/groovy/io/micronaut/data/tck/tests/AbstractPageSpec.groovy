@@ -202,6 +202,25 @@ abstract class AbstractPageSpec extends Specification {
         page.getContent().size() == books.size()
         page.getTotalSize() == books.size()
 
+        bookRepository.deleteAll()
+    }
+
+    void "test paging with criteria and limit"() {
+        given:
+        def books = bookRepository.saveAll([
+                new Book(title: "Book 1", totalPages: 100),
+                new Book(title: "Book 2", totalPages: 100),
+                new Book(title: "Book 3", totalPages: 100),
+                new Book(title: "Book 4", totalPages: 200)
+        ])
+
+        when:"Find pageable with criteria and limit"
+        var page = bookRepository.findBooksByTotalPages(100, Pageable.from(0, 2))
+
+        then:
+        page.totalSize == 3
+        page.content.size() == 2
+
         cleanup:
         bookRepository.deleteAll()
     }

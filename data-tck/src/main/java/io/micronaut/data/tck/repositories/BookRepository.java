@@ -204,4 +204,9 @@ public abstract class BookRepository implements PageableRepository<Book, Long>, 
     public abstract List<Book> findByAuthorIds(List<Long> authorIds);
 
     public abstract List<Book> findByAuthorInList(List<Author> authors);
+
+    @Query(value = "SELECT * FROM book WHERE total_pages = :totalPages",
+        countQuery = "SELECT COUNT(*) FROM book WHERE total_pages = :totalPages",
+        nativeQuery = true)
+    public abstract Page<Book> findBooksByTotalPages(int totalPages, Pageable pageable);
 }

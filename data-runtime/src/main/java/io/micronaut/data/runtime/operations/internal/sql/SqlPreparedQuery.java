@@ -53,7 +53,14 @@ public interface SqlPreparedQuery<E, R> extends BindableParametersPreparedQuery<
      * @param isSingleResult is single result
      */
     default void attachPageable(Pageable pageable, Limit limit, Sort sort, boolean isSingleResult) {
-        attachPageable(pageable, isSingleResult ? Limit.of(1, limit.offset()) : limit, sort);
+        Limit finalLimit = limit;
+        if (Limit.UNLIMITED.equals(finalLimit)) {
+            finalLimit = Limit.of(pageable.getSize(), pageable.getOffset());
+        }
+        if (isSingleResult) {
+            finalLimit = Limit.of(1, finalLimit.offset());
+        }
+        attachPageable(pageable, finalLimit, sort);
     }
 
     /**
