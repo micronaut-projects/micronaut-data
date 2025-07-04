@@ -85,7 +85,6 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
         this.storedQuery = storedQuery;
         this.dto = dtoProjection;
         this.conversionService = conversionService;
-        this.limit = limit;
         if (pageable.getMode() == Pageable.Mode.OFFSET && hasReturnTypeInRole(TypeRole.CURSORED_PAGE, CursoredPage.class, context, conversionService)) {
             if (pageable.getNumber() == 0) {
                 pageable = CursoredPageable.from(pageable.getSize(), pageable.getSort());
@@ -94,6 +93,7 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
             }
         }
         this.pageable = pageable.withSort(storedQuery.getSort().orders(pageable.getOrderBy()));
+        this.limit = Limit.UNLIMITED.equals(limit) && !storedQuery.isCount() ? Limit.of(pageable.getSize(), pageable.getOffset()) : limit;
     }
 
     /**

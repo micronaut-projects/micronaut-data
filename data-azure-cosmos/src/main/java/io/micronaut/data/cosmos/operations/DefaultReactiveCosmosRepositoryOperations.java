@@ -57,9 +57,7 @@ import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Page;
-import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.BatchOperation;
@@ -278,9 +276,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     @NonNull
     public <T, R> Flux<R> findAll(@NonNull PreparedQuery<T, R> pq) {
         SqlPreparedQuery<T, R> preparedQuery = getSqlPreparedQuery(pq);
-        Pageable pageable = preparedQuery.getPageable();
-        Limit queryLimit = Limit.of(pageable.getSize(), pageable.getOffset());
-        preparedQuery.attachPageable(pageable, queryLimit, preparedQuery.getSort(), false);
+        preparedQuery.attachPageable(preparedQuery.getPageable(), preparedQuery.getQueryLimit(), preparedQuery.getSort(), false);
         preparedQuery.prepare(null);
         boolean dtoProjection = preparedQuery.isDtoProjection();
         boolean isEntity = preparedQuery.getResultDataType() == DataType.ENTITY;
