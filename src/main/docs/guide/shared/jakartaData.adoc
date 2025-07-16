@@ -5,7 +5,7 @@ Micronaut Data provides implementation support for the https://jakarta.ee/specif
 ## Configuration
 To use Jakarta Data annotations in your Micronaut project, ensure you have the following dependency:
 
-dependency:jakarta.data:jakarta-data-api[]
+dependency:jakarta.data:jakarta.data-api[]
 
 ## Key features
 
