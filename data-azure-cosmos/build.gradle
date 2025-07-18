@@ -22,7 +22,11 @@ dependencies {
     api projects.micronautDataDocumentModel
     api mnSerde.micronaut.serde.jackson
     api mnSerde.micronaut.serde.support
-    api libs.micronaut.azure.cosmos
+    api (libs.micronaut.azure.cosmos) {
+        exclude group: "io.projectreactor.netty", module: "reactor-netty-http"
+    }
+    // TODO: Temp workaround for CVE https://github.com/advisories/GHSA-4q2v-9p7v-3v22
+    api("io.projectreactor.netty:reactor-netty-http:1.2.8")
 
     runtimeOnly(mn.jackson.databind) {
         because("Serde Cosmos depends on Jackson parsers")
