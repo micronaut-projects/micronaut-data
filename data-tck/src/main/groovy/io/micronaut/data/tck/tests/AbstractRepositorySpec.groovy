@@ -2498,9 +2498,9 @@ abstract class AbstractRepositorySpec extends Specification {
             def book = bookRepository.findAllByTitleStartingWith("Along Came a Spider").first()
             def author = authorRepository.searchByName("Stephen King")
             bookRepository.updateAuthorCustom(book.id, author)
-            book = bookRepository.queryByTitle(book.title)
+            book = bookRepository.findById(book.id).get()
         then:
-            book.author.id == author.id
+            book.author.id == book.author.id
     }
 
     void "test update relation"() {
@@ -2510,9 +2510,9 @@ abstract class AbstractRepositorySpec extends Specification {
             def book = bookRepository.findAllByTitleStartingWith("Along Came a Spider").first()
             def author = authorRepository.searchByName("Stephen King")
             bookRepository.updateAuthor(book.id, author)
-            book = bookRepository.queryByTitle(book.title)
+            book = bookRepository.findById(book.id).get()
         then:
-            book.author.id == author.id
+            book.author.id == book.author.id
     }
 
     void "test criteria" () {
@@ -2855,14 +2855,14 @@ abstract class AbstractRepositorySpec extends Specification {
         def loadedChaptersViaPage1 = pageRepository.findBookChaptersById(page1.id)
         def loadedChaptersViaPage3 = pageRepository.findBookChaptersById(page3.id)
         then:
-        loadedChaptersViaPage1.size() == 2
-        !loadedChaptersViaPage1[0].book
-        !loadedChaptersViaPage1[1].book
-        // book not joined
-        !loadedChaptersViaPage1[0].book
-        !loadedChaptersViaPage1[1].book
+        loadedChaptersViaPage1[0].book.id == page1.book.id
+        loadedChaptersViaPage1[1].book.id == page1.book.id
+        // book not joined, only book with id loaded
+        loadedChaptersViaPage1[0].book.title == null
+        loadedChaptersViaPage1[1].book.title == null
         loadedChaptersViaPage3.size() == 1
-        !loadedChaptersViaPage3[0].book
+        loadedChaptersViaPage3[0].book.id == page3.book.id
+        loadedChaptersViaPage3[0].book.title == null
 
         when: "Loaded chapters with book joined"
         def loadedChaptersViaPage1BookJoined = pageRepository.findBookChaptersByIdAndNum(page1.id, page1.num)

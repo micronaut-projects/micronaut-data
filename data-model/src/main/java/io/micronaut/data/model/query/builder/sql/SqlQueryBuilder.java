@@ -848,7 +848,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
                     queryBuffer.append(COMMA);
 
-                    boolean includeIdentity = association.isForeignKey() || association.isSingleEnded();
+                    boolean includeIdentity = association.isForeignKey();
                     // in the case of a foreign key association the ID is not in the table,
                     // so we need to retrieve it
                     traversePersistentProperties(associatedEntity, includeIdentity, true, (propertyAssociations, prop) -> {
@@ -899,7 +899,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         boolean escape = shouldEscape(entity);
         NamingStrategy namingStrategy = getNamingStrategy(entity);
         int length = sb.length();
-        traversePersistentProperties(entity, Association::isSingleEnded, (associations, property)
+        traversePersistentProperties(entity, (associations, property)
                 -> appendProperty(sb, associations, property, namingStrategy, alias, escape));
         int newLength = sb.length();
         if (newLength == length) {

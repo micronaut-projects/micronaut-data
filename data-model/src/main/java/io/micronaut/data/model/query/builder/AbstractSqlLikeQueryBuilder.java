@@ -66,7 +66,6 @@ import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
-import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
@@ -2138,17 +2137,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      */
     protected void traversePersistentProperties(PersistentEntity persistentEntity, BiConsumer<List<Association>, PersistentProperty> consumer) {
         PersistentEntityUtils.traversePersistentProperties(persistentEntity, consumer);
-    }
-
-    /**
-     * Traverses persistent properties.
-     *
-     * @param persistentEntity The persistent entity
-     * @param skipAssociationPredicate Logic for skipping association while traversin properties
-     * @param consumer         The function to invoke on every property
-     */
-    protected void traversePersistentProperties(PersistentEntity persistentEntity, Predicate<Association> skipAssociationPredicate, BiConsumer<List<Association>, PersistentProperty> consumer) {
-        PersistentEntityUtils.traversePersistentProperties(persistentEntity, skipAssociationPredicate, consumer);
     }
 
     /**

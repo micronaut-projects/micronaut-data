@@ -121,9 +121,9 @@ class User {
                     '@OneToOne',
             ]
             query << [
-                    'SELECT user_."id",user_authority_."id" AS authority_id,user_authority_."name" AS authority_name,user_authority_."user_id" AS authority_user_id FROM "user" user_ INNER JOIN "authority" user_authority_ ON user_."authority_id"=user_authority_."id" WHERE (user_."id" = ?)',
+                    'SELECT user_."id",user_."authority_id",user_authority_."name" AS authority_name,user_authority_."user_id" AS authority_user_id FROM "user" user_ INNER JOIN "authority" user_authority_ ON user_."authority_id"=user_authority_."id" WHERE (user_."id" = ?)',
                     'SELECT user_."id",user_authority_."id" AS authority_id,user_authority_."name" AS authority_name,user_authority_."user_id" AS authority_user_id FROM "user" user_ INNER JOIN "authority" user_authority_ ON user_."id"=user_authority_."user_id" WHERE (user_."id" = ?)',
-                    'SELECT user_."id",user_authority_."id" AS authority_id,user_authority_."name" AS authority_name FROM "user" user_ INNER JOIN "authority" user_authority_ ON user_."authority_id"=user_authority_."id" WHERE (user_."id" = ?)',
+                    'SELECT user_."id",user_."authority_id",user_authority_."name" AS authority_name FROM "user" user_ INNER JOIN "authority" user_authority_ ON user_."authority_id"=user_authority_."id" WHERE (user_."id" = ?)',
             ]
     }
 
