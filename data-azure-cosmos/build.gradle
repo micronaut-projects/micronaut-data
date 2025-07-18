@@ -49,5 +49,5 @@ dependencies {
 ossIndexAudit {
     // TODO: Temporary disable check for CVE https://github.com/advisories/GHSA-4q2v-9p7v-3v22
     // until azure provides patch with fixed version
-    excludeCoordinates = ['io.projectreactor.netty:reactor-netty-http:1.0.48']
+    excludeCoordinates = ['io.projectreactor.netty:reactor-netty-http:1.2.8']
 }
