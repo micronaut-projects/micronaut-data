@@ -124,18 +124,6 @@ public interface Association extends PersistentProperty {
     }
 
     /**
-     * Determines whether this association is single-ended, meaning it only has one end point.
-     * An association is considered single-ended if its kind is either ONE_TO_ONE or MANY_TO_ONE,
-     * but not EMBEDDED.
-     *
-     * @return True if the association is single-ended, false otherwise.
-     */
-    default boolean isSingleEnded() {
-        Relation.Kind kind = getKind();
-        return kind.isSingleEnded() && !kind.equals(Relation.Kind.EMBEDDED);
-    }
-
-    /**
      * Whether this association cascades the given types.
      * @param types The types
      * @return True if it does, false otherwise.

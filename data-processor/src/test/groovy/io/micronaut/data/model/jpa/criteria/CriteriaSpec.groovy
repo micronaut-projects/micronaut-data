@@ -92,7 +92,7 @@ class CriteriaSpec extends AbstractCriteriaSpec {
             String query = getSqlQuery(criteriaQuery)
 
         expect:
-            query == '''SELECT book_."id",book_."title",book_."total_pages",book_."last_updated" FROM "book" book_ WHERE (book_."id" IN (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."id" = 123)))'''
+            query == '''SELECT book_."id",book_."author_id",book_."title",book_."total_pages",book_."last_updated" FROM "book" book_ WHERE (book_."id" IN (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."id" = 123)))'''
     }
 
     void "test subquery EQ"() {
@@ -110,7 +110,7 @@ class CriteriaSpec extends AbstractCriteriaSpec {
             String query = getSqlQuery(criteriaQuery)
 
         expect:
-            query == '''SELECT book_."id",book_."title",book_."total_pages",book_."last_updated" FROM "book" book_ WHERE (book_."id" = (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."id" = 123)))'''
+            query == '''SELECT book_."id",book_."author_id",book_."title",book_."total_pages",book_."last_updated" FROM "book" book_ WHERE (book_."id" = (SELECT book_book_."id" FROM "book" book_book_ WHERE (book_book_."id" = 123)))'''
     }
 
     void "test function projection 3"() {

@@ -36,7 +36,6 @@ public class RuntimeAssociation<T> extends RuntimePersistentProperty<T> implemen
     private final Relation.Kind kind;
     private final String aliasName;
     private final boolean isForeignKey;
-    private final boolean isSingleEnded;
 
     /**
      * Default constructor.
@@ -49,17 +48,11 @@ public class RuntimeAssociation<T> extends RuntimePersistentProperty<T> implemen
         this.kind = Association.super.getKind();
         this.aliasName = Association.super.getAliasName();
         this.isForeignKey = Association.super.isForeignKey();
-        this.isSingleEnded = Association.super.isSingleEnded();
     }
 
     @Override
     public boolean isForeignKey() {
         return isForeignKey;
-    }
-
-    @Override
-    public boolean isSingleEnded() {
-        return isSingleEnded;
     }
 
     @Override

@@ -18,7 +18,6 @@ package io.micronaut.data.model;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.annotation.sql.JoinColumn;
 import io.micronaut.data.annotation.sql.JoinColumns;
@@ -30,7 +29,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 /**
  * Persistent entity utils.
@@ -83,28 +81,14 @@ public final class PersistentEntityUtils {
      * @param consumer         The function to invoke on every property
      */
     public static void traversePersistentProperties(PersistentEntity persistentEntity, BiConsumer<List<Association>, PersistentProperty> consumer) {
-        traversePersistentProperties(persistentEntity, null, consumer);
-    }
-
-    /**
-     * Traverses properties that should be persisted.
-     * This method recursively traverses the properties of a persistent entity,
-     * including embedded entities and associations, and invokes the provided consumer
-     * function on each property.
-     *
-     * @param persistentEntity the persistent entity whose properties will be traversed
-     * @param skipAssociationPredicate an optional predicate to filter out certain associations
-     * @param consumer the function to invoke on every property
-     */
-    public static void traversePersistentProperties(PersistentEntity persistentEntity, @Nullable Predicate<Association> skipAssociationPredicate, BiConsumer<List<Association>, PersistentProperty> consumer) {
         for (PersistentProperty identityProperty : persistentEntity.getIdentityProperties()) {
-            traversePersistentProperties(Collections.emptyList(), identityProperty, skipAssociationPredicate, consumer);
+            traversePersistentProperties(Collections.emptyList(), identityProperty, consumer);
         }
         if (persistentEntity.getVersion() != null) {
-            traversePersistentProperties(Collections.emptyList(), persistentEntity.getVersion(), skipAssociationPredicate, consumer);
+            traversePersistentProperties(Collections.emptyList(), persistentEntity.getVersion(), consumer);
         }
         for (PersistentProperty property : persistentEntity.getPersistentProperties()) {
-            traversePersistentProperties(Collections.emptyList(), property, skipAssociationPredicate, consumer);
+            traversePersistentProperties(Collections.emptyList(), property, consumer);
         }
     }
 
@@ -157,25 +141,7 @@ public final class PersistentEntityUtils {
     public static void traversePersistentProperties(List<Association> associations,
                                                     PersistentProperty property,
                                                     BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
-        traversePersistentProperties(associations, property, null, consumerProperty);
-    }
-
-    /**
-     * Traverses properties that should be persisted.
-     * This method recursively traverses the properties of a persistent entity,
-     * including embedded entities and associations, and invokes the provided consumer
-     * function on each property.
-     *
-     * @param associations the current list of associations being traversed
-     * @param property the current property being processed
-     * @param skipAssociationPredicate an optional predicate to filter out certain associations
-     * @param consumerProperty the function to invoke on every property
-     */
-    public static void traversePersistentProperties(List<Association> associations,
-                                                    PersistentProperty property,
-                                                    @Nullable Predicate<Association> skipAssociationPredicate,
-                                                    BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
-        traversePersistentProperties(associations, property, true, skipAssociationPredicate, consumerProperty);
+        traversePersistentProperties(associations, property, true, consumerProperty);
     }
 
     public static void traversePersistentProperties(PersistentPropertyPath propertyPath,
@@ -199,26 +165,6 @@ public final class PersistentEntityUtils {
                                                     PersistentProperty property,
                                                     boolean traverseEmbedded,
                                                     BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
-        traversePersistentProperties(associations, property, traverseEmbedded, null, consumerProperty);
-    }
-
-    /**
-     * Traverses properties that should be persisted.
-     * This method recursively traverses the properties of a persistent entity,
-     * including embedded entities and associations, and invokes the provided consumer
-     * function on each property.
-     *
-     * @param associations the current list of associations being traversed
-     * @param property the current property being processed
-     * @param traverseEmbedded whether to traverse embedded entities
-     * @param skipAssociationPredicate an optional predicate to filter out certain associations
-     * @param consumerProperty the function to invoke on every property
-     */
-    public static void traversePersistentProperties(List<Association> associations,
-                                                    PersistentProperty property,
-                                                    boolean traverseEmbedded,
-                                                    @Nullable Predicate<Association> skipAssociationPredicate,
-                                                    BiConsumer<List<Association>, PersistentProperty> consumerProperty) {
         if (property instanceof Embedded embedded) {
             if (traverseEmbedded) {
                 PersistentEntity embeddedEntity = embedded.getAssociatedEntity();
@@ -233,9 +179,6 @@ public final class PersistentEntityUtils {
             }
         } else if (property instanceof Association association) {
             if (association.isForeignKey()) {
-                return;
-            }
-            if (skipAssociationPredicate != null && skipAssociationPredicate.test(association)) {
                 return;
             }
             List<Association> newAssociations = new ArrayList<>(associations);
