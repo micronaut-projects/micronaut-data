@@ -52,7 +52,7 @@ class ProductManagerSpec {
     @Test
     void testProductManagerUsingRepoMDC() {
         Manufacturer intel = manufacturerRepository.save("Intel");
-        productManager.saveUsingRepoAndMDC("Processor", intel);
+        productManager.saveUsingRepoAndMDCTransactional("Processor", intel);
 
         Product product = productManager.findUsingRepo("Processor");
         assertEquals("Processor", product.getName());

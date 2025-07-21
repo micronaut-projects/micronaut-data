@@ -4,6 +4,7 @@ package example;
 import io.micronaut.context.propagation.slf4j.MdcPropagationContext;
 import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.transaction.TransactionOperations;
+import io.micronaut.transaction.annotation.Transactional;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,8 +100,32 @@ public class ProductManager {
                 return productRepository.save(new Product(name, manufacturer));
             });
         }
+    }
 
+    /**
+     * Creates new product using transaction operations and product repository.
+     *
+     * @param name the product name
+     * @param manufacturer the manufacturer
+     * @return the created product instance
+     */
+    Product saveUsingRepoAndMDCTransactional(String name, Manufacturer manufacturer) {
+        UUID newUserId = UUID.randomUUID();
+        MDC.put("userId", newUserId.toString());
+        MDC.put("product", name);
+        try (PropagatedContext.Scope ignore = PropagatedContext.getOrEmpty().plus(new MdcPropagationContext()).propagate()) {
+            Product product = saveProductTransactional(name, manufacturer);
+            System.out.println("MDC.get(\"another\") = " + MDC.get("another"));
+            return product;
+        }
+    }
 
+    @Transactional
+    Product saveProductTransactional(String name, Manufacturer manufacturer) {
+        String product = MDC.get("product");
+        LOG.info("Saving product {}", product);
+        MDC.put("another", product);
+        return productRepository.save(new Product(name, manufacturer));
     }
 
 }
