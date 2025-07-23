@@ -77,12 +77,25 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
         customBook.title = "book1"
         customBook.pages = 100
         customBook.author = customAuthor
+        customBook.type = new BookType(id: 1, name: "Fantasy")
         customBookRepository.save(customBook)
         when:
         def books = customBookRepository.findAll()
         then:
         books.size() == 1
         books[0].author.id2 == 20
+        when:"Read and update book title"
+        customBook = customBookRepository.findById(customBook.id).orElse(null)
+        customBook.type
+        customBook.type.id == 1
+        // Since there is no join, only id is populated
+        !customBook.type.name
+        customBook.title = "book1-updated"
+        customBookRepository.update(customBook)
+        customBook = customBookRepository.findById(customBook.id).orElse(null)
+        then:"Should update without errors"
+        noExceptionThrown()
+        customBook.title == "book1-updated"
         cleanup:
         customBookRepository.deleteAll()
     }
@@ -183,6 +196,9 @@ class RefC {
 @JdbcRepository(dialect = H2)
 @Join("author")
 interface CustomBookRepository extends CrudRepository<CustomBook, Long> {
+
+    @Query("INSERT INTO custbooktype (id, name) VALUE (:id, :name)")
+    void insertBookType(Long id, String name)
 }
 
 @MappedEntity(value = "custauthor1")
@@ -201,6 +217,14 @@ class CustomAuthor {
     void setName(String name) { this.name = name }
 }
 
+@MappedEntity("custbooktype")
+class BookType {
+    @Id
+    Long id
+
+    String name
+}
+
 @MappedEntity(value = "custbook1")
 class CustomBook {
     @GeneratedValue
@@ -212,6 +236,9 @@ class CustomBook {
     @JoinColumn(name = "author_id2", referencedColumnName = "id2")
     private CustomAuthor author
 
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private BookType type
+
     Long getId() { return id }
     void setId(Long id) { this.id = id }
     String getTitle() { return title }
@@ -220,6 +247,8 @@ class CustomBook {
     void setPages(int pages) { this.pages = pages }
     CustomAuthor getAuthor() { return author }
     void setAuthor(CustomAuthor author) { this.author = author }
+    BookType getType() { return type }
+    void setType(BookType type) { this.type = type }
 }
 
 @MappedEntity(value = "ugm", alias = "ugm_")
