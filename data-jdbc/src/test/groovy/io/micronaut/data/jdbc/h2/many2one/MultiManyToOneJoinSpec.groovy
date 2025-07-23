@@ -70,6 +70,8 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
 
     void "test join via non identity join column"() {
         given:
+        def bookType = new BookType(id: 1, name: "Fantasy")
+        customBookRepository.insertBookType(bookType.id, bookType.name)
         def customAuthor = new CustomAuthor()
         customAuthor.name = "author1"
         customAuthor.id2 = 20
@@ -77,7 +79,7 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
         customBook.title = "book1"
         customBook.pages = 100
         customBook.author = customAuthor
-        customBook.type = new BookType(id: 1, name: "Fantasy")
+        customBook.type = bookType
         customBookRepository.save(customBook)
         when:
         def books = customBookRepository.findAll()
@@ -98,6 +100,7 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
         customBook.title == "book1-updated"
         cleanup:
         customBookRepository.deleteAll()
+        customBookRepository.deleteBookType(bookType.id)
     }
 
     void "test many to one with two properties starting with same prefix"() {
@@ -197,8 +200,11 @@ class RefC {
 @Join("author")
 interface CustomBookRepository extends CrudRepository<CustomBook, Long> {
 
-    @Query("INSERT INTO custbooktype (id, name) VALUE (:id, :name)")
+    @Query("INSERT INTO custbooktype (id, name) VALUES (:id, :name)")
     void insertBookType(Long id, String name)
+
+    @Query("DELETE FROM custbooktype WHERE id = :id")
+    void deleteBookType(Long id)
 }
 
 @MappedEntity(value = "custauthor1")
