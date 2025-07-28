@@ -160,12 +160,22 @@ public interface PersistentEntity extends PersistentElement {
     }
 
     /**
-     * Obtains a PersistentProperty instance by name.
+     * Gets a PersistentProperty instance by name.
      *
      * @param name The name of the property
      * @return The PersistentProperty or null if it doesn't exist
      */
-    @Nullable PersistentProperty getPropertyByName(String name);
+    @Nullable
+    PersistentProperty getPropertyByName(String name);
+
+    /**
+     * Gets a PersistentProperty instance by name ignoring the case.
+     *
+     * @param name The name of the property
+     * @return The PersistentProperty or null if it doesn't exist
+     */
+    @Nullable
+    PersistentProperty getPropertyByNameIgnoreCase(String name);
 
     /**
      * Obtains an identity PersistentProperty instance by name.

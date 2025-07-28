@@ -16,6 +16,7 @@
 package io.micronaut.data.runtime.criteria;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
@@ -25,10 +26,10 @@ import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Path;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -66,18 +67,34 @@ abstract class AbstractRuntimePersistentEntityJoinSupport<T, E> extends Abstract
 
     @Override
     public <Y> PersistentPropertyPath<Y> get(String attributeName) {
-        RuntimePersistentProperty<?> property = getPersistentEntity().getPropertyByName(attributeName);
+        RuntimePersistentProperty<?> property = getPersistentEntity().getPropertyByNameIgnoreCase(attributeName);
         if (property == null) {
             throw new IllegalStateException("Cannot query entity [" + getPersistentEntity().getSimpleName() + "] on non-existent property: " + attributeName);
         }
-        if (this instanceof PersistentAssociationPath<?, ?> associationPath) {
-            List<Association> associations = associationPath.getAssociations();
-            List<Association> newAssociations = new ArrayList<>(associations.size() + 1);
-            newAssociations.addAll(associations);
-            newAssociations.add(associationPath.getAssociation());
-            return new RuntimePersistentPropertyPathImpl<>(this, newAssociations, property, criteriaBuilder);
+        return asPropertyPath(this, property, criteriaBuilder);
+    }
+
+    private static <Y> PersistentPropertyPath<Y> asPropertyPath(Path<?> parentPath,
+                                                                @NonNull RuntimePersistentProperty property,
+                                                                CriteriaBuilder criteriaBuilder) {
+        List<Association> associations;
+        if (parentPath instanceof PersistentAssociationPath<?, ?> associationPath) {
+            List<Association> pathAssociations = associationPath.getAssociations();
+            associations = new ArrayList<>(pathAssociations.size() + 1);
+            associations.addAll(pathAssociations);
+            associations.add(associationPath.getAssociation());
+        } else {
+            associations = List.of();
         }
-        return new RuntimePersistentPropertyPathImpl<>(this, Collections.emptyList(), property, criteriaBuilder);
+        if (property instanceof RuntimeAssociation<?> association && association.isEmbedded()) {
+            return new RuntimeEmbeddedPersistentPropertyPathImpl<>(
+                parentPath,
+                associations,
+                (RuntimeAssociation<Y>) association,
+                (path, persistentProperty) -> asPropertyPath(path, property, criteriaBuilder)
+            );
+        }
+        return new RuntimePersistentPropertyPathImpl<>(parentPath, associations, property, criteriaBuilder);
     }
 
 }

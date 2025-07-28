@@ -61,7 +61,7 @@ public final class JakartaDataQueryAnnotatedMethodMatcher implements MethodMatch
 
             Function<String, ClassElement> findClassElementFn = name -> {
                 SourcePersistentEntity rootEntity = matchContext.getRootEntity();
-                if (rootEntity.getSimpleName().equals(name)) {
+                if (rootEntity != null && rootEntity.getSimpleName().equals(name)) {
                     return rootEntity.getClassElement();
                 }
                 SourcePersistentEntity persistentEntity = matchContext.getEntityBySimplyNameResolver().apply(name);
