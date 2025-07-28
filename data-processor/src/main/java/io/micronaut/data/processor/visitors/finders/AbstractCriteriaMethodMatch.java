@@ -234,8 +234,12 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                         } else {
                             // TODO: support embedded ID
                             Association association = propPath.getAssociations().get(0);
-                            if (propPath.getAssociations().size() == 1 && PersistentEntityUtils.isAccessibleWithoutJoin(association, property)) {
-                                predicates.add(cb.equal(root.join(association.getName()).get(property.getName()), param));
+                            if (propPath.getAssociations().size() == 1) {
+                                if (association.isEmbedded()) {
+                                    predicates.add(cb.equal(root.get(association.getName()).get(property.getName()), param));
+                                } else if (PersistentEntityUtils.isAccessibleWithoutJoin(association, property)) {
+                                    predicates.add(cb.equal(root.join(association.getName()).get(property.getName()), param));
+                                }
                             } else {
                                 throw new MatchFailedException("Cannot apply a predicate to a path with an association: " + paramName);
                             }

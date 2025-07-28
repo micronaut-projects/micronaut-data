@@ -77,7 +77,7 @@ public final class JDQLCriteriaBuilderUtils {
     }
 
     public static PersistentEntityCommonAbstractCriteria build(String query,
-                                                               PersistentEntity rootPersistentEntity,
+                                                               @Nullable PersistentEntity rootPersistentEntity,
                                                                MethodElement methodElement,
                                                                Function<String, ClassElement> classElementResolver,
                                                                SourcePersistentEntityCriteriaBuilder criteriaBuilder) {
@@ -90,7 +90,7 @@ public final class JDQLCriteriaBuilderUtils {
             return JDQLCriteriaBuilderUtils.buildUpdate(updateStatementContext, classElementResolver, criteriaBuilder);
         }
         if (child instanceof JDQLParser.Select_statementContext select_clauseContext) {
-            return JDQLCriteriaBuilderUtils.buildSelect(rootPersistentEntity, select_clauseContext, classElementResolver, criteriaBuilder, methodElement);
+            return JDQLCriteriaBuilderUtils.buildSelect(rootPersistentEntity, select_clauseContext, classElementResolver, criteriaBuilder, methodElement, query);
         }
 
         throw new MatchFailedException("Unrecognized query: " + child.getParent(), methodElement);
@@ -173,11 +173,12 @@ public final class JDQLCriteriaBuilderUtils {
         return errorText;
     }
 
-    public static PersistentEntityCriteriaQuery<?> buildSelect(PersistentEntity rootPersistentEntity,
+    public static PersistentEntityCriteriaQuery<?> buildSelect(@Nullable PersistentEntity rootPersistentEntity,
                                                                JDQLParser.Select_statementContext selectStatementContext,
                                                                Function<String, ClassElement> classElementResolver,
                                                                SourcePersistentEntityCriteriaBuilder criteriaBuilder,
-                                                               MethodElement methodElement) {
+                                                               MethodElement methodElement,
+                                                               String q) {
 
         SourcePersistentEntityCriteriaQuery<Object> query = criteriaBuilder
             .createQuery(null);
@@ -187,6 +188,7 @@ public final class JDQLCriteriaBuilderUtils {
             String entityName = fromClauseContext.entity_name().getText();
             root = query.from(classElementResolver.apply(entityName));
         } else {
+            Objects.requireNonNull(rootPersistentEntity, "Root persistent entity is not specified in the JDQL query: " + q);
             root = query.from(rootPersistentEntity);
         }
         Predicate predicate = getPredicate(selectStatementContext.where_clause(), root, criteriaBuilder);

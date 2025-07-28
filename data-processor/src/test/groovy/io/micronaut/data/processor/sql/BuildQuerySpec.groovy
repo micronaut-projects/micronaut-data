@@ -34,6 +34,7 @@ import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Restaurant
 import io.micronaut.data.tck.jdbc.entities.EmployeeGroup
+import io.micronaut.inject.ExecutableMethod
 import spock.lang.Issue
 import spock.lang.PendingFeature
 import spock.lang.Unroll
@@ -2253,5 +2254,31 @@ interface BookRepository extends CrudRepository<Book, Long> {
         expect:
         insertCustomMethod.classValue(DataMethod, "interceptor").get() == InsertReturningOneInterceptor
         insertCustomQuery == 'insert into book (id, title, total_pages) values (:id, :title, :totalPages) on conflict do update set title = :title returning id, title, total_pages'
+    }
+
+    void "test find by embedded property"() {
+        given:
+            def repository = buildRepository('test.RestaurantRepository', """
+import io.micronaut.data.annotation.By;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Restaurant;
+import java.util.Optional;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface RestaurantRepository extends GenericRepository<Restaurant, Long> {
+
+    Optional<Restaurant> find(@By("address.street") String street);
+}
+
+""")
+
+            def method = repository.getRequiredMethod("find", String)
+        expect:
+            getQuery(method) == 'SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`address_street`,restaurant_.`address_zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM `restaurant` restaurant_ WHERE (restaurant_.`address_street` = ?)'
+            getParameterBindingIndexes(method) == ["0"] as String[]
+            getParameterBindingPaths(method) == [""] as String[]
+            getParameterPropertyPaths(method) == ["address.street"] as String[]
     }
 }

@@ -36,7 +36,6 @@ import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.MapJoin;
-import jakarta.persistence.criteria.Path;
 import jakarta.persistence.metamodel.CollectionAttribute;
 import jakarta.persistence.metamodel.ListAttribute;
 import jakarta.persistence.metamodel.MapAttribute;
@@ -136,16 +135,6 @@ public abstract class AbstractPersistentEntityJoinSupport<J, E> implements Persi
             throw new IllegalStateException("Join is not a List!");
         }
         return persistentListAssociationPath;
-    }
-
-    @Override
-    public <K, V, M extends Map<K, V>> Expression<M> get(MapAttribute<E, K, V> map) {
-        return get(map.getName());
-    }
-
-    @Override
-    public <K, C extends Collection<K>> Expression<C> get(PluralAttribute<E, C, K> collection) {
-        return get(collection.getName());
     }
 
     @Override
@@ -323,11 +312,6 @@ public abstract class AbstractPersistentEntityJoinSupport<J, E> implements Persi
     @Override
     public <X, Y> Fetch<X, Y> fetch(String attributeName, JoinType jt) {
         throw notSupportedOperation();
-    }
-
-    @Override
-    public <Y> Path<Y> get(SingularAttribute<? super E, Y> attribute) {
-        return get(attribute.getName());
     }
 
     @Override

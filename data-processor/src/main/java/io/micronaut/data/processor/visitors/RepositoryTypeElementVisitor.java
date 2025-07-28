@@ -241,7 +241,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             @Override
             public SourcePersistentEntity apply(String entitySimpleName) {
                 for (SourcePersistentEntity persistentEntity : entityMap.values()) {
-                    if (persistentEntity.getSimpleName().equals(entitySimpleName)) {
+                    if (persistentEntity.getPersistedName().equalsIgnoreCase(entitySimpleName)) {
                         return persistentEntity;
                     }
                 }
@@ -291,7 +291,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             return;
         }
         ClassElement genericReturnType = element.getGenericReturnType();
-        if (queryEncoder != null && currentClass != null && element.isAbstract() && !element.isStatic() && methodsMatchers != null) {
+        if (queryEncoder != null && currentClass != null && element.isAbstract() && !element.isStatic()) {
             ParameterElement[] parameters = element.getParameters();
             Map<Element, String> parametersInRole = getParametersInRole(parameters);
 

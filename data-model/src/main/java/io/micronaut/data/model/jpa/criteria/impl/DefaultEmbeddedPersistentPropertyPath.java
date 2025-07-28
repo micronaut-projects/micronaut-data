@@ -19,18 +19,14 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
-import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
-import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.metamodel.Bindable;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.function.BiFunction;
 
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupportedOperation;
 
@@ -39,46 +35,59 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupport
  *
  * @param <T> The property type
  * @author Denis Stepanov
- * @since 3.2
+ * @since 4.13
  */
 @Internal
-public class DefaultPersistentPropertyPath<T> implements PersistentPropertyPath<T> {
+public class DefaultEmbeddedPersistentPropertyPath<T> implements PersistentPropertyPath<T> {
 
-    private final io.micronaut.data.model.PersistentPropertyPath propertyPath;
-    private final CriteriaBuilder criteriaBuilder;
+    private final io.micronaut.data.model.PersistentAssociationPath propertyPath;
+    private final BiFunction<Path<?>, PersistentProperty, PersistentPropertyPath<?>> getPropertyFn;
 
-    public DefaultPersistentPropertyPath(PersistentProperty persistentProperty, List<Association> associations, CriteriaBuilder criteriaBuilder) {
-        this(new io.micronaut.data.model.PersistentPropertyPath(associations, persistentProperty), criteriaBuilder);
+    public DefaultEmbeddedPersistentPropertyPath(
+        Association association,
+        List<Association> associations,
+        BiFunction<Path<?>, PersistentProperty, PersistentPropertyPath<?>> getPropertyFn) {
+        this(new io.micronaut.data.model.PersistentAssociationPath(associations, association), getPropertyFn);
     }
 
-    public DefaultPersistentPropertyPath(io.micronaut.data.model.PersistentPropertyPath propertyPath, CriteriaBuilder criteriaBuilder) {
+    public DefaultEmbeddedPersistentPropertyPath(io.micronaut.data.model.PersistentAssociationPath propertyPath,
+                                                 BiFunction<Path<?>, PersistentProperty, PersistentPropertyPath<?>> getPropertyFn) {
         this.propertyPath = propertyPath;
-        this.criteriaBuilder = criteriaBuilder;
+        this.getPropertyFn = getPropertyFn;
+        if (propertyPath.getAssociation() == null) {
+            throw new IllegalArgumentException("Embedded association path must have an association: " + propertyPath);
+        }
+        if (!propertyPath.getAssociation().isEmbedded()) {
+            throw new IllegalArgumentException("Embedded association path must be have an embedded association: " + propertyPath);
+        }
+    }
+
+    private IllegalStateException inNotSupported() {
+        return new IllegalStateException("Embedded association doesn't support IN predicate");
     }
 
     @Override
     public Predicate in(Object... values) {
-        return in(Arrays.asList(Objects.requireNonNull(values)));
+        throw inNotSupported();
     }
 
     @Override
     public Predicate in(Collection<?> values) {
-        List<Expression<?>> expressions = Objects.requireNonNull(values).stream().map(criteriaBuilder::literal).collect(Collectors.toList());
-        return new InPredicate<>(this, expressions, criteriaBuilder);
+        throw inNotSupported();
     }
 
     @Override
     public Predicate in(Expression<?>... values) {
-        return new InPredicate<>(this, Arrays.asList(values), criteriaBuilder);
+        throw inNotSupported();
     }
 
     @Override
     public Predicate in(Expression<Collection<?>> values) {
-        return new InPredicate<>(this, List.of(Objects.requireNonNull(values)), criteriaBuilder);
+        throw inNotSupported();
     }
 
     @Override
-    public PersistentProperty getProperty() {
+    public Association getProperty() {
         return propertyPath.getProperty();
     }
 
@@ -88,7 +97,7 @@ public class DefaultPersistentPropertyPath<T> implements PersistentPropertyPath<
     }
 
     @Override
-    public io.micronaut.data.model.PersistentPropertyPath getPropertyPath() {
+    public io.micronaut.data.model.PersistentAssociationPath getPropertyPath() {
         return propertyPath;
     }
 
@@ -109,7 +118,12 @@ public class DefaultPersistentPropertyPath<T> implements PersistentPropertyPath<
 
     @Override
     public <Y> PersistentPropertyPath<Y> get(String attributeName) {
-        throw new IllegalArgumentException("Property path doesn't support get operation: " + propertyPath);
+        Association association = propertyPath.getAssociation();
+        PersistentProperty property = association.getAssociatedEntity().getPropertyByNameIgnoreCase(attributeName);
+        if (property == null) {
+            throw new IllegalArgumentException("Embedded association doesn't have a property with name: " + attributeName);
+        }
+        return (PersistentPropertyPath<Y>) getPropertyFn.apply(this, property);
     }
 
     @Override

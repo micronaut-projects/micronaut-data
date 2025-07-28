@@ -16,16 +16,19 @@
 package io.micronaut.data.processor.model.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityJoinSupport;
+import io.micronaut.data.model.jpa.criteria.impl.DefaultEmbeddedPersistentPropertyPath;
 import io.micronaut.data.processor.model.SourceAssociation;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Path;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -52,18 +55,36 @@ abstract class AbstractSourcePersistentEntityJoinSupport<T, E> extends AbstractP
 
     @Override
     public <Y> SourcePersistentPropertyPath<Y> get(String attributeName) {
-        SourcePersistentProperty property = getPersistentEntity().getPropertyByName(attributeName);
+        SourcePersistentProperty property = getPersistentEntity().getPropertyByNameIgnoreCase(attributeName);
         if (property == null) {
             throw new IllegalStateException("Cannot query entity [" + getPersistentEntity().getSimpleName() + "] on non-existent property: " + attributeName);
         }
-        if (this instanceof PersistentAssociationPath<?, ?> associationPath) {
-            List<Association> associations = associationPath.getAssociations();
-            List<Association> newAssociations = new ArrayList<>(associations.size() + 1);
-            newAssociations.addAll(associations);
-            newAssociations.add(associationPath.getAssociation());
-            return new SourcePersistentPropertyPathImpl<>(this, newAssociations, property, criteriaBuilder);
+        return asPropertyPath(this, property, criteriaBuilder);
+    }
+
+    private static <Y> SourcePersistentPropertyPath<Y> asPropertyPath(Path<?> parentPath,
+                                                                      @NonNull SourcePersistentProperty property,
+                                                                      CriteriaBuilder criteriaBuilder) {
+        List<Association> associations;
+        if (parentPath instanceof PersistentAssociationPath<?, ?> associationPath) {
+            List<Association> pathAssociations = associationPath.getAssociations();
+            associations = new ArrayList<>(pathAssociations.size() + 1);
+            associations.addAll(pathAssociations);
+            associations.add(associationPath.getAssociation());
+        } else if (parentPath instanceof DefaultEmbeddedPersistentPropertyPath<?> embedded) {
+            associations = CollectionUtils.concat(embedded.getAssociations(), embedded.getProperty());
+        } else {
+            associations = List.of();
         }
-        return new SourcePersistentPropertyPathImpl<>(this, Collections.emptyList(), property, criteriaBuilder);
+        if (property instanceof SourceAssociation sourceAssociation && sourceAssociation.isEmbedded()) {
+            return new SourceEmbeddedPersistentPropertyPathImpl<>(
+                parentPath,
+                associations,
+                sourceAssociation,
+                (path, persistentProperty) -> asPropertyPath(path, (SourcePersistentProperty) persistentProperty, criteriaBuilder)
+            );
+        }
+        return new SourcePersistentPropertyPathImpl<>(parentPath, associations, property, criteriaBuilder);
     }
 
     @Override
