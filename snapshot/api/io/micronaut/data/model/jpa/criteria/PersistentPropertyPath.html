@@ -86,7 +86,7 @@ loadScripts(document, 'script');</script>
 </dl>
 <dl class="notes">
 <dt>All Known Implementing Classes:</dt>
-<dd><code><a href="impl/DefaultPersistentPropertyPath.html" title="class in io.micronaut.data.model.jpa.criteria.impl">DefaultPersistentPropertyPath</a></code></dd>
+<dd><code><a href="impl/DefaultEmbeddedPersistentPropertyPath.html" title="class in io.micronaut.data.model.jpa.criteria.impl">DefaultEmbeddedPersistentPropertyPath</a></code>, <code><a href="impl/DefaultPersistentPropertyPath.html" title="class in io.micronaut.data.model.jpa.criteria.impl">DefaultPersistentPropertyPath</a></code></dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="modifiers">public interface </span><span class="element-name type-name-label">PersistentPropertyPath&lt;T&gt;</span><span class="extends-implements">
@@ -112,6 +112,22 @@ extends jakarta.persistence.criteria.Path&lt;T&gt;, <a href="IExpression.html" t
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;K,<wbr>
+V,<wbr>
+M extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;K,<wbr>
+V&gt;&gt;<br>jakarta.persistence.criteria.Expression&lt;M&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#get(jakarta.persistence.metamodel.MapAttribute)" class="member-name-link">get</a><wbr>(jakarta.persistence.metamodel.MapAttribute&lt;<a href="PersistentPropertyPath.html" title="type parameter in PersistentPropertyPath">T</a>,<wbr>K,<wbr>V&gt;&nbsp;map)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;E,<wbr>
+C extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;E&gt;&gt;<br>jakarta.persistence.criteria.Expression&lt;C&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#get(jakarta.persistence.metamodel.PluralAttribute)" class="member-name-link">get</a><wbr>(jakarta.persistence.metamodel.PluralAttribute&lt;<a href="PersistentPropertyPath.html" title="type parameter in PersistentPropertyPath">T</a>,<wbr>C,<wbr>E&gt;&nbsp;collection)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;Y&gt;&nbsp;<a href="PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;Y&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#get(jakarta.persistence.metamodel.SingularAttribute)" class="member-name-link">get</a><wbr>(jakarta.persistence.metamodel.SingularAttribute&lt;? super <a href="PersistentPropertyPath.html" title="type parameter in PersistentPropertyPath">T</a>,<wbr>Y&gt;&nbsp;attribute)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;Y&gt;&nbsp;<a href="PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;Y&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#get(java.lang.String)" class="member-name-link">get</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;attributeName)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getAssociations()" class="member-name-link">getAssociations</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
@@ -144,7 +160,7 @@ extends jakarta.persistence.criteria.Path&lt;T&gt;, <a href="IExpression.html" t
 <code><a href="ISelection.html#alias(java.lang.String)">alias</a>, <a href="ISelection.html#getAlias()">getAlias</a>, <a href="ISelection.html#getCompoundSelectionItems()">getCompoundSelectionItems</a>, <a href="ISelection.html#isCompoundSelection()">isCompoundSelection</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-jakarta.persistence.criteria.Path">Methods inherited from interface&nbsp;jakarta.persistence.criteria.Path</h3>
-<code>get, get, get, get, getModel, getParentPath, type</code></div>
+<code>getModel, getParentPath, type</code></div>
 </section>
 </li>
 </ul>
@@ -181,6 +197,52 @@ extends jakarta.persistence.criteria.Path&lt;T&gt;, <a href="IExpression.html" t
 <h3>getPathAsString</h3>
 <div class="member-signature"><span class="annotations">@NonNull
 </span><span class="modifiers">default</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getPathAsString</span>()</div>
+</section>
+</li>
+<li>
+<section class="detail" id="get(java.lang.String)">
+<h3>get</h3>
+<div class="member-signature"><span class="type-parameters">&lt;Y&gt;</span>&nbsp;<span class="return-type"><a href="PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;Y&gt;</span>&nbsp;<span class="element-name">get</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;attributeName)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>get</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.Path&lt;<a href="PersistentPropertyPath.html" title="type parameter in PersistentPropertyPath">T</a>&gt;</code></dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="get(jakarta.persistence.metamodel.SingularAttribute)">
+<h3>get</h3>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;Y&gt;</span>&nbsp;<span class="return-type"><a href="PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;Y&gt;</span>&nbsp;<span class="element-name">get</span><wbr><span class="parameters">(jakarta.persistence.metamodel.SingularAttribute&lt;? super <a href="PersistentPropertyPath.html" title="type parameter in PersistentPropertyPath">T</a>,<wbr>Y&gt;&nbsp;attribute)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>get</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.Path&lt;<a href="PersistentPropertyPath.html" title="type parameter in PersistentPropertyPath">T</a>&gt;</code></dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="get(jakarta.persistence.metamodel.PluralAttribute)">
+<h3>get</h3>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;E,<wbr>
+C extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;E&gt;&gt;</span>
+<span class="return-type">jakarta.persistence.criteria.Expression&lt;C&gt;</span>&nbsp;<span class="element-name">get</span><wbr><span class="parameters">(jakarta.persistence.metamodel.PluralAttribute&lt;<a href="PersistentPropertyPath.html" title="type parameter in PersistentPropertyPath">T</a>,<wbr>C,<wbr>E&gt;&nbsp;collection)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>get</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.Path&lt;<a href="PersistentPropertyPath.html" title="type parameter in PersistentPropertyPath">T</a>&gt;</code></dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="get(jakarta.persistence.metamodel.MapAttribute)">
+<h3>get</h3>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;K,<wbr>
+V,<wbr>
+M extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;K,<wbr>
+V&gt;&gt;</span>
+<span class="return-type">jakarta.persistence.criteria.Expression&lt;M&gt;</span>&nbsp;<span class="element-name">get</span><wbr><span class="parameters">(jakarta.persistence.metamodel.MapAttribute&lt;<a href="PersistentPropertyPath.html" title="type parameter in PersistentPropertyPath">T</a>,<wbr>K,<wbr>V&gt;&nbsp;map)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>get</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.Path&lt;<a href="PersistentPropertyPath.html" title="type parameter in PersistentPropertyPath">T</a>&gt;</code></dd>
+</dl>
 </section>
 </li>
 <li>

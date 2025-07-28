@@ -106,7 +106,7 @@ extends jakarta.persistence.criteria.Path&lt;T&gt;, <a href="IExpression.html" t
 <section class="method-summary" id="method-summary">
 <h2>Method Summary</h2>
 <div id="method-summary-table">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab3" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab3', 3)" class="table-tab">Abstract Methods</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab3" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab3', 3)" class="table-tab">Abstract Methods</button><button id="method-summary-table-tab5" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab5', 3)" class="table-tab">Default Methods</button></div>
 <div id="method-summary-table.tabpanel" role="tabpanel">
 <div class="summary-table three-column-summary" aria-labelledby="method-summary-table-tab0">
 <div class="table-header col-first">Modifier and Type</div>
@@ -115,11 +115,24 @@ extends jakarta.persistence.criteria.Path&lt;T&gt;, <a href="IExpression.html" t
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;Y&gt;&nbsp;@NonNull <a href="PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;Y&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#get(java.lang.String)" class="member-name-link">get</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;attributeName)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
-<div class="block">Get persistent property path.</div>
+<div class="block">Get a persistent property path.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getPersistentEntity()" class="member-name-link">getPersistentEntity</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;K,<wbr>
+V,<wbr>
+M extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;K,<wbr>
+V&gt;&gt;<br>jakarta.persistence.criteria.Expression&lt;M&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#get(jakarta.persistence.metamodel.MapAttribute)" class="member-name-link">get</a><wbr>(jakarta.persistence.metamodel.MapAttribute&lt;<a href="PersistentEntityPath.html" title="type parameter in PersistentEntityPath">T</a>,<wbr>K,<wbr>V&gt;&nbsp;map)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;E,<wbr>
+C extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;E&gt;&gt;<br>jakarta.persistence.criteria.Expression&lt;C&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#get(jakarta.persistence.metamodel.PluralAttribute)" class="member-name-link">get</a><wbr>(jakarta.persistence.metamodel.PluralAttribute&lt;<a href="PersistentEntityPath.html" title="type parameter in PersistentEntityPath">T</a>,<wbr>C,<wbr>E&gt;&nbsp;collection)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;Y&gt;&nbsp;<a href="PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;Y&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#get(jakarta.persistence.metamodel.SingularAttribute)" class="member-name-link">get</a><wbr>(jakarta.persistence.metamodel.SingularAttribute&lt;? super <a href="PersistentEntityPath.html" title="type parameter in PersistentEntityPath">T</a>,<wbr>Y&gt;&nbsp;attribute)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getPersistentEntity()" class="member-name-link">getPersistentEntity</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -131,7 +144,7 @@ extends jakarta.persistence.criteria.Path&lt;T&gt;, <a href="IExpression.html" t
 <code><a href="ISelection.html#alias(java.lang.String)">alias</a>, <a href="ISelection.html#getAlias()">getAlias</a>, <a href="ISelection.html#getCompoundSelectionItems()">getCompoundSelectionItems</a>, <a href="ISelection.html#isCompoundSelection()">isCompoundSelection</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-jakarta.persistence.criteria.Path">Methods inherited from interface&nbsp;jakarta.persistence.criteria.Path</h3>
-<code>get, get, get, getModel, getParentPath, type</code></div>
+<code>getModel, getParentPath, type</code></div>
 </section>
 </li>
 </ul>
@@ -160,7 +173,7 @@ extends jakarta.persistence.criteria.Path&lt;T&gt;, <a href="IExpression.html" t
 <div class="member-signature"><span class="annotations">@NonNull
 </span><span class="type-parameters">&lt;Y&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;Y&gt;</span>&nbsp;<span class="element-name">get</span><wbr><span class="parameters">(@NonNull
  @NonNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;attributeName)</span></div>
-<div class="block">Get persistent property path.</div>
+<div class="block">Get a persistent property path.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>get</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.Path&lt;<a href="PersistentEntityPath.html" title="type parameter in PersistentEntityPath">T</a>&gt;</code></dd>
@@ -170,6 +183,42 @@ extends jakarta.persistence.criteria.Path&lt;T&gt;, <a href="IExpression.html" t
 <dd><code>attributeName</code> - The property name</dd>
 <dt>Returns:</dt>
 <dd>The property path</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="get(jakarta.persistence.metamodel.SingularAttribute)">
+<h3>get</h3>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;Y&gt;</span>&nbsp;<span class="return-type"><a href="PersistentPropertyPath.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentPropertyPath</a>&lt;Y&gt;</span>&nbsp;<span class="element-name">get</span><wbr><span class="parameters">(jakarta.persistence.metamodel.SingularAttribute&lt;? super <a href="PersistentEntityPath.html" title="type parameter in PersistentEntityPath">T</a>,<wbr>Y&gt;&nbsp;attribute)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>get</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.Path&lt;<a href="PersistentEntityPath.html" title="type parameter in PersistentEntityPath">T</a>&gt;</code></dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="get(jakarta.persistence.metamodel.PluralAttribute)">
+<h3>get</h3>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;E,<wbr>
+C extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;E&gt;&gt;</span>
+<span class="return-type">jakarta.persistence.criteria.Expression&lt;C&gt;</span>&nbsp;<span class="element-name">get</span><wbr><span class="parameters">(jakarta.persistence.metamodel.PluralAttribute&lt;<a href="PersistentEntityPath.html" title="type parameter in PersistentEntityPath">T</a>,<wbr>C,<wbr>E&gt;&nbsp;collection)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>get</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.Path&lt;<a href="PersistentEntityPath.html" title="type parameter in PersistentEntityPath">T</a>&gt;</code></dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="get(jakarta.persistence.metamodel.MapAttribute)">
+<h3>get</h3>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;K,<wbr>
+V,<wbr>
+M extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;K,<wbr>
+V&gt;&gt;</span>
+<span class="return-type">jakarta.persistence.criteria.Expression&lt;M&gt;</span>&nbsp;<span class="element-name">get</span><wbr><span class="parameters">(jakarta.persistence.metamodel.MapAttribute&lt;<a href="PersistentEntityPath.html" title="type parameter in PersistentEntityPath">T</a>,<wbr>K,<wbr>V&gt;&nbsp;map)</span></div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code>get</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.Path&lt;<a href="PersistentEntityPath.html" title="type parameter in PersistentEntityPath">T</a>&gt;</code></dd>
 </dl>
 </section>
 </li>
