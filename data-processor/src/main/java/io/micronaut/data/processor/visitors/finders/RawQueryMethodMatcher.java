@@ -61,10 +61,10 @@ import java.util.regex.Pattern;
  */
 public class RawQueryMethodMatcher implements MethodMatcher {
 
-    private static final Pattern UPDATE_PATTERN = Pattern.compile(".*\\bupdate\\b.*");
+    private static final Pattern UPDATE_PATTERN = Pattern.compile("(?<!['\"])\\bupdate\\b(?!['\"])", Pattern.CASE_INSENSITIVE);
     private static final Pattern FOR_UPDATE_PATTERN = Pattern.compile("for\\s+update");
-    private static final Pattern DELETE_PATTERN = Pattern.compile(".*\\bdelete\\b.*");
-    private static final Pattern INSERT_PATTERN = Pattern.compile(".*\\binsert\\b.*");
+    private static final Pattern DELETE_PATTERN = Pattern.compile("(?<!['\"])\\bdelete\\b(?!['\"])", Pattern.CASE_INSENSITIVE);
+    private static final Pattern INSERT_PATTERN = Pattern.compile("(?<!['\"])\\binsert\\b(?!['\"])", Pattern.CASE_INSENSITIVE);
     private static final Pattern RETURNING_PATTERN = Pattern.compile(".*\\breturning\\b.*");
 
     private static final Pattern VARIABLE_PATTERN = Pattern.compile("([^:\\\\]*)((?<![:]):([a-zA-Z0-9]+))([^:]*)");
