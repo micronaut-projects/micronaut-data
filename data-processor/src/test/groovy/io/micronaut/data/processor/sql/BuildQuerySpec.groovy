@@ -2295,15 +2295,15 @@ interface ProductRepository extends GenericRepository<Product, Long> {
     @Query("SELECT CASE WHEN p.price < 10 THEN 'INSERT' WHEN p.price => 20 THEN 'DELETE' ELSE 'UPDATE' END AS operation FROM product p WHERE p.id = :id")
     String getStockOperation(Long id);
 
-    @Query("SELECT CASE WHEN p.price < 10 THEN 'EXTENDED INSERT' WHEN p.price => 20 THEN 'EXTENDED DELETE' ELSE 'EXTENDED UPDATE' END AS operation FROM product p WHERE p.id = :id")
-    List<String> getExtendedStockOperation(Long id);
+    @Query("SELECT CASE WHEN p.price < 10 THEN 'EXTENDED INSERT' WHEN p.price => 20 THEN 'EXTENDED DELETE' ELSE 'EXTENDED UPDATE' END AS operation FROM product p")
+    List<String> getExtendedStockOperations();
 }
 """)
         def getStockOperationMethod = repository.getRequiredMethod("getStockOperation", Long)
-        def getExtendedStockOperationMethod = repository.getRequiredMethod("getExtendedStockOperation", Long)
+        def getExtendedStockOperationsMethod = repository.getRequiredMethod("getExtendedStockOperations")
 
         expect:
         getStockOperationMethod.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
-        getExtendedStockOperationMethod.classValue(DataMethod, "interceptor").get() == FindAllInterceptor
+        getExtendedStockOperationsMethod.classValue(DataMethod, "interceptor").get() == FindAllInterceptor
     }
 }
