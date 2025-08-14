@@ -2281,4 +2281,25 @@ interface RestaurantRepository extends GenericRepository<Restaurant, Long> {
             getParameterBindingPaths(method) == [""] as String[]
             getParameterPropertyPaths(method) == ["address.street"] as String[]
     }
+
+    void "test custom query raw matcher with quoted key words"() {
+        given:
+        def repository = buildRepository('test.ProductRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Product;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface ProductRepository extends GenericRepository<Product, Long> {
+
+    @Query("SELECT CASE WHEN p.price < 10 THEN 'INSERT' WHEN p.price => 20 THEN 'DELETE' ELSE 'UPDATE' END AS operation FROM product p WHERE p.id = :id")
+    String getStockOperation(Long id);
+
+}
+""")
+        def getStockOperationMethod = repository.getRequiredMethod("getStockOperation", Long)
+
+        expect:
+        getStockOperationMethod.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
+    }
 }
