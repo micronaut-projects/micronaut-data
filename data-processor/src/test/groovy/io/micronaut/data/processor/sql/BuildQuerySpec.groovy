@@ -2281,4 +2281,34 @@ interface RestaurantRepository extends GenericRepository<Restaurant, Long> {
             getParameterBindingPaths(method) == [""] as String[]
             getParameterPropertyPaths(method) == ["address.street"] as String[]
     }
+
+    void "test custom query raw matcher with quoted key words"() {
+        given:
+        def repository = buildRepository('test.ProductRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Product;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface ProductRepository extends GenericRepository<Product, Long> {
+
+    @Query("SELECT CASE WHEN p.price < 10 THEN 'INSERT' WHEN p.price => 20 THEN 'DELETE' ELSE 'UPDATE' END AS operation FROM product p WHERE p.id = :id /* Testing reserved words insert, update, delete in SQL comments */")
+    String getStockOperation(Long id);
+
+    @Query("SELECT CASE WHEN p.price < 10 THEN 'EXTENDED INSERT' WHEN p.price => 20 THEN 'EXTENDED DELETE' ELSE 'EXTENDED UPDATE' END AS operation FROM product p")
+    List<String> getExtendedStockOperations();
+
+    @Query("SELECT 'customValue' -- Just to test INSERT/UPDATE/DELETE in the SQL comment")
+    String selectCustomString();
+}
+""")
+        def getStockOperationMethod = repository.getRequiredMethod("getStockOperation", Long)
+        def getExtendedStockOperationsMethod = repository.getRequiredMethod("getExtendedStockOperations")
+        def selectCustomStringMethod = repository.getRequiredMethod("selectCustomString")
+
+        expect:
+        getStockOperationMethod.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
+        getExtendedStockOperationsMethod.classValue(DataMethod, "interceptor").get() == FindAllInterceptor
+        selectCustomStringMethod.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
+    }
 }
