@@ -133,7 +133,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         this.persistentEntity = persistentEntity;
         OperationType operationType = storedQuery.getOperationType();
         if (operationType == OperationType.QUERY || operationType == OperationType.EXISTS || operationType == OperationType.COUNT) {
-            String query = storedQuery.getQuery();
+            String query = StringUtils.trimLeadingWhitespace(storedQuery.getQuery());
             String filterParameter = getParameterInRole(MongoRoles.FILTER_ROLE);
             String filterOptionsParameter = getParameterInRole(MongoRoles.FIND_OPTIONS_ROLE);
             String pipelineParameter = getParameterInRole(MongoRoles.PIPELINE_ROLE);
