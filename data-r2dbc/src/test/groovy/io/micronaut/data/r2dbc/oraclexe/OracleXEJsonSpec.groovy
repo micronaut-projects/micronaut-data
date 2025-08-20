@@ -23,11 +23,14 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.data.tck.entities.JsonData
+import io.micronaut.data.tck.entities.JsonEntity
+import io.micronaut.data.tck.entities.SampleData
 import io.micronaut.data.tck.repositories.JsonEntityRepository
 import io.micronaut.data.tck.repositories.SaleItemRepository
 import io.micronaut.data.tck.repositories.SaleRepository
 import io.micronaut.data.tck.tests.AbstractJSONSpec
 
+import java.nio.charset.Charset
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -71,6 +74,42 @@ class OracleXEJsonSpec extends AbstractJSONSpec implements OracleXETestPropertyP
         loadedJsonData.name == jsonData.name
         loadedJsonData.createdDate.toInstant(ZoneOffset.UTC).toEpochMilli() == jsonData.createdDate.toInstant(ZoneOffset.UTC).toEpochMilli()
         loadedJsonData.duration == jsonData.duration
+    }
+
+    void "test Oracle JSON_VALUE"() {
+        def jsonEntity = new JsonEntity()
+        jsonEntity.id = 2L
+        def sampleData = new SampleData()
+        sampleData.etag = UUID.randomUUID().toString()
+        sampleData.memo = "memo2".getBytes(Charset.defaultCharset())
+        sampleData.uuid = UUID.randomUUID()
+        sampleData.duration = Duration.ofHours(10)
+        sampleData.localDateTime = LocalDateTime.now()
+        sampleData.description = "oracle json description"
+        sampleData.grade = 2
+        sampleData.rating = 8d
+        jsonEntity.jsonDefault = sampleData
+        jsonEntity.jsonBlob = sampleData
+        jsonEntity.jsonString = sampleData
+        jsonEntityRepository.save(jsonEntity)
+        when:"Load entity from JSON BLOB field"
+        def optSampleDataFromJsonBlob = jsonEntityRepository.findJsonBlobById(jsonEntity.id)
+        then:"Entity is retrieved and properly deserialized"
+        optSampleDataFromJsonBlob.present && optSampleDataFromJsonBlob.get() == sampleData
+        when:"Loaded field from JSON fields using JSON_VALUE"
+        def oracleJsonEntityRepository = (OracleXEJsonEntityRepository) jsonEntityRepository
+        def jsonBlobFieldDescription = oracleJsonEntityRepository.getDescriptionFromJsonBlob(jsonEntity.id).orElse(null)
+        def jsonStringFieldDescription = oracleJsonEntityRepository.getDescriptionFromJsonString(jsonEntity.id).orElse(null)
+        def jsonDefaultFieldDescription = oracleJsonEntityRepository.getDescriptionFromJsonDefault(jsonEntity.id).orElse(null)
+        then:
+        jsonBlobFieldDescription
+        jsonBlobFieldDescription == sampleData.description
+        jsonStringFieldDescription
+        jsonStringFieldDescription == jsonBlobFieldDescription
+        jsonDefaultFieldDescription
+        jsonDefaultFieldDescription == jsonStringFieldDescription
+        cleanup:
+        jsonEntityRepository.deleteAll()
     }
 }
 
