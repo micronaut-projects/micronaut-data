@@ -26,7 +26,7 @@ groovy = "4.0.27"
 managed-javax-persistence = "2.2"
 managed-jakarta-data = "1.0.1"
 
-spring-data = "3.5.2"
+spring-data = "3.5.3"
 
 # Lombok
 
@@ -34,7 +34,7 @@ lombok = "1.18.38"
 
 # Testing and benchmarking
 
-benchmark-spring-data = "2024.1.8"
+benchmark-spring-data = "2024.1.9"
 spock = "2.2-groovy-4.0"
 testcontainers = "1.19.4"
 jmh = "1.37"
