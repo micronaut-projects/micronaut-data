@@ -52,7 +52,7 @@ public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventL
 
     @Override
     public boolean prePersist(@NonNull EntityEventContext<Object> context) {
-        final RuntimePersistentProperty<Object>[] persistentProperties = getApplicableProperties(context.getPersistentEntity());
+        final RuntimePersistentProperty<Object>[] persistentProperties = getApplicableProperties(context);
         for (RuntimePersistentProperty<Object> persistentProperty : persistentProperties) {
             final BeanProperty<Object, Object> property = persistentProperty.getProperty();
             context.setProperty(property, UUID.randomUUID());
