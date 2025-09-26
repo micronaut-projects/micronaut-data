@@ -18,6 +18,7 @@ package io.micronaut.data.model
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
+import io.micronaut.context.annotation.Property
 import io.micronaut.core.type.Argument
 import io.micronaut.serde.annotation.Serdeable
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
@@ -28,6 +29,7 @@ import spock.lang.Unroll
 import jakarta.inject.Inject
 
 @MicronautTest
+@Property(name = "micronaut.serde.deserialization.ignore-unknown", value = "false")
 class PageSpec extends Specification {
     @Inject ObjectMapper mapper
 
@@ -80,7 +82,7 @@ class PageSpec extends Specification {
                 propertyOne: "value three",
                 propertyTwo: 3L,
                 propertyThree: new BigDecimal("3.00")
-        )], Pageable.from(0, 3), 14)
+        )], Pageable.from(0, 3, Sort.of(Sort.Order.asc("propertyOne"))), 14)
 
         when:
         def json = mapper.writeValueAsString(page)
@@ -111,7 +113,7 @@ class PageSpec extends Specification {
                 propertyOne: "value three",
                 propertyTwo: 3L,
                 propertyThree: new BigDecimal("3.00")
-        )], Pageable.from(1, 3), 14)
+        )], Pageable.from(1, 3, Sort.of(Sort.Order.asc("propertyOne"))), 14)
 
         when:
         def json = serdeMapper.writeValueAsString(page)
