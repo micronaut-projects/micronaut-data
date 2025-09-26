@@ -174,7 +174,7 @@ class PageSpec extends Specification {
         def json = serdeMapper.writeValueAsString(sort)
 
         then:
-        json == '{"orderBy":[{"ignoreCase":false,"direction":"ASC","property":"property","ascending":true}]}'
+        json == '{"orderBy":[{"ignoreCase":false,"direction":"ASC","property":"property"}]}'
         def deserializedSort = serdeMapper.readValue(json, Sort)
         deserializedSort == sort
     }
