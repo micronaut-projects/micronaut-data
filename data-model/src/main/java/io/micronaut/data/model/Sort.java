@@ -264,6 +264,7 @@ public interface Sort {
         /**
          * @return Is the order ascending
          */
+        @JsonIgnore
         public boolean isAscending() {
             return getDirection() == Direction.ASC;
         }
