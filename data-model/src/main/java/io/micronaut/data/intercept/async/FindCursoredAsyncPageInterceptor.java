@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.intercept.async;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.model.CursoredPage;
 
@@ -27,5 +28,6 @@ import java.util.concurrent.CompletionStage;
  * @author Denis Stepanov
  * @since 4.13
  */
+@Internal
 public interface FindCursoredAsyncPageInterceptor<T> extends DataInterceptor<T, CompletionStage<CursoredPage<Object>>> {
 }

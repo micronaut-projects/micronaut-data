@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.intercept.reactive;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.intercept.DataInterceptor;
 
 /**
@@ -25,5 +26,6 @@ import io.micronaut.data.intercept.DataInterceptor;
  * @author Denis Stepanov
  * @since 4.13
  */
+@Internal
 public interface FindCursoredReactivePageInterceptor<T, R> extends DataInterceptor<T, R> {
 }
