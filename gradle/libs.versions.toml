@@ -1,5 +1,5 @@
 [versions]
-micronaut = "4.9.10"
+micronaut = "4.9.11"
 micronaut-platform = "4.8.3"
 micronaut-docs = "2.0.0"
 micronaut-gradle-plugin = "4.5.4"
@@ -11,7 +11,7 @@ micronaut-rxjava2 = "2.8.0"
 micronaut-r2dbc = "6.1.0"
 micronaut-sql = "6.2.1"
 micronaut-serde = "2.15.1"
-micronaut-spring = "5.11.1"
+micronaut-spring = "5.11.2"
 micronaut-test = "4.7.0"
 micronaut-mongo = "5.6.0"
 micronaut-kotlin = "4.7.0"
@@ -26,15 +26,15 @@ groovy = "4.0.27"
 managed-javax-persistence = "2.2"
 managed-jakarta-data = "1.0.1"
 
-spring-data = "3.5.3"
+spring-data = "3.5.4"
 
 # Lombok
 
-lombok = "1.18.38"
+lombok = "1.18.42"
 
 # Testing and benchmarking
 
-benchmark-spring-data = "2024.1.9"
+benchmark-spring-data = "2024.1.10"
 spock = "2.2-groovy-4.0"
 testcontainers = "1.19.4"
 jmh = "1.37"
@@ -44,7 +44,7 @@ jmh = "1.37"
 ksp-gradle-plugin = "1.9.25-1.0.20"
 kotlin-gradle-plugin = "1.9.25"
 jmh-gradle-plugin = "0.7.3"
-spring-boot-gradle-plugin = "3.5.5"
+spring-boot-gradle-plugin = "3.5.6"
 spring-dependency-management-gradle-plugin = "1.1.7"
 shadow-gradle-plugin = "8.0.0"
 
