@@ -9,7 +9,7 @@ micronaut-azure = "5.10.0"
 micronaut-reactor = "3.8.0"
 micronaut-rxjava2 = "2.8.0"
 micronaut-r2dbc = "6.1.0"
-micronaut-sql = "6.2.1"
+micronaut-sql = "6.2.2"
 micronaut-serde = "2.15.1"
 micronaut-spring = "5.11.2"
 micronaut-test = "4.7.0"
@@ -47,7 +47,6 @@ jmh-gradle-plugin = "0.7.3"
 spring-boot-gradle-plugin = "3.5.6"
 spring-dependency-management-gradle-plugin = "1.1.7"
 shadow-gradle-plugin = "8.0.0"
-sonatype-scan = "3.1.4"
 
 # Dependency versions which are found in the platform BOM
 # meaning that they should be extracted into their own BOM
@@ -143,4 +142,4 @@ gradle-jmh = { module = "me.champeau.jmh:jmh-gradle-plugin", version.ref = "jmh-
 gradle-spring-boot = { module = "org.springframework.boot:spring-boot-gradle-plugin", version.ref = "spring-boot-gradle-plugin" }
 gradle-spring-dependencies = { module = "io.spring.gradle:dependency-management-plugin", version.ref = "spring-dependency-management-gradle-plugin" }
 gradle-shadow = { module = "gradle.plugin.com.github.johnrengelman:shadow", version.ref = "shadow-gradle-plugin" }
-sonatype-scan = { module = "org.sonatype.gradle.plugins:scan-gradle-plugin", version.ref = "sonatype-scan" }
+
