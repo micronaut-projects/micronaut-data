@@ -1,5 +1,13 @@
+drop table sample_entity if exists cascade;
 drop table relationship_status if exists cascade;
 drop table client if exists cascade;
+
+create table sample_entity (
+    id bigint primary key not null,
+    name text,
+    example text,
+    part_text text
+);
 
 create table relationship_status
 (
