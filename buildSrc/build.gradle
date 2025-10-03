@@ -21,5 +21,4 @@ dependencies {
     implementation libs.gradle.spring.boot
     implementation libs.gradle.spring.dependencies
     implementation libs.gradle.shadow
-    implementation(libs.sonatype.scan)
 }

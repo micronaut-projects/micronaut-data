@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.event.listeners;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.util.ArrayUtils;
+import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -86,9 +87,21 @@ public abstract class AutoPopulatedEntityEventListener implements EntityEventLis
 
     /**
      * Returns the applicable properties for this listener.
+     * @param context The context
+     * @return the properties
+     * @since 4.14
+     */
+    protected @NonNull RuntimePersistentProperty<Object>[] getApplicableProperties(EntityEventContext<Object> context) {
+        return getApplicableProperties(context.getPersistentEntity());
+    }
+
+    /**
+     * Returns the applicable properties for this listener.
      * @param entity The entity
      * @return the properties
+     * @deprecated Use {@link #getApplicableProperties(EntityEventContext)} instead
      */
+    @Deprecated(forRemoval = true)
     protected @NonNull RuntimePersistentProperty<Object>[] getApplicableProperties(RuntimePersistentEntity<Object> entity) {
         final RuntimePersistentProperty<Object>[] properties = applicableProperties.get(entity);
         if (properties != null) {
