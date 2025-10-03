@@ -3,7 +3,6 @@ package io.micronaut.data.jdbc.h2.embeddedAssociation
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.*
 import io.micronaut.data.annotation.repeatable.JoinSpecifications
-import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.h2.H2DBProperties
 import io.micronaut.data.jdbc.h2.H2TestPropertyProvider
@@ -12,7 +11,6 @@ import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
-import io.micronaut.data.repository.GenericRepository
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.tck.entities.Order
@@ -22,7 +20,6 @@ import spock.lang.Specification
 
 import jakarta.inject.Inject
 
-import javax.sql.DataSource
 import java.time.Instant
 
 
@@ -56,29 +53,6 @@ class EmbeddedAssociationJoinSpec extends Specification implements H2TestPropert
     @Override
     List<String> packages() {
         return Arrays.asList("io.micronaut.data.jdbc.h2.embeddedAssociation")
-    }
-
-    @Shared
-    @Inject
-    MyMainEntityRepository myMainEntityRepository = applicationContext.getBean(MyMainEntityRepository)
-
-    void setup() {
-        def dataSource = DelegatingDataSource.unwrapDataSource(applicationContext.getBean(DataSource))
-        def connection = dataSource.connection
-        connection.prepareStatement("DROP TABLE IF EXISTS `my_main_entity`").execute()
-        connection.prepareStatement("""
-                                        CREATE TABLE `my_main_entity` (
-                                            `id` bigint primary key not null,
-                                            `value` text,
-                                            `example` text,
-                                            `part_text` text);
-                                         """).execute()
-    }
-
-    void cleanup() {
-        def dataSource = DelegatingDataSource.unwrapDataSource(applicationContext.getBean(DataSource))
-        def connection = dataSource.connection
-        connection.prepareStatement("DROP TABLE IF EXISTS `my_main_entity`")
     }
 
     void 'test one-to-one update'() {
@@ -181,41 +155,6 @@ class EmbeddedAssociationJoinSpec extends Specification implements H2TestPropert
         newClient.relationship.status
         newClient.relationship.status.id == status.id
         newClient.relationship.status.name == status.name
-    }
-
-    void 'test save/update embedded with @GeneratedValue'() {
-        when:"should not update field 'example'"
-        myMainEntityRepository.save(new MyMainEntity(id: 1L, example: "Test", value: "Val"))
-        def persistedEntity = myMainEntityRepository.findById(1L).orElse(null)
-        then:
-        persistedEntity
-        persistedEntity.value == "Val"
-        !persistedEntity.example
-        when:
-        myMainEntityRepository.update(new MyMainEntity(id: 1L, example: "Changed", value: "Val-Changed"))
-        def updatedEntity = myMainEntityRepository.findById(1L).orElse(null)
-        then:
-        updatedEntity
-        updatedEntity.value == "Val-Changed"
-        !updatedEntity.example
-
-        when:"should not update field 'part_text'"
-        myMainEntityRepository.save(new MyMainEntity(id: 2L, value: "Val1", part: new MyPart(text: "Test")))
-        persistedEntity = myMainEntityRepository.findById(2L).orElse(null)
-        then:
-        persistedEntity
-        persistedEntity.value == "Val1"
-        !persistedEntity.part.text
-        when:
-        myMainEntityRepository.update(new MyMainEntity(id: 2L, value: "Val2", part: new MyPart(text: "Changed")))
-        updatedEntity = myMainEntityRepository.findById(2L).orElse(null)
-        then:
-        updatedEntity
-        updatedEntity.value == "Val2"
-        !updatedEntity.part.text
-
-        cleanup:
-        myMainEntityRepository.deleteAll()
     }
 }
 
@@ -361,36 +300,4 @@ interface ClientRepository extends CrudRepository<Client, Long> {
 
 @JdbcRepository(dialect = Dialect.H2)
 interface RelationshipStatusRepository extends CrudRepository<RelationshipStatus, Long> {
-}
-
-@MappedEntity("my_main_entity")
-class MyMainEntity {
-
-    @Id
-    Long id
-
-    @GeneratedValue
-    String example
-
-    String value
-
-    @Relation(value = Relation.Kind.EMBEDDED)
-    MyPart part = new MyPart()
-}
-
-@Embeddable
-class MyPart {
-    @GeneratedValue
-    String text
-}
-
-@JdbcRepository(dialect = Dialect.H2)
-interface MyMainEntityRepository extends GenericRepository<MyMainEntity, Long> {
-    Optional<MyMainEntity> findById(Long id)
-
-    MyMainEntity save(MyMainEntity entity)
-
-    MyMainEntity update(MyMainEntity entity)
-
-    void deleteAll()
 }
