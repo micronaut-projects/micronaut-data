@@ -728,7 +728,8 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
 
             for (PersistentProperty prop : persistentProperties) {
                 PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), prop, (associations, property) -> {
-                    if (prop.isGenerated()) {
+                    boolean generated = SqlQueryBuilderUtils.isGeneratedProperty(property, entity);
+                    if (generated) {
                         String columnName = getMappedName(namingStrategy, associations, property);
                         if (escape) {
                             columnName = quote(columnName);

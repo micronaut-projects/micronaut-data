@@ -1643,6 +1643,13 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 QueryPropertyPath propertyPath = entry.getKey();
                 if (entry.getValue() instanceof BindingParameter bindingParameter) {
                     traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), (associations, property) -> {
+                        boolean generated = property.isGenerated();
+                        if (generated && property.getOwner() != entity && !property.getOwner().isEmbeddable()) {
+                            generated = false;
+                        }
+                        if (generated) {
+                            return;
+                        }
                         String tableAlias = propertyPath.getTableAlias();
                         if (tableAlias != null) {
                             queryString.append(tableAlias).append(DOT);

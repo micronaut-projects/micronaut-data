@@ -1030,7 +1030,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
             for (PersistentProperty prop : persistentProperties) {
                 traversePersistentProperties(prop, (associations, property) -> {
-                    if (prop.isGenerated()) {
+                    boolean generated = SqlQueryBuilderUtils.isGeneratedProperty(property, entity);
+                    if (generated) {
                         String columnName = getMappedName(namingStrategy, associations, property);
                         if (escape) {
                             columnName = quote(columnName);

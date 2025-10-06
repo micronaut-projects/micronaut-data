@@ -577,6 +577,25 @@ final class SqlQueryBuilderUtils {
         return joinColumnsAnnotationValue == null || CollectionUtils.isEmpty(joinColumnsAnnotationValue.getAnnotations("value"));
     }
 
+    /**
+     * Checks whether a given property is considered generated within the context of a specific entity.
+     *
+     * A property is considered generated if it is annotated with {@link GeneratedValue} and its owner is either the same as the given entity or is an embeddable entity.
+     *
+     * @param property the persistent property to check
+     * @param entity the entity to check against
+     * @return true if the property is generated, false otherwise
+     */
+    static boolean isGeneratedProperty(PersistentProperty property, PersistentEntity entity) {
+        boolean generated = property.isGenerated();
+        if (generated) {
+            if (property.getOwner() != entity && !property.getOwner().isEmbeddable()) {
+                generated = false;
+            }
+        }
+        return generated;
+    }
+
     private static String jsonColumnDefinition(PersistentProperty prop, Dialect dialect, boolean required) {
         JsonDataType jsonDataType = prop.getJsonDataType();
         String result = "";
