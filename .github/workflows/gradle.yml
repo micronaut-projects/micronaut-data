@@ -42,12 +42,12 @@ jobs:
          df -h
 
       - name: "📥 Checkout repository"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: "🔧 Setup GraalVM CE"
-        uses: graalvm/setup-graalvm@v1.3.7
+        uses: graalvm/setup-graalvm@v1.4.1
         with:
           distribution: 'graalvm'
           java-version: ${{ matrix.java }}
@@ -69,12 +69,12 @@ jobs:
       - name: "🛠 Build with Gradle"
         id: gradle
         run: |
-          ./gradlew check --no-daemon --continue
+          ./gradlew jacocoReport check --no-daemon --continue
 
       - name: "🔎 Run static analysis"
         if: env.SONAR_TOKEN != '' && matrix.java == '17'
         run: |
-          ./gradlew sonar
+          ./gradlew sonar --no-parallel --continue
 
       - name: "📊 Publish Test Report"
         if: always()
@@ -86,7 +86,7 @@ jobs:
 
       - name: "📜 Upload binary compatibility check results"
         if: matrix.java == '17'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
         with:
           name: binary-compatibility-reports
           path: "**/build/reports/binary-compatibility-*.html"
