@@ -347,7 +347,7 @@
         <h1>Micronaut Data</h1>
         <p></p>
         <p>Data Repository Support for Micronaut</p>
-        <p><strong>Version:</strong> 4.13.5 </p>
+        <p><strong>Version:</strong> 4.13.7 </p>
     </div>
     
 <h1 id="introduction"><a class="anchor" href="#introduction"></a>1 Introduction</h1>
@@ -1928,7 +1928,14 @@ val page2 = bookRepository.find(page.nextPageable()) // <b class="conum">(2)</b>
 val pageByPagesBetween =  // <b class="conum">(3)</b>
     bookRepository.findByPagesBetween(400, 700, Pageable.from(0, 3))
 val pageByTitleStarts =  // <b class="conum">(4)</b>
-    bookRepository.findByTitleStartingWith("The", CursoredPageable.from(3, Sort.unsorted()))</code></pre>
+    bookRepository.findByTitleStartingWith("The", CursoredPageable.from(3, Sort.unsorted()))
+val page =  // <b class="conum">(1)</b>
+    bookCoroutineRepository.find(CursoredPageable.from(5, Sort.of(Sort.Order.asc("title"))))
+val page2 = bookCoroutineRepository.find(page.nextPageable()) // <b class="conum">(2)</b>
+val pageByPagesBetween =  // <b class="conum">(3)</b>
+    bookCoroutineRepository.findByPagesBetween(400, 700, Pageable.from(0, 3))
+val pageByTitleStarts =  // <b class="conum">(4)</b>
+    bookCoroutineRepository.findByTitleStartingWith("The", CursoredPageable.from(3, Sort.unsorted()))</code></pre>
 </div>
 </div>
 <div class="colist arabic">
