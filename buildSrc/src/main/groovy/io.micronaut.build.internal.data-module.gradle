@@ -4,6 +4,7 @@ plugins {
 }
 dependencies {
     testRuntimeOnly mnSerde.micronaut.serde.jackson
+    implementation mnTest.junit.platform.suite
 }
 
 def testModulesOptional = rootProject.tasks.findByName("testModules")
