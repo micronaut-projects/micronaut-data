@@ -97,9 +97,9 @@ public @interface Transactional {
     boolean readOnly() default false;
 
     /**
-     * Defines the exceptions that will not result in a rollback.
+     * Defines the exceptions that will result in a rollback.
      *
-     * @return The exception types that will not result in a rollback.
+     * @return The exception types that will result in a rollback.
      * @since 3.5.0
      */
     Class<? extends Throwable>[] rollbackFor() default {};

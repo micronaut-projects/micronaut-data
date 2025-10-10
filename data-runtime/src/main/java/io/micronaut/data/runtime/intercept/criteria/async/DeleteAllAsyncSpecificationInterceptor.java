@@ -40,7 +40,9 @@ public class DeleteAllAsyncSpecificationInterceptor extends AbstractAsyncSpecifi
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        return deleteAllAsync(methodKey, context).thenApply(number -> convertNumberToReturnType(context, number));
+        return getAsyncCriteriaRepositoryOperations(methodKey, context, null)
+            .deleteAll(buildDeleteQuery(context))
+            .thenApply(number -> convertNumberToReturnType(context, number));
     }
 
 }

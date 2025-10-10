@@ -4,12 +4,17 @@ import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.Id
 import jakarta.persistence.ManyToOne
+import java.time.LocalDate
 
 @Entity
 data class Child(
         val name: String,
+
+        val dateOfBirth: LocalDate = LocalDate.now(),
+
         @ManyToOne
         val parent: Parent? = null,
+
         @field:Id @GeneratedValue val id: Int? = null
 ) {
 

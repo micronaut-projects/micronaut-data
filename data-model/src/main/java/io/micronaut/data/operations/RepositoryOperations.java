@@ -16,6 +16,7 @@
 package io.micronaut.data.operations;
 
 import io.micronaut.context.ApplicationContextProvider;
+import io.micronaut.core.annotation.NextMajorVersion;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionServiceProvider;
@@ -34,7 +35,6 @@ import io.micronaut.data.model.runtime.UpdateOperation;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -83,6 +83,7 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
      * @param <T> The generic resultType
      * @return A result or null
      */
+    @NextMajorVersion("Switch boolean to ? as it doesn't require specific result")
     <T> boolean exists(@NonNull PreparedQuery<T, Boolean> preparedQuery);
 
     /**
@@ -166,7 +167,7 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
     default <T> Iterable<T> updateAll(@NonNull UpdateBatchOperation<T> operation) {
         return operation.split().stream()
                 .map(this::update)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -179,7 +180,7 @@ public interface RepositoryOperations extends HintsCapableRepository, Applicatio
     default <T> Iterable<T> persistAll(@NonNull InsertBatchOperation<T> operation) {
         return operation.split().stream()
                 .map(this::persist)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**

@@ -17,12 +17,16 @@ package io.micronaut.data.processor.model.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.jpa.criteria.ExpressionType;
+import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
-import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitable;
+import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaQuery;
 import io.micronaut.inject.ast.ClassElement;
+import jakarta.persistence.criteria.CriteriaBuilder;
 
 import java.util.function.Function;
 
@@ -35,12 +39,20 @@ import java.util.function.Function;
  */
 @Internal
 final class SourcePersistentEntityCriteriaQueryImpl<T> extends AbstractPersistentEntityCriteriaQuery<T>
-        implements SourcePersistentEntityCriteriaQuery<T> {
+    implements SourcePersistentEntityCriteriaQuery<T> {
 
     private final Function<ClassElement, SourcePersistentEntity> entityResolver;
 
-    public SourcePersistentEntityCriteriaQueryImpl(Function<ClassElement, SourcePersistentEntity> entityResolver) {
-        super((Class<T>) Object.class);
+    public SourcePersistentEntityCriteriaQueryImpl(Class<T> result,
+                                                   Function<ClassElement, SourcePersistentEntity> entityResolver,
+                                                   CriteriaBuilder criteriaBuilder) {
+        this(new ClassExpressionType<>(result), entityResolver, criteriaBuilder);
+    }
+
+    public SourcePersistentEntityCriteriaQueryImpl(ExpressionType<T> result,
+                                                   Function<ClassElement, SourcePersistentEntity> entityResolver,
+                                                   CriteriaBuilder criteriaBuilder) {
+        super(result, criteriaBuilder);
         this.entityResolver = entityResolver;
     }
 
@@ -59,19 +71,24 @@ final class SourcePersistentEntityCriteriaQueryImpl<T> extends AbstractPersisten
         if (entityRoot != null) {
             throw new IllegalStateException("The root entity is already specified!");
         }
-        SourcePersistentEntityRoot<X> newEntityRoot = new SourcePersistentEntityRoot<>((SourcePersistentEntity) persistentEntity);
+        SourcePersistentEntityRoot<X> newEntityRoot = new SourcePersistentEntityRoot<>((SourcePersistentEntity) persistentEntity, criteriaBuilder);
         entityRoot = newEntityRoot;
         return newEntityRoot;
     }
 
     @Override
     public String getQueryResultTypeName() {
-        if (selection instanceof SelectionVisitable selectionVisitable) {
+        if (selection instanceof ISelection<?> selectionVisitable) {
             QueryResultAnalyzer selectionVisitor = new QueryResultAnalyzer();
-            selectionVisitable.accept(selectionVisitor);
+            selectionVisitable.visitSelection(selectionVisitor);
             return selectionVisitor.getQueryResultTypeName();
         }
         return null;
+    }
+
+    @Override
+    public <U> PersistentEntitySubquery<U> subquery(ExpressionType<U> type) {
+        return new SourcePersistentEntitySubqueryImpl<>(this, type, entityResolver, criteriaBuilder);
     }
 
 }

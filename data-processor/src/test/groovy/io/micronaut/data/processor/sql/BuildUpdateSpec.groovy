@@ -17,11 +17,14 @@ package io.micronaut.data.processor.sql
 
 
 import io.micronaut.data.intercept.UpdateInterceptor
+import io.micronaut.data.intercept.UpdateReturningManyInterceptor
+import io.micronaut.data.intercept.UpdateReturningOneInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.intercept.async.UpdateAsyncInterceptor
 import io.micronaut.data.intercept.reactive.UpdateReactiveInterceptor
 import io.micronaut.data.model.DataType
 import io.micronaut.data.processor.visitors.AbstractDataSpec
+import io.micronaut.data.tck.entities.Person
 import spock.lang.PendingFeature
 import spock.lang.Unroll
 
@@ -64,6 +67,163 @@ interface PersonRepository extends CrudRepository<Person, Long> {
         'long'                                        | UpdateInterceptor
         'Long'                                        | UpdateInterceptor
         'void'                                        | UpdateInterceptor
+    }
+
+    @Unroll
+    void "test build update returning for type #type"() {
+        given:
+        def repository = buildRepository('test.PersonRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Person;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
+interface PersonRepository extends CrudRepository<Person, Long> {
+
+    @Query("UPDATE person SET name = 'test' WHERE id = :id RETURNING *")
+    $type customUpdateReturning(Long id);
+
+}
+""")
+        def method = repository.findPossibleMethods("customUpdateReturning").findFirst().get()
+        def updateQuery = getQuery(method)
+
+        expect:
+        updateQuery == "UPDATE person SET name = 'test' WHERE id = :id RETURNING *"
+        method.classValue(DataMethod, "interceptor").get() == interceptor
+
+        where:
+        type                                          | interceptor
+        'java.util.List<Person>'                      | UpdateReturningManyInterceptor
+        'Person'                                      | UpdateReturningOneInterceptor
+    }
+
+    @Unroll
+    void "test build update returning for type #type text-block no-indent"() {
+        given:
+        def repository = buildRepository('test.PersonRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Person;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
+interface PersonRepository extends CrudRepository<Person, Long> {
+
+    @Query(\"""
+            UPDATE person SET name = 'test'
+            WHERE id = :id
+            RETURNING *
+            \""")
+    $type customUpdateReturning(Long id);
+
+}
+""")
+        def method = repository.findPossibleMethods("customUpdateReturning").findFirst().get()
+        def updateQuery = getQuery(method)
+
+        expect:
+        updateQuery.replace('\n', ' ') == "UPDATE person SET name = 'test' WHERE id = :id RETURNING * "
+        method.classValue(DataMethod, "interceptor").get() == interceptor
+
+        where:
+        type                                          | interceptor
+        'java.util.List<Person>'                      | UpdateReturningManyInterceptor
+        'Person'                                      | UpdateReturningOneInterceptor
+    }
+
+    @Unroll
+    void "test build update returning property for type #type"() {
+        given:
+        def repository = buildRepository('test.PersonRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Person;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
+interface PersonRepository extends CrudRepository<Person, Long> {
+
+    @Query("UPDATE person SET name = 'test' WHERE id = :id RETURNING id")
+    $type customUpdateReturning(Long id);
+
+}
+""")
+        def method = repository.findPossibleMethods("customUpdateReturning").findFirst().get()
+        def updateQuery = getQuery(method)
+
+        expect:
+        updateQuery == "UPDATE person SET name = 'test' WHERE id = :id RETURNING id"
+        method.classValue(DataMethod, "interceptor").get() == interceptor
+
+        where:
+        type                                          | interceptor
+        'java.util.List<Long>'                        | UpdateReturningManyInterceptor
+        'Long'                                        | UpdateReturningOneInterceptor
+    }
+
+    @Unroll
+    void "test build update returning property for type #type text-block no-indent"() {
+        given:
+        def repository = buildRepository('test.PersonRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Person;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
+interface PersonRepository extends CrudRepository<Person, Long> {
+
+    @Query(\"""
+            UPDATE person SET name = 'test'
+            WHERE id = :id
+            RETURNING id
+            \""")
+    $type customUpdateReturning(Long id);
+
+}
+""")
+        def method = repository.findPossibleMethods("customUpdateReturning").findFirst().get()
+        def updateQuery = getQuery(method)
+
+        expect:
+        updateQuery.replace('\n', ' ') == "UPDATE person SET name = 'test' WHERE id = :id RETURNING id "
+        method.classValue(DataMethod, "interceptor").get() == interceptor
+
+        where:
+        type                                          | interceptor
+        'java.util.List<Long>'                        | UpdateReturningManyInterceptor
+        'Long'                                        | UpdateReturningOneInterceptor
+    }
+
+    @Unroll
+    void "test build update with CTE"() {
+        given:
+        def repository = buildRepository('test.PersonRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Person;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
+interface PersonRepository extends CrudRepository<Person, Long> {
+
+    @Query(\"""
+            WITH ids AS (SELECT id FROM person)
+            UPDATE person SET name = 'test'
+            WHERE id = :id
+            \""")
+    void customUpdate(Long id);
+
+}
+""")
+        def method = repository.findPossibleMethods("customUpdate").findFirst().get()
+        def updateQuery = getQuery(method)
+
+        expect:
+        updateQuery.replace('\n', ' ') == "WITH ids AS (SELECT id FROM person) UPDATE person SET name = 'test' WHERE id = :id "
+        method.classValue(DataMethod, "interceptor").get() == UpdateInterceptor
     }
 
     @Unroll
@@ -186,6 +346,28 @@ interface PersonRepository extends CrudRepository<Person, Long> {
     }
 
 
+    void "test update by field with entity parameter"() {
+        given:
+        def repository = buildRepository('test.PersonRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Person;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface PersonRepository extends GenericRepository<Person, Long> {
+
+    void updateByName(String name, Person person);
+}
+""")
+
+        def method = repository.findMethod("updateByName", String, Person).get()
+        def updateQuery = getQuery(method)
+
+        expect:
+        updateQuery == 'UPDATE `person` SET `name`=?,`age`=?,`enabled`=?,`income`=? WHERE (`name` = ?)'
+    }
+
     void "test AutoGenerated update method"() {
       given:
       def repository = buildRepository('test.StudentRepository', """
@@ -241,12 +423,12 @@ interface CompanyRepository extends CrudRepository<Company, Long> {
             def updateByNameMethod = repository.findPossibleMethods("updateByName").findFirst().get()
 
         then:
-            getQuery(updateByNameMethod) == "UPDATE `company` SET `last_updated`=? WHERE (`name` = ?)"
-            getDataTypes(updateByNameMethod) == [DataType.TIMESTAMP, DataType.STRING]
-            getParameterBindingIndexes(updateByNameMethod) == ["-1", "0"]
-            getParameterPropertyPaths(updateByNameMethod) == ["lastUpdated", "name"]
-            getParameterAutoPopulatedProperties(updateByNameMethod) == ["lastUpdated", ""]
-            getParameterRequiresPreviousPopulatedValueProperties(updateByNameMethod) == ["", ""]
+            getQuery(updateByNameMethod) == "UPDATE `company` SET `name`=?,`last_updated`=? WHERE (`name` = ?)"
+            getDataTypes(updateByNameMethod) == [DataType.STRING, DataType.TIMESTAMP, DataType.STRING]
+            getParameterBindingIndexes(updateByNameMethod) == ["1", "-1", "0"]
+            getParameterPropertyPaths(updateByNameMethod) == ["name", "lastUpdated", "name"]
+            getParameterAutoPopulatedProperties(updateByNameMethod) == ["", "lastUpdated", ""]
+            getParameterRequiresPreviousPopulatedValueProperties(updateByNameMethod) == ["", "", ""]
 
         when:
             def updateByLastUpdatedMethod = repository.findPossibleMethods("updateByLastUpdated").findFirst().get()
@@ -490,6 +672,146 @@ interface BookRepository extends GenericRepository<Book, Long> {
             getDataResultType(updateReturningCustomMethod) == "io.micronaut.data.tck.entities.Book"
             getDataInterceptor(updateReturningCustomMethod) == "io.micronaut.data.intercept.UpdateAllEntitiesInterceptor"
             getResultDataType(updateReturningCustomMethod) == DataType.ENTITY
+    }
+
+    void "test build update with system Version field"() {
+        given:
+        def repository = buildRepository('test.TestRepository', """
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Version;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Person;
+
+@MappedEntity
+class Article {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    private Double price;
+
+    @Version
+    @GeneratedValue
+    private Long version;
+
+    public Long getId() {
+        return id;
+    }
+    public void setId(Long id) {
+        this.id = id;
+    }
+    public String getName() {
+        return name;
+    }
+    public void setName(String name) {
+        this.name = name;
+    }
+    public Double getPrice() {
+        return price;
+    }
+    public void setPrice(Double price) {
+        this.price = price;
+    }
+    public Long getVersion() {
+        return version;
+    }
+    public void setVersion(Long version) {
+        this.version = version;
+    }
+}
+@JdbcRepository(dialect = Dialect.ORACLE)
+interface TestRepository extends CrudRepository<Article, Long> {
+}
+""")
+        def method = repository.findPossibleMethods("update").findFirst().get()
+        def updateQuery = getQuery(method)
+
+        expect:
+        // Field version is not being updated as it's marked as system field ie system generated value
+        updateQuery == 'UPDATE "ARTICLE" SET "NAME"=?,"PRICE"=? WHERE ("ID" = ? AND "VERSION" = ?)'
+    }
+
+    void "POSTGRES test update with tenant id"() {
+        given:
+            def repository = buildRepository('test.AccountRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.tck.entities.Account;
+
+@JdbcRepository(dialect= Dialect.POSTGRES)
+interface AccountRepository extends CrudRepository<Account, Long> {
+
+    List<Account> updateReturning(List<Account> books);
+
+    void updateByIdAndTenancy(Long id, String tenancy, String name);
+
+    void updateAccount1(@Id Long id, String tenancy, String name);
+    void updateAccount2(@Id Long id, String name);
+
+    void updateById(@Id Long id, String name);
+    void update(@Id Long id, String name);
+
+}
+""")
+        when:
+            def updateReturningCustomMethod = repository.findPossibleMethods("updateReturning").findFirst().get()
+        then:
+            getQuery(updateReturningCustomMethod) == 'UPDATE "account" SET "name"=?,"tenancy"=? WHERE ("id" = ? AND "tenancy" = ?) RETURNING "id","name","tenancy"'
+            getParameterPropertyPaths(updateReturningCustomMethod) == ["name", "tenancy", "id", "tenancy"] as String[]
+            getDataResultType(updateReturningCustomMethod) == "io.micronaut.data.tck.entities.Account"
+            getDataInterceptor(updateReturningCustomMethod) == "io.micronaut.data.intercept.UpdateAllEntitiesInterceptor"
+            getResultDataType(updateReturningCustomMethod) == DataType.ENTITY
+
+        when:
+            def updateByIdAndTenancyMethod = repository.findPossibleMethods("updateByIdAndTenancy").findFirst().get()
+        then:
+            getQuery(updateByIdAndTenancyMethod) == 'UPDATE "account" SET "name"=?,"tenancy"=? WHERE ("id" = ? AND "tenancy" = ? AND "tenancy" = ?)'
+            getParameterPropertyPaths(updateByIdAndTenancyMethod) == ["name", "tenancy", "id", "tenancy", "tenancy"] as String[]
+            getDataResultType(updateByIdAndTenancyMethod) == "void"
+            getDataInterceptor(updateByIdAndTenancyMethod) == "io.micronaut.data.intercept.UpdateInterceptor"
+            getResultDataType(updateByIdAndTenancyMethod) == null
+
+        when:
+            def updateAccount1 = repository.findPossibleMethods("updateAccount1").findFirst().get()
+        then:
+            getQuery(updateAccount1) == 'UPDATE "account" SET "tenancy"=?,"name"=? WHERE ("id" = ? AND "tenancy" = ?)'
+            getParameterPropertyPaths(updateAccount1) == ["tenancy", "name", "id", "tenancy"] as String[]
+            getDataResultType(updateAccount1) == "void"
+            getDataInterceptor(updateAccount1) == "io.micronaut.data.intercept.UpdateInterceptor"
+            getResultDataType(updateAccount1) == null
+
+        when:
+            def updateAccount2 = repository.findPossibleMethods("updateAccount2").findFirst().get()
+        then:
+            getQuery(updateAccount2) == 'UPDATE "account" SET "name"=?,"tenancy"=? WHERE ("id" = ? AND "tenancy" = ?)'
+            getParameterPropertyPaths(updateAccount2) == ["name", "tenancy", "id", "tenancy"] as String[]
+            getDataResultType(updateAccount2) == "void"
+            getDataInterceptor(updateAccount2) == "io.micronaut.data.intercept.UpdateInterceptor"
+            getResultDataType(updateAccount2) == null
+
+        when:
+            def updateById = repository.findPossibleMethods("updateById").findFirst().get()
+        then:
+            getQuery(updateById) == 'UPDATE "account" SET "name"=?,"tenancy"=? WHERE ("id" = ? AND "tenancy" = ?)'
+            getParameterPropertyPaths(updateById) == ["name", "tenancy", "id", "tenancy"] as String[]
+            getDataResultType(updateById) == "void"
+            getDataInterceptor(updateById) == "io.micronaut.data.intercept.UpdateInterceptor"
+            getResultDataType(updateById) == null
+
+        when:
+            def update = repository.findMethod("update", Long, String).get()
+        then:
+            getQuery(update) == 'UPDATE "account" SET "name"=?,"tenancy"=? WHERE ("id" = ? AND "tenancy" = ?)'
+            getParameterPropertyPaths(update) == ["name", "tenancy", "id", "tenancy"] as String[]
+            getDataResultType(update) == "void"
+            getDataInterceptor(update) == "io.micronaut.data.intercept.UpdateInterceptor"
+            getResultDataType(update) == null
     }
 
 //    void "ORACLE test build update returning "() {

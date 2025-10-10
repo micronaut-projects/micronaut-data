@@ -32,6 +32,7 @@ import io.micronaut.data.intercept.DeleteReturningOneInterceptor;
 import io.micronaut.data.intercept.ExistsByInterceptor;
 import io.micronaut.data.intercept.FindAllInterceptor;
 import io.micronaut.data.intercept.FindByIdInterceptor;
+import io.micronaut.data.intercept.FindCursoredPageInterceptor;
 import io.micronaut.data.intercept.FindOneInterceptor;
 import io.micronaut.data.intercept.FindOptionalInterceptor;
 import io.micronaut.data.intercept.FindPageInterceptor;
@@ -58,6 +59,7 @@ import io.micronaut.data.intercept.async.FindAllAsyncInterceptor;
 import io.micronaut.data.intercept.async.FindByIdAsyncInterceptor;
 import io.micronaut.data.intercept.async.FindOneAsyncInterceptor;
 import io.micronaut.data.intercept.async.FindPageAsyncInterceptor;
+import io.micronaut.data.intercept.async.FindCursoredAsyncPageInterceptor;
 import io.micronaut.data.intercept.async.FindSliceAsyncInterceptor;
 import io.micronaut.data.intercept.async.ProcedureReturningManyAsyncInterceptor;
 import io.micronaut.data.intercept.async.ProcedureReturningOneAsyncInterceptor;
@@ -75,6 +77,7 @@ import io.micronaut.data.intercept.reactive.FindAllReactiveInterceptor;
 import io.micronaut.data.intercept.reactive.FindByIdReactiveInterceptor;
 import io.micronaut.data.intercept.reactive.FindOneReactiveInterceptor;
 import io.micronaut.data.intercept.reactive.FindPageReactiveInterceptor;
+import io.micronaut.data.intercept.reactive.FindCursoredReactivePageInterceptor;
 import io.micronaut.data.intercept.reactive.FindSliceReactiveInterceptor;
 import io.micronaut.data.intercept.reactive.ProcedureReactiveInterceptor;
 import io.micronaut.data.intercept.reactive.SaveAllReactiveInterceptor;
@@ -361,12 +364,16 @@ public interface FindersUtils {
                 return new FindersUtils.InterceptorMatch(findInterceptorDef.returnType(), findInterceptorDef.interceptor(), false);
             }
         }
-        if (isPage(matchContext, returnType)) {
+        if (isCursoredPage(matchContext, returnType)) {
+            return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindCursoredPageInterceptor.class);
+        } else if (isPage(matchContext, returnType)) {
             return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindPageInterceptor.class);
         } else if (isSlice(matchContext, returnType)) {
             return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindSliceInterceptor.class);
         } else if (isContainer(returnType, Iterable.class)) {
             return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindAllInterceptor.class);
+        } else if (returnType.isArray()) {
+            return typeAndInterceptorEntry(matchContext, returnType.fromArray(), FindAllInterceptor.class);
         } else if (isContainer(returnType, Publisher.class)) {
             return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindAllReactiveInterceptor.class);
         } else {
@@ -377,7 +384,9 @@ public interface FindersUtils {
     static FindersUtils.InterceptorMatch resolveReactiveFindInterceptor(
         @NonNull MethodMatchContext matchContext, @NonNull ClassElement returnType, @NonNull ClassElement reactiveType) {
         ClassElement firstTypeArgument = reactiveType.getFirstTypeArgument().orElse(null);
-        if (isPage(matchContext, reactiveType)) {
+        if (isCursoredPage(matchContext, reactiveType)) {
+            return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindCursoredReactivePageInterceptor.class);
+        } else if (isPage(matchContext, reactiveType)) {
             return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindPageReactiveInterceptor.class);
         } else if (isSlice(matchContext, reactiveType)) {
             return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindSliceReactiveInterceptor.class);
@@ -391,7 +400,9 @@ public interface FindersUtils {
     static FindersUtils.InterceptorMatch resolveAsyncFindInterceptor(
         @NonNull MethodMatchContext matchContext, @NonNull ClassElement asyncType) {
         ClassElement firstTypeArgument = asyncType.getFirstTypeArgument().orElse(null);
-        if (isPage(matchContext, asyncType)) {
+        if (isCursoredPage(matchContext, asyncType)) {
+            return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindCursoredAsyncPageInterceptor.class);
+        } else if (isPage(matchContext, asyncType)) {
             return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindPageAsyncInterceptor.class);
         } else if (isSlice(matchContext, asyncType)) {
             return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindSliceAsyncInterceptor.class);
@@ -480,7 +491,11 @@ public interface FindersUtils {
                 getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.reactive.FindAllReactiveSpecificationInterceptor")
             );
         }
-        return typeAndInterceptorEntry(returnType.getType(),
+        ClassElement type = returnType.getType();
+        if (isContainer(returnType, Iterable.class)) {
+            type = returnType.getFirstTypeArgument().orElse(null);
+        }
+        return typeAndInterceptorEntry(type,
             getInterceptorElement(matchContext, "io.micronaut.data.runtime.intercept.criteria.FindAllSpecificationInterceptor")
         );
     }
@@ -572,6 +587,14 @@ public interface FindersUtils {
         return isContainer(type, Publisher.class)
             || TypeUtils.isReactiveType(type)
             && (type.getTypeArguments().isEmpty() || isContainer(type, type.getName())); // Validate container argument
+    }
+
+    static boolean isCursoredPage(MethodMatchContext methodMatchContext, ClassElement typeArgument) {
+        boolean matches = methodMatchContext.isTypeInRole(typeArgument, TypeRole.CURSORED_PAGE);
+        if (matches && !methodMatchContext.hasParameterInRole(TypeRole.PAGEABLE)) {
+            methodMatchContext.fail("Method must accept an argument that is a Pageable");
+        }
+        return matches;
     }
 
     static boolean isPage(MethodMatchContext methodMatchContext, ClassElement typeArgument) {

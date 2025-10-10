@@ -16,20 +16,31 @@
 package io.micronaut.data.runtime.query.internal;
 
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.ConvertibleValues;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.type.MutableArgumentValue;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.intercept.annotation.DataMethodQuery;
+import io.micronaut.data.model.CursoredPage;
+import io.micronaut.data.model.CursoredPageable;
+import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.runtime.DefaultStoredDataOperation;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.StoredQuery;
 
+import java.lang.annotation.Annotation;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * Represents a prepared query.
@@ -46,6 +57,8 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
     private final boolean dto;
     private final MethodInvocationContext<?, ?> context;
     private final ConversionService conversionService;
+    @Nullable
+    private final Limit limit;
 
     /**
      * The default constructor.
@@ -54,6 +67,7 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
      * @param storedQuery       The stored query
      * @param finalQuery        The final query
      * @param pageable          The pageable
+     * @param limit             The limit
      * @param dtoProjection     Whether the prepared query is a dto projection
      * @param conversionService The conversion service
      */
@@ -62,15 +76,115 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
             StoredQuery<E, RT> storedQuery,
             String finalQuery,
             @NonNull Pageable pageable,
+            @NonNull Limit limit,
             boolean dtoProjection,
             ConversionService conversionService) {
         super(context);
         this.context = context;
         this.query = finalQuery;
         this.storedQuery = storedQuery;
-        this.pageable = pageable;
         this.dto = dtoProjection;
         this.conversionService = conversionService;
+        if (pageable.getMode() == Pageable.Mode.OFFSET && hasReturnTypeInRole(TypeRole.CURSORED_PAGE, CursoredPage.class, context, conversionService)) {
+            if (pageable.getNumber() == 0) {
+                pageable = CursoredPageable.from(pageable.getSize(), pageable.getSort());
+            } else {
+                throw new IllegalArgumentException("Cursored page with the offset mode page request needs to start from the first page number: 0, but was: " + pageable.getNumber());
+            }
+        }
+        this.pageable = pageable.withSort(storedQuery.getSort().orders(pageable.getOrderBy()));
+        this.limit = Limit.UNLIMITED.equals(limit) && !storedQuery.isCount() ? Limit.of(pageable.getSize(), pageable.getOffset()) : limit;
+    }
+
+    /**
+     * Check the return role from the method context.
+     *
+     * @param role              The role
+     * @param type              The type
+     * @param methodContext     The method context
+     * @param conversionService The conversion service
+     * @return The optional parameter
+     */
+    public static boolean hasReturnTypeInRole(@NonNull String role,
+                                              @NonNull Class<?> type,
+                                              @NonNull MethodInvocationContext<?, ?> methodContext,
+                                              @NonNull ConversionService conversionService) {
+        return methodContext.stringValue(DATA_METHOD_ANN_NAME, DataMethodQuery.META_MEMBER_RETURN_TYPE_ROLE)
+            .filter(typeRole -> typeRole.equals(role))
+            .map(ignore -> conversionService.canConvert(methodContext.getReturnType().getType(), type))
+            .orElse(false);
+    }
+
+    /**
+     * Find a parameter in role from the method context.
+     *
+     * @param role              The role
+     * @param type              The type of the parameter in role
+     * @param methodContext     The method context
+     * @param conversionService The conversion service
+     * @param <RT1>             The type
+     * @return The optional parameter
+     */
+    @NonNull
+    public static <RT1> Optional<RT1> getParameterInRole(@NonNull String role,
+                                                         @NonNull Class<RT1> type,
+                                                         @NonNull MethodInvocationContext<?, ?> methodContext,
+                                                         @NonNull ConversionService conversionService) {
+        return methodContext.stringValue(DATA_METHOD_ANN_NAME, role).flatMap(name -> {
+            MutableArgumentValue<?> arg = methodContext.getParameters().get(name);
+            if (arg == null) {
+                return Optional.empty();
+            }
+            Object o = arg.getValue();
+            if (o == null) {
+                return Optional.empty();
+            }
+            if (type.isInstance(o)) {
+                //noinspection unchecked
+                return Optional.of((RT1) o);
+            }
+            return conversionService.convert(o, type);
+        });
+    }
+
+    /**
+     * Find the parameters in role from the method context.
+     *
+     * @param role              The role
+     * @param type              The type of the parameter in role
+     * @param methodContext     The method context
+     * @param conversionService The conversion service
+     * @param <RT1>             The type
+     * @return The list of types
+     */
+    @NonNull
+    public static <RT1> List<RT1> getParametersInRole(@NonNull String role,
+                                                      @NonNull Class<RT1> type,
+                                                      @NonNull MethodInvocationContext<?, ?> methodContext,
+                                                      @NonNull ConversionService conversionService) {
+        AnnotationValue<Annotation> annotation = methodContext.getAnnotation(DATA_METHOD_ANN_NAME);
+        if (annotation == null) {
+            return List.of();
+        }
+        List<AnnotationValue<Annotation>> roles = annotation.getAnnotations(DataMethodQuery.META_MEMBER_PARAMETERS_TYPE_ROLES);
+        return roles.stream()
+            .filter(a -> a.stringValue().orElseThrow().equals(role))
+            .flatMap(a -> {
+                Object value = methodContext.getParameterValues()[a.intValue("parameterIndex").orElseThrow()];
+                if (value == null) {
+                    return Stream.empty();
+                }
+                if (type.isInstance(value)) {
+                    //noinspection unchecked
+                    return Stream.of((RT1) value);
+                }
+                return conversionService.convert(value, type).stream();
+            }).toList();
+    }
+
+    @Override
+    public ConversionService getConversionService() {
+        return conversionService;
     }
 
     /**
@@ -102,21 +216,12 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
 
     @Override
     public <RT1> Optional<RT1> getParameterInRole(@NonNull String role, @NonNull Class<RT1> type) {
-        return context.stringValue(DATA_METHOD_ANN_NAME, role).flatMap(name -> {
-            MutableArgumentValue<?> arg = context.getParameters().get(name);
-            if (arg == null) {
-                return Optional.empty();
-            }
-            Object o = arg.getValue();
-            if (o == null) {
-                return Optional.empty();
-            }
-            if (type.isInstance(o)) {
-                //noinspection unchecked
-                return Optional.of((RT1) o);
-            }
-            return conversionService.convert(o, type);
-        });
+        return getParameterInRole(role, type, context, conversionService);
+    }
+
+    @Override
+    public <RT1> List<RT1> getParametersInRole(String role, Class<RT1> type) {
+        return getParametersInRole(role, type, context, conversionService);
     }
 
     @Override
@@ -173,4 +278,32 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
         return context.getAttribute(name, type);
     }
 
+    @Override
+    public int getOffset() {
+        if (limit != null) {
+            return (int) limit.offset();
+        }
+        return DelegateStoredQuery.super.getOffset();
+    }
+
+    @Override
+    public int getLimit() {
+        if (limit != null) {
+            return limit.maxResults();
+        }
+        return DelegateStoredQuery.super.getLimit();
+    }
+
+    @Override
+    public Sort getSort() {
+        return pageable.getSort();
+    }
+
+    @Override
+    public Limit getQueryLimit() {
+        if (limit != null) {
+            return limit;
+        }
+        return pageable.getLimit();
+    }
 }

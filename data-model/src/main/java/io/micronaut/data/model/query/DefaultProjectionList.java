@@ -27,7 +27,9 @@ import java.util.List;
  *
  * @author graemerocher
  * @since 1.0.0
+ * @deprecated Replaced by JPA criteria
  */
+@Deprecated(forRemoval = true, since = "4.9")
 class DefaultProjectionList implements ProjectionList {
 
     private final List<QueryModel.Projection> projections = new ArrayList(3);

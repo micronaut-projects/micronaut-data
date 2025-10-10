@@ -25,7 +25,6 @@ import io.micronaut.data.document.serde.CustomConverterSerializer;
 import io.micronaut.data.document.serde.IdPropertyNamingStrategy;
 import io.micronaut.data.document.serde.IdSerializer;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
-import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.mongodb.conf.MongoDataConfiguration;
 import io.micronaut.serde.Encoder;
@@ -36,12 +35,10 @@ import io.micronaut.serde.exceptions.SerdeException;
 import io.micronaut.serde.reference.PropertyReference;
 import io.micronaut.serde.reference.SerializationReference;
 import org.bson.codecs.Codec;
-import org.bson.codecs.IterableCodec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
 
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * The Micronaut Data's Serde's {@link Serializer.EncoderContext}.
@@ -56,8 +53,6 @@ final class DataEncoderContext implements Serializer.EncoderContext {
 
     private final MongoDataConfiguration mongoDataConfiguration;
     private final AttributeConverterRegistry attributeConverterRegistry;
-    private final Argument argument;
-    private final RuntimePersistentEntity<Object> runtimePersistentEntity;
     private final Serializer.EncoderContext parent;
     private final CodecRegistry codecRegistry;
 
@@ -66,21 +61,15 @@ final class DataEncoderContext implements Serializer.EncoderContext {
      *
      * @param mongoDataConfiguration     The Mongo Data configuration
      * @param attributeConverterRegistry The AttributeConverterRegistry
-     * @param argument                   The argument
-     * @param runtimePersistentEntity    The runtime persistent entity
      * @param parent                     The parent context
      * @param codecRegistry              The codec registry
      */
     DataEncoderContext(MongoDataConfiguration mongoDataConfiguration,
                        AttributeConverterRegistry attributeConverterRegistry,
-                       Argument argument,
-                       RuntimePersistentEntity<Object> runtimePersistentEntity,
                        Serializer.EncoderContext parent,
                        CodecRegistry codecRegistry) {
         this.mongoDataConfiguration = mongoDataConfiguration;
         this.attributeConverterRegistry = attributeConverterRegistry;
-        this.argument = argument;
-        this.runtimePersistentEntity = runtimePersistentEntity;
         this.parent = parent;
         this.codecRegistry = codecRegistry;
     }
@@ -173,7 +162,7 @@ final class DataEncoderContext implements Serializer.EncoderContext {
         if (codec instanceof MappedCodec mappedCodec) {
             return mappedCodec.serializer;
         }
-        if (codec != null && !(codec instanceof IterableCodec) && !(Map.class.isAssignableFrom(codec.getEncoderClass()))) {
+        if (codec != null && CodecUtils.shouldUseCodec(codec)) {
             return new CodecBsonDecoder<>((Codec<T>) codec);
         }
         return parent.findSerializer(type);

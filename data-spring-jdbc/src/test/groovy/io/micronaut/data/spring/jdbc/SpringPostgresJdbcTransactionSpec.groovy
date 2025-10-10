@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.spring.jdbc
 
-
+import io.micronaut.data.connection.ConnectionOperations
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.spring.jdbc.micronaut.PostgresBookRepository
 import io.micronaut.data.tck.repositories.BookRepository
@@ -45,6 +45,11 @@ class SpringPostgresJdbcTransactionSpec extends AbstractTransactionSpec implemen
     }
 
     @Override
+    protected ConnectionOperations getConnectionOperations() {
+        return context.getBean(SpringJdbcConnectionOperations)
+    }
+
+    @Override
     protected Runnable getNoTxCheck() {
         return new Runnable() {
             @Override
@@ -69,6 +74,11 @@ class SpringPostgresJdbcTransactionSpec extends AbstractTransactionSpec implemen
     @Override
     boolean supportsDontRollbackOn() {
         return false
+    }
+
+    @Override
+    boolean failsInsertInReadOnlyTx() {
+        return true;
     }
 
     @Override

@@ -47,10 +47,8 @@ import io.micronaut.inject.processing.ProcessingException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -63,13 +61,17 @@ import java.util.regex.Pattern;
  */
 public class RawQueryMethodMatcher implements MethodMatcher {
 
-    private static final String SELECT = "select";
-    private static final String DELETE = "delete";
-    private static final String UPDATE = "update";
-    private static final String RETURNING = " returning ";
-    private static final String INSERT = "insert";
+    private static final Pattern UPDATE_PATTERN = Pattern.compile("(?<!['\"])\\bupdate\\b(?!['\"])");
+    private static final Pattern FOR_UPDATE_PATTERN = Pattern.compile("for\\s+update");
+    private static final Pattern DELETE_PATTERN = Pattern.compile("(?<!['\"])\\bdelete\\b(?!['\"])");
+    private static final Pattern INSERT_PATTERN = Pattern.compile("(?<!['\"])\\binsert\\b(?!['\"])");
+    private static final Pattern RETURNING_PATTERN = Pattern.compile("(?<!['\"])\\breturning\\b(?!['\"])");
+    private static final Pattern SQL_COMMENT_PATTERN = Pattern.compile("(--[^\\r\\n]*)|(/\\*[\\s\\S]*?\\*/)", Pattern.MULTILINE);
 
     private static final Pattern VARIABLE_PATTERN = Pattern.compile("([^:\\\\]*)((?<![:]):([a-zA-Z0-9]+))([^:]*)");
+    private static final String COLON = ":";
+    private static final String COLON_ESCAPE_PATTERN = "\\" + COLON;
+    private static final String COLON_TEMP_REPLACEMENT = "___MICRONAUT_COLON_PLA@CEHOLDER___";
 
     @Override
     public final int getOrder() {
@@ -155,9 +157,9 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                     buildRawQuery(matchContext, methodMatchInfo, entityParameter, entitiesParameter, operationType, implicitQueries);
 
                     if (entityParameter != null) {
-                        methodMatchInfo.addParameterRole(TypeRole.ENTITY, entityParameter.getName());
+                        methodMatchInfo.addParameterRole(entityParameter, TypeRole.ENTITY);
                     } else if (entitiesParameter != null) {
-                        methodMatchInfo.addParameterRole(TypeRole.ENTITIES, entitiesParameter.getName());
+                        methodMatchInfo.addParameterRole(entitiesParameter, TypeRole.ENTITIES);
                     }
                     return methodMatchInfo;
                 }
@@ -175,26 +177,28 @@ public class RawQueryMethodMatcher implements MethodMatcher {
 
     private DataMethod.OperationType findOperationType(String methodName, String query, boolean readOnly) {
         query = query.trim().toLowerCase(Locale.ENGLISH);
-        if (query.startsWith(SELECT)) {
-            return DataMethod.OperationType.QUERY;
-        } else if (query.startsWith(DELETE)) {
-            if (query.contains(RETURNING)) {
+        query = SQL_COMMENT_PATTERN.matcher(query).replaceAll("").trim();
+
+        if (DELETE_PATTERN.matcher(query).find()) {
+            if (RETURNING_PATTERN.matcher(query).find()) {
                 return DataMethod.OperationType.DELETE_RETURNING;
             }
             return DataMethod.OperationType.DELETE;
-        } else if (query.startsWith(UPDATE)) {
-            if (query.contains(RETURNING)) {
+        } else if (INSERT_PATTERN.matcher(query).find()) {
+            if (RETURNING_PATTERN.matcher(query).find()) {
+                return DataMethod.OperationType.INSERT_RETURNING;
+            }
+            return DataMethod.OperationType.INSERT;
+        } else if (UPDATE_PATTERN.matcher(query).find()) {
+            if (RETURNING_PATTERN.matcher(query).find()) {
                 return DataMethod.OperationType.UPDATE_RETURNING;
             }
             if (DeleteMethodMatcher.METHOD_PATTERN.matcher(methodName.toLowerCase(Locale.ENGLISH)).matches()) {
                 return DataMethod.OperationType.DELETE;
             }
-            return DataMethod.OperationType.UPDATE;
-        } else if (query.startsWith(INSERT)) {
-            if (query.contains(RETURNING)) {
-                return DataMethod.OperationType.INSERT_RETURNING;
+            if (!FOR_UPDATE_PATTERN.matcher(query).find()) {
+                return DataMethod.OperationType.UPDATE;
             }
-            return DataMethod.OperationType.INSERT;
         }
         if (readOnly) {
             return DataMethod.OperationType.QUERY;
@@ -252,7 +256,8 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                                        boolean namedParameters,
                                        ParameterElement entityParam,
                                        SourcePersistentEntity persistentEntity) {
-        Matcher matcher = VARIABLE_PATTERN.matcher(queryString.replace("\\:", ""));
+        String newQueryString = queryString.replace(COLON_ESCAPE_PATTERN, COLON_TEMP_REPLACEMENT);
+        Matcher matcher = VARIABLE_PATTERN.matcher(newQueryString);
 
         List<AnnotationValue<ParameterExpression>> parameterExpressions = matchContext.getMethodElement()
             .getAnnotationMetadata()
@@ -263,9 +268,9 @@ public class RawQueryMethodMatcher implements MethodMatcher {
         int index = 1;
         int lastOffset = 0;
         while (matcher.find()) {
-            String prefix = queryString.substring(lastOffset, matcher.start(3) - 1);
+            String prefix = newQueryString.substring(lastOffset, matcher.start(3) - 1);
             if (!prefix.isEmpty()) {
-                queryParts.add(prefix);
+                queryParts.add(prefix.replace(COLON_TEMP_REPLACEMENT, COLON));
             }
             lastOffset = matcher.end(3);
             String name = matcher.group(3);
@@ -286,13 +291,12 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             parameterBindings.add(queryParameterBinding);
         }
 
-        queryString = queryString.replace("\\:", ":");
         if (queryParts.isEmpty()) {
-            queryParts.add(queryString);
+            queryParts.add(newQueryString.replace(COLON_TEMP_REPLACEMENT, COLON));
         } else if (lastOffset > 0) {
-            queryParts.add(queryString.substring(lastOffset));
+            queryParts.add(newQueryString.substring(lastOffset).replace(COLON_TEMP_REPLACEMENT, COLON));
         }
-        String finalQueryString = queryString;
+        String finalQueryString = newQueryString.replace(COLON_TEMP_REPLACEMENT, COLON);
         return new QueryResult() {
             @Override
             public String getQuery() {
@@ -307,11 +311,6 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             @Override
             public List<QueryParameterBinding> getParameterBindings() {
                 return parameterBindings;
-            }
-
-            @Override
-            public Map<String, String> getAdditionalRequiredParameters() {
-                return Collections.emptyMap();
             }
         };
     }
@@ -341,7 +340,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             .filter(p -> p.stringValue(Parameter.class).orElse(p.getName()).equals(name))
             .findFirst();
         if (element.isPresent()) {
-            PersistentPropertyPath propertyPath = matchContext.getRootEntity().getPropertyPath(name);
+            PersistentPropertyPath propertyPath = matchContext.getRootEntity() == null ? null : matchContext.getRootEntity().getPropertyPath(name);
             bindingContext = bindingContext
                 .incomingMethodParameterProperty(propertyPath)
                 .outgoingQueryParameterProperty(propertyPath);
@@ -372,7 +371,8 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                 Utils.getConfiguredDataTypes(matchContext.getRepositoryClass()),
                 matchContext.getParameters(),
                 element,
-                isEntityParameter);
+                isEntityParameter,
+            null);
     }
 
     private static SourceParameterExpressionImpl bindingParameter(MethodMatchContext matchContext,
@@ -381,9 +381,9 @@ public class RawQueryMethodMatcher implements MethodMatcher {
         return new SourceParameterExpressionImpl(
                 Utils.getConfiguredDataTypes(matchContext.getRepositoryClass()),
             name,
-            type);
+            type,
+            null);
     }
-
 
     /**
      * Extract the expression type.

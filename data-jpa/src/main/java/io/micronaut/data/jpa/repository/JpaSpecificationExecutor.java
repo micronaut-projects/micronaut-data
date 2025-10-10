@@ -33,7 +33,9 @@ import java.util.Optional;
  * @author Oliver Gierke
  * @author Christoph Strobl
  * @since 3.1
+ * @deprecated Replaced with {@link io.micronaut.data.repository.jpa.JpaSpecificationExecutor}
  */
+@Deprecated(forRemoval = true, since = "4.9")
 public interface JpaSpecificationExecutor<T> {
 
     /**

@@ -1,6 +1,7 @@
 package io.micronaut.data.tck.tests
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.data.connection.ConnectionOperations
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.services.TxBookService
 import io.micronaut.data.tck.services.TxEventsService
@@ -29,10 +30,15 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
 
     protected abstract TransactionOperations getTransactionOperations();
 
+    protected abstract ConnectionOperations getConnectionOperations();
+
     protected abstract Runnable getNoTxCheck();
 
     TxBookService getBookService() {
-        return context.getBean(TxBookService)
+        def service = context.getBean(TxBookService)
+        service.transactionManager = getTransactionOperations()
+        service.connectionOperations = getConnectionOperations()
+        return service
     }
 
     void cleanup() {
@@ -63,6 +69,21 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
         return false
     }
 
+    boolean failsInsertInReadOnlyTx() {
+        return false
+    }
+
+    void "connectable with nested transaction"() {
+        try {
+            when:
+                bookService.bookAddedInConnectableNestedTransaction()
+            then:
+                bookService.countBooksTransactional() == 1
+        } catch (NoClassDefFoundError e) {
+            // Avoid Spring Integration failing with Hibernate 6
+        }
+    }
+
     void "custom name transaction"() {
         when:
             bookService.bookAddedCustomNamedTransaction(new Runnable() {
@@ -74,11 +95,11 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
                 }
             })
         then:
-            assert bookService.countBooksTransactional() == 1
+            bookService.countBooksTransactional() == 1
     }
 
-    void "test book added in read only transaction"() {
-        if (!supportsReadOnlyFlag()) {
+    void "test book added in read only transaction throws error"() {
+        if (!supportsReadOnlyFlag() || !failsInsertInReadOnlyTx()) {
             return
         }
         when:
@@ -88,8 +109,19 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
             cannotInsertInReadOnlyTx(e)
     }
 
-    void "test read only transaction adding book in inner transaction"() {
-        if (!supportsReadOnlyFlag()) {
+    void "test book added in read only transaction not throwing error"() {
+        if (!supportsReadOnlyFlag() || failsInsertInReadOnlyTx()) {
+            return
+        }
+        when:
+        bookService.bookAddedInReadOnlyTransaction()
+        then:
+        noExceptionThrown()
+        bookService.countBooksTransactional() == 1
+    }
+
+    void "test read only transaction adding book in inner transaction throws error"() {
+        if (!supportsReadOnlyFlag() || !failsInsertInReadOnlyTx()) {
             return
         }
         when:
@@ -97,6 +129,17 @@ abstract class AbstractTransactionSpec extends Specification implements TestProp
         then:
             def e = thrown(Exception)
             cannotInsertInReadOnlyTx(e)
+    }
+
+    void "test read only transaction adding book in inner transaction not throwing error"() {
+        if (!supportsReadOnlyFlag() || failsInsertInReadOnlyTx()) {
+            return
+        }
+        when:
+        bookService.readOnlyTxCallingAddingBookInAnotherTransaction()
+        then:
+        noExceptionThrown()
+        bookService.countBooksTransactional() == 1
     }
 
     void "test book added in never propagation"() {

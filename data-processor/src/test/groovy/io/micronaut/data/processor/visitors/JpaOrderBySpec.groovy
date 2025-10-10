@@ -84,7 +84,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
         listName.synthesize(Query).value() == "SELECT ${alias}.name FROM $Person.name AS ${alias} ORDER BY ${alias}.name ASC"
         listName.synthesize(DataMethod).resultType() == String
         listTop3.synthesize(Query).value() == "SELECT ${alias} FROM $Person.name AS ${alias} ORDER BY ${alias}.name ASC"
-        listTop3.synthesize(DataMethod).pageSize() == 3
+        listTop3.intValue(DataMethod, DataMethod.META_MEMBER_LIMIT).getAsInt() == 3
         findByCompanyUrlOrderByCompanyUrl.synthesize(Query).value() == "SELECT ${alias} FROM $Person.name AS ${alias} JOIN ${alias}.company ${alias}${companyAlias} WHERE (${alias}${companyAlias}.url = :p1) ORDER BY ${alias}${companyAlias}.url ASC"
     }
 

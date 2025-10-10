@@ -8,5 +8,5 @@ dependencies {
 
     api projects.micronautDataRuntime
     api projects.micronautDataModel
-    api(libs.managed.jakarta.persistence.api)
+    api(mnSql.jakarta.persistence.api)
 }

@@ -15,6 +15,10 @@
  */
 package io.micronaut.data.processor.sql
 
+import io.micronaut.data.intercept.DeleteAllInterceptor
+import io.micronaut.data.intercept.DeleteReturningManyInterceptor
+import io.micronaut.data.intercept.DeleteReturningOneInterceptor
+import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.DataType
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import spock.lang.Unroll
@@ -367,4 +371,220 @@ interface BookRepository extends GenericRepository<Book, Long> {
             getResultDataType(deleteReturningMethod) == DataType.ENTITY
     }
 
+    void "POSTGRES test build delete with tenant id"() {
+        given:
+            def repository = buildRepository('test.AccountRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Account;
+
+@JdbcRepository(dialect= Dialect.POSTGRES)
+interface AccountRepository extends CrudRepository<Account, Long> {
+
+    List<Account> deleteReturning(Long id);
+
+}
+""")
+        when:
+            def deleteReturningCustomMethod = repository.findPossibleMethods("deleteReturning").findFirst().get()
+        then:
+            getQuery(deleteReturningCustomMethod) == 'DELETE  FROM "account"  WHERE ("id" = ? AND "tenancy" = ?) RETURNING "id","name","tenancy"'
+            getParameterPropertyPaths(deleteReturningCustomMethod) == ["id", "tenancy"] as String[]
+            getDataResultType(deleteReturningCustomMethod) == "io.micronaut.data.tck.entities.Account"
+            getDataInterceptor(deleteReturningCustomMethod) == "io.micronaut.data.intercept.DeleteReturningManyInterceptor"
+            getResultDataType(deleteReturningCustomMethod) == DataType.ENTITY
+
+        when:
+            def deleteOne = repository.findPossibleMethods("delete").findFirst().get()
+        then:
+            getQuery(deleteOne) == 'DELETE  FROM "account"  WHERE ("id" = ? AND "tenancy" = ?)'
+            getParameterPropertyPaths(deleteOne) == ["id", "tenancy"] as String[]
+            getDataResultType(deleteOne) == "void"
+            getDataInterceptor(deleteOne) == "io.micronaut.data.intercept.DeleteOneInterceptor"
+            getResultDataType(deleteOne) == null
+
+        when:
+            def deleteAll = repository.findPossibleMethods("deleteAll").findFirst().get()
+        then:
+            getQuery(deleteAll) == 'DELETE  FROM "account"  WHERE ("tenancy" = ?)'
+            getParameterPropertyPaths(deleteAll) == ["tenancy"] as String[]
+            getDataResultType(deleteAll) == "void"
+            getDataInterceptor(deleteAll) == "io.micronaut.data.intercept.DeleteAllInterceptor"
+            getResultDataType(deleteAll) == null
+
+        when:
+            def deleteEntities = repository.findMethod("deleteAll", Iterable).get()
+        then:
+            getQuery(deleteEntities) == 'DELETE  FROM "account"  WHERE ("id" IN (?) AND "tenancy" = ?)'
+            getParameterPropertyPaths(deleteEntities) == ["id", "tenancy"] as String[]
+            getDataResultType(deleteEntities) == "void"
+            getDataInterceptor(deleteEntities) == "io.micronaut.data.intercept.DeleteAllInterceptor"
+            getResultDataType(deleteEntities) == null
+
+        when:
+            def deleteById = repository.findPossibleMethods("deleteById").findFirst().get()
+        then:
+            getQuery(deleteById) == 'DELETE  FROM "account"  WHERE ("id" = ? AND "tenancy" = ?)'
+            getParameterPropertyPaths(deleteById) == ["id", "tenancy"] as String[]
+            getDataResultType(deleteById) == "void"
+            getDataInterceptor(deleteById) == "io.micronaut.data.intercept.DeleteAllInterceptor"
+            getResultDataType(deleteById) == null
+    }
+
+    @Unroll
+    void "test build delete returning for type #type"() {
+        given:
+        def repository = buildRepository('test.PersonRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Person;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
+interface PersonRepository extends CrudRepository<Person, Long> {
+
+    @Query("DELETE FROM person RETURNING *")
+    $type customDeleteReturning(Long id);
+
+}
+""")
+        def method = repository.findPossibleMethods("customDeleteReturning").findFirst().get()
+        def deleteQuery = getQuery(method)
+
+        expect:
+        deleteQuery == "DELETE FROM person RETURNING *"
+        method.classValue(DataMethod, "interceptor").get() == interceptor
+
+        where:
+        type                                          | interceptor
+        'java.util.List<Person>'                      | DeleteReturningManyInterceptor
+        'Person'                                      | DeleteReturningOneInterceptor
+    }
+
+    @Unroll
+    void "test build delete returning for type #type text-block no-indent"() {
+        given:
+        def repository = buildRepository('test.PersonRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Person;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
+interface PersonRepository extends CrudRepository<Person, Long> {
+
+    @Query(\"""
+            DELETE FROM person
+            RETURNING *
+            \""")
+    $type customDeleteReturning(Long id);
+
+}
+""")
+        def method = repository.findPossibleMethods("customDeleteReturning").findFirst().get()
+        def deleteQuery = getQuery(method)
+
+        expect:
+        deleteQuery.replace('\n', ' ') == "DELETE FROM person RETURNING * "
+        method.classValue(DataMethod, "interceptor").get() == interceptor
+
+        where:
+        type                                          | interceptor
+        'java.util.List<Person>'                      | DeleteReturningManyInterceptor
+        'Person'                                      | DeleteReturningOneInterceptor
+    }
+
+    @Unroll
+    void "test build delete returning property for type #type"() {
+        given:
+        def repository = buildRepository('test.PersonRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Person;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
+interface PersonRepository extends CrudRepository<Person, Long> {
+
+    @Query("DELETE FROM person RETURNING id")
+    $type customDeleteReturning(Long id);
+
+}
+""")
+        def method = repository.findPossibleMethods("customDeleteReturning").findFirst().get()
+        def deleteQuery = getQuery(method)
+
+        expect:
+        deleteQuery == "DELETE FROM person RETURNING id"
+        method.classValue(DataMethod, "interceptor").get() == interceptor
+
+        where:
+        type                                          | interceptor
+        'java.util.List<Long>'                        | DeleteReturningManyInterceptor
+        'Long'                                        | DeleteReturningOneInterceptor
+    }
+
+    @Unroll
+    void "test build delete returning property for type #type text-block no-indent"() {
+        given:
+        def repository = buildRepository('test.PersonRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Person;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
+interface PersonRepository extends CrudRepository<Person, Long> {
+
+    @Query(\"""
+            DELETE FROM person
+            RETURNING id
+            \""")
+    $type customDeleteReturning(Long id);
+
+}
+""")
+        def method = repository.findPossibleMethods("customDeleteReturning").findFirst().get()
+        def deleteQuery = getQuery(method)
+
+        expect:
+        deleteQuery.replace('\n', ' ') == "DELETE FROM person RETURNING id "
+        method.classValue(DataMethod, "interceptor").get() == interceptor
+
+        where:
+        type                                          | interceptor
+        'java.util.List<Long>'                        | DeleteReturningManyInterceptor
+        'Long'                                        | DeleteReturningOneInterceptor
+    }
+
+    @Unroll
+    void "test build delete with CTE"() {
+        given:
+        def repository = buildRepository('test.PersonRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Person;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
+interface PersonRepository extends CrudRepository<Person, Long> {
+
+    @Query(\"""
+            WITH ids AS (SELECT id FROM person)
+            DELETE FROM person
+            WHERE id = :id
+            \""")
+    void customDelete(Long id);
+
+}
+""")
+        def method = repository.findPossibleMethods("customDelete").findFirst().get()
+        def deleteQuery = getQuery(method)
+
+        expect:
+        deleteQuery.replace('\n', ' ') == "WITH ids AS (SELECT id FROM person) DELETE FROM person WHERE id = :id "
+        method.classValue(DataMethod, "interceptor").get() == DeleteAllInterceptor
+    }
 }

@@ -34,6 +34,8 @@ import java.util.Objects;
 @Serdeable
 class DefaultPage<T> extends DefaultSlice<T> implements Page<T> {
 
+    static final long NO_TOTAL_SIZE = -1L;
+
     private final long totalSize;
 
     /**
@@ -51,9 +53,14 @@ class DefaultPage<T> extends DefaultSlice<T> implements Page<T> {
             @JsonProperty("pageable")
             Pageable pageable,
             @JsonProperty("totalSize")
-            long totalSize) {
+            Long totalSize) {
         super(content, pageable);
-        this.totalSize = totalSize;
+        this.totalSize = totalSize != null ? totalSize : NO_TOTAL_SIZE;
+    }
+
+    @Override
+    public boolean hasTotalSize() {
+        return totalSize != NO_TOTAL_SIZE;
     }
 
     @Override
@@ -70,7 +77,7 @@ class DefaultPage<T> extends DefaultSlice<T> implements Page<T> {
         if (!(o instanceof DefaultPage<?> that)) {
             return false;
         }
-        return totalSize == that.totalSize && super.equals(o);
+        return Objects.equals(totalSize, that.totalSize) && super.equals(o);
     }
 
     @Override

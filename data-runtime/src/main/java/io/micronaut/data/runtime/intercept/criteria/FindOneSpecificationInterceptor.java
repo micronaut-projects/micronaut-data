@@ -42,7 +42,8 @@ public class FindOneSpecificationInterceptor extends AbstractSpecificationInterc
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         return convertOne(
             context,
-            findOne(methodKey, context, Type.FIND_ONE)
+                getCriteriaRepositoryOperations(methodKey, context, null)
+                        .<Object>findOne(buildQuery(methodKey, context))
         );
     }
 }

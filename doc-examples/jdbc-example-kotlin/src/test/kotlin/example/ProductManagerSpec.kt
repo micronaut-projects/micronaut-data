@@ -32,4 +32,14 @@ internal class ProductManagerSpec {
         val (_, name) = productManager.find("VR")
         Assertions.assertEquals("VR", name)
     }
+
+    @Test
+    fun testProductManagerUsingRepo() {
+        val intel = manufacturerRepository.save("Intel")
+        productManager.save("Processor", intel)
+        var product = productManager.findUsingRepo("Processor")
+        Assertions.assertEquals("Processor", product?.name)
+        product = productManager.findUsingRepo("NonExistingProduct")
+        Assertions.assertNull(product)
+    }
 }

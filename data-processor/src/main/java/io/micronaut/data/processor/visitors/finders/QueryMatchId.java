@@ -27,6 +27,7 @@ import io.micronaut.core.annotation.Internal;
 public enum QueryMatchId implements MethodNameParser.MatchId {
 
     PREFIX,
+    ALL,
     ALL_OR_ONE,
     LIMIT,
     FIRST,

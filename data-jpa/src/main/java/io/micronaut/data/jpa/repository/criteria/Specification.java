@@ -35,7 +35,9 @@ import jakarta.persistence.criteria.Root;
  * @author Jens Schauder
  * @param <T> The entity root type
  * @since 3.1
+ * @deprecated replaced by {@link io.micronaut.data.repository.jpa.JpaSpecificationExecutor} and {@link io.micronaut.data.repository.jpa.criteria.QuerySpecification}
  */
+@Deprecated(forRemoval = true, since = "4.9")
 public interface Specification<T> {
 
     /**

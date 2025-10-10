@@ -97,6 +97,21 @@ public @interface DataMethodQueryParameter {
     String META_MEMBER_EXPRESSION = "expression";
 
     /**
+     * The member name that holds the role name.
+     */
+    String META_MEMBER_ROLE = "role";
+
+    /**
+     * The member name that holds the table alias.
+     */
+    String META_MEMBER_TABLE_ALIAS = "tableAlias";
+
+    /**
+     * @return The query parameter value
+     */
+    String value() default "";
+
+    /**
      * @return The query parameter name
      */
     String name() default "";

@@ -86,7 +86,13 @@ public class TypeUtils {
      * @return True if is
      */
     public static boolean isIterableOfEntity(@Nullable ClassElement type) {
-        return type != null && isIterableOfDto(type) && hasPersistedTypeArgument(type);
+        if (type == null) {
+            return false;
+        }
+        if (type.isArray() && isEntity(type.fromArray())) {
+            return true;
+        }
+        return isIterableOfDto(type) && hasPersistedTypeArgument(type);
     }
 
     /**
@@ -127,8 +133,20 @@ public class TypeUtils {
         if (type == null) {
             return false;
         }
-        return type.hasStereotype(MappedEntity.class);
+        return !type.isArray() && type.hasStereotype(MappedEntity.class);
     }
+
+//    /**
+//     * Does the given type have an {@link MappedEntity}.
+//     * @param parameterElement The type
+//     * @return True if it does
+//     */
+//    public static boolean isEntity(@Nullable ParameterElement parameterElement) {
+//        if (parameterElement == null || parameterElement.getGenericType().isArray()) {
+//            return false;
+//        }
+//        return
+//    }
 
     /**
      * Does the given type have an {@link Introspected}.
@@ -279,6 +297,18 @@ public class TypeUtils {
     }
 
     /**
+     * Is the type a string.
+     * @param type The type
+     * @return True if is a number
+     */
+    public static boolean isTextual(@Nullable ClassElement type) {
+        if (type == null) {
+            return false;
+        }
+        return type.isAssignable(CharSequence.class);
+    }
+
+    /**
      * Is the type void.
      * @param type The type
      * @return True if is void
@@ -341,6 +371,27 @@ public class TypeUtils {
             returnType = TypeUtils.getKotlinCoroutineProducedType(methodElement);
         }
         return TypeUtils.isIterableOfEntity(returnType) || TypeUtils.isIterableOfDto(returnType);
+    }
+
+    /**
+     * Checks whether the return type is supported.
+     *
+     * @param methodElement The method
+     * @return True if it is supported
+     */
+    public static boolean doesMethodProducesIterable(MethodElement methodElement) {
+        ClassElement returnType = methodElement.getGenericReturnType();
+        if (TypeUtils.isReactiveType(returnType)) {
+            return true;
+        }
+        if (TypeUtils.isFutureType(returnType)) {
+            returnType = returnType.getFirstTypeArgument().orElse(null);
+            return returnType != null && returnType.isAssignable(Iterable.class);
+        }
+        if (methodElement.isSuspend()) {
+            returnType = TypeUtils.getKotlinCoroutineProducedType(methodElement);
+        }
+        return returnType.isAssignable(Iterable.class);
     }
 
     /**

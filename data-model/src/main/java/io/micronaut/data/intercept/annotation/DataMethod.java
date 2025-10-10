@@ -20,7 +20,6 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.model.DataType;
 
-import java.io.Serializable;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -92,56 +91,48 @@ public @interface DataMethod {
     String META_MEMBER_PARAMETER_BINDING = "parameterBinding";
 
     /**
-     * The member name that holds parameter binding paths.
-     * @deprecated No longer used
-     */
-    @Deprecated(forRemoval = true)
-    String META_MEMBER_PARAMETER_BINDING_PATHS = META_MEMBER_PARAMETER_BINDING + "Paths";
-
-    /**
-     * The member name that holds parameter auto-populated property paths.
-     * @deprecated No longer used
-     */
-    @Deprecated(forRemoval = true)
-    String META_MEMBER_PARAMETER_AUTO_POPULATED_PROPERTY_PATHS = META_MEMBER_PARAMETER_BINDING + "AutoPopulatedPaths";
-
-    /**
-     * The member name that holds parameter auto-populated property paths.
-     * @deprecated No longer used
-     */
-    @Deprecated(forRemoval = true)
-    String META_MEMBER_PARAMETER_AUTO_POPULATED_PREVIOUS_PROPERTY_PATHS = META_MEMBER_PARAMETER_BINDING + "AutoPopulatedPreviousPaths";
-
-    /**
-     * The member name that holds parameter auto-populated property paths.
-     * @deprecated No longer used
-     */
-    @Deprecated(forRemoval = true)
-    String META_MEMBER_PARAMETER_AUTO_POPULATED_PREVIOUS_PROPERTY_INDEXES = META_MEMBER_PARAMETER_BINDING + "AutoPopulatedPrevious";
-
-    /**
      * The ID type.
+     * @deprecated Not used
      */
+    @Deprecated(forRemoval = true, since = "4.10")
     String META_MEMBER_ID_TYPE = "idType";
 
     /**
      * The parameter that holds the pageSize value.
+     * @deprecated Replaced with {@link #META_MEMBER_LIMIT}
      */
+    @Deprecated(forRemoval = true, since = "4.10")
     String META_MEMBER_PAGE_SIZE = "pageSize";
 
     /**
      * The parameter that holds the offset value.
+     * @deprecated Replaced with {@link #META_MEMBER_OFFSET}
      */
+    @Deprecated(forRemoval = true, since = "4.10")
     String META_MEMBER_PAGE_INDEX = "pageIndex";
 
     /**
-     * The parameter that references the entity.
+     * The parameter that holds the offset value.
      */
+    String META_MEMBER_OFFSET = "offset";
+
+    /**
+     * The parameter that holds the limit value.
+     */
+    String META_MEMBER_LIMIT = "limit";
+
+    /**
+     * The parameter that references the entity.
+     * @deprecated Not used
+     */
+    @Deprecated(forRemoval = true, since = "4.10")
     String META_MEMBER_ENTITY = "entity";
 
     /**
      * The parameter that references the ID.
+     * @deprecated Not used
      */
+    @Deprecated(forRemoval = true, since = "4.10")
     String META_MEMBER_ID = "id";
 
     /**
@@ -218,13 +209,6 @@ public @interface DataMethod {
     DataType resultDataType() default DataType.OBJECT;
 
     /**
-     * The identifier type for the method being executed.
-     *
-     * @return The ID type
-     */
-    Class<?> idType() default Serializable.class;
-
-    /**
      * The parameter binding defines which method arguments bind to which
      * query parameters. The {@link Property#name()} is used to define the query parameter name and the
      * {@link Property#value()} is used to define method argument name to bind.
@@ -239,33 +223,43 @@ public @interface DataMethod {
      * The argument that defines the pageable object.
      *
      * @return The pageable.
+     * @deprecated Not used
      */
+    @Deprecated(forRemoval = true, since = "4.10")
     String pageable() default "";
 
     /**
      * The argument that represents the entity for save, update, query by example operations etc.
      *
      * @return The entity argument
+     * @deprecated Not used
      */
+    @Deprecated(forRemoval = true, since = "4.10")
     String entity() default "";
 
     /**
      * The member that defines the ID for lookup, delete, update by ID.
      * @return The ID
+     * @deprecated Not used
      */
+    @Deprecated(forRemoval = true, since = "4.10")
     String id() default "";
 
     /**
      * An explicit pageSize (in absence of a pageable).
      * @return The pageSize
+     * @deprecated Not used
      */
+    @Deprecated(forRemoval = true, since = "4.10")
     int pageSize() default -1;
 
     /**
      * An explicit offset (in absence of a pageable).
      *
      * @return The offset
+     * @deprecated Not used
      */
+    @Deprecated(forRemoval = true, since = "4.10")
     long pageIndex() default 0;
 
     /**

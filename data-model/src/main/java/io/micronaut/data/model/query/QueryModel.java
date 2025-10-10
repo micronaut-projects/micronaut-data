@@ -30,7 +30,9 @@ import java.util.*;
  *
  * @author graemerocher
  * @since 1.0
+ * @deprecated Replaced by JPA criteria
  */
+@Deprecated(forRemoval = true, since = "4.9")
 public interface QueryModel extends Criteria {
 
     @NonNull

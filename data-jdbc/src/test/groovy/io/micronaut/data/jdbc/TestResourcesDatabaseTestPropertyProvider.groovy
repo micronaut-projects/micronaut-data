@@ -53,7 +53,11 @@ trait TestResourcesDatabaseTestPropertyProvider implements TestPropertyProvider 
                 (prefix + '.schema-generate')   : schemaGenerate(),
                 (prefix + '.dialect')           : dialect(),
                 (prefix + '.packages')          : packages(),
+                (prefix + '.enabled')           : dataSourceEnabled(dataSourceName)
         ] as Map<String, String>
     }
 
+    boolean dataSourceEnabled(String dataSourceName) {
+        true
+    }
 }

@@ -50,7 +50,7 @@ import io.micronaut.data.cosmos.common.CosmosAccessException;
 import io.micronaut.data.cosmos.common.CosmosEntity;
 import io.micronaut.data.cosmos.common.CosmosUtils;
 import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration;
-import io.micronaut.data.document.model.query.builder.CosmosSqlQueryBuilder;
+import io.micronaut.data.document.model.query.builder.CosmosSqlQueryBuilder2;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
@@ -136,7 +136,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
 
     private final CosmosSerde cosmosSerde;
     private final CosmosAsyncDatabase cosmosAsyncDatabase;
-    private CosmosSqlQueryBuilder defaultCosmosSqlQueryBuilder;
+    private CosmosSqlQueryBuilder2 defaultCosmosSqlQueryBuilder;
     private final CosmosDiagnosticsProcessor cosmosDiagnosticsProcessor;
     private final boolean queryMetricsEnabled;
 
@@ -176,14 +176,14 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     @Override
     public <E, R> StoredQuery<E, R> decorate(MethodInvocationContext<?, ?> context, StoredQuery<E, R> storedQuery) {
         if (defaultCosmosSqlQueryBuilder == null) {
-            defaultCosmosSqlQueryBuilder = new CosmosSqlQueryBuilder(context.getAnnotationMetadata());
+            defaultCosmosSqlQueryBuilder = new CosmosSqlQueryBuilder2(context.getAnnotationMetadata());
         }
         String update = null;
         if (storedQuery instanceof QueryResultStoredQuery<E, R> queryResultStoredQuery) {
             update = queryResultStoredQuery.getQueryResult().getUpdate();
         }
         RuntimePersistentEntity<E> runtimePersistentEntity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
-        return new CosmosSqlStoredQuery<>(storedQuery, runtimePersistentEntity, defaultCosmosSqlQueryBuilder, update);
+        return new CosmosSqlStoredQuery<>(storedQuery, runtimePersistentEntity, defaultCosmosSqlQueryBuilder, update, getConversionService());
     }
 
     @Override
@@ -218,7 +218,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     @Override
     public <T> Mono<Boolean> exists(@NonNull PreparedQuery<T, Boolean> pq) {
         SqlPreparedQuery<T, Boolean> preparedQuery = getSqlPreparedQuery(pq);
-        preparedQuery.attachPageable(preparedQuery.getPageable(), true);
+        preparedQuery.attachPageable(preparedQuery.getPageable(), preparedQuery.getQueryLimit(), preparedQuery.getSort(), true);
         preparedQuery.prepare(null);
         SqlQuerySpec querySpec = new SqlQuerySpec(preparedQuery.getQuery(), new ParameterBinder().bindParameters(preparedQuery));
         logQuery(querySpec);
@@ -235,7 +235,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     @NonNull
     public <T, R> Mono<R> findOne(@NonNull PreparedQuery<T, R> pq) {
         SqlPreparedQuery<T, R> preparedQuery = getSqlPreparedQuery(pq);
-        preparedQuery.attachPageable(preparedQuery.getPageable(), true);
+        preparedQuery.attachPageable(preparedQuery.getPageable(), preparedQuery.getQueryLimit(), preparedQuery.getSort(), true);
         preparedQuery.prepare(null);
         SqlQuerySpec querySpec = new SqlQuerySpec(preparedQuery.getQuery(), new ParameterBinder().bindParameters(preparedQuery));
         logQuery(querySpec);
@@ -276,7 +276,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     @NonNull
     public <T, R> Flux<R> findAll(@NonNull PreparedQuery<T, R> pq) {
         SqlPreparedQuery<T, R> preparedQuery = getSqlPreparedQuery(pq);
-        preparedQuery.attachPageable(preparedQuery.getPageable(), false);
+        preparedQuery.attachPageable(preparedQuery.getPageable(), preparedQuery.getQueryLimit(), preparedQuery.getSort(), false);
         preparedQuery.prepare(null);
         boolean dtoProjection = preparedQuery.isDtoProjection();
         boolean isEntity = preparedQuery.getResultDataType() == DataType.ENTITY;
@@ -294,7 +294,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             return result.byPage().flatMap(response -> {
                 CosmosUtils.processDiagnostics(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS, response.getCosmosDiagnostics(),
                     response.getActivityId(), response.getRequestCharge());
-                return Flux.fromIterable(response.getResults().stream().map(item -> cosmosSerde.deserialize(item, argument)).collect(Collectors.toList()));
+                return Flux.fromIterable(response.getResults().stream().map(item -> cosmosSerde.deserialize(item, argument)).toList());
             }).onErrorMap(e ->  CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS,
                 FAILED_TO_QUERY_ITEMS, e));
         }
@@ -312,7 +312,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                     return conversionService.convertRequired(item, resultType);
                 }
                 return null;
-            }).collect(Collectors.toList()));
+            }).toList());
         }).onErrorMap(e ->  CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS,
             FAILED_TO_QUERY_ITEMS, e));
     }

@@ -9,7 +9,7 @@ test-resources:
       startup-timeout: 300s
     oracle:
       startup-timeout: 300s
-      image-name: gvenzl/oracle-xe:latest-faststart
+      image-name: gvenzl/oracle-free:latest-faststart
     postgres:
       startup-timeout: 300s
 

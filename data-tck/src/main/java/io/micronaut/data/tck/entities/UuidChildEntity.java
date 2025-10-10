@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.tck.entities;
 
-import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 
@@ -23,7 +23,7 @@ import java.util.UUID;
 
 @MappedEntity
 public class UuidChildEntity {
-    @GeneratedValue
+    @AutoPopulated
     @Id
     private UUID uuid;
 

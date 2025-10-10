@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.spring.jdbc
 
-
+import io.micronaut.data.connection.ConnectionOperations
 import io.micronaut.data.spring.jdbc.micronaut.H2BookRepository
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.tests.AbstractTransactionSpec
@@ -43,6 +43,11 @@ class SpringJdbcTransactionSpec extends AbstractTransactionSpec {
     @Override
     protected TransactionOperations getTransactionOperations() {
         return context.getBean(SpringJdbcTransactionOperations)
+    }
+
+    @Override
+    protected ConnectionOperations getConnectionOperations() {
+        return context.getBean(SpringJdbcConnectionOperations)
     }
 
     @Override

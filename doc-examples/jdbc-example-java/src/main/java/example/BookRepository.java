@@ -46,6 +46,14 @@ interface BookRepository extends CrudRepository<Book, Long> { // <2>
     Slice<Book> list(Pageable pageable);
     // end::pageable[]
 
+    // tag::cursored-pageable[]
+    CursoredPage<Book> find(CursoredPageable pageable); // <1>
+
+    CursoredPage<Book> findByPagesBetween(int minPageCount, int maxPageCount, Pageable pageable); // <2>
+
+    Page<Book> findByTitleStartingWith(String title, Pageable pageable); // <3>
+    // end::cursored-pageable[]
+
     // tag::simple-projection[]
     List<String> findTitleByPagesGreaterThan(int pageCount);
     // end::simple-projection[]
@@ -113,6 +121,19 @@ interface BookRepository extends CrudRepository<Book, Long> { // <2>
     @Procedure
     Long calculateSum(@NonNull Long bookId);
     // end::procedure[]
+
+    // tag::onetomanycustom[]
+    @Query("""
+        SELECT book_.*,
+               reviews_.id AS reviews_id, reviews_.reviewer AS reviews_reviewer,
+               reviews_.content AS reviews_content, reviews_.book_id AS reviews_book_id
+        FROM book book_ INNER JOIN review reviews_ ON book_.id = reviews_.book_id
+        WHERE book_.title = :title
+        """)
+    @Join("reviews")
+    List<Book> searchBooksByTitle(String title);
+    // end::onetomanycustom[]
+
 
 // tag::repository[]
 }

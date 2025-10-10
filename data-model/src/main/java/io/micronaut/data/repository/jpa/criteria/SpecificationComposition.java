@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.repository.jpa.criteria;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -37,7 +38,8 @@ import java.io.Serializable;
  * @author Denis Stepanov
  * @since 3.2
  */
-class SpecificationComposition {
+@Internal
+final class SpecificationComposition {
 
     @NonNull
     static <T> QuerySpecification<T> composed(@Nullable QuerySpecification<T> lhs, @Nullable QuerySpecification<T> rhs, Combiner combiner) {

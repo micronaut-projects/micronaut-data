@@ -20,7 +20,7 @@ dependencies {
     implementation mnRxjava2.micronaut.rxjava2
     implementation mn.micronaut.http.client
     implementation mnValidation.micronaut.validation
-    implementation(libs.managed.jakarta.persistence.api)
+    implementation(mnSql.jakarta.persistence.api)
 
     runtimeOnly mnLogging.logback.classic
     runtimeOnly mnSql.micronaut.jdbc.tomcat

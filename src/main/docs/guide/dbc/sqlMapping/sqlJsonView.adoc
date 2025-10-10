@@ -12,6 +12,44 @@ More about Oracle JSON VIEW can be read here https://docs.oracle.com/en/database
 Essentially, json view will be treated like mapped entity and will return JSON structure from the database and be mapped to java entity. All CRUD operations can be
 performed against json view mapped entities.
 
-Limitations
+==== Optimistic Locking
+
+You can use optimistic/lock-free concurrency control with duality views, writing JSON documents or committing their updates only when other sessions haven't modified them concurrently.
+
+Optimistic concurrency control at the document level uses embedded ETAG values in field etag, which is in the object that is the value of field `_metadata`.
+
+Example of class used to map `_metadata` field:
+
+[source,java]
+----
+/**
+ * The Json Duality View metadata.
+ *
+ * @param etag A unique identifier for a specific version of the document, as a string of hexadecimal characters.
+ * @param asof The latest system change number (SCN) for the JSON document, as a JSON number.
+*              This records the last logical point in time at which the document was generated.
+ */
+@Introspected
+public record Metadata(
+    String etag,
+    String asof
+) {
+}
+----
+
+Then this metadata class can be declared as property of class mapped to Json Duality View like this:
+
+[source,java]
+----
+@JsonProperty("_metadata")
+Metadata metadata;
+----
+
+If Json Duality View mapped entity is updated with invalid or unexpected `etag` value of the `metadata` field
+then `OptimisticLockingException` will be thrown.
+
+NOTE: Using `@Version` is not supported in Json Duality View mapped classes.
+
+==== Limitations
 
 * During schema creation, json view mapped entities are skipped, and it is expected for users to create them manually or via migration scripts.

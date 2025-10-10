@@ -13,7 +13,7 @@ public class Contact {
     private Long id;
     private String name;
     private int age;
-    private boolean active = true;
+    private Boolean active = true;
     private LocalDateTime startDateTime;
 
     public Long getId() { return id; }
@@ -23,11 +23,11 @@ public class Contact {
     public int getAge() { return age; }
     public void setAge(int age) { this.age = age; }
 
-    public boolean isActive() {
+    public Boolean isActive() {
         return active;
     }
 
-    public void setActive(boolean active) {
+    public void setActive(Boolean active) {
         this.active = active;
     }
 

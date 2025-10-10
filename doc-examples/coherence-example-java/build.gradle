@@ -1,0 +1,28 @@
+plugins {
+    id "io.micronaut.build.internal.data-example"
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "junit5"
+}
+
+dependencies {
+    annotationProcessor projects.micronautDataProcessor
+    annotationProcessor mnCoherence.micronaut.coherence.data
+
+    implementation projects.micronautDataModel
+    implementation projects.micronautDataRuntime
+    implementation mnCoherence.coherence
+    implementation(mnCoherence.micronaut.coherence.data) {
+        exclude group: 'io.micronaut.data'
+    }
+
+    testRuntimeOnly mnLogging.logback.classic
+    testRuntimeOnly mn.snakeyaml
+}

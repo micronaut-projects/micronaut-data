@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.mongodb.serde;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -39,6 +40,7 @@ import java.io.IOException;
  * @author Denis Stepanov
  * @since 3.3
  */
+@Internal
 class MappedCodec<T> implements Codec<T> {
 
     protected final DataSerdeRegistry dataSerdeRegistry;
@@ -68,8 +70,8 @@ class MappedCodec<T> implements Codec<T> {
         this.type = type;
         this.argument = Argument.of(type);
         this.codecRegistry = codecRegistry;
-        this.decoderContext = dataSerdeRegistry.newDecoderContext(type, argument, persistentEntity, codecRegistry);
-        this.encoderContext = dataSerdeRegistry.newEncoderContext(type, argument, persistentEntity, codecRegistry);
+        this.decoderContext = dataSerdeRegistry.newDecoderContext(type, codecRegistry);
+        this.encoderContext = dataSerdeRegistry.newEncoderContext(type, codecRegistry);
         try {
             this.serializer = dataSerdeRegistry.findSerializer(argument).createSpecific(encoderContext, argument);
             this.deserializer = dataSerdeRegistry.findDeserializer(argument).createSpecific(decoderContext, argument);

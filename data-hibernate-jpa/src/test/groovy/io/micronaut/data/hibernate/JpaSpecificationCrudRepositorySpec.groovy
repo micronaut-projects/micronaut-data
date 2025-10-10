@@ -204,7 +204,7 @@ class JpaSpecificationCrudRepositorySpec extends Specification {
         def people = [p1, p2, p3, p4, p5]
         crudRepository.saveAll(people)
         then:"can be ordered case insensitively"
-        def peopleIds = people.stream().map(p -> p.getId()).collect(Collectors.toList())
+        def peopleIds = people.stream().map(p -> p.getId()).toList()
         Page<Person> personsPaged = crudRepository.findAll(new io.micronaut.data.jpa.repository.criteria.Specification<Person>() {
             @Override
             Predicate toPredicate(Root<Person> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
@@ -212,7 +212,7 @@ class JpaSpecificationCrudRepositorySpec extends Specification {
             }
         }, Pageable.from(0, 10, Sort.of(new Sort.Order("name", Sort.Order.Direction.ASC, true))))
         personsPaged.totalSize == 5
-        def personNames = personsPaged.content.stream().map(p -> p.name).collect(Collectors.toList())
+        def personNames = personsPaged.content.stream().map(p -> p.name).toList()
         personNames.size() == 5
         personNames[0].toLowerCase() == "a"
         personNames[1].toLowerCase() == "a"

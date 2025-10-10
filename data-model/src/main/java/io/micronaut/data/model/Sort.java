@@ -72,6 +72,22 @@ public interface Sort {
     @NonNull Sort order(@NonNull Sort.Order order);
 
     /**
+     * Adds an orders.
+     *
+     * @param orders The orders
+     * @return A new sort with the order applied
+     * @since 4.10
+     */
+    @NonNull
+    default Sort orders(@NonNull List<Sort.Order> orders) {
+        Sort theSort = this;
+        for (Order order : orders) {
+            theSort = theSort.order(order);
+        }
+        return theSort;
+    }
+
+    /**
      * Orders by the specified property name and direction.
      *
      * @param propertyName The property name to order by
@@ -179,6 +195,19 @@ public interface Sort {
         }
 
         /**
+         * Create an order that is reversed to current.
+         *
+         * @return A new instance of order that is reversed.
+         */
+        public Order reverse() {
+            return new Order(
+                property,
+                direction == Direction.ASC ? Direction.DESC : Direction.ASC,
+                ignoreCase
+            );
+        }
+
+        /**
          * Creates a new order for the given property in descending order.
          *
          * @param property The property
@@ -221,8 +250,21 @@ public interface Sort {
         }
 
         /**
+         * Creates a new order for the given property in ascending order.
+         *
+         * @param property The property
+         * @param ignoreCase  Whether to ignore case
+         * @return The order instance
+         * @since 4.13
+         */
+        public static Order of(String property, boolean ignoreCase) {
+            return new Order(property, Direction.ASC, ignoreCase);
+        }
+
+        /**
          * @return Is the order ascending
          */
+        @JsonIgnore
         public boolean isAscending() {
             return getDirection() == Direction.ASC;
         }
@@ -232,6 +274,14 @@ public interface Sort {
          */
         public enum Direction {
             ASC, DESC
+        }
+
+        @Override
+        public String toString() {
+            return "SORT{" + property
+                + (direction == Direction.ASC ? ", ASC" : ", DESC")
+                + (ignoreCase ? ", ignoreCase" : "")
+                + ")";
         }
 
         @Override

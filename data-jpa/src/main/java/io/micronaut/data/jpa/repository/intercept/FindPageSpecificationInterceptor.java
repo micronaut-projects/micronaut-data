@@ -40,7 +40,9 @@ import java.util.List;
  * @author graemerocher
  * @author Denis Stepanov
  * @since 3.1
+ * @deprecated {@link Specification} is deprecated
  */
+@Deprecated(since = "4.10", forRemoval = true)
 @Internal
 public class FindPageSpecificationInterceptor extends AbstractSpecificationInterceptor<Object, Object> {
     private final JpaRepositoryOperations jpaOperations;
@@ -96,29 +98,33 @@ public class FindPageSpecificationInterceptor extends AbstractSpecificationInter
             return Page.of(
                     resultList,
                     pageable,
-                    resultList.size()
+                    (long) resultList.size()
             );
         } else {
             typedQuery.setFirstResult((int) pageable.getOffset());
             typedQuery.setMaxResults(pageable.getSize());
             final List<Object> results = typedQuery.getResultList();
-            final CriteriaQuery<Long> countQuery = criteriaBuilder.createQuery(Long.class);
-            final Root<?> countRoot = countQuery.from(rootEntity);
-            final Predicate countPredicate = specification != null ? specification.toPredicate(countRoot, countQuery, criteriaBuilder) : null;
-            if (countPredicate != null) {
-                countQuery.where(countPredicate);
+
+            Long totalCount = null;
+            if (pageable.requestTotal()) {
+                final CriteriaQuery<Long> countQuery = criteriaBuilder.createQuery(Long.class);
+                final Root<?> countRoot = countQuery.from(rootEntity);
+                final Predicate countPredicate = specification != null ? specification.toPredicate(countRoot, countQuery, criteriaBuilder) : null;
+                if (countPredicate != null) {
+                    countQuery.where(countPredicate);
+                }
+                if (countQuery.isDistinct()) {
+                    countQuery.select(criteriaBuilder.countDistinct(countRoot));
+                } else {
+                    countQuery.select(criteriaBuilder.count(countRoot));
+                }
+                totalCount = entityManager.createQuery(countQuery).getSingleResult();
             }
-            if (countQuery.isDistinct()) {
-                countQuery.select(criteriaBuilder.countDistinct(countRoot));
-            } else {
-                countQuery.select(criteriaBuilder.count(countRoot));
-            }
-            Long singleResult = entityManager.createQuery(countQuery).getSingleResult();
 
             return Page.of(
                     results,
                     pageable,
-                    singleResult
+                    totalCount
             );
         }
 

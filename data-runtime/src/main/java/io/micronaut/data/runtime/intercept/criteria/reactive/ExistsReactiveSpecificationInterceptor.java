@@ -43,7 +43,8 @@ public class ExistsReactiveSpecificationInterceptor extends AbstractReactiveSpec
     public Publisher<Boolean> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Publisher<Boolean>> context) {
         return Publishers.convertPublisher(
             conversionService,
-            existsReactive(methodKey, context),
+            getReactiveCriteriaOperations(methodKey, context, null)
+                .exists(buildExistsQuery(methodKey, context)),
             context.getReturnType().getType()
         );
     }

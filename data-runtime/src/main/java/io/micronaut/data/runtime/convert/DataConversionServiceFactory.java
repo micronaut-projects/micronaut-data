@@ -26,6 +26,8 @@ import io.micronaut.core.convert.TypeConverter;
 import io.micronaut.core.convert.TypeConverterRegistrar;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.model.Limit;
+import io.micronaut.data.model.Pageable;
 import jakarta.inject.Singleton;
 
 import java.math.BigDecimal;
@@ -65,6 +67,7 @@ final class DataConversionServiceFactory {
     @Bean(typed = DataConversionService.class)
     DataConversionServiceImpl build(@NonNull BeanContext beanContext) {
         DataConversionServiceImpl conversionService = new DataConversionServiceImpl(beanContext.getConversionService());
+        conversionService.addConverter(Pageable.class, Limit.class, Pageable::getLimit);
         conversionService.addConverter(Enum.class, Number.class, Enum::ordinal);
         conversionService.addConverter(Number.class, Enum.class, (index, targetType, context) -> {
             Enum[] enumConstants = targetType.getEnumConstants();
@@ -633,6 +636,9 @@ final class DataConversionServiceFactory {
 
         // ZonedDateTime
         addZonedConvertorsConvertors(conversionService, ZonedDateTime.class, Function.identity());
+
+        // LocalDate
+        conversionService.addConverter(LocalDate.class, java.sql.Date.class, java.sql.Date::valueOf);
 
         // LocalTime
         conversionService.addConverter(LocalTime.class, Timestamp.class, localTime -> Timestamp.valueOf(localTime.atDate(LocalDate.now())));

@@ -17,6 +17,7 @@ package io.micronaut.transaction.hibernate6
 
 import io.micronaut.core.type.Argument
 import io.micronaut.data.connection.ConnectionOperations
+import io.micronaut.data.hibernate.connection.HibernateConnectionOperations
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.tests.AbstractTransactionSpec
@@ -38,7 +39,7 @@ class HibernateTransactionSpec extends AbstractTransactionSpec implements TestRe
     @Override
     Map<String, String> getProperties() {
         return TestResourcesDatabaseTestPropertyProvider.super.getProperties() + [
-                "datasources.default.name"                     : "mydb",
+                "datasources.default.name"                     : "mypgdb",
                 'jpa.default.properties.hibernate.hbm2ddl.auto': 'create-drop',
                 'jpa.default.properties.hibernate.dialect'     : 'org.hibernate.dialect.PostgreSQLDialect'
         ]
@@ -52,6 +53,11 @@ class HibernateTransactionSpec extends AbstractTransactionSpec implements TestRe
     @Override
     protected TransactionOperations getTransactionOperations() {
         return context.getBean(HibernateTransactionManager)
+    }
+
+    @Override
+    protected ConnectionOperations getConnectionOperations() {
+        return context.getBean(HibernateConnectionOperations)
     }
 
     @Override

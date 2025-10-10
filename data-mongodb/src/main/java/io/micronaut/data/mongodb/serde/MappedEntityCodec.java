@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.mongodb.serde;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.mongodb.operations.MongoUtils;
@@ -32,6 +33,7 @@ import org.bson.types.ObjectId;
  * @author Denis Stepanov
  * @since 3.3
  */
+@Internal
 class MappedEntityCodec<T> extends MappedCodec<T> implements CollectibleCodec<T> {
 
     private final boolean isGeneratedId;

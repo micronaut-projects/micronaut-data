@@ -164,6 +164,24 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
 
     @Memoized
     @Override
+    EntityWithIdClassRepository getEntityWithIdClassRepository() {
+        return context.getBean(PostgresEntityWithIdClassRepository)
+    }
+
+    @Memoized
+    @Override
+    EntityWithIdClass2Repository getEntityWithIdClass2Repository() {
+        return context.getBean(PostgresEntityWithIdClass2Repository)
+    }
+
+    @Memoized
+    @Override
+    ExampleEntityRepository getExampleEntityRepository() {
+        return context.getBean(PostgresExampleEntityRepository)
+    }
+
+    @Memoized
+    @Override
     boolean isSupportsArrays() {
         return true
     }
@@ -432,7 +450,6 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
             def b = bookRepository.modifyReturning(petCemetery.author.id)
         then:
             b.author.id == petCemetery.author.id
-            b.postLoad == 1
         when:
             def allBooks = bookRepository.findAll()
         then:

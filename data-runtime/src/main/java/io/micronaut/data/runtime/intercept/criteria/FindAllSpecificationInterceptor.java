@@ -19,6 +19,7 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.operations.RepositoryOperations;
+import jakarta.persistence.criteria.CriteriaQuery;
 
 import java.util.Collections;
 
@@ -43,7 +44,8 @@ public class FindAllSpecificationInterceptor extends AbstractSpecificationInterc
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         Class<Object> rt = context.getReturnType().getType();
-        Iterable<?> iterable = findAll(methodKey, context, Type.FIND_ALL);
+        CriteriaQuery<Object> criteriaQuery = buildQuery(methodKey, context);
+        Iterable<?> iterable = findAll(methodKey, context, getPageable(context), criteriaQuery);
         if (rt.isInstance(iterable)) {
             return iterable;
         }

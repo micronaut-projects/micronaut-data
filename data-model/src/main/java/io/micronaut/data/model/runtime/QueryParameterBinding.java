@@ -150,9 +150,27 @@ public interface QueryParameterBinding {
 
     /**
      * @return Is expression value
-     * @see 4.5.0
+     * @since 4.5.0
      */
     default boolean isExpression() {
         return false;
+    }
+
+    /**
+     * @return The parameter in role
+     * @since 4.10
+     */
+    @Nullable
+    default String getRole() {
+        return null;
+    }
+
+    /**
+     * @return The table alias
+     * @since 4.10
+     */
+    @Nullable
+    default String getTableAlias() {
+        return null;
     }
 }

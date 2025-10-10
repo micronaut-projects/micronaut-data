@@ -34,7 +34,7 @@ import java.util.List;
  * @since 3.2
  */
 @Experimental
-public interface PersistentEntityCriteriaDelete<T> extends CriteriaDelete<T> {
+public interface PersistentEntityCriteriaDelete<T> extends CriteriaDelete<T>, PersistentEntityCommonAbstractCriteria {
 
     PersistentEntityRoot<T> from(PersistentEntity persistentEntity);
 

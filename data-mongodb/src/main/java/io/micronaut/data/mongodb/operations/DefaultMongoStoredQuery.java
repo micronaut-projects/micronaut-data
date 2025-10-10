@@ -27,7 +27,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Query;
-import io.micronaut.data.document.model.query.builder.MongoQueryBuilder;
+import io.micronaut.data.document.model.query.builder.MongoQueryBuilder2;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.PersistentPropertyPath;
@@ -50,10 +50,14 @@ import io.micronaut.data.runtime.query.internal.DefaultStoredQuery;
 import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.bson.BsonDocumentWrapper;
+import org.bson.BsonDouble;
 import org.bson.BsonInt32;
+import org.bson.BsonInt64;
 import org.bson.BsonObjectId;
 import org.bson.BsonRegularExpression;
 import org.bson.BsonValue;
+import org.bson.codecs.Encoder;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
@@ -70,20 +74,19 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Default implementation of {@link MongoStoredQuery}.
  *
- * @param <E>   The entity type
- * @param <R>   The result type
+ * @param <E> The entity type
+ * @param <R> The result type
  * @author Denis Stepanov
  * @since 3.3.
  */
 @Internal
 final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStoredQuery<E, R> implements DelegateStoredQuery<E, R>, MongoStoredQuery<E, R> {
 
-    private static final Pattern MONGO_PARAM_PATTERN = Pattern.compile("\\W*(\\" + MongoQueryBuilder.QUERY_PARAMETER_PLACEHOLDER + ":(\\d)+)\\W*");
+    private static final Pattern MONGO_PARAM_PATTERN = Pattern.compile("\\W*(\\" + MongoQueryBuilder2.QUERY_PARAMETER_PLACEHOLDER + ":(\\d)+)\\W*");
     private static final Logger LOG = LoggerFactory.getLogger(DefaultMongoStoredQuery.class);
     private static final BsonDocument EMPTY = new BsonDocument();
 
@@ -106,12 +109,12 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                             ConversionService conversionService,
                             RuntimePersistentEntity<E> persistentEntity) {
         this(storedQuery,
-                codecRegistry,
-                attributeConverterRegistry,
-                runtimeEntityRegistry,
-                conversionService,
-                persistentEntity,
-                storedQuery.getAnnotationMetadata().stringValue(Query.class, "update").orElse(null));
+            codecRegistry,
+            attributeConverterRegistry,
+            runtimeEntityRegistry,
+            conversionService,
+            persistentEntity,
+            storedQuery.getAnnotationMetadata().stringValue(Query.class, "update").orElse(null));
     }
 
     DefaultMongoStoredQuery(StoredQuery<E, R> storedQuery,
@@ -121,7 +124,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                             ConversionService conversionService,
                             RuntimePersistentEntity<E> persistentEntity,
                             String updateJson) {
-        super(storedQuery, persistentEntity);
+        super(storedQuery, persistentEntity, conversionService);
         this.storedQuery = storedQuery;
         this.codecRegistry = codecRegistry;
         this.attributeConverterRegistry = attributeConverterRegistry;
@@ -131,6 +134,9 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         OperationType operationType = storedQuery.getOperationType();
         if (operationType == OperationType.QUERY || operationType == OperationType.EXISTS || operationType == OperationType.COUNT) {
             String query = storedQuery.getQuery();
+            if (query != null) {
+                query = query.trim();
+            }
             String filterParameter = getParameterInRole(MongoRoles.FILTER_ROLE);
             String filterOptionsParameter = getParameterInRole(MongoRoles.FIND_OPTIONS_ROLE);
             String pipelineParameter = getParameterInRole(MongoRoles.PIPELINE_ROLE);
@@ -144,7 +150,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 aggregateData = null;
                 findData = new FindData(BsonDocument.parse(query));
             } else if (query.startsWith("[")) {
-                aggregateData = new AggregateData(BsonArray.parse(query).stream().map(BsonValue::asDocument).collect(Collectors.toList()));
+                aggregateData = new AggregateData(parseAggregation(query, storedQuery.isCount()));
                 findData = null;
             } else {
                 aggregateData = null;
@@ -160,9 +166,9 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         if (operationType == OperationType.DELETE) {
             String query = storedQuery.getQuery();
             deleteData = new DeleteData(
-                    StringUtils.isEmpty(query) ? EMPTY : BsonDocument.parse(query),
-                    getParameterInRole(MongoRoles.FILTER_ROLE),
-                    getParameterInRole(MongoRoles.DELETE_OPTIONS_ROLE)
+                StringUtils.isEmpty(query) ? EMPTY : BsonDocument.parse(query),
+                getParameterInRole(MongoRoles.FILTER_ROLE),
+                getParameterInRole(MongoRoles.DELETE_OPTIONS_ROLE)
             );
         } else {
             deleteData = null;
@@ -174,14 +180,25 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             }
             String query = storedQuery.getQuery();
             updateData = new UpdateData(
-                    BsonDocument.parse(updateJson), StringUtils.isEmpty(query) ? EMPTY : BsonDocument.parse(query),
-                    getParameterInRole(MongoRoles.FILTER_ROLE),
-                    getParameterInRole(MongoRoles.UPDATE_ROLE),
-                    getParameterInRole(MongoRoles.UPDATE_OPTIONS_ROLE)
+                BsonDocument.parse(updateJson), StringUtils.isEmpty(query) ? EMPTY : BsonDocument.parse(query),
+                getParameterInRole(MongoRoles.FILTER_ROLE),
+                getParameterInRole(MongoRoles.UPDATE_ROLE),
+                getParameterInRole(MongoRoles.UPDATE_OPTIONS_ROLE)
             );
         } else {
             updateData = null;
         }
+    }
+
+    private List<Bson> parseAggregation(String query, boolean isCount) {
+        List<Bson> pipeline = BsonArray.parse(query).stream().<Bson>map(BsonValue::asDocument).toList();
+        if (isCount && pipeline.stream().noneMatch(p -> p.toBsonDocument().containsKey("$count"))) {
+            // We can probably remove sorting projection etc. or allow a user to specify a custom count pipeline
+            List<Bson> countPipeline = new ArrayList<>(pipeline);
+            countPipeline.add(BsonDocument.parse("{ $count: \"totalCount\" }"));
+            return countPipeline;
+        }
+        return pipeline;
     }
 
     @Override
@@ -304,7 +321,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
 
     private boolean needsProcessingValue(BsonValue value) {
         if (value instanceof BsonDocument bsonDocument) {
-            BsonInt32 queryParameterIndex = bsonDocument.getInt32(MongoQueryBuilder.QUERY_PARAMETER_PLACEHOLDER, null);
+            BsonInt32 queryParameterIndex = bsonDocument.getInt32(MongoQueryBuilder2.QUERY_PARAMETER_PLACEHOLDER, null);
             if (queryParameterIndex != null) {
                 return true;
             }
@@ -403,7 +420,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
 
     private BsonValue replaceQueryParametersInBsonValue(BsonValue value, @Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
         if (value instanceof BsonDocument bsonDocument) {
-            BsonInt32 queryParameterIndex = bsonDocument.getInt32(MongoQueryBuilder.QUERY_PARAMETER_PLACEHOLDER, null);
+            BsonInt32 queryParameterIndex = bsonDocument.getInt32(MongoQueryBuilder2.QUERY_PARAMETER_PLACEHOLDER, null);
             if (queryParameterIndex != null) {
                 int index = queryParameterIndex.getValue();
                 QueryParameterBinding queryParameterBinding = getQueryBindings().get(index);
@@ -411,7 +428,78 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 if (e == null) {
                     throw new DataAccessException("Cannot bind a value at index: " + index);
                 }
-                return getValue(e.getKey(), e.getValue());
+                BsonValue bsonValue = getValue(e.getKey(), e.getValue());
+                if (bsonDocument.containsKey(MongoQueryBuilder2.NEGATE)) {
+                    if (bsonValue instanceof BsonDocumentWrapper<?> bsonDocumentWrapper) {
+                        Object object = bsonDocumentWrapper.getWrappedDocument();
+                        if (object instanceof Long aLong) {
+                            return new BsonDocumentWrapper<>(
+                                -aLong,
+                                (Encoder<? super Long>) bsonDocumentWrapper.getEncoder()
+                            );
+                        }
+                        if (object instanceof Integer integer) {
+                            return new BsonDocumentWrapper<>(
+                                -integer,
+                                (Encoder<? super Integer>) bsonDocumentWrapper.getEncoder()
+                            );
+                        }
+                        if (object instanceof Double aDouble) {
+                            return new BsonDocumentWrapper<>(
+                                -aDouble,
+                                (Encoder<? super Double>) bsonDocumentWrapper.getEncoder()
+                            );
+                        }
+                        if (object instanceof Float aFloat) {
+                            return new BsonDocumentWrapper<>(
+                                -aFloat,
+                                (Encoder<? super Float>) bsonDocumentWrapper.getEncoder()
+                            );
+                        }
+                    }
+                    return switch (bsonValue.getBsonType()) {
+                        case INT32 -> new BsonInt32(-bsonValue.asInt32().getValue());
+                        case INT64 -> new BsonInt64(-bsonValue.asInt64().getValue());
+                        case DOUBLE -> new BsonDouble(-bsonValue.asDouble().getValue());
+                        default -> bsonValue;
+                    };
+                }
+                if (bsonDocument.containsKey(MongoQueryBuilder2.RECIPROCATE)) {
+                    if (bsonValue instanceof BsonDocumentWrapper<?> bsonDocumentWrapper) {
+                        Object object = bsonDocumentWrapper.getWrappedDocument();
+                        if (object instanceof Long aLong) {
+                            return new BsonDocumentWrapper<>(
+                                1L / aLong,
+                                (Encoder<? super Long>) bsonDocumentWrapper.getEncoder()
+                            );
+                        }
+                        if (object instanceof Integer integer) {
+                            return new BsonDocumentWrapper<>(
+                                1 / integer,
+                                (Encoder<? super Integer>) bsonDocumentWrapper.getEncoder()
+                            );
+                        }
+                        if (object instanceof Double aDouble) {
+                            return new BsonDocumentWrapper<>(
+                                1D / aDouble,
+                                (Encoder<? super Double>) bsonDocumentWrapper.getEncoder()
+                            );
+                        }
+                        if (object instanceof Float aFloat) {
+                            return new BsonDocumentWrapper<>(
+                                1F / aFloat,
+                                (Encoder<? super Float>) bsonDocumentWrapper.getEncoder()
+                            );
+                        }
+                    }
+                    return switch (bsonValue.getBsonType()) {
+                        case INT32 -> new BsonInt32(1 / bsonValue.asInt32().getValue());
+                        case INT64 -> new BsonInt64(1L / bsonValue.asInt64().getValue());
+                        case DOUBLE -> new BsonDouble(1D / bsonValue.asDouble().getValue());
+                        default -> bsonValue;
+                    };
+                }
+                return bsonValue;
             }
             for (Map.Entry<String, BsonValue> entry : bsonDocument.entrySet()) {
                 BsonValue bsonValue = entry.getValue();
@@ -448,7 +536,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                     String queryParamIndexStr = matcher.group(2);
                     queryParamIndex = Integer.parseInt(queryParamIndexStr);
                 } catch (Exception e) {
-                    LOG.info("Failed to get mongo parameter for regex {}", e);
+                    LOG.info("Failed to get mongo parameter for regex {}", pattern, e);
                 }
                 if (queryParamIndex != null) {
                     QueryParameterBinding queryParameterBinding = getQueryBindings().get(queryParamIndex);
@@ -457,7 +545,14 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                         throw new DataAccessException("Cannot bind a value at index: " + queryParamIndex);
                     }
                     pattern = pattern.replace(matcher.group(1), e.getValue().toString());
-                    return new BsonRegularExpression(pattern, bsonRegularExpression.getOptions());
+                    String options = bsonRegularExpression.getOptions();
+                    if (options.contains("l")) {
+                        pattern = pattern
+                            .replace("_", ".")
+                            .replace("%", ".*");
+                        options = options.replace("l", "");
+                    }
+                    return new BsonRegularExpression(pattern, options);
                 }
             }
         }
@@ -502,7 +597,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                     return new BsonObjectId(new ObjectId(string));
                 }
                 return MongoUtils.toBsonValue(conversionService, val, codecRegistry.get());
-            }).collect(Collectors.toList()));
+            }).toList());
         }
         return MongoUtils.toBsonValue(conversionService, value, codecRegistry.get());
     }
@@ -632,9 +727,9 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
 
         public MongoUpdate getUpdateMany(InvocationContext<?, ?> invocationContext) {
             return new MongoUpdate(
-                    getUpdate(invocationContext, null),
-                    getFilter(invocationContext, null),
-                    getOptions(invocationContext));
+                getUpdate(invocationContext, null),
+                getFilter(invocationContext, null),
+                getOptions(invocationContext));
         }
 
         public MongoUpdate getUpdateOne(E entity) {

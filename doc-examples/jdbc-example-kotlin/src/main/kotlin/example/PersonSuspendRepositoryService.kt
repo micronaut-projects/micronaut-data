@@ -60,6 +60,28 @@ open class PersonSuspendRepositoryService(private val parentSuspendRepository: P
     }
 
     @Transactional
+    open fun normalStoreThrowable() {
+        saveOne()
+        throw Throwable("exception")
+    }
+
+    @Transactional
+    open fun normalThrowable() {
+        throw Throwable("exception")
+    }
+
+    @Transactional
+    open suspend fun coroutinesStoreThrowable() {
+        saveOneSuspended()
+        throw Throwable("exception")
+    }
+
+    @Transactional
+    open suspend fun coroutinesThrowable() {
+        throw Throwable("exception")
+    }
+
+    @Transactional
     open suspend fun coroutinesStore() {
         saveOneSuspended()
         throw RuntimeException("exception")

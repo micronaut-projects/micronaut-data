@@ -28,7 +28,9 @@ import java.util.stream.Stream;
  *
  * @author Graeme Rocher
  * @since 1.0
+ * @deprecated Replaced by JPA criteria
  */
+@Deprecated(forRemoval = true, since = "4.9")
 public class DefaultQuery implements QueryModel {
 
     private final PersistentEntity entity;

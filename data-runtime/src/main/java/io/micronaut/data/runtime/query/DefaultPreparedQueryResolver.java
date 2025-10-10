@@ -18,6 +18,8 @@ package io.micronaut.data.runtime.query;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.data.annotation.TypeRole;
+import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.StoredQuery;
@@ -41,6 +43,7 @@ public abstract class DefaultPreparedQueryResolver implements PreparedQueryResol
                 storedQuery,
                 storedQuery.getQuery(),
                 pageable,
+                DefaultPreparedQuery.getParameterInRole(TypeRole.LIMIT, Limit.class, context, getConversionService()).orElse(Limit.UNLIMITED),
                 storedQuery.isDtoProjection(),
                 getConversionService()
         );
@@ -55,6 +58,7 @@ public abstract class DefaultPreparedQueryResolver implements PreparedQueryResol
                 storedQuery,
                 storedQuery.getQuery(),
                 pageable,
+                Limit.UNLIMITED,
                 false,
                 getConversionService()
         );

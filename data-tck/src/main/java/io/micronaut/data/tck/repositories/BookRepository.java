@@ -19,8 +19,10 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Expandable;
+import io.micronaut.data.annotation.Find;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.OrderBy;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
@@ -43,8 +45,18 @@ import java.util.stream.Stream;
 
 public abstract class BookRepository implements PageableRepository<Book, Long>, JpaSpecificationExecutor<Book>, SimpleBookRepository {
 
+//    @Join("students")
+    @Override
+    public abstract Page<Book> findAll(PredicateSpecification<Book> spec, Pageable pageable);
+
+    @Join(value = "students", type = Join.Type.LEFT_FETCH)
+    public abstract Page<Book> findAllByStudentsNameIn(List<String> names, Pageable pageable);
+
     @Override
     public abstract @NonNull Book save(@NonNull Book book);
+
+    @Query(value = "SELECT book_.* FROM book book_ ORDER BY book_.title ASC LIMIT :limit OFFSET :offset")
+    public abstract List<Book> findBooks(int limit, int offset);
 
     @Join(value = "author", alias = "auth")
     public abstract Book queryByTitle(String title);
@@ -56,6 +68,17 @@ public abstract class BookRepository implements PageableRepository<Book, Long>, 
     @Override
     @Join("author")
     public abstract Page<Book> findAll(@NonNull Pageable pageable);
+
+    @Find
+    @Join("author")
+    @OrderBy("author.name")
+    @OrderBy("title")
+    public abstract Page<Book> findAllSorted(Pageable pageable);
+
+    @Find
+    @Join("author")
+    @OrderBy("author.name")
+    public abstract Page<Book> findAllSorted2(Pageable pageable);
 
     @Join(value = "author", type = Join.Type.LEFT_FETCH)
     public abstract Page<Book> findByTotalPagesGreaterThan(int totalPages, Pageable pageable);
@@ -172,4 +195,17 @@ public abstract class BookRepository implements PageableRepository<Book, Long>, 
     abstract List<Book> findByTitleInAndTotalPagesGreaterThan(List<String> titles, int totalPages);
 
     abstract Long countByTitleInAndTotalPagesGreaterThan(List<String> titles, int totalPages);
+
+    @Query("SELECT b FROM Book b WHERE b.author in :authors")
+    public abstract List<Book> findByAuthors(List<Author> authors);
+
+    @Query("SELECT b FROM Book b WHERE b.author.id in :authorIds")
+    public abstract List<Book> findByAuthorIds(List<Long> authorIds);
+
+    public abstract List<Book> findByAuthorInList(List<Author> authors);
+
+    @Query(value = "SELECT * FROM book WHERE total_pages = :totalPages",
+        countQuery = "SELECT COUNT(*) FROM book WHERE total_pages = :totalPages",
+        nativeQuery = true)
+    public abstract Page<Book> findBooksByTotalPages(int totalPages, Pageable pageable);
 }

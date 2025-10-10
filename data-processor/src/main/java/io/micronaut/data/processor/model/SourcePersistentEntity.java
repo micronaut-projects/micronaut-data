@@ -23,6 +23,7 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.*;
+import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.ast.TypedElement;
@@ -81,6 +82,9 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
                 allPersistentProperties.put(id.getName(), id);
             } else if (propertyElement.hasStereotype(Version.class)) {
                 version = new SourcePersistentProperty(this, propertyElement);
+                if (hasAnnotation(JsonView.class)) {
+                    throw new MappingException("@JsonView mapped entities do not support @Version fields.");
+                }
                 allPersistentProperties.put(version.getName(), version);
             } else {
                 SourcePersistentProperty prop;
@@ -155,6 +159,11 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
         return ids.length == 1 ? ids[0] : null;
     }
 
+    @Override
+    public List<PersistentProperty> getIdentityProperties() {
+        return List.of(ids);
+    }
+
     @Nullable
     @Override
     public SourcePersistentProperty getVersion() {
@@ -175,6 +184,16 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
     public SourcePersistentProperty getPropertyByName(String name) {
         if (StringUtils.isNotEmpty(name)) {
             return allPersistentProperties.get(name);
+        }
+        return null;
+    }
+
+    @Override
+    public SourcePersistentProperty getPropertyByNameIgnoreCase(String name) {
+        for (SourcePersistentProperty property : allPersistentProperties.values()) {
+            if (property.getName().equalsIgnoreCase(name)) {
+                return property;
+            }
         }
         return null;
     }

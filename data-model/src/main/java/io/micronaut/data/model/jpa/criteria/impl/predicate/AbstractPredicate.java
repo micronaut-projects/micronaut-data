@@ -17,9 +17,7 @@ package io.micronaut.data.model.jpa.criteria.impl.predicate;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitable;
-import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitable;
-import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
+import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 
@@ -33,7 +31,7 @@ import java.util.List;
  * @since 3.2
  */
 @Internal
-public abstract class AbstractPredicate implements IPredicate, PredicateVisitable, SelectionVisitable {
+public abstract class AbstractPredicate implements IPredicate {
 
     @Override
     public BooleanOperator getOperator() {
@@ -66,8 +64,7 @@ public abstract class AbstractPredicate implements IPredicate, PredicateVisitabl
     }
 
     @Override
-    public void accept(SelectionVisitor selectionVisitor) {
-        selectionVisitor.visit(this);
+    public void visitExpression(ExpressionVisitor expressionVisitor) {
+        expressionVisitor.visit(this);
     }
-
 }

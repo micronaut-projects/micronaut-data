@@ -18,7 +18,9 @@ package io.micronaut.data.runtime.intercept.criteria.async;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.intercept.RepositoryMethodKey;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.operations.RepositoryOperations;
+import jakarta.persistence.criteria.CriteriaQuery;
 
 /**
  * Implementation of async {@code findOne(Specification)}.
@@ -40,6 +42,10 @@ public class FindOneAsyncSpecificationInterceptor extends AbstractAsyncSpecifica
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        return findOneAsync(methodKey, context, Type.FIND_ONE).thenApply(o -> convertOne(context, o));
+        CriteriaQuery<Object> query = buildQuery(methodKey, context);
+        Pageable pageable = applyPaginationAndSort(getPageable(context), query, true);
+        return getAsyncCriteriaRepositoryOperations(methodKey, context, pageable)
+            .findOne(query)
+            .thenApply(o -> convertOne(context, o));
     }
 }

@@ -27,7 +27,6 @@ import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.document.mongo.MongoAnnotations;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
-import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
@@ -67,7 +66,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 import static java.util.Arrays.asList;
@@ -176,7 +174,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
             String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
             if (value instanceof Iterable<?> iterable) {
                 List<?> values = CollectionUtils.iterableToList(iterable);
-                obj.put(criterionPropertyName, singletonMap("$in", values.stream().map(val -> valueRepresentation(context, propertyPath, val)).collect(Collectors.toList())));
+                obj.put(criterionPropertyName, singletonMap("$in", values.stream().map(val -> valueRepresentation(context, propertyPath, val)).toList()));
             } else {
                 obj.put(criterionPropertyName, singletonMap("$in", singletonList(valueRepresentation(context, propertyPath, value))));
             }
@@ -187,7 +185,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
             String criterionPropertyName = getCriterionPropertyName(criterion.getProperty(), context);
             if (value instanceof Iterable<?> iterable) {
                 List<?> values = CollectionUtils.iterableToList(iterable);
-                obj.put(criterionPropertyName, singletonMap("$nin", values.stream().map(val -> valueRepresentation(context, propertyPath, val)).collect(Collectors.toList())));
+                obj.put(criterionPropertyName, singletonMap("$nin", values.stream().map(val -> valueRepresentation(context, propertyPath, val)).toList()));
             } else {
                 obj.put(criterionPropertyName, singletonMap("$nin", singletonList(valueRepresentation(context, propertyPath, value))));
             }
@@ -225,7 +223,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
             Object criteriaValue;
             if (value instanceof Iterable<?> iterable) {
                 List<?> values = CollectionUtils.iterableToList(iterable);
-                criteriaValue = values.stream().map(val -> valueRepresentation(context, propertyPath, val)).collect(Collectors.toList());
+                criteriaValue = values.stream().map(val -> valueRepresentation(context, propertyPath, val)).toList();
             } else {
                 criteriaValue = singletonList(valueRepresentation(context, propertyPath, value));
             }
@@ -453,40 +451,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         } else {
             q = toJsonString(pipeline);
         }
-        return new QueryResult() {
-
-            @NonNull
-            @Override
-            public String getQuery() {
-                return q;
-            }
-
-            @Override
-            public int getMax() {
-                return query.getMax();
-            }
-
-            @Override
-            public long getOffset() {
-                return query.getOffset();
-            }
-
-            @Override
-            public List<String> getQueryParts() {
-                return Collections.emptyList();
-            }
-
-            @Override
-            public List<QueryParameterBinding> getParameterBindings() {
-                return queryState.getParameterBindings();
-            }
-
-            @Override
-            public Map<String, String> getAdditionalRequiredParameters() {
-                return Collections.emptyMap();
-            }
-
-        };
+        return QueryResult.of(q, queryState.getParameterBindings());
     }
 
     private void addLookups(Collection<JoinPath> joins, QueryState queryState) {
@@ -495,7 +460,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         }
         List<String> joined = joins.stream().map(JoinPath::getPath)
                 .sorted((o1, o2) -> Comparator.comparingInt(String::length).thenComparing(String::compareTo).compare(o1, o2))
-                .collect(Collectors.toList());
+                .toList();
         for (String join : joined) {
             StringJoiner rootPath = new StringJoiner(".");
             StringJoiner currentEntityPath = new StringJoiner(".");
@@ -840,7 +805,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
             StringJoiner joinPathJoiner = new StringJoiner(".");
             for (Association association : propertyPath.getAssociations()) {
                 joinPathJoiner.add(association.getName());
-                if (association instanceof Embedded) {
+                if (association.isEmbedded()) {
                     continue;
                 }
                 if (joinAssociation == null) {
@@ -998,9 +963,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 predicateQuery,
                 Collections.emptyList(),
                 queryState.getParameterBindings(),
-                queryState.getAdditionalRequiredParameters(),
-                query.getMax(),
-                query.getOffset()
+                queryState.getAdditionalRequiredParameters()
         );
     }
 

@@ -142,15 +142,12 @@ public final class ProcedureMethodMatcher implements MethodMatcher {
     }
 
     private SourceParameterExpressionImpl bindingParameter(MethodMatchContext matchContext, ParameterElement element) {
-        return bindingParameter(matchContext, element, false);
-    }
-
-    private SourceParameterExpressionImpl bindingParameter(MethodMatchContext matchContext, ParameterElement element, boolean isEntityParameter) {
         return new SourceParameterExpressionImpl(
             Utils.getConfiguredDataTypes(matchContext.getRepositoryClass()),
             matchContext.getParameters(),
             element,
-            isEntityParameter);
+            false,
+            null);
     }
 
 }

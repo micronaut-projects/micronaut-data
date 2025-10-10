@@ -17,12 +17,13 @@ package io.micronaut.data.processor.model.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.jpa.criteria.ISelection;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
-import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitable;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaUpdate;
 import io.micronaut.inject.ast.ClassElement;
+import jakarta.persistence.criteria.CriteriaBuilder;
 
 import java.util.function.Function;
 
@@ -40,9 +41,13 @@ final class SourcePersistentEntityCriteriaUpdateImpl<T> extends AbstractPersiste
         implements SourcePersistentEntityCriteriaUpdate<T> {
 
     private final Function<ClassElement, SourcePersistentEntity> entityResolver;
+    private final CriteriaBuilder criteriaBuilder;
 
-    public SourcePersistentEntityCriteriaUpdateImpl(Function<ClassElement, SourcePersistentEntity> entityResolver, Class<T> root) {
+    public SourcePersistentEntityCriteriaUpdateImpl(Function<ClassElement, SourcePersistentEntity> entityResolver,
+                                                    Class<T> root,
+                                                    CriteriaBuilder criteriaBuilder) {
         this.entityResolver = entityResolver;
+        this.criteriaBuilder = criteriaBuilder;
     }
 
     @Override
@@ -60,7 +65,7 @@ final class SourcePersistentEntityCriteriaUpdateImpl<T> extends AbstractPersiste
         if (entityRoot != null) {
             throw new IllegalStateException("The root entity is already specified!");
         }
-        SourcePersistentEntityRoot<T> newEntityRoot = new SourcePersistentEntityRoot<>((SourcePersistentEntity) persistentEntity);
+        SourcePersistentEntityRoot<T> newEntityRoot = new SourcePersistentEntityRoot<>((SourcePersistentEntity) persistentEntity, criteriaBuilder);
         entityRoot = newEntityRoot;
         return newEntityRoot;
     }
@@ -75,9 +80,9 @@ final class SourcePersistentEntityCriteriaUpdateImpl<T> extends AbstractPersiste
 
     @Override
     public String getQueryResultTypeName() {
-        if (returning instanceof SelectionVisitable selectionVisitable) {
+        if (returning instanceof ISelection<?> selectionVisitable) {
             QueryResultAnalyzer selectionVisitor = new QueryResultAnalyzer();
-            selectionVisitable.accept(selectionVisitor);
+            selectionVisitable.visitSelection(selectionVisitor);
             return selectionVisitor.getQueryResultTypeName();
         }
         return null;

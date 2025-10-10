@@ -15,16 +15,15 @@ import io.micronaut.data.model.query.QueryParameter
 import io.micronaut.data.model.query.builder.QueryBuilder
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.repository.CrudRepository
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
 import jakarta.inject.Inject
 
-@MicronautTest
 @H2DBProperties
 class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyProvider {
     @AutoCleanup
@@ -97,7 +96,7 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
 
     void "test build create Student tables"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
+            SqlQueryBuilder2 encoder = new SqlQueryBuilder2()
             def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Student))
 
         then:
@@ -109,7 +108,7 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
 
     void "test build create CourseRating tables"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
+            SqlQueryBuilder2 encoder = new SqlQueryBuilder2()
             def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(CourseRating))
 
         then:
@@ -120,7 +119,7 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
 
     void "test build create Course tables"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
+            SqlQueryBuilder2 encoder = new SqlQueryBuilder2()
             def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Course))
 
         then:

@@ -44,6 +44,15 @@ public interface ReactiveCriteriaRepositoryOperations extends ReactiveCriteriaCa
     CriteriaBuilder getCriteriaBuilder();
 
     /**
+     * Exists query.
+     *
+     * @param query The query
+     * @return True if query returns true or any row
+     * @since 4.10
+     */
+    Publisher<Boolean> exists(@NonNull CriteriaQuery<?> query);
+
+    /**
      * Find one by Query.
      *
      * @param query The query

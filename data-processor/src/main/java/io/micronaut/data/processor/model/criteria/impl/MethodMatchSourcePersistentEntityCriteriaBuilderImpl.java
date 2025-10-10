@@ -15,8 +15,12 @@
  */
 package io.micronaut.data.processor.model.criteria.impl;
 
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractCriteriaBuilder;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
@@ -26,6 +30,7 @@ import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteria
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.Utils;
 import io.micronaut.inject.ast.ParameterElement;
+import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.ParameterExpression;
 
 import java.util.Map;
@@ -47,33 +52,67 @@ public final class MethodMatchSourcePersistentEntityCriteriaBuilderImpl extends 
         this.dataTypes = Utils.getConfiguredDataTypes(matchContext.getRepositoryClass());
     }
 
-    @Override
-    public SourcePersistentEntityCriteriaQuery<Object> createQuery() {
-        return new SourcePersistentEntityCriteriaQueryImpl<>(methodMatchContext::getEntity);
+    public MethodMatchContext getMethodMatchContext() {
+        return methodMatchContext;
     }
 
     @Override
-    public <T> PersistentEntityCriteriaQuery<T> createQuery(Class<T> resultClass) {
-        return new SourcePersistentEntityCriteriaQueryImpl<>(methodMatchContext::getEntity);
+    public PersistentEntityCriteriaQuery<Tuple> createTupleQuery() {
+        return new SourcePersistentEntityCriteriaQueryImpl<>(Tuple.class, methodMatchContext::getEntity, this);
+    }
+
+    @Override
+    public SourcePersistentEntityCriteriaQuery<Object> createQuery() {
+        return new SourcePersistentEntityCriteriaQueryImpl<>(Object.class, methodMatchContext::getEntity, this);
+    }
+
+    @Override
+    public <T> SourcePersistentEntityCriteriaQuery<T> createQuery(Class<T> resultClass) {
+        return new SourcePersistentEntityCriteriaQueryImpl<>(resultClass, methodMatchContext::getEntity, this);
     }
 
     @Override
     public <T> SourcePersistentEntityCriteriaDelete<T> createCriteriaDelete(Class<T> targetEntity) {
-        return new SourcePersistentEntityCriteriaDeleteImpl<>(methodMatchContext::getEntity, targetEntity);
+        return new SourcePersistentEntityCriteriaDeleteImpl<>(methodMatchContext::getEntity, targetEntity, this);
     }
 
     @Override
     public <T> SourcePersistentEntityCriteriaUpdate<T> createCriteriaUpdate(Class<T> targetEntity) {
-        return new SourcePersistentEntityCriteriaUpdateImpl<>(methodMatchContext::getEntity, targetEntity);
+        return new SourcePersistentEntityCriteriaUpdateImpl<>(methodMatchContext::getEntity, targetEntity, this);
     }
 
     @Override
-    public ParameterExpression<Object> parameter(ParameterElement parameterElement) {
-        return new SourceParameterExpressionImpl(dataTypes, methodMatchContext.getParameters(), parameterElement, false);
+    public ParameterExpression<Object> expression(PersistentProperty property, String expression) {
+        return new SourceParameterStringExpressionImpl(property, expression);
     }
 
     @Override
-    public ParameterExpression<Object> entityPropertyParameter(ParameterElement entityParameter) {
-        return new SourceParameterExpressionImpl(dataTypes, methodMatchContext.getParameters(), entityParameter, true);
+    public ParameterExpression<Object> parameter(ParameterElement parameterElement,
+                                                 PersistentPropertyPath propertyPath) {
+        return new SourceParameterExpressionImpl(dataTypes, methodMatchContext.getParameters(), parameterElement, false, propertyPath);
+    }
+
+    @Override
+    public ParameterExpression<Object> parameterReferencingMethodParameter(int parameterIndex) {
+        return new SourceParameterExpressionImpl(dataTypes, methodMatchContext.getParameters(), methodMatchContext.getParameters()[parameterIndex], false, null);
+    }
+
+    @Override
+    public ParameterExpression<Object> parameterReferencingMethodParameter(String parameterName) {
+        ParameterElement parameterElement = null;
+        ParameterElement[] parameters = methodMatchContext.getParameters();
+        for (ParameterElement parameter : parameters) {
+            if (parameter.stringValue(Parameter.class).orElse(parameter.getName()).equals(parameterName)) {
+                parameterElement = parameter;
+                break;
+            }
+        }
+        return new SourceParameterExpressionImpl(dataTypes, methodMatchContext.getParameters(), parameterElement, false, null);
+    }
+
+    @Override
+    public ParameterExpression<Object> entityPropertyParameter(ParameterElement entityParameter,
+                                                               @Nullable PersistentPropertyPath propertyPath) {
+        return new SourceParameterExpressionImpl(dataTypes, methodMatchContext.getParameters(), entityParameter, true, propertyPath);
     }
 }

@@ -7,6 +7,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
 import io.reactivex.Maybe
 import io.reactivex.Single
+import java.util.Optional
 import java.util.concurrent.CompletableFuture
 // tag::join[]
 // tag::async[]
@@ -35,13 +36,17 @@ interface ProductRepository : CrudRepository<Product, Long> {
     // end::reactive[]
 
     // tag::native[]
-    @Query("""SELECT *, m_.name as m_name, m_.id as m_id 
-                    FROM product p 
-                    INNER JOIN manufacturer m_ ON p.manufacturer_id = m_.id 
+    @Query("""SELECT *, m_.name as m_name, m_.id as m_id
+                    FROM product p
+                    INNER JOIN manufacturer m_ ON p.manufacturer_id = m_.id
                     WHERE p.name like :name limit 5""")
     @Join(value = "manufacturer", alias = "m_")
     fun searchProducts(name: String): List<Product>
     // end::native[]
+
+    @Join("manufacturer")
+    fun findByName(str: String): Optional<Product>
+
 // tag::join[]
 // tag::async[]
 }

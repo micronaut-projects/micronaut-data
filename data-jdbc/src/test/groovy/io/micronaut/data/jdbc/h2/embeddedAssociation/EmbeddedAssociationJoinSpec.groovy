@@ -2,21 +2,30 @@ package io.micronaut.data.jdbc.h2.embeddedAssociation
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.*
+import io.micronaut.data.annotation.repeatable.JoinSpecifications
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.h2.H2DBProperties
 import io.micronaut.data.jdbc.h2.H2TestPropertyProvider
+import io.micronaut.data.model.Page
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Sort
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import io.micronaut.data.repository.jpa.JpaSpecificationExecutor
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
+import io.micronaut.data.tck.entities.Order
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
 import jakarta.inject.Inject
 
-@MicronautTest
+import java.time.Instant
+
+
 @H2DBProperties
 class EmbeddedAssociationJoinSpec extends Specification implements H2TestPropertyProvider {
+
     @AutoCleanup
     @Shared
     ApplicationContext applicationContext = ApplicationContext.run(getProperties())
@@ -32,6 +41,19 @@ class EmbeddedAssociationJoinSpec extends Specification implements H2TestPropert
     @Shared
     @Inject
     OneMainEntityEmRepository oneMainEntityEmRepository = applicationContext.getBean(OneMainEntityEmRepository)
+
+    @Shared
+    @Inject
+    ClientRepository clientRepository = applicationContext.getBean(ClientRepository)
+
+    @Shared
+    @Inject
+    RelationshipStatusRepository relationshipStatusRepository = applicationContext.getBean(RelationshipStatusRepository)
+
+    @Override
+    List<String> packages() {
+        return Arrays.asList("io.micronaut.data.jdbc.h2.embeddedAssociation")
+    }
 
     void 'test one-to-one update'() {
         given:
@@ -64,6 +86,11 @@ class EmbeddedAssociationJoinSpec extends Specification implements H2TestPropert
         when:
             mainEntityRepository.save(e)
             e = mainEntityRepository.findById(e.id).get()
+            Sort.Order.Direction sortDirection = Sort.Order.Direction.ASC;
+            Pageable pageable = Pageable.UNPAGED.order(new Sort.Order("child.name", sortDirection, false));
+            mainEntityRepository.findAll(pageable).totalPages == 1
+            PredicateSpecification<Order> predicate = null
+             mainEntityRepository.findAllByCriteria(predicate, pageable).totalPages == 1
         then:
             e.id
             e.assoc.size() == 2
@@ -110,15 +137,40 @@ class EmbeddedAssociationJoinSpec extends Specification implements H2TestPropert
             oem.id.one.em.assoc[0].name == "C"
             oem.id.one.em.assoc[1].name == "D"
     }
+
+    void 'embedded with generated values are saved'() {
+        given:
+        relationshipStatusRepository.save(new RelationshipStatus(id: 1, name: 'Active'))
+        relationshipStatusRepository.save(new RelationshipStatus(id: 2, name: 'InActive'))
+        when:
+        var status = relationshipStatusRepository.findById(1L).orElse(null)
+        then:
+        status
+        status.name == 'Active'
+        when:"New client with embedded is created"
+        var newClient = clientRepository.save(new Client(name: 'Active Client', relationship: new Relationship(status: status)))
+        then:"Embedded is saved"
+        newClient.name == 'Active Client'
+        newClient.relationship.type == RelationshipType.CLIENT
+        newClient.relationship.status
+        newClient.relationship.status.id == status.id
+        newClient.relationship.status.name == status.name
+    }
 }
 
 @JdbcRepository(dialect = Dialect.H2)
-interface MainEntityRepository extends CrudRepository<MainEntity, Long> {
+interface MainEntityRepository extends CrudRepository<MainEntity, Long>, JpaSpecificationExecutor<MainEntity> {
 
     @Join(value = "assoc", type = Join.Type.FETCH)
     @Join(value = "em.assoc", type = Join.Type.FETCH)
     @Override
     Optional<MainEntity> findById(Long aLong)
+
+    @JoinSpecifications(@Join(value = "child", type = Join.Type.LEFT_FETCH))
+    Page<MainEntity> findAll(Pageable pageable)
+
+    @JoinSpecifications(@Join(value = "child", type = Join.Type.LEFT_FETCH))
+    Page<MainEntity> findAllByCriteria(PredicateSpecification<Order> spec, Pageable pageable)
 }
 
 @JdbcRepository(dialect = Dialect.H2)
@@ -199,4 +251,53 @@ class MainEntityAssociation {
     @GeneratedValue
     Long id
     String name
+}
+
+@MappedEntity
+class RelationshipStatus {
+    @Id
+    @GeneratedValue
+    Long id
+
+    String name
+}
+
+enum RelationshipType {
+    CLIENT,
+    SUPPLIER
+}
+
+@Embeddable
+class Relationship {
+    RelationshipType type = RelationshipType.CLIENT
+
+    @Relation(value = Relation.Kind.MANY_TO_ONE)
+    RelationshipStatus status
+}
+
+@MappedEntity
+class Client {
+    @Id
+    @GeneratedValue
+    Long id
+
+    String name
+
+    @Relation(value = Relation.Kind.EMBEDDED)
+    Relationship relationship
+
+    @DateCreated
+    Instant createdAt = Instant.now()
+
+    @DateUpdated
+    Instant updatedAt =Instant.now()
+}
+
+@JdbcRepository(dialect = Dialect.H2)
+@Join(value = "relationship.status", type = Join.Type.LEFT_FETCH)
+interface ClientRepository extends CrudRepository<Client, Long> {
+}
+
+@JdbcRepository(dialect = Dialect.H2)
+interface RelationshipStatusRepository extends CrudRepository<RelationshipStatus, Long> {
 }

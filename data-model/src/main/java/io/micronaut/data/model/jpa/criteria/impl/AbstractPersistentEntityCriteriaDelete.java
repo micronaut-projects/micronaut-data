@@ -15,25 +15,22 @@
  */
 package io.micronaut.data.model.jpa.criteria.impl;
 
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
-import io.micronaut.data.model.jpa.criteria.impl.query.QueryModelPredicateVisitor;
-import io.micronaut.data.model.jpa.criteria.impl.query.QueryModelSelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
-import io.micronaut.data.model.jpa.criteria.impl.util.Joiner;
-import io.micronaut.data.model.query.QueryModel;
-import io.micronaut.data.model.query.builder.QueryBuilder;
+import io.micronaut.data.model.query.builder.QueryBuilder2;
 import io.micronaut.data.model.query.builder.QueryResult;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Selection;
-import jakarta.persistence.criteria.Subquery;
 import jakarta.persistence.metamodel.EntityType;
 
 import java.util.Arrays;
@@ -41,8 +38,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
+
+import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupportedOperation;
 
 /**
  * The abstract implementation of {@link PersistentEntityCriteriaDelete}.
@@ -53,46 +50,23 @@ import java.util.stream.Collectors;
  */
 @Internal
 public abstract class AbstractPersistentEntityCriteriaDelete<T> implements PersistentEntityCriteriaDelete<T>,
-        QueryResultPersistentEntityCriteriaQuery {
+    QueryResultPersistentEntityCriteriaQuery {
 
     protected Predicate predicate;
     protected PersistentEntityRoot<T> entityRoot;
     protected Selection<?> returning;
 
     @Override
-    public QueryModel getQueryModel() {
-        if (entityRoot == null) {
-            throw new IllegalStateException("The root entity must be specified!");
-        }
-        QueryModel qm = QueryModel.from(entityRoot.getPersistentEntity());
-        Joiner joiner = new Joiner();
-        if (predicate instanceof PredicateVisitable predicateVisitable) {
-            predicateVisitable.accept(createPredicateVisitor(qm));
-            predicateVisitable.accept(joiner);
-        }
-        if (returning instanceof SelectionVisitable selectionVisitable) {
-            selectionVisitable.accept(new QueryModelSelectionVisitor(qm, false));
-            selectionVisitable.accept(joiner);
-        }
-        for (Map.Entry<String, Joiner.Joined> e : joiner.getJoins().entrySet()) {
-            qm.join(e.getKey(), Optional.ofNullable(e.getValue().getType()).orElse(Join.Type.DEFAULT), e.getValue().getAlias());
-        }
-        return qm;
-    }
-
-    /**
-     * Creates query model predicate visitor.
-     * @param queryModel The query model
-     * @return the visitor
-     */
-    @NonNull
-    protected QueryModelPredicateVisitor createPredicateVisitor(QueryModel queryModel) {
-        return new QueryModelPredicateVisitor(queryModel);
+    public PersistentEntity getPersistentEntity() {
+        return entityRoot.getPersistentEntity();
     }
 
     @Override
-    public QueryResult buildQuery(QueryBuilder queryBuilder) {
-        return queryBuilder.buildDelete(getQueryModel());
+    public QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder2 queryBuilder) {
+        return queryBuilder.buildDelete(
+            annotationMetadata,
+            new DeleteQueryDefinitionImpl(entityRoot.getPersistentEntity(), predicate, returning)
+        );
     }
 
     @Override
@@ -108,7 +82,11 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
 
     @Override
     public PersistentEntityCriteriaDelete<T> where(Expression<Boolean> restriction) {
-        predicate = new ConjunctionPredicate(Collections.singleton((IExpression<Boolean>) restriction));
+        if (restriction instanceof ConjunctionPredicate conjunctionPredicate) {
+            predicate = conjunctionPredicate;
+        } else {
+            predicate = new ConjunctionPredicate(Collections.singleton((IExpression<Boolean>) restriction));
+        }
         return this;
     }
 
@@ -117,7 +95,7 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
         Objects.requireNonNull(restrictions);
         if (restrictions.length > 0) {
             predicate = restrictions.length == 1 ? restrictions[0] : new ConjunctionPredicate(
-                    Arrays.stream(restrictions).sequential().map(x -> (IExpression<Boolean>) x).collect(Collectors.toList())
+                Arrays.stream(restrictions).sequential().map(x -> (IExpression<Boolean>) x).toList()
             );
         } else {
             predicate = null;
@@ -136,8 +114,8 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
     }
 
     @Override
-    public <U> Subquery<U> subquery(Class<U> type) {
-        throw new IllegalStateException("Unsupported!");
+    public <U> PersistentEntitySubquery<U> subquery(ExpressionType<U> type) {
+        throw notSupportedOperation();
     }
 
     public final boolean hasVersionRestriction() {
@@ -174,5 +152,20 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
             this.returning = null;
         }
         return this;
+    }
+
+    private static final class DeleteQueryDefinitionImpl extends AbstractPersistentEntityCriteriaQuery.BaseQueryDefinitionImpl implements QueryBuilder2.DeleteQueryDefinition {
+
+        private final Selection<?> returningSelection;
+
+        DeleteQueryDefinitionImpl(PersistentEntity persistentEntity, Predicate predicate, Selection<?> returningSelection) {
+            super(persistentEntity, predicate, Map.of());
+            this.returningSelection = returningSelection;
+        }
+
+        @Override
+        public Selection<?> returningSelection() {
+            return returningSelection;
+        }
     }
 }

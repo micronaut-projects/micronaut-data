@@ -1,0 +1,15 @@
+The DATASOURCE mode is used in combination with the micronaut-multitenancy library in order to resolve the tenant name.
+In the below example, the tenant resolver is set to use a http header. See https://micronaut-projects.github.io/micronaut-multitenancy/latest/guide/[Micronaut Multitenancy] for more information.
+
+.Example of the configuration with two data sources to be chosen based on the tenancy
+[configuration]
+----
+include::doc-examples/jdbc-multitenancy-datasource-example-java/src/main/resources/application.yml[]
+----
+
+The following HTTP clients will access a different tenant datasource:
+
+[source,java]
+----
+include::doc-examples/jdbc-multitenancy-schema-example-java/src/test/java/example/BookJdbcSchemaMultiTenancySpec.java[tags="clients"]
+----

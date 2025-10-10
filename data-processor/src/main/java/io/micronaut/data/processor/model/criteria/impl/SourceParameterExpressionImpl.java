@@ -16,6 +16,7 @@
 package io.micronaut.data.processor.model.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.Expandable;
@@ -26,7 +27,7 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
-import io.micronaut.data.model.jpa.criteria.impl.ParameterExpressionImpl;
+import io.micronaut.data.model.jpa.criteria.impl.IParameterExpression;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
@@ -35,9 +36,7 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.Element;
 import io.micronaut.inject.ast.ParameterElement;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -45,13 +44,13 @@ import java.util.Objects;
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupportedOperation;
 
 /**
- * The internal source implementation of {@link ParameterExpressionImpl}.
+ * The internal source implementation of {@link IParameterExpression}.
  *
  * @author Denis Stepanov
  * @since 3.2
  */
 @Internal
-public final class SourceParameterExpressionImpl extends ParameterExpressionImpl<Object> implements BindingParameter {
+public final class SourceParameterExpressionImpl extends IParameterExpression<Object> implements BindingParameter {
 
     private final Map<String, DataType> dataTypes;
     private final ClassElement expressionType;
@@ -60,28 +59,56 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
     private final ParameterElement parameterElement;
     private final boolean isEntityParameter;
     private boolean isUpdate;
+    private final PersistentPropertyPath parameterPropertyPath;
 
     public SourceParameterExpressionImpl(Map<String, DataType> dataTypes,
                                          ParameterElement[] parameters,
                                          ParameterElement parameterElement,
-                                         boolean isEntityParameter) {
-        super(null, parameterElement == null ? null : parameterElement.getName());
-        this.dataTypes = dataTypes;
-        this.parameters = parameters;
-        this.parameterElement = parameterElement;
-        this.isEntityParameter = isEntityParameter;
-        this.expressionType = null;
+                                         boolean isEntityParameter,
+                                         PersistentPropertyPath parameterPropertyPath) {
+        this(parameterElement == null ? null : parameterElement.getName(),
+            dataTypes, null, parameters, parameterElement, isEntityParameter, false, parameterPropertyPath);
     }
 
     public SourceParameterExpressionImpl(Map<String, DataType> dataTypes,
                                          String name,
-                                         ClassElement expressionType) {
-        super(null, name);
+                                         ClassElement expressionType,
+                                         PersistentPropertyPath parameterPropertyPath) {
+        this(name, dataTypes, expressionType, null, null, false, false, parameterPropertyPath);
+    }
+
+    private SourceParameterExpressionImpl(String name,
+                                          Map<String, DataType> dataTypes,
+                                          ClassElement expressionType,
+                                          @Nullable ParameterElement[] parameters,
+                                          ParameterElement parameterElement,
+                                          boolean isEntityParameter,
+                                          boolean isUpdate,
+                                          PersistentPropertyPath parameterPropertyPath) {
+        super(new ClassElementExpressionType<>(getSourceExpressionType(expressionType, parameterElement, parameterPropertyPath)), name);
         this.dataTypes = dataTypes;
-        this.parameters = null;
-        this.parameterElement = null;
         this.expressionType = expressionType;
-        this.isEntityParameter = false;
+        this.parameters = parameters;
+        this.parameterElement = parameterElement;
+        this.isEntityParameter = isEntityParameter;
+        this.isUpdate = isUpdate;
+        this.parameterPropertyPath = parameterPropertyPath;
+    }
+
+    public static ClassElement getSourceExpressionType(ClassElement expressionType,
+                                                       ParameterElement parameterElement,
+                                                       PersistentPropertyPath parameterPropertyPath) {
+        if (expressionType != null) {
+            return expressionType;
+        }
+        if (parameterPropertyPath != null) {
+            SourcePersistentProperty property = (SourcePersistentProperty) parameterPropertyPath.getProperty();
+            return property.getType();
+        }
+        if (parameterElement != null) {
+            return parameterElement.getType();
+        }
+        return null;
     }
 
     @Override
@@ -102,6 +129,9 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
             bindName = bindingContext.getName();
         }
         PersistentPropertyPath incomingMethodParameterProperty = bindingContext.getIncomingMethodParameterProperty();
+        if (incomingMethodParameterProperty == null) {
+            incomingMethodParameterProperty = parameterPropertyPath;
+        }
         PersistentPropertyPath outgoingQueryParameterProperty = bindingContext.getOutgoingQueryParameterProperty();
         PersistentPropertyPath propertyPath = outgoingQueryParameterProperty == null ? incomingMethodParameterProperty : outgoingQueryParameterProperty;
         if (propertyPath == null) {
@@ -188,21 +218,26 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
             };
 
         }
-        if (outgoingQueryParameterProperty == null) {
-            throw new IllegalStateException("Outgoing query parameter property is required!");
-        }
         boolean autopopulated = propertyPath.getProperty()
-                        .findAnnotation(AutoPopulated.class)
-                        .map(ap -> ap.getRequiredValue(AutoPopulated.UPDATEABLE, Boolean.class))
-                        .orElse(false);
+            .findAnnotation(AutoPopulated.class)
+            .map(ap -> ap.getRequiredValue(AutoPopulated.UPDATEABLE, Boolean.class))
+            .orElse(false);
         DataType dataType = getDataType(propertyPath, parameterElement, expressionType);
         JsonDataType jsonDataType = getJsonDataType(propertyPath, parameterElement, expressionType);
         String converterClassName = ((SourcePersistentProperty) propertyPath.getProperty()).getConverterClassName();
         int index = parameterElement == null || isEntityParameter ? -1 : Arrays.asList(parameters).indexOf(parameterElement);
-        String[] path = asStringPath(outgoingQueryParameterProperty.getAssociations(), outgoingQueryParameterProperty.getProperty());
-        String[] parameterBindingPath = index != -1 ? getBindingPath(incomingMethodParameterProperty, outgoingQueryParameterProperty) : null;
         boolean requiresPrevValue = index == -1 && autopopulated && !isUpdate;
         boolean isExpandable = isExpandable(bindingContext, dataType);
+        String[] parameterBindingPath;
+        if (bindingContext.getParameterBindingPath() == null) {
+            if (incomingMethodParameterProperty != null && outgoingQueryParameterProperty != null) {
+                parameterBindingPath = getParameterBindingPath(incomingMethodParameterProperty, outgoingQueryParameterProperty);
+            } else {
+                parameterBindingPath = null;
+            }
+        } else {
+            parameterBindingPath = bindingContext.getParameterBindingPath().getArrayPath();
+        }
         return new QueryParameterBinding() {
 
             @Override
@@ -242,7 +277,7 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
 
             @Override
             public String[] getPropertyPath() {
-                return path;
+                return propertyPath.getArrayPath();
             }
 
             @Override
@@ -280,12 +315,11 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
         return !dataType.isArray() && (parameterElement != null && parameterElement.getType().isAssignable(Iterable.class.getName()));
     }
 
-    private String[] getBindingPath(PersistentPropertyPath parameterProperty, PersistentPropertyPath bindedPath) {
-        if (parameterProperty == null) {
-            return asStringPath(bindedPath.getAssociations(), bindedPath.getProperty());
-        }
-        List<String> parameterPath = Arrays.asList(asStringPath(parameterProperty.getAssociations(), parameterProperty.getProperty()));
-        List<String> path = new LinkedList<>(Arrays.asList(asStringPath(bindedPath.getAssociations(), bindedPath.getProperty())));
+    @Nullable
+    private String[] getParameterBindingPath(@NonNull PersistentPropertyPath incomingMethodParameterPropertyPath,
+                                             @NonNull PersistentPropertyPath outgoingQueryParameterPropertyPath) {
+        List<String> parameterPath = List.of(incomingMethodParameterPropertyPath.getArrayPath());
+        List<String> path = List.of(outgoingQueryParameterPropertyPath.getArrayPath());
         if (path.equals(parameterPath)) {
             return null;
         }
@@ -348,18 +382,6 @@ public final class SourceParameterExpressionImpl extends ParameterExpressionImpl
         }
         // default
         return JsonDataType.DEFAULT;
-    }
-
-    private String[] asStringPath(List<Association> associations, PersistentProperty property) {
-        if (associations.isEmpty()) {
-            return new String[]{property.getName()};
-        }
-        List<String> path = new ArrayList<>(associations.size() + 1);
-        for (Association association : associations) {
-            path.add(association.getName());
-        }
-        path.add(property.getName());
-        return path.toArray(new String[0]);
     }
 
 }

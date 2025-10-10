@@ -26,7 +26,7 @@ import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.r2dbc.operations.R2dbcSchemaHandler;
 import io.micronaut.data.runtime.config.DataSettings;
@@ -41,7 +41,6 @@ import jakarta.annotation.PostConstruct;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Schema generation for R2DBC.
@@ -78,6 +77,9 @@ public class R2dbcSchemaGenerator {
         for (DataR2dbcConfiguration configuration : configurations) {
 
             SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
+            if (schemaGenerate == SchemaGenerate.VALIDATE) {
+                throw new IllegalStateException("Micronaut Data does not currently support validation of R2dbc data sources.");
+            }
             if (schemaGenerate != null && schemaGenerate != SchemaGenerate.NONE) {
                 List<String> packages = configuration.getPackages();
 
@@ -94,7 +96,7 @@ public class R2dbcSchemaGenerator {
                         .filter(i -> !i.hasAnnotation(JsonView.class))
                         .map(e -> runtimeEntityRegistry.getEntity(e.getBeanType())).toArray(PersistentEntity[]::new);
                 if (ArrayUtils.isNotEmpty(entities)) {
-                    SqlQueryBuilder builder = new SqlQueryBuilder(configuration.getDialect());
+                    SqlQueryBuilder2 builder = new SqlQueryBuilder2(configuration.getDialect());
                     Mono.from(configuration.getConnectionFactory().create()).flatMap(connection -> {
                         Dialect dialect = configuration.getDialect();
                         if (configuration.getSchemaGenerateNames() != null && !configuration.getSchemaGenerateNames().isEmpty()) {
@@ -119,10 +121,8 @@ public class R2dbcSchemaGenerator {
         }
     }
 
-    private Mono<Void> generate(Connection connection, SchemaGenerate schemaGenerate, PersistentEntity[] entities, SqlQueryBuilder builder) {
-        List<String> createStatements = Arrays.stream(entities)
-                .flatMap(entity -> Arrays.stream(builder.buildCreateTableStatements(entity)))
-                .collect(Collectors.toList());
+    private Mono<Void> generate(Connection connection, SchemaGenerate schemaGenerate, PersistentEntity[] entities, SqlQueryBuilder2 builder) {
+        List<String> createStatements = Arrays.asList(builder.buildCreateTableStatements(entities));
         Flux<Void> createTablesFlow = Flux.fromIterable(createStatements)
                 .concatMap(sql -> {
                     if (DataSettings.QUERY_LOG.isDebugEnabled()) {
@@ -139,7 +139,7 @@ public class R2dbcSchemaGenerator {
         return switch (schemaGenerate) {
             case CREATE_DROP -> {
                 List<String> dropStatements = Arrays.stream(entities).flatMap(entity -> Arrays.stream(builder.buildDropTableStatements(entity)))
-                        .collect(Collectors.toList());
+                        .toList();
                 yield Flux.fromIterable(dropStatements)
                         .concatMap(sql -> {
                             if (DataSettings.QUERY_LOG.isDebugEnabled()) {

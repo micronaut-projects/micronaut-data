@@ -46,7 +46,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -146,9 +145,9 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
                 buildRawQuery(matchContext, methodMatchInfo, entityParameter, entitiesParameter, operationType);
 
                 if (entityParameter != null) {
-                    methodMatchInfo.addParameterRole(TypeRole.ENTITY, entityParameter.getName());
+                    methodMatchInfo.addParameterRole(entityParameter, TypeRole.ENTITY);
                 } else if (entitiesParameter != null) {
-                    methodMatchInfo.addParameterRole(TypeRole.ENTITIES, entitiesParameter.getName());
+                    methodMatchInfo.addParameterRole(entitiesParameter, TypeRole.ENTITIES);
                 }
                 return methodMatchInfo;
             }
@@ -221,27 +220,7 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
         }
         List<QueryParameterBinding> parameterBindings = new ArrayList<>(parameters.size());
         String filterQuery = processCustomQuery(matchContext, filterQueryString, parameters, entityParam, persistentEntity, parameterBindings);
-        return new QueryResult() {
-            @Override
-            public String getQuery() {
-                return filterQuery;
-            }
-
-            @Override
-            public List<String> getQueryParts() {
-                return Collections.emptyList();
-            }
-
-            @Override
-            public List<QueryParameterBinding> getParameterBindings() {
-                return parameterBindings;
-            }
-
-            @Override
-            public Map<String, String> getAdditionalRequiredParameters() {
-                return Collections.emptyMap();
-            }
-        };
+        return QueryResult.of(filterQuery, parameterBindings);
     }
 
     private QueryResult getUpdateQueryResult(MethodMatchContext matchContext,
@@ -278,10 +257,6 @@ public class MongoRawQueryMethodMatcher implements MethodMatcher {
                 return parameterBindings;
             }
 
-            @Override
-            public Map<String, String> getAdditionalRequiredParameters() {
-                return Collections.emptyMap();
-            }
         };
     }
 

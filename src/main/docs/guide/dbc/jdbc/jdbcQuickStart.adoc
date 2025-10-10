@@ -58,7 +58,7 @@ The annotation processor needs to have the Micronaut Data processor dependency p
 
 dependency:io.micronaut.data:micronaut-data-processor[scope="annotationProcessor"]
 
-NOTE: For Kotlin the dependency should be in the `kapt` scope and for Groovy it should be in `compileOnly` scope.
+NOTE: For Kotlin, add the `micronaut-data-processor` dependency in https://docs.micronaut.io/4.4.3/guide/#kaptOrKsp[kapt or ksp scope], and for Groovy add `micronaut-data-processor` in compileOnly scope.
 
 Next up you need to configure at least one data source. The following snippet from the application configuration file is an example of configuring the default JDBC data source:
 

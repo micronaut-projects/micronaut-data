@@ -1,6 +1,6 @@
 package io.micronaut.data.jdbc.h2.one2one
 
-import io.micronaut.context.ApplicationContext
+import io.micronaut.context.annotation.Property
 import io.micronaut.data.annotation.DateCreated
 import io.micronaut.data.annotation.DateUpdated
 import io.micronaut.data.annotation.GeneratedValue
@@ -11,14 +11,11 @@ import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.Relation
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.h2.H2DBProperties
-import io.micronaut.data.jdbc.h2.H2TestPropertyProvider
 import io.micronaut.data.model.naming.NamingStrategies
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
-import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
-import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -27,23 +24,16 @@ import java.time.LocalDateTime
 
 @MicronautTest
 @H2DBProperties
-class OneToOneSpec extends Specification implements H2TestPropertyProvider {
-    @AutoCleanup
-    @Shared
-    ApplicationContext applicationContext = ApplicationContext.run(getProperties())
+@Property(name = "datasources.default.schema-generate", value = "NONE")
+class OneToOneSpec extends Specification {
 
     @Shared
     @Inject
-    CustomerRepository customerRepository = applicationContext.getBean(CustomerRepository)
+    CustomerRepository customerRepository
 
     @Shared
     @Inject
     Connection connection
-
-    @Override
-    SchemaGenerate schemaGenerate() {
-        return SchemaGenerate.NONE
-    }
 
     void 'test'() {
         given:

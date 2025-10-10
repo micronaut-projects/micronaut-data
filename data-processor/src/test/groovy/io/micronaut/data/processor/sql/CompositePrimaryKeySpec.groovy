@@ -26,7 +26,6 @@ import spock.lang.Shared
 
 import static io.micronaut.data.processor.visitors.TestUtils.*
 
-//@IgnoreIf({ !jvm.isJava8() })
 class CompositePrimaryKeySpec extends AbstractDataSpec {
 
     @Shared SourcePersistentEntity entity

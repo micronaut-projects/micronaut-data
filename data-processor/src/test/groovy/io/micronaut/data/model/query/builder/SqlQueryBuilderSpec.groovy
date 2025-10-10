@@ -173,6 +173,50 @@ interface MyRepository {
 
     }
 
+    void "test h2 crud"() {
+        given:
+        def annotationMetadata = buildTypeAnnotationMetadata('''
+package test;
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.model.query.builder.sql.*;
+import java.lang.annotation.*;
+import io.micronaut.data.jdbc.annotation.*;
+import io.micronaut.context.annotation.*;
+
+@MyAnnotation(dialect = Dialect.H2)
+interface MyRepository {
+}
+
+@RepositoryConfiguration(
+        queryBuilder = SqlQueryBuilder.class
+)
+@SqlQueryConfiguration(
+    @SqlQueryConfiguration.DialectConfiguration(
+        dialect = Dialect.H2,
+        positionalParameterFormat = "$%s",
+        escapeQueries = false
+    )
+)
+@Retention(RetentionPolicy.RUNTIME)
+@Repository
+@interface MyAnnotation {
+    @AliasFor(annotation = Repository.class, member = "dialect")
+    Dialect dialect() default Dialect.ANSI;
+}
+''')
+
+        PersistentEntity entity = PersistentEntity.of(Sale)
+        QueryBuilder builder = new SqlQueryBuilder(Dialect.H2)
+        def queryModel = QueryModel.from(entity).eq("name", QueryParameter.of("name"))
+
+        expect:
+        builder.dialect == Dialect.H2
+        builder.buildQuery(annotationMetadata, queryModel).query == 'SELECT sale_.`id`,sale_.`name`,sale_.`data`,sale_.`quantities`,sale_.`extra_data`,sale_.`data_list` FROM `sale` sale_ WHERE (sale_.`name` = ?)'
+        builder.buildDelete(queryModel).query == 'DELETE  FROM `sale`  WHERE (`name` = ?)'
+        builder.buildUpdate(queryModel, Arrays.asList("name")).query == 'UPDATE `sale` SET `name`=? WHERE (`name` = ?)'
+        builder.buildInsert(annotationMetadata, entity).query == 'INSERT INTO `sale` (`name`,`data`,`quantities`,`extra_data`,`data_list`) VALUES (?,? FORMAT JSON,? FORMAT JSON,? FORMAT JSON,? FORMAT JSON)'
+    }
+
     void "test encode to-one join - single level"() {
         given:
         PersistentEntity entity = PersistentEntity.of(Book)
@@ -214,9 +258,7 @@ interface MyRepository {
 
         expect:
         encoded.query == 'SELECT book_."id",book_."author_id",book_."genre_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated",book_genre_."genre_name" AS genre_genre_name FROM "book" book_ FULL OUTER JOIN "genre" book_genre_ ON book_."genre_id"=book_genre_."id" FULL OUTER JOIN "author" book_author_ ON book_."author_id"=book_author_."id" WHERE (book_."id" = ?)'
-
     }
-
 
     void "test encode to-one join - unsupported outer join throws exception for H2 Dialect"() {
         given:
@@ -621,7 +663,7 @@ interface MyRepository {
         then:
         statements[0] == 'CREATE TABLE "shipment_with_index_on_class" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
         statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_on_class_field" ON "shipment_with_index_on_class" (field);'
-        statements[2] == 'CREATE INDEX "idx_shipment_with_index_on_class_taxcode" ON "shipment_with_index_on_class" (taxCode);'
+        statements[2] == 'CREATE INDEX "idx_shipment_tax" ON "shipment_with_index_on_class" (taxCode);'
     }
 
     void "test build create index from index class annotation and field annotation"() {

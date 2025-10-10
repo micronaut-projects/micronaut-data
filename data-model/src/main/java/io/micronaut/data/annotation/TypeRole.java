@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.annotation;
 
+import io.micronaut.core.annotation.Experimental;
+
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
@@ -40,10 +42,16 @@ import java.lang.annotation.Target;
 @Documented
 @Inherited
 public @interface TypeRole {
+
     /**
      * The parameter that is used for pagination.
      */
     String PAGEABLE = "pageable";
+
+    /**
+     * The parameter that is used for limit.
+     */
+    String LIMIT = "querylimit";
 
     /**
      * The parameter that is used for sorting.
@@ -74,6 +82,17 @@ public @interface TypeRole {
      * The parameter that is used to represent a {@link io.micronaut.data.model.Page}.
      */
     String PAGE = "page";
+
+    /**
+     * The parameter that is used to represent a {@link io.micronaut.data.model.CursoredPage}.
+     */
+    String CURSORED_PAGE = "cursoredPage";
+
+    /**
+     * The parameter that is used for pageable which is no un-paged.
+     */
+    @Experimental
+    String PAGEABLE_REQUIRED = "pageableRequired";
 
     /**
      * The name of the role.

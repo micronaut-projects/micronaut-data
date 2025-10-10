@@ -31,7 +31,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 
 /**
  * Projections.
@@ -50,7 +49,7 @@ public final class Projections {
                 } catch (Throwable e) {
                     return null;
                 }
-            }).collect(Collectors.toList());
+            }).toList();
 
     @Nullable
     public static Selection<?> find(@NonNull PersistentEntityRoot<?> entityRoot,
@@ -78,7 +77,7 @@ public final class Projections {
 
         @Override
         public Selection<?> createProjection(CriteriaBuilder cb, PersistentPropertyPath<?> propertyPath) {
-            return propertyPath.isNumeric()
+            return propertyPath.getExpressionType().isNumeric()
                 ? cb.max((PersistentPropertyPath<? extends Number>) propertyPath)
                 : cb.greatest((PersistentPropertyPath<? extends Comparable>) propertyPath);
         }
@@ -96,7 +95,7 @@ public final class Projections {
 
         @Override
         public Selection<?> createProjection(CriteriaBuilder cb, PersistentPropertyPath<?> propertyPath) {
-            return propertyPath.isNumeric()
+            return propertyPath.getExpressionType().isNumeric()
                 ? cb.min((PersistentPropertyPath<? extends Number>) propertyPath)
                 : cb.least((PersistentPropertyPath<? extends Comparable>) propertyPath);
         }

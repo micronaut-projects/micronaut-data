@@ -30,7 +30,6 @@ import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
-import io.micronaut.core.type.MutableArgumentValue;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.annotation.Query;
@@ -70,6 +69,7 @@ import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryResolver;
 import io.micronaut.data.runtime.query.StoredQueryDecorator;
 import io.micronaut.data.runtime.query.StoredQueryResolver;
+import io.micronaut.data.runtime.query.internal.DefaultPreparedQuery;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -83,6 +83,8 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import static io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_LIMIT;
+import static io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_OFFSET;
 import static io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_PAGE_SIZE;
 
 /**
@@ -183,6 +185,9 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     @Nullable
     protected final Object convertOne(MethodInvocationContext<?, ?> context, @Nullable Object o) {
         Argument<?> argumentType = getReturnType(context);
+        if (argumentType.isVoid()) {
+            return null;
+        }
         Class<?> type = argumentType.getType();
         if (o == null) {
             if (type == Optional.class) {
@@ -216,69 +221,30 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     /**
      * Prepares a query for the given context.
      *
-     * @param key     The method key
-     * @param context The context
-     * @return The query
-     */
-    @NonNull
-    protected final PreparedQuery<?, ?> prepareQuery(RepositoryMethodKey key, MethodInvocationContext<T, R> context) {
-        return prepareQuery(key, context, null);
-    }
-
-    /**
-     * Prepares a query for the given context.
-     *
      * @param <RT>       The result generic type
      * @param methodKey  The method key
      * @param context    The context
-     * @param resultType The result type
      * @return The query
      */
     @NonNull
     protected final <RT> PreparedQuery<?, RT> prepareQuery(RepositoryMethodKey methodKey,
-                                                           MethodInvocationContext<T, R>
-                                                                   context, Class<RT> resultType) {
-        return prepareQuery(methodKey, context, resultType, false);
-    }
-
-    /**
-     * Prepares a query for the given context.
-     *
-     * @param <RT>       The result generic type
-     * @param methodKey  The method key
-     * @param context    The context
-     * @param resultType The result type
-     * @param isCount    Is count query
-     * @return The query
-     */
-    @NonNull
-    protected final <RT> PreparedQuery<?, RT> prepareQuery(RepositoryMethodKey methodKey,
-                                                           MethodInvocationContext<T, R> context,
-                                                           Class<RT> resultType,
-                                                           boolean isCount) {
+                                                           MethodInvocationContext<T, R> context) {
         validateNullArguments(context);
-        StoredQuery<?, RT> storedQuery = findStoreQuery(methodKey, context, resultType, isCount);
+        StoredQuery<?, RT> storedQuery = findStoreQuery(methodKey, context);
         Pageable pageable = storedQuery.hasPageable() ? getPageable(context) : Pageable.UNPAGED;
         PreparedQuery<?, RT> preparedQuery = preparedQueryResolver.resolveQuery(context, storedQuery, pageable);
         return preparedQueryDecorator.decorate(preparedQuery);
     }
 
-    private <E, RT> StoredQuery<E, RT> findStoreQuery(MethodInvocationContext<?, ?> context, boolean isCount) {
+    private <E, RT> StoredQuery<E, RT> findStoreQuery(MethodInvocationContext<?, ?> context) {
         RepositoryMethodKey key = new RepositoryMethodKey(context.getTarget(), context.getExecutableMethod());
-        return findStoreQuery(key, context, null, isCount);
+        return findStoreQuery(key, context);
     }
 
-    private <E, RT> StoredQuery<E, RT> findStoreQuery(RepositoryMethodKey methodKey, MethodInvocationContext<?, ?> context, Class<RT> resultType, boolean isCount) {
+    private <E, RT> StoredQuery<E, RT> findStoreQuery(RepositoryMethodKey methodKey, MethodInvocationContext<?, ?> context) {
         StoredQuery<E, RT> storedQuery = queries.get(methodKey);
         if (storedQuery == null) {
-            Class<E> rootEntity = context.classValue(DataMethod.NAME, DataMethod.META_MEMBER_ROOT_ENTITY)
-                    .orElseThrow(() -> new IllegalStateException("No root entity present in method"));
-            if (resultType == null) {
-                //noinspection unchecked
-                resultType = (Class<RT>) context.classValue(DataMethod.NAME, DataMethod.META_MEMBER_RESULT_TYPE)
-                        .orElse(rootEntity);
-            }
-            storedQuery = storedQueryResolver.resolveQuery(context, rootEntity, resultType, isCount);
+            storedQuery = storedQueryResolver.resolveQuery(context);
             storedQuery = storedQueryDecorator.decorate(context, storedQuery);
             queries.put(methodKey, storedQuery);
         }
@@ -296,15 +262,14 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     protected final PreparedQuery<?, Number> prepareCountQuery(RepositoryMethodKey methodKey, @NonNull MethodInvocationContext<T, R> context) {
         StoredQuery storedQuery = countQueries.get(methodKey);
         if (storedQuery == null) {
-            Class rootEntity = getRequiredRootEntity(context);
-            storedQuery = storedQueryResolver.resolveCountQuery(context, rootEntity, Long.class);
+            storedQuery = storedQueryResolver.resolveCountQuery(context);
             storedQuery = storedQueryDecorator.decorate(context, storedQuery);
             countQueries.put(methodKey, storedQuery);
         }
 
         Pageable pageable = storedQuery.hasPageable() ? getPageable(context) : Pageable.UNPAGED;
         //noinspection unchecked
-        PreparedQuery preparedQuery = preparedQueryResolver.resolveCountQuery(context, storedQuery, pageable);
+        PreparedQuery<?, Number> preparedQuery = preparedQueryResolver.resolveCountQuery(context, storedQuery, pageable);
         return preparedQueryDecorator.decorate(preparedQuery);
     }
 
@@ -392,7 +357,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @param <RT>    The generic type
      * @return An result
      */
-    private <RT> RT getRequiredParameterInRole(MethodInvocationContext<?, ?> context, @NonNull String role, @NonNull Class<RT> type) {
+    protected <RT> RT getRequiredParameterInRole(MethodInvocationContext<?, ?> context, @NonNull String role, @NonNull Class<RT> type) {
         return getParameterInRole(context, role, type).orElseThrow(() -> new IllegalStateException("Cannot find parameter with role: " + role));
     }
 
@@ -405,25 +370,22 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @param <RT>    The generic type
      * @return An optional result
      */
-    private <RT> Optional<RT> getParameterInRole(MethodInvocationContext<?, ?> context, @NonNull String role, @NonNull Class<RT> type) {
-        return context.stringValue(DataMethod.NAME, role).flatMap(name -> {
-            RT parameterValue = null;
-            Map<String, MutableArgumentValue<?>> params = context.getParameters();
-            MutableArgumentValue<?> arg = params.get(name);
-            if (arg != null) {
-                Object o = arg.getValue();
-                if (o != null) {
-                    if (type.isInstance(o)) {
-                        //noinspection unchecked
-                        parameterValue = (RT) o;
-                    } else {
-                        parameterValue = operations.getConversionService()
-                                .convert(o, type).orElse(null);
-                    }
-                }
-            }
-            return Optional.ofNullable(parameterValue);
-        });
+    protected <RT> Optional<RT> getParameterInRole(MethodInvocationContext<?, ?> context, @NonNull String role, @NonNull Class<RT> type) {
+        return DefaultPreparedQuery.getParameterInRole(role, type, context, conversionService);
+    }
+
+    /**
+     * Retrieve a parameter in the given role for the given type.
+     *
+     * @param context The context
+     * @param role    The role
+     * @param type    The type
+     * @param <RT>    The generic type
+     * @return An optional result
+     */
+    @NonNull
+    protected <RT> List<RT> getParametersInRole(@NonNull MethodInvocationContext<?, ?> context, @NonNull String role, @NonNull Class<RT> type) {
+        return DefaultPreparedQuery.getParametersInRole(role, type, context, conversionService);
     }
 
     /**
@@ -434,22 +396,54 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      */
     @NonNull
     protected Pageable getPageable(MethodInvocationContext<?, ?> context) {
-        Pageable pageable = getParameterInRole(context, TypeRole.PAGEABLE, Pageable.class).orElse(null);
+        Pageable pageable = getPageableInRole(context);
         if (pageable == null) {
-            Sort sort = getParameterInRole(context, TypeRole.SORT, Sort.class).orElse(null);
-            int max = context.intValue(DataMethod.NAME, META_MEMBER_PAGE_SIZE).orElse(-1);
-            if (sort != null) {
-                int pageIndex = context.intValue(DataMethod.NAME, DataMethod.META_MEMBER_PAGE_INDEX).orElse(0);
-                if (max > 0) {
-                    pageable = Pageable.from(pageIndex, max, sort);
-                } else {
-                    pageable = Pageable.from(sort);
-                }
-            } else if (max > -1) {
-                return Pageable.from(0, max);
+            pageable = Pageable.UNPAGED;
+            int limit = context.intValue(DataMethod.NAME, META_MEMBER_PAGE_SIZE)
+                .orElseGet(() -> context.intValue(DataMethod.NAME, META_MEMBER_LIMIT).orElse(-1));
+            if (limit > 0) {
+                pageable = Pageable.from(0, limit);
             }
         }
-        return pageable != null ? pageable : Pageable.UNPAGED;
+        for (Sort sort : getParametersInRole(context, TypeRole.SORT, Sort.class)) {
+            if (pageable != sort) {
+                pageable = pageable.orders(sort.getOrderBy());
+            }
+        }
+        return pageable;
+    }
+
+    /**
+     * Resolves the {@link Pageable} for the given context.
+     *
+     * @param context The context
+     * @return The pageable or null
+     */
+    @Nullable
+    protected Pageable getPageableInRole(MethodInvocationContext<?, ?> context) {
+        return getParameterInRole(context, TypeRole.PAGEABLE, Pageable.class).orElse(null);
+    }
+
+    /**
+     * Resolves the offset.
+     *
+     * @param context The context
+     * @return The offset or -1
+     * @since 4.10
+     */
+    protected int getOffset(MethodInvocationContext<?, ?> context) {
+        return context.intValue(DataMethod.class, META_MEMBER_OFFSET).orElse(-1);
+    }
+
+    /**
+     * Resolves the limit.
+     *
+     * @param context The context
+     * @return The limit or -1
+     * @since 4.10
+     */
+    protected int getLimit(MethodInvocationContext<?, ?> context) {
+        return context.intValue(DataMethod.class, META_MEMBER_LIMIT).orElse(-1);
     }
 
     /**
@@ -457,7 +451,9 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      *
      * @param metadata The metadata
      * @return True if it is nullable
+     * @deprecated Not used
      */
+    @Deprecated(forRemoval = true, since = "4.10")
     protected boolean isNullable(@NonNull AnnotationMetadata metadata) {
         return metadata
                 .getDeclaredAnnotationNames()
@@ -935,7 +931,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                 if (queryString == null) {
                     return null;
                 }
-                storedQuery = findStoreQuery(method, false);
+                storedQuery = findStoreQuery(method);
             }
             return storedQuery;
         }
@@ -943,6 +939,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         @Override
         public <RT1> Optional<RT1> getParameterInRole(@NonNull String role, @NonNull Class<RT1> type) {
             return AbstractQueryInterceptor.this.getParameterInRole(method, role, type);
+        }
+
+        @Override
+        public <RT> List<RT> getParametersInRole(String role, Class<RT> type) {
+            return AbstractQueryInterceptor.this.getParametersInRole(method, role, type);
         }
 
         @NonNull

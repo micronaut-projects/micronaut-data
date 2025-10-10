@@ -42,7 +42,7 @@ public class UpdateAllSpecificationInterceptor extends AbstractSpecificationInte
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         ReturnType<Object> rt = context.getReturnType();
-        Number result = updateAll(methodKey, context).orElse(0);
+        Number result = getCriteriaRepositoryOperations(methodKey, context, null).updateAll(buildUpdateQuery(context)).orElse(0);
         if (rt.isVoid()) {
             return null;
         }

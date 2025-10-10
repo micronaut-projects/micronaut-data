@@ -27,6 +27,8 @@ import jakarta.persistence.metamodel.ListAttribute;
 import jakarta.persistence.metamodel.SetAttribute;
 import jakarta.persistence.metamodel.SingularAttribute;
 
+import java.util.Collection;
+
 /**
  * The persistent entity {@link From}.
  *
@@ -37,6 +39,12 @@ import jakarta.persistence.metamodel.SingularAttribute;
  */
 @Experimental
 public interface PersistentEntityFrom<OwnerType, AssociatedEntityType> extends From<OwnerType, AssociatedEntityType>, PersistentEntityPath<AssociatedEntityType> {
+
+    /**
+     * @return The persistent joins
+     */
+    @NonNull
+    Collection<PersistentAssociationPath<AssociatedEntityType, ?>> getPersistentJoins();
 
     @Override
     @Nullable

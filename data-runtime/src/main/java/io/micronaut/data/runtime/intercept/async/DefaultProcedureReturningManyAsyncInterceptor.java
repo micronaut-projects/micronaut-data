@@ -46,7 +46,7 @@ public final class DefaultProcedureReturningManyAsyncInterceptor<T, R> extends A
 
     @Override
     public CompletionStage<? extends Iterable<R>> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<? extends Iterable<R>>> context) {
-        PreparedQuery<?, R> preparedQuery = prepareQuery(methodKey, context, null);
+        PreparedQuery<?, R> preparedQuery = prepareQuery(methodKey, context);
         return asyncDatastoreOperations.execute(preparedQuery);
     }
 

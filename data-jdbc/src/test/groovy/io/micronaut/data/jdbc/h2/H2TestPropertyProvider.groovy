@@ -34,7 +34,7 @@ trait H2TestPropertyProvider implements TestPropertyProvider {
     }
 
     Map<String, String> getProperties() {
-        return shouldAddDefaultDbProperties()? getH2DataSourceProperties("default") : [:]
+        return shouldAddDefaultDbProperties() ? getH2DataSourceProperties("default") : [:]
     }
 
     Map<String, String> getH2DataSourceProperties(String dataSourceName) {

@@ -16,7 +16,9 @@
 package io.micronaut.data.jdbc.oraclexe
 
 import groovy.transform.Memoized
+import io.micronaut.data.model.Pageable
 import io.micronaut.data.tck.entities.Book
+import io.micronaut.data.tck.entities.Face
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 import spock.lang.PendingFeature
@@ -160,6 +162,24 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
         return context.getBean(OracleXEPageRepository)
     }
 
+    @Memoized
+    @Override
+    EntityWithIdClassRepository getEntityWithIdClassRepository() {
+        return context.getBean(OracleXEEntityWithIdClassRepository)
+    }
+
+    @Memoized
+    @Override
+    EntityWithIdClass2Repository getEntityWithIdClass2Repository() {
+        return context.getBean(OracleXEEntityWithIdClass2Repository)
+    }
+
+    @Memoized
+    @Override
+    ExampleEntityRepository getExampleEntityRepository() {
+        return context.getBean(OracleExampleEntityRepository)
+    }
+
     @Override
     protected boolean skipCustomSchemaAndCatalogTest() {
         // ORA-04043: object "FORD"."CARS" does not exist
@@ -257,6 +277,23 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
         then:
             newTitle == "Xyz"
             bookRepository.findById(book.id).get().title == "Xyz"
+    }
+
+    void "test native query with colon"() {
+        given:
+        def face = faceRepository.save(new Face("New"))
+        def oracleFaceRepository = (OracleXEFaceRepository) faceRepository
+        when:
+        def faces = oracleFaceRepository.findAllWithOptionalFilters(null, "2024-01-01")
+        then:
+        faces
+        faces[0].name == face.name
+        when:"Call repository void method"
+        oracleFaceRepository.lock()
+        then:"No error thrown"
+        noExceptionThrown()
+        cleanup:
+        faceRepository.delete(face)
     }
 
 }

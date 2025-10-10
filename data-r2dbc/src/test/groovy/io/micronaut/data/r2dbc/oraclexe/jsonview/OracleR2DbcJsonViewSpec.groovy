@@ -75,11 +75,16 @@ class OracleR2DbcJsonViewSpec extends Specification {
 
         when:"Test optimistic locking"
         contactView = contactViewRepository.findById(contactView.id).get()
-        contactView.metadata.etag = UUID.randomUUID().toString()
+        contactView.metadata = new io.micronaut.data.tck.entities.Metadata(UUID.randomUUID().toString(), contactView.metadata.asof())
         contactViewRepository.update(contactView)
         then:
         def e = thrown(OptimisticLockException)
         e.message.startsWith("ETAG did not match when updating record")
+
+        when:"Optimistic lock exception with invalid ETAG in batch update"
+        contactViewRepository.updateAll(List.of(contactView))
+        then:
+        thrown(OptimisticLockException)
 
         when:"Save multiple at once"
         ContactView contactView1 = new ContactView()

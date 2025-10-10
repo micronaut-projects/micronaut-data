@@ -34,17 +34,11 @@ import io.micronaut.data.mongodb.conf.MongoDataConfiguration;
 import io.micronaut.data.mongodb.operations.MongoUtils;
 import io.micronaut.serde.Deserializer;
 import io.micronaut.serde.Encoder;
-import io.micronaut.serde.Serde;
-import io.micronaut.serde.SerdeIntrospections;
 import io.micronaut.serde.SerdeRegistry;
 import io.micronaut.serde.Serializer;
-import io.micronaut.serde.config.DeserializationConfiguration;
-import io.micronaut.serde.config.SerializationConfiguration;
 import io.micronaut.serde.config.naming.PropertyNamingStrategy;
 import io.micronaut.serde.exceptions.SerdeException;
 import io.micronaut.serde.support.DefaultSerdeRegistry;
-import io.micronaut.serde.support.deserializers.ObjectDeserializer;
-import io.micronaut.serde.support.serializers.ObjectSerializer;
 import jakarta.inject.Singleton;
 import org.bson.codecs.configuration.CodecRegistry;
 
@@ -74,44 +68,28 @@ final class DataSerdeRegistry implements SerdeRegistry {
      * Default constructor.
      *
      * @param beanContext                  The bean context
-     * @param serializationConfiguration   The serializationConfiguration
-     * @param deserializationConfiguration The deserializationConfiguration
-     * @param objectArraySerde             The object array Serde
-     * @param introspections               The introspections
      * @param runtimeEntityRegistry        The runtimeEntityRegistry
      * @param attributeConverterRegistry   The attributeConverterRegistry
      * @param mongoDataConfiguration       The Mongo configuration
-     * @param conversionService            The conversion service
      */
     public DataSerdeRegistry(BeanContext beanContext,
-                             SerializationConfiguration serializationConfiguration,
-                             DeserializationConfiguration deserializationConfiguration,
-                             Serde<Object[]> objectArraySerde,
-                             SerdeIntrospections introspections,
                              RuntimeEntityRegistry runtimeEntityRegistry,
                              AttributeConverterRegistry attributeConverterRegistry,
-                             MongoDataConfiguration mongoDataConfiguration,
-                             ConversionService conversionService) {
-        ObjectSerializer objectSerializer = new ObjectSerializer(introspections, beanContext);
-        ObjectDeserializer objectDeserializer = new ObjectDeserializer(introspections, deserializationConfiguration, null);
-        this.defaultSerdeRegistry = new DefaultSerdeRegistry(beanContext, objectSerializer, objectDeserializer, objectArraySerde, introspections, conversionService);
+                             MongoDataConfiguration mongoDataConfiguration) {
+        this.defaultSerdeRegistry = beanContext.createBean(DefaultSerdeRegistry.class);
         this.runtimeEntityRegistry = runtimeEntityRegistry;
         this.attributeConverterRegistry = attributeConverterRegistry;
         this.mongoDataConfiguration = mongoDataConfiguration;
     }
 
     public Serializer.EncoderContext newEncoderContext(Class<?> view,
-                                                       Argument argument,
-                                                       RuntimePersistentEntity<?> runtimePersistentEntity,
                                                        CodecRegistry codecRegistry) {
-        return new DataEncoderContext(mongoDataConfiguration, attributeConverterRegistry, argument, (RuntimePersistentEntity<Object>) runtimePersistentEntity, newEncoderContext(view), codecRegistry);
+        return new DataEncoderContext(mongoDataConfiguration, attributeConverterRegistry, newEncoderContext(view), codecRegistry);
     }
 
     public Deserializer.DecoderContext newDecoderContext(Class<?> view,
-                                                         Argument argument,
-                                                         RuntimePersistentEntity<?> runtimePersistentEntity,
                                                          CodecRegistry codecRegistry) {
-        return new DataDecoderContext(mongoDataConfiguration, attributeConverterRegistry, argument, (RuntimePersistentEntity<Object>) runtimePersistentEntity, newDecoderContext(view), codecRegistry);
+        return new DataDecoderContext(mongoDataConfiguration, attributeConverterRegistry, newDecoderContext(view), codecRegistry);
     }
 
     @Override

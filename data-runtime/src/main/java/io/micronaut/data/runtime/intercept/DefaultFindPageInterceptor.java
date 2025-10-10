@@ -15,17 +15,9 @@
  */
 package io.micronaut.data.runtime.intercept;
 
-import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.FindPageInterceptor;
-import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.model.Page;
-import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
-
-import java.util.List;
 
 /**
  * Default implementation of {@link FindPageInterceptor}.
@@ -35,7 +27,7 @@ import java.util.List;
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultFindPageInterceptor<T, R> extends AbstractQueryInterceptor<T, R> implements FindPageInterceptor<T, R> {
+public class DefaultFindPageInterceptor<T, R> extends DefaultAbstractFindPageInterceptor<T, R> implements FindPageInterceptor<T, R> {
 
     /**
      * Default constructor.
@@ -43,35 +35,5 @@ public class DefaultFindPageInterceptor<T, R> extends AbstractQueryInterceptor<T
      */
     protected DefaultFindPageInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
-    }
-
-    @Override
-    public R intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
-        Class<R> returnType = context.getReturnType().getType();
-        if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context);
-            PreparedQuery<?, Number> countQuery = prepareCountQuery(methodKey, context);
-
-            Iterable<?> iterable = operations.findAll(preparedQuery);
-            List<R> resultList = (List<R>) CollectionUtils.iterableToList(iterable);
-            Number n = operations.findOne(countQuery);
-            Long result = n != null ? n.longValue() : 0;
-            Page<R> page = Page.of(resultList, getPageable(context), result);
-            if (returnType.isInstance(page)) {
-                return (R) page;
-            } else {
-                return operations.getConversionService().convert(page, returnType)
-                        .orElseThrow(() -> new IllegalStateException("Unsupported page interface type " + returnType));
-            }
-        } else {
-
-            Page page = operations.findPage(getPagedQuery(context));
-            if (returnType.isInstance(page)) {
-                return (R) page;
-            } else {
-                return operations.getConversionService().convert(page, returnType)
-                        .orElseThrow(() -> new IllegalStateException("Unsupported page interface type " + returnType));
-            }
-        }
     }
 }

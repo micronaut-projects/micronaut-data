@@ -23,7 +23,7 @@ import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentProperty;
 
 import java.util.Arrays;
-import java.util.Objects;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -57,6 +57,17 @@ public class JoinPath {
     }
 
     /**
+     * Create a new join path with an alias.
+     * @param alias The alias
+     * @return a new join path
+     * @since 4.9.0
+     */
+    @NonNull
+    public JoinPath withAlias(@Nullable String alias) {
+        return new JoinPath(path, associationPath, joinType, alias);
+    }
+
+    /**
      * The alias for the join path.
      *
      * @return The optional alias
@@ -73,9 +84,16 @@ public class JoinPath {
     /**
      * @return The association
      */
-    public @NonNull
-    Association getAssociation() {
+    @NonNull
+    public Association getAssociation() {
         return associationPath[associationPath.length - 1];
+    }
+
+    /**
+     * @return The association leading to this association
+     */
+    public List<Association> getLeadingAssociations() {
+        return List.of(associationPath).subList(0, associationPath.length - 1);
     }
 
     /**
@@ -88,16 +106,16 @@ public class JoinPath {
     /**
      * @return The association path
      */
-    public @NonNull
-    String getPath() {
+    @NonNull
+    public String getPath() {
         return path;
     }
 
     /**
      * @return The join type
      */
-    public @NonNull
-    Join.Type getJoinType() {
+    @NonNull
+    public Join.Type getJoinType() {
         return joinType;
     }
 
@@ -115,7 +133,7 @@ public class JoinPath {
 
     @Override
     public int hashCode() {
-        return Objects.hash(path);
+        return path.hashCode();
     }
 
     /**

@@ -202,6 +202,7 @@ class PageSpec extends Specification {
         def pageable = Pageable.from(0, 10)
         Page<Person> page = personRepository.findByNameLike("A%", pageable)
         Page<Person> page2 = crudRepository.findPeople("A%", pageable)
+        Page<Person> page3 = crudRepository.findPeopleNative("A%", pageable)
         Slice<Person> slice = personRepository.queryByNameLike("A%", pageable)
 
         then:"The page is correct"
@@ -209,6 +210,7 @@ class PageSpec extends Specification {
         page.pageNumber == 0
         page.totalSize == 50
         page2.totalSize == page.totalSize
+        page3.totalSize == page.totalSize
         slice.offset == 0
         slice.pageNumber == 0
         slice.size == 10

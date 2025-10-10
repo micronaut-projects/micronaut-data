@@ -22,7 +22,9 @@ import io.micronaut.core.annotation.NonNull;
  *
  * @author Graeme Rocher
  * @since 1.0
+ * @deprecated Replaced by JPA criteria
  */
+@Deprecated(forRemoval = true, since = "4.9")
 public interface ProjectionList {
     /**
      * A Projection that obtains the id of an object.

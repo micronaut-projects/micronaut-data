@@ -1,52 +1,58 @@
 [versions]
-micronaut = "4.4.1"
-micronaut-platform = "4.3.7"
+micronaut = "4.10.3"
+micronaut-platform = "4.8.3"
 micronaut-docs = "2.0.0"
-micronaut-gradle-plugin = "4.3.6"
-micronaut-testresources = "2.3.3"
+micronaut-gradle-plugin = "4.5.4"
+micronaut-testresources = "2.10.1"
 
-micronaut-azure = "5.4.0"
-micronaut-reactor = "3.3.0"
-micronaut-rxjava2 = "2.3.0"
-micronaut-r2dbc = "5.4.0"
-micronaut-serde = "2.9.0"
-micronaut-sql = "5.6.0"
-micronaut-spring = "5.5.0"
-micronaut-test = "4.3.0"
-micronaut-mongo = "5.3.0"
-micronaut-kotlin = "4.3.0"
-micronaut-multitenancy = "5.3.0"
-micronaut-validation = "4.5.0"
-micronaut-logging = "1.3.0"
-micronaut-flyway = "7.2.0"
+micronaut-azure = "5.12.0"
+micronaut-reactor = "3.8.0"
+micronaut-rxjava2 = "2.8.0"
+micronaut-r2dbc = "6.1.0"
+micronaut-sql = "6.2.2"
+micronaut-serde = "2.15.4"
+micronaut-spring = "5.11.2"
+micronaut-test = "4.9.0"
+micronaut-mongo = "5.7.0"
+micronaut-kotlin = "4.7.0"
+micronaut-multitenancy = "5.7.0"
+micronaut-validation = "4.11.0"
+micronaut-logging = "1.7.1"
+micronaut-flyway = "7.8.0"
+micronaut-coherence = "5.0.6"
 
-groovy = "4.0.20"
+groovy = "4.0.28"
 
 managed-javax-persistence = "2.2"
-managed-jakarta-persistence-api = "3.1.0"
-managed-jakarta-transaction-api = "2.0.1"
+managed-jakarta-data = "1.0.1"
 
-spring-data = "3.2.4"
+spring-data = "3.5.4"
+
+# Lombok
+
+lombok = "1.18.42"
 
 # Testing and benchmarking
 
-benchmark-spring-data = "2023.1.4"
+benchmark-spring-data = "2024.1.10"
 spock = "2.2-groovy-4.0"
 testcontainers = "1.19.4"
 jmh = "1.37"
 
 # Gradle plugins
 
-ksp-gradle-plugin = "1.9.23-1.0.20"
-kotlin-gradle-plugin = "1.9.23"
-jmh-gradle-plugin = "0.7.2"
-spring-boot-gradle-plugin = "3.2.4"
-spring-dependency-management-gradle-plugin = "1.1.4"
+ksp-gradle-plugin = "1.9.25-1.0.20"
+kotlin-gradle-plugin = "1.9.25"
+jmh-gradle-plugin = "0.7.3"
+spring-boot-gradle-plugin = "3.5.6"
+spring-dependency-management-gradle-plugin = "1.1.7"
 shadow-gradle-plugin = "8.0.0"
 
 # Dependency versions which are found in the platform BOM
 # meaning that they should be extracted into their own BOM
-kotlin-coroutines = "1.8.0"
+kotlin-coroutines = "1.9.0"
+
+antlr = "4.13.2"
 
 
 [libraries]
@@ -70,6 +76,7 @@ micronaut-sql = { module = "io.micronaut.sql:micronaut-sql-bom", version.ref = "
 micronaut-r2dbc = { module = "io.micronaut.r2dbc:micronaut-r2dbc-bom", version.ref = "micronaut-r2dbc" }
 micronaut-flyway = { module = "io.micronaut.flyway:micronaut-flyway-bom", version.ref = "micronaut-flyway" }
 micronaut-serde = { module = "io.micronaut.serde:micronaut-serde-bom", version.ref = "micronaut-serde" }
+micronaut-coherence = { module = "io.micronaut.coherence:micronaut-coherence-bom", version.ref = "micronaut-coherence" }
 
 micronaut-docs = { module = "io.micronaut.docs:micronaut-docs-asciidoc-config-props", version.ref = "micronaut-docs" }
 
@@ -82,19 +89,26 @@ kotlin-coroutines-reactor = { module = "org.jetbrains.kotlinx:kotlinx-coroutines
 kotlin-coroutines-reactive = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactive", version.ref = "kotlin-coroutines" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }
 
-managed-jakarta-transaction-api = { module = "jakarta.transaction:jakarta.transaction-api", version.ref = "managed-jakarta-transaction-api" }
-
 managed-javax-persistence-api = { module = "javax.persistence:javax.persistence-api", version.ref = "managed-javax-persistence" }
-managed-jakarta-persistence-api = { module = "jakarta.persistence:jakarta.persistence-api", version.ref = "managed-jakarta-persistence-api" }
+managed-jakarta-data-api = { module = 'jakarta.data:jakarta.data-api', version.ref = "managed-jakarta-data" }
 
 # JPA
 
 spring-data-jpa = { module = "org.springframework.data:spring-data-jpa", version.ref = "spring-data" }
 spring-data-commons = { module = "org.springframework.data:spring-data-commons", version.ref = "spring-data" }
 
+# Lombok
+
+lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
+
 # AZURE COSMOS
 
 micronaut-azure-cosmos = { module = "io.micronaut.azure:micronaut-azure-cosmos", version.ref = "micronaut-azure" }
+
+# Antlr
+
+antlr = { module = "org.antlr:antlr4", version.ref = "antlr"}
+antlr-runtime = { module = "org.antlr:antlr4-runtime", version.ref = "antlr"}
 
 # Test
 
@@ -102,6 +116,9 @@ jupiter-engine = { module = 'org.junit.jupiter:junit-jupiter-engine' }
 jupiter-api = { module = 'org.junit.jupiter:junit-jupiter-api' }
 groovy-sql = { module = "org.apache.groovy:groovy-sql" }
 groovy-dateutil = { module = "org.apache.groovy:groovy-dateutil", version.ref = "groovy" }
+
+jakarta-data-tck = { module = 'jakarta.data:jakarta.data-tck', version.ref = "managed-jakarta-data" }
+junit-platform-suite-engine = { module = "org.junit.platform:junit-platform-suite-engine" }
 
 # Benchmark
 
@@ -125,3 +142,4 @@ gradle-jmh = { module = "me.champeau.jmh:jmh-gradle-plugin", version.ref = "jmh-
 gradle-spring-boot = { module = "org.springframework.boot:spring-boot-gradle-plugin", version.ref = "spring-boot-gradle-plugin" }
 gradle-spring-dependencies = { module = "io.spring.gradle:dependency-management-plugin", version.ref = "spring-dependency-management-gradle-plugin" }
 gradle-shadow = { module = "gradle.plugin.com.github.johnrengelman:shadow", version.ref = "shadow-gradle-plugin" }
+

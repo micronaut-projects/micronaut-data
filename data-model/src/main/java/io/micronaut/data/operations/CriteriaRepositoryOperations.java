@@ -41,6 +41,15 @@ public interface CriteriaRepositoryOperations {
     CriteriaBuilder getCriteriaBuilder();
 
     /**
+     * Exists query.
+     *
+     * @param query The query
+     * @return True if query returns true or any row
+     * @since 4.10
+     */
+    boolean exists(@NonNull CriteriaQuery<?> query);
+
+    /**
      * Find one by Query.
      *
      * @param query The query

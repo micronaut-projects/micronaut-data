@@ -17,9 +17,11 @@ package io.micronaut.data.jdbc.config;
 
 import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
+import io.micronaut.core.annotation.NextMajorVersion;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.naming.Named;
+import io.micronaut.core.util.Toggleable;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.runtime.config.SchemaGenerate;
 
@@ -33,7 +35,7 @@ import java.util.List;
  * @since 1.0.0
  */
 @EachProperty(value = DataJdbcConfiguration.PREFIX, primary = "default")
-public class DataJdbcConfiguration implements Named {
+public class DataJdbcConfiguration implements Named, Toggleable {
     /**
      * The prefix to use.
      */
@@ -53,6 +55,13 @@ public class DataJdbcConfiguration implements Named {
      * If true, {@link javax.sql.DataSource#getConnection()} will be used in try-resource block for the operation.
      */
     private boolean allowConnectionPerOperation = true;
+    private boolean enabled = true;
+
+    /**
+     * Fail on multiple results for findOne.
+     */
+    @NextMajorVersion("Make the default")
+    private boolean uniqueResultOnFindOne;
 
     /**
      * The configuration.
@@ -174,5 +183,32 @@ public class DataJdbcConfiguration implements Named {
      */
     public void setSchemaGenerateNames(@Nullable List<String> schemaGenerateNames) {
         this.schemaGenerateNames = schemaGenerateNames;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    /**
+     * Sets an indicator telling whether data source is enabled.
+     * @param enabled an indicator telling whether data source is enabled
+     */
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    /**
+     * @return Is unique result required on find one
+     */
+    public boolean isUniqueResultOnFindOne() {
+        return uniqueResultOnFindOne;
+    }
+
+    /**
+     * @param uniqueResultOnFindOne Is unique result required on find one
+     */
+    public void setUniqueResultOnFindOne(boolean uniqueResultOnFindOne) {
+        this.uniqueResultOnFindOne = uniqueResultOnFindOne;
     }
 }

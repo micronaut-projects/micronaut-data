@@ -32,10 +32,11 @@ dependencies {
     testImplementation mnReactor.micronaut.reactor
     testImplementation libs.jackson.databind
     testImplementation(libs.managed.javax.persistence.api)
-    testImplementation(libs.managed.jakarta.persistence.api)
+    testImplementation(mnSql.jakarta.persistence.api)
     testImplementation libs.groovy.sql
     testImplementation mnValidation.micronaut.validation
     testImplementation mnValidation.micronaut.validation.processor
+    testImplementation mn.micronaut.http.client
 
     testImplementation(mnTestResources.testcontainers.mysql)
     testImplementation(mnTestResources.testcontainers.mariadb)
@@ -65,6 +66,9 @@ dependencies {
 
     testImplementation mnSerde.micronaut.serde.support
     testImplementation mnTestResources.micronaut.test.resources.extensions.junit.platform
+    testRuntimeOnly(libs.jupiter.engine)
+    testImplementation(mnTest.micronaut.test.junit5)
+    testImplementation(libs.managed.jakarta.data.api)
 
     testRuntimeOnly mnSerde.micronaut.serde.oracle.jdbc.json
     testRuntimeOnly mnFlyway.micronaut.flyway
@@ -79,7 +83,7 @@ micronaut {
         additionalModules.add(KnownModules.JDBC_POSTGRESQL)
         additionalModules.add(KnownModules.JDBC_MYSQL)
         additionalModules.add(KnownModules.JDBC_MARIADB)
-        additionalModules.add(KnownModules.JDBC_ORACLE_XE)
+        additionalModules.add(KnownModules.JDBC_ORACLE_FREE)
         additionalModules.add(KnownModules.JDBC_MSSQL)
         clientTimeout = 300
         version = libs.versions.micronaut.testresources.get()

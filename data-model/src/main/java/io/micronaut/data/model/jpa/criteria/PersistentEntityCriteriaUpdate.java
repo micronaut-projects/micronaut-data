@@ -39,7 +39,7 @@ import java.util.Set;
  * @since 3.2
  */
 @Experimental
-public interface PersistentEntityCriteriaUpdate<T> extends CriteriaUpdate<T> {
+public interface PersistentEntityCriteriaUpdate<T> extends CriteriaUpdate<T>, PersistentEntityCommonAbstractCriteria {
 
     @NonNull
     PersistentEntityRoot<T> from(@NonNull PersistentEntity persistentEntity);

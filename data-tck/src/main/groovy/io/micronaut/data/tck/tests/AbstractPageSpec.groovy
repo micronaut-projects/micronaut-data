@@ -81,6 +81,9 @@ abstract class AbstractPageSpec extends Specification {
         page.totalPages == 130
         page.nextPageable().offset == 10
         page.nextPageable().size == 10
+        page.hasNext()
+        page.hasTotalSize()
+        !page.hasPrevious()
 
         when: "The next page is selected"
         pageable = page.nextPageable()
@@ -91,6 +94,8 @@ abstract class AbstractPageSpec extends Specification {
         page.pageNumber == 1
         page.content[0].name.startsWith("K")
         page.content.size() == 10
+        page.hasNext()
+        page.hasPrevious()
 
         when: "The previous page is selected"
         pageable = page.previousPageable()
@@ -101,6 +106,23 @@ abstract class AbstractPageSpec extends Specification {
         page.pageNumber == 0
         page.content[0].name.startsWith("A")
         page.content.size() == 10
+        page.hasNext()
+        !page.hasPrevious()
+    }
+
+    void "test pageable list without total count"() {
+        when: "10 people are paged"
+        def pageable = Pageable.from(0, 10).withoutTotal()
+        Page<Person> page = personRepository.findAll(pageable)
+
+        then: "The data is correct"
+        page.content.size() == 10
+        page.content.every() { it instanceof Person }
+        !page.hasTotalSize()
+
+        and:
+        page.getTotalPages() == 0
+        page.getTotalSize() == -1
     }
 
     void "test pageable sort"() {
@@ -179,6 +201,25 @@ abstract class AbstractPageSpec extends Specification {
         then:
         page.getContent().size() == books.size()
         page.getTotalSize() == books.size()
+
+        bookRepository.deleteAll()
+    }
+
+    void "test paging with criteria and limit"() {
+        given:
+        def books = bookRepository.saveAll([
+                new Book(title: "Book 1", totalPages: 100),
+                new Book(title: "Book 2", totalPages: 100),
+                new Book(title: "Book 3", totalPages: 100),
+                new Book(title: "Book 4", totalPages: 200)
+        ])
+
+        when:"Find pageable with criteria and limit"
+        var page = bookRepository.findBooksByTotalPages(100, Pageable.from(0, 2))
+
+        then:
+        page.totalSize == 3
+        page.content.size() == 2
 
         cleanup:
         bookRepository.deleteAll()

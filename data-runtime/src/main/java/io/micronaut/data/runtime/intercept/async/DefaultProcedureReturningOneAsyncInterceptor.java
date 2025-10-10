@@ -47,7 +47,7 @@ public class DefaultProcedureReturningOneAsyncInterceptor<T, R> extends Abstract
 
     @Override
     public CompletionStage<R> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<R>> context) {
-        PreparedQuery<?, R> preparedQuery = prepareQuery(methodKey, context, null);
+        PreparedQuery<?, R> preparedQuery = prepareQuery(methodKey, context);
         return asyncDatastoreOperations.execute(preparedQuery).thenApply(ts -> {
             if (ts.isEmpty()) {
                 return null;

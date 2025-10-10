@@ -17,16 +17,11 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.model.Embedded;
-import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
-import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
-import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
 import io.micronaut.data.processor.visitors.MatchFailedException;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.criteria.DeleteCriteriaMethodMatch;
 import io.micronaut.inject.ast.ParameterElement;
-import jakarta.persistence.criteria.Predicate;
 
 import java.util.Arrays;
 import java.util.List;
@@ -94,75 +89,14 @@ public final class DeleteMethodMatcher extends AbstractMethodMatcher {
 
         boolean supportedByImplicitQueries = !isSpecificDelete;
 
-        boolean generateInIdList = entitiesParameter != null
-                && !rootEntity.hasCompositeIdentity()
-                && !(rootEntity.getIdentity() instanceof Embedded) && rootEntity.getVersion() == null;
         ParameterElement finalEntityParameter = entityParameter;
         ParameterElement finalEntitiesParameter = entitiesParameter;
-        if (generateInIdList) {
-            return new DeleteCriteriaMethodMatch(matches, isReturning) {
-
-                @Override
-                protected boolean supportedByImplicitQueries() {
-                    return supportedByImplicitQueries;
-                }
-
-                @Override
-                protected <T> void applyPredicates(List<ParameterElement> parameters,
-                                                   PersistentEntityRoot<T> root,
-                                                   PersistentEntityCriteriaDelete<T> query,
-                                                   SourcePersistentEntityCriteriaBuilder cb) {
-                    Predicate restriction = query.getRestriction();
-                    Predicate predicate = root.id().in(cb.entityPropertyParameter(finalEntitiesParameter));
-                    if (restriction == null) {
-                        query.where(predicate);
-                    } else {
-                        query.where(cb.and(predicate, restriction));
-                    }
-                }
-
-                @Override
-                protected ParameterElement getEntityParameter() {
-                    return finalEntityParameter;
-                }
-
-                @Override
-                protected ParameterElement getEntitiesParameter() {
-                    return finalEntitiesParameter;
-                }
-
-            };
-        }
-
-        ParameterElement entityParam = entityParameter == null ? entitiesParameter : entityParameter;
 
         return new DeleteCriteriaMethodMatch(matches, isReturning) {
 
             @Override
             protected boolean supportedByImplicitQueries() {
                 return supportedByImplicitQueries;
-            }
-
-            @Override
-            protected <T> void applyPredicates(List<ParameterElement> parameters,
-                                               PersistentEntityRoot<T> root,
-                                               PersistentEntityCriteriaDelete<T> query,
-                                               SourcePersistentEntityCriteriaBuilder cb) {
-                Predicate restriction = query.getRestriction();
-                Predicate predicate;
-                if (rootEntity.getVersion() != null) {
-                    predicate = cb.and(
-                            cb.equal(root.id(), cb.entityPropertyParameter(entityParam)),
-                            cb.equal(root.version(), cb.entityPropertyParameter(entityParam))
-                    );
-                } else {
-                    predicate = cb.equal(root.id(), cb.entityPropertyParameter(entityParam));
-                }
-                if (restriction == null) {
-                    query.where(predicate);
-                } else {
-                    query.where(cb.and(predicate, restriction));
-                }
             }
 
             @Override

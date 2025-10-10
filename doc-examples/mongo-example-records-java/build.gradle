@@ -32,8 +32,8 @@ dependencies {
     implementation mnMongo.mongo.driver
 
     compileOnly(libs.managed.javax.persistence.api)
-    implementation(libs.managed.jakarta.persistence.api)
-    implementation(libs.managed.jakarta.transaction.api)
+    implementation(mnSql.jakarta.persistence.api)
+    implementation(mnSql.jakarta.transaction.api)
 
     runtimeOnly mnLogging.logback.classic
 }

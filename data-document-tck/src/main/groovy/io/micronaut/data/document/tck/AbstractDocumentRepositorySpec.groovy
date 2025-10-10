@@ -1214,7 +1214,7 @@ abstract class AbstractDocumentRepositorySpec extends Specification {
                 @Override
                 List<Author> call(TransactionStatus<Object> status) throws Exception {
                     try (Stream<Author> stream = authorRepository.queryByNameRegex(/.*e.*/)) {
-                        return stream.collect(Collectors.toList())
+                        return stream.toList()
                     }
                 }
             })
@@ -1227,7 +1227,7 @@ abstract class AbstractDocumentRepositorySpec extends Specification {
                 @Override
                 List<Author> call(TransactionStatus<Object> status) throws Exception {
                     try (Stream<Author> stream = authorRepository.queryByNameRegex(/.*x.*/)) {
-                        return stream.collect(Collectors.toList())
+                        return stream.toList()
                     }
                 }
             })

@@ -18,8 +18,9 @@ package io.micronaut.data.processor.model.criteria.impl;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
-import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Path;
 import jakarta.persistence.metamodel.EntityType;
 
 import java.util.Collections;
@@ -36,17 +37,19 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupport
  */
 @Internal
 final class SourcePersistentEntityRoot<T> extends AbstractSourcePersistentEntityJoinSupport<T, T>
-        implements SourcePersistentEntityPath<T>, PersistentEntityRoot<T> {
+    implements SourcePersistentEntityPath<T>, PersistentEntityRoot<T> {
 
     private final SourcePersistentEntity sourcePersistentEntity;
 
-    public SourcePersistentEntityRoot(SourcePersistentEntity sourcePersistentEntity) {
+    public SourcePersistentEntityRoot(SourcePersistentEntity sourcePersistentEntity,
+                                      CriteriaBuilder criteriaBuilder) {
+        super(criteriaBuilder);
         this.sourcePersistentEntity = sourcePersistentEntity;
     }
 
     @Override
-    public void accept(SelectionVisitor selectionVisitor) {
-        selectionVisitor.visit(this);
+    public Path<?> getParentPath() {
+        return null;
     }
 
     @Override
@@ -70,24 +73,10 @@ final class SourcePersistentEntityRoot<T> extends AbstractSourcePersistentEntity
     }
 
     @Override
-    public boolean isBoolean() {
-        return false;
-    }
-
-    @Override
-    public boolean isNumeric() {
-        return false;
-    }
-
-    @Override
-    public boolean isComparable() {
-        return false;
-    }
-
-    @Override
     public String toString() {
         return "SourcePersistentEntityRoot{" +
-                "sourcePersistentEntity=" + sourcePersistentEntity +
-                '}';
+            "sourcePersistentEntity=" + sourcePersistentEntity +
+            '}';
     }
+
 }

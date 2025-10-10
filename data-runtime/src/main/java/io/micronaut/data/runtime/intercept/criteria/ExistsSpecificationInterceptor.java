@@ -39,6 +39,7 @@ public class ExistsSpecificationInterceptor extends AbstractSpecificationInterce
 
     @Override
     public Boolean intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Boolean> context) {
-        return exists(methodKey, context);
+        return getCriteriaRepositoryOperations(methodKey, context, null)
+            .exists(buildExistsQuery(methodKey, context));
     }
 }

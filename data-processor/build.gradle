@@ -1,10 +1,13 @@
 plugins {
 	id "io.micronaut.build.internal.data-module"
+    id 'antlr'
 }
 
 dependencies {
 	api projects.micronautDataModel
-	api(libs.managed.jakarta.persistence.api)
+	api(mnSql.jakarta.persistence.api)
+
+    implementation libs.antlr.runtime
 
 	compileOnly mn.micronaut.core.processor
 
@@ -16,9 +19,17 @@ dependencies {
     testImplementation mn.micronaut.inject.groovy.test
 	testImplementation mn.micronaut.inject.java.test
 	testImplementation(libs.managed.javax.persistence.api)
-	testImplementation(libs.managed.jakarta.transaction.api)
+	testImplementation(mnSql.jakarta.transaction.api)
 	testImplementation libs.spring.data.jpa
 	testImplementation projects.micronautDataTck
 	testImplementation projects.micronautDataTx
 	testImplementation projects.micronautDataJdbc
+
+    antlr libs.antlr
+}
+
+tasks.named("generateGrammarSource") {
+    dependsOn "sourcesJar"
+    outputDirectory = file("$outputDirectory/io/micronaut/data/jdql")
+    arguments += ["-package", "io.micronaut.data.jdql"]
 }

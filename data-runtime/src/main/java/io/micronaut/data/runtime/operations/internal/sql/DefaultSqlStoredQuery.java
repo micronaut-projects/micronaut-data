@@ -18,11 +18,12 @@ package io.micronaut.data.runtime.operations.internal.sql;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanWrapper;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.QueryResult;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.QueryResultInfo;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -48,16 +49,20 @@ import java.util.stream.Collectors;
 public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStoredQuery<E, R> implements SqlStoredQuery<E, R> {
 
     private final boolean expandableQuery;
-    private final SqlQueryBuilder queryBuilder;
+    private final SqlQueryBuilder2 queryBuilder;
     private final QueryResultInfo queryResultInfo;
 
     /**
      * @param storedQuery             The stored query
      * @param runtimePersistentEntity The persistent entity
      * @param queryBuilder            The query builder
+     * @param conversionService       The conversion service
      */
-    public DefaultSqlStoredQuery(StoredQuery<E, R> storedQuery, RuntimePersistentEntity<E> runtimePersistentEntity, SqlQueryBuilder queryBuilder) {
-        super(storedQuery, runtimePersistentEntity);
+    public DefaultSqlStoredQuery(StoredQuery<E, R> storedQuery,
+                                 RuntimePersistentEntity<E> runtimePersistentEntity,
+                                 SqlQueryBuilder2 queryBuilder,
+                                 ConversionService conversionService) {
+        super(storedQuery, runtimePersistentEntity, conversionService);
         this.queryBuilder = queryBuilder;
         Objects.requireNonNull(storedQuery, "Query cannot be null");
         Objects.requireNonNull(queryBuilder, "Builder cannot be null");
@@ -95,7 +100,7 @@ public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStored
     }
 
     @Override
-    public SqlQueryBuilder getQueryBuilder() {
+    public SqlQueryBuilder2 getQueryBuilder() {
         return queryBuilder;
     }
 

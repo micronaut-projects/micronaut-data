@@ -42,7 +42,7 @@ public class DeleteAllReactiveSpecificationInterceptor extends AbstractReactiveS
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        Publisher<?> publisher = deleteAllReactive(methodKey, context);
+        Publisher<?> publisher = getReactiveCriteriaOperations(methodKey, context, null).deleteAll(buildDeleteQuery(context));
         return Publishers.convertPublisher(conversionService, publisher, context.getReturnType().getType());
     }
 

@@ -41,7 +41,7 @@ public class DefaultExistsByReactiveInterceptor extends AbstractPublisherInterce
 
     @Override
     public Publisher<?> interceptPublisher(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        PreparedQuery<?, Boolean> preparedQuery = prepareQuery(methodKey, context, null);
+        PreparedQuery<?, Boolean> preparedQuery = prepareQuery(methodKey, context);
         return reactiveOperations.exists(preparedQuery);
     }
 }

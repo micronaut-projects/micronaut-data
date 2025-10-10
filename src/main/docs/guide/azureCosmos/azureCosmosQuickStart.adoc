@@ -4,7 +4,7 @@ To get started with Micronaut Data Azure Cosmos add the following dependency to 
 
 dependency:io.micronaut.data:micronaut-data-document-processor[scope="annotationProcessor""]
 
-NOTE: For Kotlin the dependency should be in the `kapt` scope and for Groovy it should be in `compileOnly` scope.
+NOTE: For Kotlin, add the `micronaut-data-document-processor` dependency in https://docs.micronaut.io/4.4.3/guide/#kaptOrKsp[kapt or ksp scope], and for Groovy add `micronaut-data-document-processor` in compileOnly scope.
 
 You should then configure a compile-scoped dependency on the `micronaut-data-azure-cosmos` module:
 

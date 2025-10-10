@@ -49,7 +49,7 @@ public final class Restrictions {
                 } catch (Throwable e) {
                     return null;
                 }
-            }).collect(Collectors.toList());
+            }).toList();
 
     private static final List<Restriction> RESTRICTIONS_LIST = Arrays.stream(Restrictions.class.getClasses())
             .filter(clazz -> Restriction.class.isAssignableFrom(clazz) && !Modifier.isAbstract(clazz.getModifiers()))
@@ -59,7 +59,7 @@ public final class Restrictions {
                 } catch (Throwable e) {
                     return null;
                 }
-            }).collect(Collectors.toList());
+            }).toList();
 
     public static final Map<String, PropertyRestriction> PROPERTY_RESTRICTIONS_MAP = PROPERTY_RESTRICTIONS_LIST.stream()
             .collect(Collectors.toMap(PropertyRestriction::getName, p -> p, (a, b) -> a, TreeMap::new));
@@ -97,8 +97,8 @@ public final class Restrictions {
         @Override
         public Predicate find(PersistentEntityRoot<?> entityRoot,
                               PersistentEntityCriteriaBuilder cb,
-                              ParameterExpression<T>[] parameters) {
-            return entityRoot.id().in(parameters[0]);
+                              List<ParameterExpression<T>> parameters) {
+            return entityRoot.id().in(parameters.get(0));
         }
     }
 
@@ -162,6 +162,23 @@ public final class Restrictions {
     }
 
     /**
+     * Greater than equals.
+     *
+     * @param <T> The property type
+     */
+    public static class PropertyGreaterThanEqual<T extends Comparable<? super T>> extends SinglePropertyExpressionRestriction<T> {
+
+        public PropertyGreaterThanEqual() {
+            super(PersistentEntityCriteriaBuilder::greaterThanOrEqualTo);
+        }
+
+        @Override
+        public String getName() {
+            return "GreaterThanEqual";
+        }
+    }
+
+    /**
      * Less than.
      *
      * @param <T> The property type
@@ -192,6 +209,23 @@ public final class Restrictions {
         @Override
         public String getName() {
             return "LessThanEquals";
+        }
+    }
+
+    /**
+     * Less than equals.
+     *
+     * @param <T> The property type
+     */
+    public static class PropertyLessThanEqual<T extends Comparable<? super T>> extends SinglePropertyExpressionRestriction<T> {
+
+        public PropertyLessThanEqual() {
+            super(PersistentEntityCriteriaBuilder::lessThanOrEqualTo);
+        }
+
+        @Override
+        public String getName() {
+            return "LessThanEqual";
         }
     }
 
@@ -390,7 +424,7 @@ public final class Restrictions {
     public static class PropertyIlike extends SinglePropertyExpressionRestriction<String> {
 
         public PropertyIlike() {
-            super(PersistentEntityCriteriaBuilder::ilikeString);
+            super(PersistentEntityCriteriaBuilder::ilike);
         }
 
         @Override
@@ -405,7 +439,7 @@ public final class Restrictions {
     public static class PropertyRlike extends SinglePropertyExpressionRestriction<String> {
 
         public PropertyRlike() {
-            super(PersistentEntityCriteriaBuilder::rlikeString);
+            super(PersistentEntityCriteriaBuilder::regex);
         }
 
         @Override
@@ -449,8 +483,8 @@ public final class Restrictions {
         public Predicate find(PersistentEntityRoot<?> entityRoot,
                               PersistentEntityCriteriaBuilder cb,
                               Expression<T> expression,
-                              ParameterExpression<T>[] parameters) {
-            return expression.in(parameters[0]).not();
+                              List<ParameterExpression<T>> parameters) {
+            return expression.in(parameters.get(0)).not();
         }
     }
 
@@ -489,8 +523,8 @@ public final class Restrictions {
         public Predicate find(PersistentEntityRoot<?> entityRoot,
                               PersistentEntityCriteriaBuilder cb,
                               Expression<T> expression,
-                              ParameterExpression<T>[] parameters) {
-            return expression.in(parameters[0]);
+                              List<ParameterExpression<T>> parameters) {
+            return expression.in(parameters.get(0));
         }
     }
 
@@ -555,6 +589,23 @@ public final class Restrictions {
     }
 
     /**
+     * IsNotNull restriction.
+     *
+     * @param <T> The property type
+     */
+    public static class PropertyNotNull<T> extends SinglePropertyRestriction<T> {
+
+        public PropertyNotNull() {
+            super(PersistentEntityCriteriaBuilder::isNotNull);
+        }
+
+        @Override
+        public String getName() {
+            return "NotNull";
+        }
+    }
+
+    /**
      * IsNull restriction.
      *
      * @param <T> The property type
@@ -568,6 +619,23 @@ public final class Restrictions {
         @Override
         public String getName() {
             return "IsNull";
+        }
+    }
+
+    /**
+     * Null restriction.
+     *
+     * @param <T> The property type
+     */
+    public static class PropertyNull<T> extends SinglePropertyRestriction<T> {
+
+        public PropertyNull() {
+            super(PersistentEntityCriteriaBuilder::isNull);
+        }
+
+        @Override
+        public String getName() {
+            return "Null";
         }
     }
 
@@ -622,8 +690,39 @@ public final class Restrictions {
         public Predicate find(PersistentEntityRoot<?> entityRoot,
                               PersistentEntityCriteriaBuilder cb,
                               Expression<T> expression,
-                              ParameterExpression<T>[] parameters) {
-            return cb.between(expression, parameters[0], parameters[1]);
+                              List<ParameterExpression<T>> parameters) {
+            return cb.between(expression, parameters.get(0), parameters.get(1));
+        }
+
+    }
+
+    /**
+     * Between restriction.
+     *
+     * @param <T> The property type
+     */
+    public static class PropertyIgnoreCaseBetween<T extends Comparable<? super T>> implements PropertyRestriction<T> {
+
+        @Override
+        public String getName() {
+            return "IgnoreCaseBetween";
+        }
+
+        @Override
+        public int getRequiredParameters() {
+            return 2;
+        }
+
+        @Override
+        public Predicate find(PersistentEntityRoot<?> entityRoot,
+                              PersistentEntityCriteriaBuilder cb,
+                              Expression<T> expression,
+                              List<ParameterExpression<T>> parameters) {
+            return cb.between(
+                cb.lower((Expression<String>) expression),
+                cb.lower((Expression<String>) parameters.get(0)),
+                cb.lower((Expression<String>) parameters.get(1))
+            );
         }
 
     }
@@ -733,7 +832,7 @@ public final class Restrictions {
         public Predicate find(PersistentEntityRoot<?> entityRoot,
                               PersistentEntityCriteriaBuilder cb,
                               Expression<T> expression,
-                              ParameterExpression<T>[] parameters) {
+                              List<ParameterExpression<T>> parameters) {
             return func.apply(cb, expression);
         }
     }
@@ -755,8 +854,8 @@ public final class Restrictions {
         public Predicate find(PersistentEntityRoot<?> entityRoot,
                               PersistentEntityCriteriaBuilder cb,
                               Expression<T> expression,
-                              ParameterExpression<T>[] parameters) {
-            return func.apply(cb, expression, parameters[0]);
+                              List<ParameterExpression<T>> parameters) {
+            return func.apply(cb, expression, parameters.get(0));
         }
     }
 
@@ -776,7 +875,7 @@ public final class Restrictions {
         Predicate find(@NonNull PersistentEntityRoot<?> entityRoot,
                        @NonNull PersistentEntityCriteriaBuilder cb,
                        @NonNull Expression<T> expression,
-                       @NonNull ParameterExpression<T>[] parameters);
+                       @NonNull List<ParameterExpression<T>> parameters);
     }
 
     /**
@@ -793,7 +892,7 @@ public final class Restrictions {
         @NonNull
         Predicate find(@NonNull PersistentEntityRoot<?> entityRoot,
                        @NonNull PersistentEntityCriteriaBuilder cb,
-                       @NonNull ParameterExpression<T>[] parameters);
+                       @NonNull List<ParameterExpression<T>> parameters);
 
     }
 

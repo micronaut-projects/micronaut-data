@@ -49,6 +49,12 @@ public interface PersonCrudRepository extends JpaRepository<Person, Long>, Perso
     @Transactional
     Page<Person> findPeople(String n, Pageable pageable);
 
+    @Query(value = "SELECT * FROM person WHERE name LIKE :n",
+            countQuery = "SELECT COUNT(*) FROM person WHERE name LIKE :n",
+            nativeQuery = true)
+    @Transactional
+    Page<Person> findPeopleNative(String n, Pageable pageable);
+
     @Query("from Person p where p.name = :n")
     @Transactional
     Person queryByName(String n);

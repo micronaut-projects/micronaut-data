@@ -19,5 +19,15 @@
       "typeReachable": "org.hibernate.event.service.internal.EventListenerGroupImpl"
     },
     "unsafeAllocated": true
+  },
+  {
+    "name": "org.hibernate.binder.internal.BatchSizeBinder",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+        ]
+      }
+    ]
   }
 ]

@@ -81,7 +81,7 @@ final class OracleJdbcJsonColumnMapper implements SqlJsonColumnReader<ResultSet>
                     if (bytes == null) {
                         return null;
                     }
-                    return binaryObjectMapper.readValue(bytes, argument);
+                    return textObjectMapper.readValue(bytes, argument);
                 }
                 case STRING -> {
                     String data = resultReader.readString(resultSet, columnName);
@@ -120,6 +120,8 @@ final class OracleJdbcJsonColumnMapper implements SqlJsonColumnReader<ResultSet>
     public Object mapValue(Object object, JsonDataType jsonDataType) throws IOException {
         if (jsonDataType == JsonDataType.STRING) {
             return textObjectMapper.writeValueAsString(object);
+        } else if (jsonDataType == JsonDataType.BLOB) {
+            return textObjectMapper.writeValueAsBytes(object);
         } else {
             return binaryObjectMapper.writeValueAsBytes(object);
         }

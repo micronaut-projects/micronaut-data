@@ -16,6 +16,7 @@
 package io.micronaut.data.jdbc.oraclexe;
 
 import io.micronaut.data.annotation.Join;
+import io.micronaut.data.connection.annotation.ClientInfo;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Author;
@@ -25,5 +26,6 @@ import io.micronaut.data.tck.repositories.AuthorRepository;
 public interface OracleXEAuthorRepository extends AuthorRepository {
     @Override
     @Join(value = "books", type = Join.Type.LEFT_FETCH)
+    @ClientInfo.Attribute(name = "OCSID.ACTION", value = "QueryAuthorByName")
     Author queryByName(String name);
 }

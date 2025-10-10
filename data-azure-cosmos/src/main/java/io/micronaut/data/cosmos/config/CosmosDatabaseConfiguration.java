@@ -51,6 +51,8 @@ public final class CosmosDatabaseConfiguration {
 
     private boolean queryMetricsEnabled = true;
 
+    private boolean disableNonStreamingOrderBy = false;
+
     public ThroughputSettings getThroughput() {
         return throughput;
     }
@@ -134,6 +136,26 @@ public final class CosmosDatabaseConfiguration {
      */
     public void setQueryMetricsEnabled(boolean queryMetricsEnabled) {
         this.queryMetricsEnabled = queryMetricsEnabled;
+    }
+
+    /**
+     * Gets an indicator telling whether non-streaming order by is by default disabled.
+     * By default, it is not disabled currently and users can change it as needed.
+     * Effectively, this value will be set as "COSMOS.AZURE_COSMOS_DISABLE_NON_STREAMING_ORDER_BY" env variable.
+     *
+     * @return the disabled non-streaming order by indicator
+     */
+    public boolean isDisableNonStreamingOrderBy() {
+        return disableNonStreamingOrderBy;
+    }
+
+    /**
+     * Sets an indicator telling whether non-streaming order by is by default disabled.
+     *
+     * @param disableNonStreamingOrderBy the disabled non-streaming order by indicator
+     */
+    public void setDisableNonStreamingOrderBy(boolean disableNonStreamingOrderBy) {
+        this.disableNonStreamingOrderBy = disableNonStreamingOrderBy;
     }
 
     /**

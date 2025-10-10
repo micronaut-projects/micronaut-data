@@ -103,16 +103,16 @@ class MongoMultipleDataSourceSpec extends Specification implements TestPropertyP
         }
 
         @CompileStatic
-        <T> InsertOperation<T> insertOperation(T instance) {
-            return new InsertOperation<T>() {
+        InsertOperation<Person> insertOperation(Person instance) {
+            return new InsertOperation<Person>() {
                 @Override
-                T getEntity() {
+                Person getEntity() {
                     return instance
                 }
 
                 @Override
-                Class<T> getRootEntity() {
-                    return instance.getClass() as Class<T>
+                Class<Person> getRootEntity() {
+                    return instance.getClass() as Class<Person>
                 }
 
                 @Override
@@ -121,7 +121,7 @@ class MongoMultipleDataSourceSpec extends Specification implements TestPropertyP
                 }
 
                 @Override
-                StoredQuery<T, ?> getStoredQuery() {
+                StoredQuery<Person, ?> getStoredQuery() {
                     return null
                 }
 
@@ -141,8 +141,8 @@ class MongoMultipleDataSourceSpec extends Specification implements TestPropertyP
                 }
 
                 @Override
-                Argument<T> getResultArgument() {
-                    return Argument.of(instance.getClass()) as Argument<T>
+                Argument<Person> getResultArgument() {
+                    return Argument.of(Person) as Argument<Person>
                 }
             }
         }

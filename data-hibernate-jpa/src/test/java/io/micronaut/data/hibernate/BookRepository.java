@@ -28,6 +28,7 @@ import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.tck.entities.Author;
 import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.BookDto;
 import io.micronaut.data.tck.repositories.AuthorRepository;
 
 import jakarta.transaction.Transactional;
@@ -40,6 +41,9 @@ public abstract class BookRepository extends io.micronaut.data.tck.repositories.
     public BookRepository(AuthorRepository authorRepository) {
         super(authorRepository);
     }
+
+    @Override
+    public abstract Book save(Book book);
 
     /**
      * @deprecated Order by 'author.name' case without a join. Hibernate will do the cross join if the association property is accessed by the property path without join.
@@ -71,7 +75,7 @@ public abstract class BookRepository extends io.micronaut.data.tck.repositories.
     @Query(value = "select count(*) from book b where b.title like :title and b.total_pages > :pages", nativeQuery = true)
     abstract int countNativeByTitleWithPagesGreaterThan(String title, int pages);
 
-    @Query(value = "select * from book where (CASE WHEN CAST(:arg0 AS VARCHAR) is not null THEN title = :arg0 ELSE true END)", nativeQuery = true)
+    @Query(value = "select * from book where (CASE WHEN CAST(:arg0 AS VARCHAR) is not null THEN title = :arg0 ELSE true END) FOR UPDATE", nativeQuery = true)
     public abstract List<Book> listNativeBooksNullableSearch(@Nullable String arg0);
 
     @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title IN (:arg0) ELSE true END)", nativeQuery = true)
@@ -122,4 +126,6 @@ public abstract class BookRepository extends io.micronaut.data.tck.repositories.
 
     @Query(nativeQuery = true, value = "select * from book limit 1")
     public abstract Book findFirstBook();
+
+    public abstract Page<BookDto> findByTotalPagesLessThan(int totalPages, Pageable pageable);
 }

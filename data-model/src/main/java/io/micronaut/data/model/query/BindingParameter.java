@@ -50,7 +50,7 @@ public interface BindingParameter {
         /**
          * Create new context.
          *
-         * @return new bindign context
+         * @return new binding context
          */
         static BindingContext create() {
             return new BindingContextImpl();
@@ -93,6 +93,16 @@ public interface BindingParameter {
         BindingContext  outgoingQueryParameterProperty(@Nullable PersistentPropertyPath propertyPath);
 
         /**
+         * The binding path of the parameter.
+         * Parameter value needs to be resolved before it can be set.
+         *
+         * @param propertyPath The property path
+         * @return this context
+         */
+        @NonNull
+        BindingContext parameterBindingPath(@Nullable PersistentPropertyPath propertyPath);
+
+        /**
          * Mark the property as expandable.
          *
          * @return this context
@@ -124,6 +134,12 @@ public interface BindingParameter {
          */
         @Nullable
         PersistentPropertyPath getOutgoingQueryParameterProperty();
+
+        /**
+         * @return The parameter binding path
+         */
+        @Nullable
+        PersistentPropertyPath getParameterBindingPath();
 
         /**
          * @return Is expandable

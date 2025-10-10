@@ -8,6 +8,7 @@ azure:
     endpoint: https://localhost:8081
     key: ''
     database:
+      disable-non-streaming-order-by: true
       throughput-settings:
         request-units: 1000
         auto-scale: false

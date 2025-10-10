@@ -100,7 +100,7 @@ public interface QueryStatement<PS, IDX> {
                 if (value instanceof Date date) {
                     return setDate(statement, index, date);
                 } else {
-                    return setDate(statement, index, convertRequired(value, Date.class));
+                    return setDate(statement, index, convertRequired(value, java.sql.Date.class));
                 }
             case TIMESTAMP:
                 Instant instant;

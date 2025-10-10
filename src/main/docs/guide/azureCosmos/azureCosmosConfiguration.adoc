@@ -12,3 +12,4 @@ The below is an example application configuration showing container and db prope
 ----
 include::doc-examples/azure-cosmos-example-java/src/main/resources/application-example.yml[]
 ----
+NOTE: `azure.cosmos.database.disable-non-streaming-order-by` needs to be set to true if the query runs against a region or emulator that has not yet been updated with the new NonStreamingOrderBy query feature.

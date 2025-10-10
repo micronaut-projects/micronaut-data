@@ -27,6 +27,10 @@ dependencies {
     testRuntimeOnly mnSql.micronaut.jdbc.tomcat
     testRuntimeOnly mnSql.postgresql
     testResourcesService mnSql.postgresql
+    testRuntimeOnly mnSql.mssql.jdbc
+    testResourcesService mnSql.mssql.jdbc
+    testRuntimeOnly mnSql.ojdbc11
+    testResourcesService mnSql.ojdbc11
 }
 
 micronaut {
@@ -35,6 +39,8 @@ micronaut {
         enabled = true
         inferClasspath = false
         additionalModules.add(KnownModules.JDBC_POSTGRESQL)
+        additionalModules.add(KnownModules.JDBC_MSSQL)
+        additionalModules.add(KnownModules.JDBC_ORACLE_FREE)
         clientTimeout = 300
         version = libs.versions.micronaut.testresources.get()
     }

@@ -22,6 +22,8 @@ import io.micronaut.core.naming.Named;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.Limit;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.JoinPath;
 
 import java.util.Collections;
@@ -184,8 +186,20 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
 
     /**
      * @return The join paths that require a fetch
+     * @deprecated Use {@link #getJoinPaths()} and filter the paths
      */
-    default @NonNull Set<JoinPath> getJoinFetchPaths() {
+    @Deprecated(forRemoval = true, since = "4.8.1")
+    @NonNull
+    default Set<JoinPath> getJoinFetchPaths() {
+        return Collections.emptySet();
+    }
+
+    /**
+     * @return The all join paths
+     * @since 4.8.1
+     */
+    @NonNull
+    default Set<JoinPath> getJoinPaths() {
         return Collections.emptySet();
     }
 
@@ -234,6 +248,44 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
     @Experimental
     default Map<String, AnnotationValue<?>> getParameterExpressions() {
         return Map.of();
+    }
+
+    /**
+     * @return The limit of the query or -1 if none
+     * @since 4.10
+     * @deprecated Replaced by {@link #getQueryLimit()} ()}
+     */
+    @Deprecated(forRemoval = true, since = "4.13")
+    default int getLimit() {
+        return getQueryLimit().maxResults();
+    }
+
+    /**
+     * @return The offset of the query or 0 if none
+     * @since 4.10
+     * @deprecated Replaced by {@link #getQueryLimit()} ()}
+     */
+    @Deprecated(forRemoval = true, since = "4.13")
+    default int getOffset() {
+        return (int) getQueryLimit().offset();
+    }
+
+    /**
+     * @return The query limit
+     * @since 4.13
+     */
+    @NonNull
+    default Limit getQueryLimit() {
+        return Limit.of(getLimit(), getOffset());
+    }
+
+    /**
+     * @return The runtime sort
+     * @since 4.13
+     */
+    @NonNull
+    default Sort getSort() {
+        return Sort.UNSORTED;
     }
 
     /**

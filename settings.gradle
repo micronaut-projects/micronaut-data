@@ -6,7 +6,7 @@ pluginManagement {
 }
 
 plugins {
-    id 'io.micronaut.build.shared.settings' version '6.7.0'
+    id 'io.micronaut.build.shared.settings' version '7.6.4'
 }
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
@@ -34,6 +34,7 @@ micronautBuild {
     importMicronautCatalog("micronaut-validation")
     importMicronautCatalog("micronaut-mongo")
     importMicronautCatalog("micronaut-flyway")
+    importMicronautCatalog("micronaut-coherence")
 }
 
 include 'data-bom'
@@ -85,6 +86,8 @@ include 'doc-examples:hibernate-reactive-example-kotlin'
 include 'doc-examples:hibernate-reactive-example-groovy'
 include 'doc-examples:hibernate-sync-and-reactive-example-java'
 
+include 'doc-examples:hibernate-multitenancy-discriminator-example-java'
+
 include 'doc-examples:example-hibernate-and-jdbc'
 
 include 'doc-examples:jdbc-example-java'
@@ -92,16 +95,22 @@ include 'doc-examples:jdbc-example-groovy'
 include 'doc-examples:jdbc-example-kotlin'
 include 'doc-examples:jdbc-example-records-java'
 
+include 'doc-examples:jdbc-jakarta-data-example-java'
+
 include 'doc-examples:jdbc-multitenancy-datasource-example-java'
 include 'doc-examples:jdbc-multitenancy-schema-example-java'
+include 'doc-examples:jdbc-multitenancy-discriminator-example-java'
 
 include 'doc-examples:jdbc-and-r2dbc-example-java'
 
 include 'doc-examples:r2dbc-example-java'
 include 'doc-examples:r2dbc-example-groovy'
 include 'doc-examples:r2dbc-example-kotlin'
+include 'doc-examples:r2dbc-micrometer-example-java'
+
 include 'doc-examples:r2dbc-multitenancy-datasource-example-java'
 include 'doc-examples:r2dbc-multitenancy-schema-example-java'
+include 'doc-examples:r2dbc-multitenancy-discriminator-example-java'
 
 include 'doc-examples:mongo-example-java'
 include 'doc-examples:mongo-example-groovy'
@@ -113,10 +122,13 @@ include 'doc-examples:mongo-jackson-example-java'
 
 include 'doc-examples:mongo-multitenancy-database-example-java'
 include 'doc-examples:mongo-multitenancy-datasource-example-java'
+include 'doc-examples:mongo-multitenancy-discriminator-example-java'
 
 include 'doc-examples:azure-cosmos-example-java'
 include 'doc-examples:azure-cosmos-example-groovy'
 include 'doc-examples:azure-cosmos-example-kotlin'
+
+include 'doc-examples:coherence-example-java'
 
 include 'doc-examples:jdbc-spring-tx-example-java'
 include 'doc-examples:hibernate-spring-tx-example-java'
@@ -136,3 +148,8 @@ include 'benchmarks:benchmark-micronaut-data-mongodb'
 include 'benchmarks:benchmark-spring-data'
 include 'benchmarks:benchmark-spring-data-jdbc'
 include 'benchmarks:benchmark-spring-data-mongodb'
+
+include 'jakarta-data-tck:support'
+include 'jakarta-data-tck:hibernate'
+include 'jakarta-data-tck:jdbc'
+include 'jakarta-data-tck:mongodb'

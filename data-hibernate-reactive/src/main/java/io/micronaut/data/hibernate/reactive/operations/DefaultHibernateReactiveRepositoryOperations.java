@@ -20,15 +20,14 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
 import io.micronaut.data.hibernate.conf.RequiresReactiveHibernate;
 import io.micronaut.data.hibernate.operations.AbstractHibernateOperations;
+import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Page;
-import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
 import io.micronaut.data.model.runtime.InsertBatchOperation;
@@ -42,7 +41,6 @@ import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.reactive.ReactorCriteriaRepositoryOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
-import io.micronaut.data.runtime.operations.internal.query.BindableParametersPreparedQuery;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
 import jakarta.persistence.EntityGraph;
 import jakarta.persistence.FlushModeType;
@@ -53,6 +51,7 @@ import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.CriteriaUpdate;
 import org.hibernate.SessionFactory;
 import org.hibernate.reactive.stage.Stage;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -240,8 +239,18 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
 
     @Override
     public <R> Mono<Page<R>> findPage(PagedQuery<R> pagedQuery) {
+        if (pagedQuery instanceof PreparedQuery<?, ?> pg) {
+            PreparedQuery<R, R> preparedQuery = (PreparedQuery<R, R>) pg;
+            return findAll(preparedQuery)
+                .collectList()
+                .map(content -> Page.of(
+                    content,
+                    pagedQuery.getPageable(),
+                    -1L
+                ));
+        }
         return operation(session -> findPaged(session, pagedQuery).collectList()
-                .flatMap(resultList -> countOf(session, pagedQuery.getRootEntity(), pagedQuery.getPageable())
+                .flatMap(resultList -> countOf(session, pagedQuery.getRootEntity(), pagedQuery.getQueryLimit())
                         .map(total -> Page.of(resultList, pagedQuery.getPageable(), total))));
     }
 
@@ -256,9 +265,9 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
         return collector.result;
     }
 
-    private <T> Mono<Long> countOf(Stage.Session session, Class<T> entity, @Nullable Pageable pageable) {
+    private <T> Mono<Long> countOf(Stage.Session session, Class<T> entity, Limit limit) {
         SingleResultCollector<Long> collector = new SingleResultCollector<>();
-        collectCountOf(sessionFactory.getCriteriaBuilder(), session, entity, pageable, collector);
+        collectCountOf(sessionFactory.getCriteriaBuilder(), session, entity, limit, collector);
         return collector.result;
     }
 
@@ -308,7 +317,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
                                                   InvocationContext<?, ?> invocationContext,
                                                   T entity) {
         Stage.MutationQuery query = session.createMutationQuery(storedQuery.getQuery());
-        bindParameters(query, storedQuery, invocationContext, true, entity);
+        bindParameters(query, storedQuery, invocationContext, entity);
         return helper.executeUpdate(query);
     }
 
@@ -432,6 +441,11 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     }
 
     @Override
+    public Publisher<Boolean> exists(CriteriaQuery<?> query) {
+        return withSession(session -> helper.monoFromCompletionStage(() -> session.createQuery(query).setMaxResults(1).getResultList().thenApply(l -> !l.isEmpty())));
+    }
+
+    @Override
     public <T> Flux<T> findAll(CriteriaQuery<T> query) {
         return withSession(session -> helper.monoFromCompletionStage(() -> session.createQuery(query).getResultList()))
             .flatMapIterable(res -> res);
@@ -441,10 +455,10 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     public <T> Flux<T> findAll(CriteriaQuery<T> query, int offset, int limit) {
         return withSession(session -> helper.monoFromCompletionStage(() -> {
             Stage.SelectionQuery<T> sessionQuery = session.createQuery(query);
-            if (offset != -1) {
+            if (offset > 0) {
                 sessionQuery = sessionQuery.setFirstResult(offset);
             }
-            if (limit != -1) {
+            if (limit > 0) {
                 sessionQuery = sessionQuery.setMaxResults(limit);
             }
             return sessionQuery.getResultList();

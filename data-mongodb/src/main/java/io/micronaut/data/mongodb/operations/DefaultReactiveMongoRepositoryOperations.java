@@ -84,7 +84,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * The reactive MongoDB repository operations implementation.
@@ -203,6 +202,16 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
 
     @Override
     public <R> Mono<Page<R>> findPage(PagedQuery<R> pagedQuery) {
+        if (pagedQuery instanceof PreparedQuery<?, ?> pg) {
+            PreparedQuery<R, R> preparedQuery = (PreparedQuery<R, R>) pg;
+            return findAll(preparedQuery)
+                .collectList()
+                .map(content -> Page.of(
+                    content,
+                    pagedQuery.getPageable(),
+                    -1L
+                ));
+        }
         throw new DataAccessException("Not supported!");
     }
 
@@ -347,7 +356,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
         if (preparedQuery.isAggregate()) {
             MongoAggregation aggregation = preparedQuery.getAggregation();
             if (QUERY_LOG.isDebugEnabled()) {
-                QUERY_LOG.debug("Executing Mongo 'aggregate' with pipeline: {}", aggregation.getPipeline().stream().map(e -> e.toBsonDocument().toJson()).collect(Collectors.toList()));
+                QUERY_LOG.debug("Executing Mongo 'aggregate' with pipeline: {}", aggregation.getPipeline().stream().map(e -> e.toBsonDocument().toJson()).toList());
             }
             return Mono.from(aggregate(clientSession, preparedQuery, BsonDocument.class).first())
                 .map(bsonDocument -> convertResult(database.getCodecRegistry(), resultType, bsonDocument, false))
@@ -896,7 +905,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
             @Override
             protected void execute() throws RuntimeException {
                 Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities.flatMap(list -> {
-                    List<Bson> filters = list.stream().filter(d -> !d.vetoed).map(d -> ((Bson) d.filter)).collect(Collectors.toList());
+                    List<Bson> filters = list.stream().filter(d -> !d.vetoed).map(d -> ((Bson) d.filter)).toList();
                     Mono<Long> modifiedCount;
                     if (!filters.isEmpty()) {
                         Bson filter = Filters.or(filters);
@@ -957,7 +966,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
             @Override
             protected void execute() throws RuntimeException {
                 entities = entities.flatMap(list -> {
-                    List<T> toInsert = list.stream().filter(d -> !d.vetoed).map(d -> d.entity).collect(Collectors.toList());
+                    List<T> toInsert = list.stream().filter(d -> !d.vetoed).map(d -> d.entity).toList();
                     if (toInsert.isEmpty()) {
                         return Mono.just(list);
                     }

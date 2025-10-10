@@ -1,0 +1,40 @@
+plugins {
+    id "io.micronaut.build.internal.data-add-lombok-first"
+    id "io.micronaut.build.internal.data-native-example"
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "junit5"
+}
+
+dependencies {
+    annotationProcessor projects.micronautDataProcessor
+    annotationProcessor mnValidation.micronaut.validation
+    implementation libs.managed.jakarta.data.api
+    implementation projects.micronautDataJdbc
+    implementation mn.micronaut.http.client
+    implementation mnValidation.micronaut.validation
+    implementation(mnSql.jakarta.persistence.api)
+
+    runtimeOnly mnSql.micronaut.jdbc.tomcat
+    runtimeOnly mnLogging.logback.classic
+    runtimeOnly mnSql.h2
+}
+
+sourceSets {
+    generated {
+        java {
+            srcDirs = ["$build/generated/java"]
+        }
+    }
+}
+
+//compileJava.options.fork = true
+//compileJava.options.forkOptions.jvmArgs = ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005']
+

@@ -16,7 +16,9 @@
 package io.micronaut.data.runtime.operations.internal;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.async.propagation.ReactorPropagation;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.event.EntityEventListener;
@@ -101,27 +103,35 @@ public abstract class AbstractReactiveEntityOperations<Ctx extends OperationCont
 
     @Override
     protected boolean triggerPre(Function<EntityEventContext<Object>, Boolean> fn) {
-        data = data.map(d -> {
+        data = data.flatMap(d -> {
             if (d.vetoed) {
-                return d;
+                return Mono.just(d);
             }
-            final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, d.entity);
-            d.vetoed = !fn.apply((EntityEventContext<Object>) event);
-            d.entity = event.getEntity();
-            return d;
+            return Mono.deferContextual(contextView -> {
+                try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate()) {
+                    final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, d.entity);
+                    d.vetoed = !fn.apply((EntityEventContext<Object>) event);
+                    d.entity = event.getEntity();
+                    return Mono.just(d);
+                }
+            });
         });
         return false;
     }
 
     @Override
     protected void triggerPost(Consumer<EntityEventContext<Object>> fn) {
-        data = data.map(d -> {
+        data = data.flatMap(d -> {
             if (d.vetoed) {
-                return d;
+                return Mono.just(d);
             }
-            final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, d.entity);
-            fn.accept((EntityEventContext<Object>) event);
-            return d;
+            return Mono.deferContextual(contextView -> {
+                try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate()) {
+                    final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, d.entity);
+                    fn.accept((EntityEventContext<Object>) event);
+                    return Mono.just(d);
+                }
+            });
         });
     }
 

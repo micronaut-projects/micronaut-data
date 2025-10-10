@@ -29,6 +29,7 @@ import java.util.List;
 @Internal
 public abstract class AbstractMethodMatcher implements MethodMatcher {
 
+    protected static final String[] ALL = {"All"};
     protected static final String[] ALL_OR_ONE = {"All", "One"};
     protected static final String[] TOP_OR_FIRST = {"Top", "First"};
     protected static final String FIRST = "First";

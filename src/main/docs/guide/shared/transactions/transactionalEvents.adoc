@@ -9,3 +9,5 @@ snippet::example.BookManager[project-base="doc-examples/hibernate-example", sour
 <3> The listener itself is annotated with ann:transaction.annotation.TransactionalEventListener[]
 
 TIP: You can set the value of the ann:transaction.annotation.TransactionalEventListener[] annotation to bind the listener to a particular transaction phase.
+
+NOTE: Using ann:transaction.annotation.TransactionalEventListener[] annotations for transaction events is not supported for reactive transactions.

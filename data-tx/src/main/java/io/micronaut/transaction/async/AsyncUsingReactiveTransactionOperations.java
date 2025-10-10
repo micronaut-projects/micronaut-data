@@ -50,7 +50,7 @@ public final class AsyncUsingReactiveTransactionOperations<C> implements AsyncTr
     }
 
     @Override
-    public Optional<? extends DefaultAsyncTransactionStatus<?>> findTransactionStatus() {
+    public Optional<? extends AsyncTransactionStatus<?>> findTransactionStatus() {
         return Optional.ofNullable(
             reactiveTransactionOperations.getTransactionStatus(
                 ReactorPropagation.addPropagatedContext(Context.empty(), PropagatedContext.getOrEmpty())

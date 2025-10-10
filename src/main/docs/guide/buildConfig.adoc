@@ -13,6 +13,8 @@ For document databases like <<mongo, MongoDB>> or <<azureCosmos, Azure Cosmos Da
 
 dependency:io.micronaut.data:micronaut-data-document-processor[scope="annotationProcessor"]
 
+NOTE: For Kotlin, add the `micronaut-data-processor` or `micronaut-data-document-processor` dependency in https://docs.micronaut.io/4.4.3/guide/#kaptOrKsp[kapt or ksp scope], and for Groovy add `micronaut-data-processor` or `micronaut-data-document-processor` in compileOnly scope.
+
 You can use Micronaut Launch to create a pre-configured project:
 
 [cols=3*]
