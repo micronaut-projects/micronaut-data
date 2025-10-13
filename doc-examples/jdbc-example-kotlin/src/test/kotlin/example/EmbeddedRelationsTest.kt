@@ -6,7 +6,6 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.micronaut.test.annotation.Sql
-import kotlin.jvm.optionals.getOrNull
 
 @MicronautTest
 @Sql("classpath:embedded-relations.sql")
@@ -17,7 +16,7 @@ class EmbeddedRelationsTest(
 ) : StringSpec({
 
     "client is saved with relationship status" {
-        val status = relationshipStatusRepository.findById(1).getOrNull()
+        val status = relationshipStatusRepository.findById(1)
 
         status.shouldNotBeNull()
         status.name shouldBe "Active"
