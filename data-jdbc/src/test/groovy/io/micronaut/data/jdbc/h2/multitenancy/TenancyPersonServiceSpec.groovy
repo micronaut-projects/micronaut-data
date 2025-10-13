@@ -15,11 +15,9 @@ import spock.lang.Specification
 @Property(name = "datasources.default.password", value = "")
 @Property(name = "datasources.default.dialect", value = "H2")
 @Property(name = "datasources.default.driver-class-name", value = "org.h2.Driver")
-@Property(name = "micronaut.multitenancy.tenantresolver.httpheader.enabled", value = StringUtils.TRUE)
 @Property(name = "datasources.default.packages", value = "io.micronaut.data.jdbc.h2.multitenancy")
 @Property(name = "micronaut.data.multi-tenancy.mode", value = "DISCRIMINATOR")
-@Property(name = "micronaut.multitenancy.tenantresolver.systemproperty.enabled", value = "true")
-@Property(name = "micronaut.multitenancy.tenantresolver.httpheader.enabled", value = "false")
+@Property(name = "micronaut.multitenancy.tenantresolver.systemproperty.enabled", value = StringUtils.TRUE)
 @Property(name = "spec.name", value = "TenancyPersonServiceSpec")
 @MicronautTest(transactional = false)
 class TenancyPersonServiceSpec extends Specification {
