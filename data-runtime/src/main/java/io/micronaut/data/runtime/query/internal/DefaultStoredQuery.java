@@ -232,9 +232,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
         }
 
         this.queryParameters = getQueryParameters(
-            dataMethodQuery.getAnnotations(DataMethodQuery.META_MEMBER_PARAMETERS, DataMethodQueryParameter.class),
-            isNumericPlaceHolder,
-            operationType
+            dataMethodQuery.getAnnotations(DataMethodQuery.META_MEMBER_PARAMETERS, DataMethodQueryParameter.class), isNumericPlaceHolder
         );
         this.jsonEntity = DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(annotationMetadata);
         this.parameterExpressions = annotationMetadata.getAnnotationValuesByType(ParameterExpression.class).stream()
@@ -269,9 +267,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
         }
     }
 
-    private static List<QueryParameterBinding> getQueryParameters(List<AnnotationValue<DataMethodQueryParameter>> params,
-                                                                  boolean isNumericPlaceHolder,
-                                                                  OperationType operationType) {
+    private static List<QueryParameterBinding> getQueryParameters(List<AnnotationValue<DataMethodQueryParameter>> params, boolean isNumericPlaceHolder) {
         List<QueryParameterBinding> queryParameters = new ArrayList<>(params.size());
         for (AnnotationValue<DataMethodQueryParameter> av : params) {
             String[] propertyPath = av.stringValues(DataMethodQueryParameter.META_MEMBER_PROPERTY_PATH);
@@ -299,7 +295,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
                             parameterBindingPath,
                             propertyPath,
                             av.booleanValue(DataMethodQueryParameter.META_MEMBER_AUTO_POPULATED).orElse(false),
-                            operationType == OperationType.INSERT || operationType == OperationType.INSERT_RETURNING ? false : av.booleanValue(DataMethodQueryParameter.META_MEMBER_REQUIRES_PREVIOUS_POPULATED_VALUES).orElse(false),
+                            av.booleanValue(DataMethodQueryParameter.META_MEMBER_REQUIRES_PREVIOUS_POPULATED_VALUES).orElse(false),
                             av.classValue(DataMethodQueryParameter.META_MEMBER_CONVERTER).orElse(null),
                             av.booleanValue(DataMethodQueryParameter.META_MEMBER_EXPANDABLE).orElse(false),
                             av.booleanValue(DataMethodQueryParameter.META_MEMBER_EXPRESSION).orElse(false),

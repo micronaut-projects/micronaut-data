@@ -9,7 +9,7 @@ import io.micronaut.serde.annotation.Serdeable;
 
 @Serdeable // <1>
 @MappedEntity // <2>
-public record TenancyBook(@Nullable
+record TenancyBook(@Nullable
                           @Id // <3>
                           @GeneratedValue // <4>
                           Long id,
