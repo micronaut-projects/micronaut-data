@@ -3,11 +3,8 @@ package io.micronaut.data.r2dbc.oraclexe
 import io.micronaut.data.r2dbc.AbstractR2dbcMultitenancySpec
 import io.micronaut.data.r2dbc.CleanupTestResourcesDatabaseTestPropertyProvider
 import io.micronaut.test.extensions.junit5.annotation.TestResourcesScope
-import spock.lang.Ignore
 
 @TestResourcesScope("multitenancy-r2-oracle")
-// TODO: Enable later
-@Ignore("Temporary disable flaky test")
 class OracleXEMultitenancySpec extends AbstractR2dbcMultitenancySpec implements CleanupTestResourcesDatabaseTestPropertyProvider {
 
     @Override
