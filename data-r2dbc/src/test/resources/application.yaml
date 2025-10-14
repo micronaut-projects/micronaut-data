@@ -21,4 +21,4 @@ micronaut:
   test:
     resources:
       client:
-        read-timeout: 5m
+        read-timeout: 10m
