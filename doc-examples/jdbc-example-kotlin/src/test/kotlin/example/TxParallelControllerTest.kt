@@ -9,7 +9,7 @@ import org.junit.jupiter.api.RepeatedTest
 
 @MicronautTest
 internal class TxParallelControllerTest(
-    @Client("/") val client: HttpClient,
+    @param:Client("/") val client: HttpClient,
     var repo: DemoRepository
 ) {
 

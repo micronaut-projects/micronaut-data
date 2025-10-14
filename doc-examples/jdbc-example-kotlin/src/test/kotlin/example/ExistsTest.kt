@@ -6,7 +6,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 import java.util.*
 
 @MicronautTest(transactional = false)

@@ -5,31 +5,26 @@ import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.repository.CrudRepository
-import io.micronaut.data.repository.jpa.JpaSpecificationExecutor
 import io.micronaut.data.repository.jpa.criteria.DeleteSpecification
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
-import io.micronaut.data.runtime.criteria.delete
-import io.micronaut.data.runtime.criteria.get
-import io.micronaut.data.runtime.criteria.query
-import io.micronaut.data.runtime.criteria.update
-import io.micronaut.data.runtime.criteria.where
-import java.util.*
+import io.micronaut.data.repository.jpa.kotlin.KotlinJpaSpecificationExecutor
+import io.micronaut.data.repository.kotlin.KotlinCrudRepository
+import io.micronaut.data.runtime.criteria.*
 
 // tag::repository[]
 @JdbcRepository(dialect = Dialect.H2)
-interface PersonRepository : CrudRepository<Person, Long>, JpaSpecificationExecutor<Person> {
+interface PersonRepository : KotlinCrudRepository<Person, Long>, KotlinJpaSpecificationExecutor<Person> {
     // end::repository[]
     override
     // tag::find[]
-    fun findOne(spec: PredicateSpecification<Person>?): Optional<Person>
+    fun findOne(spec: PredicateSpecification<Person>?): Person?
 
     // end::find[]
     override
     // tag::find[]
-    fun findOne(spec: QuerySpecification<Person>?): Optional<Person>
+    fun findOne(spec: QuerySpecification<Person>?): Person?
 
     // end::find[]
     override
