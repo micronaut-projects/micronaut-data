@@ -379,7 +379,7 @@ abstract class AbstractRepositorySpec extends Specification {
             page.content[1].students.collect { it.name }.sort() == ["Denis", "Josh"]
 
         when:
-            def pageable = Pageable.from(0, 1, Sort.of(Sort.Order.asc("title")))
+            def pageable = Pageable.from(0, 1, Sort.of(Sort.Order.asc("title", true)))
             page = bookRepository.findAll(criteria, pageable)
 
         then:
