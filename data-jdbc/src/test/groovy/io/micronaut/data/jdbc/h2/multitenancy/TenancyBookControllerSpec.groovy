@@ -23,6 +23,7 @@ import static org.junit.Assert.assertEquals
 @Property(name = "datasources.default.dialect", value = "H2")
 @Property(name = "datasources.default.driver-class-name", value = "org.h2.Driver")
 @Property(name = "micronaut.multitenancy.tenantresolver.httpheader.enabled", value = StringUtils.TRUE)
+@Property(name = "datasources.default.packages", value = "io.micronaut.data.jdbc.h2.multitenancy")
 @Property(name = "spec.name", value = "TenancyBookControllerSpec")
 @MicronautTest(transactional = false)
 // <2>

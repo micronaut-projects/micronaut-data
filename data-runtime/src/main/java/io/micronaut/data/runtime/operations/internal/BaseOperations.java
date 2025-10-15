@@ -73,6 +73,7 @@ abstract class BaseOperations<T, Exc extends Exception> {
      */
     public void persist() {
         try {
+            collectAutoPopulatedPreviousValues();
             boolean vetoed = triggerPrePersist();
             if (vetoed) {
                 return;
