@@ -25,7 +25,7 @@ import io.micronaut.data.repository.GenericRepository
  * @param <ID> The ID type
  *
  * @author Denis Stepanov
- * @since 3.1.0
+ * @since 4.13
  */
 @Blocking
 interface KotlinCrudRepository<E, ID> : GenericRepository<E, ID> {
