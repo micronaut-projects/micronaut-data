@@ -141,6 +141,7 @@ public interface Sort {
      * The ordering of results.
      */
     @Serdeable
+    @JsonIgnoreProperties(ignoreUnknown = true)
     class Order {
         private final String property;
         private final Direction direction;
@@ -264,7 +265,6 @@ public interface Sort {
         /**
          * @return Is the order ascending
          */
-        @JsonIgnore
         public boolean isAscending() {
             return getDirection() == Direction.ASC;
         }
