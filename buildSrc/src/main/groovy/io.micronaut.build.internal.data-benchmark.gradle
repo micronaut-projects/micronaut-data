@@ -16,6 +16,7 @@ configurations.configureEach {
 dependencies {
     testImplementation libs.jupiter.api
     testRuntimeOnly libs.jupiter.engine
+    testImplementation(mnTest.junit.platform.suite)
 
     jmh libs.jmh.core
     jmh libs.jmh.annprocess
