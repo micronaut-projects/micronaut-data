@@ -39,6 +39,7 @@ dependencies {
     kaptTest projects.micronautDataProcessor
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.micronautDataProcessor
+    testImplementation(mnTest.junit.platform.suite)
 }
 
 test {
