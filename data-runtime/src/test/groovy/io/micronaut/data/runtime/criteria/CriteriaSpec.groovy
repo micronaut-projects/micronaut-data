@@ -170,6 +170,17 @@ class CriteriaSpec extends AbstractCriteriaSpec {
             query == '''SELECT MYFUNC3(?,?) FROM "test" test_'''
     }
 
+    void "test criteria with embedded id"() {
+        given:
+        def criteriaQuery = criteriaBuilder.createQuery(TestCustomer)
+        def testCustomerRoot = criteriaQuery.from(TestCustomer)
+        criteriaQuery.where(criteriaBuilder.equal(testCustomerRoot.get("id").get("name"), "MyName"))
+        String query = getSqlQuery(criteriaQuery)
+
+        expect:
+        query == 'SELECT test_customer_."id",test_customer_."name",test_customer_."version",test_customer_."address" FROM "CUSTOMER" test_customer_ WHERE (test_customer_."name" = ?)'
+    }
+
     @Unroll
     void "test criteria predicate"(Specification specification) {
         given:
