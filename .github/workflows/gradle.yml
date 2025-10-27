@@ -69,7 +69,7 @@ jobs:
       - name: "🛠 Build with Gradle"
         id: gradle
         run: |
-          ./gradlew jacocoReport check --no-daemon --continue
+          ./gradlew check jacocoReport --no-daemon --continue
 
       - name: "🔎 Run static analysis"
         if: env.SONAR_TOKEN != '' && matrix.java == '17'
