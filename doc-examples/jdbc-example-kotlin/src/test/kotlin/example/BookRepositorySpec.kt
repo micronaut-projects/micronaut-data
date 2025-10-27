@@ -231,7 +231,7 @@ class BookRepositorySpec {
 
     @Test
     fun testOneToManyCustomQuery() {
-        val savedBook = bookRepository.save(Book(0, "Dummy Book", 20, setOf(Review("Anonymous", "Lorem Ipsum"),
+        bookRepository.save(Book(0, "Dummy Book", 20, setOf(Review("Anonymous", "Lorem Ipsum"),
             Review("Member", "Interesting"))))
 
         val books = bookRepository.searchBooksByTitle("Dummy Book")

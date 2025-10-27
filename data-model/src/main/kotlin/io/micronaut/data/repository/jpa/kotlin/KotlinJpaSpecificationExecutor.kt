@@ -30,7 +30,7 @@ import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
  *
  * @param <T> The entity type
  * @author Denis Stepanov
- * @since 3.2
+ * @since 4.13
  */
 interface KotlinJpaSpecificationExecutor<T> {
 

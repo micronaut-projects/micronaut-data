@@ -11,11 +11,7 @@ import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
 import io.micronaut.data.repository.jpa.kotlin.KotlinJpaSpecificationExecutor
 import io.micronaut.data.repository.kotlin.KotlinCrudRepository
-import io.micronaut.data.runtime.criteria.delete
-import io.micronaut.data.runtime.criteria.get
-import io.micronaut.data.runtime.criteria.query
-import io.micronaut.data.runtime.criteria.update
-import io.micronaut.data.runtime.criteria.where
+import io.micronaut.data.runtime.criteria.*
 
 // tag::repository[]
 @JdbcRepository(dialect = Dialect.H2)
