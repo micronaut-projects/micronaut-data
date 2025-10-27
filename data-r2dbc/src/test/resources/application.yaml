@@ -9,8 +9,7 @@ test-resources:
       startup-timeout: 300s
       image-name: mysql:8.4.5
     oracle:
-      startup-timeout: 600s
-      db-name: test
+      startup-timeout: 300s
     postgres:
       startup-timeout: 300s
 
@@ -18,7 +17,3 @@ micronaut:
   http:
     client:
       read-timeout: 5m
-  test:
-    resources:
-      client:
-        read-timeout: 10m
