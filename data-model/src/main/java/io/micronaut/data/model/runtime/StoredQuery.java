@@ -19,7 +19,6 @@ import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.naming.Named;
-import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Limit;
@@ -29,7 +28,6 @@ import io.micronaut.data.model.query.JoinPath;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -130,43 +128,12 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
     OperationType getOperationType();
 
     /**
-     * Are the placeholders for query set using numeric indices starting from 1.
-     * @return True if they are.
-     * @deprecated Not used anymore
-     */
-    @Deprecated(forRemoval = true)
-    boolean useNumericPlaceholders();
-
-    /**
      * Returns whether the query returns the actual entity or a Data Transfer Object (DTO) project. Defaults to false.
      *
      * @return Whether the query is a DTO projection query
      */
     default boolean isDtoProjection() {
         return false;
-    }
-
-    /**
-     * The type of the ID member of the entity.
-     *
-     * @return The ID type
-     * @deprecated Not used anymore
-     */
-    @Deprecated(forRemoval = true)
-    default Optional<Class<?>> getEntityIdentifierType() {
-        return Optional.empty();
-    }
-
-    /**
-     * The argument types to the method that invokes the query.
-     *
-     * @return The argument types
-     * @deprecated Not used anymore
-     */
-    @Deprecated(forRemoval = true)
-    @NonNull
-    default Class<?>[] getArgumentTypes() {
-        return ReflectionUtils.EMPTY_CLASS_ARRAY;
     }
 
     /**
@@ -185,16 +152,6 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
     }
 
     /**
-     * @return The join paths that require a fetch
-     * @deprecated Use {@link #getJoinPaths()} and filter the paths
-     */
-    @Deprecated(forRemoval = true, since = "4.8.1")
-    @NonNull
-    default Set<JoinPath> getJoinFetchPaths() {
-        return Collections.emptySet();
-    }
-
-    /**
      * @return The all join paths
      * @since 4.8.1
      */
@@ -202,14 +159,6 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
     default Set<JoinPath> getJoinPaths() {
         return Collections.emptySet();
     }
-
-    /**
-     * Whether the query can be treated as a single result.
-     * @return True if it can.
-     * @deprecated Not used anymore
-     */
-    @Deprecated(forRemoval = true)
-    boolean isSingleResult();
 
     /**
      * @return Whether a result consumer is present

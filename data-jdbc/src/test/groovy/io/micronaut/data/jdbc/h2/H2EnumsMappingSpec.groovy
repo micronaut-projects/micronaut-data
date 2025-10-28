@@ -12,7 +12,6 @@ import io.micronaut.data.jdbc.runtime.JdbcOperations
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2
 import io.micronaut.data.repository.CrudRepository
 import jakarta.inject.Inject
@@ -116,7 +115,7 @@ class H2EnumsMappingSpec extends Specification implements H2TestPropertyProvider
 
     void "test create table with enums"() {
         given:
-            SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.H2)
+            SqlQueryBuilder2 builder = new SqlQueryBuilder2(Dialect.H2)
 
         when:
             def sql = builder.buildBatchCreateTableStatement(PersistentEntity.of(EnumEntity))
@@ -127,7 +126,7 @@ class H2EnumsMappingSpec extends Specification implements H2TestPropertyProvider
 
     void "test jpa create table with enums"() {
         given:
-            SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.H2)
+            SqlQueryBuilder2 builder = new SqlQueryBuilder2(Dialect.H2)
 
         when:
             def sql = builder.buildBatchCreateTableStatement(PersistentEntity.of(JpaEnumEntity))

@@ -106,23 +106,8 @@ public interface DelegateStoredQuery<E, R> extends StoredQuery<E, R> {
     }
 
     @Override
-    default boolean useNumericPlaceholders() {
-        return getStoredQueryDelegate().useNumericPlaceholders();
-    }
-
-    @Override
     default boolean isDtoProjection() {
         return getStoredQueryDelegate().isDtoProjection();
-    }
-
-    @Override
-    default Optional<Class<?>> getEntityIdentifierType() {
-        return getStoredQueryDelegate().getEntityIdentifierType();
-    }
-
-    @Override
-    default Class<?>[] getArgumentTypes() {
-        return getStoredQueryDelegate().getArgumentTypes();
     }
 
     @Override
@@ -136,18 +121,8 @@ public interface DelegateStoredQuery<E, R> extends StoredQuery<E, R> {
     }
 
     @Override
-    default Set<JoinPath> getJoinFetchPaths() {
-        return getStoredQueryDelegate().getJoinFetchPaths();
-    }
-
-    @Override
     default Set<JoinPath> getJoinPaths() {
         return getStoredQueryDelegate().getJoinPaths();
-    }
-
-    @Override
-    default boolean isSingleResult() {
-        return getStoredQueryDelegate().isSingleResult();
     }
 
     @Override

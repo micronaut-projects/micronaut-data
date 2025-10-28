@@ -32,7 +32,7 @@ import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
-import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder2;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
@@ -90,7 +90,7 @@ import java.util.stream.Collectors;
 @Internal
 public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements HintsCapableRepository, PreparedQueryDecorator, StoredQueryDecorator {
 
-    private static final JpaQueryBuilder QUERY_BUILDER = new JpaQueryBuilder();
+    private static final JpaQueryBuilder2 QUERY_BUILDER = new JpaQueryBuilder2();
     private static final String ENTITY_GRAPH_FETCH = "jakarta.persistence.fetchgraph";
     private static final String ENTITY_GRAPH_LOAD = "jakarta.persistence.loadgraph";
 
@@ -355,7 +355,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
                                                ResultCollector<R> resultCollector) {
         if (sort != null && sort.isSorted()) {
             queryStr += QUERY_BUILDER.buildOrderBy(queryStr, getEntity(preparedQuery.getRootEntity()), AnnotationMetadata.EMPTY_METADATA, sort,
-                preparedQuery.isNative()).getQuery();
+                preparedQuery.isNative(), null);
         }
         if (preparedQuery.isDtoProjection()) {
             P q;

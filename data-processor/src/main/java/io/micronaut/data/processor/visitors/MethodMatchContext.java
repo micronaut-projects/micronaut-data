@@ -17,7 +17,7 @@ package io.micronaut.data.processor.visitors;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.data.model.query.builder.QueryBuilder;
+import io.micronaut.data.model.query.builder.QueryBuilder2;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.Element;
@@ -59,7 +59,7 @@ public class MethodMatchContext extends MatchContext {
      * @param findInterceptors The interceptors
      */
     MethodMatchContext(
-            @NonNull QueryBuilder queryBuilder,
+            @NonNull QueryBuilder2 queryBuilder,
             @NonNull ClassElement repositoryClass,
             @NonNull SourcePersistentEntity entity,
             @NonNull VisitorContext visitorContext,

@@ -26,7 +26,7 @@ import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteri
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityQuery;
 import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
-import io.micronaut.data.model.query.builder.QueryBuilder;
+import io.micronaut.data.model.query.builder.QueryBuilder2;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.processor.jdql.JDQLCriteriaBuilderUtils;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -116,7 +116,7 @@ public final class JakartaDataQueryAnnotatedMethodMatcher implements MethodMatch
                     matchContext.getRepositoryClass().getAnnotationMetadata(),
                     matchContext.getAnnotationMetadata()
                 );
-                QueryBuilder queryBuilder = matchContext.getQueryBuilder();
+                QueryBuilder2 queryBuilder = matchContext.getQueryBuilder();
 
                 QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(annotationMetadataHierarchy, queryBuilder);
 
@@ -153,7 +153,7 @@ public final class JakartaDataQueryAnnotatedMethodMatcher implements MethodMatch
                     matchContext.getAnnotationMetadata()
                 );
 
-                QueryBuilder queryBuilder = matchContext.getQueryBuilder();
+                QueryBuilder2 queryBuilder = matchContext.getQueryBuilder();
                 QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(annotationMetadataHierarchy, queryBuilder);
 
                 return new MethodMatchInfo(
@@ -188,7 +188,7 @@ public final class JakartaDataQueryAnnotatedMethodMatcher implements MethodMatch
                     matchContext.getAnnotationMetadata()
                 );
 
-                QueryBuilder queryBuilder = matchContext.getQueryBuilder();
+                QueryBuilder2 queryBuilder = matchContext.getQueryBuilder();
                 QueryResultPersistentEntityCriteriaQuery persistentEntityCriteriaQuery = (QueryResultPersistentEntityCriteriaQuery) criteriaQuery;
 
                 if (matchContext.hasParameterInRole(TypeRole.PAGEABLE)) {

@@ -21,7 +21,7 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Pageable.Mode;
-import io.micronaut.data.model.query.builder.QueryBuilder;
+import io.micronaut.data.model.query.builder.QueryBuilder2;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveCriteriaCapableRepository;
@@ -73,7 +73,7 @@ public abstract class AbstractReactiveSpecificationInterceptor<T, R> extends Abs
         if (reactiveCriteriaOperations != null) {
             return reactiveCriteriaOperations;
         }
-        QueryBuilder sqlQueryBuilder = getQueryBuilder(methodKey, context);
+        QueryBuilder2 sqlQueryBuilder = getQueryBuilder(methodKey, context);
         return new PreparedQueryReactiveCriteriaRepositoryOperations(
             criteriaBuilder,
             reactiveOperations,

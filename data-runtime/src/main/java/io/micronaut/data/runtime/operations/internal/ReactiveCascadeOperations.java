@@ -18,7 +18,7 @@ package io.micronaut.data.runtime.operations.internal;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.Association;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
@@ -117,7 +117,7 @@ public final class ReactiveCascadeOperations<Ctx extends OperationContext> exten
 
                 if (!hasId
                         && (cascadeType == Relation.Cascade.PERSIST || cascadeType == Relation.Cascade.UPDATE)
-                        && SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
+                        && SqlQueryBuilder2.isForeignKeyWithJoinTable(association)) {
                     return childMono.flatMap(c -> {
                         if (ctx.persisted.contains(c)) {
                             return Mono.just(e);
@@ -209,7 +209,7 @@ public final class ReactiveCascadeOperations<Ctx extends OperationContext> exten
         monoEntity = monoEntity.flatMap(e -> fn.apply(e).flatMap(newChildren -> {
             T entityAfterCascade = afterCascadedMany(e, cascadeOp.ctx.associations, cascadeManyOp.children, newChildren);
             RuntimeAssociation<Object> association = (RuntimeAssociation) cascadeOp.ctx.getAssociation();
-            if (SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
+            if (SqlQueryBuilder2.isForeignKeyWithJoinTable(association)) {
                 if (helper.isSupportsBatchInsert(ctx, cascadeOp.ctx.parentPersistentEntity)) {
                     Predicate<Object> veto = ctx.persisted::contains;
                     Mono<Void> op = helper.persistManyAssociationBatch(ctx, association, cascadeOp.ctx.parent, cascadeOp.ctx.parentPersistentEntity, newChildren, childPersistentEntity, veto);

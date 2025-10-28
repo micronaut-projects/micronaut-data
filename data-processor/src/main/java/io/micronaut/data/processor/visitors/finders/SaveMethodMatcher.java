@@ -24,8 +24,10 @@ import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.builder.QueryResult;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
+import io.micronaut.data.processor.model.criteria.impl.MethodMatchSourcePersistentEntityCriteriaBuilderImpl;
 import io.micronaut.data.processor.visitors.MatchFailedException;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
@@ -121,9 +123,15 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
                 boolean encodeEntityParameters = !DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(mc.getAnnotationMetadata());
                 QueryResult queryResult;
                 if (operationType == DataMethod.OperationType.INSERT_RETURNING) {
-                    queryResult = mc.getQueryBuilder().buildInsertReturning(annotationMetadataHierarchy, mc.getRootEntity());
+                    queryResult = mc.getQueryBuilder().buildInsert(
+                        annotationMetadataHierarchy,
+                        new SqlQueryBuilder2.InsertQueryDefinitionImpl(mc.getRootEntity(), true)
+                    );
                 } else {
-                    queryResult = mc.getQueryBuilder().buildInsert(annotationMetadataHierarchy, mc.getRootEntity());
+                    queryResult = mc.getQueryBuilder().buildInsert(
+                        annotationMetadataHierarchy,
+                        new SqlQueryBuilder2.InsertQueryDefinitionImpl(mc.getRootEntity())
+                    );
                 }
                 methodMatchInfo
                     .encodeEntityParameters(encodeEntityParameters)
@@ -222,7 +230,10 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
                 )
                     .encodeEntityParameters(encodeEntityParameters)
                     .queryResult(
-                        matchContext.getQueryBuilder().buildInsert(annotationMetadataHierarchy, matchContext.getRootEntity())
+                        matchContext.getQueryBuilder().buildInsert(
+                            annotationMetadataHierarchy,
+                            new SqlQueryBuilder2.InsertQueryDefinitionImpl(matchContext.getRootEntity())
+                        )
                     );
             }
 

@@ -21,7 +21,7 @@ import io.micronaut.core.annotation.NonNull
 import io.micronaut.data.model.jpa.criteria.*
 import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2
 import jakarta.persistence.criteria.*
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -523,7 +523,7 @@ abstract class AbstractCriteriaSpec extends Specification {
     }
 
     protected String getSqlQuery(def query, Dialect dialect) {
-        return ((QueryResultPersistentEntityCriteriaQuery) query).buildQuery(AnnotationMetadata.EMPTY_METADATA, new SqlQueryBuilder(dialect)).getQuery()
+        return ((QueryResultPersistentEntityCriteriaQuery) query).buildQuery(AnnotationMetadata.EMPTY_METADATA, new SqlQueryBuilder2(dialect)).getQuery()
     }
 
     @CompileStatic

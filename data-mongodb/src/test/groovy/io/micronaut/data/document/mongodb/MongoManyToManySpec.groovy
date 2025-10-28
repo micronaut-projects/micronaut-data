@@ -10,10 +10,10 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
-import io.micronaut.data.document.model.query.builder.MongoQueryBuilder
+import io.micronaut.data.document.model.query.builder.MongoQueryBuilder2
 import io.micronaut.data.model.query.QueryModel
 import io.micronaut.data.model.query.QueryParameter
-import io.micronaut.data.model.query.builder.QueryBuilder
+import io.micronaut.data.model.query.builder.QueryBuilder2
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.data.repository.CrudRepository
@@ -104,7 +104,7 @@ class MongoManyToManySpec extends Specification implements MongoTestPropertyProv
 
     void "test build Student select with courses"() {
         when:
-            QueryBuilder encoder = new MongoQueryBuilder()
+            QueryBuilder2 encoder = new MongoQueryBuilder2()
             def queryModel = QueryModel.from(getRuntimePersistentEntity(Student))
             queryModel.join("courses", Join.Type.FETCH, null)
             def q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel.idEq(new QueryParameter("id")))
@@ -114,7 +114,7 @@ class MongoManyToManySpec extends Specification implements MongoTestPropertyProv
 
     void "test build Student select with ratings"() {
         when:
-            QueryBuilder encoder = new MongoQueryBuilder()
+            QueryBuilder2 encoder = new MongoQueryBuilder2()
             def queryModel = QueryModel.from(getRuntimePersistentEntity(Student))
             queryModel.join("ratings", Join.Type.FETCH, null)
             def q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel.idEq(new QueryParameter("id")))

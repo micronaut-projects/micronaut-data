@@ -36,7 +36,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.query.JoinPath;
-import io.micronaut.data.model.query.builder.QueryBuilder;
+import io.micronaut.data.model.query.builder.QueryBuilder2;
 import io.micronaut.data.operations.CriteriaRepositoryOperations;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.repository.jpa.criteria.CriteriaDeleteBuilder;
@@ -87,7 +87,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
 
     protected final CriteriaRepositoryOperations criteriaRepositoryOperations;
     protected final CriteriaBuilder criteriaBuilder;
-    private final Map<RepositoryMethodKey, QueryBuilder> sqlQueryBuilderForRepositories = new ConcurrentHashMap<>();
+    private final Map<RepositoryMethodKey, QueryBuilder2> sqlQueryBuilderForRepositories = new ConcurrentHashMap<>();
     private final Map<RepositoryMethodKey, Set<JoinPath>> methodsJoinPaths = new ConcurrentHashMap<>();
 
     /**
@@ -112,7 +112,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         if (criteriaRepositoryOperations != null) {
             return criteriaRepositoryOperations;
         }
-        QueryBuilder sqlQueryBuilder = getQueryBuilder(methodKey, context);
+        QueryBuilder2 sqlQueryBuilder = getQueryBuilder(methodKey, context);
         return new PreparedQueryCriteriaRepositoryOperations(
             criteriaBuilder,
             operations,
@@ -164,11 +164,11 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     }
 
     @NonNull
-    protected final QueryBuilder getQueryBuilder(RepositoryMethodKey methodKey, MethodInvocationContext<?, ?> context) {
+    protected final QueryBuilder2 getQueryBuilder(RepositoryMethodKey methodKey, MethodInvocationContext<?, ?> context) {
         return sqlQueryBuilderForRepositories.computeIfAbsent(methodKey, repositoryMethodKey -> {
-                Class<QueryBuilder> builder = context.getAnnotationMetadata().classValue(RepositoryConfiguration.class, "queryBuilder")
+                Class<QueryBuilder2> builder = context.getAnnotationMetadata().classValue(RepositoryConfiguration.class, "queryBuilder")
                     .orElseThrow(() -> new IllegalStateException("Cannot determine QueryBuilder"));
-                BeanIntrospection<QueryBuilder> introspection = BeanIntrospection.getIntrospection(builder);
+                BeanIntrospection<QueryBuilder2> introspection = BeanIntrospection.getIntrospection(builder);
                 if (introspection.getConstructorArguments().length == 1
                     && introspection.getConstructorArguments()[0].getType() == AnnotationMetadata.class) {
                     return introspection.instantiate(context.getAnnotationMetadata());

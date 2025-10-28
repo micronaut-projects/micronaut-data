@@ -54,7 +54,6 @@ import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
 import jakarta.persistence.criteria.Order;
-import jakarta.persistence.criteria.Selection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -670,8 +669,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
     @NonNull
     @Override
     public QueryResult buildInsert(AnnotationMetadata repositoryMetadata, InsertQueryDefinition definition) {
-        Selection<?> returningSelection = definition.returningSelection();
-        if (returningSelection != null && !getDialect().supportsInsertReturning()) {
+        if (definition.returning() && !getDialect().supportsInsertReturning()) {
             throw new IllegalStateException("Dialect: " + getDialect() + " doesn't support INSERT ... RETURNING clause");
         }
         PersistentEntity entity = definition.persistentEntity();
@@ -890,7 +888,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
                 " (" + String.join(",", columns) + CLOSE_BRACKET + " " +
                 "VALUES (" + String.join(String.valueOf(COMMA), values) + CLOSE_BRACKET;
 
-            if (definition.returningSelection() != null) {
+            if (definition.returning()) {
                 // TODO: proper selection of columns
                 builder += RETURNING + String.join(",", resultColumns);
             }
@@ -1605,11 +1603,15 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
     public static final class InsertQueryDefinitionImpl implements InsertQueryDefinition {
 
         private final PersistentEntity persistentEntity;
-        private final Selection<?> returningSelection;
+        private final boolean returning;
 
         public InsertQueryDefinitionImpl(PersistentEntity persistentEntity) {
+            this(persistentEntity, false);
+        }
+
+        public InsertQueryDefinitionImpl(PersistentEntity persistentEntity, boolean returning) {
             this.persistentEntity = persistentEntity;
-            this.returningSelection = null;
+            this.returning = returning;
         }
 
         @Override
@@ -1618,8 +1620,8 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
         }
 
         @Override
-        public Selection<?> returningSelection() {
-            return returningSelection;
+        public boolean returning() {
+            return returning;
         }
     }
 

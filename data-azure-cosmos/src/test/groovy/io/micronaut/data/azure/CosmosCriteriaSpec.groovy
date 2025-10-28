@@ -22,18 +22,23 @@ import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.data.azure.entities.CosmosBook
 import io.micronaut.data.azure.entities.Family
-import io.micronaut.data.document.model.query.builder.CosmosSqlQueryBuilder
-import io.micronaut.data.document.tck.entities.Settlement
-import io.micronaut.data.document.tck.entities.SettlementPk
+import io.micronaut.data.document.model.query.builder.CosmosSqlQueryBuilder2
 import io.micronaut.data.event.EntityEventListener
-import io.micronaut.data.model.jpa.criteria.*
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery
+import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot
 import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery
-import io.micronaut.data.model.query.builder.QueryBuilder
+import io.micronaut.data.model.query.builder.QueryBuilder2
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.model.runtime.RuntimePersistentProperty
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
-import jakarta.persistence.criteria.*
+import jakarta.persistence.criteria.CriteriaBuilder
+import jakarta.persistence.criteria.CriteriaDelete
+import jakarta.persistence.criteria.CriteriaQuery
+import jakarta.persistence.criteria.CriteriaUpdate
+import jakarta.persistence.criteria.Predicate
+import jakarta.persistence.criteria.Root
 import spock.lang.Unroll
 
 import java.time.Instant
@@ -45,7 +50,7 @@ class CosmosCriteriaSpec extends AbstractTypeElementSpec {
 
     PersistentEntityCriteriaQuery criteriaQuery
 
-    static QueryBuilder queryBuilder
+    static QueryBuilder2 queryBuilder
 
     void setupSpec() {
         def annotationMetadata = buildTypeAnnotationMetadata('''
@@ -56,7 +61,7 @@ import io.micronaut.data.cosmos.annotation.CosmosRepository;
 interface MyRepository {
 }
 ''')
-        queryBuilder = new CosmosSqlQueryBuilder(annotationMetadata)
+        queryBuilder = new CosmosSqlQueryBuilder2(annotationMetadata)
     }
 
     void setup() {

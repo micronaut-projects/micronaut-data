@@ -23,7 +23,7 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.query.JoinPath;
-import io.micronaut.data.model.query.builder.QueryBuilder;
+import io.micronaut.data.model.query.builder.QueryBuilder2;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.StoredQuery;
@@ -58,13 +58,13 @@ public abstract class AbstractPreparedQueryCriteriaRepositoryOperations {
     private final PreparedQueryDecorator preparedQueryDecorator;
     private final PreparedQueryResolver preparedQueryResolver;
     private final MethodInvocationContext<?, ?> context;
-    private final QueryBuilder queryBuilder;
+    private final QueryBuilder2 queryBuilder;
     private final Class<?> entityRoot;
     private final Pageable pageable;
 
     protected AbstractPreparedQueryCriteriaRepositoryOperations(RepositoryOperations operations,
                                                                 MethodInvocationContext<?, ?> context,
-                                                                QueryBuilder queryBuilder,
+                                                                QueryBuilder2 queryBuilder,
                                                                 Class<?> entityRoot,
                                                                 Pageable pageable) {
         this.context = context;

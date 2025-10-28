@@ -4,7 +4,7 @@ import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.hibernate.entities.RelPerson;
 import io.micronaut.data.jpa.repository.JpaRepository;
-import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder2;
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
 import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder;
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
@@ -19,7 +19,7 @@ import jakarta.persistence.criteria.SetJoin;
 import java.util.List;
 
 @Repository
-@RepositoryConfiguration(queryBuilder = JpaQueryBuilder.class)
+@RepositoryConfiguration(queryBuilder = JpaQueryBuilder2.class)
 public interface RelPersonRepository extends JpaRepository<RelPerson, Long>, JpaSpecificationExecutor<RelPerson> {
 
     @Override

@@ -20,7 +20,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.Association;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
@@ -105,7 +105,7 @@ public final class SyncCascadeOperations<Ctx extends OperationContext> extends A
                 RuntimeAssociation<Object> association = (RuntimeAssociation) cascadeOp.ctx.getAssociation();
                 if (!hasId
                         && (cascadeType == Relation.Cascade.PERSIST || cascadeType == Relation.Cascade.UPDATE)
-                        && SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
+                        && SqlQueryBuilder2.isForeignKeyWithJoinTable(association)) {
 
                     helper.persistManyAssociation(ctx, association, entity, (RuntimePersistentEntity<Object>) persistentEntity, child, childPersistentEntity);
                 }
@@ -157,7 +157,7 @@ public final class SyncCascadeOperations<Ctx extends OperationContext> extends A
                 entity = afterCascadedMany(entity, cascadeOp.ctx.associations, cascadeManyOp.children, entities);
 
                 RuntimeAssociation<Object> association = (RuntimeAssociation) cascadeOp.ctx.getAssociation();
-                if (SqlQueryBuilder.isForeignKeyWithJoinTable(association) && !entities.isEmpty()) {
+                if (SqlQueryBuilder2.isForeignKeyWithJoinTable(association) && !entities.isEmpty()) {
                     if (helper.isSupportsBatchInsert(ctx, childPersistentEntity)) {
                         helper.persistManyAssociationBatch(ctx, association,
                                 cascadeOp.ctx.parent, cascadeOp.ctx.parentPersistentEntity, entities, childPersistentEntity);

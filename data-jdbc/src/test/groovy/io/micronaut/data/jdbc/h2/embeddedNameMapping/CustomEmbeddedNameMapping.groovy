@@ -11,17 +11,16 @@ import io.micronaut.data.jdbc.h2.H2TestPropertyProvider
 import io.micronaut.data.model.naming.NamingStrategies
 import io.micronaut.data.model.query.QueryModel
 import io.micronaut.data.model.query.QueryParameter
-import io.micronaut.data.model.query.builder.QueryBuilder
+import io.micronaut.data.model.query.builder.QueryBuilder2
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.repository.CrudRepository
+import jakarta.inject.Inject
+import jakarta.persistence.Embedded
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
-
-import jakarta.inject.Inject
-import jakarta.persistence.Embedded
 
 @H2DBProperties
 class CustomEmbeddedNameMapping extends Specification implements H2TestPropertyProvider {
@@ -64,7 +63,7 @@ class CustomEmbeddedNameMapping extends Specification implements H2TestPropertyP
 
     void "test build create"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
+            QueryBuilder2 encoder = new SqlQueryBuilder2()
             def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(MyBook))
 
         then:
@@ -73,7 +72,7 @@ class CustomEmbeddedNameMapping extends Specification implements H2TestPropertyP
 
     void "test build insert"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
+            QueryBuilder2 encoder = new SqlQueryBuilder2()
             def res = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, getRuntimePersistentEntity(MyBook))
 
         then:
@@ -82,7 +81,7 @@ class CustomEmbeddedNameMapping extends Specification implements H2TestPropertyP
 
     void "test update"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
+            QueryBuilder2 encoder = new SqlQueryBuilder2()
             def entity = getRuntimePersistentEntity(MyBook)
             def res = encoder.buildUpdate(
                     QueryModel.from(entity).idEq(new QueryParameter("id")),
@@ -102,7 +101,7 @@ class CustomEmbeddedNameMapping extends Specification implements H2TestPropertyP
 
     void "test build query"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
+            QueryBuilder2 encoder = new SqlQueryBuilder2()
             def q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, QueryModel.from(getRuntimePersistentEntity(MyBook)).idEq(new QueryParameter("xyz")))
         then:
             q.query == 'SELECT my_book_."id",my_book_."authorFirstName",my_book_."authorLastName",my_book_."authorDetailsIncludedNumberAge" FROM "MyBook" my_book_ WHERE (my_book_."id" = ?)'

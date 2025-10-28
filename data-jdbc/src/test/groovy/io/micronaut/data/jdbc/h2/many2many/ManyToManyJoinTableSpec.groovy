@@ -12,9 +12,8 @@ import io.micronaut.data.jdbc.h2.H2TestPropertyProvider
 import io.micronaut.data.model.Association
 import io.micronaut.data.model.query.QueryModel
 import io.micronaut.data.model.query.QueryParameter
-import io.micronaut.data.model.query.builder.QueryBuilder
+import io.micronaut.data.model.query.builder.QueryBuilder2
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.repository.CrudRepository
@@ -130,7 +129,7 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
 
     void "test build Student select with courses"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
+            QueryBuilder2 encoder = new SqlQueryBuilder2()
             def queryModel = QueryModel.from(getRuntimePersistentEntity(Student))
             queryModel.join("courses", Join.Type.FETCH, null)
             def q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel.idEq(new QueryParameter("id")))
@@ -141,7 +140,7 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
 
     void "test build Student select with ratings"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
+            QueryBuilder2 encoder = new SqlQueryBuilder2()
             def queryModel = QueryModel.from(getRuntimePersistentEntity(Student))
             queryModel.join("ratings", Join.Type.FETCH, null)
             def q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel.idEq(new QueryParameter("id")))
@@ -152,7 +151,7 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
 
     void "test build insert"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
+            QueryBuilder2 encoder = new SqlQueryBuilder2()
             def e = getRuntimePersistentEntity(Student)
             def query = encoder.buildJoinTableInsert(e, e.getPropertyByName("courses") as Association)
 
@@ -162,7 +161,7 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
 
     void "test build CourseRatingCompositeKey insert"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
+            QueryBuilder2 encoder = new SqlQueryBuilder2()
             def e = getRuntimePersistentEntity(CourseRatingCompositeKey)
             def insert = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, e)
 

@@ -261,12 +261,12 @@ class Test {
 package test;
 
 import io.micronaut.data.annotation.*;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
 import io.micronaut.data.repository.*;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.DataType;
 
 @Repository
-@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false)
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder2.class, implicitQueries = false)
 @io.micronaut.context.annotation.Executable
 interface MyInterface extends CrudRepository<TableRatings, Long> {
 }
@@ -313,10 +313,10 @@ package test;
 import io.micronaut.data.model.entities.Person;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.repository.*;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
 
 @Repository
-@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false)
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder2.class, implicitQueries = false)
 @io.micronaut.context.annotation.Executable
 interface MyInterface extends CrudRepository<Person, Long> {
 }
@@ -343,7 +343,7 @@ import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.entities.ShelfBook;
 
 @Repository
-@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false)
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder2.class, implicitQueries = false)
 interface TestBookPageRepository extends io.micronaut.data.tck.repositories.BookPageRepository {
 
 }

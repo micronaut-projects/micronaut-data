@@ -37,9 +37,8 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.Sort.Order;
-import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder2;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
@@ -294,9 +293,9 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         StringBuilder builder = new StringBuilder();
         appendPageable(builder, pageable, limit, sort, null, storedQuery.getQueryBindings().size() + 1);
 
-        int forUpdateIndex = this.query.lastIndexOf(SqlQueryBuilder.STANDARD_FOR_UPDATE_CLAUSE);
+        int forUpdateIndex = this.query.lastIndexOf(SqlQueryBuilder2.STANDARD_FOR_UPDATE_CLAUSE);
         if (forUpdateIndex == -1) {
-            forUpdateIndex = this.query.lastIndexOf(SqlQueryBuilder.SQL_SERVER_FOR_UPDATE_CLAUSE);
+            forUpdateIndex = this.query.lastIndexOf(SqlQueryBuilder2.SQL_SERVER_FOR_UPDATE_CLAUSE);
         }
         if (forUpdateIndex > -1) {
             this.query = this.query.substring(0, forUpdateIndex) + builder + this.query.substring(forUpdateIndex);
@@ -532,7 +531,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
      * @return True if it is
      */
     private boolean isSqlServerWithoutOrderBy(String query, Dialect dialect) {
-        return dialect == Dialect.SQL_SERVER && !query.contains(AbstractSqlLikeQueryBuilder.ORDER_BY_CLAUSE);
+        return dialect == Dialect.SQL_SERVER && !query.contains(AbstractSqlLikeQueryBuilder2.ORDER_BY_CLAUSE);
     }
 
     /**

@@ -1,29 +1,34 @@
 package io.micronaut.data.jdbc.h2.composite
 
-import io.micronaut.core.annotation.NonNull
 import io.micronaut.context.ApplicationContext
 import io.micronaut.core.annotation.AnnotationMetadata
-import io.micronaut.data.annotation.*
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.data.annotation.Embeddable
+import io.micronaut.data.annotation.EmbeddedId
+import io.micronaut.data.annotation.GeneratedValue
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.Join
+import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.MappedProperty
+import io.micronaut.data.annotation.Relation
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.h2.H2DBProperties
 import io.micronaut.data.jdbc.h2.H2TestPropertyProvider
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.query.QueryModel
 import io.micronaut.data.model.query.QueryParameter
-import io.micronaut.data.model.query.builder.QueryBuilder
+import io.micronaut.data.model.query.builder.QueryBuilder2
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.repository.CrudRepository
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import jakarta.inject.Inject
+import jakarta.persistence.CascadeType
+import jakarta.persistence.OneToMany
 import spock.lang.AutoCleanup
 import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
-
-import jakarta.inject.Inject
-import jakarta.persistence.CascadeType
-import jakarta.persistence.OneToMany
 
 @Ignore
 @H2DBProperties
@@ -224,7 +229,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
 
     void "test build create Settlement"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
+            QueryBuilder2 encoder = new SqlQueryBuilder2()
             def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Settlement))
 
         then:
@@ -233,7 +238,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
 
     void "test build create Citizen"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
+            QueryBuilder2 encoder = new SqlQueryBuilder2()
             def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Citizen))
 
         then:
@@ -244,7 +249,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
 
     void "test build insert"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
+            QueryBuilder2 encoder = new SqlQueryBuilder2()
             def res = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, getRuntimePersistentEntity(Settlement))
 
         then:
@@ -263,7 +268,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
 
     void "test update insert"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
+            QueryBuilder2 encoder = new SqlQueryBuilder2()
             def entity = getRuntimePersistentEntity(Settlement)
             def res = encoder.buildUpdate(
                     QueryModel.from(entity).idEq(new QueryParameter("xyz")),
@@ -290,7 +295,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
 
     void "test build query"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
+            QueryBuilder2 encoder = new SqlQueryBuilder2()
             def q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, QueryModel.from(getRuntimePersistentEntity(Settlement)).idEq(new QueryParameter("xyz")))
         then:
 
@@ -305,7 +310,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
 
     void "test build query 2"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
+            QueryBuilder2 encoder = new SqlQueryBuilder2()
             def queryModel = QueryModel.from(getRuntimePersistentEntity(Settlement))
             queryModel.join("settlementType", null, Join.Type.FETCH, null)
             queryModel.join("zone", null, Join.Type.FETCH, null)
@@ -322,7 +327,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
 
     void "test build query 3"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
+            QueryBuilder2 encoder = new SqlQueryBuilder2()
             def queryModel = QueryModel.from(getRuntimePersistentEntity(Settlement))
             queryModel.join("settlementType", null, Join.Type.FETCH, null)
             queryModel.join("zone", null, Join.Type.FETCH, null)
@@ -341,7 +346,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
     void "test build query 4"() {
         when:
 //            DefaultAnnotationMetadata annotationMetadata = new DefaultAnnotationMetadata()
-            QueryBuilder encoder = new SqlQueryBuilder()
+            QueryBuilder2 encoder = new SqlQueryBuilder2()
             def queryModel = QueryModel.from(getRuntimePersistentEntity(Citizen))
             queryModel.join("settlements", null, Join.Type.FETCH, null)
             def q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel.idEq(new QueryParameter("xyz")))

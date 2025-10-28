@@ -22,10 +22,8 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.Query;
-import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.operations.HintsCapableRepository;
@@ -142,19 +140,8 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
             }
 
             @Override
-            public boolean useNumericPlaceholders() {
-                return annotationMetadata.classValue(RepositoryConfiguration.class, "queryBuilder")
-                    .map(c -> c == SqlQueryBuilder.class).orElse(false);
-            }
-
-            @Override
             public boolean isCount() {
                 return false;
-            }
-
-            @Override
-            public boolean isSingleResult() {
-                return isSingleResult;
             }
 
             @Override
@@ -241,19 +228,7 @@ public abstract class DefaultStoredQueryResolver implements StoredQueryResolver 
             }
 
             @Override
-            public boolean useNumericPlaceholders() {
-                return annotationMetadata
-                    .classValue(RepositoryConfiguration.class, "queryBuilder")
-                    .map(c -> c == SqlQueryBuilder.class).orElse(false);
-            }
-
-            @Override
             public boolean isCount() {
-                return true;
-            }
-
-            @Override
-            public boolean isSingleResult() {
                 return true;
             }
 

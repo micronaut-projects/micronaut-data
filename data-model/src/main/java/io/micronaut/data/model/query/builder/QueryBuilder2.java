@@ -20,11 +20,17 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.beans.BeanIntrospector;
+import io.micronaut.core.reflect.exception.InstantiationException;
+import io.micronaut.core.type.Argument;
+import io.micronaut.data.annotation.RepositoryConfiguration;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.DefaultOrder;
 import io.micronaut.data.model.query.JoinPath;
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder2;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
@@ -47,6 +53,7 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requirePro
 @Internal
 @Introspected
 public interface QueryBuilder2 {
+
 
     /**
      * Builds an insert statement for the given entity.
@@ -189,10 +196,10 @@ public interface QueryBuilder2 {
         PersistentEntity persistentEntity();
 
         /**
-         * @return The returning selection
+         * @return Is returning selection
          */
         @Nullable
-        Selection<?> returningSelection();
+        boolean returning();
 
     }
 

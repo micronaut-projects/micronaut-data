@@ -104,10 +104,10 @@ import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requireProperty;
-import static io.micronaut.data.model.query.builder.QueryBuilder.VARIABLE_PATTERN;
 
 /**
  * An abstract class for builders that build SQL-like queries.
@@ -140,6 +140,11 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
     protected static final String CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID = "Cannot query on ID with entity that has no ID";
 
     private static final String UNSUPPORTED_EXPRESSION = "Unsupported expression: ";
+
+    /**
+     * A pattern used to find variables in a query string.
+     */
+    private static final Pattern VARIABLE_PATTERN = Pattern.compile("([^:])(:([a-zA-Z0-9]+))");
 
     /**
      * Get dialect.
