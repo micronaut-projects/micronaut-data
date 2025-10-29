@@ -65,6 +65,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
     private static final Pattern FOR_UPDATE_PATTERN = Pattern.compile("for\\s+update");
     private static final Pattern DELETE_PATTERN = Pattern.compile("(?<!['\"])\\bdelete\\b(?!['\"])");
     private static final Pattern INSERT_PATTERN = Pattern.compile("(?<!['\"])\\binsert\\b(?!['\"])");
+    private static final Pattern REPLACE_INTO_PATTERN = Pattern.compile("(?<!['\"])\\breplace\\s+into\\b(?!['\"])");
     private static final Pattern RETURNING_PATTERN = Pattern.compile("(?<!['\"])\\breturning\\b(?!['\"])");
     private static final Pattern SQL_COMMENT_PATTERN = Pattern.compile("(--[^\\r\\n]*)|(/\\*[\\s\\S]*?\\*/)", Pattern.MULTILINE);
 
@@ -184,7 +185,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                 return DataMethod.OperationType.DELETE_RETURNING;
             }
             return DataMethod.OperationType.DELETE;
-        } else if (INSERT_PATTERN.matcher(query).find()) {
+        } else if (INSERT_PATTERN.matcher(query).find() || REPLACE_INTO_PATTERN.matcher(query).find()) {
             if (RETURNING_PATTERN.matcher(query).find()) {
                 return DataMethod.OperationType.INSERT_RETURNING;
             }

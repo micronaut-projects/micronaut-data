@@ -59,6 +59,7 @@ public abstract class BookRepository implements PageableRepository<Book, Long>, 
     public abstract List<Book> findBooks(int limit, int offset);
 
     @Join(value = "author", alias = "auth")
+    @Nullable
     public abstract Book queryByTitle(String title);
 
     @Query(value = "SELECT book_.* FROM book book_ LEFT JOIN author book_author_ ON book_.author_id = book_author_.id", countQuery = "SELECT count(*) FROM book book_ ")
