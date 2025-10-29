@@ -35,7 +35,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -51,7 +50,6 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.hibernate.query.Order.asc;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -1574,20 +1572,17 @@ public class EntityTests {
     }
 
     public Page<Long> oddsFrom21To(Session session, long max, PageRequest pageRequest) {
-        var _orders = new ArrayList<org.hibernate.query.Order<? super Long>>();
-        _orders.add(asc(Long.class, "id"));
         try {
-            long _totalResults =
-                pageRequest.requestTotal()
-                    ? session.createSelectionQuery("SELECT naturalNumber_.id FROM io.micronaut.data.hibernate.jakarta_data.read.only.NaturalNumber AS naturalNumber_ WHERE (naturalNumber_.isOdd = TRUE AND (naturalNumber_.id >= 21 AND naturalNumber_.id <= :p1))", Long.class)
+            String base = "FROM io.micronaut.data.hibernate.jakarta_data.read.only.NaturalNumber AS naturalNumber_ WHERE (naturalNumber_.isOdd = TRUE AND (naturalNumber_.id >= 21 AND naturalNumber_.id <= :p1))";
+            long _totalResults = pageRequest.requestTotal()
+                ? session.createSelectionQuery("SELECT COUNT(naturalNumber_.id) " + base, Long.class)
                     .setParameter("p1", max)
-                    .getResultCount()
-                    : -1;
-            var _results = session.createSelectionQuery("SELECT naturalNumber_.id FROM io.micronaut.data.hibernate.jakarta_data.read.only.NaturalNumber AS naturalNumber_ WHERE (naturalNumber_.isOdd = TRUE AND (naturalNumber_.id >= 21 AND naturalNumber_.id <= :p1))", Long.class)
+                    .getSingleResult()
+                : -1L;
+            List<Long> _results = session.createSelectionQuery("SELECT naturalNumber_.id " + base + " ORDER BY naturalNumber_.id ASC", Long.class)
                 .setParameter("p1", max)
-                .setFirstResult((int) (pageRequest.page()-1) * pageRequest.size())
+                .setFirstResult((int) ((pageRequest.page() - 1) * pageRequest.size()))
                 .setMaxResults(pageRequest.size())
-                .setOrder(_orders)
                 .getResultList();
             return new PageRecord(pageRequest, _results, _totalResults);
         }

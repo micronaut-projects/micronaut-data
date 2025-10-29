@@ -12,14 +12,12 @@ micronaut {
 
 compileKotlin {
     kotlinOptions {
-        jvmTarget = "17"
         freeCompilerArgs = ["-Xjvm-default=all"]
     }
 }
 
 compileTestKotlin {
     kotlinOptions {
-        jvmTarget = "17"
         freeCompilerArgs = ["-Xjvm-default=all"]
     }
 }

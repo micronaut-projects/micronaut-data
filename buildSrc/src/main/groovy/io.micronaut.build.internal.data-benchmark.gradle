@@ -2,7 +2,7 @@ plugins {
     id "io.micronaut.build.internal.data-dependencies"
     id "java"
     id "application"
-    id "com.github.johnrengelman.shadow"
+   // id "com.github.johnrengelman.shadow"
     id "me.champeau.jmh"
 }
 
@@ -37,6 +37,6 @@ jmh {
     duplicateClassesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
-jmhJar {
-    mergeServiceFiles()
-}
+//jmhJar {
+//    mergeServiceFiles()
+//}

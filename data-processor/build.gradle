@@ -29,7 +29,7 @@ dependencies {
 }
 
 tasks.named("generateGrammarSource") {
-    dependsOn "sourcesJar"
+    //dependsOn "sourcesJar"
     outputDirectory = file("$outputDirectory/io/micronaut/data/jdql")
     arguments += ["-package", "io.micronaut.data.jdql"]
 }

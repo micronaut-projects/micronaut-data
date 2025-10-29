@@ -7,18 +7,6 @@ dependencies {
     compileOnly libs.kotlin.coroutines
 }
 
-tasks.named("compileKotlin") {
-    kotlinOptions {
-        jvmTarget = '17'
-    }
-}
-
-tasks.named("compileTestKotlin") {
-    kotlinOptions {
-        jvmTarget = '17'
-    }
-}
-
 kotlin {
     kotlinDaemonJvmArgs = ["--add-opens=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
                            "--add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED",

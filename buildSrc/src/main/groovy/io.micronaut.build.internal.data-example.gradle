@@ -3,12 +3,6 @@ plugins {
     id "io.micronaut.minimal.application"
 }
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
-    }
-}
-
 configurations.configureEach {
     resolutionStrategy.preferProjectModules()
 }
