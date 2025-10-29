@@ -11,6 +11,12 @@ plugins {
 group "io.micronaut.data"
 version projectVersion
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
 tasks.withType(JavaCompile).configureEach {
     options.fork = true
     options.encoding = "UTF-8"
