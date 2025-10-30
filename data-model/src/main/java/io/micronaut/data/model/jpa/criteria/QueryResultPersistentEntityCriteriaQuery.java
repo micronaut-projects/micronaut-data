@@ -40,4 +40,15 @@ public interface QueryResultPersistentEntityCriteriaQuery {
     @NonNull
     QueryResult build(@NonNull AnnotationMetadata annotationMetadata, @NonNull QueryBuilder2 queryBuilder);
 
+    /**
+     * Build the query.
+     *
+     * @param queryBuilder The query builder
+     * @return The query result
+     */
+    @NonNull
+    default QueryResult build(@NonNull QueryBuilder2 queryBuilder) {
+        return build(AnnotationMetadata.EMPTY_METADATA, queryBuilder);
+    }
+
 }

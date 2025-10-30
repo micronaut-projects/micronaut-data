@@ -36,6 +36,7 @@ import io.micronaut.data.model.jpa.criteria.impl.util.Joiner;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryBuilder2;
 import io.micronaut.data.model.query.builder.QueryResult;
+import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.AbstractQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
@@ -113,12 +114,21 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
      * @return Build {@link io.micronaut.data.model.query.builder.QueryBuilder2.SelectQueryDefinition}.
      */
     public QueryBuilder2.SelectQueryDefinition toSelectQueryDefinition() {
+        PersistentEntityRoot<?> root = entityRoot;
+        if (root == null) {
+            Class<T> resultType = this.resultType.getJavaType();
+            if (resultType != Object.class && resultType != Tuple.class) {
+                root = from(resultType);
+            } else {
+                throw new IllegalStateException("Root entity has to be specified");
+            }
+        }
         return new SelectQueryDefinitionImpl(
-            entityRoot,
-            entityRoot.getPersistentEntity(),
+            root,
+            root.getPersistentEntity(),
             predicate,
-            selection == null ? entityRoot : selection,
-            calculateJoins(entityRoot.getPersistentEntity()),
+            selection == null ? root : selection,
+            calculateJoins(root.getPersistentEntity()),
             forUpdate,
             distinct,
             orders == null ? List.of() : orders,

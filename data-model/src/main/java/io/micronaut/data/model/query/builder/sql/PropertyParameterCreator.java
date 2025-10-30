@@ -15,10 +15,12 @@
  */
 package io.micronaut.data.model.query.builder.sql;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.builder.AdditionalBindingParameter;
 
+@Internal
 interface PropertyParameterCreator {
 
     void pushParameter(@NonNull BindingParameter bindingParameter,

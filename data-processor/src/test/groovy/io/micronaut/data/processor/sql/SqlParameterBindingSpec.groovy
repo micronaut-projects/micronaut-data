@@ -30,13 +30,13 @@ class SqlParameterBindingSpec extends AbstractDataSpec {
 import io.micronaut.data.annotation.FindInterceptorDef;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.tck.entities.Sale;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
 
 import java.util.Map;
 
 @Repository
 @RepositoryConfiguration(
-        queryBuilder=SqlQueryBuilder.class,
+        queryBuilder=SqlQueryBuilder2.class,
         implicitQueries = false,
         namedParameters = false,
         findInterceptors = {
@@ -87,12 +87,12 @@ abstract class MyInterceptor2 implements DataInterceptor<Object, Object> {
         given:
         def repository = buildRepository('test.SaleRepository', """
 import io.micronaut.data.tck.entities.Sale;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
 
 import java.util.Map;
 
 @Repository
-@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false, namedParameters = false)
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder2.class, implicitQueries = false, namedParameters = false)
 @io.micronaut.context.annotation.Executable
 interface SaleRepository extends CrudRepository<Sale, Long> {
 
@@ -113,12 +113,12 @@ interface SaleRepository extends CrudRepository<Sale, Long> {
 import jakarta.persistence.Entity;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Column;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
 
 ${TestEntities.compositePrimaryKeyEntities()}
 
 @Repository
-@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false, namedParameters = false)
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder2.class, implicitQueries = false, namedParameters = false)
 @io.micronaut.context.annotation.Executable
 interface ProjectRepository extends CrudRepository<Project, ProjectId> {
     List<Project> findByNameLikeOrNameNotEqual(String n1, String n2, Pageable pageable);

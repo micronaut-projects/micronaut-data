@@ -24,7 +24,6 @@ import io.micronaut.data.tck.jdbc.entities.Employee
 import io.micronaut.data.tck.jdbc.entities.EmployeeGroup
 import spock.lang.Unroll
 
-//@Requires({ javaVersion <= 1.8 })
 class BuildTableSpec extends AbstractDataSpec {
 
 

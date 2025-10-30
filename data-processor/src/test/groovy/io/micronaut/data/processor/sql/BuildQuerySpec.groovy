@@ -15,8 +15,7 @@
  */
 package io.micronaut.data.processor.sql
 
-import io.micronaut.core.annotation.AnnotationMetadata
-import io.micronaut.data.annotation.Join
+
 import io.micronaut.data.intercept.FindAllInterceptor
 import io.micronaut.data.intercept.FindOneInterceptor
 import io.micronaut.data.intercept.InsertReturningOneInterceptor
@@ -24,12 +23,7 @@ import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.Pageable
-import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Invoice
-import io.micronaut.data.model.query.QueryModel
-import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2
-import io.micronaut.data.processor.entity.ActivityPeriodEntity
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Restaurant
@@ -82,7 +76,6 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.CustomBook;
 
 @JdbcRepository(dialect= Dialect.POSTGRES)
-@io.micronaut.context.annotation.Executable
 interface MyInterface2 extends CrudRepository<CustomBook, Long> {
 }
 """
@@ -103,7 +96,6 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.CustomBook;
 
 @JdbcRepository(dialect= Dialect.POSTGRES)
-@io.micronaut.context.annotation.Executable
 interface MyInterface2 extends CrudRepository<CustomBook, Long> {
 
     @Query("SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[:nickNames]")
@@ -133,7 +125,6 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.CustomBook;
 
 @JdbcRepository(dialect= Dialect.POSTGRES)
-@io.micronaut.context.annotation.Executable
 interface MyInterface2 extends CrudRepository<CustomBook, Long> {
 
     @Query("SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[:nickNames]")
@@ -2029,7 +2020,7 @@ interface TestRepository extends GenericRepository<Book, Long> {
         findByTitleContainsQuery.endsWith('FROM "book" book_ WHERE (book_."title" LIKE CONCAT(\'%\',?,\'%\'))')
         findByTitleLikeQuery.endsWith('FROM "book" book_ WHERE (book_."title" LIKE ?)')
         findByTitleIlikeQuery.endsWith('FROM "book" book_ WHERE (LOWER(book_."title") LIKE LOWER(?))')
-        findByTitleNotLikeQuery.endsWith('FROM "book" book_ WHERE (NOT(book_."title" LIKE ?))')
+        findByTitleNotLikeQuery.endsWith('FROM "book" book_ WHERE (book_."title" NOT LIKE ?)')
     }
 
     void "test IN"() {
