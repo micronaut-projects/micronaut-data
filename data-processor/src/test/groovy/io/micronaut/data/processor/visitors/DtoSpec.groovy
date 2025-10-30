@@ -20,7 +20,7 @@ import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
-import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder2
 
 import static io.micronaut.data.processor.visitors.TestUtils.getQuery
 
@@ -162,7 +162,7 @@ class PersonDto {
 
 }
 """)
-        def alias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Person))
+        def alias = new JpaQueryBuilder2().getAliasName(PersistentEntity.of(Person))
 
         then:
         repository != null

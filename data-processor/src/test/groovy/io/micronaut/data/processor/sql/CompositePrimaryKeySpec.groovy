@@ -19,7 +19,7 @@ import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.query.QueryModel
 import io.micronaut.data.model.query.QueryParameter
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2
 import io.micronaut.data.processor.model.SourcePersistentEntity
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import spock.lang.Shared
@@ -200,7 +200,7 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
         given:
         def entity = buildJpaEntity('test.Project', TestEntities.compositePrimaryKeyEntities())
         when:
-        SqlQueryBuilder builder = new SqlQueryBuilder()
+        SqlQueryBuilder2 builder = new SqlQueryBuilder2()
         def sql = builder.buildBatchCreateTableStatement(entity)
 
         then:
@@ -211,7 +211,7 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
         given:
         def entity = buildJpaEntity('test.Project', TestEntities.compositePrimaryKeyEntities())
         when:
-        SqlQueryBuilder builder = new SqlQueryBuilder()
+        SqlQueryBuilder2 builder = new SqlQueryBuilder2()
         def sql = builder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity).query
 
         then:
@@ -225,7 +225,7 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
                 .idEq(new QueryParameter("test"))
 
         when:
-        SqlQueryBuilder builder = new SqlQueryBuilder()
+        SqlQueryBuilder2 builder = new SqlQueryBuilder2()
         def sql = builder.buildQuery(AnnotationMetadata.EMPTY_METADATA, model).query
 
         then:
@@ -241,7 +241,7 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
         model.projections().property(entity.identity.name)
 
         when:
-        SqlQueryBuilder builder = new SqlQueryBuilder()
+        SqlQueryBuilder2 builder = new SqlQueryBuilder2()
         def sql = builder.buildQuery(AnnotationMetadata.EMPTY_METADATA, model).query
 
         then:

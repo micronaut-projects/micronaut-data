@@ -17,7 +17,7 @@ package io.micronaut.data.processor.visitors
 
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.model.PersistentEntity
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2
 import io.micronaut.data.tck.entities.City
 import spock.lang.Issue
 import spock.lang.Unroll
@@ -44,11 +44,11 @@ class Authority {
 
     @Id
     private String name12345;
-    
+
     public String getName12345() {
         return name12345;
     }
-    
+
     public void setName12345(String name12345) {
         this.name12345 = name12345;
     }
@@ -63,18 +63,18 @@ class User {
     public Long getId() {
         return id;
     }
-    
+
     public void setId(Long id) {
         this.id = id;
     }
 
     @Relation(Relation.Kind.ONE_TO_MANY)
     private Set<Authority> authorities = new HashSet<>();
-    
+
     public Set<Authority> getAuthorities() {
         return authorities;
     }
-    
+
     public void setAuthorities(Set<Authority> authorities) {
         this.authorities = authorities;
     }
@@ -351,7 +351,7 @@ interface MyInterface extends GenericRepository<City, Long> {
     }
 
     private String columns(Class t, String alias) {
-        def builder = new SqlQueryBuilder()
+        def builder = new SqlQueryBuilder2()
         StringBuilder columns = new StringBuilder()
         builder.selectAllColumns(PersistentEntity.of(t), alias, columns)
         columns.toString()

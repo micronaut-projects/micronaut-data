@@ -20,7 +20,7 @@ import io.micronaut.data.intercept.FindOneInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
-import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder2
 import spock.lang.Unroll
 
 class EqualsSpec extends AbstractDataMethodSpec {
@@ -68,6 +68,6 @@ interface MyInterface extends GenericRepository<Person, Long> {
     }
 
     private String alias() {
-        new JpaQueryBuilder().getAliasName(PersistentEntity.of(Person))
+        new JpaQueryBuilder2().getAliasName(PersistentEntity.of(Person))
     }
 }

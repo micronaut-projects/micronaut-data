@@ -17,21 +17,16 @@ package io.micronaut.data.azure
 
 import groovy.transform.CompileStatic
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
-import io.micronaut.context.ApplicationContext
 import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.data.azure.entities.CosmosBook
 import io.micronaut.data.azure.entities.Family
 import io.micronaut.data.document.model.query.builder.CosmosSqlQueryBuilder2
-import io.micronaut.data.event.EntityEventListener
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot
-import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery
 import io.micronaut.data.model.query.builder.QueryBuilder2
-import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
-import io.micronaut.data.model.runtime.RuntimePersistentProperty
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
 import jakarta.persistence.criteria.CriteriaBuilder
 import jakarta.persistence.criteria.CriteriaDelete
@@ -66,32 +61,7 @@ interface MyRepository {
 
     void setup() {
         Map<Class, RuntimePersistentEntity> map = new HashMap<>()
-        criteriaBuilder = new RuntimeCriteriaBuilder(new RuntimeEntityRegistry() {
-            @Override
-            EntityEventListener<Object> getEntityEventListener() {
-                throw new IllegalStateException()
-            }
-
-            @Override
-            Object autoPopulateRuntimeProperty(RuntimePersistentProperty<?> persistentProperty, Object previousValue) {
-                throw new IllegalStateException()
-            }
-
-            @Override
-            <T> RuntimePersistentEntity<T> getEntity(Class<T> type) {
-                return map.computeIfAbsent(type, RuntimePersistentEntity::new)
-            }
-
-            @Override
-            <T> RuntimePersistentEntity<T> newEntity(Class<T> type) {
-                throw new IllegalStateException()
-            }
-
-            @Override
-            ApplicationContext getApplicationContext() {
-                throw new IllegalStateException()
-            }
-        })
+        criteriaBuilder = new RuntimeCriteriaBuilder()
         criteriaQuery = criteriaBuilder.createQuery()
     }
 
@@ -309,7 +279,7 @@ interface MyRepository {
     }
 
     private static String getQuery(PersistentEntityCriteriaQuery<Object> query) {
-        return ((QueryResultPersistentEntityCriteriaQuery) query).buildQuery(AnnotationMetadata.EMPTY_METADATA, queryBuilder).getQuery()
+        return query.build(AnnotationMetadata.EMPTY_METADATA, queryBuilder).getQuery()
     }
 
     @CompileStatic

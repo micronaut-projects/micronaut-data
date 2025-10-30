@@ -20,7 +20,7 @@ import io.micronaut.data.annotation.DataTransformer
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.QueryModel
 import io.micronaut.data.model.query.QueryParameter
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.jdbc.entities.Project
 import io.micronaut.data.tck.jdbc.entities.Transform
@@ -61,7 +61,7 @@ class Project {
     void "test build insert with column writer"() {
         given:
         def entity = PersistentEntity.of(Project)
-        SqlQueryBuilder builder = new SqlQueryBuilder()
+        SqlQueryBuilder2 builder = new SqlQueryBuilder2()
         def sql = builder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity).query
 
         expect:
@@ -72,7 +72,7 @@ class Project {
     void "test build update with column writer"() {
         given:
         def entity = PersistentEntity.of(Project)
-        SqlQueryBuilder builder = new SqlQueryBuilder()
+        SqlQueryBuilder2 builder = new SqlQueryBuilder2()
         def sql = builder.buildUpdate(QueryModel.from(entity), Collections.singletonList("name")).query
 
         expect:
@@ -82,7 +82,7 @@ class Project {
     void "test build query with column reader"() {
         given:
         def entity = PersistentEntity.of(Project)
-        SqlQueryBuilder builder = new SqlQueryBuilder()
+        SqlQueryBuilder2 builder = new SqlQueryBuilder2()
         def sql = builder.buildQuery(AnnotationMetadata.EMPTY_METADATA, QueryModel.from(entity)).query
 
         expect:
@@ -91,7 +91,7 @@ class Project {
     void "test build query with column reader in where"() {
         given:
         def entity = PersistentEntity.of(Project)
-        SqlQueryBuilder builder = new SqlQueryBuilder()
+        SqlQueryBuilder2 builder = new SqlQueryBuilder2()
         def sql = builder.buildQuery(AnnotationMetadata.EMPTY_METADATA, QueryModel.from(entity).eq("name", new QueryParameter("xyz"))).query
 
         expect:
@@ -101,7 +101,7 @@ class Project {
     void "test update query with column readers and writers"() {
         given:
         def entity = PersistentEntity.of(Project)
-        SqlQueryBuilder builder = new SqlQueryBuilder()
+        SqlQueryBuilder2 builder = new SqlQueryBuilder2()
         def sql = builder.buildUpdate(
                 QueryModel.from(entity)
                     .eq("name", new QueryParameter("abc"))
@@ -117,7 +117,7 @@ class Project {
     void "test build insert with column writer2"() {
         given:
             def entity = PersistentEntity.of(Transform)
-            SqlQueryBuilder builder = new SqlQueryBuilder()
+            SqlQueryBuilder2 builder = new SqlQueryBuilder2()
             def sql = builder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity).query
 
         expect:
@@ -128,7 +128,7 @@ class Project {
     void "test build update with column writer2"() {
         given:
             def entity = PersistentEntity.of(Transform)
-            SqlQueryBuilder builder = new SqlQueryBuilder()
+            SqlQueryBuilder2 builder = new SqlQueryBuilder2()
             def sql = builder.buildUpdate(QueryModel.from(entity), Collections.singletonList("xyz")).query
 
         expect:
@@ -138,7 +138,7 @@ class Project {
     void "test build query with column reader2"() {
         given:
             def entity = PersistentEntity.of(Transform)
-            SqlQueryBuilder builder = new SqlQueryBuilder()
+            SqlQueryBuilder2 builder = new SqlQueryBuilder2()
             def sql = builder.buildQuery(AnnotationMetadata.EMPTY_METADATA, QueryModel.from(entity)).query
 
         expect:
@@ -148,7 +148,7 @@ class Project {
     void "test build query with column reader in where2"() {
         given:
             def entity = PersistentEntity.of(Transform)
-            SqlQueryBuilder builder = new SqlQueryBuilder()
+            SqlQueryBuilder2 builder = new SqlQueryBuilder2()
             def sql = builder.buildQuery(AnnotationMetadata.EMPTY_METADATA, QueryModel.from(entity).eq("xyz", new QueryParameter("xyz"))).query
 
         expect:

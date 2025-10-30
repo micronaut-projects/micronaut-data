@@ -2,8 +2,6 @@ package io.micronaut.data.processor.jdql
 
 import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.model.jpa.criteria.CriteriaSpec
-import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery
-import io.micronaut.data.model.query.builder.QueryResult
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2
 import io.micronaut.data.processor.model.SourcePersistentEntity
@@ -81,9 +79,7 @@ class JakartaDataQueryLanguageBuilderSpec extends Specification {
         def query = JDQLCriteriaBuilderUtils.build(
                 q, root, null, classElementResolver, criteriaBuilder
         )
-        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) query)
-                .buildQuery(AnnotationMetadata.EMPTY_METADATA, queryBuilder)
-        return queryResult.query
+        return query.build(AnnotationMetadata.EMPTY_METADATA, queryBuilder).query
     }
 
     def 'test delete query'() {

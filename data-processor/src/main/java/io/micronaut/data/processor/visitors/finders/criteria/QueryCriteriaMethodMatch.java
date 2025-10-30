@@ -32,7 +32,6 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityQuery;
-import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder2;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -423,11 +422,11 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                 Root<?> root = query.getRoots().iterator().next();
                 List<Selection<?>> selectionList = dtoProjectionProperties.stream()
                     .map(p -> {
-//                        if (matchContext.getQueryBuilder().shouldAliasProjections()) {
-//                            return root.get(p.getName()).alias(p.getName());
-//                        } else {
+                        if (!(matchContext.getQueryBuilder() instanceof SqlQueryBuilder2)) {
+                            return root.get(p.getName()).alias(p.getName());
+                        } else {
                             return root.get(p.getName());
-//                        }
+                        }
                     })
                     .collect(Collectors.toList());
                 query.multiselect(
@@ -437,7 +436,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         }
 
         final AnnotationMetadata annotationMetadata = matchContext.getMethodElement();
-        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(annotationMetadata, matchContext.getQueryBuilder());
+        QueryResult queryResult = criteriaQuery.build(annotationMetadata, matchContext.getQueryBuilder());
 
         ClassElement genericReturnType = matchContext.getReturnType();
         if (TypeUtils.isReactiveOrFuture(genericReturnType)) {
@@ -447,7 +446,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         QueryResult countQueryResult = null;
         if (isReturnsPage) {
             PersistentEntityCriteriaQuery<Object> countQuery = createDefaultCountQuery(matchContext, cb, joinSpecs);
-            countQueryResult = ((QueryResultPersistentEntityCriteriaQuery) countQuery).buildQuery(annotationMetadata, matchContext.getQueryBuilder());
+            countQueryResult = countQuery.build(annotationMetadata, matchContext.getQueryBuilder());
         }
 
         return new MethodMatchInfo(

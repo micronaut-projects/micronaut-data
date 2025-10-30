@@ -19,7 +19,7 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.model.Association
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.JoinPath
-import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder2
 import io.micronaut.data.tck.entities.Book
 import spock.lang.Unroll
 
@@ -83,19 +83,19 @@ interface MyInterface extends GenericRepository<Book, Long> {
 
     @Join("author")
     List<Book> list();
-    
+
     @Join("author")
     Book find(String title);
-    
+
     @Join("author")
     Book findByTitle(String title);
-    
+
     @Join("author")
     @Join("publisher")
     Book getByTitle(String title);
 }
 ''')
-        def builder = new JpaQueryBuilder()
+        def builder = new JpaQueryBuilder2()
         def entity = PersistentEntity.of(Book)
         def alias = builder.getAliasName(entity)
         def authorAlias = builder.getAliasName(JoinPath.of(entity.getPropertyByName("author") as Association))

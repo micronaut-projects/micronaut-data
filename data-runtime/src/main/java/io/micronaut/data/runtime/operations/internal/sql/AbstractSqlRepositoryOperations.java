@@ -38,7 +38,6 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
-import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
@@ -374,7 +373,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 )
                 .forEach(prop -> criteriaUpdate.set(prop.getName(), criteriaBuilder.parameter(prop.getType())));
 
-            final QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaUpdate).buildQuery(annotationMetadata, queryBuilder);
+            final QueryResult queryResult = criteriaUpdate.build(annotationMetadata, queryBuilder);
             final QueryResult newQueryResult = replaceQueryPlaceholders(queryResult);
             return new DefaultSqlStoredQuery<>(
                 QueryResultStoredQuery.single(OperationType.UPDATE, "Custom update", AnnotationMetadata.EMPTY_METADATA, newQueryResult, rootEntity),

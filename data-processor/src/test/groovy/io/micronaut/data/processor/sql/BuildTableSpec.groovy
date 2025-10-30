@@ -17,7 +17,7 @@ package io.micronaut.data.processor.sql
 
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.entities.Restaurant
 import io.micronaut.data.tck.jdbc.entities.Employee
@@ -30,7 +30,7 @@ class BuildTableSpec extends AbstractDataSpec {
 
     void "test build create table table statement for nullable embeddable"() {
         given:
-        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ANSI)
+        SqlQueryBuilder2 builder = new SqlQueryBuilder2(Dialect.ANSI)
         def entity = PersistentEntity.of(Restaurant)
         def sql = builder.buildBatchCreateTableStatement(entity)
 
@@ -88,7 +88,7 @@ class Test {
     }
 }
 ''')
-        SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
+        SqlQueryBuilder2 builder = new SqlQueryBuilder2(dialect)
         def sql = builder.buildBatchCreateTableStatement(entity)
 
         expect:
@@ -138,7 +138,7 @@ class Test {
 ''')
 
         when:
-        SqlQueryBuilder builder = new SqlQueryBuilder()
+        SqlQueryBuilder2 builder = new SqlQueryBuilder2()
         def sql = builder.buildBatchCreateTableStatement(entity)
 
         then:
@@ -157,7 +157,7 @@ class Test extends io.micronaut.data.tck.entities.BaseEntity<Long> {
 ''')
 
         when:
-        SqlQueryBuilder builder = new SqlQueryBuilder()
+        SqlQueryBuilder2 builder = new SqlQueryBuilder2()
         def sql = builder.buildBatchCreateTableStatement(entity)
 
         then:
@@ -290,7 +290,7 @@ class Test {
 }
 ''')
 
-        SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
+        SqlQueryBuilder2 builder = new SqlQueryBuilder2(dialect)
         def sql = builder.buildBatchCreateTableStatement(entity)
 
         expect:
@@ -325,7 +325,7 @@ class Test {
         return wakeUpTime;
     }}
 ''')
-        SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
+        SqlQueryBuilder2 builder = new SqlQueryBuilder2(dialect)
         def sql = builder.buildBatchCreateTableStatement(entity)
 
         expect:
@@ -405,7 +405,7 @@ class Emb {
 ''')
 
         when:
-        SqlQueryBuilder builder = new SqlQueryBuilder()
+        SqlQueryBuilder2 builder = new SqlQueryBuilder2()
         def sql = builder.buildBatchCreateTableStatement(entity)
 
         then:
@@ -416,7 +416,7 @@ class Emb {
         given:
         def employeeEntity = PersistentEntity.of(Employee)
         def employeeGroupEntity = PersistentEntity.of(EmployeeGroup)
-        def builder = new SqlQueryBuilder(Dialect.H2)
+        def builder = new SqlQueryBuilder2(Dialect.H2)
 
         when:"Tables are created"
         def employeeSql = builder.buildCreateTableStatements(employeeEntity)
@@ -504,7 +504,7 @@ class Teacher {
 ''')
 
         when:
-        SqlQueryBuilder builder = new SqlQueryBuilder()
+        SqlQueryBuilder2 builder = new SqlQueryBuilder2()
         def sql = builder.buildCreateTableStatements(entity)
 
         then:

@@ -57,8 +57,7 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requirePro
  * @since 3.2
  */
 @Internal
-public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements PersistentEntityCriteriaUpdate<T>,
-    QueryResultPersistentEntityCriteriaQuery {
+public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements PersistentEntityCriteriaUpdate<T> {
 
     protected Predicate predicate;
     protected PersistentEntityRoot<T> entityRoot;
@@ -71,7 +70,7 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
     }
 
     @Override
-    public QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder2 queryBuilder) {
+    public QueryResult build(AnnotationMetadata annotationMetadata, QueryBuilder2 queryBuilder) {
         return queryBuilder.buildUpdate(
             annotationMetadata,
             new UpdateQueryDefinitionImpl(entityRoot.getPersistentEntity(), predicate, returning, updateValues)

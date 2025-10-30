@@ -1,7 +1,6 @@
 package io.micronaut.data.query.builder.custom;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
 
 /**

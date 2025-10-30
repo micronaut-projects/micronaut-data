@@ -23,7 +23,7 @@ import io.micronaut.data.intercept.FindOneInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
-import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder2
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.writer.BeanDefinitionVisitor
 import spock.lang.Issue
@@ -277,7 +277,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
     Iterable<Person> findByIds(Iterable<Long> ids);
 }
 """)
-        def alias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Person))
+        def alias = new JpaQueryBuilder2().getAliasName(PersistentEntity.of(Person))
 
         when: "the list method is retrieved"
 

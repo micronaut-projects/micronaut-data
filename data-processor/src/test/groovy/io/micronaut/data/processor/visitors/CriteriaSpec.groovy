@@ -19,7 +19,7 @@ import io.micronaut.core.naming.NameUtils
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
-import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder2
 import io.micronaut.inject.BeanDefinition
 import spock.lang.Unroll
 
@@ -83,6 +83,6 @@ interface MyInterface {
     }
 
     private String alias() {
-        new JpaQueryBuilder().getAliasName(PersistentEntity.of(Person))
+        new JpaQueryBuilder2().getAliasName(PersistentEntity.of(Person))
     }
 }

@@ -22,9 +22,9 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaDelete;
-import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.query.builder.QueryBuilder2;
 import io.micronaut.data.model.query.builder.QueryResult;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
@@ -225,11 +225,11 @@ public class DeleteCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             if (!dtoProjectionProperties.isEmpty()) {
                 List<Selection<?>> selectionList = dtoProjectionProperties.stream()
                     .map(p -> {
-//                        if (matchContext.getQueryBuilder().shouldAliasProjections()) {
-//                            return root.get(p.getName()).alias(p.getName());
-//                        } else {
+                        if (matchContext.getQueryBuilder() instanceof SqlQueryBuilder2) {
+                            return root.get(p.getName()).alias(p.getName());
+                        } else {
                             return root.get(p.getName());
-//                        }
+                        }
                     })
                     .collect(Collectors.toList());
                 criteriaQuery.returningMulti(
@@ -239,7 +239,7 @@ public class DeleteCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         }
 
         QueryBuilder2 queryBuilder = matchContext.getQueryBuilder();
-        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(annotationMetadataHierarchy, queryBuilder);
+        QueryResult queryResult = criteriaQuery.build(annotationMetadataHierarchy, queryBuilder);
 
         return new MethodMatchInfo(
             getOperationType(),

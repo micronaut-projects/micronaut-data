@@ -20,7 +20,7 @@ import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2
 import io.micronaut.data.processor.model.SourcePersistentEntity
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.inject.BeanDefinition
@@ -71,7 +71,7 @@ class Test {
 }
 
 """)
-        SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
+        SqlQueryBuilder2 builder = new SqlQueryBuilder2(dialect)
         def entity = new SourcePersistentEntity(element, {})
         def sql = builder.buildBatchCreateTableStatement(entity)
 
@@ -185,7 +185,7 @@ class Test {
 }
 
 """)
-        SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
+        SqlQueryBuilder2 builder = new SqlQueryBuilder2(dialect)
         def entity = new SourcePersistentEntity(element, {})
         def sql = builder.buildBatchCreateTableStatement(entity)
 

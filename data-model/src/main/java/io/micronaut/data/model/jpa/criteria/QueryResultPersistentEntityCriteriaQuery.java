@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.model.jpa.criteria.impl;
+package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
-import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Experimental;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.query.builder.QueryBuilder2;
 import io.micronaut.data.model.query.builder.QueryResult;
 
@@ -26,9 +27,17 @@ import io.micronaut.data.model.query.builder.QueryResult;
  * @author Denis Stepanov
  * @since 3.2
  */
-@Internal
+@Experimental
 public interface QueryResultPersistentEntityCriteriaQuery {
 
-    QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder2 queryBuilder);
+    /**
+     * Build the query.
+     *
+     * @param annotationMetadata The annotation metadata.
+     * @param queryBuilder       The query builder
+     * @return The query result
+     */
+    @NonNull
+    QueryResult build(@NonNull AnnotationMetadata annotationMetadata, @NonNull QueryBuilder2 queryBuilder);
 
 }

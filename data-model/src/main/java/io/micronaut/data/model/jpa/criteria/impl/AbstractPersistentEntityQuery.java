@@ -71,7 +71,7 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requirePro
  */
 @Internal
 public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEntityQuery<T>> implements AbstractQuery<T>,
-    QueryResultPersistentEntityCriteriaQuery, PersistentEntityQuery<T> {
+    PersistentEntityQuery<T> {
 
     protected Map<Integer, String> parametersInRole = new LinkedHashMap<>();
     protected final CriteriaBuilder criteriaBuilder;
@@ -105,7 +105,7 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
     protected abstract Self self();
 
     @Override
-    public QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder2 queryBuilder) {
+    public QueryResult build(AnnotationMetadata annotationMetadata, QueryBuilder2 queryBuilder) {
         return queryBuilder.buildSelect(annotationMetadata, toSelectQueryDefinition());
     }
 

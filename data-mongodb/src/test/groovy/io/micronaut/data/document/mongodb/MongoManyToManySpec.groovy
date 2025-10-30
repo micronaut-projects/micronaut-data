@@ -11,12 +11,10 @@ import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
 import io.micronaut.data.document.model.query.builder.MongoQueryBuilder2
-import io.micronaut.data.model.query.QueryModel
-import io.micronaut.data.model.query.QueryParameter
-import io.micronaut.data.model.query.builder.QueryBuilder2
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.data.repository.CrudRepository
+import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.AutoCleanup
@@ -104,20 +102,24 @@ class MongoManyToManySpec extends Specification implements MongoTestPropertyProv
 
     void "test build Student select with courses"() {
         when:
-            QueryBuilder2 encoder = new MongoQueryBuilder2()
-            def queryModel = QueryModel.from(getRuntimePersistentEntity(Student))
-            queryModel.join("courses", Join.Type.FETCH, null)
-            def q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel.idEq(new QueryParameter("id")))
+            def builder = new RuntimeCriteriaBuilder()
+            def query = builder.createQuery()
+            def root = query.from(getRuntimePersistentEntity(Student))
+            root.join("courses", Join.Type.FETCH)
+            query.where(builder.equal(root.get("id"), builder.parameter(String)))
+            def q = query.build(AnnotationMetadata.EMPTY_METADATA, new MongoQueryBuilder2())
         then:
             q.query == '''[{$lookup:{from:'student_course',localField:'_id',foreignField:'m2m_student',pipeline:[{$lookup:{from:'m2m_course',localField:'m2m_course',foreignField:'_id',as:'m2m_course'}},{$unwind:{path:'$m2m_course',preserveNullAndEmptyArrays:true}},{$replaceRoot:{newRoot:'$m2m_course'}}],as:'courses'}},{$match:{_id:{$eq:{$mn_qp:0}}}}]'''
     }
 
     void "test build Student select with ratings"() {
         when:
-            QueryBuilder2 encoder = new MongoQueryBuilder2()
-            def queryModel = QueryModel.from(getRuntimePersistentEntity(Student))
-            queryModel.join("ratings", Join.Type.FETCH, null)
-            def q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel.idEq(new QueryParameter("id")))
+            def builder = new RuntimeCriteriaBuilder()
+            def query = builder.createQuery()
+            def root = query.from(getRuntimePersistentEntity(Student))
+            query.where(builder.equal(root.get("id"), builder.parameter(String)))
+            root.join("ratings", Join.Type.FETCH)
+            def q = query.build(AnnotationMetadata.EMPTY_METADATA, new MongoQueryBuilder2())
         then:
             q.query == '''[{$lookup:{from:'m2m_course_rating',localField:'_id',foreignField:'student._id',as:'ratings'}},{$match:{_id:{$eq:{$mn_qp:0}}}}]'''
     }
