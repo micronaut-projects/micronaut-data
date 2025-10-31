@@ -1,22 +1,11 @@
 plugins {
     id "org.jetbrains.kotlin.jvm"
+    id "io.micronaut.build.internal.kotlin-base"
 }
 
 dependencies {
     compileOnly libs.kotlin.stdlib
     compileOnly libs.kotlin.coroutines
-}
-
-tasks.named("compileKotlin") {
-    kotlinOptions {
-        jvmTarget = '21'
-    }
-}
-
-tasks.named("compileTestKotlin") {
-    kotlinOptions {
-        jvmTarget = '21'
-    }
 }
 
 kotlin {
