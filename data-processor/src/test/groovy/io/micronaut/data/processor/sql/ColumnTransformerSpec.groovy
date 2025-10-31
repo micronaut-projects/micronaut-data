@@ -22,7 +22,6 @@ import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
 import io.micronaut.data.tck.jdbc.entities.Project
 import io.micronaut.data.tck.jdbc.entities.Transform
-import spock.lang.PendingFeature
 import spock.lang.Requires
 import spock.lang.Shared
 

@@ -226,7 +226,7 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
                 )
                     .encodeEntityParameters(encodeEntityParameters)
                     .queryResult(
-                        criteriaBuilder.createCriteriaInsert(matchContext.getReturnType()).build(annotationMetadataHierarchy, matchContext.getQueryBuilder())
+                        criteriaBuilder.createCriteriaInsert(matchContext.getRootEntity()).build(annotationMetadataHierarchy, matchContext.getQueryBuilder())
                     );
             }
 

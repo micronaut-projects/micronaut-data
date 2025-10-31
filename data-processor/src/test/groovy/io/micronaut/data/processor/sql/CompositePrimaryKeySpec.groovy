@@ -21,7 +21,6 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2
 import io.micronaut.data.processor.model.SourcePersistentEntity
 import io.micronaut.data.processor.model.criteria.impl.SourcePersistentEntityCriteriaBuilderImpl
 import io.micronaut.data.processor.visitors.AbstractDataSpec
-import spock.lang.PendingFeature
 import spock.lang.Shared
 
 import static io.micronaut.data.processor.visitors.TestUtils.getDataTypes
