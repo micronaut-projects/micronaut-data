@@ -63,16 +63,13 @@ class Project {
                 .get() == 'UPPER(org)'
     }
 
-    @PendingFeature
     void "test build insert with column writer"() {
-//        given:
-//        def entity = PersistentEntity.of(Project)
-//        def builder = new RuntimeCriteriaBuilder()
-//        SqlQueryBuilder2 builder = new SqlQueryBuilder2()
-//        def sql = builder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity).query
-//
-//        expect:
-//        sql == 'INSERT INTO "project" ("name","db_name","org","project_id_department_id","project_id_project_id") VALUES (UPPER(?),?,?,?,?)'
+        given:
+        def builder = new RuntimeCriteriaBuilder()
+        def sql = builder.createCriteriaInsert(Project).build(new SqlQueryBuilder2()).query
+
+        expect:
+        sql == 'INSERT INTO "project" ("name","db_name","org","project_id_department_id","project_id_project_id") VALUES (UPPER(?),?,?,?,?)'
     }
 
     void "test build update with column writer"() {

@@ -49,7 +49,7 @@ public final class SaveAnnotatedMethodMatcher implements MethodMatcher {
                 ClassElement producingItem = TypeUtils.getMethodProducingItemType(methodElement);
                 throw new ProcessingException(methodElement, "Unsupported return type for a save method: " + producingItem.getName());
             }
-            return SaveMethodMatcher.saveEntity(DataMethod.OperationType.INSERT);
+            return SaveMethodMatcher.saveEntity(matchContext, DataMethod.OperationType.INSERT);
         }
         return null;
     }

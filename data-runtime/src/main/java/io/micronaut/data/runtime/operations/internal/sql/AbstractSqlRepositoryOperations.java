@@ -311,8 +311,9 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
 
         //noinspection unchecked
         return entityInserts.computeIfAbsent(new QueryKey(repositoryType, rootEntity), (queryKey) -> {
+            var criteriaBuilder = new RuntimeCriteriaBuilder(runtimeEntityRegistry);
             final SqlQueryBuilder2 queryBuilder = findQueryBuilder(repositoryType);
-            final QueryResult queryResult = queryBuilder.buildInsert(annotationMetadata, new SqlQueryBuilder2.InsertQueryDefinitionImpl(persistentEntity));
+            final QueryResult queryResult = criteriaBuilder.createCriteriaInsert(rootEntity).build(annotationMetadata, queryBuilder);
             final QueryResult newQueryResult = replaceQueryPlaceholders(queryResult);
 
             return new DefaultSqlStoredQuery<>(QueryResultStoredQuery.single(OperationType.INSERT, "Custom insert", AnnotationMetadata.EMPTY_METADATA, newQueryResult, rootEntity), persistentEntity, queryBuilder, getConversionService());

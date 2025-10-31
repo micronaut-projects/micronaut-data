@@ -94,7 +94,6 @@ public interface PersistentEntityCriteriaUpdate<T> extends CriteriaUpdate<T>, Pe
     @NonNull
     PersistentEntityCriteriaUpdate<T> returning(@NonNull Selection<? extends T> selection);
 
-
     /**
      * The returning result of the query.
      *
@@ -104,7 +103,9 @@ public interface PersistentEntityCriteriaUpdate<T> extends CriteriaUpdate<T>, Pe
      */
     @Experimental
     @NonNull
-    PersistentEntityCriteriaUpdate<T> returningMulti(@NonNull Selection<?>... selections);
+    default PersistentEntityCriteriaUpdate<T> returningMulti(@NonNull Selection<?>... selections) {
+        return returningMulti(List.of(selections));
+    }
 
     /**
      * The returning result of the query.

@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.NextMajorVersion;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaInsert;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractCriteriaBuilder;
@@ -105,6 +106,11 @@ public class RuntimeCriteriaBuilder extends AbstractCriteriaBuilder {
     @Override
     public <T> PersistentEntityCriteriaDelete<T> createCriteriaDelete(Class<T> targetEntity) {
         return new RuntimePersistentEntityCriteriaDelete<>(this, targetEntity, runtimeEntityRegistry, staticMetamodelInitializer);
+    }
+
+    @Override
+    public <T> PersistentEntityCriteriaInsert<T> createCriteriaInsert(Class<T> targetEntity) {
+        return new RuntimePersistentEntityCriteriaInsert<>(this, targetEntity, runtimeEntityRegistry, staticMetamodelInitializer);
     }
 
     @Override

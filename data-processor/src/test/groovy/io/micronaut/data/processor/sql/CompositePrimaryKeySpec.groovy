@@ -212,18 +212,16 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
         sql == 'CREATE TABLE "project" ("department_id" INT NOT NULL,"project_id_project_id" INT AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL, PRIMARY KEY("department_id","project_id_project_id"));'
     }
 
-    @PendingFeature
     void "test build insert"() {
-//        given:
-//        def entity = buildJpaEntity('test.Project', TestEntities.compositePrimaryKeyEntities())
-//        when:
-//        def builder = new SourcePersistentEntityCriteriaBuilderImpl(null)
-//        def query = builder.creatceQuery()
-//        query.from(entity)
-//        def sql = query.build(new SqlQueryBuilder2()).query
-//
-//        then:
-//        sql == 'INSERT INTO "project" ("name","department_id") VALUES (?,?)'
+        given:
+        def entity = buildJpaEntity('test.Project', TestEntities.compositePrimaryKeyEntities())
+        when:
+        def builder = new SourcePersistentEntityCriteriaBuilderImpl(null)
+        def query = builder.createCriteriaInsert(entity)
+        def sql = query.build(new SqlQueryBuilder2()).query
+
+        then:
+        sql == 'INSERT INTO "project" ("name","department_id") VALUES (?,?)'
     }
 
     void "test build query"() {

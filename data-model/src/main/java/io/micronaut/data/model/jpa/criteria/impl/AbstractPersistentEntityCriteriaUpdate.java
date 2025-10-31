@@ -201,18 +201,6 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
         return this;
     }
 
-    @Override
-    public PersistentEntityCriteriaUpdate<T> returningMulti(@NonNull Selection<?>... selections) {
-        Objects.requireNonNull(selections);
-        if (selections.length != 0) {
-            this.returning = new CompoundSelection<>(List.of(selections));
-        } else {
-            this.returning = null;
-        }
-        return this;
-    }
-
-
     private static final class UpdateQueryDefinitionImpl extends BaseQueryDefinitionImpl implements QueryBuilder2.UpdateQueryDefinition {
 
         private final Map<String, Object> propertiesToUpdate;

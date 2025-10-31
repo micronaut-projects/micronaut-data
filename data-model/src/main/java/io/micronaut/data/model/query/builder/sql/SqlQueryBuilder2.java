@@ -1597,32 +1597,4 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
 
     }
 
-    /**
-     * The insert query definition.
-     */
-    public static final class InsertQueryDefinitionImpl implements InsertQueryDefinition {
-
-        private final PersistentEntity persistentEntity;
-        private final boolean returning;
-
-        public InsertQueryDefinitionImpl(PersistentEntity persistentEntity) {
-            this(persistentEntity, false);
-        }
-
-        public InsertQueryDefinitionImpl(PersistentEntity persistentEntity, boolean returning) {
-            this.persistentEntity = persistentEntity;
-            this.returning = returning;
-        }
-
-        @Override
-        public PersistentEntity persistentEntity() {
-            return persistentEntity;
-        }
-
-        @Override
-        public boolean returning() {
-            return returning;
-        }
-    }
-
 }
