@@ -156,16 +156,6 @@ public interface DelegateStoredQuery<E, R> extends StoredQuery<E, R> {
     }
 
     @Override
-    default int getLimit() {
-        return getStoredQueryDelegate().getLimit();
-    }
-
-    @Override
-    default int getOffset() {
-        return getStoredQueryDelegate().getOffset();
-    }
-
-    @Override
     default Limit getQueryLimit() {
         return getStoredQueryDelegate().getQueryLimit();
     }

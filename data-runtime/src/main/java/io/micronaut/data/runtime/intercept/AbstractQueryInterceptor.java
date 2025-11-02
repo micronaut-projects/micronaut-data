@@ -166,7 +166,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         Map<String, Object> valueMap = new LinkedHashMap<>(arguments.length);
         for (int i = 0; i < parameterValues.length; i++) {
             Object parameterValue = parameterValues[i];
-            Argument arg = arguments[i];
+            Argument<?> arg = arguments[i];
             valueMap.put(arg.getAnnotationMetadata().stringValue(Parameter.class).orElseGet(arg::getName), parameterValue);
         }
         return valueMap;
@@ -447,21 +447,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     }
 
     /**
-     * Return whether the metadata indicates the instance is nullable.
-     *
-     * @param metadata The metadata
-     * @return True if it is nullable
-     * @deprecated Not used
-     */
-    @Deprecated(forRemoval = true, since = "4.10")
-    protected boolean isNullable(@NonNull AnnotationMetadata metadata) {
-        return metadata
-                .getDeclaredAnnotationNames()
-                .stream()
-                .anyMatch(n -> NameUtils.getSimpleName(n).equalsIgnoreCase("nullable"));
-    }
-
-    /**
      * Looks up the entity to persist from the execution context, or throws an exception.
      *
      * @param context The context
@@ -561,7 +546,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      */
     @NonNull
     protected <E> InsertBatchOperation<E> getInsertBatchOperation(@NonNull MethodInvocationContext context, @NonNull Iterable<E> iterable) {
-        @SuppressWarnings("unchecked") Class<E> rootEntity = getRequiredRootEntity(context);
+        Class<E> rootEntity = getRequiredRootEntity(context);
         return getInsertBatchOperation(context, rootEntity, iterable);
     }
 
@@ -614,7 +599,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @param <E>     The entity type
      * @return The paged query
      */
-    @SuppressWarnings("unchecked")
     @NonNull
     protected <E> UpdateOperation<E> getUpdateOperation(@NonNull MethodInvocationContext<T, ?> context, E entity) {
         return new DefaultUpdateOperation<>(context, entity);
@@ -804,7 +788,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                 wrapper.setProperty(propName, v);
             } else if (prop.isRequired()) {
                 final Optional<Object> p = wrapper.getProperty(propName, Object.class);
-                if (!p.isPresent()) {
+                if (p.isEmpty()) {
                     throw new IllegalArgumentException("Argument [" + propName + "] cannot be null");
                 }
             }
@@ -938,12 +922,12 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
         @Override
         public <RT1> Optional<RT1> getParameterInRole(@NonNull String role, @NonNull Class<RT1> type) {
-            return AbstractQueryInterceptor.this.getParameterInRole(method, role, type);
+            return DefaultPreparedQuery.getParameterInRole(role, type, method, conversionService);
         }
 
         @Override
         public <RT> List<RT> getParametersInRole(String role, Class<RT> type) {
-            return AbstractQueryInterceptor.this.getParametersInRole(method, role, type);
+            return DefaultPreparedQuery.getParametersInRole(role, type, method, conversionService);
         }
 
         @NonNull

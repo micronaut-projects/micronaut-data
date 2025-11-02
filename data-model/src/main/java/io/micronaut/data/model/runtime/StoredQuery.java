@@ -200,32 +200,12 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
     }
 
     /**
-     * @return The limit of the query or -1 if none
-     * @since 4.10
-     * @deprecated Replaced by {@link #getQueryLimit()} ()}
-     */
-    @Deprecated(forRemoval = true, since = "4.13")
-    default int getLimit() {
-        return getQueryLimit().maxResults();
-    }
-
-    /**
-     * @return The offset of the query or 0 if none
-     * @since 4.10
-     * @deprecated Replaced by {@link #getQueryLimit()} ()}
-     */
-    @Deprecated(forRemoval = true, since = "4.13")
-    default int getOffset() {
-        return (int) getQueryLimit().offset();
-    }
-
-    /**
      * @return The query limit
      * @since 4.13
      */
     @NonNull
     default Limit getQueryLimit() {
-        return Limit.of(getLimit(), getOffset());
+        return Limit.UNLIMITED;
     }
 
     /**

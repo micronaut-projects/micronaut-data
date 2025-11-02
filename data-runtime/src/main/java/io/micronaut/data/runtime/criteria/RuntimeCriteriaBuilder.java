@@ -28,6 +28,7 @@ import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.runtime.criteria.metamodel.StaticMetamodelInitializer;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.Expression;
@@ -69,7 +70,7 @@ public class RuntimeCriteriaBuilder extends AbstractCriteriaBuilder {
 
             @Override
             public <T> RuntimePersistentEntity<T> newEntity(Class<T> type) {
-                return new  RuntimePersistentEntity<>(type);
+                return new RuntimePersistentEntity<>(type);
             }
 
             @Override
@@ -79,6 +80,7 @@ public class RuntimeCriteriaBuilder extends AbstractCriteriaBuilder {
         });
     }
 
+    @Inject
     public RuntimeCriteriaBuilder(RuntimeEntityRegistry runtimeEntityRegistry) {
         this.runtimeEntityRegistry = runtimeEntityRegistry;
     }
