@@ -25,7 +25,6 @@ import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 

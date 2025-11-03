@@ -48,7 +48,7 @@ public interface PersistentEntityCriteriaInsert<T> extends QueryResultPersistent
     PersistentEntity getPersistentEntity();
 
     /**
-     * Set returning the entity as a result
+     * Set returning the entity as a result.
      */
     @Internal
     void setReturning();
