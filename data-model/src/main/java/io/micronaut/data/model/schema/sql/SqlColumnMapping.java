@@ -236,7 +236,7 @@ public final class SqlColumnMapping {
                     // OracleDB doesn't have a TIME type, so DATE is used
                     yield "DATE ";
                 } else {
-                    yield "TIME";
+                    yield "TIME(6)";
                 }
             }
             case LONG -> {
