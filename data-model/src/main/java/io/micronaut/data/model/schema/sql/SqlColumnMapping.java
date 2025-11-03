@@ -224,8 +224,8 @@ public final class SqlColumnMapping {
                     // sql server timestamp is an internal type, use datetime instead
                     yield "DATETIME2";
                 } else if (dialect == Dialect.MYSQL) {
-                    // TODO: mysql doesn't allow timestamp without default?
-                    yield "TIMESTAMP(6)";
+                    // mysql doesn't allow timestamp without default?
+                    yield "TIMESTAMP(6) DEFAULT NOW(6)";
                 } else {
                     yield "TIMESTAMP";
                 }
