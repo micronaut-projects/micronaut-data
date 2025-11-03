@@ -49,7 +49,7 @@ import java.util.Set;
  * @since 1.0
  */
 @Internal
-public final class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder {
+public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     private static final NamingStrategy JPA_NAMING_STRATEGY = new NamingStrategy() {
         @Override
