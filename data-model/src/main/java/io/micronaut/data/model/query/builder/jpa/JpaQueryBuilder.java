@@ -33,7 +33,7 @@ import io.micronaut.data.model.jpa.criteria.impl.DefaultOrder;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryResult;
-import io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder2;
+import io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import jakarta.persistence.criteria.Order;
 
@@ -49,7 +49,7 @@ import java.util.Set;
  * @since 1.0
  */
 @Internal
-public final class JpaQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
+public final class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     private static final NamingStrategy JPA_NAMING_STRATEGY = new NamingStrategy() {
         @Override
@@ -75,7 +75,7 @@ public final class JpaQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
     /**
      * Default constructor.
      */
-    public JpaQueryBuilder2() {
+    public JpaQueryBuilder() {
     }
 
     @Override

@@ -76,7 +76,7 @@ import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.JoinPath;
-import io.micronaut.data.model.query.builder.QueryBuilder2;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.impl.AdvancedPredicateVisitor;
@@ -118,7 +118,7 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requirePro
  */
 @Internal
 @SuppressWarnings("FileLength")
-public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
+public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     public static final String ORDER_BY_CLAUSE = " ORDER BY ";
     protected static final String SELECT_CLAUSE = "SELECT ";
     protected static final String AS_CLAUSE = " AS ";
@@ -1482,7 +1482,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
      */
     @Internal
     protected final class QueryState implements PropertyParameterCreator {
-        private final AbstractSqlLikeQueryBuilder2.QueryBuilder queryBuilder;
+        private final AbstractSqlLikeQueryBuilder.QueryBuilder queryBuilder;
         private final String rootAlias;
         private final Map<String, JoinPath> appliedJoinPaths = new LinkedHashMap<>();
         private final boolean allowJoins;
@@ -1491,17 +1491,17 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         private final PersistentEntity entity;
         private List<JoinPath> joinPaths = new ArrayList<>();
 
-        private QueryState(AbstractSqlLikeQueryBuilder2.QueryBuilder queryBuilder, BaseQueryDefinition query, boolean allowJoins, boolean useAlias) {
+        private QueryState(AbstractSqlLikeQueryBuilder.QueryBuilder queryBuilder, BaseQueryDefinition query, boolean allowJoins, boolean useAlias) {
             this(queryBuilder, query, allowJoins, useAlias, null);
         }
 
-        private QueryState(AbstractSqlLikeQueryBuilder2.QueryBuilder queryBuilder, BaseQueryDefinition query, boolean allowJoins, boolean useAlias, String tableAliasPrefix) {
+        private QueryState(AbstractSqlLikeQueryBuilder.QueryBuilder queryBuilder, BaseQueryDefinition query, boolean allowJoins, boolean useAlias, String tableAliasPrefix) {
             this.queryBuilder = queryBuilder;
             this.allowJoins = allowJoins;
             this.baseQueryDefinition = query;
             this.entity = query.persistentEntity();
-            this.escape = AbstractSqlLikeQueryBuilder2.this.shouldEscape(entity);
-            this.rootAlias = useAlias || tableAliasPrefix != null ? (tableAliasPrefix == null ? "" : tableAliasPrefix) + AbstractSqlLikeQueryBuilder2.this.getAliasName(entity) : null;
+            this.escape = AbstractSqlLikeQueryBuilder.this.shouldEscape(entity);
+            this.rootAlias = useAlias || tableAliasPrefix != null ? (tableAliasPrefix == null ? "" : tableAliasPrefix) + AbstractSqlLikeQueryBuilder.this.getAliasName(entity) : null;
         }
 
         public QueryState(BaseQueryDefinition query, boolean allowJoins, boolean useAlias) {
@@ -1654,12 +1654,12 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
                 String ownerAlias;
                 if (owner.equals(entity)) {
                     if (rootAlias == null) {
-                        ownerAlias = AbstractSqlLikeQueryBuilder2.this.getAliasName(owner);
+                        ownerAlias = AbstractSqlLikeQueryBuilder.this.getAliasName(owner);
                     } else {
                         ownerAlias = rootAlias;
                     }
                 } else {
-                    ownerAlias = AbstractSqlLikeQueryBuilder2.this.getAliasName(owner);
+                    ownerAlias = AbstractSqlLikeQueryBuilder.this.getAliasName(owner);
                 }
                 if (ownerAlias.endsWith("_") && joinPathAlias.startsWith("_")) {
                     return ownerAlias + joinPathAlias.substring(1);
@@ -1940,14 +1940,14 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
          * @return the naming strategy
          */
         public NamingStrategy getNamingStrategy() {
-            return AbstractSqlLikeQueryBuilder2.this.getNamingStrategy(propertyPath);
+            return AbstractSqlLikeQueryBuilder.this.getNamingStrategy(propertyPath);
         }
 
         /**
          * @return should escape
          */
         public boolean shouldEscape() {
-            return AbstractSqlLikeQueryBuilder2.this.shouldEscape(propertyPath.findPropertyOwner().orElse(propertyPath.getProperty().getOwner()));
+            return AbstractSqlLikeQueryBuilder.this.shouldEscape(propertyPath.findPropertyOwner().orElse(propertyPath.getProperty().getOwner()));
         }
 
         /**
@@ -2432,7 +2432,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         }
 
         protected final void appendPropertyRef(PersistentPropertyPath propertyPath) {
-            AbstractSqlLikeQueryBuilder2.this.appendPropertyRef(annotationMetadata, query, queryState, propertyPath, false);
+            AbstractSqlLikeQueryBuilder.this.appendPropertyRef(annotationMetadata, query, queryState, propertyPath, false);
         }
 
         protected final void appendBinaryOperation(@NonNull String operator, @NonNull Expression<?> leftExpression, @NonNull Expression<?> rightExpression) {
@@ -3044,7 +3044,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
         }
 
         private void appendExpression(Expression<?> expression) {
-            AbstractSqlLikeQueryBuilder2.this.appendExpression(annotationMetadata, query, queryState, expression, true);
+            AbstractSqlLikeQueryBuilder.this.appendExpression(annotationMetadata, query, queryState, expression, true);
         }
 
         private QueryPropertyPath findProperty(String propertyPath) {

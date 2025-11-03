@@ -61,11 +61,11 @@ import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.AdditionalParameterBinding;
-import io.micronaut.data.model.query.builder.QueryBuilder2;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
-import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder2;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.model.criteria.impl.SourceParameterExpressionImpl;
@@ -122,7 +122,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
     private ClassElement currentClass;
     private ClassElement currentRepository;
-    private QueryBuilder2 queryEncoder;
+    private QueryBuilder queryEncoder;
     private final List<MethodMatcher> methodsMatchers;
     private boolean failing = false;
     private final Set<String> visitedRepositories = new HashSet<>();
@@ -294,7 +294,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
      * @param annotationMetadata The annotation metadata.
      * @return The query builder
      */
-    private static @NonNull QueryBuilder2 newQueryBuilder(@NonNull AnnotationMetadata annotationMetadata) {
+    private static @NonNull QueryBuilder newQueryBuilder(@NonNull AnnotationMetadata annotationMetadata) {
         return annotationMetadata.stringValue(
                 RepositoryConfiguration.class,
                 DataMethod.META_MEMBER_QUERY_BUILDER
@@ -304,15 +304,15 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     try {
                         Argument<?>[] constructorArguments = introspection.getConstructorArguments();
                         if (constructorArguments.length == 0) {
-                            return (QueryBuilder2) introspection.instantiate();
+                            return (QueryBuilder) introspection.instantiate();
                         } else if (constructorArguments.length == 1 && constructorArguments[0].getType() == AnnotationMetadata.class) {
-                            return (QueryBuilder2) introspection.instantiate(annotationMetadata);
+                            return (QueryBuilder) introspection.instantiate(annotationMetadata);
                         }
                     } catch (InstantiationException e) {
-                        return new JpaQueryBuilder2();
+                        return new JpaQueryBuilder();
                     }
-                    return new JpaQueryBuilder2();
-                })).orElse(new JpaQueryBuilder2());
+                    return new JpaQueryBuilder();
+                })).orElse(new JpaQueryBuilder());
     }
 
     @Override
@@ -435,7 +435,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     }
 
     private void processMethodInfo(MethodMatchContext methodMatchContext, MethodMatchInfo methodInfo) {
-        QueryBuilder2 queryEncoder = methodMatchContext.getQueryBuilder();
+        QueryBuilder queryEncoder = methodMatchContext.getQueryBuilder();
         MethodElement method = methodMatchContext.getMethodElement();
 
         // populate parameter roles
@@ -819,8 +819,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             .bind(bindingContext);
     }
 
-    private String addRawQueryParameterPlaceholders(QueryBuilder2 queryEncoder, String query, List<String> queryParts) {
-        if (queryEncoder instanceof SqlQueryBuilder2 sqlQueryBuilder) {
+    private String addRawQueryParameterPlaceholders(QueryBuilder queryEncoder, String query, List<String> queryParts) {
+        if (queryEncoder instanceof SqlQueryBuilder sqlQueryBuilder) {
             Iterator<String> iterator = queryParts.iterator();
             String first = iterator.next();
             if (queryParts.size() < 2) {

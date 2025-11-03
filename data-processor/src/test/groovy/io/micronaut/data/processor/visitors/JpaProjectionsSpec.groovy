@@ -26,7 +26,7 @@ import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.entities.PersonProjection
-import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder2
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
@@ -39,7 +39,7 @@ import jakarta.persistence.Entity
 
 class JpaProjectionsSpec extends AbstractTypeElementSpec {
 
-    @Shared String alias = new JpaQueryBuilder2().getAliasName(PersistentEntity.of(Person))
+    @Shared String alias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Person))
 
     @Unroll
     void "test JPA single result projection finder for method #method"() {

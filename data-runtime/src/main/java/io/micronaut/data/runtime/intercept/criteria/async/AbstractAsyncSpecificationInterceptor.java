@@ -23,7 +23,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.query.builder.QueryBuilder2;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.async.AsyncCriteriaCapableRepository;
@@ -79,7 +79,7 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
         if (asyncCriteriaOperations != null) {
             return asyncCriteriaOperations;
         }
-        QueryBuilder2 sqlQueryBuilder = getQueryBuilder(methodKey, context);
+        QueryBuilder sqlQueryBuilder = getQueryBuilder(methodKey, context);
         return new PreparedQueryAsyncCriteriaRepositoryOperations(
             criteriaBuilder,
             asyncOperations,

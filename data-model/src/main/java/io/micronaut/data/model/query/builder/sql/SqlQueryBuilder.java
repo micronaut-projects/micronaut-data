@@ -88,7 +88,7 @@ import static io.micronaut.data.annotation.GeneratedValue.Type.UUID;
  */
 @Internal
 @SuppressWarnings("FileLength")
-public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
+public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     /**
      * The start of an IN expression.
@@ -105,7 +105,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
     private static final String DIALECT_ATTR = "dialect";
     private static final String REFERENCED_COLUMN_NAME = "referencedColumnName";
 
-    private static final Logger LOG = LoggerFactory.getLogger(SqlQueryBuilder2.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SqlQueryBuilder.class);
 
     private final Dialect dialect;
     private final Map<Dialect, DialectConfig> perDialectConfig = new EnumMap<>(Dialect.class);
@@ -116,7 +116,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
      * @param annotationMetadata The annotation metadata
      */
     @Creator
-    public SqlQueryBuilder2(AnnotationMetadata annotationMetadata) {
+    public SqlQueryBuilder(AnnotationMetadata annotationMetadata) {
         if (annotationMetadata != null) {
             this.dialect = annotationMetadata
                 .enumValue(JDBC_REPO_ANNOTATION, DIALECT_ATTR, Dialect.class)
@@ -154,14 +154,14 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
     /**
      * Default constructor.
      */
-    public SqlQueryBuilder2() {
+    public SqlQueryBuilder() {
         this.dialect = Dialect.ANSI;
     }
 
     /**
      * @param dialect The dialect
      */
-    public SqlQueryBuilder2(Dialect dialect) {
+    public SqlQueryBuilder(Dialect dialect) {
         ArgumentUtils.requireNonNull(DIALECT_ATTR, dialect);
         this.dialect = dialect;
     }
@@ -1419,7 +1419,7 @@ public class SqlQueryBuilder2 extends AbstractSqlLikeQueryBuilder2 {
         String positionalNameFormatter;
     }
 
-    protected class SqlSelectionVisitor extends AbstractSqlLikeQueryBuilder2.SqlSelectionVisitor {
+    protected class SqlSelectionVisitor extends AbstractSqlLikeQueryBuilder.SqlSelectionVisitor {
 
         public SqlSelectionVisitor(QueryState queryState, AnnotationMetadata annotationMetadata, boolean distinct) {
             super(queryState, annotationMetadata, distinct);

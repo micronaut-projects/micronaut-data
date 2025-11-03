@@ -20,7 +20,7 @@ import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.SqlQueryConfiguration;
 import io.micronaut.data.r2dbc.operations.R2dbcRepositoryOperations;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
@@ -34,7 +34,7 @@ import java.lang.annotation.*;
  * @since 1.0.0
  */
 @RepositoryConfiguration(
-    queryBuilder = SqlQueryBuilder2.class,
+    queryBuilder = SqlQueryBuilder.class,
     operations = R2dbcRepositoryOperations.class,
     implicitQueries = false,
     namedParameters = false,

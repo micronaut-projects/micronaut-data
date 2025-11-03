@@ -26,7 +26,7 @@ import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
-import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder2
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.ExecutableMethod
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
@@ -40,7 +40,7 @@ import javax.annotation.processing.SupportedAnnotationTypes
 import static io.micronaut.data.processor.visitors.TestUtils.getQueryParameterNames
 
 class RepositoryTypeElementVisitorSpec extends AbstractTypeElementSpec {
-    @Shared String personAlias = new JpaQueryBuilder2().getAliasName(PersistentEntity.of(Person))
+    @Shared String personAlias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Person))
 
     @Unroll
     void "test JPA find one by dynamic finder #method"() {

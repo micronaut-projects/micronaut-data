@@ -58,7 +58,7 @@
 //}
 //
 //@RepositoryConfiguration(
-//        queryBuilder = SqlQueryBuilder2.class
+//        queryBuilder = SqlQueryBuilder.class
 //)
 //@SqlQueryConfiguration(
 //    @SqlQueryConfiguration.DialectConfiguration(
@@ -104,7 +104,7 @@
 //}
 //
 //@RepositoryConfiguration(
-//        queryBuilder = SqlQueryBuilder2.class
+//        queryBuilder = SqlQueryBuilder.class
 //)
 //@SqlQueryConfiguration(
 //    @SqlQueryConfiguration.DialectConfiguration(
@@ -188,7 +188,7 @@
 //}
 //
 //@RepositoryConfiguration(
-//        queryBuilder = SqlQueryBuilder2.class
+//        queryBuilder = SqlQueryBuilder.class
 //)
 //@SqlQueryConfiguration(
 //    @SqlQueryConfiguration.DialectConfiguration(

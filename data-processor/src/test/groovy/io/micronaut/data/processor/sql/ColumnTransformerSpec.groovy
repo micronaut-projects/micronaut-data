@@ -17,7 +17,7 @@ package io.micronaut.data.processor.sql
 
 
 import io.micronaut.data.annotation.DataTransformer
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
 import io.micronaut.data.tck.jdbc.entities.Project
@@ -30,7 +30,7 @@ class ColumnTransformerSpec extends AbstractDataSpec {
     @Shared
     def builder = new RuntimeCriteriaBuilder()
     @Shared
-    def queryBuilder = new SqlQueryBuilder2()
+    def queryBuilder = new SqlQueryBuilder()
 
     @Requires({ javaVersion <= 1.8 })
     void "test mapping"() {
@@ -65,7 +65,7 @@ class Project {
     void "test build insert with column writer"() {
         given:
         def builder = new RuntimeCriteriaBuilder()
-        def sql = builder.createCriteriaInsert(Project).build(new SqlQueryBuilder2()).query
+        def sql = builder.createCriteriaInsert(Project).build(new SqlQueryBuilder()).query
 
         expect:
         sql == 'INSERT INTO "project" ("name","db_name","org","project_id_department_id","project_id_project_id") VALUES (UPPER(?),?,?,?,?)'

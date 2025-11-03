@@ -19,7 +19,7 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.query.builder.QueryBuilder2;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.operations.CriteriaRepositoryOperations;
 import io.micronaut.data.operations.RepositoryOperations;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -45,7 +45,7 @@ final class PreparedQueryCriteriaRepositoryOperations extends AbstractPreparedQu
     public PreparedQueryCriteriaRepositoryOperations(CriteriaBuilder criteriaBuilder,
                                                      RepositoryOperations operations,
                                                      MethodInvocationContext<?, ?> context,
-                                                     QueryBuilder2 queryBuilder,
+                                                     QueryBuilder queryBuilder,
                                                      Class<?> entityRoot,
                                                      Pageable pageable) {
         super(operations, context, queryBuilder, entityRoot, pageable);

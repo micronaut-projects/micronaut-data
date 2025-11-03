@@ -35,7 +35,7 @@ import io.micronaut.data.jdbc.operations.JdbcSchemaHandler;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.IdentifierNamingStrategy;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils;
 import io.micronaut.data.model.query.builder.sql.validation.SqlTableMappingValidator;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
@@ -183,7 +183,7 @@ public class SchemaGenerator {
                                  PropertyPlaceholderResolver propertyPlaceholderResolver,
                                  PersistentEntity[] entities) throws SQLException {
         Dialect dialect = configuration.getDialect();
-        SqlQueryBuilder2 builder = new SqlQueryBuilder2(dialect);
+        SqlQueryBuilder builder = new SqlQueryBuilder(dialect);
         if (dialect.allowBatch() && configuration.isBatchGenerate()) {
             switch (configuration.getSchemaGenerate()) {
                 case CREATE_DROP:

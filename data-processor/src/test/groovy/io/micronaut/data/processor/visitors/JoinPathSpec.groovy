@@ -17,7 +17,7 @@ package io.micronaut.data.processor.visitors
 
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.model.PersistentEntity
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.tck.entities.City
 import spock.lang.Issue
 import spock.lang.Unroll
@@ -330,7 +330,7 @@ interface MyInterface extends GenericRepository<City, Long> {
     }
 
     private String columns(Class t, String alias) {
-        def builder = new SqlQueryBuilder2()
+        def builder = new SqlQueryBuilder()
         StringBuilder columns = new StringBuilder()
         builder.selectAllColumns(PersistentEntity.of(t), alias, columns)
         columns.toString()

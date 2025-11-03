@@ -18,7 +18,7 @@ package io.micronaut.data.runtime.intercept.criteria.reactive;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.query.builder.QueryBuilder2;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveCriteriaRepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
@@ -45,7 +45,7 @@ final class PreparedQueryReactiveCriteriaRepositoryOperations extends AbstractPr
                                                              ReactiveRepositoryOperations reactiveRepositoryOperations,
                                                              RepositoryOperations operations,
                                                              MethodInvocationContext<?, ?> context,
-                                                             QueryBuilder2 queryBuilder,
+                                                             QueryBuilder queryBuilder,
                                                              Class<?> entityRoot,
                                                              Pageable pageable) {
         super(operations, context, queryBuilder, entityRoot, pageable);

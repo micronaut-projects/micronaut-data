@@ -20,7 +20,7 @@ import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.data.model.jpa.criteria.*
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import jakarta.persistence.criteria.*
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -522,7 +522,7 @@ abstract class AbstractCriteriaSpec extends Specification {
     }
 
     protected String getSqlQuery(def query, Dialect dialect) {
-        return ((QueryResultPersistentEntityCriteriaQuery) query).build(AnnotationMetadata.EMPTY_METADATA, new SqlQueryBuilder2(dialect)).getQuery()
+        return ((QueryResultPersistentEntityCriteriaQuery) query).build(AnnotationMetadata.EMPTY_METADATA, new SqlQueryBuilder(dialect)).getQuery()
     }
 
     @CompileStatic

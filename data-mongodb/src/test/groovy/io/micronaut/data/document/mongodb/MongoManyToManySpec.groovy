@@ -10,7 +10,7 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
-import io.micronaut.data.document.model.query.builder.MongoQueryBuilder2
+import io.micronaut.data.document.model.query.builder.MongoQueryBuilder
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.mongodb.annotation.MongoRepository
 import io.micronaut.data.repository.CrudRepository
@@ -107,7 +107,7 @@ class MongoManyToManySpec extends Specification implements MongoTestPropertyProv
             def root = query.from(getRuntimePersistentEntity(Student))
             root.join("courses", Join.Type.FETCH)
             query.where(builder.equal(root.get("id"), builder.parameter(String)))
-            def q = query.build(AnnotationMetadata.EMPTY_METADATA, new MongoQueryBuilder2())
+            def q = query.build(AnnotationMetadata.EMPTY_METADATA, new MongoQueryBuilder())
         then:
             q.query == '''[{$lookup:{from:'student_course',localField:'_id',foreignField:'m2m_student',pipeline:[{$lookup:{from:'m2m_course',localField:'m2m_course',foreignField:'_id',as:'m2m_course'}},{$unwind:{path:'$m2m_course',preserveNullAndEmptyArrays:true}},{$replaceRoot:{newRoot:'$m2m_course'}}],as:'courses'}},{$match:{_id:{$eq:{$mn_qp:0}}}}]'''
     }
@@ -119,7 +119,7 @@ class MongoManyToManySpec extends Specification implements MongoTestPropertyProv
             def root = query.from(getRuntimePersistentEntity(Student))
             query.where(builder.equal(root.get("id"), builder.parameter(String)))
             root.join("ratings", Join.Type.FETCH)
-            def q = query.build(AnnotationMetadata.EMPTY_METADATA, new MongoQueryBuilder2())
+            def q = query.build(AnnotationMetadata.EMPTY_METADATA, new MongoQueryBuilder())
         then:
             q.query == '''[{$lookup:{from:'m2m_course_rating',localField:'_id',foreignField:'student._id',as:'ratings'}},{$match:{_id:{$eq:{$mn_qp:0}}}}]'''
     }

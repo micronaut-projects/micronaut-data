@@ -35,7 +35,7 @@ import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.JoinPath;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.DefaultStoredDataOperation;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.StoredQuery;
@@ -152,7 +152,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
         this.hasResultConsumer = method.stringValue(DATA_METHOD_ANN_NAME, "sqlMappingFunction").isPresent();
         boolean isNumericPlaceHolder = method
                 .classValue(RepositoryConfiguration.class, "queryBuilder")
-                .map(c -> c == SqlQueryBuilder2.class).orElse(false);
+                .map(c -> c == SqlQueryBuilder.class).orElse(false);
         this.hasPageable = dataMethodQuery.stringValue(TypeRole.PAGEABLE).isPresent() ||
             dataMethodQuery.stringValue(TypeRole.SORT).isPresent() ||
             dataMethodQuery.intValue(META_MEMBER_LIMIT).orElse(-1) > -1 ||

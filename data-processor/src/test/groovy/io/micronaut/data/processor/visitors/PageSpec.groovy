@@ -25,7 +25,7 @@ import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
-import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder2
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.inject.BeanDefinition
@@ -93,7 +93,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
 }
 """)
 
-        def alias = new JpaQueryBuilder2().getAliasName(PersistentEntity.of(Person))
+        def alias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Person))
 
         when: "the list method is retrieved"
         def listMethod = beanDefinition.getRequiredMethod("list", Pageable)
@@ -126,7 +126,7 @@ interface MyInterface extends GenericRepository<Book, Long> {
 }
 """)
 
-        def alias = new JpaQueryBuilder2().getAliasName(PersistentEntity.of(Book))
+        def alias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Book))
 
         when: "the list method is retrieved"
         def findMethod = beanDefinition.getRequiredMethod("findAll", Pageable)
@@ -165,7 +165,7 @@ interface MyInterface extends GenericRepository<Book, Long> {
 }
 """)
 
-        def alias = new JpaQueryBuilder2().getAliasName(PersistentEntity.of(Book))
+        def alias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Book))
 
         when: "the list method is retrieved"
         def findMethod = beanDefinition.getRequiredMethod("findAll", Pageable)
@@ -206,7 +206,7 @@ interface MyInterface extends GenericRepository<Author, Long> {
 }
 """)
 
-        def alias = new JpaQueryBuilder2().getAliasName(PersistentEntity.of(Author))
+        def alias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Author))
 
         when: "the list method is retrieved"
         def findMethod = beanDefinition.getRequiredMethod("findAll", Pageable)
@@ -285,7 +285,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
 }
 """)
 
-        def alias = new JpaQueryBuilder2().getAliasName(PersistentEntity.of(Person))
+        def alias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Person))
 
         when: "the list method is retrieved"
         def listMethod = beanDefinition.getRequiredMethod("list", Pageable)

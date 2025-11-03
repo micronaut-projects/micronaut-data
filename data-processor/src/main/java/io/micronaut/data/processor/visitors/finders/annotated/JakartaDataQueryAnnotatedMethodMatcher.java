@@ -25,7 +25,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityQuery;
-import io.micronaut.data.model.query.builder.QueryBuilder2;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.processor.jdql.JDQLCriteriaBuilderUtils;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -115,7 +115,7 @@ public final class JakartaDataQueryAnnotatedMethodMatcher implements MethodMatch
                     matchContext.getRepositoryClass().getAnnotationMetadata(),
                     matchContext.getAnnotationMetadata()
                 );
-                QueryBuilder2 queryBuilder = matchContext.getQueryBuilder();
+                QueryBuilder queryBuilder = matchContext.getQueryBuilder();
 
                 QueryResult queryResult = criteriaQuery.build(annotationMetadataHierarchy, queryBuilder);
 
@@ -152,7 +152,7 @@ public final class JakartaDataQueryAnnotatedMethodMatcher implements MethodMatch
                     matchContext.getAnnotationMetadata()
                 );
 
-                QueryBuilder2 queryBuilder = matchContext.getQueryBuilder();
+                QueryBuilder queryBuilder = matchContext.getQueryBuilder();
                 QueryResult queryResult = criteriaQuery.build(annotationMetadataHierarchy, queryBuilder);
 
                 return new MethodMatchInfo(
@@ -187,7 +187,7 @@ public final class JakartaDataQueryAnnotatedMethodMatcher implements MethodMatch
                     matchContext.getAnnotationMetadata()
                 );
 
-                QueryBuilder2 queryBuilder = matchContext.getQueryBuilder();
+                QueryBuilder queryBuilder = matchContext.getQueryBuilder();
 
                 if (matchContext.hasParameterInRole(TypeRole.PAGEABLE)) {
                     Element pageableParameter = matchContext.findParameterInRole(TypeRole.PAGEABLE);

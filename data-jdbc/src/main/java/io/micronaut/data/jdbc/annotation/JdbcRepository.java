@@ -22,7 +22,7 @@ import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.jdbc.mapper.SqlResultConsumer;
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
 import java.lang.annotation.*;
 
@@ -34,7 +34,7 @@ import java.lang.annotation.*;
  * @since 1.0.0
  */
 @RepositoryConfiguration(
-    queryBuilder = SqlQueryBuilder2.class,
+    queryBuilder = SqlQueryBuilder.class,
     operations = JdbcRepositoryOperations.class,
     implicitQueries = false,
     namedParameters = false,

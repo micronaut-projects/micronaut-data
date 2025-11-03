@@ -34,7 +34,7 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.jpa.criteria.impl.util.Joiner;
 import io.micronaut.data.model.query.JoinPath;
-import io.micronaut.data.model.query.builder.QueryBuilder2;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.AbstractQuery;
@@ -106,14 +106,14 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
     protected abstract Self self();
 
     @Override
-    public QueryResult build(AnnotationMetadata annotationMetadata, QueryBuilder2 queryBuilder) {
+    public QueryResult build(AnnotationMetadata annotationMetadata, QueryBuilder queryBuilder) {
         return queryBuilder.buildSelect(annotationMetadata, toSelectQueryDefinition());
     }
 
     /**
-     * @return Build {@link io.micronaut.data.model.query.builder.QueryBuilder2.SelectQueryDefinition}.
+     * @return Build {@link QueryBuilder.SelectQueryDefinition}.
      */
-    public QueryBuilder2.SelectQueryDefinition toSelectQueryDefinition() {
+    public QueryBuilder.SelectQueryDefinition toSelectQueryDefinition() {
         PersistentEntityRoot<?> root = entityRoot;
         if (root == null) {
             Class<T> resultType = this.resultType.getJavaType();
@@ -392,7 +392,7 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
     }
 
     @Internal
-    private static final class SelectQueryDefinitionImpl extends BaseQueryDefinitionImpl implements QueryBuilder2.SelectQueryDefinition {
+    private static final class SelectQueryDefinitionImpl extends BaseQueryDefinitionImpl implements QueryBuilder.SelectQueryDefinition {
 
         private final Root<?> root;
         private final Selection<?> selection;
@@ -467,7 +467,7 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
     }
 
     @Internal
-    abstract static class BaseQueryDefinitionImpl implements QueryBuilder2.BaseQueryDefinition {
+    abstract static class BaseQueryDefinitionImpl implements QueryBuilder.BaseQueryDefinition {
 
         private final PersistentEntity persistentEntity;
         private final Predicate predicate;

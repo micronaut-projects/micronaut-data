@@ -8,9 +8,9 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.h2.H2DBProperties
 import io.micronaut.data.jdbc.h2.H2TestPropertyProvider
 import io.micronaut.data.model.naming.NamingStrategies
-import io.micronaut.data.model.query.builder.QueryBuilder2
+import io.micronaut.data.model.query.builder.QueryBuilder
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
@@ -61,7 +61,7 @@ class CustomEmbeddedNameMapping extends Specification implements H2TestPropertyP
 
     void "test build create"() {
         when:
-            QueryBuilder2 encoder = new SqlQueryBuilder2()
+            QueryBuilder encoder = new SqlQueryBuilder()
             def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(MyBook))
 
         then:
@@ -71,7 +71,7 @@ class CustomEmbeddedNameMapping extends Specification implements H2TestPropertyP
     void "test build insert"() {
         when:
             RuntimeCriteriaBuilder builder = new RuntimeCriteriaBuilder()
-            def res = builder.createCriteriaInsert(MyBook).build(new SqlQueryBuilder2())
+            def res = builder.createCriteriaInsert(MyBook).build(new SqlQueryBuilder())
 
         then:
             res.query == 'INSERT INTO "MyBook" ("authorFirstName","authorLastName","authorDetailsIncludedNumberAge","id") VALUES (?,?,?,?)'
@@ -86,7 +86,7 @@ class CustomEmbeddedNameMapping extends Specification implements H2TestPropertyP
             query.set('author.lastName', builder.parameter(Object))
             query.set('author.detailsIncluded.numberAge', builder.parameter(Object))
             query.where(builder.equal(query.root.id(), builder.parameter(Object)))
-            def res = query.build(new SqlQueryBuilder2())
+            def res = query.build(new SqlQueryBuilder())
 
         then:
             res.query == 'UPDATE "MyBook" SET "id"=?,"authorFirstName"=?,"authorLastName"=?,"authorDetailsIncludedNumberAge"=? WHERE ("id" = ?)'
@@ -105,7 +105,7 @@ class CustomEmbeddedNameMapping extends Specification implements H2TestPropertyP
             def query = builder.createQuery(MyBook)
             def root = query.from(MyBook)
             query.where(builder.equal(root.id(), builder.parameter(Object)))
-            def q = query.build(new SqlQueryBuilder2())
+            def q = query.build(new SqlQueryBuilder())
         then:
             q.query == 'SELECT my_book_."id",my_book_."authorFirstName",my_book_."authorLastName",my_book_."authorDetailsIncludedNumberAge" FROM "MyBook" my_book_ WHERE (my_book_."id" = ?)'
     }

@@ -19,7 +19,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.data.annotation.RepositoryConfiguration;
-import io.micronaut.data.model.query.builder.QueryBuilder2;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
@@ -47,7 +47,7 @@ public class MatchContext implements AnnotationMetadataProvider {
     @NonNull
     protected final ParameterElement[] parameters;
     private final ClassElement repositoryClass;
-    private final QueryBuilder2 queryBuilder;
+    private final QueryBuilder queryBuilder;
     private final List<String> possibleFailures = new ArrayList<>();
     private final Map<ClassElement, FindInterceptorDef> findInterceptors;
 
@@ -64,7 +64,7 @@ public class MatchContext implements AnnotationMetadataProvider {
      * @param findInterceptors The find interceptors
      */
     MatchContext(
-        @NonNull QueryBuilder2 queryBuilder,
+        @NonNull QueryBuilder queryBuilder,
         @NonNull ClassElement repositoryClass,
         @NonNull VisitorContext visitorContext,
         @NonNull MethodElement methodElement,
@@ -85,7 +85,7 @@ public class MatchContext implements AnnotationMetadataProvider {
     /**
      * @return The active query builder
      */
-    public QueryBuilder2 getQueryBuilder() {
+    public QueryBuilder getQueryBuilder() {
         return queryBuilder;
     }
 

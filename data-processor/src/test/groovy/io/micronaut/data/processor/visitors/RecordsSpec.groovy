@@ -16,7 +16,7 @@ import io.micronaut.data.intercept.reactive.UpdateReactiveInterceptor
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import spock.lang.IgnoreIf
 import spock.lang.Unroll
 
@@ -30,7 +30,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.*;
 record Person(@Id @GeneratedValue @Nullable Long id, String name, int age) {}
 ''')
-        SqlQueryBuilder2 builder = new SqlQueryBuilder2(Dialect.ANSI)
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ANSI)
         def sql = builder.buildBatchCreateTableStatement(entity)
 
         expect:

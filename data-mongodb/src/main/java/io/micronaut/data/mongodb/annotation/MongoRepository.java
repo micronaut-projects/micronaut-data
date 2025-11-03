@@ -19,7 +19,7 @@ import io.micronaut.context.annotation.AliasFor;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.document.annotation.DocumentProcessorRequired;
-import io.micronaut.data.document.model.query.builder.MongoQueryBuilder2;
+import io.micronaut.data.document.model.query.builder.MongoQueryBuilder;
 import io.micronaut.data.mongodb.operations.MongoRepositoryOperations;
 import org.bson.BsonDocument;
 
@@ -36,7 +36,7 @@ import java.lang.annotation.Target;
  * @since 3.3.0
  */
 @RepositoryConfiguration(
-        queryBuilder = MongoQueryBuilder2.class,
+        queryBuilder = MongoQueryBuilder.class,
         operations = MongoRepositoryOperations.class,
         implicitQueries = true,
         namedParameters = false,

@@ -59,7 +59,7 @@ import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.JoinPath;
-import io.micronaut.data.model.query.builder.QueryBuilder2;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.impl.AdvancedPredicateVisitor;
@@ -103,9 +103,9 @@ import static java.util.Arrays.asList;
  * @author Denis Stepanov
  * @since 3.3
  */
-@TypeHint(MongoQueryBuilder2.class)
+@TypeHint(MongoQueryBuilder.class)
 @Internal
-public final class MongoQueryBuilder2 implements QueryBuilder2 {
+public final class MongoQueryBuilder implements QueryBuilder {
 
     /**
      * An object with this property is replaced with an actual query parameter at the runtime.

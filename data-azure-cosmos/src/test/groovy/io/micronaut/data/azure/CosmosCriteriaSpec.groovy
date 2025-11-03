@@ -21,11 +21,11 @@ import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.core.annotation.NonNull
 import io.micronaut.data.azure.entities.CosmosBook
 import io.micronaut.data.azure.entities.Family
-import io.micronaut.data.document.model.query.builder.CosmosSqlQueryBuilder2
+import io.micronaut.data.document.model.query.builder.CosmosSqlQueryBuilder
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot
-import io.micronaut.data.model.query.builder.QueryBuilder2
+import io.micronaut.data.model.query.builder.QueryBuilder
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
 import jakarta.persistence.criteria.CriteriaBuilder
@@ -45,7 +45,7 @@ class CosmosCriteriaSpec extends AbstractTypeElementSpec {
 
     PersistentEntityCriteriaQuery criteriaQuery
 
-    static QueryBuilder2 queryBuilder
+    static QueryBuilder queryBuilder
 
     void setupSpec() {
         def annotationMetadata = buildTypeAnnotationMetadata('''
@@ -56,7 +56,7 @@ import io.micronaut.data.cosmos.annotation.CosmosRepository;
 interface MyRepository {
 }
 ''')
-        queryBuilder = new CosmosSqlQueryBuilder2(annotationMetadata)
+        queryBuilder = new CosmosSqlQueryBuilder(annotationMetadata)
     }
 
     void setup() {

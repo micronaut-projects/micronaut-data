@@ -17,7 +17,7 @@ package io.micronaut.data.processor.sql
 
 
 import io.micronaut.data.model.DataType
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.processor.model.SourcePersistentEntity
 import io.micronaut.data.processor.model.criteria.impl.SourcePersistentEntityCriteriaBuilderImpl
 import io.micronaut.data.processor.visitors.AbstractDataSpec
@@ -41,9 +41,9 @@ class CompositePrimaryKeySpec extends AbstractDataSpec {
     void "test compile repository 2"() {
         given:
         def repository = buildRepository('test.CompanyRepository', """
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 @Repository
-@RepositoryConfiguration(queryBuilder=SqlQueryBuilder2.class, implicitQueries = false, namedParameters = false)
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false, namedParameters = false)
 @io.micronaut.context.annotation.Executable
 interface CompanyRepository extends io.micronaut.data.tck.repositories.CompanyRepository {
 }
@@ -62,12 +62,12 @@ interface CompanyRepository extends io.micronaut.data.tck.repositories.CompanyRe
 import jakarta.persistence.Entity;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Column;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.context.annotation.Parameter;
 ${TestEntities.compositePrimaryKeyEntities()}
 
 @Repository
-@RepositoryConfiguration(queryBuilder=SqlQueryBuilder2.class, implicitQueries = false, namedParameters = false)
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false, namedParameters = false)
 @io.micronaut.context.annotation.Executable
 interface ProjectRepository extends CrudRepository<Project, ProjectId>{
     void update(@Id ProjectId id, @Parameter("name") String name);
@@ -104,12 +104,12 @@ interface ProjectRepository extends CrudRepository<Project, ProjectId>{
 import jakarta.persistence.Entity;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Column;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.context.annotation.Parameter;
 ${TestEntities.compositeRelationPrimaryKeyEntities()}
 
 @Repository
-@RepositoryConfiguration(queryBuilder=SqlQueryBuilder2.class, implicitQueries = false, namedParameters = false)
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false, namedParameters = false)
 @io.micronaut.context.annotation.Executable
 interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
 
@@ -156,12 +156,12 @@ interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
 import jakarta.persistence.Entity;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Column;
-import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder2;
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
 import io.micronaut.data.tck.entities.*;
 import io.micronaut.data.repository.CrudRepository;
 
 @Repository
-@RepositoryConfiguration(queryBuilder=JpaQueryBuilder2.class, implicitQueries = true, namedParameters = true)
+@RepositoryConfiguration(queryBuilder=JpaQueryBuilder.class, implicitQueries = true, namedParameters = true)
 @io.micronaut.context.annotation.Executable
 interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, EntityIdClass> {
     List<EntityWithIdClass> findById1(Long id1);
@@ -204,7 +204,7 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
         given:
         def entity = buildJpaEntity('test.Project', TestEntities.compositePrimaryKeyEntities())
         when:
-        SqlQueryBuilder2 builder = new SqlQueryBuilder2()
+        SqlQueryBuilder builder = new SqlQueryBuilder()
         def sql = builder.buildBatchCreateTableStatement(entity)
 
         then:
@@ -217,7 +217,7 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
         when:
         def builder = new SourcePersistentEntityCriteriaBuilderImpl(null)
         def query = builder.createCriteriaInsert(entity)
-        def sql = query.build(new SqlQueryBuilder2()).query
+        def sql = query.build(new SqlQueryBuilder()).query
 
         then:
         sql == 'INSERT INTO "project" ("name","department_id") VALUES (?,?)'
@@ -231,7 +231,7 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
         def root = query.from(entity)
 
         when:
-        def sql = query.where(builder.equal(root.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder2()).query
+        def sql = query.where(builder.equal(root.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder()).query
 
         then:
         sql == 'SELECT project_."department_id",project_."project_id_project_id",project_."name" FROM "project" project_ WHERE (project_."department_id" = ? AND project_."project_id_project_id" = ?)'
@@ -245,7 +245,7 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
         when:
         def query1 = builder.createQuery()
         def root1 = query1.from(entity)
-        def sql1 = query1.select(root1.get(entity.identity.name)).where(builder.equal(root1.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder2()).query
+        def sql1 = query1.select(root1.get(entity.identity.name)).where(builder.equal(root1.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder()).query
 
         then:
         sql1.startsWith('SELECT project_."department_id",project_."project_id_project_id"')
@@ -253,7 +253,7 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
         when:"an id project ins used"
         def query2 = builder.createQuery()
         def root2 = query2.from(entity)
-        def sql2 = query2.select(root2.get(entity.identity.name)).where(builder.equal(root2.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder2()).query
+        def sql2 = query2.select(root2.get(entity.identity.name)).where(builder.equal(root2.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder()).query
 
         then:
         sql2.startsWith('SELECT project_."department_id",project_."project_id_project_id"')

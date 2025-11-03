@@ -21,7 +21,7 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaInsert;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
-import io.micronaut.data.model.query.builder.QueryBuilder2;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import jakarta.persistence.criteria.ParameterExpression;
 
@@ -46,7 +46,7 @@ public abstract class AbstractPersistentEntityCriteriaInsert<T> implements Persi
     }
 
     @Override
-    public QueryResult build(AnnotationMetadata annotationMetadata, QueryBuilder2 queryBuilder) {
+    public QueryResult build(AnnotationMetadata annotationMetadata, QueryBuilder queryBuilder) {
         return queryBuilder.buildInsert(
             annotationMetadata,
             new InsertQueryDefinitionImpl(entityRoot.getPersistentEntity(), returning)
@@ -68,6 +68,6 @@ public abstract class AbstractPersistentEntityCriteriaInsert<T> implements Persi
         return Set.of();
     }
 
-    private record InsertQueryDefinitionImpl(PersistentEntity persistentEntity, boolean returning) implements QueryBuilder2.InsertQueryDefinition {
+    private record InsertQueryDefinitionImpl(PersistentEntity persistentEntity, boolean returning) implements QueryBuilder.InsertQueryDefinition {
     }
 }

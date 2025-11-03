@@ -24,7 +24,7 @@ import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Company
 import io.micronaut.data.model.entities.Person
-import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder2
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
@@ -67,8 +67,8 @@ interface MyInterface extends GenericRepository<Person, Long> {
     List<Person> findByCompanyUrlOrderByCompanyUrl(URL url);
 }
 """)
-        def alias = new JpaQueryBuilder2().getAliasName(PersistentEntity.of(Person))
-        def companyAlias = new JpaQueryBuilder2().getAliasName(PersistentEntity.of(Company))
+        def alias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Person))
+        def companyAlias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Company))
 
         when: "the query method is retrieved"
         def findOne = beanDefinition.getRequiredMethod("queryByNameOrderByName", String.class)

@@ -25,9 +25,9 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaUpdate;
-import io.micronaut.data.model.query.builder.QueryBuilder2;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
@@ -270,7 +270,7 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             if (!dtoProjectionProperties.isEmpty()) {
                 List<Selection<?>> selectionList = dtoProjectionProperties.stream()
                     .map(p -> {
-                        if (matchContext.getQueryBuilder() instanceof SqlQueryBuilder2) {
+                        if (matchContext.getQueryBuilder() instanceof SqlQueryBuilder) {
                             return root.get(p.getName()).alias(p.getName());
                         } else {
                             return root.get(p.getName());
@@ -291,7 +291,7 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             matchContext.getRepositoryClass().getAnnotationMetadata(),
             matchContext.getAnnotationMetadata()
         );
-        QueryBuilder2 queryBuilder = matchContext.getQueryBuilder();
+        QueryBuilder queryBuilder = matchContext.getQueryBuilder();
 
         QueryResult queryResult = criteriaQuery.build(annotationMetadataHierarchy, queryBuilder);
 

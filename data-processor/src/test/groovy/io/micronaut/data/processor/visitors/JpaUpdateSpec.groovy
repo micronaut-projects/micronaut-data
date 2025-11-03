@@ -23,7 +23,7 @@ import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Company
 import io.micronaut.data.model.entities.Person
-import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder2
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
@@ -58,7 +58,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
     void updateByName(String nameToUpdate, String name);
 }
 """)
-        def alias = new JpaQueryBuilder2().getAliasName(PersistentEntity.of(Person))
+        def alias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Person))
 
         when: "update method is retrieved"
         def updateMethod = beanDefinition.getRequiredMethod("update", Long, String)
@@ -109,7 +109,7 @@ interface MyInterface extends GenericRepository<Company, Long> {
 }
 """)
 
-        def alias = new JpaQueryBuilder2().getAliasName(PersistentEntity.of(Company))
+        def alias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Company))
 
         when: "update method is retrieved"
         def updateMethod = beanDefinition.getRequiredMethod("update", Long, String)

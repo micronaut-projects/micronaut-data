@@ -33,7 +33,7 @@ import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 
@@ -55,14 +55,14 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requirePro
  * @since 3.9.0
  */
 @Internal
-public final class CosmosSqlQueryBuilder2 extends SqlQueryBuilder2 {
+public final class CosmosSqlQueryBuilder extends SqlQueryBuilder {
 
     private static final NamingStrategy RAW_NAMING_STRATEGY = new NamingStrategies.Raw();
     private static final String JOIN = " JOIN ";
     private static final String IN = " IN ";
 
     @Creator
-    public CosmosSqlQueryBuilder2(AnnotationMetadata annotationMetadata) {
+    public CosmosSqlQueryBuilder(AnnotationMetadata annotationMetadata) {
         super(annotationMetadata);
     }
 

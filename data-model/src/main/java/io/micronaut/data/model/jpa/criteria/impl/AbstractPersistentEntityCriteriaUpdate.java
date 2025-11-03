@@ -26,7 +26,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityQuery.BaseQueryDefinitionImpl;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
-import io.micronaut.data.model.query.builder.QueryBuilder2;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.ParameterExpression;
@@ -69,7 +69,7 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
     }
 
     @Override
-    public QueryResult build(AnnotationMetadata annotationMetadata, QueryBuilder2 queryBuilder) {
+    public QueryResult build(AnnotationMetadata annotationMetadata, QueryBuilder queryBuilder) {
         return queryBuilder.buildUpdate(
             annotationMetadata,
             new UpdateQueryDefinitionImpl(entityRoot.getPersistentEntity(), predicate, returning, updateValues)
@@ -200,7 +200,7 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
         return this;
     }
 
-    private static final class UpdateQueryDefinitionImpl extends BaseQueryDefinitionImpl implements QueryBuilder2.UpdateQueryDefinition {
+    private static final class UpdateQueryDefinitionImpl extends BaseQueryDefinitionImpl implements QueryBuilder.UpdateQueryDefinition {
 
         private final Map<String, Object> propertiesToUpdate;
         private final Selection<?> returningSelection;

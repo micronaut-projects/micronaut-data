@@ -20,7 +20,7 @@ import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.processor.model.SourcePersistentEntity
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.inject.BeanDefinition
@@ -71,7 +71,7 @@ class Test {
 }
 
 """)
-        SqlQueryBuilder2 builder = new SqlQueryBuilder2(dialect)
+        SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
         def entity = new SourcePersistentEntity(element, {})
         def sql = builder.buildBatchCreateTableStatement(entity)
 
@@ -185,7 +185,7 @@ class Test {
 }
 
 """)
-        SqlQueryBuilder2 builder = new SqlQueryBuilder2(dialect)
+        SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
         def entity = new SourcePersistentEntity(element, {})
         def sql = builder.buildBatchCreateTableStatement(entity)
 
@@ -261,12 +261,12 @@ class Test {
 package test;
 
 import io.micronaut.data.annotation.*;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.repository.*;
 import io.micronaut.data.model.DataType;
 
 @Repository
-@RepositoryConfiguration(queryBuilder=SqlQueryBuilder2.class, implicitQueries = false)
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false)
 @io.micronaut.context.annotation.Executable
 interface MyInterface extends CrudRepository<TableRatings, Long> {
 }
@@ -313,10 +313,10 @@ package test;
 import io.micronaut.data.model.entities.Person;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.repository.*;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
 @Repository
-@RepositoryConfiguration(queryBuilder=SqlQueryBuilder2.class, implicitQueries = false)
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false)
 @io.micronaut.context.annotation.Executable
 interface MyInterface extends CrudRepository<Person, Long> {
 }
@@ -336,14 +336,10 @@ interface MyInterface extends CrudRepository<Person, Long> {
 package test;
 
 import io.micronaut.data.annotation.*;
-import io.micronaut.data.repository.*;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
-import io.micronaut.data.tck.entities.Shelf;
-import io.micronaut.data.tck.entities.Book;
-import io.micronaut.data.tck.entities.ShelfBook;
 
 @Repository
-@RepositoryConfiguration(queryBuilder=SqlQueryBuilder2.class, implicitQueries = false)
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false)
 interface TestBookPageRepository extends io.micronaut.data.tck.repositories.BookPageRepository {
 
 }
@@ -364,11 +360,11 @@ package test;
 import io.micronaut.data.tck.entities.Food;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.repository.*;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import java.util.UUID;
 
 @Repository
-@RepositoryConfiguration(queryBuilder=SqlQueryBuilder2.class, implicitQueries = false)
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false)
 @io.micronaut.context.annotation.Executable
 interface MyInterface extends CrudRepository<Food, UUID> {
 }
@@ -390,11 +386,11 @@ import io.micronaut.data.tck.entities.Food;
 import io.micronaut.data.tck.entities.Meal;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.repository.*;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import java.util.UUID;
 
 @Repository
-@RepositoryConfiguration(queryBuilder=SqlQueryBuilder2.class, implicitQueries = false)
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false)
 @io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<Food, UUID> {
 

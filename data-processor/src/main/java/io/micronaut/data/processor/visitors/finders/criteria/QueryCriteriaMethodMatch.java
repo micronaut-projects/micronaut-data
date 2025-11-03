@@ -33,9 +33,9 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityQuery;
 import io.micronaut.data.model.query.builder.QueryResult;
-import io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder2;
+import io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaQuery;
@@ -122,9 +122,9 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
     private boolean isPageableWithJoins(SourcePersistentEntity persistentEntity, MethodMatchContext matchContext, List<AnnotationValue<Join>> joinSpecs) {
         return !joinSpecs.isEmpty()
-            && matchContext.getQueryBuilder() instanceof AbstractSqlLikeQueryBuilder2 sqlQueryBuilder
+            && matchContext.getQueryBuilder() instanceof AbstractSqlLikeQueryBuilder sqlQueryBuilder
             // MySQL doesn't support subquery with limits
-            && (!(sqlQueryBuilder instanceof SqlQueryBuilder2 queryBuilder) || queryBuilder.getDialect() != Dialect.MYSQL)
+            && (!(sqlQueryBuilder instanceof SqlQueryBuilder queryBuilder) || queryBuilder.getDialect() != Dialect.MYSQL)
             && !persistentEntity.hasCompositeIdentity()
             && !(persistentEntity.getIdentity() instanceof Embedded);
     }
@@ -422,7 +422,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                 Root<?> root = query.getRoots().iterator().next();
                 List<Selection<?>> selectionList = dtoProjectionProperties.stream()
                     .map(p -> {
-                        if (!(matchContext.getQueryBuilder() instanceof SqlQueryBuilder2)) {
+                        if (!(matchContext.getQueryBuilder() instanceof SqlQueryBuilder)) {
                             return root.get(p.getName()).alias(p.getName());
                         } else {
                             return root.get(p.getName());

@@ -16,6 +16,7 @@
 package io.micronaut.data.model.query.builder;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
@@ -44,9 +45,9 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requirePro
  * @author Denis Stepanov
  * @since 1.0
  */
-@Internal
+@Experimental
 @Introspected
-public interface QueryBuilder2 {
+public interface QueryBuilder {
 
     /**
      * Builds an insert statement for the given entity.

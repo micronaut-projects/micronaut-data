@@ -19,7 +19,7 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.query.builder.QueryBuilder2;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.async.AsyncCriteriaRepositoryOperations;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
@@ -48,7 +48,7 @@ final class PreparedQueryAsyncCriteriaRepositoryOperations extends AbstractPrepa
                                                           AsyncRepositoryOperations asyncRepositoryOperations,
                                                           RepositoryOperations operations,
                                                           MethodInvocationContext<?, ?> context,
-                                                          QueryBuilder2 queryBuilder,
+                                                          QueryBuilder queryBuilder,
                                                           Class<?> entityRoot,
                                                           Pageable pageable) {
         super(operations, context, queryBuilder, entityRoot, pageable);
