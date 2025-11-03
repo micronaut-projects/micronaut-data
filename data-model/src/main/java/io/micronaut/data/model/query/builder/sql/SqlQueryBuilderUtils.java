@@ -578,19 +578,32 @@ final class SqlQueryBuilderUtils {
     }
 
     /**
-     * Checks whether a given property is considered generated within the context of a specific entity.
+     * Checks whether a given property is considered generated within the context of a specific entity and association path.
      *
-     * A property is considered generated if it is annotated with {@link GeneratedValue} and its owner is either the same as the given entity or is an embeddable entity.
+     * This variant allows callers to provide the traversed association path. If a property is part of the identity
+     * of the last associated entity in the path, it will be considered NOT generated here so that updates for
+     * association references (foreign keys) can be generated.
      *
-     * @param property the persistent property to check
-     * @param entity the entity to check against
-     * @return true if the property is generated, false otherwise
+     * @param property     the persistent property to check
+     * @param entity       the entity to check against
+     * @param associations the association path leading to the property (can be empty)
+     * @return true if the property is generated for this context, false otherwise
      */
-    static boolean isGeneratedProperty(PersistentProperty property, PersistentEntity entity) {
+    static boolean isGeneratedProperty(PersistentProperty property, PersistentEntity entity, List<Association> associations) {
         boolean generated = property.isGenerated();
         if (generated) {
+            // Keep original owner constraint
             if (property.getOwner() != entity && !property.getOwner().isEmbeddable()) {
                 generated = false;
+            }
+            // If this property is an identity of the associated entity being referenced,
+            // treat it as NOT generated so we can set the FK value.
+            if (generated && CollectionUtils.isNotEmpty(associations)) {
+                Association last = associations.get(associations.size() - 1);
+                PersistentEntity assocEntity = last.getAssociatedEntity();
+                if (assocEntity != null && assocEntity.getIdentityProperties().contains(property)) {
+                    generated = false;
+                }
             }
         }
         return generated;

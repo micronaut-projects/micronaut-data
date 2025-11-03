@@ -1647,6 +1647,15 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         if (generated && property.getOwner() != entity && !property.getOwner().isEmbeddable()) {
                             generated = false;
                         }
+                        // If this property is an identity of the associated entity being referenced,
+                        // treat it as NOT generated so we can set the FK value.
+                        if (generated && CollectionUtils.isNotEmpty(associations)) {
+                            Association last = associations.get(associations.size() - 1);
+                            PersistentEntity assocEntity = last.getAssociatedEntity();
+                            if (assocEntity != null && assocEntity.getIdentityProperties().contains(property)) {
+                                generated = false;
+                            }
+                        }
                         if (generated) {
                             return;
                         }
