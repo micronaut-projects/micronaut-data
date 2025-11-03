@@ -422,7 +422,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                     CriteriaQuery<?> criteriaQuery = providedCriteriaQueryBuilder.build(criteriaBuilder);
                     Root<?> root = criteriaQuery.getRoots().iterator().next();
                     Expression countExpression;
-                    if (!root.getJoins().isEmpty() || !joinPaths.isEmpty()) {
+                    if (!root.getJoins().isEmpty() || !root.getFetches().isEmpty() || !joinPaths.isEmpty()) {
                         countExpression = criteriaBuilder.countDistinct(getIdExpression(root));
                     } else {
                         countExpression = criteriaBuilder.count(getIdExpression(root));
@@ -434,12 +434,12 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         return criteriaBuilder -> createPageCountCriteriaQuery(context, criteriaBuilder, joinPaths);
     }
 
-    private <E> CriteriaQuery createPageCountCriteriaQuery(MethodInvocationContext<?, ?> context,
+    private <E> CriteriaQuery<Long> createPageCountCriteriaQuery(MethodInvocationContext<?, ?> context,
                                                            CriteriaBuilder criteriaBuilder,
                                                            Set<JoinPath> joinPaths) {
         Class<E> rootEntity = getRequiredRootEntity(context);
         QuerySpecification<E> specification = getQuerySpecification(context);
-        CriteriaQuery criteriaQuery = criteriaBuilder.createQuery(Long.class);
+        CriteriaQuery<Long> criteriaQuery = criteriaBuilder.createQuery(Long.class);
         Root<E> root = criteriaQuery.from(rootEntity);
         if (specification != null) {
             Predicate predicate = specification.toPredicate(root, criteriaQuery, criteriaBuilder);
@@ -447,8 +447,8 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                 criteriaQuery.where(predicate);
             }
         }
-        Expression countExpression;
-        if (!root.getJoins().isEmpty() || !joinPaths.isEmpty()) {
+        Expression<Long> countExpression;
+        if (!root.getJoins().isEmpty() || !root.getFetches().isEmpty() || !joinPaths.isEmpty()) {
             countExpression = criteriaBuilder.countDistinct(getIdExpression(root));
         } else {
             countExpression = criteriaBuilder.count(getIdExpression(root));

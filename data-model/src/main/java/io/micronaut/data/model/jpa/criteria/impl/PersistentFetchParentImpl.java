@@ -83,7 +83,7 @@ sealed class PersistentFetchParentImpl<OwnerType, AssociatedEntityType> implemen
     @Override
     public <X, Y> Fetch<X, Y> fetch(String attributeName) {
         PersistentFetchParentImpl<Y, X> thisTyped = (PersistentFetchParentImpl<Y, X>) this;
-        return new PersistentFetchImpl<>(thisTyped, thisTyped.persistentAssociationPath.join(attributeName));
+        return new PersistentFetchImpl<>(thisTyped, thisTyped.persistentAssociationPath.join(attributeName, FETCH));
     }
 
     @Override

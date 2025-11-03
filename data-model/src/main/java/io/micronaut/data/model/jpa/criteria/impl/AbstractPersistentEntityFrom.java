@@ -87,8 +87,9 @@ public abstract class AbstractPersistentEntityFrom<J, E> implements PersistentEn
             int periodIndex = attributeName.indexOf(".");
             String owner = attributeName.substring(0, periodIndex);
             PersistentAssociationPath<E, ?> persistentAssociationPath;
-            if (joins.containsKey(owner)) {
-                persistentAssociationPath = joins.get(owner);
+            PersistentAssociationPath<E, ?> existingJoin = joins.get(owner);
+            if (existingJoin != null) {
+                persistentAssociationPath = existingJoin;
             } else {
                 persistentAssociationPath = join(owner, type);
             }
@@ -148,12 +149,12 @@ public abstract class AbstractPersistentEntityFrom<J, E> implements PersistentEn
 
     @Override
     public <X, Y> PersistentAssociationPath<X, Y> join(String attributeName, io.micronaut.data.annotation.Join.Type type) {
-        return getJoin(attributeName, Objects.requireNonNull(type));
+        return getJoin(attributeName, type);
     }
 
     @Override
     public <X, Y> PersistentAssociationPath<X, Y> join(String attributeName, io.micronaut.data.annotation.Join.Type type, String alias) {
-        return getJoin(attributeName, Objects.requireNonNull(type), Objects.requireNonNull(alias));
+        return getJoin(attributeName, type, Objects.requireNonNull(alias));
     }
 
     @Nullable
@@ -165,18 +166,6 @@ public abstract class AbstractPersistentEntityFrom<J, E> implements PersistentEn
             case LEFT -> io.micronaut.data.annotation.Join.Type.LEFT_FETCH;
             case RIGHT -> io.micronaut.data.annotation.Join.Type.RIGHT_FETCH;
             case INNER -> io.micronaut.data.annotation.Join.Type.INNER;
-        };
-    }
-
-    @Nullable
-    private io.micronaut.data.annotation.Join.Type convertFetch(@Nullable JoinType joinType) {
-        if (joinType == null) {
-            return null;
-        }
-        return switch (joinType) {
-            case LEFT -> io.micronaut.data.annotation.Join.Type.LEFT_FETCH;
-            case RIGHT -> io.micronaut.data.annotation.Join.Type.RIGHT_FETCH;
-            case INNER -> io.micronaut.data.annotation.Join.Type.INNER_FETCH;
         };
     }
 
@@ -278,7 +267,7 @@ public abstract class AbstractPersistentEntityFrom<J, E> implements PersistentEn
     @Override
     public Set<Join<E, ?>> getJoins() {
         return joins.values().stream()
-            .filter(e -> e.getAssociationJoinType() != null && !e.getAssociationJoinType().isFetch())
+//            .filter(e -> e.getAssociationJoinType() != null && !e.getAssociationJoinType().isFetch())
             .collect(Collectors.toUnmodifiableSet());
     }
 

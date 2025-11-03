@@ -23,7 +23,6 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.*;
-import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.ast.TypedElement;
