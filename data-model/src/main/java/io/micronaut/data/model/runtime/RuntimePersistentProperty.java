@@ -51,7 +51,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     private final Argument<Object> argument;
     private final Supplier<AttributeConverter<Object, Object>> converter;
     private String persistedName;
-    private String alias;
+    private final String alias;
 
     /**
      * Default constructor.
@@ -232,7 +232,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
         if (obj == null || obj.getClass() != this.getClass()) {
             return false;
         }
-        RuntimePersistentProperty other = (RuntimePersistentProperty) obj;
+        RuntimePersistentProperty<?> other = (RuntimePersistentProperty<?>) obj;
         return Objects.equals(other.getOwner(), getOwner()) && Objects.equals(other.getName(), getName());
     }
 }

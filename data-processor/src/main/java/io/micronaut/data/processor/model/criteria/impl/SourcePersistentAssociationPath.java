@@ -46,13 +46,13 @@ import java.util.stream.Collectors;
  * @since 3.2
  */
 @Internal
-final class SourcePersistentAssociationPath<Owner, E> extends AbstractSourcePersistentEntityJoinSupport<Owner, E>
+final class SourcePersistentAssociationPath<Owner, E> extends AbstractSourcePersistentEntityFrom<Owner, E>
     implements SourcePersistentEntityPath<E>, SourcePersistentPropertyPath<E>, PersistentAssociationPath<Owner, E> {
 
     private final PersistentEntityFrom<?, Owner> parent;
     private final SourceAssociation association;
     private final List<Association> associations;
-    private io.micronaut.data.annotation.Join.Type associationJoinType;
+    private Join.Type associationJoinType;
     @Nullable
     private String alias;
 

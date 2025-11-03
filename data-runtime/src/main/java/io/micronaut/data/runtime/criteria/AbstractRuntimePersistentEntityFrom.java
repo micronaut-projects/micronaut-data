@@ -21,7 +21,7 @@ import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
-import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityJoinSupport;
+import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityFrom;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
@@ -34,11 +34,11 @@ import java.util.List;
 import java.util.Set;
 
 @Internal
-abstract class AbstractRuntimePersistentEntityJoinSupport<T, E> extends AbstractPersistentEntityJoinSupport<T, E> {
+abstract sealed class AbstractRuntimePersistentEntityFrom<T, E> extends AbstractPersistentEntityFrom<T, E> permits RuntimePersistentAssociationPath, RuntimePersistentEntityRoot {
 
     private final CriteriaBuilder criteriaBuilder;
 
-    AbstractRuntimePersistentEntityJoinSupport(CriteriaBuilder criteriaBuilder) {
+    AbstractRuntimePersistentEntityFrom(CriteriaBuilder criteriaBuilder) {
         this.criteriaBuilder = criteriaBuilder;
     }
 
@@ -51,8 +51,8 @@ abstract class AbstractRuntimePersistentEntityJoinSupport<T, E> extends Abstract
     protected <Y> PersistentAssociationPath<E, Y> createJoinAssociation(Association association,
                                                                         Join.Type associationJoinType,
                                                                         String alias) {
-        Class<?> type = ((RuntimeAssociation<?>) association).getProperty().getType();
         RuntimeAssociation<E> runtimeAssociation = (RuntimeAssociation<E>) association;
+        Class<?> type = runtimeAssociation.getProperty().getType();
         if (List.class.isAssignableFrom(type)) {
             return new RuntimePersistentListAssociationPath<>(this, runtimeAssociation, getCurrentPath(), associationJoinType, alias, criteriaBuilder);
         }
@@ -75,7 +75,7 @@ abstract class AbstractRuntimePersistentEntityJoinSupport<T, E> extends Abstract
     }
 
     private static <Y> PersistentPropertyPath<Y> asPropertyPath(Path<?> parentPath,
-                                                                @NonNull RuntimePersistentProperty property,
+                                                                @NonNull RuntimePersistentProperty<?> property,
                                                                 CriteriaBuilder criteriaBuilder) {
         List<Association> associations;
         if (parentPath instanceof PersistentAssociationPath<?, ?> associationPath) {

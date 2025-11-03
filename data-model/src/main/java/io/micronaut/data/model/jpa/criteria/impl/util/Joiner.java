@@ -51,6 +51,7 @@ import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Selection;
 
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
@@ -145,23 +146,20 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
 
     @Override
     public void visit(PersistentEntityRoot<?> entityRoot) {
-        Set<? extends jakarta.persistence.criteria.Join<?, ?>> joins = entityRoot.getJoins();
-        visitJoins(joins);
+        visitJoins(entityRoot.getPersistentJoins());
     }
 
     @Override
     public void visit(PersistentEntitySubquery<?> subquery) {
     }
 
-    private void visitJoins(Set<? extends jakarta.persistence.criteria.Join<?, ?>> joins) {
-        for (jakarta.persistence.criteria.Join<?, ?> join : joins) {
-            if (join instanceof PersistentAssociationPath<?, ?> persistentAssociationPath) {
-                if (persistentAssociationPath.getAssociationJoinType() == null) {
-                    continue;
-                }
-                joinIfNeeded(persistentAssociationPath, false);
-                visitJoins(join.getJoins());
+    private void visitJoins(Collection<? extends PersistentAssociationPath<?, ?>> persistentAssociationPaths) {
+        for (PersistentAssociationPath<?, ?> persistentAssociationPath : persistentAssociationPaths) {
+            if (persistentAssociationPath.getAssociationJoinType() == null) {
+                continue;
             }
+            joinIfNeeded(persistentAssociationPath, false);
+            visitJoins(persistentAssociationPath.getPersistentJoins());
         }
     }
 

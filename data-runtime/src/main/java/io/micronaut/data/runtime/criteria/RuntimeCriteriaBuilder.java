@@ -43,7 +43,7 @@ import java.util.Map;
  * @since 3.2
  */
 @Singleton
-public class RuntimeCriteriaBuilder extends AbstractCriteriaBuilder {
+public final class RuntimeCriteriaBuilder extends AbstractCriteriaBuilder {
 
     private final RuntimeEntityRegistry runtimeEntityRegistry;
     private final StaticMetamodelInitializer staticMetamodelInitializer = new StaticMetamodelInitializer();
@@ -65,7 +65,13 @@ public class RuntimeCriteriaBuilder extends AbstractCriteriaBuilder {
 
             @Override
             public <T> RuntimePersistentEntity<T> getEntity(Class<T> type) {
-                return map.computeIfAbsent(type, RuntimePersistentEntity::new);
+                RuntimeEntityRegistry entityRegistry = this;
+                return map.computeIfAbsent(type, t -> new RuntimePersistentEntity<Object>(t) {
+                    @Override
+                    protected RuntimePersistentEntity<Object> getEntity(Class<Object> type) {
+                        return entityRegistry.getEntity(type);
+                    }
+                });
             }
 
             @Override
@@ -120,5 +126,12 @@ public class RuntimeCriteriaBuilder extends AbstractCriteriaBuilder {
     public <T> Expression<T> literal(T value) {
         // Runtime literals need to be bind as parameters not modifying the query to avoid the SQL injection
         return super.parameter(value == null ? (Class<T>) Object.class : (Class<T>) value.getClass(), null, value);
+    }
+
+    /**
+     * @return The runtime entity registry
+     */
+    public RuntimeEntityRegistry getRuntimeEntityRegistry() {
+        return runtimeEntityRegistry;
     }
 }

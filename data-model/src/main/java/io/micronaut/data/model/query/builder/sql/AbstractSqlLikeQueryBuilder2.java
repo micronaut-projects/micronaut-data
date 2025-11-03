@@ -43,6 +43,7 @@ import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
 import io.micronaut.data.model.jpa.criteria.ISelection;
@@ -75,7 +76,6 @@ import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.JoinPath;
-import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.model.query.builder.QueryBuilder2;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
@@ -806,7 +806,7 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
                 }
                 return new AbstractMap.SimpleEntry<>(propertyPath, e.getValue());
             })
-            .filter(e -> !(e.getValue() instanceof QueryParameter) || !e.getKey().getProperty().isGenerated())
+            .filter(e -> !e.getKey().getProperty().isGenerated())
             .collect(Collectors.toList());
 
         boolean[] needsTrimming = {false};
@@ -2115,7 +2115,18 @@ public abstract class AbstractSqlLikeQueryBuilder2 implements QueryBuilder2 {
                 PersistentProperty property = propertyPath.getProperty();
                 if (computePropertyPaths() && property instanceof Association) {
                     List<IPredicate> predicates = new ArrayList<>();
-                    Expression<?> finalRightExpression = rightExpression;
+                    Expression<?> finalRightExpression;
+                    if (rightExpression instanceof IParameterExpression<?> parameterExpression) {
+                        finalRightExpression = new IParameterExpression<>((ExpressionType<Objects>) parameterExpression.getExpressionType(), parameterExpression.getName()) {
+                            @Override
+                            public QueryParameterBinding bind(BindingContext bindingContext) {
+                                bindingContext.incomingMethodParameterProperty(propertyPath);
+                                return parameterExpression.bind(bindingContext);
+                            }
+                        };
+                    } else {
+                        finalRightExpression = rightExpression;
+                    }
                     PersistentEntityUtils.traverse(propertyPath, pp ->
                         predicates.add(new BinaryPredicate(
                             new DefaultPersistentPropertyPath<>(pp, null),
