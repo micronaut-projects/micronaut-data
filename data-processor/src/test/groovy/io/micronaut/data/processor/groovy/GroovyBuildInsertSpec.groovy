@@ -31,13 +31,13 @@ package test;
 
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.repository.*;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
 import io.micronaut.data.tck.entities.Shelf;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.entities.ShelfBook;
 
 @Repository
-@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class)
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder2.class)
 interface TestShelfBookRepository extends io.micronaut.data.tck.repositories.ShelfBookRepository {
 
 }
