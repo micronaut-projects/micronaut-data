@@ -22,7 +22,6 @@ import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
 import io.micronaut.data.tck.jdbc.entities.Project
 import io.micronaut.data.tck.jdbc.entities.Transform
-import spock.lang.Requires
 import spock.lang.Shared
 
 class ColumnTransformerSpec extends AbstractDataSpec {
@@ -32,7 +31,6 @@ class ColumnTransformerSpec extends AbstractDataSpec {
     @Shared
     def queryBuilder = new SqlQueryBuilder()
 
-    @Requires({ javaVersion <= 1.8 })
     void "test mapping"() {
         given:
         def entity = buildJpaEntity('test.Project', '''
@@ -135,7 +133,7 @@ class Project {
 
     void "test build query with column reader2"() {
         given:
-            def query = builder.createCriteriaInsert(Transform)
+            def query = builder.createQuery(Transform)
             def sql = query.build(new SqlQueryBuilder()).query
 
         expect:
