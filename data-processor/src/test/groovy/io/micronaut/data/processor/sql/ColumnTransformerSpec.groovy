@@ -115,16 +115,14 @@ class Project {
         sql == 'UPDATE "project" SET "name"=UPPER(?),"org"=? WHERE ("name" = UPPER(?) AND "org" = ?)'
     }
 
-//    void "test build insert with column writer2"() {
-//        given:
-//            def entity = PersistentEntity.of(Transform)
-//            SqlQueryBuilder2 builder = new SqlQueryBuilder2()
-//            def sql = builder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity).query
-//
-//        expect:
-//            sql == 'INSERT INTO "transform" ("xyz","project_id_department_id","project_id_project_id") VALUES (LOWER(?),?,?)'
-//
-//    }
+    void "test build insert with column writer2"() {
+        given:
+            def query = builder.createCriteriaInsert(Transform)
+            def sql = query.build(new SqlQueryBuilder()).query
+
+        expect:
+            sql == 'INSERT INTO "transform" ("xyz","project_id_department_id","project_id_project_id") VALUES (LOWER(?),?,?)'
+    }
 
     void "test build update with column writer2"() {
         given:
@@ -135,15 +133,14 @@ class Project {
             sql == 'UPDATE "transform" SET "xyz"=LOWER(?)'
     }
 
-//    void "test build query with column reader2"() {
-//        given:
-//            def entity = PersistentEntity.of(Transform)
-//            SqlQueryBuilder2 builder = new SqlQueryBuilder2()
-//            def sql = builder.buildQuery(AnnotationMetadata.EMPTY_METADATA, QueryModel.from(entity)).query
-//
-//        expect:
-//            sql == 'SELECT transform_."project_id_department_id",transform_."project_id_project_id",UPPER(xyz@abc) AS xyz FROM "transform" transform_'
-//    }
+    void "test build query with column reader2"() {
+        given:
+            def query = builder.createCriteriaInsert(Transform)
+            def sql = query.build(new SqlQueryBuilder()).query
+
+        expect:
+            sql == 'SELECT transform_."project_id_department_id",transform_."project_id_project_id",UPPER(xyz@abc) AS xyz FROM "transform" transform_'
+    }
 
     void "test build query with column reader in where2"() {
         given:
