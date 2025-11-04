@@ -1,3 +1,7 @@
+com.example
+io.micronaut.coherence.data.model
+io.micronaut.coherence.data.repositories
+io.micronaut.coherence.data.util
 io.micronaut.data.annotation
 io.micronaut.data.annotation.event
 io.micronaut.data.annotation.repeatable
@@ -24,6 +28,9 @@ io.micronaut.data.document.mongo
 io.micronaut.data.document.processor.mapper
 io.micronaut.data.document.processor.matchers
 io.micronaut.data.document.serde
+io.micronaut.data.document.tck.entities
+io.micronaut.data.document.tck.repositories
+io.micronaut.data.document.tck.services
 io.micronaut.data.event
 io.micronaut.data.event.listeners
 io.micronaut.data.exceptions
@@ -147,6 +154,13 @@ io.micronaut.data.spring.jpa.intercept
 io.micronaut.data.spring.runtime
 io.micronaut.data.spring.runtime.http
 io.micronaut.data.spring.tx
+io.micronaut.data.tck.entities
+io.micronaut.data.tck.entities.embedded
+io.micronaut.data.tck.entities.schema
+io.micronaut.data.tck.jdbc.entities
+io.micronaut.data.tck.repositories
+io.micronaut.data.tck.repositories.embedded
+io.micronaut.data.tck.services
 io.micronaut.transaction
 io.micronaut.transaction.annotation
 io.micronaut.transaction.async
