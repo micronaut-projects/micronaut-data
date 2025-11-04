@@ -578,24 +578,19 @@ final class SqlQueryBuilderUtils {
     }
 
     /**
-     * Checks whether a given property is considered generated within the context of a specific entity and association path.
+     * Checks whether a given property is considered generated within the context of the association path.
      *
      * This variant allows callers to provide the traversed association path. If a property is part of the identity
      * of the last associated entity in the path, it will be considered NOT generated here so that updates for
      * association references (foreign keys) can be generated.
      *
      * @param property     the persistent property to check
-     * @param entity       the entity to check against
      * @param associations the association path leading to the property (can be empty)
      * @return true if the property is generated for this context, false otherwise
      */
-    static boolean isGeneratedProperty(PersistentProperty property, PersistentEntity entity, List<Association> associations) {
+    static boolean isGeneratedProperty(PersistentProperty property, List<Association> associations) {
         boolean generated = property.isGenerated();
         if (generated) {
-            // Keep original owner constraint
-            if (property.getOwner() != entity && !property.getOwner().isEmbeddable()) {
-                generated = false;
-            }
             // If this property is an identity of the associated entity being referenced,
             // treat it as NOT generated so we can set the FK value.
             if (generated && CollectionUtils.isNotEmpty(associations)) {
