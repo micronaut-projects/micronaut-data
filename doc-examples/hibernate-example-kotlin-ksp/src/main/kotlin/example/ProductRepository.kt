@@ -69,7 +69,7 @@ interface ProductRepository : CrudRepository<Product, Long>, JpaSpecificationExe
         }
 
         fun nameEqualsCaseInsensitive(name: String) = Specification<Product> { root, _, criteriaBuilder ->
-            criteriaBuilder.equal(criteriaBuilder.lower(root.get("name")), name.toLowerCase())
+            criteriaBuilder.equal(criteriaBuilder.lower(root.get("name")), name.lowercase())
         }
     }
     // end::spec[]

@@ -255,7 +255,7 @@ class HibernateTxTest {
             val saved2 = repositorySuspended.save(parent2)
 
             val query = query {
-                val children: ListJoin<Parent, Child> = if (query.resultType.kotlin != Long::class) {
+                val children: ListJoin<Parent, Child> = if (query.resultType != Long::class.javaObjectType) {
                     root.fetch<Parent, Child>("children", JoinType.LEFT) as SqmListJoin<Parent, Child>
                 }  else {
                     root.joinMany(Parent::children)
@@ -301,7 +301,7 @@ class HibernateTxTest {
             repositorySuspended.save(parent2)
 
             val query = query<Child> {
-                val parent: Join<Child, Parent?> = if (query.resultType.kotlin != Long::class) {
+                val parent: Join<Child, Parent?> = if (query.resultType != Long::class.javaObjectType) {
                     root.fetch<Child, Parent?>("parent") as SqmSingularJoin<Child, Parent?>
                 }  else {
                     root.joinOne(Child::parent)
@@ -339,7 +339,7 @@ class HibernateTxTest {
         }
 
         val query = query<Child> {
-            val parent: Join<Child, Parent?> = if (query.resultType.kotlin != Long::class) {
+            val parent: Join<Child, Parent?> = if (query.resultType != Long::class.javaObjectType) {
                 root.fetch<Child, Parent?>("parent") as SqmSingularJoin<Child, Parent?>
             }  else {
                 root.joinOne(Child::parent)

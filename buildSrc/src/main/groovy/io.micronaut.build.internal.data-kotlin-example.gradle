@@ -4,6 +4,7 @@ plugins {
     id "org.jetbrains.kotlin.plugin.allopen"
     id "io.micronaut.build.internal.data-example"
     id "io.micronaut.build.internal.data-kotlin"
+    id "io.micronaut.build.internal.kotlin-base"
 }
 
 allOpen {
