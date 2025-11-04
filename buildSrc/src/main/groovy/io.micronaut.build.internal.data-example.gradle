@@ -1,6 +1,7 @@
 plugins {
     id "io.micronaut.build.internal.data-dependencies"
     id "io.micronaut.minimal.application"
+    id "io.micronaut.build.internal.java-base"
 }
 
 configurations.configureEach {

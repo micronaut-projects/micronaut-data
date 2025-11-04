@@ -1,5 +1,5 @@
 [versions]
-micronaut = "4.10.6"
+micronaut = "4.10.8"
 micronaut-platform = "4.8.3"
 micronaut-docs = "3.0.0"
 micronaut-gradle-plugin = "4.6.1"
@@ -12,7 +12,7 @@ micronaut-r2dbc = "6.1.0"
 micronaut-sql = "7.0.0-SNAPSHOT"
 micronaut-serde = "2.15.4"
 micronaut-spring = "5.11.2"
-micronaut-test = "4.9.0"
+micronaut-test = "4.10.2"
 micronaut-mongo = "5.7.0"
 micronaut-kotlin = "4.7.0"
 micronaut-multitenancy = "5.7.0"
@@ -46,7 +46,7 @@ kotlin-gradle-plugin = "2.2.20"
 jmh-gradle-plugin = "0.7.3"
 spring-boot-gradle-plugin = "3.5.6"
 spring-dependency-management-gradle-plugin = "1.1.7"
-shadow-gradle-plugin = "8.0.0"
+shadow-gradle-plugin = "9.2.2"
 
 # Dependency versions which are found in the platform BOM
 # meaning that they should be extracted into their own BOM
@@ -141,5 +141,5 @@ gradle-ksp = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin
 gradle-jmh = { module = "me.champeau.jmh:jmh-gradle-plugin", version.ref = "jmh-gradle-plugin" }
 gradle-spring-boot = { module = "org.springframework.boot:spring-boot-gradle-plugin", version.ref = "spring-boot-gradle-plugin" }
 gradle-spring-dependencies = { module = "io.spring.gradle:dependency-management-plugin", version.ref = "spring-dependency-management-gradle-plugin" }
-gradle-shadow = { module = "gradle.plugin.com.github.johnrengelman:shadow", version.ref = "shadow-gradle-plugin" }
+gradle-shadow = { module = "com.gradleup.shadow:shadow-gradle-plugin", version.ref = "shadow-gradle-plugin" }
 

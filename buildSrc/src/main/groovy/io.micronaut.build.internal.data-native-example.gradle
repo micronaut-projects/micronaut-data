@@ -2,6 +2,7 @@ plugins {
     id "java"
     id "io.micronaut.application"
     id "io.micronaut.test-resources"
+    id "io.micronaut.build.internal.java-base"
 }
 
 tasks.register("testExamples") {

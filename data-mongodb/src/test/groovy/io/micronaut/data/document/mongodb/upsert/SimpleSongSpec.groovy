@@ -5,7 +5,6 @@ import io.micronaut.data.document.mongodb.upsert.model.SongEntity
 import io.micronaut.data.document.mongodb.upsert.repo.SongRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
-import org.junit.Test
 import spock.lang.Specification
 
 import java.time.LocalDateTime
@@ -22,7 +21,6 @@ class SimpleSongSpec extends Specification implements MongoTestPropertyProvider 
     @Inject
     private SongRepository songRepository
 
-    @Test
     void savesAndRetrievesSongs() {
         when:
             SongEntity songEntity = new SongEntity()
@@ -47,7 +45,6 @@ class SimpleSongSpec extends Specification implements MongoTestPropertyProvider 
             updatedSong2.updated == updatedSong.updated.truncatedTo(ChronoUnit.MILLIS)
     }
 
-    @Test
     void updatesSongs() {
         when:
             SongEntity songEntity = new SongEntity()
