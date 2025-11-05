@@ -1644,8 +1644,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 if (entry.getValue() instanceof BindingParameter bindingParameter) {
                     traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), (associations, property) -> {
                         boolean generated = property.isGenerated();
-                        if (generated && property.getOwner() != entity && !property.getOwner().isEmbeddable()) {
-                            generated = false;
+                        if (generated && CollectionUtils.isNotEmpty(associations)) {
+                            Association last = associations.get(associations.size() - 1);
+                            PersistentEntity assocEntity = last.getAssociatedEntity();
+                            if (assocEntity != null && assocEntity.getIdentityProperties().contains(property)) {
+                                generated = false;
+                            }
                         }
                         if (generated) {
                             return;
