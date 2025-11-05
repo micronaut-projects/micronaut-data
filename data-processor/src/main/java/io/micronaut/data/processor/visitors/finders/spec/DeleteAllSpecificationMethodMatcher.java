@@ -43,15 +43,11 @@ public class DeleteAllSpecificationMethodMatcher extends AbstractSpecificationMe
 
     @Override
     protected MethodMatch match(MethodMatchContext matchContext, Matcher matcher) {
-        if (TypeUtils.isValidBatchUpdateReturnType(matchContext.getMethodElement())) {
+        if (TypeUtils.isValidBatchUpdateReturnType(matchContext.getMethodElement()) && isDeleteSpecification(matchContext.getMethodElement())) {
             FindersUtils.InterceptorMatch e = FindersUtils.pickDeleteAllSpecInterceptor(matchContext, matchContext.getReturnType());
             return mc -> new MethodMatchInfo(DataMethod.OperationType.DELETE, e.returnType(), e.interceptor());
         }
         return null;
     }
 
-    @Override
-    protected boolean isMatchesParameters(MethodMatchContext matchContext) {
-        return isFirstParameterMicronautDataDeleteSpecification(matchContext.getMethodElement());
-    }
 }

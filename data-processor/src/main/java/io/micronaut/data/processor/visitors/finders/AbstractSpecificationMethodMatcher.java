@@ -17,12 +17,8 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.data.processor.visitors.MatchContext;
-import io.micronaut.data.processor.visitors.MethodMatchContext;
-import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
-import io.micronaut.inject.visitor.VisitorContext;
 
 import java.util.Arrays;
 
@@ -49,76 +45,35 @@ public abstract class AbstractSpecificationMethodMatcher extends AbstractPrefixP
         return DEFAULT_POSITION - 200;
     }
 
-    @Override
-    public MethodMatch match(MethodMatchContext matchContext) {
-        if (!isMatchesParameters(matchContext)) {
-            return null;
-        }
-        return super.match(matchContext);
-    }
-
-    /**
-     * @param matchContext    The match context
-     * @param interceptorType The interceptor type
-     * @return The resolved class element
-     */
-    protected final ClassElement getInterceptorElement(MethodMatchContext matchContext, String interceptorType) {
-        return FindersUtils.getInterceptorElement(matchContext, interceptorType);
-    }
-
-    /**
-     * Is matches parameters.
-     *
-     * @param matchContext The context
-     * @return true if matches
-     */
-    protected boolean isMatchesParameters(MethodMatchContext matchContext) {
-        return isFirstParameterSpringJpaSpecification(matchContext.getMethodElement(), matchContext) ||
-            isFirstParameterMicronautJpaSpecification(matchContext.getMethodElement());
-    }
-
-    private boolean isFirstParameterSpringJpaSpecification(MethodElement methodElement, MatchContext matchContext) {
-        VisitorContext visitorContext = matchContext.getVisitorContext();
-        if (visitorContext.getClassElement("io.micronaut.data.spring.jpa.intercept.CountSpecificationInterceptor").isPresent() &&
-            visitorContext.getClassElement("org.springframework.data.jpa.domain.Specification").isPresent()) {
-            return isFirstParameterSpringJpaSpecification(methodElement);
-        }
-        return false;
-    }
-
-    protected final boolean isFirstParameterSpringJpaSpecification(@NonNull MethodElement methodElement) {
+    private boolean isSpringPredicateSpecification(@NonNull MethodElement methodElement) {
         return isFirstParameterAssignable(methodElement, "org.springframework.data.jpa.domain.Specification");
     }
 
-    protected final boolean isFirstParameterMicronautJpaSpecification(@NonNull MethodElement methodElement) {
-        return isFirstParameterAssignable(methodElement, "io.micronaut.data.jpa.repository.criteria.Specification");
-    }
-
-    protected final boolean isFirstParameterMicronautDataQuerySpecification(@NonNull MethodElement methodElement) {
-        if (isFirstParameterMicronautDataPredicateSpecification(methodElement)) {
+    protected final boolean isQuerySpecification(@NonNull MethodElement methodElement) {
+        if (isPredicateSpecification(methodElement) || isSpringPredicateSpecification(methodElement)) {
             return true;
         }
         return isFirstParameterAssignable(methodElement, "io.micronaut.data.repository.jpa.criteria.QuerySpecification")
             || isFirstParameterAssignable(methodElement, "io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder");
     }
 
-    protected final boolean isFirstParameterMicronautDataDeleteSpecification(@NonNull MethodElement methodElement) {
-        if (isFirstParameterMicronautDataPredicateSpecification(methodElement)) {
+    protected final boolean isDeleteSpecification(@NonNull MethodElement methodElement) {
+        if (isPredicateSpecification(methodElement) || isSpringPredicateSpecification(methodElement)) {
             return true;
         }
         return isFirstParameterAssignable(methodElement, "io.micronaut.data.repository.jpa.criteria.DeleteSpecification")
             || isFirstParameterAssignable(methodElement, "io.micronaut.data.repository.jpa.criteria.CriteriaDeleteBuilder");
     }
 
-    protected final boolean isFirstParameterMicronautDataUpdateSpecification(@NonNull MethodElement methodElement) {
-        if (isFirstParameterMicronautDataPredicateSpecification(methodElement)) {
+    protected final boolean isUpdateSpecification(@NonNull MethodElement methodElement) {
+        if (isPredicateSpecification(methodElement) || isSpringPredicateSpecification(methodElement)) {
             return true;
         }
         return isFirstParameterAssignable(methodElement, "io.micronaut.data.repository.jpa.criteria.UpdateSpecification")
             || isFirstParameterAssignable(methodElement, "io.micronaut.data.repository.jpa.criteria.CriteriaUpdateBuilder");
     }
 
-    private boolean isFirstParameterMicronautDataPredicateSpecification(@NonNull MethodElement methodElement) {
+    private boolean isPredicateSpecification(@NonNull MethodElement methodElement) {
         return isFirstParameterAssignable(methodElement, "io.micronaut.data.repository.jpa.criteria.PredicateSpecification");
     }
 

@@ -9,8 +9,6 @@ import io.micronaut.data.jpa.repository.JpaRepository;
 import io.micronaut.data.jpa.repository.intercept.LoadInterceptor;
 import jakarta.validation.constraints.NotNull;
 
-import java.io.Serializable;
-
 @Repository
 public interface ChildrenRepository extends JpaRepository<Children, @NotNull ChildrenId> {
     //int findMaxIdNumberByIdParentId(int parentId);

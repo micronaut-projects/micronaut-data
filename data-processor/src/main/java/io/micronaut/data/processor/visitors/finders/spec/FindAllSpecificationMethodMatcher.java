@@ -15,19 +15,15 @@
  */
 package io.micronaut.data.processor.visitors.finders.spec;
 
-import java.util.regex.Matcher;
-
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.AbstractSpecificationMethodMatcher;
 import io.micronaut.data.processor.visitors.finders.FindersUtils;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
-import io.micronaut.inject.ast.ClassElement;
-import io.micronaut.inject.ast.MethodElement;
-import io.micronaut.inject.ast.ParameterElement;
+
+import java.util.regex.Matcher;
 
 /**
  * Find all specification method.
@@ -52,42 +48,11 @@ public class FindAllSpecificationMethodMatcher extends AbstractSpecificationMeth
 
     @Override
     protected MethodMatch match(MethodMatchContext matchContext, Matcher matcher) {
-        if (TypeUtils.doesMethodProducesIterable(matchContext.getMethodElement()) && isCorrectParameters(matchContext.getMethodElement())) {
-            if (isFirstParameterMicronautDataQuerySpecification(matchContext.getMethodElement())) {
-                FindersUtils.InterceptorMatch e = FindersUtils.pickFindAllSpecInterceptor(matchContext, matchContext.getReturnType());
-                return mc -> new MethodMatchInfo(DataMethod.OperationType.QUERY, e.returnType(), e.interceptor());
-            }
-            if (isFirstParameterSpringJpaSpecification(matchContext.getMethodElement())) {
-                return mc -> new MethodMatchInfo(
-                        DataMethod.OperationType.QUERY,
-                        mc.getReturnType(),
-                        getInterceptorElement(mc, "io.micronaut.data.spring.jpa.intercept.FindAllSpecificationInterceptor")
-                );
-            }
-            return mc -> {
-                ClassElement classElement = getInterceptorElement(mc, "io.micronaut.data.jpa.repository.intercept.FindAllSpecificationInterceptor");
-                return new MethodMatchInfo(
-                    DataMethod.OperationType.QUERY,
-                    mc.getReturnType(),
-                    classElement);
-            };
+        if (TypeUtils.doesMethodProducesIterable(matchContext.getMethodElement()) && isQuerySpecification(matchContext.getMethodElement())) {
+            FindersUtils.InterceptorMatch e = FindersUtils.pickFindAllSpecInterceptor(matchContext, matchContext.getReturnType());
+            return mc -> new MethodMatchInfo(DataMethod.OperationType.QUERY, e.returnType(), e.interceptor());
         }
         return null;
     }
 
-    private boolean isCorrectParameters(@NonNull MethodElement methodElement) {
-        final ParameterElement[] parameters = methodElement.getParameters();
-        final int len = parameters.length;
-        return switch (len) {
-            case 1 -> true;
-            case 2 -> parameters[1].getType().isAssignable("org.springframework.data.domain.Sort")
-                    || parameters[1].getType().isAssignable("io.micronaut.data.model.Sort");
-            default -> false;
-        };
-    }
-
-    @Override
-    protected boolean isMatchesParameters(MethodMatchContext matchContext) {
-        return super.isMatchesParameters(matchContext) || isFirstParameterMicronautDataQuerySpecification(matchContext.getMethodElement());
-    }
 }

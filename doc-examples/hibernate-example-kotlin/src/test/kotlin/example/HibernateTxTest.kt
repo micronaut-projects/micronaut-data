@@ -12,7 +12,6 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import jakarta.inject.Inject
 import jakarta.persistence.criteria.Join
 import jakarta.persistence.criteria.JoinType
-import jakarta.persistence.criteria.Path
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
@@ -27,7 +26,6 @@ import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.assertThrows
 import java.time.LocalDate
 import java.util.*
-import kotlin.Any
 
 @MicronautTest(transactional = false, rollback = false)
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)

@@ -75,6 +75,13 @@ import io.micronaut.data.processor.visitors.finders.MethodMatcher;
 import io.micronaut.data.processor.visitors.finders.RawQueryMethodMatcher;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
 import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.repository.jpa.criteria.CriteriaDeleteBuilder;
+import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder;
+import io.micronaut.data.repository.jpa.criteria.CriteriaUpdateBuilder;
+import io.micronaut.data.repository.jpa.criteria.DeleteSpecification;
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
+import io.micronaut.data.repository.jpa.criteria.QuerySpecification;
+import io.micronaut.data.repository.jpa.criteria.UpdateSpecification;
 import io.micronaut.inject.annotation.EvaluatedExpressionReferenceCounter;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.Element;
@@ -147,11 +154,23 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         roles.put(Page.class.getName(), TypeRole.PAGE);
         roles.put(Slice.class.getName(), TypeRole.SLICE);
         roles.put(Limit.class.getName(), TypeRole.LIMIT);
+
+        // Specifications
+        roles.put(PredicateSpecification.class.getName(), TypeRole.SPECIFICATION_PREDICATE);
+        roles.put(DeleteSpecification.class.getName(), TypeRole.SPECIFICATION_DELETE);
+        roles.put(CriteriaDeleteBuilder.class.getName(), TypeRole.SPECIFICATION_DELETE);
+        roles.put(UpdateSpecification.class.getName(), TypeRole.SPECIFICATION_UPDATE);
+        roles.put(CriteriaUpdateBuilder.class.getName(), TypeRole.SPECIFICATION_UPDATE);
+        roles.put(QuerySpecification.class.getName(), TypeRole.SPECIFICATION_QUERY);
+        roles.put(CriteriaQueryBuilder.class.getName(), TypeRole.SPECIFICATION_QUERY);
+
         // Spring Data
         roles.put("org.springframework.data.domain.Pageable", TypeRole.PAGEABLE);
         roles.put("org.springframework.data.domain.Page", TypeRole.PAGE);
         roles.put("org.springframework.data.domain.Slice", TypeRole.SLICE);
         roles.put("org.springframework.data.domain.Sort", TypeRole.SORT);
+        roles.put("org.springframework.data.jpa.domain.Specification", TypeRole.SPECIFICATION_PREDICATE);
+
         // Jakarta Data
         roles.put("jakarta.data.page.Page", TypeRole.PAGE);
         roles.put("jakarta.data.page.CursoredPage", TypeRole.CURSORED_PAGE);
