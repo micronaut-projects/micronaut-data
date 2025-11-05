@@ -31,6 +31,8 @@ shared:
     deletes: Deleting
     timestamps: Entity Timestamps
     entityEvents: Entity Events
+  jakartaData:
+      title: Jakarta Data
   criteriaSpecifications:
     title: Repositories with Jakarta Criteria API
     criteriaExecuteQuery: Querying

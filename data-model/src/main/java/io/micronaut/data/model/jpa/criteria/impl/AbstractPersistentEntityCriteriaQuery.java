@@ -92,7 +92,7 @@ public abstract class AbstractPersistentEntityCriteriaQuery<T> extends AbstractP
 
     @Override
     public List<Order> getOrderList() {
-        throw notSupportedOperation();
+        return orders;
     }
 
     @Override

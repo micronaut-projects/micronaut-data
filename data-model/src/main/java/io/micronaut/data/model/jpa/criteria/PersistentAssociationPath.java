@@ -21,15 +21,19 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
 import jakarta.persistence.criteria.Expression;
-import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.metamodel.Attribute;
 import jakarta.persistence.metamodel.Bindable;
+import jakarta.persistence.metamodel.MapAttribute;
+import jakarta.persistence.metamodel.PluralAttribute;
+import jakarta.persistence.metamodel.SingularAttribute;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupportedOperation;
 
@@ -62,6 +66,11 @@ public interface PersistentAssociationPath<OwnerType, AssociatedEntityType> exte
      */
     @Nullable
     io.micronaut.data.annotation.Join.Type getAssociationJoinType();
+
+    @Override
+    default JoinType getJoinType() {
+        return null;
+    }
 
     /**
      * Set join type.
@@ -111,18 +120,6 @@ public interface PersistentAssociationPath<OwnerType, AssociatedEntityType> exte
     }
 
     @Override
-    @Nullable
-    default From<?, OwnerType> getParent() {
-        return null;
-    }
-
-    @Override
-    @NonNull
-    default JoinType getJoinType() {
-        throw notSupportedOperation();
-    }
-
-    @Override
     @NonNull
     default Bindable<AssociatedEntityType> getModel() {
         throw notSupportedOperation();
@@ -132,4 +129,43 @@ public interface PersistentAssociationPath<OwnerType, AssociatedEntityType> exte
     default void visitExpression(ExpressionVisitor expressionVisitor) {
         expressionVisitor.visit(this);
     }
+
+    @Override
+    <Y> PersistentPropertyPath<Y> get(String attributeName);
+
+    @Override
+    default <Y> PersistentPropertyPath<Y> get(SingularAttribute<? super AssociatedEntityType, Y> attribute) {
+        return get(attribute.getName());
+    }
+
+    @Override
+    default <E, C extends Collection<E>> Expression<C> get(PluralAttribute<AssociatedEntityType, C, E> collection) {
+        return get(collection.getName());
+    }
+
+    @Override
+    default <K, V, M extends Map<K, V>> Expression<M> get(MapAttribute<AssociatedEntityType, K, V> map) {
+        return get(map.getName());
+    }
+
+    @Override
+    <X, Y> PersistentAssociationPath<X, Y> join(String attributeName);
+
+    @Override
+    <X, Y> PersistentAssociationPath<X, Y> join(String attributeName, io.micronaut.data.annotation.Join.Type joinType);
+
+    @Override
+    <X, Y> PersistentAssociationPath<X, Y> join(String attributeName, io.micronaut.data.annotation.Join.Type joinType, String alias);
+
+    @Override
+    <X, Y> PersistentAssociationPath<X, Y> join(String attributeName, JoinType jt);
+
+    @Override
+    <Y> PersistentAssociationPath<AssociatedEntityType, Y> join(SingularAttribute<? super AssociatedEntityType, Y> attribute, JoinType jt);
+
+    @Override
+    <Y> PersistentAssociationPath<AssociatedEntityType, Y> join(SingularAttribute<? super AssociatedEntityType, Y> attribute);
+
+    @Override
+    <Y> PersistentAssociationPath<AssociatedEntityType, Y> join(SingularAttribute<? super AssociatedEntityType, Y> attribute, io.micronaut.data.annotation.Join.Type jt);
 }

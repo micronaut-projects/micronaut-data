@@ -16,6 +16,10 @@
 package io.micronaut.data.jdbc.h2
 
 import groovy.transform.Memoized
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Sort
+import io.micronaut.data.tck.entities.Book
+import io.micronaut.data.tck.entities.Student
 import io.micronaut.data.tck.entities.embedded.BookEntity
 import io.micronaut.data.tck.entities.embedded.BookState
 import io.micronaut.data.tck.entities.embedded.ResourceEntity
@@ -329,5 +333,70 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
         result
         cleanup:
         bookEntityRepository.deleteAll()
+    }
+
+    void "test JOIN pagination xxx"() {
+        if (skipJoinPagination()) {
+            return
+        }
+        given:
+            Student denis = new Student("Denis")
+            Student josh = new Student("Josh")
+            Student kevin = new Student("Kevin")
+            def book1 = new Book(title: "The Stand", students: [denis, josh])
+            def book2 = new Book(title: "Pet Cemetery", students: [kevin])
+            def book3 = new Book(title: "Along Came a Spider", students: [kevin, josh])
+            bookRepository.save(book1)
+            bookRepository.save(book2)
+            bookRepository.save(book3
+            )
+            List<String> names = [denis.name, josh.name]
+        when:
+            io.micronaut.data.model.Page<Book> page = bookRepository.findAllByStudentsNameIn(names, Pageable.from(0, 10, Sort.of(Sort.Order.asc("title"))))
+
+        then:
+            page.totalSize == page.content.size()
+            page.totalSize == 2
+            page.content.collect { it.title }.sort() == ["Along Came a Spider", "The Stand"]
+            page.content[0].students.collect { it.name }.sort() == ["Josh", "Kevin"]
+            page.content[1].students.collect { it.name }.sort() == ["Denis", "Josh"]
+
+        when:
+            def pageable = Pageable.from(0, 1, Sort.of(Sort.Order.asc("title")))
+            page = bookRepository.findAllByStudentsNameIn(names, pageable)
+
+        then:
+            page.totalSize == 2
+            page.content.size() == 1
+            page.content[0].title == "Along Came a Spider"
+            page.content[0].students.collect { it.name }.sort() == ["Josh", "Kevin"]
+
+        when:
+            pageable = pageable.next()
+            page = bookRepository.findAllByStudentsNameIn(names, pageable)
+
+        then:
+            page.totalSize == 2
+            page.content.size() == 1
+            page.content[0].title == "The Stand"
+            page.content[0].students.collect { it.name }.sort() == ["Denis", "Josh"]
+
+        when:
+            pageable = pageable.next()
+            page = bookRepository.findAllByStudentsNameIn(names, pageable)
+
+        then:
+            page.totalSize == 2
+            page.content.size() == 0
+
+        when:
+            pageable = pageable.previous()
+            page = bookRepository.findAllByStudentsNameIn(names, pageable)
+
+        then:
+            page.totalSize == 2
+            page.content.size() == 1
+            page.content[0].title == "The Stand"
+            page.content[0].students.collect { it.name }.sort() == ["Denis", "Josh"]
     }
 }

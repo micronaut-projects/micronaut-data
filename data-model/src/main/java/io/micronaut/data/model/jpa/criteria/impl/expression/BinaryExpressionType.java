@@ -25,5 +25,9 @@ import io.micronaut.core.annotation.Internal;
  */
 @Internal
 public enum BinaryExpressionType {
-    CONCAT, SUM
+    CONCAT, // "foo" + "bar"
+    SUM,    // +
+    PROD,   // *
+    QUOT,   // /
+    DIFF    // -
 }

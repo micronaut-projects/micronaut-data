@@ -27,13 +27,13 @@ import jakarta.persistence.criteria.Expression;
  */
 @Internal
 public enum UnaryExpressionType {
-    AVG, SUM, MAX, MIN, COUNT, COUNT_DISTINCT, UPPER, LOWER;
+    AVG, SUM, MAX, MIN, COUNT, COUNT_DISTINCT, UPPER, LOWER, LENGTH;
 
     void validate(Expression<?> expression) {
         switch (this) {
             case AVG, SUM -> CriteriaUtils.requireNumericExpression(expression);
             case MAX, MIN -> CriteriaUtils.requireComparableExpression(expression);
-            case UPPER, LOWER -> CriteriaUtils.requireStringExpression(expression);
+            case UPPER, LOWER, LENGTH -> CriteriaUtils.requireStringExpression(expression);
             case COUNT, COUNT_DISTINCT -> CriteriaUtils.requirePropertyOrRoot(expression);
             default -> throw new IllegalStateException("Unexpected value: " + this);
         }

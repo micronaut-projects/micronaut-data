@@ -16,6 +16,8 @@
 package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
 import jakarta.persistence.criteria.CommonAbstractCriteria;
 
@@ -26,7 +28,7 @@ import jakarta.persistence.criteria.CommonAbstractCriteria;
  * @since 4.10
  */
 @Experimental
-public interface PersistentEntityCommonAbstractCriteria extends CommonAbstractCriteria {
+public interface PersistentEntityCommonAbstractCriteria extends CommonAbstractCriteria, PersistentEntityCriteriaQueryBuilder {
 
     /**
      * Create a subquery from the expression type.
@@ -35,11 +37,20 @@ public interface PersistentEntityCommonAbstractCriteria extends CommonAbstractCr
      * @return A new subquery
      * @since 4.10
      */
-    <U> PersistentEntitySubquery<U> subquery(ExpressionType<U> type);
+    @NonNull
+    <U> PersistentEntitySubquery<U> subquery(@NonNull ExpressionType<U> type);
 
     @Override
-    default <U> PersistentEntitySubquery<U> subquery(Class<U> type) {
+    @NonNull
+    default <U> PersistentEntitySubquery<U> subquery(@NonNull Class<U> type) {
         return subquery(new ClassExpressionType<>(type));
     }
+
+    /**
+     * The persistent entity.
+     * @return The persistent entity
+     */
+    @NonNull
+    PersistentEntity getPersistentEntity();
 
 }

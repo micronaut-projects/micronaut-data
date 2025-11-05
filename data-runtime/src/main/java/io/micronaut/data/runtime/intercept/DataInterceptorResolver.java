@@ -16,16 +16,19 @@
 package io.micronaut.data.runtime.intercept;
 
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.context.BeanLocator;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
+import io.micronaut.data.annotation.ConvertException;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.ExceptionConverter;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.annotation.DataMethod;
@@ -35,6 +38,7 @@ import io.micronaut.data.operations.RepositoryOperationsRegistry;
 import io.micronaut.data.runtime.multitenancy.DataSourceTenantResolver;
 import io.micronaut.inject.ArgumentInjectionPoint;
 import io.micronaut.inject.InjectionPoint;
+import io.micronaut.transaction.support.ExceptionUtil;
 import jakarta.inject.Singleton;
 
 import java.lang.reflect.Modifier;
@@ -57,10 +61,12 @@ public final class DataInterceptorResolver {
     @Nullable
     private final DataSourceTenantResolver tenantResolver;
     private final Map<TenantRepositoryMethodKey, DataInterceptor<? super Object, ? super Object>> interceptors = new ConcurrentHashMap<>();
+    private final BeanLocator beanLocator;
 
-    DataInterceptorResolver(RepositoryOperationsRegistry repositoryOperationsRegistry, @Nullable DataSourceTenantResolver tenantResolver) {
+    DataInterceptorResolver(RepositoryOperationsRegistry repositoryOperationsRegistry, @Nullable DataSourceTenantResolver tenantResolver, BeanLocator beanLocator) {
         this.repositoryOperationsRegistry = repositoryOperationsRegistry;
         this.tenantResolver = tenantResolver;
+        this.beanLocator = beanLocator;
     }
 
     DataInterceptor<Object, Object> resolve(@NonNull RepositoryMethodKey key,
@@ -106,7 +112,27 @@ public final class DataInterceptorResolver {
             });
 
         if (interceptorType != null && DataInterceptor.class.isAssignableFrom(interceptorType)) {
-            return findInterceptor(dataSourceName, operationsType, interceptorType);
+            DataInterceptor<Object, Object> interceptor = findInterceptor(dataSourceName, operationsType, interceptorType);
+            final Class<ExceptionConverter> exceptionConverterClass = context
+                .classValue(ConvertException.class)
+                .orElse(null);
+            if (exceptionConverterClass == null) {
+                return interceptor;
+            }
+            Collection<ExceptionConverter> exceptionConverters = beanLocator.getBeansOfType(exceptionConverterClass);
+            return new DataInterceptor<Object, Object>() {
+                @Override
+                public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
+                    try {
+                        return interceptor.intercept(methodKey, context);
+                    } catch (Exception e) {
+                        for (ExceptionConverter exceptionConverter : exceptionConverters) {
+                            e = exceptionConverter.convert(e);
+                        }
+                        return ExceptionUtil.sneakyThrow(e);
+                    }
+                }
+            };
         }
 
         final String interceptorName = context.getAnnotationMetadata().stringValue(DataMethod.class, DataMethod.META_MEMBER_INTERCEPTOR).orElse(null);

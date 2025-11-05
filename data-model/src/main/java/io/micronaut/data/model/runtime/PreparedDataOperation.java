@@ -18,6 +18,7 @@ package io.micronaut.data.model.runtime;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.attr.AttributeHolder;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -38,5 +39,16 @@ public interface PreparedDataOperation<R> extends StoredDataOperation<R>, Attrib
      */
     default <RT> Optional<RT> getParameterInRole(@NonNull String role, @NonNull Class<RT> type) {
         return Optional.empty();
+    }
+
+    /**
+     * Return the values of the given parameter if the given role.
+     * @param role The role
+     * @param type The type
+     * @param <RT> The generic type
+     * @return An optional value.
+     */
+    default <RT> List<RT> getParametersInRole(@NonNull String role, @NonNull Class<RT> type) {
+        return getParameterInRole(role, type).stream().toList();
     }
 }

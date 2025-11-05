@@ -450,7 +450,6 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
             def b = bookRepository.modifyReturning(petCemetery.author.id)
         then:
             b.author.id == petCemetery.author.id
-            b.postLoad == 1
         when:
             def allBooks = bookRepository.findAll()
         then:

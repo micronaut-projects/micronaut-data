@@ -44,7 +44,7 @@ internal class ProductRepositorySpec : AbstractMongoSpec() {
     @Test
     fun testAsync() {
         // tag::async[]
-        val total = productRepository.findByNameRegex(".*o.*")
+        val total = productRepository.findFirstByNameRegex(".*o.*")
                 .thenCompose { product -> productRepository.countByManufacturerName(product.manufacturer?.name) }
                 .get(1000, TimeUnit.SECONDS)
 
@@ -58,7 +58,7 @@ internal class ProductRepositorySpec : AbstractMongoSpec() {
     @Test
     fun testReactive() {
         // tag::reactive[]
-        val total = productRepository.queryByNameRegex(".*o.*")
+        val total = productRepository.queryFirstByNameRegex(".*o.*")
                 .flatMap { product ->
                     productRepository.countDistinctByManufacturerName(product.manufacturer?.name)
                             .toMaybe()

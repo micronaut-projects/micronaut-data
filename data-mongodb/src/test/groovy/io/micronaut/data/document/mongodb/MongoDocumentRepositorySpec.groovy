@@ -39,6 +39,7 @@ import io.micronaut.data.document.tck.repositories.DomainEventsRepository
 import io.micronaut.data.document.tck.repositories.SaleRepository
 import io.micronaut.data.document.tck.repositories.StudentRepository
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Sort
 import io.micronaut.data.mongodb.operations.options.MongoAggregationOptions
 import io.micronaut.data.mongodb.operations.options.MongoFindOptions
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
@@ -53,6 +54,19 @@ import static io.micronaut.data.document.tck.repositories.DocumentRepository.Spe
 class MongoDocumentRepositorySpec extends AbstractDocumentRepositorySpec implements MongoTestPropertyProvider {
 
     MongoClient mongoClient = context.getBean(MongoClient)
+
+    void "test between"() {
+        given:
+            savePersons(["A", "B", "C", "D", "E", "F"])
+        when:
+            def peopleBetween = personRepository.findAllByNameBetween("B", "E").collect { it.name}
+        then:
+            peopleBetween == ["B", "C", "D", "E"]
+        when:
+            def peopleNotBetween = personRepository.findAllByNameNotBetween("B", "E").collect { it.name}
+        then:
+            peopleNotBetween == ["A", "F"]
+    }
 
     void "test id mapping"() {
         given:

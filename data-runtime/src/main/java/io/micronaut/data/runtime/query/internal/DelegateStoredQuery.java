@@ -19,13 +19,14 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.Limit;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.StoredQuery;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -104,23 +105,8 @@ public interface DelegateStoredQuery<E, R> extends StoredQuery<E, R> {
     }
 
     @Override
-    default boolean useNumericPlaceholders() {
-        return getStoredQueryDelegate().useNumericPlaceholders();
-    }
-
-    @Override
     default boolean isDtoProjection() {
         return getStoredQueryDelegate().isDtoProjection();
-    }
-
-    @Override
-    default Optional<Class<?>> getEntityIdentifierType() {
-        return getStoredQueryDelegate().getEntityIdentifierType();
-    }
-
-    @Override
-    default Class<?>[] getArgumentTypes() {
-        return getStoredQueryDelegate().getArgumentTypes();
     }
 
     @Override
@@ -134,18 +120,8 @@ public interface DelegateStoredQuery<E, R> extends StoredQuery<E, R> {
     }
 
     @Override
-    default Set<JoinPath> getJoinFetchPaths() {
-        return getStoredQueryDelegate().getJoinFetchPaths();
-    }
-
-    @Override
     default Set<JoinPath> getJoinPaths() {
         return getStoredQueryDelegate().getJoinPaths();
-    }
-
-    @Override
-    default boolean isSingleResult() {
-        return getStoredQueryDelegate().isSingleResult();
     }
 
     @Override
@@ -179,12 +155,12 @@ public interface DelegateStoredQuery<E, R> extends StoredQuery<E, R> {
     }
 
     @Override
-    default int getLimit() {
-        return getStoredQueryDelegate().getLimit();
+    default Limit getQueryLimit() {
+        return getStoredQueryDelegate().getQueryLimit();
     }
 
     @Override
-    default int getOffset() {
-        return getStoredQueryDelegate().getOffset();
+    default Sort getSort() {
+        return getStoredQueryDelegate().getSort();
     }
 }

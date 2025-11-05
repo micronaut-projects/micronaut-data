@@ -1,7 +1,6 @@
 package io.micronaut.data.jdbc.h2.embeddedNameMapping
 
 import io.micronaut.context.ApplicationContext
-import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.annotation.Embeddable
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
@@ -9,22 +8,18 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.h2.H2DBProperties
 import io.micronaut.data.jdbc.h2.H2TestPropertyProvider
 import io.micronaut.data.model.naming.NamingStrategies
-import io.micronaut.data.model.query.QueryModel
-import io.micronaut.data.model.query.QueryParameter
 import io.micronaut.data.model.query.builder.QueryBuilder
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.repository.CrudRepository
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
+import jakarta.inject.Inject
+import jakarta.persistence.Embedded
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
-import jakarta.inject.Inject
-import jakarta.persistence.Embedded
-
-@MicronautTest
 @H2DBProperties
 class CustomEmbeddedNameMapping extends Specification implements H2TestPropertyProvider {
     @AutoCleanup
@@ -75,8 +70,8 @@ class CustomEmbeddedNameMapping extends Specification implements H2TestPropertyP
 
     void "test build insert"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
-            def res = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, getRuntimePersistentEntity(MyBook))
+            RuntimeCriteriaBuilder builder = new RuntimeCriteriaBuilder()
+            def res = builder.createCriteriaInsert(MyBook).build(new SqlQueryBuilder())
 
         then:
             res.query == 'INSERT INTO "MyBook" ("firstName","lastName","numberAge","id") VALUES (?,?,?,?)'
@@ -84,12 +79,14 @@ class CustomEmbeddedNameMapping extends Specification implements H2TestPropertyP
 
     void "test update"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
-            def entity = getRuntimePersistentEntity(MyBook)
-            def res = encoder.buildUpdate(
-                    QueryModel.from(entity).idEq(new QueryParameter("id")),
-                    ['id', 'author.firstName', 'author.lastName', 'author.detailsIncluded.numberAge']
-            )
+            RuntimeCriteriaBuilder builder = new RuntimeCriteriaBuilder()
+            def query = builder.createCriteriaUpdate(MyBook)
+            query.set('id', builder.parameter(Object))
+            query.set('author.firstName', builder.parameter(Object))
+            query.set('author.lastName', builder.parameter(Object))
+            query.set('author.detailsIncluded.numberAge', builder.parameter(Object))
+            query.where(builder.equal(query.root.id(), builder.parameter(Object)))
+            def res = query.build(new SqlQueryBuilder())
 
         then:
             res.query == 'UPDATE "MyBook" SET "id"=?,"firstName"=?,"lastName"=?,"numberAge"=? WHERE ("id" = ?)'
@@ -104,8 +101,11 @@ class CustomEmbeddedNameMapping extends Specification implements H2TestPropertyP
 
     void "test build query"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
-            def q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, QueryModel.from(getRuntimePersistentEntity(MyBook)).idEq(new QueryParameter("xyz")))
+            RuntimeCriteriaBuilder builder = new RuntimeCriteriaBuilder()
+            def query = builder.createQuery(MyBook)
+            def root = query.from(MyBook)
+            query.where(builder.equal(root.id(), builder.parameter(Object)))
+            def q = query.build(new SqlQueryBuilder())
         then:
             q.query == 'SELECT my_book_."id",my_book_."firstName",my_book_."lastName",my_book_."numberAge" FROM "MyBook" my_book_ WHERE (my_book_."id" = ?)'
     }

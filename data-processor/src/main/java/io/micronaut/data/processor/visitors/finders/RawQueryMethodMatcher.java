@@ -61,11 +61,12 @@ import java.util.regex.Pattern;
  */
 public class RawQueryMethodMatcher implements MethodMatcher {
 
-    private static final Pattern UPDATE_PATTERN = Pattern.compile(".*\\bupdate\\b.*");
+    private static final Pattern UPDATE_PATTERN = Pattern.compile("(?<!['\"])\\bupdate\\b(?!['\"])");
     private static final Pattern FOR_UPDATE_PATTERN = Pattern.compile("for\\s+update");
-    private static final Pattern DELETE_PATTERN = Pattern.compile(".*\\bdelete\\b.*");
-    private static final Pattern INSERT_PATTERN = Pattern.compile(".*\\binsert\\b.*");
-    private static final Pattern RETURNING_PATTERN = Pattern.compile(".*\\breturning\\b.*");
+    private static final Pattern DELETE_PATTERN = Pattern.compile("(?<!['\"])\\bdelete\\b(?!['\"])");
+    private static final Pattern INSERT_PATTERN = Pattern.compile("(?<!['\"])\\binsert\\b(?!['\"])");
+    private static final Pattern RETURNING_PATTERN = Pattern.compile("(?<!['\"])\\breturning\\b(?!['\"])");
+    private static final Pattern SQL_COMMENT_PATTERN = Pattern.compile("(--[^\\r\\n]*)|(/\\*[\\s\\S]*?\\*/)", Pattern.MULTILINE);
 
     private static final Pattern VARIABLE_PATTERN = Pattern.compile("([^:\\\\]*)((?<![:]):([a-zA-Z0-9]+))([^:]*)");
     private static final String COLON = ":";
@@ -156,9 +157,9 @@ public class RawQueryMethodMatcher implements MethodMatcher {
                     buildRawQuery(matchContext, methodMatchInfo, entityParameter, entitiesParameter, operationType, implicitQueries);
 
                     if (entityParameter != null) {
-                        methodMatchInfo.addParameterRole(TypeRole.ENTITY, entityParameter.getName());
+                        methodMatchInfo.addParameterRole(entityParameter, TypeRole.ENTITY);
                     } else if (entitiesParameter != null) {
-                        methodMatchInfo.addParameterRole(TypeRole.ENTITIES, entitiesParameter.getName());
+                        methodMatchInfo.addParameterRole(entitiesParameter, TypeRole.ENTITIES);
                     }
                     return methodMatchInfo;
                 }
@@ -176,12 +177,18 @@ public class RawQueryMethodMatcher implements MethodMatcher {
 
     private DataMethod.OperationType findOperationType(String methodName, String query, boolean readOnly) {
         query = query.trim().toLowerCase(Locale.ENGLISH);
+        query = SQL_COMMENT_PATTERN.matcher(query).replaceAll("").trim();
 
         if (DELETE_PATTERN.matcher(query).find()) {
             if (RETURNING_PATTERN.matcher(query).find()) {
                 return DataMethod.OperationType.DELETE_RETURNING;
             }
             return DataMethod.OperationType.DELETE;
+        } else if (INSERT_PATTERN.matcher(query).find()) {
+            if (RETURNING_PATTERN.matcher(query).find()) {
+                return DataMethod.OperationType.INSERT_RETURNING;
+            }
+            return DataMethod.OperationType.INSERT;
         } else if (UPDATE_PATTERN.matcher(query).find()) {
             if (RETURNING_PATTERN.matcher(query).find()) {
                 return DataMethod.OperationType.UPDATE_RETURNING;
@@ -192,11 +199,6 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             if (!FOR_UPDATE_PATTERN.matcher(query).find()) {
                 return DataMethod.OperationType.UPDATE;
             }
-        } else if (INSERT_PATTERN.matcher(query).find()) {
-            if (RETURNING_PATTERN.matcher(query).find()) {
-                return DataMethod.OperationType.INSERT_RETURNING;
-            }
-            return DataMethod.OperationType.INSERT;
         }
         if (readOnly) {
             return DataMethod.OperationType.QUERY;
@@ -338,7 +340,7 @@ public class RawQueryMethodMatcher implements MethodMatcher {
             .filter(p -> p.stringValue(Parameter.class).orElse(p.getName()).equals(name))
             .findFirst();
         if (element.isPresent()) {
-            PersistentPropertyPath propertyPath = matchContext.getRootEntity().getPropertyPath(name);
+            PersistentPropertyPath propertyPath = matchContext.getRootEntity() == null ? null : matchContext.getRootEntity().getPropertyPath(name);
             bindingContext = bindingContext
                 .incomingMethodParameterProperty(propertyPath)
                 .outgoingQueryParameterProperty(propertyPath);

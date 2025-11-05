@@ -30,8 +30,7 @@ class JoinPathSpec extends AbstractDataSpec {
         def repository = buildRepository('test.MyInterface', """
 import io.micronaut.data.tck.entities.*;
 
-@Repository
-@RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
+@io.micronaut.data.jdbc.annotation.JdbcRepository(dialect = io.micronaut.data.model.query.builder.sql.Dialect.ANSI)
 @io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<User, Long> {
 
@@ -44,11 +43,11 @@ class Authority {
 
     @Id
     private String name12345;
-    
+
     public String getName12345() {
         return name12345;
     }
-    
+
     public void setName12345(String name12345) {
         this.name12345 = name12345;
     }
@@ -63,18 +62,18 @@ class User {
     public Long getId() {
         return id;
     }
-    
+
     public void setId(Long id) {
         this.id = id;
     }
 
     @Relation(Relation.Kind.ONE_TO_MANY)
     private Set<Authority> authorities = new HashSet<>();
-    
+
     public Set<Authority> getAuthorities() {
         return authorities;
     }
-    
+
     public void setAuthorities(Set<Authority> authorities) {
         this.authorities = authorities;
     }
@@ -94,7 +93,6 @@ class User {
 import io.micronaut.data.tck.entities.*;
 
 @Repository
-@io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<City, Long> {
 
     $returnType $method($arguments);
@@ -124,9 +122,7 @@ interface MyInterface extends GenericRepository<City, Long> {
         def repository = buildRepository('test.MyInterface', """
 import io.micronaut.data.tck.entities.*;
 
-@Repository
-@RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
-@io.micronaut.context.annotation.Executable
+@io.micronaut.data.jdbc.annotation.JdbcRepository(dialect = io.micronaut.data.model.query.builder.sql.Dialect.ANSI)
 interface MyInterface extends GenericRepository<Author, Long> {
 
     $returnType $method($arguments);
@@ -155,9 +151,7 @@ interface MyInterface extends GenericRepository<Author, Long> {
         def repository = buildRepository('test.MyInterface', """
 import io.micronaut.data.tck.entities.*;
 
-@Repository
-@RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
-@io.micronaut.context.annotation.Executable
+@io.micronaut.data.jdbc.annotation.JdbcRepository(dialect = io.micronaut.data.model.query.builder.sql.Dialect.ANSI)
 interface MyInterface extends GenericRepository<CountryRegion, Long> {
 
     $returnType $method($arguments);
@@ -192,9 +186,7 @@ interface MyInterface extends GenericRepository<CountryRegion, Long> {
         }
         def repository = buildRepository('test.MyInterface', """
 import io.micronaut.data.tck.entities.*;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
-@Repository
-@RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
+@io.micronaut.data.jdbc.annotation.JdbcRepository(dialect = io.micronaut.data.model.query.builder.sql.Dialect.ANSI)
 @io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<City, Long> {
 
@@ -227,12 +219,9 @@ interface MyInterface extends GenericRepository<City, Long> {
         given:
         def repository = buildRepository('test.MyInterface', """
 import io.micronaut.data.tck.entities.*;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import java.util.List;
 
-@Repository
-@RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
-@io.micronaut.context.annotation.Executable
+@io.micronaut.data.jdbc.annotation.JdbcRepository(dialect = io.micronaut.data.model.query.builder.sql.Dialect.ANSI)
 interface MyInterface extends GenericRepository<City, Long> {
 
     @Join(value = "countryRegion", alias = "r_")
@@ -267,10 +256,7 @@ interface MyInterface extends GenericRepository<City, Long> {
         }
         def repository = buildRepository('test.MyInterface', """
 import io.micronaut.data.tck.entities.*;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
-@Repository
-@RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
-@io.micronaut.context.annotation.Executable
+@io.micronaut.data.jdbc.annotation.JdbcRepository(dialect = io.micronaut.data.model.query.builder.sql.Dialect.ANSI)
 interface MyInterface extends GenericRepository<City, Long> {
 
     $joinAnn
@@ -282,22 +268,19 @@ interface MyInterface extends GenericRepository<City, Long> {
         def execMethod = repository.findPossibleMethods(method)
                 .findFirst()
                 .get()
-        def ann = execMethod
-                .synthesize(Query)
-        String columnNames = columns(City, 'city_')
-        String queryStr = ann.value()
+        String queryStr = execMethod.synthesize(Query).value()
 
         expect:
-        queryStr.startsWith("SELECT ${columnNames}")
+        queryStr.startsWith("SELECT ${selectColumns}")
         queryStr.endsWith(whereClause)
         queryStr.contains('INNER JOIN')
 
         where:
-        method                           | joinPaths                 | whereClause
-        "findByCountryRegionName"        | ["countryRegion.country"] | "WHERE (city_country_region_.\"name\" = ?)"
-        "findByCountryRegionCountryName" | []                        | "WHERE (city_country_region_country_.\"name\" = ?)"
-        "findByCountryRegionName"        | []                        | "WHERE (city_country_region_.\"name\" = ?)"
-        "findByCountryRegionName"        | ["countryRegion"]         | "WHERE (city_country_region_.\"name\" = ?)"
+        method                           | joinPaths                 | whereClause                                       | selectColumns
+        "findByCountryRegionName"        | ["countryRegion.country"] | 'WHERE (city_country_region_."name" = ?)'         | 'city_."id",city_."C_NAME",city_."country_region_id",city_country_region_country_."name" AS country_region_country_name,city_country_region_."name" AS country_region_name,city_country_region_."countryId" AS country_region_countryId'
+        "findByCountryRegionCountryName" | []                        | 'WHERE (city_country_region_country_."name" = ?)' | 'city_."id",city_."C_NAME",city_."country_region_id"'
+        "findByCountryRegionName"        | []                        | 'WHERE (city_country_region_."name" = ?)'         | 'city_."id",city_."C_NAME",city_."country_region_id"'
+        "findByCountryRegionName"        | ["countryRegion"]         | 'WHERE (city_country_region_."name" = ?)'         | 'city_."id",city_."C_NAME",city_."country_region_id",city_country_region_."name" AS country_region_name,city_country_region_."countryId" AS country_region_countryId'
 
     }
 
@@ -314,9 +297,7 @@ interface MyInterface extends GenericRepository<City, Long> {
         }
         def repository = buildRepository('test.MyInterface', """
 import io.micronaut.data.tck.entities.*;
-@Repository
-@RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
-@io.micronaut.context.annotation.Executable
+@io.micronaut.data.jdbc.annotation.JdbcRepository(dialect = io.micronaut.data.model.query.builder.sql.Dialect.ANSI)
 interface MyInterface extends GenericRepository<City, Long> {
 
     $joinAnn
@@ -328,25 +309,23 @@ interface MyInterface extends GenericRepository<City, Long> {
         def execMethod = repository.findPossibleMethods(method)
                 .findFirst()
                 .get()
-        def ann = execMethod
-                .synthesize(Query)
-        String columnNames = columns(City, 'city_')
-        String queryStr = ann.value()
+
+        String queryStr = execMethod.synthesize(Query).value()
 
         expect:
-        queryStr.startsWith("SELECT ${columnNames}")
+        queryStr.startsWith("SELECT ${selectColumns}")
         queryStr.contains('INNER JOIN')
         queryStr.count("INNER JOIN") == joinCount
         queryStr.contains(joinExpression)
 
         where:
-        method                           | joinCount | joinPaths                                  | joinExpression
-        "findByCountryRegionCountryName" | 2         | ["countryRegion"]                          | 'ON city_country_region_."countryId"=city_country_region_country_."uuid"'
-        "findByCountryRegionCountryName" | 2         | ["countryRegion", "countryRegion.country"] | 'ON city_country_region_."countryId"=city_country_region_country_."uuid"'
-        "findByCountryRegionName"        | 2         | ["countryRegion.country"]                  | 'ON city_country_region_."countryId"=city_country_region_country_."uuid"'
-        "findByCountryRegionCountryName" | 2         | []                                         | 'ON city_country_region_."countryId"=city_country_region_country_."uuid"'
-        "findByCountryRegionName"        | 1         | []                                         | 'ON city_."country_region_id"=city_country_region_."id"'
-        "findByCountryRegionName"        | 1         | ["countryRegion"]                          | 'ON city_."country_region_id"=city_country_region_."id"'
+        method                           | joinCount | joinPaths                                  | joinExpression                                                              | selectColumns
+        "findByCountryRegionCountryName" | 2         | ["countryRegion"]                          | 'ON city_country_region_."countryId"=city_country_region_country_."uuid"'   | 'city_."id",city_."C_NAME",city_."country_region_id",city_country_region_."name" AS country_region_name,city_country_region_."countryId" AS country_region_countryId'
+        "findByCountryRegionCountryName" | 2         | ["countryRegion", "countryRegion.country"] | 'ON city_country_region_."countryId"=city_country_region_country_."uuid"'   | 'city_."id",city_."C_NAME",city_."country_region_id",city_country_region_country_."name" AS country_region_country_name,city_country_region_."name" AS country_region_name,city_country_region_."countryId" AS country_region_countryId'
+        "findByCountryRegionName"        | 2         | ["countryRegion.country"]                  | 'ON city_country_region_."countryId"=city_country_region_country_."uuid"'   | 'city_."id",city_."C_NAME",city_."country_region_id",city_country_region_country_."name" AS country_region_country_name,city_country_region_."name" AS country_region_name,city_country_region_."countryId" AS country_region_countryId'
+        "findByCountryRegionCountryName" | 2         | []                                         | 'ON city_country_region_."countryId"=city_country_region_country_."uuid"'   | 'city_."id",city_."C_NAME",city_."country_region_id"'
+        "findByCountryRegionName"        | 1         | []                                         | 'ON city_."country_region_id"=city_country_region_."id"'                    | 'city_."id",city_."C_NAME",city_."country_region_id"'
+        "findByCountryRegionName"        | 1         | ["countryRegion"]                          | 'ON city_."country_region_id"=city_country_region_."id"'                    | 'city_."id",city_."C_NAME",city_."country_region_id",city_country_region_."name" AS country_region_name,city_country_region_."countryId" AS country_region_countryId'
 
     }
 
@@ -364,7 +343,6 @@ interface MyInterface extends GenericRepository<City, Long> {
 import io.micronaut.data.tck.entities.*;
 
 @Repository
-@io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<City, Long> {
 
     @Join("$joinPath")
@@ -394,9 +372,7 @@ interface MyInterface extends GenericRepository<City, Long> {
         def repository = buildRepository('test.MyInterface', """
 import io.micronaut.data.tck.entities.*;
 
-@Repository
-@RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
-@io.micronaut.context.annotation.Executable
+@io.micronaut.data.jdbc.annotation.JdbcRepository(dialect = io.micronaut.data.model.query.builder.sql.Dialect.ANSI)
 interface MyInterface extends io.micronaut.data.tck.repositories.ShelfRepository {
 
 }

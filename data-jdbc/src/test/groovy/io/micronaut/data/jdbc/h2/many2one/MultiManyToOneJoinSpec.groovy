@@ -10,20 +10,16 @@ import io.micronaut.data.jdbc.h2.H2DBProperties
 import io.micronaut.data.jdbc.h2.H2TestPropertyProvider
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
-import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
-import jakarta.inject.Inject
 
 import jakarta.persistence.ManyToOne
 
 import static io.micronaut.data.model.query.builder.sql.Dialect.H2
 
-@MicronautTest
 @H2DBProperties
 class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProvider {
     @AutoCleanup
@@ -31,24 +27,19 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
     ApplicationContext applicationContext = ApplicationContext.run(getProperties())
 
     @Shared
-    @Inject
     RefARepository refARepository = applicationContext.getBean(RefARepository)
 
     @Shared
-    @Inject
     CustomBookRepository customBookRepository = applicationContext.getBean(CustomBookRepository)
 
     @Shared
-    @Inject
     UserGroupMembershipRepository userGroupMembershipRepository = applicationContext.getBean(UserGroupMembershipRepository)
 
     @Shared
-    @Inject
-    MyEntityRepository myEntityRepository
+    MyEntityRepository myEntityRepository = applicationContext.getBean(MyEntityRepository)
 
     @Shared
-    @Inject
-    MyOtherRepository myOtherRepository
+    MyOtherRepository myOtherRepository = applicationContext.getBean(MyOtherRepository)
 
     void 'test many-to-one hierarchy'() {
         given:
@@ -79,6 +70,8 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
 
     void "test join via non identity join column"() {
         given:
+        def bookType = new BookType(id: 1, name: "Fantasy")
+        customBookRepository.insertBookType(bookType.id, bookType.name)
         def customAuthor = new CustomAuthor()
         customAuthor.name = "author1"
         customAuthor.id2 = 20
@@ -86,14 +79,28 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
         customBook.title = "book1"
         customBook.pages = 100
         customBook.author = customAuthor
+        customBook.type = bookType
         customBookRepository.save(customBook)
         when:
         def books = customBookRepository.findAll()
         then:
         books.size() == 1
         books[0].author.id2 == 20
+        when:"Read and update book title"
+        customBook = customBookRepository.findById(customBook.id).orElse(null)
+        customBook.type
+        customBook.type.id == 1
+        // Since there is no join, only id is populated
+        !customBook.type.name
+        customBook.title = "book1-updated"
+        customBookRepository.update(customBook)
+        customBook = customBookRepository.findById(customBook.id).orElse(null)
+        then:"Should update without errors"
+        noExceptionThrown()
+        customBook.title == "book1-updated"
         cleanup:
         customBookRepository.deleteAll()
+        customBookRepository.deleteBookType(bookType.id)
     }
 
     void "test many to one with two properties starting with same prefix"() {
@@ -143,9 +150,10 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
         optFound.get().other
         optFound.get().other.lid == myOther.lid
     }
+
 }
 
-@JdbcRepository(dialect = Dialect.H2)
+@JdbcRepository(dialect = H2)
 interface RefARepository extends CrudRepository<RefA, Long> {
 
     @Join(value = "refB", type = Join.Type.LEFT_FETCH)
@@ -188,9 +196,15 @@ class RefC {
     String name
 }
 
-@JdbcRepository(dialect = Dialect.H2)
+@JdbcRepository(dialect = H2)
 @Join("author")
 interface CustomBookRepository extends CrudRepository<CustomBook, Long> {
+
+    @Query("INSERT INTO custbooktype (id, name) VALUES (:id, :name)")
+    void insertBookType(Long id, String name)
+
+    @Query("DELETE FROM custbooktype WHERE id = :id")
+    void deleteBookType(Long id)
 }
 
 @MappedEntity(value = "custauthor1")
@@ -209,6 +223,14 @@ class CustomAuthor {
     void setName(String name) { this.name = name }
 }
 
+@MappedEntity("custbooktype")
+class BookType {
+    @Id
+    Long id
+
+    String name
+}
+
 @MappedEntity(value = "custbook1")
 class CustomBook {
     @GeneratedValue
@@ -220,6 +242,9 @@ class CustomBook {
     @JoinColumn(name = "author_id2", referencedColumnName = "id2")
     private CustomAuthor author
 
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private BookType type
+
     Long getId() { return id }
     void setId(Long id) { this.id = id }
     String getTitle() { return title }
@@ -228,6 +253,8 @@ class CustomBook {
     void setPages(int pages) { this.pages = pages }
     CustomAuthor getAuthor() { return author }
     void setAuthor(CustomAuthor author) { this.author = author }
+    BookType getType() { return type }
+    void setType(BookType type) { this.type = type }
 }
 
 @MappedEntity(value = "ugm", alias = "ugm_")
@@ -288,7 +315,7 @@ class User {
 
     String login
 }
-@JdbcRepository(dialect = Dialect.H2)
+@JdbcRepository(dialect = H2)
 interface UserGroupMembershipRepository extends CrudRepository<UserGroupMembership, Long> {
 
     List<UserGroupMembership> findAllByUserLogin(String login)
@@ -307,7 +334,7 @@ class MyEntity {
     final MyOther other
 
     MyEntity(long lid, @Nullable MyOther other) {
-        this.lid = lid;
+        this.lid = lid
         this.other = other
     }
 }

@@ -88,7 +88,7 @@ public final class CriteriaUtils {
 
     public static IExpression<String> requireNumericExpression(Expression<?> exp) {
         IExpression expression = requireIExpression(exp);
-        if (expression.getExpressionType().isNumeric()) {
+        if (expression instanceof ParameterExpression ||  expression.getExpressionType().isNumeric()) {
             return expression;
         }
         throw new IllegalStateException("Expected a numeric expression! Got: " + expression.getExpressionType().getName());
@@ -96,7 +96,7 @@ public final class CriteriaUtils {
 
     public static IExpression<String> requireStringExpression(Expression<?> exp) {
         IExpression expression = requireIExpression(exp);
-        if (expression.getExpressionType().isTextual()) {
+        if (expression instanceof ParameterExpression || expression.getExpressionType().isTextual()) {
             return expression;
         }
         throw new IllegalStateException("Expected a string expression! Got: " + expression.getExpressionType().getName());
@@ -104,7 +104,7 @@ public final class CriteriaUtils {
 
     public static <T> Expression<T> requireComparableExpression(Expression<T> exp) {
         IExpression expression = requireIExpression(exp);
-        if (expression.getExpressionType().isComparable()) {
+        if (expression instanceof ParameterExpression || expression.getExpressionType().isComparable()) {
             return expression;
         }
         throw new IllegalStateException("Expected a comparable expression! Got: " + expression.getExpressionType().getName());
@@ -112,7 +112,7 @@ public final class CriteriaUtils {
 
     public static IExpression<Boolean> requireBoolExpression(Expression<?> exp) {
         IExpression expression = requireIExpression(exp);
-        if (expression.getExpressionType().isBoolean()) {
+        if (expression instanceof ParameterExpression ||  expression.getExpressionType().isBoolean()) {
             return expression;
         }
         throw new IllegalStateException("Expected a boolean expression! Got: " + expression.getExpressionType().getName());
@@ -182,31 +182,36 @@ public final class CriteriaUtils {
     }
 
     private static void extractPredicateParameters(Expression<?> predicate, Set<ParameterExpression<?>> parameters) {
-        if (predicate instanceof LiteralExpression<?>) {
-            return;
-        } else if (predicate instanceof BinaryPredicate binaryPredicate) {
-            if (binaryPredicate.getLeftExpression() instanceof ParameterExpression<?> parameterExpression) {
-                parameters.add(parameterExpression);
+        switch (predicate) {
+            case LiteralExpression<?> ignored -> {
             }
-            if (binaryPredicate.getRightExpression() instanceof ParameterExpression<?> parameterExpression) {
-                parameters.add(parameterExpression);
-            }
-        } else if (predicate instanceof InPredicate<?> pp) {
-            for (Expression<?> expression : pp.getValues()) {
-                if (expression instanceof ParameterExpression<?> parameterExpression) {
+            case BinaryPredicate binaryPredicate -> {
+                if (binaryPredicate.getLeftExpression() instanceof ParameterExpression<?> parameterExpression) {
+                    parameters.add(parameterExpression);
+                }
+                if (binaryPredicate.getRightExpression() instanceof ParameterExpression<?> parameterExpression) {
                     parameters.add(parameterExpression);
                 }
             }
-        } else if (predicate instanceof ConjunctionPredicate conjunctionPredicate) {
-            for (IExpression<Boolean> pred : conjunctionPredicate.getPredicates()) {
-                extractPredicateParameters(pred, parameters);
+            case InPredicate<?> pp -> {
+                for (Expression<?> expression : pp.getValues()) {
+                    if (expression instanceof ParameterExpression<?> parameterExpression) {
+                        parameters.add(parameterExpression);
+                    }
+                }
             }
-        } else if (predicate instanceof DisjunctionPredicate disjunctionPredicate) {
-            for (IExpression<Boolean> pred : disjunctionPredicate.getPredicates()) {
-                extractPredicateParameters(pred, parameters);
+            case ConjunctionPredicate conjunctionPredicate -> {
+                for (IExpression<Boolean> pred : conjunctionPredicate.getPredicates()) {
+                    extractPredicateParameters(pred, parameters);
+                }
             }
-        } else {
-            throw new IllegalStateException("Unsupported predicate type: " + predicate.getClass().getSimpleName());
+            case DisjunctionPredicate disjunctionPredicate -> {
+                for (IExpression<Boolean> pred : disjunctionPredicate.getPredicates()) {
+                    extractPredicateParameters(pred, parameters);
+                }
+            }
+            default ->
+                throw new IllegalStateException("Unsupported predicate type: " + predicate.getClass().getSimpleName());
         }
     }
 

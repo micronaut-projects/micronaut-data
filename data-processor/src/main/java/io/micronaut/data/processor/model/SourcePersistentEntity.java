@@ -187,6 +187,16 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
         return null;
     }
 
+    @Override
+    public SourcePersistentProperty getPropertyByNameIgnoreCase(String name) {
+        for (SourcePersistentProperty property : allPersistentProperties.values()) {
+            if (property.getName().equalsIgnoreCase(name)) {
+                return property;
+            }
+        }
+        return null;
+    }
+
     @Nullable
     @Override
     public SourcePersistentProperty getIdentityByName(String name) {

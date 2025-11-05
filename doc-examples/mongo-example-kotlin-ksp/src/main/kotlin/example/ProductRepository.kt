@@ -27,14 +27,14 @@ interface ProductRepository : CrudRepository<Product, ObjectId>, JpaSpecificatio
 
     // tag::async[]
     @Join("manufacturer")
-    fun findByNameRegex(str: String): CompletableFuture<Product>
+    fun findFirstByNameRegex(str: String): CompletableFuture<Product>
 
     fun countByManufacturerName(name: String?): CompletableFuture<Long>
     // end::async[]
 
     // tag::reactive[]
     @Join("manufacturer")
-    fun queryByNameRegex(str: String): Maybe<Product>
+    fun queryFirstByNameRegex(str: String): Maybe<Product>
 
     fun countDistinctByManufacturerName(name: String?): Single<Long>
     // end::reactive[]

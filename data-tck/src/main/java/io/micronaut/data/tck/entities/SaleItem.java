@@ -30,7 +30,6 @@ public class SaleItem {
     private Long id;
 
     @Relation(value = Relation.Kind.MANY_TO_ONE, cascade = Relation.Cascade.ALL)
-    @MappedProperty("fk_sale_id")
     @JsonBackReference // To avoid infinite recursion when reading Sale from JSON
     private Sale sale;
 

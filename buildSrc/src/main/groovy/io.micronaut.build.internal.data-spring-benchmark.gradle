@@ -5,7 +5,7 @@ plugins {
 }
 
 springBoot {
-    mainClassName = 'example.Application'
+    mainClass= 'example.Application'
 }
 
 dependencyManagement {

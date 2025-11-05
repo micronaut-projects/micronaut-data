@@ -59,6 +59,7 @@ import io.micronaut.data.intercept.async.FindAllAsyncInterceptor;
 import io.micronaut.data.intercept.async.FindByIdAsyncInterceptor;
 import io.micronaut.data.intercept.async.FindOneAsyncInterceptor;
 import io.micronaut.data.intercept.async.FindPageAsyncInterceptor;
+import io.micronaut.data.intercept.async.FindCursoredAsyncPageInterceptor;
 import io.micronaut.data.intercept.async.FindSliceAsyncInterceptor;
 import io.micronaut.data.intercept.async.ProcedureReturningManyAsyncInterceptor;
 import io.micronaut.data.intercept.async.ProcedureReturningOneAsyncInterceptor;
@@ -76,6 +77,7 @@ import io.micronaut.data.intercept.reactive.FindAllReactiveInterceptor;
 import io.micronaut.data.intercept.reactive.FindByIdReactiveInterceptor;
 import io.micronaut.data.intercept.reactive.FindOneReactiveInterceptor;
 import io.micronaut.data.intercept.reactive.FindPageReactiveInterceptor;
+import io.micronaut.data.intercept.reactive.FindCursoredReactivePageInterceptor;
 import io.micronaut.data.intercept.reactive.FindSliceReactiveInterceptor;
 import io.micronaut.data.intercept.reactive.ProcedureReactiveInterceptor;
 import io.micronaut.data.intercept.reactive.SaveAllReactiveInterceptor;
@@ -370,6 +372,8 @@ public interface FindersUtils {
             return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindSliceInterceptor.class);
         } else if (isContainer(returnType, Iterable.class)) {
             return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindAllInterceptor.class);
+        } else if (returnType.isArray()) {
+            return typeAndInterceptorEntry(matchContext, returnType.fromArray(), FindAllInterceptor.class);
         } else if (isContainer(returnType, Publisher.class)) {
             return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindAllReactiveInterceptor.class);
         } else {
@@ -380,7 +384,9 @@ public interface FindersUtils {
     static FindersUtils.InterceptorMatch resolveReactiveFindInterceptor(
         @NonNull MethodMatchContext matchContext, @NonNull ClassElement returnType, @NonNull ClassElement reactiveType) {
         ClassElement firstTypeArgument = reactiveType.getFirstTypeArgument().orElse(null);
-        if (isPage(matchContext, reactiveType)) {
+        if (isCursoredPage(matchContext, reactiveType)) {
+            return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindCursoredReactivePageInterceptor.class);
+        } else if (isPage(matchContext, reactiveType)) {
             return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindPageReactiveInterceptor.class);
         } else if (isSlice(matchContext, reactiveType)) {
             return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindSliceReactiveInterceptor.class);
@@ -394,7 +400,9 @@ public interface FindersUtils {
     static FindersUtils.InterceptorMatch resolveAsyncFindInterceptor(
         @NonNull MethodMatchContext matchContext, @NonNull ClassElement asyncType) {
         ClassElement firstTypeArgument = asyncType.getFirstTypeArgument().orElse(null);
-        if (isPage(matchContext, asyncType)) {
+        if (isCursoredPage(matchContext, asyncType)) {
+            return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindCursoredAsyncPageInterceptor.class);
+        } else if (isPage(matchContext, asyncType)) {
             return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindPageAsyncInterceptor.class);
         } else if (isSlice(matchContext, asyncType)) {
             return typeAndInterceptorEntry(matchContext, firstTypeArgument, FindSliceAsyncInterceptor.class);

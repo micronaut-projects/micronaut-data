@@ -25,14 +25,10 @@ import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.metamodel.Bindable;
-import jakarta.persistence.metamodel.MapAttribute;
-import jakarta.persistence.metamodel.PluralAttribute;
-import jakarta.persistence.metamodel.SingularAttribute;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -107,28 +103,13 @@ public class DefaultPersistentPropertyPath<T> implements PersistentPropertyPath<
     }
 
     @Override
-    public <E, C extends Collection<E>> Expression<C> get(PluralAttribute<T, C, E> collection) {
-        throw notSupportedOperation();
-    }
-
-    @Override
-    public <K, V, M extends Map<K, V>> Expression<M> get(MapAttribute<T, K, V> map) {
-        throw notSupportedOperation();
-    }
-
-    @Override
-    public <Y> Path<Y> get(SingularAttribute<? super T, Y> attribute) {
-        throw notSupportedOperation();
-    }
-
-    @Override
     public Expression<Class<? extends T>> type() {
         throw notSupportedOperation();
     }
 
     @Override
-    public <Y> Path<Y> get(String attributeName) {
-        throw notSupportedOperation();
+    public <Y> PersistentPropertyPath<Y> get(String attributeName) {
+        throw new IllegalArgumentException("Property path doesn't support get operation: " + propertyPath);
     }
 
     @Override

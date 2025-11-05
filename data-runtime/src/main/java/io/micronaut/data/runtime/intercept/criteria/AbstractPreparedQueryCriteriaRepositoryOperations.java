@@ -18,10 +18,9 @@ package io.micronaut.data.runtime.intercept.criteria;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
-import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
-import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQueryBuilder;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
@@ -40,10 +39,6 @@ import jakarta.persistence.criteria.CriteriaUpdate;
 import jakarta.persistence.criteria.Selection;
 
 import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * The abstract criteria operation.
@@ -133,7 +128,7 @@ public abstract class AbstractPreparedQueryCriteriaRepositoryOperations {
     private <E, T> StoredQuery<E, T> buildFind(CriteriaQuery<T> criteriaQuery,
                                                boolean isSingle) {
 
-        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(context, queryBuilder);
+        QueryResult queryResult = ((PersistentEntityCriteriaQueryBuilder) criteriaQuery).build(context, queryBuilder);
         Collection<JoinPath> joinPaths = queryResult.getJoinPaths();
         Selection<?> selection = ((AbstractPersistentEntityCriteriaQuery<?>) criteriaQuery).getSelection();
         boolean isCompoundSelection = selection != null && selection.isCompoundSelection();
@@ -146,34 +141,22 @@ public abstract class AbstractPreparedQueryCriteriaRepositoryOperations {
     }
 
     private <E> StoredQuery<E, ?> buildExists(CriteriaQuery<?> criteriaQuery) {
-        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(context, queryBuilder);
+        QueryResult queryResult = ((PersistentEntityCriteriaQueryBuilder) criteriaQuery).build(context, queryBuilder);
 
         return QueryResultStoredQuery.single(StoredQuery.OperationType.EXISTS, context.getName(), context.getAnnotationMetadata(),
             queryResult, (Class<E>) entityRoot);
     }
 
     private <E> StoredQuery<E, ?> buildUpdateAll(CriteriaUpdate<E> criteriaUpdate) {
-        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaUpdate).buildQuery(context, queryBuilder);
+        QueryResult queryResult = ((PersistentEntityCriteriaQueryBuilder) criteriaUpdate).build(context, queryBuilder);
         return QueryResultStoredQuery.single(StoredQuery.OperationType.UPDATE, context.getName(),
             context.getAnnotationMetadata(), queryResult, (Class<E>) criteriaUpdate.getRoot().getJavaType());
     }
 
     private <E> StoredQuery<E, ?> buildDeleteAll(CriteriaDelete<E> criteriaDelete) {
-        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaDelete).buildQuery(context, queryBuilder);
+        QueryResult queryResult = ((PersistentEntityCriteriaQueryBuilder) criteriaDelete).build(context, queryBuilder);
         return QueryResultStoredQuery.single(StoredQuery.OperationType.DELETE, context.getName(),
             context.getAnnotationMetadata(), queryResult, (Class<E>) criteriaDelete.getRoot().getJavaType());
-    }
-
-    private Set<JoinPath> mergeJoinPaths(Collection<JoinPath> joinPaths, Collection<JoinPath> additionalJoinPaths) {
-        Set<JoinPath> resultPaths = CollectionUtils.newHashSet(joinPaths.size() + additionalJoinPaths.size());
-        if (CollectionUtils.isNotEmpty(joinPaths)) {
-            resultPaths.addAll(joinPaths);
-        }
-        if (CollectionUtils.isNotEmpty(additionalJoinPaths)) {
-            Map<String, JoinPath> existingPathsByPath = resultPaths.stream().collect(Collectors.toMap(JoinPath::getPath, Function.identity()));
-            resultPaths.addAll(additionalJoinPaths.stream().filter(jp -> !existingPathsByPath.containsKey(jp.getPath())).collect(Collectors.toSet()));
-        }
-        return resultPaths;
     }
 
 }

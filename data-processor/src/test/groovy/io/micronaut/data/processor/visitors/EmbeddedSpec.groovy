@@ -22,7 +22,6 @@ class EmbeddedSpec extends AbstractDataSpec {
     void "test compile entity with inner class as embedded key"() {
         given:
         def repository = buildRepository('test.OwnerPetRepository', """
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
 import io.micronaut.core.annotation.Creator;
 import jakarta.persistence.Column;
@@ -180,9 +179,7 @@ class Pet {
     }
 }
 
-@Repository
-@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class)
-@io.micronaut.context.annotation.Executable
+@io.micronaut.data.jdbc.annotation.JdbcRepository(dialect = io.micronaut.data.model.query.builder.sql.Dialect.ANSI)
 interface OwnerPetRepository extends CrudRepository<OwnerPet, OwnerPet.InnerOwnerPetKey> {
 }
 
@@ -196,7 +193,6 @@ interface OwnerPetRepository extends CrudRepository<OwnerPet, OwnerPet.InnerOwne
     void "test compile embedded id count query"() {
         given:
         def repository = buildRepository('test.LikeRepository', """
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
 @javax.persistence.Entity
 @javax.persistence.Table(name = "likes")
@@ -234,9 +230,7 @@ class LikeId {
     }
 }
 
-@Repository
-@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class)
-@io.micronaut.context.annotation.Executable
+@io.micronaut.data.jdbc.annotation.JdbcRepository(dialect = io.micronaut.data.model.query.builder.sql.Dialect.ANSI)
 interface LikeRepository extends CrudRepository<Like, LikeId> {
     long countByLikeIdImageIdentifier(UUID likeIdImageIdentifier);
 }
@@ -253,7 +247,6 @@ interface LikeRepository extends CrudRepository<Like, LikeId> {
     void "test jdbc compile embedded id count query"() {
         given:
         def repository = buildRepository('test.LikeRepository', """
-import io.micronaut.data.model.query.builder.sql.Dialect;import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
 @javax.persistence.Entity
 @javax.persistence.Table(name = "likes")
@@ -291,8 +284,7 @@ class LikeId {
     }
 }
 
-@io.micronaut.data.jdbc.annotation.JdbcRepository(dialect = Dialect.ANSI)
-@io.micronaut.context.annotation.Executable
+@io.micronaut.data.jdbc.annotation.JdbcRepository(dialect = io.micronaut.data.model.query.builder.sql.Dialect.ANSI)
 interface LikeRepository extends CrudRepository<Like, LikeId> {
     long countByLikeIdImageIdentifier(UUID likeIdImageIdentifier);
 }

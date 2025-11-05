@@ -21,10 +21,12 @@ public interface ElementRowRepository extends CrudRepository<ElementRow, ObjectI
     ElementCountResponse customAggregateCount(long eventId, String rowState);
 
     @MongoAggregateQuery("""
+
         [{ $match: {$and: [{ eventId: :eventId}, {rowState: :rowState}] } },
         { $group: { _id: '$subType', count: { $sum: 1 }, total: { $sum: 1 } } },
         { $group: { _id: null, segregatedCount: { $push: { k: '$_id', v: '$count'} }, totalCount: { $sum: '$total'}} },
         { $project: { _id: 0, segregatedCount: { $arrayToObject: '$segregatedCount'}, totalCount: 1} } ]
+
         """)
     @ParameterExpression(name = "eventId", expression = "#{customDto.eventId}")
     @ParameterExpression(name = "rowState", expression = "#{customDto.rowState}")

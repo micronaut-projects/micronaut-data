@@ -31,14 +31,19 @@ class PostgresSequenceDefaultSpec extends Specification implements PostgresTestP
     @Inject
     UserRepository userRepository
 
+    @Override
+    List<String> packages() {
+        return List.of("io.micronaut.data.jdbc.postgres")
+    }
+
     void setup() {
         connection.prepareStatement('''
-drop sequence if exists "user_seq";
-drop table if exists "user_";
-create sequence "user_seq" increment by 1;
-create table "user_"
+drop sequence if exists "security"."user_seq";
+drop table if exists "security"."user_";
+create sequence "security"."user_seq" increment by 1;
+create table "security"."user_"
 (
-  "id"                 bigint default nextval('user_seq'::regclass)    not null,
+  "id"                 bigint default nextval('security.user_seq'::regclass)    not null,
   "username"           varchar(255)                                    ,
   "email"              varchar(255)                                    ,
   "password"           varchar(4000)                                   ,

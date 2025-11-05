@@ -41,7 +41,6 @@ import spock.lang.Specification
 
 import java.util.concurrent.ExecutionException
 
-import static io.micronaut.data.repository.jpa.criteria.QuerySpecification.where
 import static io.micronaut.data.tck.repositories.PersonRepository.Specifications.nameEquals
 
 abstract class AbstractAsyncRepositorySpec extends Specification {

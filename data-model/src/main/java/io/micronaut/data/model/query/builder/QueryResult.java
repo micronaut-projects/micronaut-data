@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.JoinPath;
 
 import java.util.Collection;
@@ -106,6 +107,11 @@ public interface QueryResult {
 
     default long getOffset() {
         return 0;
+    }
+
+    @NonNull
+    default Sort getSort() {
+        return Sort.UNSORTED;
     }
 
     /**
@@ -331,6 +337,72 @@ public interface QueryResult {
             @Override
             public long getOffset() {
                 return offset;
+            }
+
+            @NonNull
+            @Override
+            public String getQuery() {
+                return query;
+            }
+
+            @Override
+            public List<String> getQueryParts() {
+                return queryParts;
+            }
+
+            @Override
+            public List<QueryParameterBinding> getParameterBindings() {
+                return parameterBindings;
+            }
+
+            @Override
+            public Collection<JoinPath> getJoinPaths() {
+                return joinPaths;
+            }
+        };
+    }
+
+    /**
+     * Creates a new encoded query.
+     *
+     * @param query             The query
+     * @param queryParts        The queryParts
+     * @param parameterBindings The parameters binding
+     * @param max               The query limit
+     * @param offset            The query offset
+     * @param sort              The sort
+     * @param joinPaths         The join paths
+     * @return The query
+     */
+    @NonNull
+    static QueryResult of(
+            @NonNull String query,
+            @NonNull List<String> queryParts,
+            @NonNull List<QueryParameterBinding> parameterBindings,
+            int max,
+            long offset,
+            @NonNull
+            Sort sort,
+            @Nullable
+            Collection<JoinPath> joinPaths) {
+        ArgumentUtils.requireNonNull("query", query);
+        ArgumentUtils.requireNonNull("parameterBindings", parameterBindings);
+
+        return new QueryResult() {
+
+            @Override
+            public int getMax() {
+                return max;
+            }
+
+            @Override
+            public long getOffset() {
+                return offset;
+            }
+
+            @Override
+            public Sort getSort() {
+                return sort;
             }
 
             @NonNull

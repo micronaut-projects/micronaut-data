@@ -23,38 +23,39 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
-import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.EntityRepresentation;
 import io.micronaut.data.annotation.GeneratedValue;
-import io.micronaut.data.annotation.Index;
-import io.micronaut.data.annotation.Indexes;
 import io.micronaut.data.annotation.Join;
-import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.sql.JoinColumn;
 import io.micronaut.data.annotation.sql.JoinColumns;
 import io.micronaut.data.annotation.sql.SqlMembers;
+import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.JsonDataType;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Pageable.Mode;
+import io.micronaut.data.model.PersistentAssociationPath;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.DefaultPersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.impl.DefaultOrder;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.JoinPath;
-import io.micronaut.data.model.query.QueryModel;
-import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
-import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
+import io.micronaut.data.model.schema.sql.SqlColumnMapping;
+import io.micronaut.data.model.schema.sql.SqlIndexMapping;
+import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
+import io.micronaut.data.model.schema.sql.SqlTableMapping;
+import jakarta.persistence.criteria.Order;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -64,15 +65,11 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.StringJoiner;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -81,16 +78,17 @@ import static io.micronaut.data.annotation.GeneratedValue.Type.AUTO;
 import static io.micronaut.data.annotation.GeneratedValue.Type.IDENTITY;
 import static io.micronaut.data.annotation.GeneratedValue.Type.SEQUENCE;
 import static io.micronaut.data.annotation.GeneratedValue.Type.UUID;
-import static io.micronaut.data.model.query.builder.sql.SqlQueryBuilderUtils.addTypeToColumn;
 
 /**
  * Implementation of {@link QueryBuilder} that builds SQL queries.
  *
  * @author graemerocher
+ * @author Denis Stepanov
  * @since 1.0.0
  */
+@Internal
 @SuppressWarnings("FileLength")
-public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements QueryBuilder, SqlQueryConfiguration.DialectConfiguration {
+public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     /**
      * The start of an IN expression.
@@ -100,21 +98,17 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     public static final String STANDARD_FOR_UPDATE_CLAUSE = " FOR UPDATE";
     public static final String SQL_SERVER_FOR_UPDATE_CLAUSE = " WITH (UPDLOCK, ROWLOCK)";
 
-    /**
-     * Annotation used to represent join tables.
-     */
-    private static final String ANN_JOIN_TABLE = "io.micronaut.data.annotation.sql.JoinTable";
-    private static final String ANN_JOIN_COLUMNS = "io.micronaut.data.annotation.sql.JoinColumns";
     private static final String VALUE_MEMBER = "value";
     private static final String BLANK_SPACE = " ";
-    private static final String SEQ_SUFFIX = "_seq";
     private static final String INSERT_INTO = "INSERT INTO ";
     private static final String JDBC_REPO_ANNOTATION = "io.micronaut.data.jdbc.annotation.JdbcRepository";
+    private static final String DIALECT_ATTR = "dialect";
+    private static final String REFERENCED_COLUMN_NAME = "referencedColumnName";
+
+    private static final Logger LOG = LoggerFactory.getLogger(SqlQueryBuilder.class);
 
     private final Dialect dialect;
     private final Map<Dialect, DialectConfig> perDialectConfig = new EnumMap<>(Dialect.class);
-    private final AnnotationMetadata annotationMetadata;
-    private Pattern positionalParameterPattern;
 
     /**
      * Constructor with annotation metadata.
@@ -125,28 +119,28 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     public SqlQueryBuilder(AnnotationMetadata annotationMetadata) {
         if (annotationMetadata != null) {
             this.dialect = annotationMetadata
-                    .enumValue(JDBC_REPO_ANNOTATION, "dialect", Dialect.class)
-                    .orElseGet(() ->
-                            annotationMetadata
-                                    .enumValue(Repository.class, "dialect", Dialect.class)
-                                    .orElse(Dialect.ANSI)
-                    );
+                .enumValue(JDBC_REPO_ANNOTATION, DIALECT_ATTR, Dialect.class)
+                .orElseGet(() ->
+                    annotationMetadata
+                        .enumValue(Repository.class, DIALECT_ATTR, Dialect.class)
+                        .orElse(Dialect.ANSI)
+                );
 
             AnnotationValue<SqlQueryConfiguration> annotation = annotationMetadata.getAnnotation(SqlQueryConfiguration.class);
             if (annotation != null) {
                 List<AnnotationValue<SqlQueryConfiguration.DialectConfiguration>> dialectConfigs = annotation.getAnnotations(AnnotationMetadata.VALUE_MEMBER, SqlQueryConfiguration.DialectConfiguration.class);
                 for (AnnotationValue<SqlQueryConfiguration.DialectConfiguration> dialectConfig : dialectConfigs) {
-                    dialectConfig.enumValue("dialect", Dialect.class).ifPresent(dialect -> {
+                    dialectConfig.enumValue(DIALECT_ATTR, Dialect.class).ifPresent(aDialect -> {
                         DialectConfig dc = new DialectConfig();
-                        perDialectConfig.put(dialect, dc);
+                        perDialectConfig.put(aDialect, dc);
                         dialectConfig.stringValue("positionalParameterFormat").ifPresent(format ->
-                                dc.positionalFormatter = format
+                            dc.positionalFormatter = format
                         );
                         dialectConfig.stringValue("positionalParameterName").ifPresent(format ->
-                                dc.positionalNameFormatter = format
+                            dc.positionalNameFormatter = format
                         );
                         dialectConfig.booleanValue("escapeQueries").ifPresent(escape ->
-                                dc.escapeQueries = escape
+                            dc.escapeQueries = escape
                         );
                     });
 
@@ -155,7 +149,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         } else {
             this.dialect = Dialect.ANSI;
         }
-        this.annotationMetadata = annotationMetadata;
     }
 
     /**
@@ -163,23 +156,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      */
     public SqlQueryBuilder() {
         this.dialect = Dialect.ANSI;
-        this.annotationMetadata = null;
     }
 
     /**
      * @param dialect The dialect
      */
     public SqlQueryBuilder(Dialect dialect) {
-        ArgumentUtils.requireNonNull("dialect", dialect);
+        ArgumentUtils.requireNonNull(DIALECT_ATTR, dialect);
         this.dialect = dialect;
-        this.annotationMetadata = null;
-    }
-
-    /**
-     * @return The annotation metadata
-     */
-    public AnnotationMetadata getAnnotationMetadata() {
-        return annotationMetadata;
     }
 
     /**
@@ -192,12 +176,16 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     @Override
     protected boolean shouldEscape(@NonNull PersistentEntity entity) {
+        Boolean shouldEscapeDialect = shouldEscapeDialect(dialect);
+        return Objects.requireNonNullElseGet(shouldEscapeDialect, () -> super.shouldEscape(entity));
+    }
+
+    private @Nullable Boolean shouldEscapeDialect(Dialect dialect) {
         DialectConfig config = perDialectConfig.get(dialect);
         if (config != null && config.escapeQueries != null) {
             return config.escapeQueries;
-        } else {
-            return super.shouldEscape(entity);
         }
+        return null;
     }
 
     @Override
@@ -208,16 +196,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return super.asLiteral(value);
     }
 
-    @Override
-    public boolean shouldAliasProjections() {
-        return false;
-    }
-
-    @Override
-    protected boolean isExpandEmbedded() {
-        return true;
-    }
-
     /**
      * Builds a batch create tables statement. Designed for testing and not production usage. For production a
      * SQL migration tool such as Flyway or Liquibase is recommended.
@@ -226,10 +204,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      * @return The table
      */
     @Experimental
-    public @NonNull
-    String buildBatchCreateTableStatement(@NonNull PersistentEntity... entities) {
+    @NonNull
+    public String buildBatchCreateTableStatement(@NonNull PersistentEntity... entities) {
         return Arrays.stream(entities).flatMap(entity -> Stream.of(buildCreateTableStatements(entity)))
-                .collect(Collectors.joining(System.getProperty("line.separator")));
+            .collect(Collectors.joining(System.lineSeparator()));
     }
 
     /**
@@ -240,8 +218,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      * @return The table
      */
     @Experimental
-    public @NonNull
-    String buildBatchDropTableStatement(@NonNull PersistentEntity... entities) {
+    @NonNull
+    public String buildBatchDropTableStatement(@NonNull PersistentEntity... entities) {
         return Arrays.stream(entities).flatMap(entity -> Stream.of(buildDropTableStatements(entity)))
             .collect(Collectors.joining("\n"));
     }
@@ -255,21 +233,21 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      * @return The tables for the give entity
      */
     @Experimental
-    public @NonNull
-    String[] buildDropTableStatements(@NonNull PersistentEntity entity) {
+    @NonNull
+    public String[] buildDropTableStatements(@NonNull PersistentEntity entity) {
         String tableName = getTableName(entity);
         boolean escape = shouldEscape(entity);
         String sql = "DROP TABLE " + tableName;
-        Collection<Association> foreignKeyAssociations = getJoinTableAssociations(entity);
+        Collection<Association> foreignKeyAssociations = SqlQueryBuilderUtils.getJoinTableAssociations(entity);
         List<String> dropStatements = new ArrayList<>();
         for (Association association : foreignKeyAssociations) {
             AnnotationMetadata associationMetadata = association.getAnnotationMetadata();
             NamingStrategy namingStrategy = getNamingStrategy(entity);
             String joinTableName = associationMetadata
-                    .stringValue(ANN_JOIN_TABLE, "name")
-                    .orElseGet(() ->
-                            getMappedName(namingStrategy, association)
-                    );
+                .stringValue(SqlQueryBuilderUtils.ANN_JOIN_TABLE, "name")
+                .orElseGet(() ->
+                    getMappedName(namingStrategy, association)
+                );
             dropStatements.add("DROP TABLE " + (escape ? quote(joinTableName, true) : joinTableName) + ";");
         }
 
@@ -284,37 +262,38 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      * @param association The association
      * @return The join table insert statement
      */
-    public @NonNull
-    String buildJoinTableInsert(@NonNull PersistentEntity entity, @NonNull Association association) {
+    @NonNull
+    public String buildJoinTableInsert(@NonNull PersistentEntity entity, @NonNull Association association) {
         if (!isForeignKeyWithJoinTable(association)) {
             throw new IllegalArgumentException("Join table inserts can only be built for foreign key associations that are mapped with a join table.");
-        } else {
-            Optional<Association> inverseSide = association.getInverseSide().map(Function.identity());
-            Association owningAssociation = inverseSide.orElse(association);
-            AnnotationMetadata annotationMetadata = owningAssociation.getAnnotationMetadata();
-            NamingStrategy namingStrategy = getNamingStrategy(entity);
-            String joinTableName = annotationMetadata
-                    .stringValue(ANN_JOIN_TABLE, "name")
-                    .orElseGet(() ->
-                            getMappedName(namingStrategy, association)
-                    );
-            joinTableName = quote(joinTableName, true);
-            String joinTableSchema = annotationMetadata
-                    .stringValue(ANN_JOIN_TABLE, SqlMembers.SCHEMA)
-                    .orElse(getSchemaName(entity));
-            if (StringUtils.isNotEmpty(joinTableSchema)) {
-                joinTableSchema = quote(joinTableSchema, true);
-                joinTableName = joinTableSchema + DOT + joinTableName;
-            }
-            List<String> leftJoinColumns = resolveJoinTableJoinColumns(annotationMetadata, true, entity, namingStrategy);
-            List<String> rightJoinColumns = resolveJoinTableJoinColumns(annotationMetadata, false, association.getAssociatedEntity(), namingStrategy);
-            boolean escape = shouldEscape(entity);
-            String columns = Stream.concat(leftJoinColumns.stream(), rightJoinColumns.stream())
-                    .map(columnName -> escape ? quote(columnName) : columnName)
-                    .collect(Collectors.joining(","));
-            String placeholders = IntStream.range(0, leftJoinColumns.size() + rightJoinColumns.size()).mapToObj(i -> formatParameter(i + 1).toString()).collect(Collectors.joining(","));
-            return INSERT_INTO + joinTableName + " (" + columns + ") VALUES (" + placeholders + ")";
         }
+        Optional<Association> inverseSide = association.getInverseSide().map(Function.identity());
+        Association owningAssociation = inverseSide.orElse(association);
+        AnnotationMetadata annotationMetadata = owningAssociation.getAnnotationMetadata();
+        NamingStrategy namingStrategy = getNamingStrategy(entity);
+        String joinTableName = annotationMetadata
+            .stringValue(SqlQueryBuilderUtils.ANN_JOIN_TABLE, "name")
+            .orElseGet(() ->
+                getMappedName(namingStrategy, association)
+            );
+        joinTableName = quote(joinTableName, true);
+        String joinTableSchema = annotationMetadata
+            .stringValue(SqlQueryBuilderUtils.ANN_JOIN_TABLE, SqlMembers.SCHEMA)
+            .orElse(SqlQueryBuilderUtils.getSchemaName(entity));
+        if (StringUtils.isNotEmpty(joinTableSchema)) {
+            joinTableSchema = quote(joinTableSchema, true);
+            joinTableName = joinTableSchema + DOT + joinTableName;
+        }
+        List<String> leftJoinColumns = SqlQueryBuilderUtils.resolveJoinTableJoinColumns(annotationMetadata,
+            true, entity, namingStrategy);
+        List<String> rightJoinColumns = SqlQueryBuilderUtils.resolveJoinTableJoinColumns(annotationMetadata,
+            false, association.getAssociatedEntity(), namingStrategy);
+        boolean escape = shouldEscape(entity);
+        String columns = Stream.concat(leftJoinColumns.stream(), rightJoinColumns.stream())
+            .map(columnName -> escape ? quote(columnName) : columnName)
+            .collect(Collectors.joining(","));
+        String placeholders = IntStream.range(0, leftJoinColumns.size() + rightJoinColumns.size()).mapToObj(i -> formatParameter(i + 1).toString()).collect(Collectors.joining(","));
+        return INSERT_INTO + joinTableName + " (" + columns + ") VALUES (" + placeholders + ")";
     }
 
     /**
@@ -324,14 +303,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      * @return True if it is.
      */
     public static boolean isForeignKeyWithJoinTable(@NonNull Association association) {
-        if (!association.isForeignKey()) {
-            return false;
-        }
-        if (association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").isPresent()) {
-            return false;
-        }
-        AnnotationValue<JoinColumns> joinColumnsAnnotationValue  = association.getAnnotationMetadata().getAnnotation(JoinColumns.class);
-        return joinColumnsAnnotationValue == null || CollectionUtils.isEmpty(joinColumnsAnnotationValue.getAnnotations(VALUE_MEMBER));
+        return SqlQueryBuilderUtils.isForeignKeyWithJoinTable(association);
     }
 
     /**
@@ -342,180 +314,141 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      * @return The tables for the give entity
      */
     @Experimental
-    public @NonNull
-    String[] buildCreateTableStatements(@NonNull PersistentEntity entity) {
-        ArgumentUtils.requireNonNull("entity", entity);
-        final String unescapedTableName = getUnescapedTableName(entity);
-        String tableName = getTableName(entity);
+    @NonNull
+    public String[] buildCreateTableStatements(@NonNull PersistentEntity entity) {
+        List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(entity);
+        assert CollectionUtils.isNotEmpty(tables);
         boolean escape = shouldEscape(entity);
+        String schema = SqlQueryBuilderUtils.getSchemaName(entity);
 
         List<String> createStatements = new ArrayList<>();
-        String schema = getSchemaName(entity);
         if (StringUtils.isNotEmpty(schema)) {
-            if (escape) {
-                schema = quote(schema, true);
-            }
-            createStatements.add("CREATE SCHEMA " + schema + ";");
+            createStatements.add("CREATE SCHEMA " + (escape ? quote(schema, true) : schema) + ";");
         }
 
-        Collection<Association> foreignKeyAssociations = getJoinTableAssociations(entity);
+        for (SqlTableMapping table : tables) {
+           addTableCreateStatements(createStatements, table, schema, escape);
+        }
 
-        NamingStrategy namingStrategy = getNamingStrategy(entity);
-        if (CollectionUtils.isNotEmpty(foreignKeyAssociations)) {
-            for (Association association : foreignKeyAssociations) {
-                StringBuilder joinTableBuilder = new StringBuilder("CREATE TABLE ");
-                PersistentEntity associatedEntity = association.getAssociatedEntity();
+        return createStatements.toArray(new String[0]);
+    }
 
-                Optional<Association> inverseSide = association.getInverseSide().map(Function.identity());
-                Association owningAssociation = inverseSide.orElse(association);
-                AnnotationMetadata annotationMetadata = owningAssociation.getAnnotationMetadata();
-
-                String joinTableName = annotationMetadata
-                        .stringValue(ANN_JOIN_TABLE, "name")
-                        .orElseGet(() ->
-                                getMappedName(namingStrategy, association)
-                        );
-                if (escape) {
-                    joinTableName = quote(joinTableName, true);
-                }
-                String joinTableSchema = annotationMetadata.stringValue(ANN_JOIN_TABLE, SqlMembers.SCHEMA).orElse(null);
-                if (StringUtils.isNotEmpty(joinTableSchema)) {
-                    if (escape) {
-                        joinTableSchema = quote(joinTableSchema, true);
-                    }
-                } else {
-                    joinTableSchema = schema;
-                }
-                if (StringUtils.isNotEmpty(joinTableSchema)) {
-                    joinTableBuilder.append(joinTableSchema).append(DOT);
-                }
-                joinTableBuilder.append(joinTableName).append(" (");
-                List<PersistentPropertyPath> leftProperties = new ArrayList<>();
-                List<PersistentPropertyPath> rightProperties = new ArrayList<>();
-                boolean isAssociationOwner = inverseSide.isEmpty();
-                List<String> leftJoinTableColumns = resolveJoinTableJoinColumns(annotationMetadata, isAssociationOwner, entity, namingStrategy);
-                List<String> rightJoinTableColumns = resolveJoinTableJoinColumns(annotationMetadata, !isAssociationOwner, association.getAssociatedEntity(), namingStrategy);
-                traversePersistentProperties(entity.getIdentity(), (associations, property)
-                        -> leftProperties.add(PersistentPropertyPath.of(associations, property, "")));
-                traversePersistentProperties(associatedEntity.getIdentity(), (associations, property)
-                        -> rightProperties.add(PersistentPropertyPath.of(associations, property, "")));
-                if (leftJoinTableColumns.size() == leftProperties.size()) {
-                    for (int i = 0; i < leftJoinTableColumns.size(); i++) {
-                        PersistentPropertyPath pp = leftProperties.get(i);
-                        String columnName = leftJoinTableColumns.get(i);
-                        if (escape) {
-                            columnName = quote(columnName);
-                        }
-                        joinTableBuilder
-                                .append(addTypeToColumn(pp.getProperty(), columnName, dialect, true))
-                                .append(',');
-                    }
-                } else {
-                    for (PersistentPropertyPath pp : leftProperties) {
-                        String columnName = namingStrategy.mappedJoinTableColumn(entity, pp.getAssociations(), pp.getProperty());
-                        if (escape) {
-                            columnName = quote(columnName);
-                        }
-                        joinTableBuilder
-                                .append(addTypeToColumn(pp.getProperty(), columnName, dialect, true))
-                                .append(',');
-                    }
-                }
-                if (rightJoinTableColumns.size() == rightProperties.size()) {
-                    for (int i = 0; i < rightJoinTableColumns.size(); i++) {
-                        PersistentPropertyPath pp = rightProperties.get(i);
-                        String columnName = rightJoinTableColumns.get(i);
-                        if (escape) {
-                            columnName = quote(columnName);
-                        }
-                        joinTableBuilder
-                                .append(addTypeToColumn(pp.getProperty(), columnName, dialect, true))
-                                .append(',');
-                    }
-                } else {
-                    for (PersistentPropertyPath pp : rightProperties) {
-                        String columnName = namingStrategy.mappedJoinTableColumn(entity, pp.getAssociations(), pp.getProperty());
-                        if (escape) {
-                            columnName = quote(columnName);
-                        }
-                        joinTableBuilder
-                                .append(addTypeToColumn(pp.getProperty(), columnName, dialect, true))
-                                .append(',');
-                    }
-                }
-                joinTableBuilder.setLength(joinTableBuilder.length() - 1);
-                joinTableBuilder.append(")");
-                if (dialect != Dialect.ORACLE) {
-                    joinTableBuilder.append(';');
-                }
-
-                createStatements.add(joinTableBuilder.toString());
-
+    /**
+     * Builds the creation table statement for collection of entities. Designed for testing and not production usage. For production a
+     * SQL migration tool such as Flyway or Liquibase is recommended.
+     *
+     * @param entities The collection of entities
+     * @return The tables for the given entities
+     */
+    @Experimental
+    @NonNull
+    public String[] buildCreateTableStatements(PersistentEntity[] entities) {
+        Map<String, SqlTableMapping> sqlTableMappingByTableName = CollectionUtils.newLinkedHashMap(entities.length);
+        // Entity can generate indexes, sequences, join tables so need some longer map
+        List<String> createStatements = new ArrayList<>(entities.length * 5);
+        for (PersistentEntity entity : entities) {
+            String schema = SqlQueryBuilderUtils.getSchemaName(entity);
+            boolean escape = shouldEscape(entity);
+            List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(entity);
+            if (StringUtils.isNotEmpty(schema)) {
+                String createSchemaStatement = "CREATE SCHEMA " + (escape ? quote(schema) : schema) + ";";
+                addToCollectionIfNotContains(createStatements, createSchemaStatement);
+            }
+            for (SqlTableMapping table : tables) {
+                addTable(table, sqlTableMappingByTableName);
             }
         }
 
-        boolean generatePkAfterColumns = false;
+        for (SqlTableMapping table : sqlTableMappingByTableName.values()) {
+            Boolean shouldEscapeDialect = shouldEscapeDialect(dialect);
+            boolean escape = Objects.requireNonNullElseGet(shouldEscapeDialect, table::escape);
+            addTableCreateStatements(createStatements, table, table.schema(), escape);
+        }
 
+        return createStatements.toArray(new String[0]);
+    }
+
+    private void addTable(SqlTableMapping table, Map<String, SqlTableMapping> sqlTableMappingByTableName) {
+        boolean addTable = true;
+        if (sqlTableMappingByTableName.containsKey(table.name())) {
+            SqlTableMapping existingSqlTableMapping = sqlTableMappingByTableName.get(table.name());
+            if (table.type() == existingSqlTableMapping.type()) {
+                if (LOG.isWarnEnabled() && table.type() == SqlTableMapping.TableType.MAIN) {
+                    LOG.warn("Table with name {} has more than one mapped entity. Will use table {}", table.name(), existingSqlTableMapping);
+                }
+                addTable = false;
+            } else if (existingSqlTableMapping.type() == SqlTableMapping.TableType.JOIN) {
+                // Remove ad-hoc join table created from one of the entities relation mappings and not an actual entity
+                sqlTableMappingByTableName.remove(table.name());
+            } else if (table.type() == SqlTableMapping.TableType.JOIN) {
+                // Skip this table mapping ad-hoc join table created from one of the entities relation mappings and not an actual entity
+                addTable = false;
+            }
+        }
+        if (addTable) {
+            sqlTableMappingByTableName.put(table.name(), table);
+        }
+    }
+
+    private void addTableCreateStatements(List<String> createStatements, SqlTableMapping table, String schema, boolean escape) {
         List<String> primaryColumnsName = new ArrayList<>();
+        boolean generatePkAfterColumns = false;
         List<String> columns = new ArrayList<>();
 
-        List<PersistentProperty> identities = entity.getIdentityProperties();
-        for (PersistentProperty identity : identities) {
-            List<PersistentPropertyPath> ids = new ArrayList<>();
-            traversePersistentProperties(identity, (associations, property)
-                -> ids.add(PersistentPropertyPath.of(associations, property, "")));
-            int idFieldCount = ids.size();
-            if (idFieldCount > 1) {
-                generatePkAfterColumns = true;
-            } else if (idFieldCount > 0 && !identity.isGenerated()) {
+        List<SqlColumnMapping> identities = table.primaryKeyColumns();
+        if (CollectionUtils.isNotEmpty(identities)) {
+            int idFieldCount = identities.size();
+            generatePkAfterColumns = idFieldCount > 1;
+            if (!generatePkAfterColumns && idFieldCount > 0 && !identities.get(0).isAutoGenerated()) {
                 // Need to define primary key if id not generated (otherwise defined in column definition)
                 // but can't do if id field is byte array (BLOB) and it expects length for MySQL
-                if (!(dialect == Dialect.MYSQL && ids.get(0).getProperty().getDataType() == DataType.BYTE_ARRAY)) {
+                if (!(dialect == Dialect.MYSQL && identities.get(0).getDataType() == DataType.BYTE_ARRAY)) {
                     generatePkAfterColumns = true;
                 }
             }
-            boolean finalGeneratePkAfterColumns = generatePkAfterColumns;
-            for (PersistentPropertyPath pp : ids) {
-                String column = getMappedName(namingStrategy, pp.getAssociations(), pp.getProperty());
+
+            for (SqlColumnMapping tableIdentity : identities) {
+
+                String column = tableIdentity.getName();
                 if (escape) {
                     column = quote(column);
                 }
                 primaryColumnsName.add(column);
-
-                column = addTypeToColumn(pp.getProperty(), column, dialect, isRequired(pp.getAssociations(), pp.getProperty()));
-                if (isNotForeign(pp.getAssociations())) {
-                    column = addGeneratedStatementToColumn(pp.getProperty(), column, !finalGeneratePkAfterColumns);
+                if (StringUtils.isNotEmpty(tableIdentity.getDefinition())) {
+                    column += " " + tableIdentity.getDefinition();
+                } else {
+                    column += " " + tableIdentity.getSqlType(dialect);
+                    if (tableIdentity.isRequired()) {
+                        column += " NOT NULL";
+                    }
+                }
+                if (tableIdentity.isAutoGenerated()) {
+                    column = addGeneratedStatementToColumn(tableIdentity.getGeneratedValueType(), tableIdentity.getDataType(), column, !generatePkAfterColumns);
                 }
                 columns.add(column);
             }
         }
 
-        PersistentProperty version = entity.getVersion();
-        if (version != null && !version.isGenerated()) {
-            String column = getMappedName(namingStrategy, Collections.emptyList(), version);
+        for (SqlColumnMapping tableColumn : table.columns()) {
+            String column = tableColumn.getName();
             if (escape) {
                 column = quote(column);
             }
-            column = addTypeToColumn(version, column, dialect, true);
+            if (StringUtils.isNotEmpty(tableColumn.getDefinition())) {
+                column += " " + tableColumn.getDefinition();
+            } else {
+                column += " " + tableColumn.getSqlType(dialect);
+                if (tableColumn.isRequired()) {
+                    column += " NOT NULL";
+                }
+            }
+            if (tableColumn.isAutoGenerated()) {
+                column = addGeneratedStatementToColumn(tableColumn.getGeneratedValueType(), tableColumn.getDataType(), column, false);
+            }
             columns.add(column);
         }
 
-        BiConsumer<List<Association>, PersistentProperty> addColumn = (associations, property) -> {
-            String column = getMappedName(namingStrategy, associations, property);
-            if (escape) {
-                column = quote(column);
-            }
-            column = addTypeToColumn(property, column, dialect, isRequired(associations, property));
-            if (isNotForeign(associations)) {
-                column = addGeneratedStatementToColumn(property, column, false);
-            }
-            columns.add(column);
-        };
-
-        for (PersistentProperty prop : entity.getPersistentProperties()) {
-            traversePersistentProperties(prop, addColumn);
-        }
-
+        String tableName = getObjectName(schema, table.name(), escape, true);
         StringBuilder builder = new StringBuilder("CREATE TABLE ").append(tableName).append(" (");
         builder.append(String.join(",", columns));
         if (generatePkAfterColumns) {
@@ -526,82 +459,55 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         } else {
             builder.append(");");
         }
+        addToCollectionIfNotContains(createStatements, builder.toString());
+        createSequenceStatements(table, escape, createStatements);
+        createIndexStatements(table, tableName, escape, createStatements);
+    }
 
-        for (PersistentProperty identity : identities) {
-            if (identity.isGenerated()) {
-                GeneratedValue.Type idGeneratorType = identity.getAnnotationMetadata()
-                    .enumValue(GeneratedValue.class, GeneratedValue.Type.class)
-                    .orElseGet(() -> selectAutoStrategy(identity));
+    private void createSequenceStatements(SqlTableMapping table, boolean escape, List<String> createStatements) {
+        List<SqlSequenceMapping> sequences = table.sequences();
+        if (CollectionUtils.isEmpty(sequences)) {
+            return;
+        }
+        for (SqlSequenceMapping sequence : sequences) {
+            if (sequence.definition() != null) {
+                addToCollectionIfNotContains(createStatements, sequence.definition());
+            } else {
+                GeneratedValue.Type idGeneratorType = sequence.generatedValueType().orElseGet(() -> defaultSelectAutoStrategy(sequence.dataType(), dialect));
                 boolean isSequence = idGeneratorType == GeneratedValue.Type.SEQUENCE;
-                final String generatedDefinition = identity.getAnnotationMetadata().stringValue(GeneratedValue.class, "definition").orElse(null);
-                if (generatedDefinition != null) {
-                    createStatements.add(generatedDefinition);
-                } else if (isSequence) {
-                    final boolean isSqlServer = dialect == Dialect.SQL_SERVER;
-                    final String sequenceName = quote(unescapedTableName + SEQ_SUFFIX, true);
-                    String createSequenceStmt = "CREATE SEQUENCE " + sequenceName;
-                    if (isSqlServer) {
-                        createSequenceStmt += " AS BIGINT";
-                    }
-
-                    createSequenceStmt += " MINVALUE 1 START WITH 1";
-                    if (dialect == Dialect.ORACLE) {
-                        createSequenceStmt += " CACHE 100 NOCYCLE";
-                    } else {
-                        if (isSqlServer) {
-                            createSequenceStmt += " INCREMENT BY 1";
-                        }
-                    }
-                    createStatements.add(createSequenceStmt);
+                if (isSequence) {
+                    addToCollectionIfNotContains(createStatements, createSequenceStmt(table.schema(), table.name(), sequence.definedName(), escape));
                 }
             }
         }
-
-        createStatements.add(builder.toString());
-        addIndexes(entity, tableName, createStatements);
-        return createStatements.toArray(new String[0]);
     }
 
-    private void addIndexes(PersistentEntity entity, String tableName, List<String> createStatements) {
-        final List<String> indexes = createIndexes(entity, tableName);
-        if (CollectionUtils.isNotEmpty(indexes)) {
-            createStatements.addAll(indexes);
+    private void createIndexStatements(SqlTableMapping table, String escapedTableName, boolean escape, List<String> createStatements) {
+        List<SqlIndexMapping> indexes = table.indexes();
+        if (CollectionUtils.isEmpty(indexes)) {
+            return;
+        }
+        for (SqlIndexMapping indexMapping : indexes) {
+            addToCollectionIfNotContains(createStatements, createIndexStatement(table, indexMapping, escapedTableName, escape));
         }
     }
 
-    private List<String> createIndexes(PersistentEntity entity, String tableName) {
-        List<String> indexStatements = new ArrayList<>();
-
-        final Optional<List<AnnotationValue<Index>>> indexes = entity
-                .findAnnotation(Indexes.class)
-                .map(idxes -> idxes.getAnnotations(VALUE_MEMBER, Index.class));
-
-        Stream.of(indexes)
-                .flatMap(Optional::stream)
-                .flatMap(Collection::stream)
-                .forEach(index -> indexStatements.add(addIndex(entity, new IndexConfiguration(index, tableName, entity.getPersistedName()))));
-
-        return indexStatements;
-
-    }
-
-    private String addIndex(PersistentEntity entity, IndexConfiguration config) {
+    private @NonNull String createIndexStatement(SqlTableMapping tableMapping, SqlIndexMapping indexMapping, String escapedTableName, boolean escape) {
         // Create index name without escaped table name and then escape if needed
-        String indexName = config.index.stringValue("name")
-            .orElse(String.format(
-                "idx_%s%s", prepareNames(config.unquotedTableName),
-                makeTransformedColumnList(provideColumnList(config))));
-        if (shouldEscape(entity)) {
+        String columnNames = String.join(", ", indexMapping.columns());
+        String indexName = StringUtils.isNotEmpty(indexMapping.name()) ? indexMapping.name() :
+            String.format(
+                "idx_%s%s", prepareNames(tableMapping.name()),
+                makeTransformedColumnList(columnNames));
+        if (escape) {
             indexName = quote(indexName);
         }
 
         StringBuilder indexBuilder = new StringBuilder();
-        indexBuilder.append("CREATE ").append(config.index.booleanValue("unique")
-                        .map(isUnique -> isUnique ? "UNIQUE " : "")
-                        .orElse(""))
-               .append("INDEX ");
-        indexBuilder.append(indexName).append(" ON ").append(Optional.ofNullable(config.tableName)
-                .orElseThrow(() -> new NullPointerException("Table name cannot be null"))).append(" (").append(provideColumnList(config));
+        indexBuilder.append("CREATE ").append(indexMapping.unique() ? "UNIQUE " : "")
+            .append("INDEX ");
+        String indexColumnNames = escape ? String.join(", ", Arrays.stream(indexMapping.columns()).map(this::quote).toList()) : columnNames;
+        indexBuilder.append(indexName).append(" ON ").append(escapedTableName).append(" (").append(indexColumnNames);
 
         if (dialect == Dialect.ORACLE) {
             indexBuilder.append(")");
@@ -611,51 +517,39 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return indexBuilder.toString();
     }
 
-    private String provideColumnList(IndexConfiguration config) {
-        return String.join(", ", (String[]) config.index.getValues().get("columns"));
+    @NonNull
+    private String createSequenceStmt(@Nullable String schema, String tableName, String definedName, boolean escape) {
+        final String sequenceName = getObjectName(schema, StringUtils.isNotEmpty(definedName) ? definedName : tableName + SqlQueryBuilderUtils.SEQ_SUFFIX, escape, true);
+        final boolean isSqlServer = dialect == Dialect.SQL_SERVER;
+        String createSequenceStmt = "CREATE SEQUENCE " + sequenceName;
+        if (isSqlServer) {
+            createSequenceStmt += " AS BIGINT";
+        }
+
+        createSequenceStmt += " MINVALUE 1 START WITH 1";
+        if (dialect == Dialect.ORACLE) {
+            createSequenceStmt += " CACHE 100 NOCYCLE";
+        } else {
+            if (isSqlServer) {
+                createSequenceStmt += " INCREMENT BY 1";
+            }
+        }
+        return createSequenceStmt;
     }
 
     private String makeTransformedColumnList(String columnList) {
         return Arrays.stream(prepareNames(columnList).split(","))
-                .map(col -> "_" + col)
-                .collect(Collectors.joining());
-
+            .map(col -> "_" + col)
+            .collect(Collectors.joining());
     }
 
     private String prepareNames(String columnList) {
         return columnList.chars()
-                .mapToObj(c -> String.valueOf((char) c))
-                .filter(x -> !x.equals(" "))
-                .filter(x -> !x.equals("\""))
-                .map(String::toLowerCase)
-                .collect(Collectors.joining());
-    }
-
-    private boolean isRequired(List<Association> associations, PersistentProperty property) {
-        Association foreignAssociation = null;
-        for (Association association : associations) {
-            if (!association.isRequired()) {
-                return false;
-            }
-            if (association.getKind() != Relation.Kind.EMBEDDED) {
-                if (foreignAssociation == null) {
-                    foreignAssociation = association;
-                }
-            }
-        }
-        if (foreignAssociation != null) {
-            return foreignAssociation.isRequired();
-        }
-        return property.isRequired();
-    }
-
-    private boolean isNotForeign(List<Association> associations) {
-        for (Association association : associations) {
-            if (association.getKind() != Relation.Kind.EMBEDDED) {
-                return false;
-            }
-        }
-        return true;
+            .mapToObj(c -> String.valueOf((char) c))
+            .filter(x -> !x.equals(" "))
+            .filter(x -> !x.equals("\""))
+            .map(String::toLowerCase)
+            .collect(Collectors.joining());
     }
 
     @Override
@@ -663,111 +557,95 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return BLANK_SPACE;
     }
 
-    private String addGeneratedStatementToColumn(PersistentProperty prop, String column, boolean isPk) {
-        if (prop.isGenerated()) {
-            GeneratedValue.Type type = prop.getAnnotationMetadata().enumValue(GeneratedValue.class, GeneratedValue.Type.class)
-                    .orElse(AUTO);
-
-            if (type == AUTO) {
-                if (prop.getDataType() == DataType.UUID) {
-                    type = UUID;
-                } else if (dialect == Dialect.ORACLE) {
-                    type = SEQUENCE;
-                } else {
-                    type = IDENTITY;
+    @SuppressWarnings("java:S3776")
+    private String addGeneratedStatementToColumn(GeneratedValue.Type type, DataType dataType, String column, boolean isPk) {
+        if (type == AUTO) {
+            if (dataType == DataType.UUID) {
+                type = UUID;
+            } else if (dialect == Dialect.ORACLE) {
+                type = SEQUENCE;
+            } else {
+                type = IDENTITY;
+            }
+        }
+        boolean addPkBefore = dialect != Dialect.H2 && dialect != Dialect.ORACLE;
+        if (isPk && addPkBefore) {
+            column += " PRIMARY KEY";
+        }
+        switch (dialect) {
+            case POSTGRES:
+                if (type == SEQUENCE) {
+                    column += " NOT NULL";
+                } else if (type == IDENTITY) {
+                    if (isPk) {
+                        column += " GENERATED ALWAYS AS IDENTITY";
+                    } else {
+                        column += " NOT NULL";
+                    }
+                } else if (type == UUID) {
+                    column += " NOT NULL DEFAULT uuid_generate_v4()";
                 }
-            }
-            boolean addPkBefore = dialect != Dialect.H2 && dialect != Dialect.ORACLE;
-            if (isPk && addPkBefore) {
-                column += " PRIMARY KEY";
-            }
-            switch (dialect) {
-                case POSTGRES:
-                    if (type == SEQUENCE) {
+                break;
+            case H2:
+                if (type == SEQUENCE) {
+                    column += " NOT NULL";
+                } else if (type == IDENTITY) {
+                    if (isPk) {
+                        column += " GENERATED ALWAYS AS IDENTITY";
+                    } else {
                         column += " NOT NULL";
-                    } else if (type == IDENTITY) {
-                        if (isPk) {
-                            column += " GENERATED ALWAYS AS IDENTITY";
-                        } else {
-                            column += " NOT NULL";
-                        }
-                    } else if (type == UUID) {
-                        column += " NOT NULL DEFAULT uuid_generate_v4()";
                     }
-                    break;
-                case H2:
-                    if (type == SEQUENCE) {
+                } else if (type == UUID) {
+                    column += " NOT NULL DEFAULT random_uuid()";
+                }
+                break;
+            case SQL_SERVER:
+                if (type == UUID) {
+                    column += " NOT NULL DEFAULT newid()";
+                } else if (type == SEQUENCE) {
+                    if (isPk) {
                         column += " NOT NULL";
-                    } else if (type == IDENTITY) {
-                        if (isPk) {
-                            column += " GENERATED ALWAYS AS IDENTITY";
-                        } else {
-                            column += " NOT NULL";
-                        }
-                    } else if (type == UUID) {
+                    }
+                } else {
+                    column += " IDENTITY(1,1) NOT NULL";
+                }
+                break;
+            case ORACLE:
+                // for Oracle, we use sequences so just add NOT NULL
+                // then alter the table for sequences
+                if (type == UUID) {
+                    column += " NOT NULL DEFAULT SYS_GUID()";
+                } else if (type == IDENTITY) {
+                    if (isPk) {
+                        column += " GENERATED ALWAYS AS IDENTITY (MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE)";
+                    } else {
+                        column += " NOT NULL";
+                    }
+                } else {
+                    column += " NOT NULL";
+                }
+                break;
+            default:
+                if (type == UUID) {
+                    // mysql requires the UUID generation in the insert statement
+                    if (dialect != Dialect.MYSQL) {
                         column += " NOT NULL DEFAULT random_uuid()";
-                    }
-                    break;
-                case SQL_SERVER:
-                    if (type == UUID) {
-                        column += " NOT NULL DEFAULT newid()";
-                    } else if (type == SEQUENCE) {
-                        if (isPk) {
-                            column += " NOT NULL";
-                        }
-                    } else {
-                        column += " IDENTITY(1,1) NOT NULL";
-                    }
-                    break;
-                case ORACLE:
-                    // for Oracle, we use sequences so just add NOT NULL
-                    // then alter the table for sequences
-                    if (type == UUID) {
-                        column += " NOT NULL DEFAULT SYS_GUID()";
-                    } else if (type == IDENTITY) {
-                        if (isPk) {
-                            column += " GENERATED ALWAYS AS IDENTITY (MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE)";
-                        } else {
-                            column += " NOT NULL";
-                        }
                     } else {
                         column += " NOT NULL";
                     }
-                    break;
-                default:
-                    if (type == UUID) {
-                        // mysql requires the UUID generation in the insert statement
-                        if (dialect != Dialect.MYSQL) {
-                            column += " NOT NULL DEFAULT random_uuid()";
-                        } else {
-                            column += " NOT NULL";
-                        }
-                    } else {
-                        column += " AUTO_INCREMENT";
-                    }
-            }
-            if (isPk && !addPkBefore) {
-                column += " PRIMARY KEY";
-            }
+                } else if (dataType.isNumeric()) {
+                    column += " AUTO_INCREMENT";
+                }
+        }
+        if (isPk && !addPkBefore) {
+            column += " PRIMARY KEY";
         }
         return column;
     }
 
     @NonNull
-    private List<String> resolveJoinTableJoinColumns(AnnotationMetadata annotationMetadata, boolean associationOwner, PersistentEntity entity, NamingStrategy namingStrategy) {
-        List<String> joinColumns = getJoinedColumns(annotationMetadata, associationOwner, "name");
-        if (!joinColumns.isEmpty()) {
-            return joinColumns;
-        }
-        List<String> columns = new ArrayList<>();
-        traversePersistentProperties(entity.getIdentity(), (associations, property)
-                -> columns.add(namingStrategy.mappedJoinTableColumn(entity, associations, property)));
-        return columns;
-    }
-
-    @NonNull
     private List<String> resolveJoinTableAssociatedColumns(AnnotationMetadata annotationMetadata, boolean associationOwner, PersistentEntity entity, NamingStrategy namingStrategy) {
-        List<String> joinColumns = getJoinedColumns(annotationMetadata, associationOwner, "referencedColumnName");
+        List<String> joinColumns = SqlQueryBuilderUtils.getJoinedColumns(annotationMetadata, associationOwner, REFERENCED_COLUMN_NAME);
         if (!joinColumns.isEmpty()) {
             return joinColumns;
         }
@@ -776,171 +654,16 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             throw new MappingException("Cannot have a foreign key association without an ID on entity: " + entity.getName());
         }
         List<String> columns = new ArrayList<>();
-        traversePersistentProperties(identity, (associations, property) -> {
+        PersistentEntityUtils.traversePersistentProperties(identity, (associations, property) -> {
             String columnName = getMappedName(namingStrategy, associations, property);
             columns.add(columnName);
         });
         return columns;
     }
 
-    @NonNull
-    private List<String> getJoinedColumns(AnnotationMetadata annotationMetadata, boolean associationOwner, String columnType) {
-        AnnotationValue<Annotation> joinTable = annotationMetadata.getAnnotation(ANN_JOIN_TABLE);
-        if (joinTable != null) {
-            return joinTable.getAnnotations(associationOwner ? "joinColumns" : "inverseJoinColumns")
-                    .stream()
-                    .flatMap(ann -> ann.stringValue(columnType).stream())
-                    .toList();
-        }
-        return Collections.emptyList();
-    }
-
-    @NonNull
-    private Collection<Association> getJoinTableAssociations(PersistentEntity persistentEntity) {
-        return Stream.concat(Stream.of(persistentEntity.getIdentity()), persistentEntity.getPersistentProperties().stream())
-                .flatMap(this::flatMapEmbedded)
-                .filter(p -> {
-                    if (p instanceof Association a) {
-                        return isForeignKeyWithJoinTable(a);
-                    }
-                    return false;
-                }).map(p -> (Association) p).toList();
-    }
-
     @Override
-    protected void selectAllColumns(AnnotationMetadata annotationMetadata, QueryState queryState, StringBuilder queryBuffer) {
-        PersistentEntity entity = queryState.getEntity();
-        selectAllColumns(annotationMetadata, entity, queryState.getRootAlias(), queryBuffer);
-
-        QueryModel queryModel = queryState.getQueryModel();
-
-        Collection<JoinPath> allPaths = queryModel.getJoinPaths();
-        selectAllColumnsFromJoinPaths(queryState, queryBuffer, allPaths, null);
-    }
-
-    @Internal
-    @Override
-    protected void selectAllColumnsFromJoinPaths(QueryState queryState,
-                                                 StringBuilder queryBuffer,
-                                                 Collection<JoinPath> allPaths,
-                                                 @Nullable
-                                                 Map<JoinPath, String> joinAliasOverride) {
-        if (CollectionUtils.isNotEmpty(allPaths)) {
-
-            Collection<JoinPath> joinPaths = allPaths.stream().filter(jp -> jp.getJoinType().isFetch()).toList();
-
-            if (CollectionUtils.isNotEmpty(joinPaths)) {
-                for (JoinPath joinPath : joinPaths) {
-                    Association association = joinPath.getAssociation();
-                    if (association instanceof Embedded) {
-                        // joins on embedded don't make sense
-                        continue;
-                    }
-
-                    PersistentEntity associatedEntity = association.getAssociatedEntity();
-                    NamingStrategy namingStrategy = getNamingStrategy(associatedEntity);
-
-                    String joinAlias = joinAliasOverride == null ? getAliasName(joinPath) : joinAliasOverride.get(joinPath);
-                    Objects.requireNonNull(joinAlias);
-                    String joinPathAlias = getPathOnlyAliasName(joinPath);
-
-                    queryBuffer.append(COMMA);
-
-                    boolean includeIdentity = association.isForeignKey();
-                    // in the case of a foreign key association the ID is not in the table,
-                    // so we need to retrieve it
-                    traversePersistentProperties(associatedEntity, includeIdentity, true, (propertyAssociations, prop) -> {
-                        String transformed = getDataTransformerReadValue(joinAlias, prop).orElse(null);
-                        String columnAlias = getColumnAlias(prop);
-                        String columnName;
-                        if (computePropertyPaths()) {
-                            columnName = getMappedName(namingStrategy, propertyAssociations, prop);
-                        } else {
-                            columnName = asPath(propertyAssociations, prop);
-                        }
-                        if (transformed != null) {
-                            queryBuffer.append(transformed).append(AS_CLAUSE);
-                        } else {
-                            queryBuffer
-                                .append(joinAlias)
-                                .append(DOT)
-                                .append(queryState.shouldEscape() ? quote(columnName) : columnName)
-                                .append(AS_CLAUSE);
-                        }
-                        if (StringUtils.isNotEmpty(columnAlias)) {
-                            queryBuffer.append(columnAlias);
-                        } else {
-                            queryBuffer.append(joinPathAlias).append(columnName);
-                        }
-                        queryBuffer.append(COMMA);
-                    });
-                    queryBuffer.setLength(queryBuffer.length() - 1);
-                }
-            }
-        }
-    }
-
-    /**
-     * Selects all columns for the given entity and alias.
-     *
-     * @param annotationMetadata The annotation metadata
-     * @param entity             The entity
-     * @param alias              The alias
-     * @param sb                 The builder to add the columns
-     */
-    @Override
-    public void selectAllColumns(AnnotationMetadata annotationMetadata, PersistentEntity entity, String alias, StringBuilder sb) {
-        if (canUseWildcardForSelect(annotationMetadata, entity)) {
-            selectAllColumns(sb, alias);
-            return;
-        }
-        boolean escape = shouldEscape(entity);
-        NamingStrategy namingStrategy = getNamingStrategy(entity);
-        int length = sb.length();
-        traversePersistentProperties(entity, (associations, property)
-                -> appendProperty(sb, associations, property, namingStrategy, alias, escape));
-        int newLength = sb.length();
-        if (newLength == length) {
-            selectAllColumns(sb, alias);
-        } else {
-            sb.setLength(newLength - 1);
-        }
-    }
-
-    /**
-     * Appends '*' symbol (meaning all columns selection) to the string builder representing query.
-     * @param sb the string builder representing query
-     * @param alias an alias, if not null will be apended with '.' before '*' symbol
-     */
-    private void selectAllColumns(StringBuilder sb, String alias) {
-        if (alias != null) {
-            sb.append(alias).append(DOT);
-        }
-        sb.append("*");
-    }
-
-    private boolean canUseWildcardForSelect(AnnotationMetadata annotationMetadata, PersistentEntity entity) {
-        if (isJsonEntity(annotationMetadata, entity)) {
-            return true;
-        }
-        return Stream.concat(entity.getIdentityProperties().stream(), entity.getPersistentProperties().stream())
-                .flatMap(this::flatMapEmbedded)
-                .noneMatch(pp -> {
-                    if (pp instanceof Association association) {
-                        return !association.isForeignKey();
-                    }
-                    return true;
-                });
-    }
-
-    private Stream<? extends PersistentProperty> flatMapEmbedded(PersistentProperty pp) {
-        if (pp instanceof Embedded embedded) {
-            PersistentEntity embeddedEntity = embedded.getAssociatedEntity();
-            return embeddedEntity.getPersistentProperties()
-                    .stream()
-                    .flatMap(this::flatMapEmbedded);
-        }
-        return Stream.of(pp);
+    protected SqlSelectionVisitor createSelectionVisitor(AnnotationMetadata annotationMetadata, QueryState queryState, boolean distinct) {
+        return new SqlSelectionVisitor(queryState, annotationMetadata, distinct);
     }
 
     @Override
@@ -958,22 +681,15 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     @NonNull
     @Override
-    public QueryResult buildInsert(AnnotationMetadata repositoryMetadata, PersistentEntity entity) {
-        return buildInsert(repositoryMetadata, entity, false);
-    }
-
-    @Override
-    public QueryResult buildInsertReturning(AnnotationMetadata repositoryMetadata, PersistentEntity entity) {
-        if (!getDialect().supportsInsertReturning()) {
+    public QueryResult buildInsert(AnnotationMetadata repositoryMetadata, InsertQueryDefinition definition) {
+        if (definition.returning() && !getDialect().supportsInsertReturning()) {
             throw new IllegalStateException("Dialect: " + getDialect() + " doesn't support INSERT ... RETURNING clause");
         }
-        return buildInsert(repositoryMetadata, entity, true);
-    }
+        PersistentEntity entity = definition.persistentEntity();
 
-    @NonNull
-    private QueryResult buildInsert(AnnotationMetadata repositoryMetadata, PersistentEntity entity, boolean isReturning) {
         boolean escape = shouldEscape(entity);
         final String unescapedTableName = getUnescapedTableName(entity);
+        final String unescapedSchema = SqlQueryBuilderUtils.getSchemaName(entity);
 
         String builder;
         List<QueryParameterBinding> parameterBindings = new ArrayList<>();
@@ -1010,10 +726,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         return JsonDataType.DEFAULT;
                     }
 
-                    @Override
-                    public int getParameterIndex() {
-                        return -1;
-                    }
                 });
             }
         } else {
@@ -1026,8 +738,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             List<String> values = new ArrayList<>();
 
             for (PersistentProperty prop : persistentProperties) {
-                traversePersistentProperties(prop, (associations, property) -> {
-                    boolean generated = PersistentEntityUtils.isPropertyGenerated(entity, prop, property);
+                PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), prop, (associations, property) -> {
+                    boolean generated = SqlQueryBuilderUtils.isGeneratedProperty(property, entity);
                     if (generated) {
                         String columnName = getMappedName(namingStrategy, associations, property);
                         if (escape) {
@@ -1037,7 +749,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         return;
                     }
 
-                    addWriteExpression(values, property);
+                    addWriteExpression(values, prop);
 
                     String key = String.valueOf(values.size());
                     String[] path = asStringPath(associations, property);
@@ -1118,14 +830,15 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             }
 
             for (PersistentProperty identity : entity.getIdentityProperties()) {
-                traversePersistentProperties(identity, (associations, property) -> {
+                // Property skipped
+                PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property) -> {
                     String columnName = getMappedName(namingStrategy, associations, property);
                     if (escape) {
                         columnName = quote(columnName);
                     }
 
                     boolean isSequence = false;
-                    if (isNotForeign(associations)) {
+                    if (SqlQueryBuilderUtils.isNotForeign(associations)) {
 
                         resultColumns.add(columnName);
 
@@ -1144,7 +857,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     }
 
                     if (isSequence) {
-                        values.add(getSequenceStatement(unescapedTableName, property));
+                        values.add(getSequenceStatement(unescapedSchema, unescapedTableName, property));
                     } else {
                         addWriteExpression(values, property);
 
@@ -1188,15 +901,16 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 " (" + String.join(",", columns) + CLOSE_BRACKET + " " +
                 "VALUES (" + String.join(String.valueOf(COMMA), values) + CLOSE_BRACKET;
 
-            if (isReturning) {
+            if (definition.returning()) {
+                // TODO: proper selection of columns
                 builder += RETURNING + String.join(",", resultColumns);
             }
         }
         return QueryResult.of(
-                builder,
-                Collections.emptyList(),
-                parameterBindings,
-                Collections.emptyMap()
+            builder,
+            Collections.emptyList(),
+            parameterBindings,
+            Collections.emptyMap()
         );
     }
 
@@ -1212,81 +926,26 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return path.toArray(new String[0]);
     }
 
-    private String getSequenceStatement(String unescapedTableName, PersistentProperty property) {
+    private String getSequenceStatement(String unescapedSchemaName, String unescapedTableName, PersistentProperty property) {
         final String sequenceName = resolveSequenceName(property, unescapedTableName);
         return switch (dialect) {
-            case ORACLE -> quote(sequenceName, true) + ".nextval";
-            case POSTGRES -> "nextval('" + sequenceName + "')";
-            case H2 -> "nextval('" + sequenceName + "')";
-            case SQL_SERVER -> "NEXT VALUE FOR " + quote(sequenceName, true);
+            case ORACLE -> (StringUtils.isEmpty(unescapedSchemaName) ? "" : quote(unescapedSchemaName, true) + DOT) + quote(sequenceName, true) + ".nextval";
+            case POSTGRES -> "nextval('" + (StringUtils.isEmpty(unescapedSchemaName) ? "" : unescapedSchemaName + DOT) + sequenceName + "')";
+            case SQL_SERVER -> "NEXT VALUE FOR " + (StringUtils.isEmpty(unescapedSchemaName) ? "" : quote(unescapedSchemaName, true) + DOT) + quote(sequenceName, true);
             default -> throw new IllegalStateException("Cannot generate a sequence for dialect: " + dialect);
         };
     }
 
     private String resolveSequenceName(PersistentProperty identity, String unescapedTableName) {
         return identity.getAnnotationMetadata().stringValue(GeneratedValue.class, "ref")
-                .map(n -> {
-                    if (StringUtils.isEmpty(n)) {
-                        return unescapedTableName + SEQ_SUFFIX;
-                    } else {
-                        return n;
-                    }
-                })
-                .orElseGet(() -> unescapedTableName + SEQ_SUFFIX);
-    }
-
-    @NonNull
-    @Override
-    public QueryResult buildPagination(@NonNull Pageable pageable) {
-        int size = pageable.getSize();
-        if (size > 0) {
-            StringBuilder builder = new StringBuilder(" ");
-            long from = pageable.getMode() == Mode.OFFSET ? pageable.getOffset() : 0;
-            switch (dialect) {
-                case H2:
-                case MYSQL:
-                    if (from == 0) {
-                        builder.append("LIMIT ").append(size);
-                    } else {
-                        builder.append("LIMIT ").append(from).append(',').append(size);
-                    }
-                    break;
-                case POSTGRES:
-                    builder.append("LIMIT ").append(size).append(" ");
-                    if (from != 0) {
-                        builder.append("OFFSET ").append(from);
-                    }
-                    break;
-
-                case SQL_SERVER:
-                    // SQL server requires OFFSET always
-                    if (from == 0) {
-                        builder.append("OFFSET ").append(0).append(" ROWS ");
-                    }
-                    // intentional fall through
-                case ANSI:
-                case ORACLE:
-                default:
-                    if (from != 0) {
-                        builder.append("OFFSET ").append(from).append(" ROWS ");
-                    }
-                    builder.append("FETCH NEXT ").append(size).append(" ROWS ONLY ");
-                    break;
-            }
-            return QueryResult.of(
-                    builder.toString(),
-                    Collections.emptyList(),
-                    Collections.emptyList(),
-                    Collections.emptyMap()
-            );
-        } else {
-            return QueryResult.of(
-                    "",
-                    Collections.emptyList(),
-                    Collections.emptyList(),
-                    Collections.emptyMap()
-            );
-        }
+            .map(n -> {
+                if (StringUtils.isEmpty(n)) {
+                    return unescapedTableName + SqlQueryBuilderUtils.SEQ_SUFFIX;
+                } else {
+                    return n;
+                }
+            })
+            .orElseGet(() -> unescapedTableName + SqlQueryBuilderUtils.SEQ_SUFFIX);
     }
 
     @Override
@@ -1294,42 +953,23 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return entity.getAliasName();
     }
 
-    private String getSchemaName(PersistentEntity entity) {
-        return entity.getAnnotationMetadata().stringValue(MappedEntity.class, SqlMembers.SCHEMA).orElseGet(() ->
-            entity.getAnnotationMetadata().stringValue(MappedEntity.class, SqlMembers.SCHEMA).orElse(null)
-        );
-    }
-
     @Override
     public String getTableName(PersistentEntity entity) {
         boolean escape = shouldEscape(entity);
         String tableName = entity.getPersistedName();
-        String schema = getSchemaName(entity);
-        if (StringUtils.isNotEmpty(schema)) {
-            if (escape) {
-                return quote(schema, true) + '.' + quote(tableName, true);
-            } else {
-                return schema + '.' + tableName;
-            }
-        } else {
-            return escape ? quote(tableName, true) : tableName;
-        }
+        String schema = SqlQueryBuilderUtils.getSchemaName(entity);
+        return getObjectName(schema, tableName, escape, true);
     }
 
-    /**
-     * @param partsWriters The parts writers
-     */
-    @Override
-    protected void concat(StringBuilder writer, Collection<Runnable> partsWriters) {
-        if (dialect == Dialect.ORACLE) {
-            for (Iterator<Runnable> iterator = partsWriters.iterator(); iterator.hasNext(); ) {
-                iterator.next().run();
-                if (iterator.hasNext()) {
-                    writer.append(" || ");
-                }
+    private String getObjectName(String schema, String objectName, boolean escape, boolean objectSupportsDynamicValues) {
+        if (StringUtils.isNotEmpty(schema)) {
+            if (escape) {
+                return quote(schema, true) + '.' + quote(objectName, objectSupportsDynamicValues);
+            } else {
+                return schema + '.' + objectName;
             }
         } else {
-            super.concat(writer, partsWriters);
+            return escape ? quote(objectName, objectSupportsDynamicValues) : objectName;
         }
     }
 
@@ -1340,14 +980,17 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             return values.add(transformer);
         }
         if (dt == DataType.JSON) {
-            return switch (dialect) {
-                case POSTGRES -> values.add("to_json(" + formatParameter(values.size() + 1).getName() + "::json)");
-                case H2 -> values.add(formatParameter(values.size() + 1).getName() + " FORMAT JSON");
-                case MYSQL -> values.add("CONVERT(" + formatParameter(values.size() + 1).getName() + " USING UTF8MB4)");
-                default -> values.add(formatParameter(values.size() + 1).getName());
-            };
+            switch (dialect) {
+                case POSTGRES ->
+                    values.add("to_json(" + formatParameter(values.size() + 1).name() + "::json)");
+                case H2 -> values.add(formatParameter(values.size() + 1).name() + " FORMAT JSON");
+                case MYSQL ->
+                    values.add("CONVERT(" + formatParameter(values.size() + 1).name() + " USING UTF8MB4)");
+                default -> values.add(formatParameter(values.size() + 1).name());
+            }
+            return true;
         }
-        return values.add(formatParameter(values.size() + 1).getName());
+        return values.add(formatParameter(values.size() + 1).name());
     }
 
     @Override
@@ -1382,96 +1025,19 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
-    protected String[] buildJoin(
-            final String alias,
-            JoinPath joinPath,
-            String joinType,
-            StringBuilder target,
-            Map<String, String> appliedJoinPaths,
-            QueryState queryState) {
-        Association[] associationPath = joinPath.getAssociationPath();
-        String[] joinAliases;
-        if (ArrayUtils.isEmpty(associationPath)) {
-            throw new IllegalArgumentException("Invalid association path [" + joinPath.getPath() + "]");
-        }
-
-        List<Association> joinAssociationsPath = new ArrayList<>(associationPath.length);
-
-        joinAliases = new String[associationPath.length];
-        StringJoiner pathSoFar = new StringJoiner(".");
-        String joinAlias = alias;
-        for (int i = 0; i < associationPath.length; i++) {
-            Association association = associationPath[i];
-            pathSoFar.add(association.getName());
-            if (association instanceof Embedded) {
-                joinAssociationsPath.add(association);
-                continue;
-            }
-
-            String currentPath = pathSoFar.toString();
-            String existingAlias = appliedJoinPaths.get(currentPath);
-            if (existingAlias != null) {
-                joinAliases[i] = existingAlias;
-                joinAlias = existingAlias;
-            } else {
-                PersistentEntity associatedEntity = association.getAssociatedEntity();
-                int finalI = i;
-                JoinPath joinPathToUse = queryState.getQueryModel().getJoinPath(currentPath)
-                        .orElseGet(() ->
-                                new JoinPath(
-                                        currentPath,
-                                        Arrays.copyOfRange(associationPath, 0, finalI + 1),
-                                        joinPath.getJoinType(),
-                                        joinPath.getAlias().orElse(null))
-                        );
-                joinAliases[i] = getAliasName(joinPathToUse);
-                String currentJoinAlias = joinAliases[i];
-
-                buildJoin(joinType, target, queryState,
-                        joinAssociationsPath,
-                        joinAlias,
-                        association,
-                        associatedEntity,
-                        findOwner(joinAssociationsPath, association).orElseGet(queryState::getEntity),
-                        currentJoinAlias);
-
-                String additionalWhere = resolveWhereForAnnotationMetadata(currentJoinAlias, associatedEntity.getAnnotationMetadata());
-                if (StringUtils.isNotEmpty(additionalWhere)) {
-                    target.append(LOGICAL_AND).append(additionalWhere);
-                }
-
-                joinAlias = currentJoinAlias;
-            }
-            joinAssociationsPath.clear();
-        }
-        return joinAliases;
-    }
-
-    /**
-     * Builds join, adding fields and criteria.
-     *
-     * @param joinType the join type
-     * @param sb string builder that join will be added to
-     * @param queryState the query state
-     * @param joinAssociationsPath the list of associations
-     * @param joinAlias the join alias
-     * @param association the association
-     * @param associatedEntity the associated entity
-     * @param associationOwner the association owner
-     * @param currentJoinAlias the current join alias
-     */
     protected void buildJoin(String joinType,
-                           StringBuilder sb,
-                           QueryState queryState,
-                           List<Association> joinAssociationsPath,
-                           String joinAlias,
-                           Association association,
-                           PersistentEntity associatedEntity,
-                           PersistentEntity associationOwner,
-                           String currentJoinAlias) {
+                             StringBuilder query,
+                             QueryState queryState,
+                             PersistentAssociationPath joinAssociation,
+                             PersistentEntity associationOwner,
+                             String currentJoinAlias,
+                             String lastJoinAlias) {
+        Association association = joinAssociation.getAssociation();
+        List<Association> joinAssociationsPath = joinAssociation.getAssociations();
+        PersistentEntity associatedEntity = association.getAssociatedEntity();
         final boolean escape = shouldEscape(associationOwner);
         String mappedBy = association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").orElse(null);
-        AnnotationValue<JoinColumns> joinColumnsAnnotationValue  = association.getAnnotationMetadata().getAnnotation(JoinColumns.class);
+        AnnotationValue<JoinColumns> joinColumnsAnnotationValue = association.getAnnotationMetadata().getAnnotation(JoinColumns.class);
         List<AnnotationValue<JoinColumn>> joinColumnValues = joinColumnsAnnotationValue == null ? null : joinColumnsAnnotationValue.getAnnotations(VALUE_MEMBER);
 
         if (association.getKind() == Relation.Kind.MANY_TO_MANY || (association.isForeignKey() && StringUtils.isEmpty(mappedBy) && CollectionUtils.isEmpty(joinColumnValues))) {
@@ -1490,9 +1056,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             AnnotationMetadata annotationMetadata = owningAssociation.getAnnotationMetadata();
 
             List<String> ownerJoinColumns = resolveJoinTableAssociatedColumns(annotationMetadata, isAssociationOwner, associationOwner, namingStrategy);
-            List<String> ownerJoinTableColumns = resolveJoinTableJoinColumns(annotationMetadata, isAssociationOwner, associationOwner, namingStrategy);
+            List<String> ownerJoinTableColumns = SqlQueryBuilderUtils.resolveJoinTableJoinColumns(annotationMetadata,
+                isAssociationOwner, associationOwner, namingStrategy);
             List<String> associationJoinColumns = resolveJoinTableAssociatedColumns(annotationMetadata, !isAssociationOwner, associatedEntity, namingStrategy);
-            List<String> associationJoinTableColumns = resolveJoinTableJoinColumns(annotationMetadata, !isAssociationOwner, associatedEntity, namingStrategy);
+            List<String> associationJoinTableColumns = SqlQueryBuilderUtils.resolveJoinTableJoinColumns(annotationMetadata, !isAssociationOwner, associatedEntity, namingStrategy);
             if (escape) {
                 ownerJoinColumns = ownerJoinColumns.stream().map(this::quote).toList();
                 ownerJoinTableColumns = ownerJoinTableColumns.stream().map(this::quote).toList();
@@ -1501,39 +1068,39 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             }
 
             String joinTableSchema = annotationMetadata
-                .stringValue(ANN_JOIN_TABLE, SqlMembers.SCHEMA)
-                .orElse(getSchemaName(associationOwner));
+                .stringValue(SqlQueryBuilderUtils.ANN_JOIN_TABLE, SqlMembers.SCHEMA)
+                .orElse(SqlQueryBuilderUtils.getSchemaName(associationOwner));
             if (StringUtils.isNotEmpty(joinTableSchema) && escape) {
                 joinTableSchema = quote(joinTableSchema, true);
             }
             String joinTableName = annotationMetadata
-                    .stringValue(ANN_JOIN_TABLE, "name")
-                    .orElseGet(() -> getMappedName(namingStrategy, association));
+                .stringValue(SqlQueryBuilderUtils.ANN_JOIN_TABLE, "name")
+                .orElseGet(() -> getMappedName(namingStrategy, association));
             String joinTableAlias = annotationMetadata
-                    .stringValue(ANN_JOIN_TABLE, "alias")
-                    .orElseGet(() -> currentJoinAlias + joinTableName + "_");
+                .stringValue(SqlQueryBuilderUtils.ANN_JOIN_TABLE, "alias")
+                .orElseGet(() -> currentJoinAlias + joinTableName + "_");
             String finalTableName = escape ? quote(joinTableName, true) : joinTableName;
             if (StringUtils.isNotEmpty(joinTableSchema)) {
                 finalTableName = joinTableSchema + DOT + finalTableName;
             }
-            join(sb,
-                    queryState.getQueryModel(),
-                    joinType,
-                    finalTableName,
-                    joinTableAlias,
-                    joinAlias,
-                    ownerJoinColumns,
-                    ownerJoinTableColumns
+            join(query,
+                queryState.baseQueryDefinition(),
+                joinType,
+                finalTableName,
+                joinTableAlias,
+                lastJoinAlias,
+                ownerJoinColumns,
+                ownerJoinTableColumns
             );
-            sb.append(SPACE);
-            join(sb,
-                    queryState.getQueryModel(),
-                    joinType,
-                    getTableName(associatedEntity),
-                    currentJoinAlias,
-                    joinTableAlias,
-                    associationJoinTableColumns,
-                    associationJoinColumns
+            query.append(SPACE);
+            join(query,
+                queryState.baseQueryDefinition(),
+                joinType,
+                getTableName(associatedEntity),
+                currentJoinAlias,
+                joinTableAlias,
+                associationJoinTableColumns,
+                associationJoinColumns
             );
         } else {
             if (StringUtils.isNotEmpty(mappedBy)) {
@@ -1545,34 +1112,35 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 if (mappedByPropertyPath == null) {
                     throw new MappingException("Foreign key association with mappedBy references a property that doesn't exist [" + mappedBy + "] of entity: " + associatedEntity.getName());
                 }
-                join(sb,
-                        joinType,
-                        queryState,
-                        associatedEntity,
-                        associationOwner,
-                        joinAlias,
-                        currentJoinAlias,
-                        joinAssociationsPath,
-                        ownerIdentity,
-                        mappedByPropertyPath.getAssociations(),
-                        mappedByPropertyPath.getProperty());
+                join(query,
+                    joinType,
+                    queryState,
+                    associatedEntity,
+                    associationOwner,
+                    lastJoinAlias,
+                    currentJoinAlias,
+                    new PersistentPropertyPath(joinAssociationsPath, ownerIdentity),
+                    mappedByPropertyPath);
             } else {
-                PersistentProperty associatedProperty = association.getAssociatedEntity().getIdentity();
+                PersistentProperty associatedProperty = associatedEntity.getIdentity();
                 if (associatedProperty == null) {
-                    throw new IllegalArgumentException("Associated entity [" + association.getAssociatedEntity().getName() + "] defines no ID. Cannot join.");
+                    throw new IllegalArgumentException("Associated entity [" + associatedEntity.getName() + "] defines no ID. Cannot join.");
                 }
-                join(sb,
-                        joinType,
-                        queryState,
-                        associatedEntity,
-                        associationOwner,
-                        joinAlias,
-                        currentJoinAlias,
-                        joinAssociationsPath,
-                        association,
-                        Collections.emptyList(),
-                        associatedProperty);
+                join(query,
+                    joinType,
+                    queryState,
+                    associatedEntity,
+                    associationOwner,
+                    lastJoinAlias,
+                    currentJoinAlias,
+                    joinAssociation,
+                    new PersistentPropertyPath(List.of(), associatedProperty));
             }
+        }
+
+        String additionalWhere = resolveWhereForAnnotationMetadata(currentJoinAlias, associatedEntity.getAnnotationMetadata());
+        if (StringUtils.isNotEmpty(additionalWhere)) {
+            query.append(LOGICAL_AND).append(additionalWhere);
         }
     }
 
@@ -1583,14 +1151,15 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                       PersistentEntity associationOwner,
                       String leftTableAlias,
                       String rightTableAlias,
-                      List<Association> leftPropertyAssociations,
-                      PersistentProperty leftProperty,
-                      List<Association> rightPropertyAssociations,
-                      PersistentProperty rightProperty) {
+                      PersistentPropertyPath leftPropertyPath,
+                      PersistentPropertyPath rightPropertyPath) {
 
         final boolean escape = shouldEscape(associationOwner);
         List<String> onLeftColumns = new ArrayList<>();
         List<String> onRightColumns = new ArrayList<>();
+
+        PersistentProperty leftProperty = leftPropertyPath.getProperty();
+        PersistentProperty rightProperty = rightPropertyPath.getProperty();
 
         Association association = null;
         if (leftProperty instanceof Association associationLeft) {
@@ -1602,25 +1171,25 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             Optional<Association> inverse = association.getInverseSide().map(Function.identity());
             Association owner = inverse.orElse(association);
             boolean isOwner = leftProperty == owner;
-            AnnotationValue<Annotation> joinColumnsHolder = owner.getAnnotationMetadata().getAnnotation(ANN_JOIN_COLUMNS);
+            AnnotationValue<Annotation> joinColumnsHolder = owner.getAnnotationMetadata().getAnnotation(SqlQueryBuilderUtils.ANN_JOIN_COLUMNS);
             if (joinColumnsHolder != null) {
                 onLeftColumns.addAll(
-                        joinColumnsHolder.getAnnotations(VALUE_MEMBER)
-                                .stream()
-                                .flatMap(ann -> ann.stringValue(isOwner ? "name" : "referencedColumnName").stream())
-                                .toList()
+                    joinColumnsHolder.getAnnotations(VALUE_MEMBER)
+                        .stream()
+                        .flatMap(ann -> ann.stringValue(isOwner ? "name" : REFERENCED_COLUMN_NAME).stream())
+                        .toList()
                 );
                 onRightColumns.addAll(
-                        joinColumnsHolder.getAnnotations(VALUE_MEMBER)
-                                .stream()
-                                .flatMap(ann -> ann.stringValue(isOwner ? "referencedColumnName" : "name").stream())
-                                .toList()
+                    joinColumnsHolder.getAnnotations(VALUE_MEMBER)
+                        .stream()
+                        .flatMap(ann -> ann.stringValue(isOwner ? REFERENCED_COLUMN_NAME : "name").stream())
+                        .toList()
                 );
             }
         }
         if (onLeftColumns.isEmpty()) {
-            traversePersistentProperties(leftProperty, (associations, p) -> {
-                String column = getMappedName(getNamingStrategy(leftProperty.getOwner()), merge(leftPropertyAssociations, associations), p);
+            PersistentEntityUtils.traversePersistentProperties(leftProperty, (associations, p) -> {
+                String column = getMappedName(getNamingStrategy(leftProperty.getOwner()), merge(leftPropertyPath.getAssociations(), associations), p);
                 onLeftColumns.add(column);
             });
             if (onLeftColumns.isEmpty()) {
@@ -1628,39 +1197,24 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             }
         }
         if (onRightColumns.isEmpty()) {
-            traversePersistentProperties(rightProperty, (associations, p) -> {
-                String column = getMappedName(getNamingStrategy(rightProperty.getOwner()), merge(rightPropertyAssociations, associations), p);
+            PersistentEntityUtils.traversePersistentProperties(rightProperty, (associations, p) -> {
+                String column = getMappedName(getNamingStrategy(rightProperty.getOwner()), merge(rightPropertyPath.getAssociations(), associations), p);
                 onRightColumns.add(column);
             });
         }
         join(sb,
-                queryState.getQueryModel(),
-                joinType,
-                getTableName(associatedEntity),
-                rightTableAlias,
-                leftTableAlias,
-                escape ? onLeftColumns.stream().map(this::quote).toList() : onLeftColumns,
-                escape ? onRightColumns.stream().map(this::quote).toList() : onRightColumns
+            queryState.baseQueryDefinition(),
+            joinType,
+            getTableName(associatedEntity),
+            rightTableAlias,
+            leftTableAlias,
+            escape ? onLeftColumns.stream().map(this::quote).toList() : onLeftColumns,
+            escape ? onRightColumns.stream().map(this::quote).toList() : onRightColumns
         );
     }
 
-    private Optional<PersistentEntity> findOwner(List<Association> associations, PersistentProperty property) {
-        PersistentEntity owner = property.getOwner();
-        if (!owner.isEmbeddable()) {
-            return Optional.of(owner);
-        }
-        ListIterator<Association> listIterator = associations.listIterator(associations.size());
-        while (listIterator.hasPrevious()) {
-            Association association = listIterator.previous();
-            if (!association.getOwner().isEmbeddable()) {
-                return Optional.of(association.getOwner());
-            }
-        }
-        return Optional.empty();
-    }
-
     private void join(StringBuilder builder,
-                      QueryModel queryModel,
+                      BaseQueryDefinition queryDefinition,
                       String joinType,
                       String tableName,
                       String tableAlias,
@@ -1673,22 +1227,24 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         }
 
         builder
-                .append(joinType)
-                .append(tableName)
-                .append(SPACE)
-                .append(tableAlias);
-        appendForUpdate(QueryPosition.AFTER_TABLE_NAME, queryModel, builder);
+            .append(joinType)
+            .append(tableName)
+            .append(SPACE)
+            .append(tableAlias);
+        if (queryDefinition instanceof SelectQueryDefinition selectQueryDefinition) {
+            appendForUpdate(QueryPosition.AFTER_TABLE_NAME, selectQueryDefinition, builder);
+        }
         builder.append(" ON ");
         for (int i = 0; i < onLeftColumns.size(); i++) {
             String leftColumn = onLeftColumns.get(i);
             String rightColumn = onRightColumns.get(i);
             builder.append(onTableName)
-                    .append(DOT)
-                    .append(leftColumn)
-                    .append('=')
-                    .append(tableAlias)
-                    .append(DOT)
-                    .append(rightColumn);
+                .append(DOT)
+                .append(leftColumn)
+                .append('=')
+                .append(tableAlias)
+                .append(DOT)
+                .append(rightColumn);
             if (i + 1 != onLeftColumns.size()) {
                 builder.append(LOGICAL_AND);
             }
@@ -1728,62 +1284,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
-    protected void appendProjectionRowCount(StringBuilder queryString, String logicalName) {
-        queryString.append(FUNCTION_COUNT)
-                .append(OPEN_BRACKET)
-                .append('*')
-                .append(CLOSE_BRACKET);
-    }
-
-    @Override
-    protected void appendProjectionRowCountDistinct(StringBuilder queryString, QueryState queryState,
-                                                    PersistentEntity entity, AnnotationMetadata annotationMetadata,
-                                                    String logicalName) {
-        queryString.append("COUNT(DISTINCT(");
-        // If id is composite identity or embedded id then we need to do CONCAT
-        // all id properties. It is safe as none portion of such id should be null
-        // For regular single field id we just select that field COUNT(DISTINCT(id_field))
-        // and we are doing CONCAT because COUNT(DISTINCT *) is not supported
-        if (entity.hasCompositeIdentity()) {
-            queryString.append(" CONCAT(");
-            for (PersistentProperty identity : entity.getCompositeIdentity()) {
-                appendPropertyProjection(annotationMetadata, entity, queryString, asQueryPropertyPath(queryState.getRootAlias(), identity), null);
-                queryString.append(COMMA);
-            }
-            queryString.setLength(queryString.length() - 1);
-            queryString.append(CLOSE_BRACKET);
-        } else if (entity.hasIdentity()) {
-            List<PersistentProperty> identityProperties = entity.getIdentityProperties();
-            if (identityProperties.isEmpty()) {
-                throw new IllegalArgumentException(CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID);
-            }
-            StringBuilder sbSelectionProps = new StringBuilder();
-            for (PersistentProperty identity : identityProperties) {
-                appendPropertyProjection(annotationMetadata, queryState.getEntity(), sbSelectionProps, asQueryPropertyPath(queryState.getRootAlias(), identity), null);
-            }
-            String[] selectionProps = sbSelectionProps.toString().split(",");
-            if (selectionProps.length > 1) {
-                queryString.append(" CONCAT(");
-                for (String selectionProp : selectionProps) {
-                    queryString.append(selectionProp).append(COMMA);
-                }
-                queryString.setLength(queryString.length() - 1);
-                queryString.append(CLOSE_BRACKET);
-            } else {
-                queryString.append(selectionProps[0]);
-            }
-        } else {
-            throw new IllegalArgumentException(CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID);
-        }
-        queryString.append("))");
-    }
-
-    @Override
-    protected void appendForUpdate(QueryPosition queryPosition, QueryModel query, StringBuilder queryBuilder) {
-        if (query.isForUpdate()) {
+    protected void appendForUpdate(QueryPosition queryPosition, SelectQueryDefinition definition, StringBuilder queryBuilder) {
+        if (definition.isForUpdate()) {
             boolean isSqlServer = Dialect.SQL_SERVER.equals(dialect);
             if (isSqlServer && queryPosition.equals(QueryPosition.AFTER_TABLE_NAME) ||
-                    !isSqlServer && queryPosition.equals(QueryPosition.END_OF_QUERY)) {
+                !isSqlServer && queryPosition.equals(QueryPosition.END_OF_QUERY)) {
                 queryBuilder.append(isSqlServer ? SQL_SERVER_FOR_UPDATE_CLAUSE : STANDARD_FOR_UPDATE_CLAUSE);
             }
         }
@@ -1822,7 +1327,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      * @return The generated value
      */
     protected GeneratedValue.Type selectAutoStrategy(PersistentProperty property) {
-        if (property.getDataType() == DataType.UUID) {
+        return defaultSelectAutoStrategy(property.getDataType(), dialect);
+    }
+
+    private GeneratedValue.Type defaultSelectAutoStrategy(DataType dataType, Dialect dialect) {
+        if (dataType == DataType.UUID) {
             return UUID;
         }
         if (dialect == Dialect.ORACLE) {
@@ -1831,18 +1340,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return GeneratedValue.Type.AUTO;
     }
 
-    @Override
-    public boolean supportsForUpdate() {
-        return true;
-    }
-
-    @Override
-    public Dialect dialect() {
-        return dialect;
-    }
-
-    @Override
-    public String positionalParameterFormat() {
+    /**
+     * @return The positional parameter format
+     */
+    public final String positionalParameterFormat() {
         DialectConfig dialectConfig = perDialectConfig.get(dialect);
         if (dialectConfig != null && dialectConfig.positionalFormatter != null) {
             return dialectConfig.positionalFormatter;
@@ -1851,62 +1352,262 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
-    public String positionalParameterName() {
-        DialectConfig dialectConfig = perDialectConfig.get(dialect);
-        if (dialectConfig != null && dialectConfig.positionalNameFormatter != null) {
-            return dialectConfig.positionalNameFormatter;
+    protected void appendLimitAndOrder(AnnotationMetadata annotationMetadata,
+                                       SelectQueryDefinition definition,
+                                       boolean appendLimit,
+                                       boolean appendOrder,
+                                       QueryState queryState) {
+        if (appendOrder) {
+            appendOrder(annotationMetadata, definition, queryState);
         }
-        return "";
+        if (appendLimit) {
+            appendLimitAndOffset(getDialect(), definition.limit(), definition.offset(), queryState.getQuery());
+        }
+        Map<Integer, String> parametersInRole = definition.parametersInRole();
+       if (parameterInRoleModifiesOrder(parametersInRole) || parameterInRoleModifiesLimit(parametersInRole)) {
+            Map.Entry<Integer, String> e = parametersInRole.entrySet().iterator().next();
+            queryState.pushParameter(new QueryParameterBinding() {
+                @Override
+                public String getName() {
+                    return e.getValue();
+                }
+
+                @Override
+                public String getKey() {
+                    return "";
+                }
+
+                @Override
+                public int getParameterIndex() {
+                    return e.getKey();
+                }
+
+                @Override
+                public DataType getDataType() {
+                    return DataType.OBJECT;
+                }
+
+                @Override
+                public boolean isExpandable() {
+                    return true;
+                }
+
+                @Override
+                public String getRole() {
+                    return e.getValue();
+                }
+
+                @Override
+                public String getTableAlias() {
+                    String rootAlias = queryState.getRootAlias();
+                    return StringUtils.isNotEmpty(rootAlias) ? rootAlias : null;
+                }
+            });
+        }
     }
 
-    /**
-     * @return The regex pattern for positional parameters.
-     */
-    public Pattern positionalParameterPattern() {
-        if (this.positionalParameterPattern == null) {
-            String positionalParameterFormat = positionalParameterFormat();
-            boolean messageFormat = positionalParameterFormat.endsWith("%s");
-            if (messageFormat) {
-                String pattern = positionalParameterFormat.substring(0, positionalParameterFormat.length() - 2);
-                pattern = Pattern.quote(pattern) + "\\d";
-                this.positionalParameterPattern = Pattern.compile(pattern);
-            } else {
-                this.positionalParameterPattern = Pattern.compile(Pattern.quote(positionalParameterFormat));
+    private void appendOrder(AnnotationMetadata annotationMetadata, SelectQueryDefinition definition, QueryState queryState) {
+        List<Order> orders = definition.order();
+        if (getDialect() == Dialect.SQL_SERVER && orders.isEmpty() && (definition.limit() > 0 || definition.offset() > 0)) {
+            PersistentEntity persistentEntity = definition.persistentEntity();
+            PersistentProperty identity = persistentEntity.getIdentity();
+            if (identity == null) {
+                throw new DataAccessException("Pagination requires an entity ID on SQL Server");
             }
+            orders = List.of(new DefaultOrder<>(new DefaultPersistentPropertyPath<>(identity, List.of(), null), true, false));
         }
-        return this.positionalParameterPattern;
+        appendOrder(annotationMetadata, orders, queryState);
     }
 
-    @Override
-    public boolean escapeQueries() {
-        DialectConfig dialectConfig = perDialectConfig.get(dialect);
-        if (dialectConfig != null && dialectConfig.escapeQueries != null) {
-            return dialectConfig.escapeQueries;
+    private <T> void addToCollectionIfNotContains(Collection<T> collection, T item) {
+        if (collection.contains(item)) {
+            return;
         }
-        return true;
+        collection.add(item);
     }
 
-    @Override
-    public Class<? extends Annotation> annotationType() {
-        return SqlQueryConfiguration.DialectConfiguration.class;
-    }
-
-    private static class DialectConfig {
+    private static final class DialectConfig {
         Boolean escapeQueries;
         String positionalFormatter;
         String positionalNameFormatter;
     }
 
-    private static class IndexConfiguration {
-        AnnotationValue<?> index;
-        String tableName;
-        String unquotedTableName;
+    protected class SqlSelectionVisitor extends AbstractSqlLikeQueryBuilder.SqlSelectionVisitor {
 
-        public IndexConfiguration(AnnotationValue<?> index, String tableName, String unquotedTableName) {
-            this.index = index;
-            this.tableName = tableName;
-            this.unquotedTableName = unquotedTableName;
+        public SqlSelectionVisitor(QueryState queryState, AnnotationMetadata annotationMetadata, boolean distinct) {
+            super(queryState, annotationMetadata, distinct);
         }
+
+        @Override
+        protected void appendRowCount(String logicalName) {
+            query.append("COUNT(*)");
+        }
+
+        @Override
+        protected void appendRowCountDistinct(String logicalName) {
+            query.append("COUNT(DISTINCT(");
+            // If id is composite identity or embedded id then we need to do CONCAT
+            // all id properties. It is safe as none portion of such id should be null
+            // For regular single field id we just select that field COUNT(DISTINCT(id_field))
+            // and we are doing CONCAT because COUNT(DISTINCT *) is not supported
+            if (entity.hasCompositeIdentity()) {
+                appendConcatProperties(List.of(entity.getCompositeIdentity()));
+            } else if (entity.hasIdentity()) {
+                List<PersistentProperty> identityProperties = entity.getIdentityProperties();
+                if (identityProperties.isEmpty()) {
+                    throw new IllegalArgumentException(CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID);
+                }
+                long count = identityProperties.stream().mapToInt(PersistentEntityUtils::countPersistentProperties).sum();
+                if (count > 1) {
+                    appendConcatProperties(identityProperties);
+                } else {
+                    for (PersistentProperty identity : identityProperties) {
+                        appendPropertyProjection(asQueryPropertyPath(tableAlias, identity));
+                    }
+                }
+            } else {
+                throw new IllegalArgumentException(CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID);
+            }
+            query.append("))");
+        }
+
+        private void appendConcatProperties(List<PersistentProperty> properties) {
+            query.append(" CONCAT(");
+            for (Iterator<PersistentProperty> iterator = properties.iterator(); iterator.hasNext(); ) {
+                PersistentProperty identity = iterator.next();
+                appendPropertyProjection(asQueryPropertyPath(tableAlias, identity));
+                if (iterator.hasNext()) {
+                    query.append(COMMA);
+                }
+            }
+            query.append(CLOSE_BRACKET);
+        }
+
+        @Override
+        protected void selectAllColumnsAndJoined() {
+            selectAllColumns(annotationMetadata, entity, tableAlias);
+
+            Collection<JoinPath> allPaths = queryState.baseQueryDefinition().getJoinPaths();
+            selectAllColumnsFromJoinPaths(allPaths, null);
+        }
+
+        @Internal
+        @Override
+        protected void selectAllColumnsFromJoinPaths(Collection<JoinPath> allPaths,
+                                                     @Nullable
+                                                     Map<JoinPath, String> joinAliasOverride) {
+            if (CollectionUtils.isEmpty(allPaths)) {
+                return;
+            }
+
+            List<JoinPath> joinPaths = allPaths.stream().filter(jp -> jp.getJoinType().isFetch()).collect(Collectors.toList());
+            Collections.reverse(joinPaths);
+
+            if (CollectionUtils.isEmpty(joinPaths)) {
+                return;
+            }
+            for (JoinPath joinPath : joinPaths) {
+                Association association = joinPath.getAssociation();
+                if (association.isEmbedded()) {
+                    // joins on embedded don't make sense
+                    continue;
+                }
+
+                PersistentEntity associatedEntity = association.getAssociatedEntity();
+                NamingStrategy namingStrategy = getNamingStrategy(associatedEntity);
+
+                String joinAlias = joinAliasOverride == null ? getAliasName(joinPath) : joinAliasOverride.get(joinPath);
+                Objects.requireNonNull(joinAlias);
+                String joinPathAlias = getPathOnlyAliasName(joinPath);
+
+                query.append(COMMA);
+
+                boolean includeIdentity = association.isForeignKey();
+                // in the case of a foreign key association the ID is not in the table,
+                // so we need to retrieve it
+                PersistentEntityUtils.traversePersistentProperties(associatedEntity, includeIdentity, true, (propertyAssociations, prop) -> {
+
+                    String transformed = getDataTransformerReadValue(joinAlias, prop).orElse(null);
+                    String columnAlias = getColumnAlias(prop);
+                    String columnName;
+                    if (computePropertyPaths()) {
+                        columnName = getMappedName(namingStrategy, propertyAssociations, prop);
+                    } else {
+                        columnName = asPath(propertyAssociations, prop);
+                    }
+                    if (transformed != null) {
+                        query.append(transformed).append(AS_CLAUSE);
+                    } else {
+                        query
+                            .append(joinAlias)
+                            .append(DOT)
+                            .append(queryState.shouldEscape() ? quote(columnName) : columnName)
+                            .append(AS_CLAUSE);
+                    }
+                    if (StringUtils.isNotEmpty(columnAlias)) {
+                        query.append(columnAlias);
+                    } else {
+                        query.append(joinPathAlias).append(columnName);
+                    }
+                    query.append(COMMA);
+                });
+                query.setLength(query.length() - 1);
+            }
+        }
+
+        /**
+         * Selects all columns for the given entity and alias.
+         *
+         * @param annotationMetadata The annotation metadata
+         * @param entity             The entity
+         * @param alias              The alias
+         */
+        @Override
+        public void selectAllColumns(AnnotationMetadata annotationMetadata, PersistentEntity entity, String alias) {
+            if (canUseWildcardForSelect(annotationMetadata, entity)) {
+                selectAllColumns(query, alias);
+                return;
+            }
+            boolean escape = shouldEscape(entity);
+            NamingStrategy namingStrategy = getNamingStrategy(entity);
+            int length = query.length();
+            PersistentEntityUtils.traversePersistentProperties(entity, (associations, property)
+                -> appendProperty(query, associations, property, namingStrategy, alias, escape));
+            int newLength = query.length();
+            if (newLength == length) {
+                selectAllColumns(query, alias);
+            } else {
+                query.setLength(newLength - 1);
+            }
+        }
+
+        /**
+         * Appends '*' symbol (meaning all columns selection) to the string builder representing query.
+         *
+         * @param sb    the string builder representing query
+         * @param alias an alias, if not null will be apended with '.' before '*' symbol
+         */
+        private void selectAllColumns(StringBuilder sb, String alias) {
+            if (alias != null) {
+                sb.append(alias).append(DOT);
+            }
+            sb.append("*");
+        }
+
+        private boolean canUseWildcardForSelect(AnnotationMetadata annotationMetadata, PersistentEntity entity) {
+            if (isJsonEntity(annotationMetadata, entity)) {
+                return true;
+            }
+            return Stream.concat(entity.getIdentityProperties().stream(), entity.getPersistentProperties().stream())
+                .flatMap(SqlQueryBuilderUtils::flatMapEmbedded)
+                .noneMatch(pp -> {
+                    if (pp instanceof Association association) {
+                        return !association.isForeignKey();
+                    }
+                    return true;
+                });
+        }
+
     }
 
 }

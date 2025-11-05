@@ -2,7 +2,7 @@ plugins {
     id "io.micronaut.build.internal.data-dependencies"
     id "java"
     id "application"
-    id "com.github.johnrengelman.shadow"
+    id "com.gradleup.shadow"
     id "me.champeau.jmh"
 }
 
@@ -16,6 +16,7 @@ configurations.configureEach {
 dependencies {
     testImplementation libs.jupiter.api
     testRuntimeOnly libs.jupiter.engine
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 
     jmh libs.jmh.core
     jmh libs.jmh.annprocess

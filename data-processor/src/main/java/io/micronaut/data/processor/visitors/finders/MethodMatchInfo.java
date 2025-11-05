@@ -15,10 +15,12 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.ast.TypedElement;
 
 import java.util.Collections;
@@ -40,7 +42,7 @@ public final class MethodMatchInfo {
     private final TypedElement resultType;
     private final ClassElement interceptor;
 
-    private final Map<String, String> parameterRoles = new HashMap<>(2);
+    private final Map<ParameterElement, String> parameterRoles = new HashMap<>(2);
     private boolean dto;
     private boolean optimisticLock;
 
@@ -98,18 +100,20 @@ public final class MethodMatchInfo {
     /**
      * Adds a parameter role. This indicates that a parameter is involved
      * somehow in the query.
-     * @param role The role name
-     * @param name The parameter
+     *
+     * @param parameter The parameter
+     * @param name      The role name
      * @see io.micronaut.data.annotation.TypeRole
      */
-    public void addParameterRole(CharSequence role, String name) {
-        parameterRoles.put(role.toString(), name);
+    public void addParameterRole(@NonNull ParameterElement parameter, @NonNull String name) {
+        parameterRoles.put(parameter, name);
     }
 
     /**
      * @return The parameter roles
      */
-    public Map<String, String> getParameterRoles() {
+    @NonNull
+    public Map<ParameterElement, String> getParameterRoles() {
         return Collections.unmodifiableMap(parameterRoles);
     }
 

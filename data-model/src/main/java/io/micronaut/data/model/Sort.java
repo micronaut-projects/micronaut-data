@@ -80,10 +80,11 @@ public interface Sort {
      */
     @NonNull
     default Sort orders(@NonNull List<Sort.Order> orders) {
+        Sort theSort = this;
         for (Order order : orders) {
-            order(order);
+            theSort = theSort.order(order);
         }
-        return this;
+        return theSort;
     }
 
     /**
@@ -249,8 +250,21 @@ public interface Sort {
         }
 
         /**
+         * Creates a new order for the given property in ascending order.
+         *
+         * @param property The property
+         * @param ignoreCase  Whether to ignore case
+         * @return The order instance
+         * @since 4.13
+         */
+        public static Order of(String property, boolean ignoreCase) {
+            return new Order(property, Direction.ASC, ignoreCase);
+        }
+
+        /**
          * @return Is the order ascending
          */
+        @JsonIgnore
         public boolean isAscending() {
             return getDirection() == Direction.ASC;
         }

@@ -18,8 +18,11 @@ package io.micronaut.data.runtime.operations.internal.sql;
 import io.micronaut.aop.InvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.runtime.QueryResultInfo;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.runtime.operations.internal.query.BindableParametersPreparedQuery;
 
 /**
@@ -45,9 +48,22 @@ public interface SqlPreparedQuery<E, R> extends BindableParametersPreparedQuery<
      * Modify the query according to the pageable.
      *
      * @param pageable       The pageable
+     * @param limit          The limit
+     * @param sort           The sort
      * @param isSingleResult is single result
      */
-    void attachPageable(Pageable pageable, boolean isSingleResult);
+    default void attachPageable(Pageable pageable, Limit limit, Sort sort, boolean isSingleResult) {
+        attachPageable(pageable, isSingleResult ? Limit.of(1, limit.offset()) : limit, sort);
+    }
+
+    /**
+     * Modify the query according to the pageable.
+     *
+     * @param pageable       The pageable
+     * @param limit          The limit
+     * @param sort           The sort
+     */
+    void attachPageable(Pageable pageable, Limit limit, Sort sort);
 
     /**
      * @return the query result info
@@ -64,4 +80,10 @@ public interface SqlPreparedQuery<E, R> extends BindableParametersPreparedQuery<
     @Nullable
     @SuppressWarnings("java:S1452")
     InvocationContext<?, ?> getInvocationContext();
+
+    /**
+     * @return The persistent entity
+     */
+    @Nullable
+    RuntimePersistentEntity<E> getPersistentEntity();
 }

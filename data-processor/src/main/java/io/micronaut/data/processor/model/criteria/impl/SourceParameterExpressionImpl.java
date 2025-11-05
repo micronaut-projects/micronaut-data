@@ -16,6 +16,7 @@
 package io.micronaut.data.processor.model.criteria.impl;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.Expandable;
@@ -219,7 +220,7 @@ public final class SourceParameterExpressionImpl extends IParameterExpression<Ob
         }
         boolean autopopulated = propertyPath.getProperty()
             .findAnnotation(AutoPopulated.class)
-            .map(ap -> ap.getRequiredValue(AutoPopulated.UPDATEABLE, Boolean.class))
+            .map(ap -> ap.getRequiredValue(AutoPopulated.UPDATABLE, Boolean.class))
             .orElse(false);
         DataType dataType = getDataType(propertyPath, parameterElement, expressionType);
         JsonDataType jsonDataType = getJsonDataType(propertyPath, parameterElement, expressionType);
@@ -227,18 +228,15 @@ public final class SourceParameterExpressionImpl extends IParameterExpression<Ob
         int index = parameterElement == null || isEntityParameter ? -1 : Arrays.asList(parameters).indexOf(parameterElement);
         boolean requiresPrevValue = index == -1 && autopopulated && !isUpdate;
         boolean isExpandable = isExpandable(bindingContext, dataType);
-        String[] path;
         String[] parameterBindingPath;
-        if (outgoingQueryParameterProperty != null) {
-            path = outgoingQueryParameterProperty.getArrayPath();
-            if (index != -1) {
-                parameterBindingPath = getBindingPath(incomingMethodParameterProperty, outgoingQueryParameterProperty);
+        if (bindingContext.getParameterBindingPath() == null) {
+            if (incomingMethodParameterProperty != null && outgoingQueryParameterProperty != null) {
+                parameterBindingPath = getParameterBindingPath(incomingMethodParameterProperty, outgoingQueryParameterProperty);
             } else {
                 parameterBindingPath = null;
             }
         } else {
-            path = null;
-            parameterBindingPath = null;
+            parameterBindingPath = bindingContext.getParameterBindingPath().getArrayPath();
         }
         return new QueryParameterBinding() {
 
@@ -279,7 +277,7 @@ public final class SourceParameterExpressionImpl extends IParameterExpression<Ob
 
             @Override
             public String[] getPropertyPath() {
-                return path;
+                return propertyPath.getArrayPath();
             }
 
             @Override
@@ -317,12 +315,11 @@ public final class SourceParameterExpressionImpl extends IParameterExpression<Ob
         return !dataType.isArray() && (parameterElement != null && parameterElement.getType().isAssignable(Iterable.class.getName()));
     }
 
-    private String[] getBindingPath(PersistentPropertyPath parameterProperty, PersistentPropertyPath bindedPath) {
-        if (parameterProperty == null) {
-            return bindedPath.getArrayPath();
-        }
-        List<String> parameterPath = List.of(parameterProperty.getArrayPath());
-        List<String> path = List.of(bindedPath.getArrayPath());
+    @Nullable
+    private String[] getParameterBindingPath(@NonNull PersistentPropertyPath incomingMethodParameterPropertyPath,
+                                             @NonNull PersistentPropertyPath outgoingQueryParameterPropertyPath) {
+        List<String> parameterPath = List.of(incomingMethodParameterPropertyPath.getArrayPath());
+        List<String> path = List.of(outgoingQueryParameterPropertyPath.getArrayPath());
         if (path.equals(parameterPath)) {
             return null;
         }

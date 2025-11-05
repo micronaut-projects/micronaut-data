@@ -15,6 +15,8 @@ dependencies {
     api projects.micronautDataJpa
     api mnSql.hibernate.core
 
+    compileOnly libs.managed.jakarta.data.api
+
     implementation (mnSql.micronaut.hibernate.jpa) {
         exclude group:'org.javassist', module:'javassist'
         exclude group: 'io.micronaut.data'
@@ -28,7 +30,9 @@ dependencies {
     testImplementation mnValidation.micronaut.validation.processor
 
     testImplementation mn.micronaut.inject.groovy
-    testImplementation projects.micronautDataProcessor
+    testImplementation (projects.micronautDataProcessor) {
+        exclude group: 'org.antlr'
+    }
     testImplementation mnRxjava2.micronaut.rxjava2
     testImplementation mnReactor.micronaut.reactor
     testImplementation projects.micronautDataTck
@@ -40,6 +44,7 @@ dependencies {
 
     testRuntimeOnly(libs.jupiter.engine)
     testImplementation(mnTest.micronaut.test.junit5)
+    testImplementation(libs.managed.jakarta.data.api)
 }
 
 micronaut {

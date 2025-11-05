@@ -21,6 +21,9 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaInsert;
+import io.micronaut.data.processor.model.SourcePersistentEntity;
+import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ParameterElement;
 import jakarta.persistence.criteria.ParameterExpression;
 
@@ -57,14 +60,66 @@ public interface SourcePersistentEntityCriteriaBuilder extends PersistentEntityC
                                          @Nullable PersistentPropertyPath propertyPath);
 
     /**
+     * Create parameter expression from {@link ParameterElement}.
+     *
+     * @param parameterIndex The parameter index
+     * @param <T>            The expression type
+     * @return new parameter
+     * @since 4.13
+     */
+    @NonNull
+    <T> ParameterExpression<T> parameterReferencingMethodParameter(int parameterIndex);
+
+    /**
+     * Create parameter expression from {@link ParameterElement}.
+     *
+     * @param parameterName The parameter name
+     * @param <T>           The expression type
+     * @return new parameter
+     * @since 4.13
+     */
+    @NonNull
+    <T> ParameterExpression<T> parameterReferencingMethodParameter(String parameterName);
+
+    /**
      * Create parameter expression from {@link ParameterElement} that is representing an entity instance.
      *
      * @param entityParameter The entity parameter element
-     * @param propertyPath     The property path this parameter is representing
+     * @param propertyPath    The property path this parameter is representing
      * @param <T>             The expression type
      * @return new parameter
      */
     @NonNull
     <T> ParameterExpression<T> entityPropertyParameter(@NonNull ParameterElement entityParameter,
                                                        @Nullable PersistentPropertyPath propertyPath);
+
+    @Override
+    <T> SourcePersistentEntityCriteriaDelete<T> createCriteriaDelete(Class<T> targetEntity);
+
+    @Override
+    <T> SourcePersistentEntityCriteriaUpdate<T> createCriteriaUpdate(Class<T> targetEntity);
+
+    /**
+     * The criteria insert.
+     * @param targetEntity The target entity
+     * @param <T> The type
+     * @return The criteria insert
+     */
+    @NonNull
+    <T> PersistentEntityCriteriaInsert<T> createCriteriaInsert(ClassElement targetEntity);
+
+    /**
+     * The criteria insert.
+     * @param targetEntity The target entity
+     * @param <T> The type
+     * @return The criteria insert
+     */
+    @NonNull
+    <T> PersistentEntityCriteriaInsert<T> createCriteriaInsert(SourcePersistentEntity targetEntity);
+
+    @Override
+    SourcePersistentEntityCriteriaQuery<Object> createQuery();
+
+    @Override
+    <T> SourcePersistentEntityCriteriaQuery<T> createQuery(Class<T> resultClass);
 }

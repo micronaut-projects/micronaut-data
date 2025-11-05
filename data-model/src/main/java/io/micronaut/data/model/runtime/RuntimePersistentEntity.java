@@ -350,6 +350,16 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
         return allPersistentProperties[propertyIndex];
     }
 
+    @Override
+    public RuntimePersistentProperty<T> getPropertyByNameIgnoreCase(String name) {
+        for (RuntimePersistentProperty<T> property : allPersistentProperties) {
+            if (property != null && property.getName().equalsIgnoreCase(name)) {
+                return property;
+            }
+        }
+        return null;
+    }
+
     @Nullable
     @Override
     public RuntimePersistentProperty<T> getIdentityByName(String name) {

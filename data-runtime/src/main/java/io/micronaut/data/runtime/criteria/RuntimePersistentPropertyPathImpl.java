@@ -38,7 +38,7 @@ final class RuntimePersistentPropertyPathImpl<I, T> extends DefaultPersistentPro
     private final Path<?> parentPath;
     private final RuntimePersistentProperty<I> runtimePersistentProperty;
 
-    public RuntimePersistentPropertyPathImpl(Path<?> parentPath,
+    RuntimePersistentPropertyPathImpl(Path<?> parentPath,
                                              List<Association> path,
                                              RuntimePersistentProperty<I> persistentProperty,
                                              CriteriaBuilder criteriaBuilder) {

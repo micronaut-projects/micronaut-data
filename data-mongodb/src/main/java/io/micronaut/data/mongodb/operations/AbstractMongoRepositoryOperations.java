@@ -263,48 +263,53 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
         filter.put(MongoUtils.ID, bsonDocument.get(MongoUtils.ID));
         RuntimePersistentProperty<T> version = persistentEntity.getVersion();
         if (version != null) {
-            filter.put(version.getPersistedName(), bsonDocument.get(version.getPersistedName()));
+            // We don't support naming strategy for Mongo entity properties
+            String versionPropertyName = version.getName();
+            BsonValue value = bsonDocument.get(versionPropertyName);
+            if (value != null) {
+                filter.put(versionPropertyName, value);
+            }
         }
         return filter;
     }
 
     protected void logFind(MongoFind find) {
-        StringBuilder sb = new StringBuilder("Executing Mongo 'find'");
-        MongoFindOptions options = find.getOptions();
-        if (options != null) {
-            sb.append(" with");
-            Bson filter = options.getFilter();
-            sb.append(" filter: ").append(filter == null ? "{}" : filter.toBsonDocument().toJson());
-            Bson sort = options.getSort();
-            if (sort != null) {
-                sb.append(" sort: ").append(sort.toBsonDocument().toJson());
-            }
-            Bson projection = options.getProjection();
-            if (projection != null) {
-                sb.append(" projection: ").append(projection.toBsonDocument().toJson());
-            }
-            Collation collation = options.getCollation();
-            if (collation != null) {
-                sb.append(" collation: ").append(collation);
-            }
-        }
         if (QUERY_LOG.isDebugEnabled()) {
+            StringBuilder sb = new StringBuilder("Executing Mongo 'find'");
+            MongoFindOptions options = find.getOptions();
+            if (options != null) {
+                sb.append(" with");
+                Bson filter = options.getFilter();
+                sb.append(" filter: ").append(filter == null ? "{}" : filter.toBsonDocument().toJson());
+                Bson sort = options.getSort();
+                if (sort != null) {
+                    sb.append(" sort: ").append(sort.toBsonDocument().toJson());
+                }
+                Bson projection = options.getProjection();
+                if (projection != null) {
+                    sb.append(" projection: ").append(projection.toBsonDocument().toJson());
+                }
+                Collation collation = options.getCollation();
+                if (collation != null) {
+                    sb.append(" collation: ").append(collation);
+                }
+            }
             QUERY_LOG.debug(sb.toString());
         }
     }
 
     protected void logAggregate(MongoAggregation aggregation) {
-        MongoAggregationOptions options = aggregation.getOptions();
-        StringBuilder sb = new StringBuilder("Executing Mongo 'aggregate'");
-        if (options != null) {
+        if (QUERY_LOG.isDebugEnabled()) {
+            StringBuilder sb = new StringBuilder("Executing Mongo 'aggregate'");
             sb.append(" with");
             sb.append(" pipeline: ").append(aggregation.getPipeline().stream().map(e -> e.toBsonDocument().toJson()).toList());
-            Collation collation = options.getCollation();
-            if (collation != null) {
-                sb.append(" collation: ").append(collation);
+            MongoAggregationOptions options = aggregation.getOptions();
+            if (options != null) {
+                Collation collation = options.getCollation();
+                if (collation != null) {
+                    sb.append(" collation: ").append(collation);
+                }
             }
-        }
-        if (QUERY_LOG.isDebugEnabled()) {
             QUERY_LOG.debug(sb.toString());
         }
     }

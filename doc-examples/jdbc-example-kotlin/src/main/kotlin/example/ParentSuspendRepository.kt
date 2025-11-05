@@ -12,7 +12,6 @@ import io.micronaut.data.runtime.criteria.query
 import jakarta.persistence.criteria.JoinType
 import java.util.*
 import jakarta.transaction.Transactional
-import kotlinx.coroutines.selects.select
 
 @JdbcRepository(dialect = Dialect.H2)
 interface ParentSuspendRepository : GenericRepository<Parent, Int>, CoroutineJpaSpecificationExecutor<Parent> {

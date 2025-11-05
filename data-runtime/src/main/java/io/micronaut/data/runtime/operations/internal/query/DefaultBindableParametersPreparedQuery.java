@@ -16,9 +16,13 @@
 package io.micronaut.data.runtime.operations.internal.query;
 
 import io.micronaut.aop.InvocationContext;
+import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.model.Limit;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -42,7 +46,7 @@ import java.util.Optional;
 public class DefaultBindableParametersPreparedQuery<E, R> implements BindableParametersPreparedQuery<E, R>, DelegatePreparedQuery<E, R> {
 
     protected final PreparedQuery<E, R> preparedQuery;
-    protected final InvocationContext<?, ?> invocationContext;
+    protected final MethodInvocationContext<?, ?> invocationContext;
     protected final BindableParametersStoredQuery<E, R> storedQuery;
 
     public DefaultBindableParametersPreparedQuery(PreparedQuery<E, R> preparedQuery) {
@@ -52,7 +56,7 @@ public class DefaultBindableParametersPreparedQuery<E, R> implements BindablePar
     }
 
     public DefaultBindableParametersPreparedQuery(PreparedQuery<E, R> preparedQuery,
-                                                  InvocationContext<?, ?> invocationContext,
+                                                  MethodInvocationContext<?, ?> invocationContext,
                                                   BindableParametersStoredQuery<E, R> storedQuery) {
         this.preparedQuery = preparedQuery;
         this.invocationContext = invocationContext;
@@ -67,6 +71,11 @@ public class DefaultBindableParametersPreparedQuery<E, R> implements BindablePar
             return unwrap(storedQuery);
         }
         throw new DataAccessException("Cannot unwrap BindableParametersStoredQuery");
+    }
+
+    @Override
+    public ConversionService getConversionService() {
+        return preparedQuery.getConversionService();
     }
 
     @Override
@@ -98,5 +107,15 @@ public class DefaultBindableParametersPreparedQuery<E, R> implements BindablePar
         } else {
             BindableParametersPreparedQuery.super.bindParameters(binder);
         }
+    }
+
+    @Override
+    public Sort getSort() {
+        return preparedQuery.getSort();
+    }
+
+    @Override
+    public Limit getQueryLimit() {
+        return preparedQuery.getQueryLimit();
     }
 }

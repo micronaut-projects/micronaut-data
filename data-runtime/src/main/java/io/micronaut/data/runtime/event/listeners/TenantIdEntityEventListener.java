@@ -74,7 +74,7 @@ public class TenantIdEntityEventListener extends AutoPopulatedEntityEventListene
 
     @Override
     public boolean prePersist(@NonNull EntityEventContext<Object> context) {
-        for (RuntimePersistentProperty<Object> property : getApplicableProperties(context.getPersistentEntity())) {
+        for (RuntimePersistentProperty<Object> property : getApplicableProperties(context)) {
             if (property.getAnnotationMetadata().hasStereotype(TenantId.class)) {
                 if (property.getProperty().get(context.getEntity()) != null) {
                     // Skip existing value

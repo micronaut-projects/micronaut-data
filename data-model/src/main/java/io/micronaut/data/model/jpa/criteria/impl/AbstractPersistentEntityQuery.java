@@ -34,8 +34,9 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.jpa.criteria.impl.util.Joiner;
 import io.micronaut.data.model.query.JoinPath;
-import io.micronaut.data.model.query.builder.QueryBuilder2;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
+import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.AbstractQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
@@ -71,9 +72,9 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requirePro
  */
 @Internal
 public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEntityQuery<T>> implements AbstractQuery<T>,
-    QueryResultPersistentEntityCriteriaQuery, PersistentEntityQuery<T> {
+    PersistentEntityQuery<T> {
 
-    protected Map<String, Integer> parametersInRole = new LinkedHashMap<>();
+    protected Map<Integer, String> parametersInRole = new LinkedHashMap<>();
     protected final CriteriaBuilder criteriaBuilder;
     protected final ExpressionType<T> resultType;
     protected Predicate predicate;
@@ -90,7 +91,12 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
         this.criteriaBuilder = criteriaBuilder;
     }
 
-    public final Map<String, Integer> getParametersInRole() {
+    @Override
+    public PersistentEntity getPersistentEntity() {
+        return entityRoot.getPersistentEntity();
+    }
+
+    public final Map<Integer, String> getParametersInRole() {
         return parametersInRole;
     }
 
@@ -100,20 +106,29 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
     protected abstract Self self();
 
     @Override
-    public QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder2 queryBuilder) {
+    public QueryResult build(AnnotationMetadata annotationMetadata, QueryBuilder queryBuilder) {
         return queryBuilder.buildSelect(annotationMetadata, toSelectQueryDefinition());
     }
 
     /**
-     * @return Build {@link io.micronaut.data.model.query.builder.QueryBuilder2.SelectQueryDefinition}.
+     * @return Build {@link QueryBuilder.SelectQueryDefinition}.
      */
-    public QueryBuilder2.SelectQueryDefinition toSelectQueryDefinition() {
+    public QueryBuilder.SelectQueryDefinition toSelectQueryDefinition() {
+        PersistentEntityRoot<?> root = entityRoot;
+        if (root == null) {
+            Class<T> resultType = this.resultType.getJavaType();
+            if (resultType != Object.class && resultType != Tuple.class) {
+                root = from(resultType);
+            } else {
+                throw new IllegalStateException("Root entity has to be specified");
+            }
+        }
         return new SelectQueryDefinitionImpl(
-            entityRoot,
-            entityRoot.getPersistentEntity(),
+            root,
+            root.getPersistentEntity(),
             predicate,
-            selection == null ? entityRoot : selection,
-            calculateJoins(entityRoot.getPersistentEntity()),
+            selection == null ? root : selection,
+            calculateJoins(root.getPersistentEntity()),
             forUpdate,
             distinct,
             orders == null ? List.of() : orders,
@@ -377,7 +392,7 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
     }
 
     @Internal
-    private static final class SelectQueryDefinitionImpl extends BaseQueryDefinitionImpl implements QueryBuilder2.SelectQueryDefinition {
+    private static final class SelectQueryDefinitionImpl extends BaseQueryDefinitionImpl implements QueryBuilder.SelectQueryDefinition {
 
         private final Root<?> root;
         private final Selection<?> selection;
@@ -386,7 +401,7 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
         private final List<Order> order;
         private final int limit;
         private final int offset;
-        private final Map<String, Integer> parametersInRole;
+        private final Map<Integer, String> parametersInRole;
 
         public SelectQueryDefinitionImpl(Root<?> root,
                                          PersistentEntity persistentEntity,
@@ -398,7 +413,7 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
                                          List<Order> order,
                                          int limit,
                                          int offset,
-                                         Map<String, Integer> parametersInRole) {
+                                         Map<Integer, String> parametersInRole) {
             super(persistentEntity, predicate, joinPaths);
             this.root = root;
             this.selection = selection;
@@ -411,7 +426,7 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
         }
 
         @Override
-        public Map<String, Integer> parametersInRole() {
+        public Map<Integer, String> parametersInRole() {
             return parametersInRole;
         }
 
@@ -452,7 +467,7 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
     }
 
     @Internal
-    abstract static class BaseQueryDefinitionImpl implements QueryBuilder2.BaseQueryDefinition {
+    abstract static class BaseQueryDefinitionImpl implements QueryBuilder.BaseQueryDefinition {
 
         private final PersistentEntity persistentEntity;
         private final Predicate predicate;

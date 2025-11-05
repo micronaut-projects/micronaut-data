@@ -32,6 +32,8 @@ import io.micronaut.data.intercept.annotation.DataMethodQueryParameter;
 import io.micronaut.data.model.AssociationUtils;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
+import io.micronaut.data.model.Limit;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.DefaultStoredDataOperation;
@@ -78,7 +80,6 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     private final boolean isOptimisticLock;
     private final boolean isNative;
     private final boolean isProcedure;
-    private final boolean isNumericPlaceHolder;
     private final boolean hasPageable;
     private final AnnotationMetadata annotationMetadata;
     private final boolean isCount;
@@ -91,8 +92,8 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     private final boolean jsonEntity;
     private final OperationType operationType;
     private final Map<String, AnnotationValue<?>> parameterExpressions;
-    private final int limit;
-    private final int offset;
+    private final Limit limit;
+    private final Sort sort;
     private final Function<Object, Object> stringsEnvResolverValueMapper;
 
     /**
@@ -149,7 +150,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
         this.annotationMetadata = method.getAnnotationMetadata();
         this.isProcedure = dataMethodQuery.isTrue(DataMethodQuery.META_MEMBER_PROCEDURE);
         this.hasResultConsumer = method.stringValue(DATA_METHOD_ANN_NAME, "sqlMappingFunction").isPresent();
-        this.isNumericPlaceHolder = method
+        boolean isNumericPlaceHolder = method
                 .classValue(RepositoryConfiguration.class, "queryBuilder")
                 .map(c -> c == SqlQueryBuilder.class).orElse(false);
         this.hasPageable = dataMethodQuery.stringValue(TypeRole.PAGEABLE).isPresent() ||
@@ -236,8 +237,18 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
         this.jsonEntity = DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(annotationMetadata);
         this.parameterExpressions = annotationMetadata.getAnnotationValuesByType(ParameterExpression.class).stream()
             .collect(Collectors.toMap(av -> av.stringValue("name").orElseThrow(), av -> av));
-        this.limit = dataMethodQuery.intValue(DataMethodQuery.META_MEMBER_LIMIT).orElse(-1);
-        this.offset = dataMethodQuery.intValue(DataMethodQuery.META_MEMBER_OFFSET).orElse(0);
+        this.limit = Limit.of(
+            dataMethodQuery.intValue(DataMethodQuery.META_MEMBER_LIMIT).orElse(-1),
+            dataMethodQuery.intValue(DataMethodQuery.META_MEMBER_OFFSET).orElse(0)
+        );
+        this.sort = Sort.of(
+            dataMethodQuery.getAnnotations(DataMethodQuery.META_MEMBER_SORT).stream()
+                .map(av ->  new Sort.Order(
+                    av.stringValue().orElseThrow(),
+                    av.enumValue("direction", Sort.Order.Direction.class).orElse(Sort.Order.Direction.ASC),
+                    av.booleanValue("ignoreCase").orElse(false))
+                ).toList()
+        );
     }
 
     private static <E> Class<E> getRequiredRootEntity(ExecutableMethod<?, ?> context) {
@@ -299,27 +310,18 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     }
 
     @Override
-    public int getLimit() {
+    public Limit getQueryLimit() {
         return limit;
     }
 
     @Override
-    public int getOffset() {
-        return offset;
+    public Sort getSort() {
+        return sort;
     }
 
     @Override
     public List<QueryParameterBinding> getQueryBindings() {
         return queryParameters;
-    }
-
-    @NonNull
-    @Override
-    public Set<JoinPath> getJoinFetchPaths() {
-        if (joinFetchPaths == null) {
-            this.joinFetchPaths = Collections.unmodifiableSet(AssociationUtils.getJoinFetchPaths(method));
-        }
-        return joinFetchPaths;
     }
 
     @Override
@@ -335,11 +337,6 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
      */
     public ExecutableMethod<?, ?> getMethod() {
         return method;
-    }
-
-    @Override
-    public boolean isSingleResult() {
-        return !isCount() && getJoinFetchPaths().isEmpty();
     }
 
     @Override
@@ -377,16 +374,6 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     }
 
     /**
-     * Is this a raw SQL query.
-     *
-     * @return The raw sql query.
-     */
-    @Override
-    public boolean useNumericPlaceholders() {
-        return isNumericPlaceHolder;
-    }
-
-    /**
      * @return Whether the query is a DTO query
      */
     @Override
@@ -407,16 +394,6 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     @Override
     public DataType getResultDataType() {
         return resultDataType;
-    }
-
-    /**
-     * @return The ID type
-     */
-    @SuppressWarnings("unchecked")
-    @Override
-    public Optional<Class<?>> getEntityIdentifierType() {
-        Optional o = annotationMetadata.classValue(DATA_METHOD_ANN_NAME, DataMethod.META_MEMBER_ID_TYPE);
-        return o;
     }
 
     /**
@@ -448,12 +425,6 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     @Override
     public String getName() {
         return method.getMethodName();
-    }
-
-    @Override
-    @NonNull
-    public Class<?>[] getArgumentTypes() {
-        return method.getArgumentTypes();
     }
 
     @Override

@@ -18,4 +18,5 @@ package io.micronaut.data.tck.repositories;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.SaleItem;
 
-public interface SaleItemRepository extends CrudRepository<SaleItem, Long> {}
+public interface SaleItemRepository extends CrudRepository<SaleItem, Long> {
+}

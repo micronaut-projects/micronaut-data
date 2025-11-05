@@ -108,11 +108,11 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
     }
 
     private void autoTimestampIfNecessary(@NonNull EntityEventContext<Object> context, boolean isUpdate) {
-        final RuntimePersistentProperty<Object>[] applicableProperties = getApplicableProperties(context.getPersistentEntity());
+        final RuntimePersistentProperty<Object>[] applicableProperties = getApplicableProperties(context);
         Object now = dateTimeProvider.getNow();
         for (RuntimePersistentProperty<Object> property : applicableProperties) {
             if (isUpdate) {
-                if (!property.getAnnotationMetadata().booleanValue(AutoPopulated.class, AutoPopulated.UPDATEABLE).orElse(true)) {
+                if (!property.getAnnotationMetadata().booleanValue(AutoPopulated.class, AutoPopulated.UPDATABLE).orElse(true)) {
                     continue;
                 }
             }

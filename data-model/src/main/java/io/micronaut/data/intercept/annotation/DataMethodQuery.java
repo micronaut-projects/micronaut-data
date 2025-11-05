@@ -87,6 +87,11 @@ public @interface DataMethodQuery {
     String META_MEMBER_LIMIT = "limit";
 
     /**
+     * The parameter that holds the order value.
+     */
+    String META_MEMBER_SORT = "sorts";
+
+    /**
      * Does the query result in a DTO object.
      */
     String META_MEMBER_DTO = "dto";
@@ -105,6 +110,16 @@ public @interface DataMethodQuery {
      * The member name that holds the root entity type.
      */
     String META_MEMBER_OPERATION_TYPE = "opType";
+
+    /**
+     * The member name that holds the type roles if parameters.
+     */
+    String META_MEMBER_PARAMETERS_TYPE_ROLES = "parametersTypeRoles";
+
+    /**
+     * The member name that holds the type role of the return type.
+     */
+    String META_MEMBER_RETURN_TYPE_ROLE = "returnTypeRole";
 
     /**
      * The computed result type. This represents the type that is to be read from the database. For example for a {@link java.util.List}

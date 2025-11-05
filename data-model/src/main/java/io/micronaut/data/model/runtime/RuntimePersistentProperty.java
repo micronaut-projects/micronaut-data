@@ -27,6 +27,8 @@ import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
@@ -49,7 +51,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     private final Argument<Object> argument;
     private final Supplier<AttributeConverter<Object, Object>> converter;
     private String persistedName;
-    private String alias;
+    private final String alias;
 
     /**
      * Default constructor.
@@ -110,6 +112,27 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     @Override
     public boolean isEnum() {
         return type.isEnum();
+    }
+
+    @Override
+    public List<EnumConstant> getEnumConstants() {
+        if (type.isEnum()) {
+            return Arrays.stream(type.getEnumConstants()).<EnumConstant>map(it -> new EnumConstant() {
+
+                final Enum<?> e = (Enum<?>) it;
+
+                @Override
+                public String name() {
+                    return e.name();
+                }
+
+                @Override
+                public int ordinal() {
+                    return e.ordinal();
+                }
+            }).toList();
+        }
+        return List.of();
     }
 
     @Override
@@ -209,7 +232,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
         if (obj == null || obj.getClass() != this.getClass()) {
             return false;
         }
-        RuntimePersistentProperty other = (RuntimePersistentProperty) obj;
+        RuntimePersistentProperty<?> other = (RuntimePersistentProperty<?>) obj;
         return Objects.equals(other.getOwner(), getOwner()) && Objects.equals(other.getName(), getName());
     }
 }

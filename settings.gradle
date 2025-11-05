@@ -6,7 +6,7 @@ pluginManagement {
 }
 
 plugins {
-    id 'io.micronaut.build.shared.settings' version '7.4.0'
+    id 'io.micronaut.build.shared.settings' version '8.0.0-M9'
 }
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
@@ -95,6 +95,8 @@ include 'doc-examples:jdbc-example-groovy'
 include 'doc-examples:jdbc-example-kotlin'
 include 'doc-examples:jdbc-example-records-java'
 
+include 'doc-examples:jdbc-jakarta-data-example-java'
+
 include 'doc-examples:jdbc-multitenancy-datasource-example-java'
 include 'doc-examples:jdbc-multitenancy-schema-example-java'
 include 'doc-examples:jdbc-multitenancy-discriminator-example-java'
@@ -146,3 +148,8 @@ include 'benchmarks:benchmark-micronaut-data-mongodb'
 include 'benchmarks:benchmark-spring-data'
 include 'benchmarks:benchmark-spring-data-jdbc'
 include 'benchmarks:benchmark-spring-data-mongodb'
+
+include 'jakarta-data-tck:support'
+include 'jakarta-data-tck:hibernate'
+include 'jakarta-data-tck:jdbc'
+include 'jakarta-data-tck:mongodb'

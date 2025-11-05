@@ -23,9 +23,12 @@ import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaInsert;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
+import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
+import io.micronaut.data.processor.model.criteria.impl.MethodMatchSourcePersistentEntityCriteriaBuilderImpl;
 import io.micronaut.data.processor.visitors.MatchFailedException;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
@@ -90,12 +93,12 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
             throw new ProcessingException(methodElement, "Save method requires parameters");
         }
         if (matchContext.getParametersNotInRole().stream().allMatch(p -> TypeUtils.isIterableOfEntity(p.getGenericType()) || TypeUtils.isEntity(p.getGenericType()))) {
-            return saveEntity(isReturning ? DataMethod.OperationType.INSERT_RETURNING : DataMethod.OperationType.INSERT);
+            return saveEntity(matchContext, isReturning ? DataMethod.OperationType.INSERT_RETURNING : DataMethod.OperationType.INSERT);
         }
         return saveProperties();
     }
 
-    private MethodMatch saveEntity(DataMethod.OperationType operationType) {
+    public static MethodMatch saveEntity(MethodMatchContext matchContext, DataMethod.OperationType operationType) {
         return mc -> {
             ParameterElement[] parameters = mc.getParameters();
             ParameterElement entityParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isEntity(p.getGenericType())).findFirst().orElse(null);
@@ -119,12 +122,12 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
                     mc.getAnnotationMetadata()
                 );
                 boolean encodeEntityParameters = !DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(mc.getAnnotationMetadata());
-                QueryResult queryResult;
+                SourcePersistentEntityCriteriaBuilder criteriaBuilder = new MethodMatchSourcePersistentEntityCriteriaBuilderImpl(matchContext);
+                PersistentEntityCriteriaInsert<Object> criteriaInsert = criteriaBuilder.createCriteriaInsert(mc.getRootEntity());
                 if (operationType == DataMethod.OperationType.INSERT_RETURNING) {
-                    queryResult = mc.getQueryBuilder().buildInsertReturning(annotationMetadataHierarchy, mc.getRootEntity());
-                } else {
-                    queryResult = mc.getQueryBuilder().buildInsert(annotationMetadataHierarchy, mc.getRootEntity());
+                    criteriaInsert.setReturning();
                 }
+                QueryResult queryResult = criteriaInsert.build(annotationMetadataHierarchy, mc.getQueryBuilder());
                 methodMatchInfo
                     .encodeEntityParameters(encodeEntityParameters)
                     .queryResult(
@@ -132,10 +135,10 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
                     );
             }
             if (entitiesParameter != null) {
-                methodMatchInfo.addParameterRole(TypeRole.ENTITIES, entitiesParameter.getName());
+                methodMatchInfo.addParameterRole(entitiesParameter, TypeRole.ENTITIES);
             }
             if (entityParameter != null) {
-                methodMatchInfo.addParameterRole(TypeRole.ENTITY, entityParameter.getName());
+                methodMatchInfo.addParameterRole(entityParameter, TypeRole.ENTITY);
             }
             return methodMatchInfo;
         };
@@ -213,6 +216,7 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
                     matchContext.getAnnotationMetadata()
                 );
 
+                SourcePersistentEntityCriteriaBuilder criteriaBuilder = new MethodMatchSourcePersistentEntityCriteriaBuilderImpl(matchContext);
                 FindersUtils.InterceptorMatch e = FindersUtils.pickSaveOneInterceptor(matchContext, matchContext.getReturnType());
                 boolean encodeEntityParameters = !DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(matchContext.getAnnotationMetadata());
                 return new MethodMatchInfo(
@@ -222,7 +226,7 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
                 )
                     .encodeEntityParameters(encodeEntityParameters)
                     .queryResult(
-                        matchContext.getQueryBuilder().buildInsert(annotationMetadataHierarchy, matchContext.getRootEntity())
+                        criteriaBuilder.createCriteriaInsert(matchContext.getRootEntity()).build(annotationMetadataHierarchy, matchContext.getQueryBuilder())
                     );
             }
 

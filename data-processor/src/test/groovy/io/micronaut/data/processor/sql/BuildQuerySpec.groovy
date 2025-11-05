@@ -15,26 +15,23 @@
  */
 package io.micronaut.data.processor.sql
 
-import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.intercept.FindAllInterceptor
 import io.micronaut.data.intercept.FindOneInterceptor
+import io.micronaut.data.intercept.InsertReturningOneInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.Pageable
-import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Invoice
-import io.micronaut.data.model.query.QueryModel
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
-import io.micronaut.data.model.runtime.StoredQuery
 import io.micronaut.data.processor.entity.ActivityPeriodEntity
 import io.micronaut.data.processor.visitors.AbstractDataSpec
+import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Restaurant
 import io.micronaut.data.tck.jdbc.entities.EmployeeGroup
-import io.micronaut.inject.ExecutableMethod
 import spock.lang.Issue
 import spock.lang.PendingFeature
 import spock.lang.Unroll
@@ -49,8 +46,8 @@ import static io.micronaut.data.processor.visitors.TestUtils.getParameterBinding
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterBindingPaths
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterExpressions
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterPropertyPaths
+import static io.micronaut.data.processor.visitors.TestUtils.getParameterRoles
 import static io.micronaut.data.processor.visitors.TestUtils.getQuery
-import static io.micronaut.data.processor.visitors.TestUtils.getQueryParts
 import static io.micronaut.data.processor.visitors.TestUtils.getRawQuery
 import static io.micronaut.data.processor.visitors.TestUtils.getResultDataType
 import static io.micronaut.data.processor.visitors.TestUtils.isExpandableQuery
@@ -83,7 +80,6 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.CustomBook;
 
 @JdbcRepository(dialect= Dialect.POSTGRES)
-@io.micronaut.context.annotation.Executable
 interface MyInterface2 extends CrudRepository<CustomBook, Long> {
 }
 """
@@ -104,7 +100,6 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.CustomBook;
 
 @JdbcRepository(dialect= Dialect.POSTGRES)
-@io.micronaut.context.annotation.Executable
 interface MyInterface2 extends CrudRepository<CustomBook, Long> {
 
     @Query("SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[:nickNames]")
@@ -134,7 +129,6 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.CustomBook;
 
 @JdbcRepository(dialect= Dialect.POSTGRES)
-@io.micronaut.context.annotation.Executable
 interface MyInterface2 extends CrudRepository<CustomBook, Long> {
 
     @Query("SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[:nickNames]")
@@ -369,8 +363,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository(value = "secondary")
-@JdbcRepository(dialect= Dialect.MYSQL)
-@io.micronaut.context.annotation.Executable
+@JdbcRepository(dialect = Dialect.MYSQL)
 interface FoodRepository extends GenericRepository<Food, UUID> {
 
     @Join("meal")
@@ -1161,6 +1154,31 @@ interface AuthorRepository extends GenericRepository<Author, Long> {
             getResultDataType(queryAllMethod) == DataType.OBJECT
     }
 
+    void "test embedded id with many-to-one counts"() {
+        given:
+        def repository = buildRepository('test.UserRoleRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.jdbc.entities.UserRole;
+import io.micronaut.data.tck.jdbc.entities.UserRoleId;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
+
+    long count();
+
+    long countDistinct();
+}
+
+""")
+        def countQuery = getQuery(repository.getRequiredMethod("count"))
+        def countDistinctQuery = getQuery(repository.getRequiredMethod("countDistinct"))
+        expect:
+        countQuery == 'SELECT COUNT(*) FROM `user_role_composite` user_role_'
+        countDistinctQuery == 'SELECT COUNT(DISTINCT( CONCAT(user_role_.`user_id`,user_role_.`role_id`))) FROM `user_role_composite` user_role_'
+    }
+
     void "test many-to-one with properties starting with the same prefix"() {
         given:
         def repository = buildRepository('test.UserGroupMembershipRepository', """
@@ -1350,13 +1368,13 @@ interface TestRepository extends GenericRepository<ActivityPeriodEntity, UUID> {
         then:
         queryFindAll == 'SELECT activity_period_entity_.`id`,activity_period_entity_.`name`,activity_period_entity_.`description`,activity_period_entity_.`type` FROM `activity_period` activity_period_entity_ LEFT JOIN `activity_period_person` activity_period_entity_persons_ ON activity_period_entity_.`id`=activity_period_entity_persons_.`activity_period_id` LEFT JOIN `activity_person` activity_period_entity_persons_id_person_ ON activity_period_entity_persons_.`person_id`=activity_period_entity_persons_id_person_.`id`'
         when:
-        def test = QueryModel.from(PersistentEntity.of(ActivityPeriodEntity))
-        test.join("persons.id.person", Join.Type.LEFT, null)
-        def builder = new SqlQueryBuilder(Dialect.H2)
-        def result = builder.buildQuery(AnnotationMetadata.EMPTY_METADATA, test)
-        def query = result.query
+        RuntimeCriteriaBuilder builder = new RuntimeCriteriaBuilder()
+        def query = builder.createQuery()
+        def root = query.from(ActivityPeriodEntity)
+        root.join("persons.id.person", Join.Type.LEFT)
+        def result = query.build(new SqlQueryBuilder(Dialect.H2))
         then:
-        query == queryFindAll
+        result.query == queryFindAll
     }
 
     void "test project enum"() {
@@ -2006,7 +2024,7 @@ interface TestRepository extends GenericRepository<Book, Long> {
         findByTitleContainsQuery.endsWith('FROM "book" book_ WHERE (book_."title" LIKE CONCAT(\'%\',?,\'%\'))')
         findByTitleLikeQuery.endsWith('FROM "book" book_ WHERE (book_."title" LIKE ?)')
         findByTitleIlikeQuery.endsWith('FROM "book" book_ WHERE (LOWER(book_."title") LIKE LOWER(?))')
-        findByTitleNotLikeQuery.endsWith('FROM "book" book_ WHERE (NOT(book_."title" LIKE ?))')
+        findByTitleNotLikeQuery.endsWith('FROM "book" book_ WHERE (book_."title" NOT LIKE ?)')
     }
 
     void "test IN"() {
@@ -2087,6 +2105,60 @@ interface TestRepository extends GenericRepository<Book, Long> {
             countQueryAnnotation.getAnnotations("parameters").size() == 1
     }
 
+    void "test LIMIT method"() {
+        given:
+        def repository = buildRepository('test.TestRepository', """
+
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.Limit;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.Author;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+
+import java.util.List;
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface TestRepository extends GenericRepository<Book, Long> {
+    List<Book> findAll(Limit limit);
+}
+
+""")
+        def findAll = repository.findPossibleMethods("findAll").findFirst().get()
+        expect:
+            getQuery(findAll) == """SELECT book_."id",book_."author_id",book_."genre_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated" FROM "book" book_"""
+            isExpandableQuery(findAll)
+            getParameterRoles(findAll) == ["querylimit"]
+    }
+
+    void "test JOIN query method"() {
+        given:
+        def repository = buildRepository('test.TestRepository', """
+
+import io.micronaut.data.annotation.OrderBy;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.Author;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+
+import java.util.List;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface TestRepository extends GenericRepository<Book, Long> {
+    @Join("author")
+    @OrderBy("author.name")
+    @OrderBy("title")
+    Page<Book> findAll(Pageable pageable);
+}
+
+""")
+        def findAll = repository.findPossibleMethods("findAll").findFirst().get()
+        expect:
+            getQuery(findAll) == """SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated`,book_author_.`name` AS author_name,book_author_.`nick_name` AS author_nick_name FROM `book` book_ INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` IN (SELECT book_book_.`id` FROM `book` book_book_ WHERE (book_book_.`id` IN (SELECT book_book_book_.`id` FROM `book` book_book_book_ INNER JOIN `author` book_book_book_author_ ON book_book_book_.`author_id`=book_book_book_author_.`id`))"""
+            getParameterRoles(findAll) == ["pageableRequired", "sort"]
+    }
+
     void "test repository with reused embedded entity"() {
         when:
         buildRepository('test.TestRepository', """
@@ -2153,5 +2225,84 @@ interface PersonRepository extends CrudRepository<Person, Long> {
         type                                          | interceptor
         'java.util.List<Person>'                      | FindAllInterceptor
         'Person'                                      | FindOneInterceptor
+    }
+
+    void "test build insert returning update on conflict"() {
+        given:
+        def repository = buildRepository('test.BookRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface BookRepository extends CrudRepository<Book, Long> {
+
+    @Query("insert into book (id, title, total_pages) values (:id, :title, :totalPages) on conflict do update set title = :title returning id, title, total_pages")
+    Book insertCustom(Long id, String title, int totalPages);
+
+}
+""")
+        def insertCustomMethod = repository.findPossibleMethods("insertCustom").findFirst().get()
+        def insertCustomQuery = getQuery(insertCustomMethod)
+
+        expect:
+        insertCustomMethod.classValue(DataMethod, "interceptor").get() == InsertReturningOneInterceptor
+        insertCustomQuery == 'insert into book (id, title, total_pages) values (:id, :title, :totalPages) on conflict do update set title = :title returning id, title, total_pages'
+    }
+
+    void "test find by embedded property"() {
+        given:
+            def repository = buildRepository('test.RestaurantRepository', """
+import io.micronaut.data.annotation.By;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Restaurant;
+import java.util.Optional;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface RestaurantRepository extends GenericRepository<Restaurant, Long> {
+
+    Optional<Restaurant> find(@By("address.street") String street);
+}
+
+""")
+
+            def method = repository.getRequiredMethod("find", String)
+        expect:
+            getQuery(method) == 'SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`street`,restaurant_.`zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM `restaurant` restaurant_ WHERE (restaurant_.`street` = ?)'
+            getParameterBindingIndexes(method) == ["0"] as String[]
+            getParameterBindingPaths(method) == [""] as String[]
+            getParameterPropertyPaths(method) == ["address.street"] as String[]
+    }
+
+    void "test custom query raw matcher with quoted key words"() {
+        given:
+        def repository = buildRepository('test.ProductRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Product;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface ProductRepository extends GenericRepository<Product, Long> {
+
+    @Query("SELECT CASE WHEN p.price < 10 THEN 'INSERT' WHEN p.price => 20 THEN 'DELETE' ELSE 'UPDATE' END AS operation FROM product p WHERE p.id = :id /* Testing reserved words insert, update, delete in SQL comments */")
+    String getStockOperation(Long id);
+
+    @Query("SELECT CASE WHEN p.price < 10 THEN 'EXTENDED INSERT' WHEN p.price => 20 THEN 'EXTENDED DELETE' ELSE 'EXTENDED UPDATE' END AS operation FROM product p")
+    List<String> getExtendedStockOperations();
+
+    @Query("SELECT 'customValue' -- Just to test INSERT/UPDATE/DELETE in the SQL comment")
+    String selectCustomString();
+}
+""")
+        def getStockOperationMethod = repository.getRequiredMethod("getStockOperation", Long)
+        def getExtendedStockOperationsMethod = repository.getRequiredMethod("getExtendedStockOperations")
+        def selectCustomStringMethod = repository.getRequiredMethod("selectCustomString")
+
+        expect:
+        getStockOperationMethod.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
+        getExtendedStockOperationsMethod.classValue(DataMethod, "interceptor").get() == FindAllInterceptor
+        selectCustomStringMethod.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
     }
 }

@@ -8,7 +8,6 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -23,7 +22,6 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 
-@MicronautTest
 @H2DBProperties
 class H2EmbeddedCascadeSpec extends Specification implements H2TestPropertyProvider {
     @AutoCleanup

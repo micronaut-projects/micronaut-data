@@ -43,13 +43,13 @@ final class SourcePersistentEntityCriteriaQueryImpl<T> extends AbstractPersisten
 
     private final Function<ClassElement, SourcePersistentEntity> entityResolver;
 
-    public SourcePersistentEntityCriteriaQueryImpl(Class<T> result,
+    SourcePersistentEntityCriteriaQueryImpl(Class<T> result,
                                                    Function<ClassElement, SourcePersistentEntity> entityResolver,
                                                    CriteriaBuilder criteriaBuilder) {
         this(new ClassExpressionType<>(result), entityResolver, criteriaBuilder);
     }
 
-    public SourcePersistentEntityCriteriaQueryImpl(ExpressionType<T> result,
+    SourcePersistentEntityCriteriaQueryImpl(ExpressionType<T> result,
                                                    Function<ClassElement, SourcePersistentEntity> entityResolver,
                                                    CriteriaBuilder criteriaBuilder) {
         super(result, criteriaBuilder);
