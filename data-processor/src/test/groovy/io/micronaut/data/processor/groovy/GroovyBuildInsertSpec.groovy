@@ -16,7 +16,6 @@
 package io.micronaut.data.processor.groovy
 
 import io.micronaut.data.annotation.Query
-import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.writer.BeanDefinitionVisitor
 import spock.lang.PendingFeature
@@ -31,13 +30,13 @@ package test;
 
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.repository.*;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.tck.entities.Shelf;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.entities.ShelfBook;
 
 @Repository
-@RepositoryConfiguration(queryBuilder=SqlQueryBuilder2.class)
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class)
 interface TestShelfBookRepository extends io.micronaut.data.tck.repositories.ShelfBookRepository {
 
 }
