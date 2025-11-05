@@ -146,33 +146,45 @@ implements <a href="../SourcePersistentEntityCriteriaBuilder.html" title="interf
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;<a href="../SourcePersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaDelete</a><wbr>&lt;T&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createCriteriaDelete(java.lang.Class)" class="member-name-link">createCriteriaDelete</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;targetEntity)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;<a href="../SourcePersistentEntityCriteriaUpdate.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaUpdate</a><wbr>&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createCriteriaUpdate(java.lang.Class)" class="member-name-link">createCriteriaUpdate</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;targetEntity)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../SourcePersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaQuery</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createQuery()" class="member-name-link">createQuery</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;<a href="../SourcePersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaQuery</a><wbr>&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createQuery(java.lang.Class)" class="member-name-link">createQuery</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;resultClass)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../../model/jpa/criteria/PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a><wbr>&lt;jakarta.persistence.Tuple&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createTupleQuery()" class="member-name-link">createTupleQuery</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.ParameterExpression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#entityPropertyParameter(io.micronaut.inject.ast.ParameterElement,io.micronaut.data.model.PersistentPropertyPath)" class="member-name-link">entityPropertyParameter</a><wbr>(io.micronaut.inject.ast.ParameterElement&nbsp;entityParameter,
- @Nullable <a href="../../../../model/PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a>&nbsp;propertyPath)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;<a href="../../../../model/jpa/criteria/PersistentEntityCriteriaInsert.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaInsert</a><wbr>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createCriteriaInsert(io.micronaut.data.processor.model.SourcePersistentEntity)" class="member-name-link">createCriteriaInsert</a><wbr>(<a href="../../SourcePersistentEntity.html" title="class in io.micronaut.data.processor.model">SourcePersistentEntity</a>&nbsp;targetEntity)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">The criteria insert.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;<a href="../../../../model/jpa/criteria/PersistentEntityCriteriaInsert.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaInsert</a><wbr>&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createCriteriaInsert(io.micronaut.inject.ast.ClassElement)" class="member-name-link">createCriteriaInsert</a><wbr>(io.micronaut.inject.ast.ClassElement&nbsp;targetEntity)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">The criteria insert.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;<a href="../../../../model/jpa/criteria/PersistentEntityCriteriaInsert.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaInsert</a><wbr>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createCriteriaInsert(java.lang.Class)" class="member-name-link">createCriteriaInsert</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;targetEntity)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">The insert criteria.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;<a href="../SourcePersistentEntityCriteriaUpdate.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaUpdate</a><wbr>&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createCriteriaUpdate(java.lang.Class)" class="member-name-link">createCriteriaUpdate</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;targetEntity)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../SourcePersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaQuery</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createQuery()" class="member-name-link">createQuery</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;<a href="../SourcePersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaQuery</a><wbr>&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createQuery(java.lang.Class)" class="member-name-link">createQuery</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;resultClass)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../../model/jpa/criteria/PersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQuery</a><wbr>&lt;jakarta.persistence.Tuple&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createTupleQuery()" class="member-name-link">createTupleQuery</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.ParameterExpression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#entityPropertyParameter(io.micronaut.inject.ast.ParameterElement,io.micronaut.data.model.PersistentPropertyPath)" class="member-name-link">entityPropertyParameter</a><wbr>(io.micronaut.inject.ast.ParameterElement&nbsp;entityParameter,
+ @Nullable <a href="../../../../model/PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a>&nbsp;propertyPath)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Create parameter expression from <code>ParameterElement</code> that is representing an entity instance.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.ParameterExpression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#expression(io.micronaut.data.model.PersistentProperty,java.lang.String)" class="member-name-link">expression</a><wbr>(<a href="../../../../model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.ParameterExpression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#expression(io.micronaut.data.model.PersistentProperty,java.lang.String)" class="member-name-link">expression</a><wbr>(<a href="../../../../model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;expression)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Create parameter expression from <code>ParameterElement</code>.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../visitors/MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMethodMatchContext()" class="member-name-link">getMethodMatchContext</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.ParameterExpression<wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#parameter(io.micronaut.inject.ast.ParameterElement,io.micronaut.data.model.PersistentPropertyPath)" class="member-name-link">parameter</a><wbr>(io.micronaut.inject.ast.ParameterElement&nbsp;parameterElement,
  <a href="../../../../model/PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a>&nbsp;propertyPath)</code></div>
@@ -229,12 +241,6 @@ implements <a href="../SourcePersistentEntityCriteriaBuilder.html" title="interf
 <section class="method-details" id="method-detail">
 <h2>Method Details</h2>
 <ul class="member-list">
-<li>
-<section class="detail" id="getMethodMatchContext()">
-<h3>getMethodMatchContext</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../../visitors/MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a></span>&nbsp;<span class="element-name">getMethodMatchContext</span>()</div>
-</section>
-</li>
 <li>
 <section class="detail" id="createTupleQuery()">
 <h3>createTupleQuery</h3>
@@ -300,6 +306,60 @@ implements <a href="../SourcePersistentEntityCriteriaBuilder.html" title="interf
 <dd><code><a href="../../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#createCriteriaUpdate(java.lang.Class)">createCriteriaUpdate</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaBuilder</a></code></dd>
 <dt>Specified by:</dt>
 <dd><code><a href="../SourcePersistentEntityCriteriaBuilder.html#createCriteriaUpdate(java.lang.Class)">createCriteriaUpdate</a></code>&nbsp;in interface&nbsp;<code><a href="../SourcePersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaBuilder</a></code></dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="createCriteriaInsert(java.lang.Class)">
+<h3>createCriteriaInsert</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type"><a href="../../../../model/jpa/criteria/PersistentEntityCriteriaInsert.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaInsert</a>&lt;T&gt;</span>&nbsp;<span class="element-name">createCriteriaInsert</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;targetEntity)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#createCriteriaInsert(java.lang.Class)">PersistentEntityCriteriaBuilder</a></code></span></div>
+<div class="block">The insert criteria.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html#createCriteriaInsert(java.lang.Class)">createCriteriaInsert</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../model/jpa/criteria/PersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaBuilder</a></code></dd>
+<dt>Type Parameters:</dt>
+<dd><code>T</code> - The entity type</dd>
+<dt>Parameters:</dt>
+<dd><code>targetEntity</code> - The target entity</dd>
+<dt>Returns:</dt>
+<dd>The insert criteria</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="createCriteriaInsert(io.micronaut.inject.ast.ClassElement)">
+<h3>createCriteriaInsert</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type"><a href="../../../../model/jpa/criteria/PersistentEntityCriteriaInsert.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaInsert</a>&lt;T&gt;</span>&nbsp;<span class="element-name">createCriteriaInsert</span><wbr><span class="parameters">(io.micronaut.inject.ast.ClassElement&nbsp;targetEntity)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../SourcePersistentEntityCriteriaBuilder.html#createCriteriaInsert(io.micronaut.inject.ast.ClassElement)">SourcePersistentEntityCriteriaBuilder</a></code></span></div>
+<div class="block">The criteria insert.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../SourcePersistentEntityCriteriaBuilder.html#createCriteriaInsert(io.micronaut.inject.ast.ClassElement)">createCriteriaInsert</a></code>&nbsp;in interface&nbsp;<code><a href="../SourcePersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaBuilder</a></code></dd>
+<dt>Type Parameters:</dt>
+<dd><code>T</code> - The type</dd>
+<dt>Parameters:</dt>
+<dd><code>targetEntity</code> - The target entity</dd>
+<dt>Returns:</dt>
+<dd>The criteria insert</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="createCriteriaInsert(io.micronaut.data.processor.model.SourcePersistentEntity)">
+<h3>createCriteriaInsert</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type"><a href="../../../../model/jpa/criteria/PersistentEntityCriteriaInsert.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaInsert</a>&lt;T&gt;</span>&nbsp;<span class="element-name">createCriteriaInsert</span><wbr><span class="parameters">(<a href="../../SourcePersistentEntity.html" title="class in io.micronaut.data.processor.model">SourcePersistentEntity</a>&nbsp;targetEntity)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../SourcePersistentEntityCriteriaBuilder.html#createCriteriaInsert(io.micronaut.data.processor.model.SourcePersistentEntity)">SourcePersistentEntityCriteriaBuilder</a></code></span></div>
+<div class="block">The criteria insert.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../SourcePersistentEntityCriteriaBuilder.html#createCriteriaInsert(io.micronaut.data.processor.model.SourcePersistentEntity)">createCriteriaInsert</a></code>&nbsp;in interface&nbsp;<code><a href="../SourcePersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.processor.model.criteria">SourcePersistentEntityCriteriaBuilder</a></code></dd>
+<dt>Type Parameters:</dt>
+<dd><code>T</code> - The type</dd>
+<dt>Parameters:</dt>
+<dd><code>targetEntity</code> - The target entity</dd>
+<dt>Returns:</dt>
+<dd>The criteria insert</dd>
 </dl>
 </section>
 </li>

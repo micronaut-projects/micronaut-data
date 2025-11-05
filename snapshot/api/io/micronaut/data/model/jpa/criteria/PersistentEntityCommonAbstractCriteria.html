@@ -88,7 +88,7 @@ loadScripts(document, 'script');</script>
 <section class="class-description" id="class-description">
 <dl class="notes">
 <dt>All Superinterfaces:</dt>
-<dd><code>jakarta.persistence.criteria.CommonAbstractCriteria</code></dd>
+<dd><code>jakarta.persistence.criteria.CommonAbstractCriteria</code>, <code><a href="PersistentEntityCriteriaQueryBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQueryBuilder</a></code></dd>
 </dl>
 <dl class="notes">
 <dt>All Known Subinterfaces:</dt>
@@ -100,7 +100,7 @@ loadScripts(document, 'script');</script>
 </dl>
 <hr>
 <div class="type-signature"><span class="modifiers">public interface </span><span class="element-name type-name-label">PersistentEntityCommonAbstractCriteria</span><span class="extends-implements">
-extends jakarta.persistence.criteria.CommonAbstractCriteria</span></div>
+extends jakarta.persistence.criteria.CommonAbstractCriteria, <a href="PersistentEntityCriteriaQueryBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQueryBuilder</a></span></div>
 <div class="block">The persistent entity <code>CommonAbstractCriteria</code>.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -122,16 +122,18 @@ extends jakarta.persistence.criteria.CommonAbstractCriteria</span></div>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getPersistentEntity()" class="member-name-link">getPersistentEntity</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;U&gt;&nbsp;<a href="PersistentEntitySubquery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySubquery</a><wbr>&lt;U&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#subquery(io.micronaut.data.model.jpa.criteria.ExpressionType)" class="member-name-link">subquery</a><wbr>(<a href="ExpressionType.html" title="interface in io.micronaut.data.model.jpa.criteria">ExpressionType</a>&lt;U&gt;&nbsp;type)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">The persistent entity.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;U&gt;&nbsp;@NonNull <a href="PersistentEntitySubquery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySubquery</a><wbr>&lt;U&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#subquery(io.micronaut.data.model.jpa.criteria.ExpressionType)" class="member-name-link">subquery</a><wbr>(@NonNull <a href="ExpressionType.html" title="interface in io.micronaut.data.model.jpa.criteria">ExpressionType</a>&lt;U&gt;&nbsp;type)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Create a subquery from the expression type.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;U&gt;&nbsp;<a href="PersistentEntitySubquery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySubquery</a><wbr>&lt;U&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#subquery(java.lang.Class)" class="member-name-link">subquery</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;U&gt;&nbsp;type)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;U&gt;&nbsp;@NonNull <a href="PersistentEntitySubquery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySubquery</a><wbr>&lt;U&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#subquery(java.lang.Class)" class="member-name-link">subquery</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;U&gt;&nbsp;type)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
 </div>
 </div>
@@ -139,6 +141,9 @@ extends jakarta.persistence.criteria.CommonAbstractCriteria</span></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-jakarta.persistence.criteria.CommonAbstractCriteria">Methods inherited from interface&nbsp;jakarta.persistence.criteria.CommonAbstractCriteria</h3>
 <code>getRestriction</code></div>
+<div class="inherited-list">
+<h3 id="methods-inherited-from-class-io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQueryBuilder">Methods inherited from interface&nbsp;io.micronaut.data.model.jpa.criteria.<a href="PersistentEntityCriteriaQueryBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQueryBuilder</a></h3>
+<code><a href="PersistentEntityCriteriaQueryBuilder.html#build(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryBuilder)">build</a>, <a href="PersistentEntityCriteriaQueryBuilder.html#build(io.micronaut.data.model.query.builder.QueryBuilder)">build</a></code></div>
 </section>
 </li>
 </ul>
@@ -153,7 +158,9 @@ extends jakarta.persistence.criteria.CommonAbstractCriteria</span></div>
 <li>
 <section class="detail" id="subquery(io.micronaut.data.model.jpa.criteria.ExpressionType)">
 <h3>subquery</h3>
-<div class="member-signature"><span class="type-parameters">&lt;U&gt;</span>&nbsp;<span class="return-type"><a href="PersistentEntitySubquery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySubquery</a>&lt;U&gt;</span>&nbsp;<span class="element-name">subquery</span><wbr><span class="parameters">(<a href="ExpressionType.html" title="interface in io.micronaut.data.model.jpa.criteria">ExpressionType</a>&lt;U&gt;&nbsp;type)</span></div>
+<div class="member-signature"><span class="annotations">@NonNull
+</span><span class="type-parameters">&lt;U&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="PersistentEntitySubquery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySubquery</a>&lt;U&gt;</span>&nbsp;<span class="element-name">subquery</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="ExpressionType.html" title="interface in io.micronaut.data.model.jpa.criteria">ExpressionType</a>&lt;U&gt;&nbsp;type)</span></div>
 <div class="block">Create a subquery from the expression type.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
@@ -170,7 +177,9 @@ extends jakarta.persistence.criteria.CommonAbstractCriteria</span></div>
 <li>
 <section class="detail" id="subquery(java.lang.Class)">
 <h3>subquery</h3>
-<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;U&gt;</span>&nbsp;<span class="return-type"><a href="PersistentEntitySubquery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySubquery</a>&lt;U&gt;</span>&nbsp;<span class="element-name">subquery</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;U&gt;&nbsp;type)</span></div>
+<div class="member-signature"><span class="annotations">@NonNull
+</span><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;U&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="PersistentEntitySubquery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySubquery</a>&lt;U&gt;</span>&nbsp;<span class="element-name">subquery</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;U&gt;&nbsp;type)</span></div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>subquery</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.CommonAbstractCriteria</code></dd>
@@ -180,7 +189,13 @@ extends jakarta.persistence.criteria.CommonAbstractCriteria</span></div>
 <li>
 <section class="detail" id="getPersistentEntity()">
 <h3>getPersistentEntity</h3>
-<div class="member-signature"><span class="return-type"><a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></span>&nbsp;<span class="element-name">getPersistentEntity</span>()</div>
+<div class="member-signature"><span class="annotations">@NonNull
+</span><span class="return-type">@NonNull <a href="../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></span>&nbsp;<span class="element-name">getPersistentEntity</span>()</div>
+<div class="block">The persistent entity.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>The persistent entity</dd>
+</dl>
 </section>
 </li>
 </ul>

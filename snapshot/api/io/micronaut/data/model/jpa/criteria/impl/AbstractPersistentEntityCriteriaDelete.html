@@ -95,13 +95,13 @@ loadScripts(document, 'script');</script>
 </dl>
 <dl class="notes">
 <dt>All Implemented Interfaces:</dt>
-<dd><code><a href="QueryResultPersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">QueryResultPersistentEntityCriteriaQuery</a></code>, <code><a href="../PersistentEntityCommonAbstractCriteria.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCommonAbstractCriteria</a></code>, <code><a href="../PersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a>&lt;T&gt;</code>, <code>jakarta.persistence.criteria.CommonAbstractCriteria</code>, <code>jakarta.persistence.criteria.CriteriaDelete&lt;T&gt;</code></dd>
+<dd><code><a href="../PersistentEntityCommonAbstractCriteria.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCommonAbstractCriteria</a></code>, <code><a href="../PersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a>&lt;T&gt;</code>, <code><a href="../PersistentEntityCriteriaQueryBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQueryBuilder</a></code>, <code>jakarta.persistence.criteria.CommonAbstractCriteria</code>, <code>jakarta.persistence.criteria.CriteriaDelete&lt;T&gt;</code></dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="annotations">@Internal
 </span><span class="modifiers">public abstract class </span><span class="element-name type-name-label">AbstractPersistentEntityCriteriaDelete&lt;T&gt;</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>
-implements <a href="../PersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a>&lt;T&gt;, <a href="QueryResultPersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">QueryResultPersistentEntityCriteriaQuery</a></span></div>
+implements <a href="../PersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaDelete</a>&lt;T&gt;</span></div>
 <div class="block">The abstract implementation of <a href="../PersistentEntityCriteriaDelete.html" title="interface in io.micronaut.data.model.jpa.criteria"><code>PersistentEntityCriteriaDelete</code></a>.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -158,9 +158,11 @@ implements <a href="../PersistentEntityCriteriaDelete.html" title="interface in 
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildQuery(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryBuilder2)" class="member-name-link">buildQuery</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
- <a href="../../../query/builder/QueryBuilder2.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder2</a>&nbsp;queryBuilder)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#build(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryBuilder)" class="member-name-link">build</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+ <a href="../../../query/builder/QueryBuilder.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder</a>&nbsp;queryBuilder)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Build the query.</div>
+</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>abstract <a href="../PersistentEntityRoot.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityRoot</a><wbr>&lt;<a href="AbstractPersistentEntityCriteriaDelete.html" title="type parameter in AbstractPersistentEntityCriteriaDelete">T</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#from(io.micronaut.data.model.PersistentEntity)" class="member-name-link">from</a><wbr>(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;persistentEntity)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
@@ -172,7 +174,9 @@ implements <a href="../PersistentEntityCriteriaDelete.html" title="interface in 
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getPersistentEntity()" class="member-name-link">getPersistentEntity</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">The persistent entity.</div>
+</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>jakarta.persistence.criteria.Predicate</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getRestriction()" class="member-name-link">getRestriction</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
@@ -218,8 +222,8 @@ implements <a href="../PersistentEntityCriteriaDelete.html" title="interface in 
 <h3 id="methods-inherited-from-class-io.micronaut.data.model.jpa.criteria.PersistentEntityCommonAbstractCriteria">Methods inherited from interface&nbsp;io.micronaut.data.model.jpa.criteria.<a href="../PersistentEntityCommonAbstractCriteria.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCommonAbstractCriteria</a></h3>
 <code><a href="../PersistentEntityCommonAbstractCriteria.html#subquery(java.lang.Class)">subquery</a></code></div>
 <div class="inherited-list">
-<h3 id="methods-inherited-from-class-io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery">Methods inherited from interface&nbsp;io.micronaut.data.model.jpa.criteria.impl.<a href="QueryResultPersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">QueryResultPersistentEntityCriteriaQuery</a></h3>
-<code><a href="QueryResultPersistentEntityCriteriaQuery.html#buildQuery(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryBuilder)">buildQuery</a></code></div>
+<h3 id="methods-inherited-from-class-io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQueryBuilder">Methods inherited from interface&nbsp;io.micronaut.data.model.jpa.criteria.<a href="../PersistentEntityCriteriaQueryBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQueryBuilder</a></h3>
+<code><a href="../PersistentEntityCriteriaQueryBuilder.html#build(io.micronaut.data.model.query.builder.QueryBuilder)">build</a></code></div>
 </section>
 </li>
 </ul>
@@ -275,20 +279,31 @@ implements <a href="../PersistentEntityCriteriaDelete.html" title="interface in 
 <section class="detail" id="getPersistentEntity()">
 <h3>getPersistentEntity</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></span>&nbsp;<span class="element-name">getPersistentEntity</span>()</div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../PersistentEntityCommonAbstractCriteria.html#getPersistentEntity()">PersistentEntityCommonAbstractCriteria</a></code></span></div>
+<div class="block">The persistent entity.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code><a href="../PersistentEntityCommonAbstractCriteria.html#getPersistentEntity()">getPersistentEntity</a></code>&nbsp;in interface&nbsp;<code><a href="../PersistentEntityCommonAbstractCriteria.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCommonAbstractCriteria</a></code></dd>
+<dt>Returns:</dt>
+<dd>The persistent entity</dd>
 </dl>
 </section>
 </li>
 <li>
-<section class="detail" id="buildQuery(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryBuilder2)">
-<h3>buildQuery</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../../query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></span>&nbsp;<span class="element-name">buildQuery</span><wbr><span class="parameters">(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
- <a href="../../../query/builder/QueryBuilder2.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder2</a>&nbsp;queryBuilder)</span></div>
+<section class="detail" id="build(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryBuilder)">
+<h3>build</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../../query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></span>&nbsp;<span class="element-name">build</span><wbr><span class="parameters">(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+ <a href="../../../query/builder/QueryBuilder.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder</a>&nbsp;queryBuilder)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../PersistentEntityCriteriaQueryBuilder.html#build(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryBuilder)">PersistentEntityCriteriaQueryBuilder</a></code></span></div>
+<div class="block">Build the query.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="QueryResultPersistentEntityCriteriaQuery.html#buildQuery(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryBuilder2)">buildQuery</a></code>&nbsp;in interface&nbsp;<code><a href="QueryResultPersistentEntityCriteriaQuery.html" title="interface in io.micronaut.data.model.jpa.criteria.impl">QueryResultPersistentEntityCriteriaQuery</a></code></dd>
+<dd><code><a href="../PersistentEntityCriteriaQueryBuilder.html#build(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.QueryBuilder)">build</a></code>&nbsp;in interface&nbsp;<code><a href="../PersistentEntityCriteriaQueryBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaQueryBuilder</a></code></dd>
+<dt>Parameters:</dt>
+<dd><code>annotationMetadata</code> - The annotation metadata.</dd>
+<dd><code>queryBuilder</code> - The query builder</dd>
+<dt>Returns:</dt>
+<dd>The query result</dd>
 </dl>
 </section>
 </li>

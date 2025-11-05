@@ -101,7 +101,7 @@ loadScripts(document, 'script');</script>
 </dl>
 <dl class="notes">
 <dt>All Known Implementing Classes:</dt>
-<dd><code><a href="impl/AbstractPersistentEntityJoinSupport.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityJoinSupport</a></code></dd>
+<dd><code><a href="impl/AbstractPersistentEntityFrom.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityFrom</a></code></dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="modifiers">public interface </span><span class="element-name type-name-label">PersistentEntityFrom&lt;OwnerType,<wbr>AssociatedEntityType&gt;</span><span class="extends-implements">
@@ -155,60 +155,66 @@ extends jakarta.persistence.criteria.From&lt;OwnerType,<wbr>AssociatedEntityType
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#join(jakarta.persistence.metamodel.SingularAttribute)" class="member-name-link">join</a><wbr>(@NonNull jakarta.persistence.metamodel.SingularAttribute&lt;? super <a href="PersistentEntityFrom.html" title="type parameter in PersistentEntityFrom">AssociatedEntityType</a>,<wbr>Y&gt;&nbsp;attribute)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;Y&gt;&nbsp;@NonNull <a href="PersistentEntityJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityJoin</a><wbr>&lt;<a href="PersistentEntityFrom.html" title="type parameter in PersistentEntityFrom">AssociatedEntityType</a>,<wbr>Y&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#join(jakarta.persistence.metamodel.SingularAttribute,jakarta.persistence.criteria.JoinType)" class="member-name-link">join</a><wbr>(@NonNull jakarta.persistence.metamodel.SingularAttribute&lt;? super <a href="PersistentEntityFrom.html" title="type parameter in PersistentEntityFrom">AssociatedEntityType</a>,<wbr>Y&gt;&nbsp;attribute,
- @NonNull jakarta.persistence.criteria.JoinType&nbsp;jt)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;X,<wbr>
-Y&gt;&nbsp;@Nullable <a href="PersistentEntityJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityJoin</a><wbr>&lt;X,<wbr>Y&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#join(java.lang.String)" class="member-name-link">join</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;attributeName)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;X,<wbr>
-Y&gt;&nbsp;@NonNull <a href="PersistentEntityJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityJoin</a><wbr>&lt;X,<wbr>Y&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#join(java.lang.String,io.micronaut.data.annotation.Join.Type)" class="member-name-link">join</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;attributeName,
- <a href="../../../annotation/Join.Type.html" title="enum class in io.micronaut.data.annotation">Join.Type</a>&nbsp;joinType)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#join(jakarta.persistence.metamodel.SingularAttribute,io.micronaut.data.annotation.Join.Type)" class="member-name-link">join</a><wbr>(@NonNull jakarta.persistence.metamodel.SingularAttribute&lt;? super <a href="PersistentEntityFrom.html" title="type parameter in PersistentEntityFrom">AssociatedEntityType</a>,<wbr>Y&gt;&nbsp;attribute,
+ <a href="../../../annotation/Join.Type.html" title="enum class in io.micronaut.data.annotation">Join.Type</a>&nbsp;jt)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Joins the entity with specific join type.</div>
 </div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;Y&gt;&nbsp;@NonNull <a href="PersistentEntityJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityJoin</a><wbr>&lt;<a href="PersistentEntityFrom.html" title="type parameter in PersistentEntityFrom">AssociatedEntityType</a>,<wbr>Y&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#join(jakarta.persistence.metamodel.SingularAttribute,jakarta.persistence.criteria.JoinType)" class="member-name-link">join</a><wbr>(@NonNull jakarta.persistence.metamodel.SingularAttribute&lt;? super <a href="PersistentEntityFrom.html" title="type parameter in PersistentEntityFrom">AssociatedEntityType</a>,<wbr>Y&gt;&nbsp;attribute,
+ @NonNull jakarta.persistence.criteria.JoinType&nbsp;jt)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;X,<wbr>
+Y&gt;&nbsp;@Nullable <a href="PersistentEntityJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityJoin</a><wbr>&lt;X,<wbr>Y&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#join(java.lang.String)" class="member-name-link">join</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;attributeName)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;X,<wbr>
 Y&gt;&nbsp;@NonNull <a href="PersistentEntityJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityJoin</a><wbr>&lt;X,<wbr>Y&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#join(java.lang.String,io.micronaut.data.annotation.Join.Type,java.lang.String)" class="member-name-link">join</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;attributeName,
- <a href="../../../annotation/Join.Type.html" title="enum class in io.micronaut.data.annotation">Join.Type</a>&nbsp;joinType,
- @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;alias)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#join(java.lang.String,io.micronaut.data.annotation.Join.Type)" class="member-name-link">join</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;attributeName,
+ <a href="../../../annotation/Join.Type.html" title="enum class in io.micronaut.data.annotation">Join.Type</a>&nbsp;joinType)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Joins the entity with specific join type.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;X,<wbr>
 Y&gt;&nbsp;@NonNull <a href="PersistentEntityJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityJoin</a><wbr>&lt;X,<wbr>Y&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#join(java.lang.String,jakarta.persistence.criteria.JoinType)" class="member-name-link">join</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;attributeName,
- @NonNull jakarta.persistence.criteria.JoinType&nbsp;jt)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#join(java.lang.String,io.micronaut.data.annotation.Join.Type,java.lang.String)" class="member-name-link">join</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;attributeName,
+ <a href="../../../annotation/Join.Type.html" title="enum class in io.micronaut.data.annotation">Join.Type</a>&nbsp;joinType,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;alias)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Joins the entity with specific join type.</div>
+</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;X,<wbr>
-Y&gt;&nbsp;@NonNull <a href="PersistentEntityCollectionJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCollectionJoin</a><wbr>&lt;X,<wbr>Y&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#joinCollection(java.lang.String)" class="member-name-link">joinCollection</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;attributeName)</code></div>
+Y&gt;&nbsp;@NonNull <a href="PersistentEntityJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityJoin</a><wbr>&lt;X,<wbr>Y&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#join(java.lang.String,jakarta.persistence.criteria.JoinType)" class="member-name-link">join</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;attributeName,
+ @NonNull jakarta.persistence.criteria.JoinType&nbsp;jt)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;X,<wbr>
 Y&gt;&nbsp;@NonNull <a href="PersistentEntityCollectionJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCollectionJoin</a><wbr>&lt;X,<wbr>Y&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#joinCollection(java.lang.String,jakarta.persistence.criteria.JoinType)" class="member-name-link">joinCollection</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;attributeName,
- @NonNull jakarta.persistence.criteria.JoinType&nbsp;jt)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#joinCollection(java.lang.String)" class="member-name-link">joinCollection</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;attributeName)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;X,<wbr>
-Y&gt;&nbsp;@NonNull <a href="PersistentEntityListJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityListJoin</a><wbr>&lt;X,<wbr>Y&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#joinList(java.lang.String)" class="member-name-link">joinList</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;attributeName)</code></div>
+Y&gt;&nbsp;@NonNull <a href="PersistentEntityCollectionJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCollectionJoin</a><wbr>&lt;X,<wbr>Y&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#joinCollection(java.lang.String,jakarta.persistence.criteria.JoinType)" class="member-name-link">joinCollection</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;attributeName,
+ @NonNull jakarta.persistence.criteria.JoinType&nbsp;jt)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;X,<wbr>
 Y&gt;&nbsp;@NonNull <a href="PersistentEntityListJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityListJoin</a><wbr>&lt;X,<wbr>Y&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#joinList(java.lang.String,jakarta.persistence.criteria.JoinType)" class="member-name-link">joinList</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;attributeName,
- @NonNull jakarta.persistence.criteria.JoinType&nbsp;jt)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#joinList(java.lang.String)" class="member-name-link">joinList</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;attributeName)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;X,<wbr>
-Y&gt;&nbsp;@NonNull <a href="PersistentEntitySetJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySetJoin</a><wbr>&lt;X,<wbr>Y&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#joinSet(java.lang.String)" class="member-name-link">joinSet</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;attributeName)</code></div>
+Y&gt;&nbsp;@NonNull <a href="PersistentEntityListJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityListJoin</a><wbr>&lt;X,<wbr>Y&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#joinList(java.lang.String,jakarta.persistence.criteria.JoinType)" class="member-name-link">joinList</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;attributeName,
+ @NonNull jakarta.persistence.criteria.JoinType&nbsp;jt)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;X,<wbr>
 Y&gt;&nbsp;@NonNull <a href="PersistentEntitySetJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySetJoin</a><wbr>&lt;X,<wbr>Y&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#joinSet(java.lang.String,jakarta.persistence.criteria.JoinType)" class="member-name-link">joinSet</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;attributeName,
- @NonNull jakarta.persistence.criteria.JoinType&nbsp;jt)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#joinSet(java.lang.String)" class="member-name-link">joinSet</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;attributeName)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;X,<wbr>
+Y&gt;&nbsp;@NonNull <a href="PersistentEntitySetJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySetJoin</a><wbr>&lt;X,<wbr>Y&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#joinSet(java.lang.String,jakarta.persistence.criteria.JoinType)" class="member-name-link">joinSet</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;attributeName,
+ @NonNull jakarta.persistence.criteria.JoinType&nbsp;jt)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -339,6 +345,27 @@ Y&gt;</span>&nbsp;<span class="return-type">@NonNull <a href="PersistentEntityJo
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>join</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.From&lt;<a href="PersistentEntityFrom.html" title="type parameter in PersistentEntityFrom">OwnerType</a>,<wbr><a href="PersistentEntityFrom.html" title="type parameter in PersistentEntityFrom">AssociatedEntityType</a>&gt;</code></dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="join(jakarta.persistence.metamodel.SingularAttribute,io.micronaut.data.annotation.Join.Type)">
+<h3>join</h3>
+<div class="member-signature"><span class="annotations">@NonNull
+</span><span class="type-parameters">&lt;Y&gt;</span>
+<span class="return-type">@NonNull <a href="PersistentEntityJoin.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityJoin</a>&lt;<a href="PersistentEntityFrom.html" title="type parameter in PersistentEntityFrom">AssociatedEntityType</a>,<wbr>Y&gt;</span>&nbsp;<span class="element-name">join</span><wbr><span class="parameters">(@NonNull
+ @NonNull jakarta.persistence.metamodel.SingularAttribute&lt;? super <a href="PersistentEntityFrom.html" title="type parameter in PersistentEntityFrom">AssociatedEntityType</a>,<wbr>Y&gt;&nbsp;attribute,
+ @NonNull
+ <a href="../../../annotation/Join.Type.html" title="enum class in io.micronaut.data.annotation">Join.Type</a>&nbsp;jt)</span></div>
+<div class="block">Joins the entity with specific join type.</div>
+<dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><code>Y</code> - The association entity type</dd>
+<dt>Parameters:</dt>
+<dd><code>attribute</code> - The attribute</dd>
+<dd><code>jt</code> - The join type</dd>
+<dt>Returns:</dt>
+<dd>The joined entity</dd>
 </dl>
 </section>
 </li>
