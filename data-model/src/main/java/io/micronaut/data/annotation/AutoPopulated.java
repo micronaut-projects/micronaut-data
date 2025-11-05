@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.annotation;
 
-import io.micronaut.context.annotation.AliasFor;
-
 import java.lang.annotation.*;
 
 /**
@@ -36,24 +34,10 @@ public @interface AutoPopulated {
      */
     String NAME = AutoPopulated.class.getName();
 
-    /**
-     * @deprecated Replaced by {@link #UPDATABLE}
-     */
-    @Deprecated(since = "4.8", forRemoval = true)
-    String UPDATEABLE = "updateable";
-
     String UPDATABLE = "updatable";
 
     /**
      * @return Whether the property can be updated following an insert
-     * @deprecated Replaced by {@link #updatable()}
      */
-    @Deprecated(since = "4.8", forRemoval = true)
-    boolean updateable() default true;
-
-    /**
-     * @return Whether the property can be updated following an insert
-     */
-    @AliasFor(member = UPDATEABLE)
     boolean updatable() default true;
 }

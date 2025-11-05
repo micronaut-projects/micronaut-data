@@ -18,31 +18,41 @@ package io.micronaut.data.model.query.builder
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.annotation.Join
-import io.micronaut.data.model.Association
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.entities.Bike
 import io.micronaut.data.model.entities.MappedEntityCar
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.entities.PersonAssignedId
-import io.micronaut.data.model.naming.NamingStrategies
-import io.micronaut.data.model.naming.NamingStrategy
-import io.micronaut.data.model.query.QueryModel
-import io.micronaut.data.model.query.QueryParameter
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
-import io.micronaut.data.model.query.factory.Projections
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
-import io.micronaut.data.tck.entities.*
+import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
+import io.micronaut.data.tck.entities.Book
+import io.micronaut.data.tck.entities.Car
+import io.micronaut.data.tck.entities.City
+import io.micronaut.data.tck.entities.CountryRegion
+import io.micronaut.data.tck.entities.Product
+import io.micronaut.data.tck.entities.Restaurant
+import io.micronaut.data.tck.entities.Sale
+import io.micronaut.data.tck.entities.Shipment
+import io.micronaut.data.tck.entities.ShipmentWithIndex
+import io.micronaut.data.tck.entities.ShipmentWithIndexOnClass
+import io.micronaut.data.tck.entities.ShipmentWithIndexOnClassAndFields
+import io.micronaut.data.tck.entities.ShipmentWithIndexOnFields
+import io.micronaut.data.tck.entities.ShipmentWithIndexOnFieldsCompositeIndexes
+import io.micronaut.data.tck.entities.UuidEntity
 import io.micronaut.data.tck.jdbc.entities.Project
 import io.micronaut.data.tck.jdbc.entities.UserRole
-import spock.lang.Requires
+import jakarta.persistence.criteria.JoinType
 import spock.lang.Shared
 import spock.lang.Unroll
 
 class SqlQueryBuilderSpec extends AbstractTypeElementSpec {
 
-    @Requires({ javaVersion <= 1.8 })
+    @Shared
+    RuntimeCriteriaBuilder builder = new RuntimeCriteriaBuilder()
+
     void 'test configure parameter placeholder format'() {
         given:
         def annotationMetadata = buildTypeAnnotationMetadata('''
@@ -52,6 +62,8 @@ import io.micronaut.data.model.query.builder.sql.*;
 import java.lang.annotation.*;
 import io.micronaut.data.jdbc.annotation.*;
 import io.micronaut.context.annotation.*;
+import io.micronaut.data.model.query.builder.sql.SqlQueryConfiguration;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 
 @MyAnnotation(dialect = Dialect.POSTGRES)
 interface MyRepository {
@@ -75,19 +87,45 @@ interface MyRepository {
 }
 ''')
 
-        SqlQueryBuilder builder = new SqlQueryBuilder(annotationMetadata)
-        PersistentEntity entity = PersistentEntity.of(Sale)
-        def queryModel = QueryModel.from(entity).eq("name", QueryParameter.of("name"))
+        when:
+        SqlQueryBuilder sqlQueryBuilder = new SqlQueryBuilder(annotationMetadata)
 
-        expect:
-        builder.dialect == Dialect.POSTGRES
-        builder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel).query == 'SELECT sale_.id,sale_.name,sale_.data,sale_.quantities,sale_.extra_data,sale_.data_list FROM sale sale_ WHERE (sale_.name = $1)'
-        builder.buildDelete(queryModel).query == 'DELETE  FROM sale  WHERE (name = $1)'
-        builder.buildUpdate(queryModel, Arrays.asList("name")).query == 'UPDATE sale SET name=$1 WHERE (name = $2)'
-        builder.buildInsert(annotationMetadata, entity).query == 'INSERT INTO sale (name,data,quantities,extra_data,data_list) VALUES ($1,to_json($2::json),to_json($3::json),to_json($4::json),to_json($5::json))'
+        then:
+        sqlQueryBuilder.dialect == Dialect.POSTGRES
+
+        when:
+        def query = builder.createQuery()
+        def queryRoot = query.from(Sale)
+        def result = query.where(builder.equal(queryRoot.get("name"), builder.parameter(Object))).build(sqlQueryBuilder)
+
+        then:
+        result.query == 'SELECT sale_.id,sale_.name,sale_.data,sale_.quantities,sale_.extra_data,sale_.data_list FROM sale sale_ WHERE (sale_.name = $1)'
+
+        when:
+        def deleteQuery = builder.createCriteriaDelete(Sale)
+        def deleteQueryRoot = deleteQuery.from(Sale)
+        def deleteResult = deleteQuery.where(builder.equal(deleteQueryRoot.get("name"), builder.parameter(Object))).build(sqlQueryBuilder)
+
+        then:
+        deleteResult.query == 'DELETE  FROM sale  WHERE (name = $1)'
+
+        when:
+        def updateQuery = builder.createCriteriaUpdate(Sale)
+        def updateQueryRoot = updateQuery.from(Sale)
+        updateQuery.set(updateQueryRoot.get('name'), builder.parameter(Object))
+        def updateResult = updateQuery.where(builder.equal(updateQueryRoot.get("name"), builder.parameter(Object))).build(sqlQueryBuilder)
+
+        then:
+        updateResult.query == 'UPDATE sale SET name=$1 WHERE (name = $2)'
+
+        when:
+        def insertQuery = builder.createCriteriaInsert(Sale)
+        def insertResult = insertQuery.build(sqlQueryBuilder)
+
+        then:
+        insertResult.query == 'INSERT INTO sale (name,data,quantities,extra_data,data_list) VALUES ($1,to_json($2::json),to_json($3::json),to_json($4::json),to_json($5::json))'
     }
 
-    @Requires({ javaVersion >= 1.8 })
     void 'test where annotation replacement'() {
         given:
         def annotationMetadata = buildTypeAnnotationMetadata('''
@@ -121,25 +159,52 @@ interface MyRepository {
 }
 ''')
 
-        SqlQueryBuilder builder = new SqlQueryBuilder(annotationMetadata)
-        PersistentEntity entity = PersistentEntity.of(Sale)
-        def queryModel = QueryModel.from(entity)
+        when:
+        SqlQueryBuilder sqlQueryBuilder = new SqlQueryBuilder(annotationMetadata)
 
-        expect:
-        builder.dialect == Dialect.POSTGRES
-        builder.buildQuery(annotationMetadata, queryModel).query == 'SELECT sale_.id,sale_.name,sale_.data,sale_.quantities,sale_.extra_data,sale_.data_list FROM sale sale_ WHERE (sale_.name =$1)'
-        builder.buildDelete(annotationMetadata, queryModel).query == 'DELETE  FROM sale  WHERE (name =$1)'
-        builder.buildUpdate(annotationMetadata, queryModel, Arrays.asList("name")).query == 'UPDATE sale SET name=$1 WHERE (name =$2)'
-        builder.buildInsert(annotationMetadata, entity).query == 'INSERT INTO sale (name,data,quantities,extra_data,data_list) VALUES ($1,to_json($2::json),to_json($3::json),to_json($4::json),to_json($5::json))'
+        then:
+        sqlQueryBuilder.dialect == Dialect.POSTGRES
+
+        when:
+        def query = builder.createQuery()
+        def queryRoot = query.from(Sale)
+        def result = query.where(builder.equal(queryRoot.get("name"), builder.parameter(Object))).build(sqlQueryBuilder)
+
+        then:
+        result.query == 'SELECT sale_.id,sale_.name,sale_.data,sale_.quantities,sale_.extra_data,sale_.data_list FROM sale sale_ WHERE (sale_.name = $1)'
+
+        when:
+        def deleteQuery = builder.createCriteriaDelete(Sale)
+        def deleteQueryRoot = deleteQuery.from(Sale)
+        def deleteResult = deleteQuery.where(builder.equal(deleteQueryRoot.get("name"), builder.parameter(Object))).build(sqlQueryBuilder)
+
+        then:
+        deleteResult.query == 'DELETE  FROM sale  WHERE (name = $1)'
+
+        when:
+        def updateQuery = builder.createCriteriaUpdate(Sale)
+        def updateQueryRoot = updateQuery.from(Sale)
+        updateQuery.set(updateQueryRoot.get('name'), builder.parameter(Object))
+        def updateResult = updateQuery.where(builder.equal(updateQueryRoot.get("name"), builder.parameter(Object))).build(sqlQueryBuilder)
+
+        then:
+        updateResult.query == 'UPDATE sale SET name=$1 WHERE (name = $2)'
+
+        when:
+        def insertQuery = builder.createCriteriaInsert(Sale)
+        def insertResult = insertQuery.build(sqlQueryBuilder)
+
+        then:
+        insertResult.query == 'INSERT INTO sale (name,data,quantities,extra_data,data_list) VALUES ($1,to_json($2::json),to_json($3::json),to_json($4::json),to_json($5::json))'
     }
-
 
     void "test encode update with JSON and MySQL"() {
         when:"A update is encoded"
-        PersistentEntity entity = PersistentEntity.of(Sale)
-        QueryModel q = QueryModel.from(entity)
+        def query = builder.createCriteriaUpdate(Sale)
+        query.set('data', builder.parameter(Object))
+
         QueryBuilder encoder = new SqlQueryBuilder(Dialect.MYSQL)
-        def encoded = encoder.buildUpdate(q, ['data'])
+        def encoded = query.build(encoder)
 
         then:"The update query is correct"
         encoded.query == 'UPDATE `sale` SET `data`=CONVERT(? USING UTF8MB4)'
@@ -147,10 +212,10 @@ interface MyRepository {
 
     void "test build queries with schema"() {
         when:"A select is encoded"
-        PersistentEntity entity = PersistentEntity.of(type)
-        QueryModel q = QueryModel.from(entity)
+        def criteriaQuery = builder.createQuery(type)
+
         QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
-        def encoded = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
+        def encoded = criteriaQuery.build(encoder)
 
         then:"The select includes the schema in the table name reference"
         encoded.query == query
@@ -163,14 +228,12 @@ interface MyRepository {
 
     void "test select embedded"() {
         given:
-        PersistentEntity entity = PersistentEntity.of(Restaurant)
-        QueryModel q = QueryModel.from(entity)
+        def criteriaQuery = builder.createQuery(Restaurant)
         QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
-        def encoded = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
+        def encoded = criteriaQuery.build(encoder)
 
         expect:
         encoded.query.startsWith('SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`address_street`,restaurant_.`address_zip_code`,restaurant_.`hqaddress_street`,restaurant_.`hqaddress_zip_code` FROM')
-
     }
 
     void "test h2 crud"() {
@@ -205,56 +268,82 @@ interface MyRepository {
 }
 ''')
 
-        PersistentEntity entity = PersistentEntity.of(Sale)
-        QueryBuilder builder = new SqlQueryBuilder(Dialect.H2)
-        def queryModel = QueryModel.from(entity).eq("name", QueryParameter.of("name"))
+        when:
+        SqlQueryBuilder sqlQueryBuilder = new SqlQueryBuilder(annotationMetadata)
 
-        expect:
-        builder.dialect == Dialect.H2
-        builder.buildQuery(annotationMetadata, queryModel).query == 'SELECT sale_.`id`,sale_.`name`,sale_.`data`,sale_.`quantities`,sale_.`extra_data`,sale_.`data_list` FROM `sale` sale_ WHERE (sale_.`name` = ?)'
-        builder.buildDelete(queryModel).query == 'DELETE  FROM `sale`  WHERE (`name` = ?)'
-        builder.buildUpdate(queryModel, Arrays.asList("name")).query == 'UPDATE `sale` SET `name`=? WHERE (`name` = ?)'
-        builder.buildInsert(annotationMetadata, entity).query == 'INSERT INTO `sale` (`name`,`data`,`quantities`,`extra_data`,`data_list`) VALUES (?,? FORMAT JSON,? FORMAT JSON,? FORMAT JSON,? FORMAT JSON)'
+        then:
+        sqlQueryBuilder.dialect == Dialect.H2
+
+        when:
+        def query = builder.createQuery()
+        def queryRoot = query.from(Sale)
+        def result = query.where(builder.equal(queryRoot.get("name"), builder.parameter(Object))).build(sqlQueryBuilder)
+
+        then:
+        result.query == 'SELECT sale_.id,sale_.name,sale_.data,sale_.quantities,sale_.extra_data,sale_.data_list FROM sale sale_ WHERE (sale_.name = $1)'
+
+        when:
+        def deleteQuery = builder.createCriteriaDelete(Sale)
+        def deleteQueryRoot = deleteQuery.from(Sale)
+        def deleteResult = deleteQuery.where(builder.equal(deleteQueryRoot.get("name"), builder.parameter(Object))).build(sqlQueryBuilder)
+
+        then:
+        deleteResult.query == 'DELETE  FROM sale  WHERE (name = $1)'
+
+        when:
+        def updateQuery = builder.createCriteriaUpdate(Sale)
+        def updateQueryRoot = updateQuery.from(Sale)
+        updateQuery.set(updateQueryRoot.get('name'), builder.parameter(Object))
+        def updateResult = updateQuery.where(builder.equal(updateQueryRoot.get("name"), builder.parameter(Object))).build(sqlQueryBuilder)
+
+        then:
+        updateResult.query == 'UPDATE sale SET name=$1 WHERE (name = $2)'
+
+        when:
+        def insertQuery = builder.createCriteriaInsert(Sale)
+        def insertResult = insertQuery.build(sqlQueryBuilder)
+
+        then:
+        insertResult.query == 'INSERT INTO sale (name,data,quantities,extra_data,data_list) VALUES ($1,$2 FORMAT JSON,$3 FORMAT JSON,$4 FORMAT JSON,$5 FORMAT JSON)'
     }
 
     void "test encode to-one join - single level"() {
         given:
-        PersistentEntity entity = PersistentEntity.of(Book)
-        QueryModel q = QueryModel.from(entity)
-        q.idEq(new QueryParameter("test"))
-        q.join(entity.getPropertyByName("author") as Association, Join.Type.FETCH)
-        QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
-        def encoded = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
+        def query = builder.createQuery()
+        def root = query.from(Book)
+        root.fetch("author")
+        def encoded = query.where(
+                builder.equal(root.id(), builder.parameter(Object))
+        ).build(new SqlQueryBuilder(Dialect.H2))
 
         expect:
         encoded.query == 'SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated`,book_author_.`name` AS author_name,book_author_.`nick_name` AS author_nick_name FROM `book` book_ INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` = ?)'
-
     }
 
     void "test encode to-one join - single level, two join entities"() {
         given:
-        PersistentEntity entity = PersistentEntity.of(Book)
-        QueryModel q = QueryModel.from(entity)
-        q.idEq(new QueryParameter("test"))
-        q.join(entity.getPropertyByName("author") as Association, Join.Type.FETCH)
-        q.join(entity.getPropertyByName("genre") as Association, Join.Type.LEFT_FETCH)
-        QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
-        def encoded = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
+        def query = builder.createQuery()
+        def root = query.from(Book)
+        root.fetch("author")
+        root.fetch("genre", JoinType.LEFT)
+        def encoded = query.where(
+                builder.equal(root.id(), builder.parameter(Object))
+        ).build(new SqlQueryBuilder(Dialect.H2))
 
         expect:
-        encoded.query == 'SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated`,book_genre_.`genre_name` AS genre_genre_name,book_author_.`name` AS author_name,book_author_.`nick_name` AS author_nick_name FROM `book` book_ LEFT JOIN `genre` book_genre_ ON book_.`genre_id`=book_genre_.`id` INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` = ?)'
+        encoded.query == 'SELECT book_.`id`,book_.`author_id`,book_.`genre_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_.`last_updated`,book_author_.`name` AS author_name,book_author_.`nick_name` AS author_nick_name,book_genre_.`genre_name` AS genre_genre_name FROM `book` book_ LEFT JOIN `genre` book_genre_ ON book_.`genre_id`=book_genre_.`id` INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` = ?)'
 
     }
 
     void "test encode to-one join - single level, two join entities, outer joins"() {
         given:
-        PersistentEntity entity = PersistentEntity.of(Book)
-        QueryModel q = QueryModel.from(entity)
-        q.idEq(new QueryParameter("test"))
-        q.join(entity.getPropertyByName("author") as Association, Join.Type.OUTER)
-        q.join(entity.getPropertyByName("genre") as Association, Join.Type.OUTER_FETCH)
-        QueryBuilder encoder = new SqlQueryBuilder(Dialect.POSTGRES)
-        def encoded = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
+        def query = builder.createQuery()
+        def root = query.from(Book)
+        root.join("author", Join.Type.OUTER)
+        root.join("genre", Join.Type.OUTER_FETCH)
+        def encoded = query.where(
+                builder.equal(root.id(), builder.parameter(Object))
+        ).build(new SqlQueryBuilder(Dialect.POSTGRES))
 
         expect:
         encoded.query == 'SELECT book_."id",book_."author_id",book_."genre_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated",book_genre_."genre_name" AS genre_genre_name FROM "book" book_ FULL OUTER JOIN "genre" book_genre_ ON book_."genre_id"=book_genre_."id" FULL OUTER JOIN "author" book_author_ ON book_."author_id"=book_author_."id" WHERE (book_."id" = ?)'
@@ -262,14 +351,14 @@ interface MyRepository {
 
     void "test encode to-one join - unsupported outer join throws exception for H2 Dialect"() {
         given:
-        PersistentEntity entity = PersistentEntity.of(Book)
-        QueryModel q = QueryModel.from(entity)
-        q.join(entity.getPropertyByName("author") as Association, Join.Type.OUTER)
-        QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
+        def query = builder.createQuery()
+        def root = query.from(Book)
+        root.join("author", Join.Type.OUTER)
 
         when:
-        encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
-
+            query.where(
+                    builder.equal(root.id(), builder.parameter(Object))
+            ).build(new SqlQueryBuilder(Dialect.H2))
         then:
         def e = thrown(IllegalArgumentException)
 
@@ -280,31 +369,32 @@ interface MyRepository {
 
     void "test encode to-one join - unsupported outer fetch join throws exception for H2 Dialect"() {
         given:
-        PersistentEntity entity = PersistentEntity.of(Book)
-        QueryModel q = QueryModel.from(entity)
-        q.join(entity.getPropertyByName("author") as Association, Join.Type.OUTER_FETCH)
-        QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
+        def query = builder.createQuery()
+        def root = query.from(Book)
+        root.join("author", Join.Type.OUTER_FETCH)
 
         when:
-        encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
+        query.where(
+                builder.equal(root.id(), builder.parameter(Object))
+        ).build(new SqlQueryBuilder(Dialect.H2))
 
         then:
         def e = thrown(IllegalArgumentException)
 
         expect:
         e.message == "Unsupported join type [OUTER_FETCH] by dialect [H2]"
-
     }
 
     void "test encode to-one join - unsupported outer join throws exception for MYSQL Dialect"() {
         given:
-        PersistentEntity entity = PersistentEntity.of(Book)
-        QueryModel q = QueryModel.from(entity)
-        q.join(entity.getPropertyByName("author") as Association, Join.Type.OUTER)
-        QueryBuilder encoder = new SqlQueryBuilder(Dialect.MYSQL)
+        def query = builder.createQuery()
+        def root = query.from(Book)
+        root.join("author", Join.Type.OUTER)
 
         when:
-        encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
+        query.where(
+                builder.equal(root.id(), builder.parameter(Object))
+        ).build(new SqlQueryBuilder(Dialect.MYSQL))
 
         then:
         def e = thrown(IllegalArgumentException)
@@ -316,13 +406,14 @@ interface MyRepository {
 
     void "test encode to-one join - unsupported outer fetch join throws exception for MYSQL Dialect"() {
         given:
-        PersistentEntity entity = PersistentEntity.of(Book)
-        QueryModel q = QueryModel.from(entity)
-        q.join(entity.getPropertyByName("author") as Association, Join.Type.OUTER_FETCH)
-        QueryBuilder encoder = new SqlQueryBuilder(Dialect.MYSQL)
+        def query = builder.createQuery()
+        def root = query.from(Book)
+        root.join("author", Join.Type.OUTER_FETCH)
 
         when:
-        encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
+        query.where(
+                builder.equal(root.id(), builder.parameter(Object))
+        ).build(new SqlQueryBuilder(Dialect.MYSQL))
 
         then:
         def e = thrown(IllegalArgumentException)
@@ -334,12 +425,11 @@ interface MyRepository {
 
     void "test encode delete"() {
         given:
+        def deleteQuery = builder.createCriteriaDelete(io.micronaut.data.tck.entities.Person)
         PersistentEntity entity = new RuntimePersistentEntity(io.micronaut.data.tck.entities.Person)
-        QueryModel q = QueryModel.from(entity)
-        q.idEq(new QueryParameter("test"))
-        QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
-        QueryResult encodedQuery = encoder.buildDelete(q)
-
+        QueryResult encodedQuery = deleteQuery.where(
+                builder.equal(deleteQuery.root.get("id"), builder.parameter(Object))
+        ).build(new SqlQueryBuilder(Dialect.H2))
 
         expect:
         encodedQuery != null
@@ -350,17 +440,12 @@ interface MyRepository {
     void "test encode order by #statement"() {
         given:
         PersistentEntity entity = new RuntimePersistentEntity(type)
-        QueryModel q = QueryModel.from(entity)
-        q.sort Sort.of(props.collect() { Sort.Order."$direction"(it) })
+        Sort sort = Sort.of(props.collect() { Sort.Order."$direction"(it)})
 
-        QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
-        QueryResult encodedQuery = encoder.buildOrderBy(entity, q.getSort())
-
+        String query = new SqlQueryBuilder(Dialect.H2).buildOrderBy("", entity, AnnotationMetadata.EMPTY_METADATA, sort, false, null)
 
         expect:
-        encodedQuery != null
-        encodedQuery.query ==
-                " ORDER BY ${statement}"
+        query == " ORDER BY ${statement}"
 
         where:
         type   | direction | props              | statement
@@ -372,9 +457,7 @@ interface MyRepository {
 
     void "test encode insert statement"() {
         given:
-        PersistentEntity entity = new RuntimePersistentEntity(Person)
-        QueryBuilder encoder = new SqlQueryBuilder()
-        def result = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity)
+        def result = builder.createCriteriaInsert(Person).build(new SqlQueryBuilder())
 
         expect:
         result.query == 'INSERT INTO "person" ("name","age","enabled","public_id","company_id") VALUES (?,?,?,?,?)'
@@ -383,9 +466,7 @@ interface MyRepository {
 
     void "test encode insert statement for embedded"() {
         given:
-        PersistentEntity entity = new RuntimePersistentEntity(Restaurant)
-        QueryBuilder encoder = new SqlQueryBuilder()
-        def result = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity)
+        def result = builder.createCriteriaInsert(Restaurant).build(new SqlQueryBuilder())
 
         expect:
         result.query == 'INSERT INTO "restaurant" ("name","address_street","address_zip_code","hqaddress_street","hqaddress_zip_code") VALUES (?,?,?,?,?)'
@@ -404,9 +485,7 @@ interface MyRepository {
 
     void "test encode insert statement - custom mapping strategy"() {
         given:
-        PersistentEntity entity = getRuntimePersistentEntity(CountryRegion)
-        QueryBuilder encoder = new SqlQueryBuilder()
-        def result = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity)
+        def result = builder.createCriteriaInsert(CountryRegion).build(new SqlQueryBuilder())
 
         expect:
         result.query == 'INSERT INTO "CountryRegion" ("name","countryId") VALUES (?,?)'
@@ -414,9 +493,7 @@ interface MyRepository {
 
     void "test encode insert statement - custom mapping"() {
         given:
-        PersistentEntity entity = new RuntimePersistentEntity(City)
-        QueryBuilder encoder = new SqlQueryBuilder()
-        def result = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity)
+        def result = builder.createCriteriaInsert(City).build(new SqlQueryBuilder())
 
         expect:
         result.query == 'INSERT INTO "T_CITY" ("C_NAME","country_region_id") VALUES (?,?)'
@@ -425,168 +502,26 @@ interface MyRepository {
 
     void "test encode insert statement - assigned id"() {
         given:
-        PersistentEntity entity = new RuntimePersistentEntity(PersonAssignedId)
-        QueryBuilder encoder = new SqlQueryBuilder()
-        def result = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity)
+        def result = builder.createCriteriaInsert(PersonAssignedId).build(new SqlQueryBuilder())
 
         expect:
         result.query == 'INSERT INTO "person_assigned_id" ("name","age","enabled","id") VALUES (?,?,?,?)'
         result.parameters.equals('1':'name', '2': 'age', '3': 'enabled', '4': 'id')
     }
 
-    void "test encode query with join"() {
-        given:
-        PersistentEntity entity = new RuntimePersistentEntity(Book)
-        SqlQueryBuilder encoder = new SqlQueryBuilder()
-        StringBuilder columns = new StringBuilder()
-        encoder.selectAllColumns(entity, "book_", columns)
-
-        def query = QueryModel.from(entity)
-                .eq("author.nickName", new QueryParameter("test"))
-        query.join("author", Join.Type.DEFAULT, null)
-
-        def result = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, query)
-
-        expect:
-        result.query == "SELECT $columns FROM \"book\" book_ INNER JOIN \"author\" book_author_ ON book_.\"author_id\"=book_author_.\"id\" WHERE (book_author_.\"nick_name\" = ?)"
-    }
-
-    @Unroll
-    void "test encode query #method - comparison methods"() {
-        given:
-        PersistentEntity entity = new RuntimePersistentEntity(type)
-        QueryModel q = QueryModel.from(entity)
-        q."$method"(property, QueryParameter.of('test'))
-
-        SqlQueryBuilder encoder = new SqlQueryBuilder()
-        StringBuilder columns = new StringBuilder()
-        encoder.selectAllColumns(entity, "person_", columns)
-        QueryResult encodedQuery = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
-        NamingStrategy namingStrategy = NamingStrategies.UnderScoreSeparatedLowerCase.newInstance()
-        def mappedName = namingStrategy.mappedName(property)
-
-        expect:
-        encodedQuery != null
-        mappedName == 'some_id'
-        encodedQuery.query ==
-                "SELECT $columns FROM \"person\" person_ WHERE (person_.\"${mappedName}\" $operator ?)"
-        encodedQuery.parameters == ['1': 'someId']
-
-        where:
-        type   | method | property | operator
-        Person | 'eq'   | 'someId' | '='
-        Person | 'gt'   | 'someId' | '>'
-        Person | 'lt'   | 'someId' | '<'
-        Person | 'ge'   | 'someId' | '>='
-        Person | 'le'   | 'someId' | '<='
-        Person | 'like' | 'someId' | 'LIKE'
-        Person | 'ne'   | 'someId' | '!='
-    }
-
-    @Unroll
-    void "test encode query #method - property projections"() {
-        given:
-        PersistentEntity entity = new RuntimePersistentEntity(type)
-        QueryModel q = QueryModel.from(entity)
-        q."$method"(property, QueryParameter.of('test'))
-        q.projections()."$projection"(property)
-        QueryBuilder encoder = new SqlQueryBuilder()
-        QueryResult encodedQuery = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, q)
-        def aliasName = encoder.getAliasName(entity)
-
-        expect:
-        encodedQuery != null
-        encodedQuery.query ==
-                "SELECT ${projection.toUpperCase()}($aliasName.\"$property\") FROM \"person\" $aliasName WHERE ($aliasName.\"$property\" $operator ?)"
-        encodedQuery.parameters == ['1': 'name']
-
-        where:
-        type   | method | property | operator | projection
-        Person | 'eq'   | 'name'   | '='      | 'max'
-        Person | 'gt'   | 'name'   | '>'      | 'min'
-        Person | 'lt'   | 'name'   | '<'      | 'sum'
-        Person | 'ge'   | 'name'   | '>='     | 'avg'
-    }
-
-    @Unroll
-    void "test build query embedded"() {
-        when:
-            QueryBuilder encoder = new SqlQueryBuilder()
-            QueryResult encodedQuery = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel)
-
-        then:
-            encodedQuery.query == query
-
-        where:
-            queryModel << [
-                    QueryModel.from(getRuntimePersistentEntity(Shipment)).idEq(new QueryParameter("xyz")),
-                    QueryModel.from(getRuntimePersistentEntity(Shipment)).eq("shipmentId.country", new QueryParameter("xyz")),
-                    {
-                        def entity = getRuntimePersistentEntity(UserRole)
-                        def qm = QueryModel.from(entity)
-                        qm.join("role", Join.Type.DEFAULT, null)
-                        qm
-                    }.call(),
-                    {
-                        def entity = getRuntimePersistentEntity(UserRole)
-                        def qm = QueryModel.from(entity)
-                        qm.join("user", Join.Type.DEFAULT, null)
-                        qm.eq("user", new QueryParameter("xyz"))
-                    }.call(),
-                    QueryModel.from(getRuntimePersistentEntity(UuidEntity)).idEq(new QueryParameter("xyz")),
-                    QueryModel.from(getRuntimePersistentEntity(UserRole)).idEq(new QueryParameter("xyz")),
-                    {
-                        def entity = getRuntimePersistentEntity(Challenge)
-                        def qm = QueryModel.from(entity)
-                        qm.join("authentication", Join.Type.FETCH, null)
-                        qm.join("authentication.device", Join.Type.FETCH, null)
-                        qm.join("authentication.device.user", Join.Type.FETCH, null)
-                        qm.idEq(new QueryParameter("xyz"))
-                        qm
-                    }.call(),
-                    {
-                        def entity = getRuntimePersistentEntity(UserRole)
-                        def qm = QueryModel.from(entity)
-                        qm.projections().add(Projections.property("role"))
-                        qm.join("role", Join.Type.FETCH, null)
-                        qm.eq("user", new QueryParameter("xyz"))
-                        qm
-                    }.call(),
-                    {
-                        def entity = getRuntimePersistentEntity(Meal)
-                        def qm = QueryModel.from(entity)
-                        qm.join("foods", Join.Type.FETCH, null)
-                        qm.idEq(new QueryParameter("xyz"))
-                        qm
-                    }.call()
-            ]
-            query << [
-                    'SELECT shipment_."sp_country",shipment_."sp_city",shipment_."field" FROM "Shipment1" shipment_ WHERE (shipment_."sp_country" = ? AND shipment_."sp_city" = ?)',
-                    'SELECT shipment_."sp_country",shipment_."sp_city",shipment_."field" FROM "Shipment1" shipment_ WHERE (shipment_."sp_country" = ?)',
-                    'SELECT user_role_."id_user_id",user_role_."id_role_id" FROM "user_role_composite" user_role_ INNER JOIN "role_composite" user_role_id_role_ ON user_role_."id_role_id"=user_role_id_role_."id"',
-                    'SELECT user_role_."id_user_id",user_role_."id_role_id" FROM "user_role_composite" user_role_ INNER JOIN "user_composite" user_role_id_user_ ON user_role_."id_user_id"=user_role_id_user_."id" WHERE (user_role_."id_user_id" = ?)',
-                    'SELECT uidx."uuid",uidx."name",uidx."child_id",uidx."xyz",uidx."embedded_child_embedded_child2_id",uidx."nullable_value" FROM "uuid_entity" uidx WHERE (uidx."uuid" = ?)',
-                    'SELECT user_role_."id_user_id",user_role_."id_role_id" FROM "user_role_composite" user_role_ WHERE (user_role_."id_user_id" = ? AND user_role_."id_role_id" = ?)',
-                    'SELECT challenge_."id",challenge_."token",challenge_."authentication_id",challenge_authentication_device_."NAME" AS authentication_device_NAME,challenge_authentication_device_."USER_ID" AS authentication_device_USER_ID,challenge_authentication_device_user_."NAME" AS authentication_device_user_NAME,challenge_authentication_."DESCRIPTION" AS authentication_DESCRIPTION,challenge_authentication_."DEVICE_ID" AS authentication_DEVICE_ID FROM "challenge" challenge_ INNER JOIN "AUTHENTICATION" challenge_authentication_ ON challenge_."authentication_id"=challenge_authentication_."ID" INNER JOIN "DEVICE" challenge_authentication_device_ ON challenge_authentication_."DEVICE_ID"=challenge_authentication_device_."ID" INNER JOIN "USER" challenge_authentication_device_user_ ON challenge_authentication_device_."USER_ID"=challenge_authentication_device_user_."ID" WHERE (challenge_."id" = ?)',
-                    'SELECT user_role_id_role_."id",user_role_id_role_."name" FROM "user_role_composite" user_role_ INNER JOIN "role_composite" user_role_id_role_ ON user_role_."id_role_id"=user_role_id_role_."id" WHERE (user_role_."id_user_id" = ?)',
-                    'SELECT meal_."mid",meal_."current_blood_glucose",meal_."created_on",meal_."updated_on",meal_."actual",meal_foods_."fid" AS foods_fid,meal_foods_."key" AS foods_key,meal_foods_."carbohydrates" AS foods_carbohydrates,meal_foods_."portion_grams" AS foods_portion_grams,meal_foods_."created_on" AS foods_created_on,meal_foods_."updated_on" AS foods_updated_on,meal_foods_."fk_meal_id" AS foods_fk_meal_id,meal_foods_."fk_alt_meal" AS foods_fk_alt_meal,meal_foods_."loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name" AS ln,meal_foods_."fresh" AS foods_fresh FROM "meal" meal_ INNER JOIN "food" meal_foods_ ON meal_."mid"=meal_foods_."fk_meal_id" AND meal_foods_.fresh = \'Y\' WHERE (meal_."mid" = ? AND (meal_.actual = \'Y\'))'
-            ]
-    }
-
     @Unroll
     void "test build insert embedded"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
-            QueryResult encodedQuery = encoder.buildInsert(entity.getAnnotationMetadata(), entity)
+            QueryResult encodedQuery = builder.createCriteriaInsert(type).build(new SqlQueryBuilder())
 
         then:
             encodedQuery.query == query
 
         where:
-            entity << [
-                    getRuntimePersistentEntity(Shipment),
-                    getRuntimePersistentEntity(UuidEntity),
-                    getRuntimePersistentEntity(UserRole)
+            type << [
+                    Shipment,
+                    UuidEntity,
+                    UserRole
             ]
             query << [
                     'INSERT INTO "Shipment1" ("field","sp_country","sp_city") VALUES (?,?,?)',
@@ -624,7 +559,7 @@ interface MyRepository {
 
         then:
         statements[0] == 'CREATE TABLE "shipment_with_index" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
-        statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_field_taxcode" ON "shipment_with_index" (field, taxCode);'
+        statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_field_taxcode" ON "shipment_with_index" ("field", "taxCode");'
 
         when:
         def productStatements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Product))
@@ -641,8 +576,8 @@ interface MyRepository {
 
         then:
         statements[0] == 'CREATE TABLE "shipment_with_index_on_fields" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
-        statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_on_fields_field" ON "shipment_with_index_on_fields" (field);'
-        statements[2] == 'CREATE INDEX "idx_shipment_with_index_on_fields_taxcode" ON "shipment_with_index_on_fields" (taxCode);'
+        statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_on_fields_field" ON "shipment_with_index_on_fields" ("field");'
+        statements[2] == 'CREATE INDEX "idx_shipment_with_index_on_fields_taxcode" ON "shipment_with_index_on_fields" ("taxCode");'
     }
 
     void "test build create index from field annotation with composite indexes"() {
@@ -652,7 +587,7 @@ interface MyRepository {
 
         then:
         statements[0] == 'CREATE TABLE "shipment_with_index_on_fields_composite_indexes" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
-        statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_on_fields_composite_indexes_field_taxcode" ON "shipment_with_index_on_fields_composite_indexes" (field, taxCode);'
+        statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_on_fields_composite_indexes_field_taxcode" ON "shipment_with_index_on_fields_composite_indexes" ("field", "taxCode");'
     }
 
     void "test build create index from index class annotation"() {
@@ -662,8 +597,8 @@ interface MyRepository {
 
         then:
         statements[0] == 'CREATE TABLE "shipment_with_index_on_class" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
-        statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_on_class_field" ON "shipment_with_index_on_class" (field);'
-        statements[2] == 'CREATE INDEX "idx_shipment_tax" ON "shipment_with_index_on_class" (taxCode);'
+        statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_on_class_field" ON "shipment_with_index_on_class" ("field");'
+        statements[2] == 'CREATE INDEX "idx_shipment_tax" ON "shipment_with_index_on_class" ("taxCode");'
     }
 
     void "test build create index from index class annotation and field annotation"() {
@@ -673,15 +608,17 @@ interface MyRepository {
 
         then:
         statements[0] == 'CREATE TABLE "shipment_with_index_on_class_and_fields" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field2" VARCHAR(255) NOT NULL,"taxCode2" VARCHAR(255) NOT NULL,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
-        statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_on_class_and_fields_field" ON "shipment_with_index_on_class_and_fields" (field);'
-        statements[2] == 'CREATE INDEX "idx_shipment_with_index_on_class_and_fields_taxcode" ON "shipment_with_index_on_class_and_fields" (taxCode);'
-        statements[3] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_on_class_and_fields_field2_taxcode2" ON "shipment_with_index_on_class_and_fields" (field2, taxCode2);'
+        statements[1] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_on_class_and_fields_field" ON "shipment_with_index_on_class_and_fields" ("field");'
+        statements[2] == 'CREATE INDEX "idx_shipment_with_index_on_class_and_fields_taxcode" ON "shipment_with_index_on_class_and_fields" ("taxCode");'
+        statements[3] == 'CREATE UNIQUE INDEX "idx_shipment_with_index_on_class_and_fields_field2_taxcode2" ON "shipment_with_index_on_class_and_fields" ("field2", "taxCode2");'
     }
 
     void "test build composite id query"() {
         when:
             QueryBuilder encoder = new SqlQueryBuilder()
-            def q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, QueryModel.from(getRuntimePersistentEntity(Project)).idEq(new QueryParameter("projectId")))
+            def query = builder.createQuery()
+            def root = query.from(Project)
+            def q = query.where(builder.equal(root.id(), builder.parameter(Object))).build(encoder)
 
         then:
             q.query == 'SELECT project_."project_id_department_id",project_."project_id_project_id",LOWER(project_.name) AS name,project_.name AS db_name,UPPER(project_.org) AS org FROM "project" project_ WHERE (project_."project_id_department_id" = ? AND project_."project_id_project_id" = ?)'
@@ -692,12 +629,8 @@ interface MyRepository {
     }
 
     void "test insert statement with version"() {
-        given:
-            PersistentEntity entity = new RuntimePersistentEntity(Bike)
-            QueryBuilder encoder = new SqlQueryBuilder()
-
         when:
-            def insertResult = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity)
+            def insertResult = builder.createCriteriaInsert(Bike).build(new SqlQueryBuilder())
 
         then:
             insertResult.query == 'INSERT INTO "bike" ("name","age","enabled","public_id","version") VALUES (?,?,?,?,?)'

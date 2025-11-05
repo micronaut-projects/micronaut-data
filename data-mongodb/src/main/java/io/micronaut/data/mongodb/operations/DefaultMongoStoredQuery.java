@@ -27,7 +27,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Query;
-import io.micronaut.data.document.model.query.builder.MongoQueryBuilder2;
+import io.micronaut.data.document.model.query.builder.MongoQueryBuilder;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.PersistentPropertyPath;
@@ -86,7 +86,7 @@ import java.util.regex.Pattern;
 @Internal
 final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStoredQuery<E, R> implements DelegateStoredQuery<E, R>, MongoStoredQuery<E, R> {
 
-    private static final Pattern MONGO_PARAM_PATTERN = Pattern.compile("\\W*(\\" + MongoQueryBuilder2.QUERY_PARAMETER_PLACEHOLDER + ":(\\d)+)\\W*");
+    private static final Pattern MONGO_PARAM_PATTERN = Pattern.compile("\\W*(\\" + MongoQueryBuilder.QUERY_PARAMETER_PLACEHOLDER + ":(\\d)+)\\W*");
     private static final Logger LOG = LoggerFactory.getLogger(DefaultMongoStoredQuery.class);
     private static final BsonDocument EMPTY = new BsonDocument();
 
@@ -321,7 +321,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
 
     private boolean needsProcessingValue(BsonValue value) {
         if (value instanceof BsonDocument bsonDocument) {
-            BsonInt32 queryParameterIndex = bsonDocument.getInt32(MongoQueryBuilder2.QUERY_PARAMETER_PLACEHOLDER, null);
+            BsonInt32 queryParameterIndex = bsonDocument.getInt32(MongoQueryBuilder.QUERY_PARAMETER_PLACEHOLDER, null);
             if (queryParameterIndex != null) {
                 return true;
             }
@@ -420,7 +420,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
 
     private BsonValue replaceQueryParametersInBsonValue(BsonValue value, @Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
         if (value instanceof BsonDocument bsonDocument) {
-            BsonInt32 queryParameterIndex = bsonDocument.getInt32(MongoQueryBuilder2.QUERY_PARAMETER_PLACEHOLDER, null);
+            BsonInt32 queryParameterIndex = bsonDocument.getInt32(MongoQueryBuilder.QUERY_PARAMETER_PLACEHOLDER, null);
             if (queryParameterIndex != null) {
                 int index = queryParameterIndex.getValue();
                 QueryParameterBinding queryParameterBinding = getQueryBindings().get(index);
@@ -429,7 +429,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                     throw new DataAccessException("Cannot bind a value at index: " + index);
                 }
                 BsonValue bsonValue = getValue(e.getKey(), e.getValue());
-                if (bsonDocument.containsKey(MongoQueryBuilder2.NEGATE)) {
+                if (bsonDocument.containsKey(MongoQueryBuilder.NEGATE)) {
                     if (bsonValue instanceof BsonDocumentWrapper<?> bsonDocumentWrapper) {
                         Object object = bsonDocumentWrapper.getWrappedDocument();
                         if (object instanceof Long aLong) {
@@ -464,7 +464,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                         default -> bsonValue;
                     };
                 }
-                if (bsonDocument.containsKey(MongoQueryBuilder2.RECIPROCATE)) {
+                if (bsonDocument.containsKey(MongoQueryBuilder.RECIPROCATE)) {
                     if (bsonValue instanceof BsonDocumentWrapper<?> bsonDocumentWrapper) {
                         Object object = bsonDocumentWrapper.getWrappedDocument();
                         if (object instanceof Long aLong) {

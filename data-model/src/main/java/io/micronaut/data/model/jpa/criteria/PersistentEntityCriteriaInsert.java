@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 original authors
+ * Copyright 2017-2025 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,35 +16,29 @@
 package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.PersistentEntity;
-import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
-import jakarta.persistence.criteria.CommonAbstractCriteria;
+import jakarta.persistence.criteria.ParameterExpression;
+
+import java.util.Set;
 
 /**
- * The persistent entity {@link CommonAbstractCriteria}.
+ * The persistent entity insert.
  *
+ * @param <T> The entity type
  * @author Denis Stepanov
- * @since 4.10
+ * @since 5.0
  */
 @Experimental
-public interface PersistentEntityCommonAbstractCriteria extends CommonAbstractCriteria, PersistentEntityCriteriaQueryBuilder {
+public interface PersistentEntityCriteriaInsert<T> extends PersistentEntityCriteriaQueryBuilder {
 
     /**
-     * Create a subquery from the expression type.
-     * @param type The type
-     * @param <U> The subquery type
-     * @return A new subquery
-     * @since 4.10
+     * The root entity.
+     * @return The root entity
      */
     @NonNull
-    <U> PersistentEntitySubquery<U> subquery(@NonNull ExpressionType<U> type);
-
-    @Override
-    @NonNull
-    default <U> PersistentEntitySubquery<U> subquery(@NonNull Class<U> type) {
-        return subquery(new ClassExpressionType<>(type));
-    }
+    PersistentEntityRoot<T> getRoot();
 
     /**
      * The persistent entity.
@@ -52,5 +46,17 @@ public interface PersistentEntityCommonAbstractCriteria extends CommonAbstractCr
      */
     @NonNull
     PersistentEntity getPersistentEntity();
+
+    /**
+     * Set returning the entity as a result.
+     */
+    @Internal
+    void setReturning();
+
+    /**
+     * @return The parameters
+     */
+    @NonNull
+    Set<ParameterExpression<?>> getParameters();
 
 }

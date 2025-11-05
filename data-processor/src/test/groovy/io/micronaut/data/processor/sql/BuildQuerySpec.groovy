@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.processor.sql
 
-import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.intercept.FindAllInterceptor
 import io.micronaut.data.intercept.FindOneInterceptor
@@ -24,17 +23,15 @@ import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.Pageable
-import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Invoice
-import io.micronaut.data.model.query.QueryModel
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.processor.entity.ActivityPeriodEntity
 import io.micronaut.data.processor.visitors.AbstractDataSpec
+import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Restaurant
 import io.micronaut.data.tck.jdbc.entities.EmployeeGroup
-import io.micronaut.inject.ExecutableMethod
 import spock.lang.Issue
 import spock.lang.PendingFeature
 import spock.lang.Unroll
@@ -83,7 +80,6 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.CustomBook;
 
 @JdbcRepository(dialect= Dialect.POSTGRES)
-@io.micronaut.context.annotation.Executable
 interface MyInterface2 extends CrudRepository<CustomBook, Long> {
 }
 """
@@ -104,7 +100,6 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.CustomBook;
 
 @JdbcRepository(dialect= Dialect.POSTGRES)
-@io.micronaut.context.annotation.Executable
 interface MyInterface2 extends CrudRepository<CustomBook, Long> {
 
     @Query("SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[:nickNames]")
@@ -134,7 +129,6 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.CustomBook;
 
 @JdbcRepository(dialect= Dialect.POSTGRES)
-@io.micronaut.context.annotation.Executable
 interface MyInterface2 extends CrudRepository<CustomBook, Long> {
 
     @Query("SELECT * FROM arrays_entity WHERE stringArray::varchar[] && ARRAY[:nickNames]")
@@ -1374,13 +1368,13 @@ interface TestRepository extends GenericRepository<ActivityPeriodEntity, UUID> {
         then:
         queryFindAll == 'SELECT activity_period_entity_.`id`,activity_period_entity_.`name`,activity_period_entity_.`description`,activity_period_entity_.`type` FROM `activity_period` activity_period_entity_ LEFT JOIN `activity_period_person` activity_period_entity_persons_ ON activity_period_entity_.`id`=activity_period_entity_persons_.`activity_period_id` LEFT JOIN `activity_person` activity_period_entity_persons_id_person_ ON activity_period_entity_persons_.`person_id`=activity_period_entity_persons_id_person_.`id`'
         when:
-        def test = QueryModel.from(PersistentEntity.of(ActivityPeriodEntity))
-        test.join("persons.id.person", Join.Type.LEFT, null)
-        def builder = new SqlQueryBuilder(Dialect.H2)
-        def result = builder.buildQuery(AnnotationMetadata.EMPTY_METADATA, test)
-        def query = result.query
+        RuntimeCriteriaBuilder builder = new RuntimeCriteriaBuilder()
+        def query = builder.createQuery()
+        def root = query.from(ActivityPeriodEntity)
+        root.join("persons.id.person", Join.Type.LEFT)
+        def result = query.build(new SqlQueryBuilder(Dialect.H2))
         then:
-        query == queryFindAll
+        result.query == queryFindAll
     }
 
     void "test project enum"() {
@@ -2030,7 +2024,7 @@ interface TestRepository extends GenericRepository<Book, Long> {
         findByTitleContainsQuery.endsWith('FROM "book" book_ WHERE (book_."title" LIKE CONCAT(\'%\',?,\'%\'))')
         findByTitleLikeQuery.endsWith('FROM "book" book_ WHERE (book_."title" LIKE ?)')
         findByTitleIlikeQuery.endsWith('FROM "book" book_ WHERE (LOWER(book_."title") LIKE LOWER(?))')
-        findByTitleNotLikeQuery.endsWith('FROM "book" book_ WHERE (NOT(book_."title" LIKE ?))')
+        findByTitleNotLikeQuery.endsWith('FROM "book" book_ WHERE (book_."title" NOT LIKE ?)')
     }
 
     void "test IN"() {

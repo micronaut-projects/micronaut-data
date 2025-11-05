@@ -51,7 +51,6 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
                                   Class<E> rootEntity,
                                   Class<R> resultType,
                                   boolean pageable,
-                                  boolean isSingleResult,
                                   boolean isCount,
                                   OperationType operationType,
                                   Collection<JoinPath> joinPaths) {
@@ -64,7 +63,6 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
             rootEntity,
             resultType,
             pageable,
-            isSingleResult,
             isCount,
             operationType);
         this.queryResult = queryResult;
@@ -77,7 +75,6 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
                                   Class<E> rootEntity,
                                   Class<R> resultType,
                                   boolean pageable,
-                                  boolean isSingleResult,
                                   boolean isCount,
                                   boolean isDto,
                                   OperationType operationType,
@@ -91,7 +88,6 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
             rootEntity,
             resultType,
             pageable,
-            isSingleResult,
             isCount,
             isDto,
             operationType);
@@ -125,7 +121,7 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
                                                              Class<R> resultType,
                                                              boolean isDto,
                                                              Collection<JoinPath> joinPaths) {
-        return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, resultType == Object.class ? (Class<R>) rootEntity : resultType, false, true, false, isDto, operationType, joinPaths);
+        return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, resultType == Object.class ? (Class<R>) rootEntity : resultType, false, false, isDto, operationType, joinPaths);
     }
 
     public static <T> QueryResultStoredQuery<T, T> many(String name,
@@ -133,7 +129,7 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
                                                         QueryResult queryResult,
                                                         Class<T> rootEntity,
                                                         boolean pageable) {
-        return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, rootEntity, pageable, false, false, OperationType.QUERY, Collections.emptySet());
+        return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, rootEntity, pageable, false, OperationType.QUERY, Collections.emptySet());
     }
 
     public static <T, R> QueryResultStoredQuery<T, R> many(String name,
@@ -154,7 +150,7 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
                                                            boolean pageable,
                                                            boolean isDto,
                                                            Collection<JoinPath> joinPaths) {
-        return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, resultType == Object.class ? (Class<R>) rootEntity : resultType, pageable, false, false, isDto, OperationType.QUERY, joinPaths);
+        return new QueryResultStoredQuery<>(name, annotationMetadata, queryResult, rootEntity, resultType == Object.class ? (Class<R>) rootEntity : resultType, pageable, false, isDto, OperationType.QUERY, joinPaths);
     }
 
     public static <T> QueryResultStoredQuery<T, Long> count(String name,
@@ -176,11 +172,6 @@ public final class QueryResultStoredQuery<E, R> extends BasicStoredQuery<E, R> {
 
     public QueryResult getQueryResult() {
         return queryResult;
-    }
-
-    @Override
-    public Set<JoinPath> getJoinFetchPaths() {
-        return joinPaths;
     }
 
     @Override

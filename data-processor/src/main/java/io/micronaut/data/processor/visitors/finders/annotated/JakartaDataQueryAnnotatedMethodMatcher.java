@@ -25,7 +25,6 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityQuery;
-import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.processor.jdql.JDQLCriteriaBuilderUtils;
@@ -118,7 +117,7 @@ public final class JakartaDataQueryAnnotatedMethodMatcher implements MethodMatch
                 );
                 QueryBuilder queryBuilder = matchContext.getQueryBuilder();
 
-                QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(annotationMetadataHierarchy, queryBuilder);
+                QueryResult queryResult = criteriaQuery.build(annotationMetadataHierarchy, queryBuilder);
 
                 return new MethodMatchInfo(
                     getOperationType(),
@@ -154,7 +153,7 @@ public final class JakartaDataQueryAnnotatedMethodMatcher implements MethodMatch
                 );
 
                 QueryBuilder queryBuilder = matchContext.getQueryBuilder();
-                QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(annotationMetadataHierarchy, queryBuilder);
+                QueryResult queryResult = criteriaQuery.build(annotationMetadataHierarchy, queryBuilder);
 
                 return new MethodMatchInfo(
                     getOperationType(),
@@ -189,7 +188,6 @@ public final class JakartaDataQueryAnnotatedMethodMatcher implements MethodMatch
                 );
 
                 QueryBuilder queryBuilder = matchContext.getQueryBuilder();
-                QueryResultPersistentEntityCriteriaQuery persistentEntityCriteriaQuery = (QueryResultPersistentEntityCriteriaQuery) criteriaQuery;
 
                 if (matchContext.hasParameterInRole(TypeRole.PAGEABLE)) {
                     Element pageableParameter = matchContext.findParameterInRole(TypeRole.PAGEABLE);
@@ -205,7 +203,7 @@ public final class JakartaDataQueryAnnotatedMethodMatcher implements MethodMatch
                     abstractPersistentEntityQuery.getParametersInRole().put(List.of(matchContext.getParameters()).indexOf(limitParameter), TypeRole.LIMIT);
                 }
 
-                QueryResult queryResult = persistentEntityCriteriaQuery.buildQuery(annotationMetadataHierarchy, queryBuilder);
+                QueryResult queryResult = criteriaQuery.build(annotationMetadataHierarchy, queryBuilder);
 
                 ClassElement genericReturnType = matchContext.getReturnType();
                 if (matchContext.isTypeInRole(genericReturnType, TypeRole.PAGE)
@@ -219,7 +217,7 @@ public final class JakartaDataQueryAnnotatedMethodMatcher implements MethodMatch
                         new MethodMatchSourcePersistentEntityCriteriaBuilderImpl(matchContext)
                     );
 
-                    QueryResult countQueryResult = ((QueryResultPersistentEntityCriteriaQuery) countCriteriaQuery).buildQuery(annotationMetadataHierarchy, queryBuilder);
+                    QueryResult countQueryResult = countCriteriaQuery.build(annotationMetadataHierarchy, queryBuilder);
                     return new MethodMatchInfo(
                         getOperationType(),
                         resultType,

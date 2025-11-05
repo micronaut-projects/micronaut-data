@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 original authors
+ * Copyright 2017-2025 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,39 +16,33 @@
 package io.micronaut.data.runtime.criteria;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.model.PersistentEntity;
-import io.micronaut.data.model.jpa.criteria.impl.AbstractCriteriaBuilder;
-import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.impl.AbstractCriteriaBuilder;
+import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaInsert;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.runtime.criteria.metamodel.StaticMetamodelInitializer;
 
+/**
+ * The runtime criteria insert.
+ *
+ * @param <T> The entity type
+ * @author Denis Stepanov
+ * @since 5.0
+ */
 @Internal
-final class RuntimePersistentEntityCriteriaDelete<T> extends AbstractPersistentEntityCriteriaDelete<T> {
+final class RuntimePersistentEntityCriteriaInsert<T> extends AbstractPersistentEntityCriteriaInsert<T> {
 
     private final AbstractCriteriaBuilder criteriaBuilder;
-    private final RuntimeEntityRegistry runtimeEntityRegistry;
     private final StaticMetamodelInitializer staticMetamodelInitializer;
 
-    public RuntimePersistentEntityCriteriaDelete(AbstractCriteriaBuilder criteriaBuilder,
-                                                 Class<T> root,
-                                                 RuntimeEntityRegistry runtimeEntityRegistry,
-                                                 StaticMetamodelInitializer staticMetamodelInitializer) {
+    RuntimePersistentEntityCriteriaInsert(AbstractCriteriaBuilder criteriaBuilder,
+                                          Class<T> root,
+                                          RuntimeEntityRegistry runtimeEntityRegistry,
+                                          StaticMetamodelInitializer staticMetamodelInitializer) {
         this.criteriaBuilder = criteriaBuilder;
-        this.runtimeEntityRegistry = runtimeEntityRegistry;
         this.staticMetamodelInitializer = staticMetamodelInitializer;
-        from(root);
-    }
-
-    @Override
-    public PersistentEntityRoot<T> from(Class<T> entityClass) {
-        return from(runtimeEntityRegistry.getEntity(entityClass));
-    }
-
-    @Override
-    public PersistentEntityRoot<T> from(PersistentEntity persistentEntity) {
-        return from((RuntimePersistentEntity<T>) persistentEntity);
+        from(runtimeEntityRegistry.getEntity(root));
     }
 
     private PersistentEntityRoot<T> from(RuntimePersistentEntity<T> runtimePersistentEntity) {

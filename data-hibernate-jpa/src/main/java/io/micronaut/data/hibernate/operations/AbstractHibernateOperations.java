@@ -355,7 +355,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
                                                ResultCollector<R> resultCollector) {
         if (sort != null && sort.isSorted()) {
             queryStr += QUERY_BUILDER.buildOrderBy(queryStr, getEntity(preparedQuery.getRootEntity()), AnnotationMetadata.EMPTY_METADATA, sort,
-                preparedQuery.isNative()).getQuery();
+                preparedQuery.isNative(), null);
         }
         if (preparedQuery.isDtoProjection()) {
             P q;

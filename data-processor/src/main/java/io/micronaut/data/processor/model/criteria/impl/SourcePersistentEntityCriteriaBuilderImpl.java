@@ -18,6 +18,7 @@ package io.micronaut.data.processor.model.criteria.impl;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaInsert;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractCriteriaBuilder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
@@ -71,6 +72,21 @@ public final class SourcePersistentEntityCriteriaBuilderImpl extends AbstractCri
     @Override
     public <T> SourcePersistentEntityCriteriaUpdate<T> createCriteriaUpdate(Class<T> targetEntity) {
         return new SourcePersistentEntityCriteriaUpdateImpl<>(entityResolver, targetEntity, this);
+    }
+
+    @Override
+    public <T> PersistentEntityCriteriaInsert<T> createCriteriaInsert(Class<T> targetEntity) {
+        throw new UnsupportedOperationException("This operation is not yet supported.");
+    }
+
+    @Override
+    public <T> PersistentEntityCriteriaInsert<T> createCriteriaInsert(ClassElement targetEntity) {
+        return createCriteriaInsert(entityResolver.apply(targetEntity));
+    }
+
+    @Override
+    public <T> PersistentEntityCriteriaInsert<T> createCriteriaInsert(SourcePersistentEntity targetEntity) {
+        return new SourcePersistentEntityCriteriaInsertImpl<>(targetEntity, this);
     }
 
     @Override

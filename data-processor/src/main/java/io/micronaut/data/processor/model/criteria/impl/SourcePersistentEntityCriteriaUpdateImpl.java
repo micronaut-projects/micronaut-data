@@ -43,7 +43,7 @@ final class SourcePersistentEntityCriteriaUpdateImpl<T> extends AbstractPersiste
     private final Function<ClassElement, SourcePersistentEntity> entityResolver;
     private final CriteriaBuilder criteriaBuilder;
 
-    public SourcePersistentEntityCriteriaUpdateImpl(Function<ClassElement, SourcePersistentEntity> entityResolver,
+    SourcePersistentEntityCriteriaUpdateImpl(Function<ClassElement, SourcePersistentEntity> entityResolver,
                                                     Class<T> root,
                                                     CriteriaBuilder criteriaBuilder) {
         this.entityResolver = entityResolver;

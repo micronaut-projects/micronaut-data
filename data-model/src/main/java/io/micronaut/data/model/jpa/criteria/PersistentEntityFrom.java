@@ -83,6 +83,17 @@ public interface PersistentEntityFrom<OwnerType, AssociatedEntityType> extends F
     @Override
     <Y> PersistentEntityJoin<AssociatedEntityType, Y> join(@NonNull SingularAttribute<? super AssociatedEntityType, Y> attribute, @NonNull JoinType jt);
 
+    /**
+     * Joins the entity with specific join type.
+     *
+     * @param attribute The attribute
+     * @param jt        The join type
+     * @param <Y>       The association entity type
+     * @return The joined entity
+     */
+    @NonNull
+    <Y> PersistentEntityJoin<AssociatedEntityType, Y> join(@NonNull SingularAttribute<? super AssociatedEntityType, Y> attribute, @NonNull Join.Type jt);
+
     @NonNull
     @Override
     <Y> PersistentEntityJoin<AssociatedEntityType, Y> join(@NonNull SingularAttribute<? super AssociatedEntityType, Y> attribute);

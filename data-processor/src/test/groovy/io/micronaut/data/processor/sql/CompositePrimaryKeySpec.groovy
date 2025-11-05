@@ -15,16 +15,20 @@
  */
 package io.micronaut.data.processor.sql
 
-import io.micronaut.core.annotation.AnnotationMetadata
+
 import io.micronaut.data.model.DataType
-import io.micronaut.data.model.query.QueryModel
-import io.micronaut.data.model.query.QueryParameter
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.processor.model.SourcePersistentEntity
+import io.micronaut.data.processor.model.criteria.impl.SourcePersistentEntityCriteriaBuilderImpl
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import spock.lang.Shared
 
-import static io.micronaut.data.processor.visitors.TestUtils.*
+import static io.micronaut.data.processor.visitors.TestUtils.getDataTypes
+import static io.micronaut.data.processor.visitors.TestUtils.getParameterAutoPopulatedProperties
+import static io.micronaut.data.processor.visitors.TestUtils.getParameterBindingIndexes
+import static io.micronaut.data.processor.visitors.TestUtils.getParameterBindingPaths
+import static io.micronaut.data.processor.visitors.TestUtils.getParameterPropertyPaths
+import static io.micronaut.data.processor.visitors.TestUtils.getQuery
 
 class CompositePrimaryKeySpec extends AbstractDataSpec {
 
@@ -211,8 +215,9 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
         given:
         def entity = buildJpaEntity('test.Project', TestEntities.compositePrimaryKeyEntities())
         when:
-        SqlQueryBuilder builder = new SqlQueryBuilder()
-        def sql = builder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity).query
+        def builder = new SourcePersistentEntityCriteriaBuilderImpl(null)
+        def query = builder.createCriteriaInsert(entity)
+        def sql = query.build(new SqlQueryBuilder()).query
 
         then:
         sql == 'INSERT INTO "project" ("name","department_id") VALUES (?,?)'
@@ -221,12 +226,12 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
     void "test build query"() {
         given:
         def entity = buildJpaEntity('test.Project', TestEntities.compositePrimaryKeyEntities())
-        def model = QueryModel.from(entity)
-                .idEq(new QueryParameter("test"))
+        def builder = new SourcePersistentEntityCriteriaBuilderImpl(null)
+        def query = builder.createQuery()
+        def root = query.from(entity)
 
         when:
-        SqlQueryBuilder builder = new SqlQueryBuilder()
-        def sql = builder.buildQuery(AnnotationMetadata.EMPTY_METADATA, model).query
+        def sql = query.where(builder.equal(root.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder()).query
 
         then:
         sql == 'SELECT project_."department_id",project_."project_id_project_id",project_."name" FROM "project" project_ WHERE (project_."department_id" = ? AND project_."project_id_project_id" = ?)'
@@ -235,26 +240,22 @@ interface EntityWithIdClassRepository extends CrudRepository<EntityWithIdClass, 
     void "test build query projection"() {
         given:
         def entity = buildJpaEntity('test.Project', TestEntities.compositePrimaryKeyEntities())
-        QueryModel model = QueryModel.from(entity)
-                .idEq(new QueryParameter("test"))
-
-        model.projections().property(entity.identity.name)
+        def builder = new SourcePersistentEntityCriteriaBuilderImpl(null)
 
         when:
-        SqlQueryBuilder builder = new SqlQueryBuilder()
-        def sql = builder.buildQuery(AnnotationMetadata.EMPTY_METADATA, model).query
+        def query1 = builder.createQuery()
+        def root1 = query1.from(entity)
+        def sql1 = query1.select(root1.get(entity.identity.name)).where(builder.equal(root1.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder()).query
 
         then:
-        sql.startsWith('SELECT project_."department_id",project_."project_id_project_id"')
+        sql1.startsWith('SELECT project_."department_id",project_."project_id_project_id"')
 
         when:"an id project ins used"
-        model = QueryModel.from(entity)
-                          .idEq(new QueryParameter("test"))
-
-        model.projections().id()
-        sql = builder.buildQuery(AnnotationMetadata.EMPTY_METADATA, model).query
+        def query2 = builder.createQuery()
+        def root2 = query2.from(entity)
+        def sql2 = query2.select(root2.get(entity.identity.name)).where(builder.equal(root2.id(), builder.parameter(Object.class))).build(new SqlQueryBuilder()).query
 
         then:
-        sql.startsWith('SELECT project_."department_id",project_."project_id_project_id"')
+        sql2.startsWith('SELECT project_."department_id",project_."project_id_project_id"')
     }
 }

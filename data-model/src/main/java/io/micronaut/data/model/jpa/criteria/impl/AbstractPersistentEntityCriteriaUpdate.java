@@ -17,7 +17,6 @@ package io.micronaut.data.model.jpa.criteria.impl;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.IExpression;
@@ -27,7 +26,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityQuery.BaseQueryDefinitionImpl;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
-import io.micronaut.data.model.query.builder.QueryBuilder2;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.ParameterExpression;
@@ -57,8 +56,7 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requirePro
  * @since 3.2
  */
 @Internal
-public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements PersistentEntityCriteriaUpdate<T>,
-    QueryResultPersistentEntityCriteriaQuery {
+public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements PersistentEntityCriteriaUpdate<T> {
 
     protected Predicate predicate;
     protected PersistentEntityRoot<T> entityRoot;
@@ -71,7 +69,7 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
     }
 
     @Override
-    public QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder2 queryBuilder) {
+    public QueryResult build(AnnotationMetadata annotationMetadata, QueryBuilder queryBuilder) {
         return queryBuilder.buildUpdate(
             annotationMetadata,
             new UpdateQueryDefinitionImpl(entityRoot.getPersistentEntity(), predicate, returning, updateValues)
@@ -202,19 +200,7 @@ public abstract class AbstractPersistentEntityCriteriaUpdate<T> implements Persi
         return this;
     }
 
-    @Override
-    public PersistentEntityCriteriaUpdate<T> returningMulti(@NonNull Selection<?>... selections) {
-        Objects.requireNonNull(selections);
-        if (selections.length != 0) {
-            this.returning = new CompoundSelection<>(List.of(selections));
-        } else {
-            this.returning = null;
-        }
-        return this;
-    }
-
-
-    private static final class UpdateQueryDefinitionImpl extends BaseQueryDefinitionImpl implements QueryBuilder2.UpdateQueryDefinition {
+    private static final class UpdateQueryDefinitionImpl extends BaseQueryDefinitionImpl implements QueryBuilder.UpdateQueryDefinition {
 
         private final Map<String, Object> propertiesToUpdate;
         private final Selection<?> returningSelection;

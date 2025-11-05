@@ -23,11 +23,14 @@ import io.micronaut.core.annotation.AnnotationValueBuilder;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.expressions.EvaluatedExpressionReference;
 import io.micronaut.core.io.service.SoftServiceLoader;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.order.OrderUtil;
 import io.micronaut.core.reflect.ClassUtils;
+import io.micronaut.core.reflect.exception.InstantiationException;
+import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Delete;
@@ -61,6 +64,7 @@ import io.micronaut.data.model.query.builder.AdditionalParameterBinding;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
@@ -257,7 +261,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             }
             visitedRepositories.add(interfaceName);
             currentRepository = element;
-            queryEncoder = QueryBuilder.newQueryBuilder(element.getAnnotationMetadata());
+            queryEncoder = newQueryBuilder(element.getAnnotationMetadata());
             this.dataTypes = Utils.getConfiguredDataTypes(currentRepository);
             AnnotationMetadata annotationMetadata = element.getAnnotationMetadata();
             List<AnnotationValue<TypeRole>> roleArray = annotationMetadata
@@ -283,6 +287,32 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             }
         }
 
+    }
+
+    /**
+     * Build a query build from the configured annotation metadata.
+     * @param annotationMetadata The annotation metadata.
+     * @return The query builder
+     */
+    private static @NonNull QueryBuilder newQueryBuilder(@NonNull AnnotationMetadata annotationMetadata) {
+        return annotationMetadata.stringValue(
+                RepositoryConfiguration.class,
+                DataMethod.META_MEMBER_QUERY_BUILDER
+        ).flatMap(type -> BeanIntrospector.SHARED.findIntrospections(ref -> ref.isPresent() && ref.getBeanType().getName().equals(type))
+                .stream().findFirst()
+                .map(introspection -> {
+                    try {
+                        Argument<?>[] constructorArguments = introspection.getConstructorArguments();
+                        if (constructorArguments.length == 0) {
+                            return (QueryBuilder) introspection.instantiate();
+                        } else if (constructorArguments.length == 1 && constructorArguments[0].getType() == AnnotationMetadata.class) {
+                            return (QueryBuilder) introspection.instantiate(annotationMetadata);
+                        }
+                    } catch (InstantiationException e) {
+                        return new JpaQueryBuilder();
+                    }
+                    return new JpaQueryBuilder();
+                })).orElse(new JpaQueryBuilder());
     }
 
     @Override
@@ -799,7 +829,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             var sb = new StringBuilder(first);
             int i = 1;
             while (iterator.hasNext()) {
-                sb.append(sqlQueryBuilder.formatParameter(i++).getName());
+                sb.append(sqlQueryBuilder.formatParameter(i++).name());
                 sb.append(iterator.next());
             }
             return sb.toString();

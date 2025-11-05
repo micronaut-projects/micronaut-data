@@ -21,14 +21,17 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaInsert;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractCriteriaBuilder;
+import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaDelete;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaQuery;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaUpdate;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.Utils;
+import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ParameterElement;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.ParameterExpression;
@@ -50,10 +53,6 @@ public final class MethodMatchSourcePersistentEntityCriteriaBuilderImpl extends 
     public MethodMatchSourcePersistentEntityCriteriaBuilderImpl(MethodMatchContext matchContext) {
         this.methodMatchContext = matchContext;
         this.dataTypes = Utils.getConfiguredDataTypes(matchContext.getRepositoryClass());
-    }
-
-    public MethodMatchContext getMethodMatchContext() {
-        return methodMatchContext;
     }
 
     @Override
@@ -79,6 +78,21 @@ public final class MethodMatchSourcePersistentEntityCriteriaBuilderImpl extends 
     @Override
     public <T> SourcePersistentEntityCriteriaUpdate<T> createCriteriaUpdate(Class<T> targetEntity) {
         return new SourcePersistentEntityCriteriaUpdateImpl<>(methodMatchContext::getEntity, targetEntity, this);
+    }
+
+    @Override
+    public <T> PersistentEntityCriteriaInsert<T> createCriteriaInsert(Class<T> targetEntity) {
+        return createCriteriaInsert(methodMatchContext.getVisitorContext().getClassElement(targetEntity).orElseThrow());
+    }
+
+    @Override
+    public <T> PersistentEntityCriteriaInsert<T> createCriteriaInsert(ClassElement targetEntity) {
+        return createCriteriaInsert(methodMatchContext.getEntity(targetEntity));
+    }
+
+    @Override
+    public <T> PersistentEntityCriteriaInsert<T> createCriteriaInsert(SourcePersistentEntity targetEntity) {
+        return new SourcePersistentEntityCriteriaInsertImpl<>(targetEntity, this);
     }
 
     @Override

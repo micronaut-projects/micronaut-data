@@ -42,7 +42,7 @@ final class SourcePersistentEntityCriteriaDeleteImpl<T> extends AbstractPersiste
     private final Function<ClassElement, SourcePersistentEntity> entityResolver;
     private final CriteriaBuilder criteriaBuilder;
 
-    public SourcePersistentEntityCriteriaDeleteImpl(Function<ClassElement, SourcePersistentEntity> entityResolver,
+    SourcePersistentEntityCriteriaDeleteImpl(Function<ClassElement, SourcePersistentEntity> entityResolver,
                                                     Class<T> result,
                                                     CriteriaBuilder criteriaBuilder) {
         this.entityResolver = entityResolver;
