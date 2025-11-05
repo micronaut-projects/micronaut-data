@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.jdbc.mysql;
 
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Book;
@@ -32,4 +33,10 @@ public abstract class MySqlBookRepository extends BookRepository {
 
     @Transactional
     abstract List<Book> findFirst500ByLastUpdatedBeforeForUpdate(LocalDateTime lastUpdated);
+
+    @Query(value = "REPLACE INTO book (id, title, total_pages, author_id) VALUES (:id, :title, :totalPages, :authorId)", nativeQuery = true)
+    public abstract void replaceBook(Long id,
+                                     String title,
+                                     int totalPages,
+                                     Long authorId);
 }
