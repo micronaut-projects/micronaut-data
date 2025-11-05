@@ -57,6 +57,7 @@ public @interface Join {
         RIGHT_FETCH,
         FETCH,
         INNER,
+        INNER_FETCH,
         OUTER,
         OUTER_FETCH;
 

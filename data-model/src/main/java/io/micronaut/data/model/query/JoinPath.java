@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
  * A join path represents a path, association and join type for performing a join with a query.
  *
  * @author graemerocher
- * @see QueryModel
  * @since 1.0.0
  */
 public class JoinPath {

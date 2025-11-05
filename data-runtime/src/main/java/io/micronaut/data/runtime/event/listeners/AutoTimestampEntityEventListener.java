@@ -112,7 +112,7 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
         Object now = dateTimeProvider.getNow();
         for (RuntimePersistentProperty<Object> property : applicableProperties) {
             if (isUpdate) {
-                if (!property.getAnnotationMetadata().booleanValue(AutoPopulated.class, AutoPopulated.UPDATEABLE).orElse(true)) {
+                if (!property.getAnnotationMetadata().booleanValue(AutoPopulated.class, AutoPopulated.UPDATABLE).orElse(true)) {
                     continue;
                 }
             }

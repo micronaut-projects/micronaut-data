@@ -261,8 +261,8 @@ class Test {
 package test;
 
 import io.micronaut.data.annotation.*;
-import io.micronaut.data.repository.*;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.repository.*;
 import io.micronaut.data.model.DataType;
 
 @Repository
@@ -336,11 +336,7 @@ interface MyInterface extends CrudRepository<Person, Long> {
 package test;
 
 import io.micronaut.data.annotation.*;
-import io.micronaut.data.repository.*;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
-import io.micronaut.data.tck.entities.Shelf;
-import io.micronaut.data.tck.entities.Book;
-import io.micronaut.data.tck.entities.ShelfBook;
 
 @Repository
 @RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false)
@@ -488,15 +484,14 @@ interface BookRepository extends GenericRepository<Book, Long> {
             BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package test;
 
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.repository.*;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import java.util.UUID;
 
-@Repository
-@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false)
-@io.micronaut.context.annotation.Executable
+@JdbcRepository(dialect = Dialect.ANSI)
 interface MyInterface extends GenericRepository<Book, UUID> {
 
     @Query("INSERT INTO Book(title, totalPages) VALUES (:title, :totalPages)")

@@ -25,9 +25,9 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaUpdate;
-import io.micronaut.data.model.jpa.criteria.impl.QueryResultPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
@@ -115,7 +115,7 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
         // Add updatable auto-populated parameters
         entity.getPersistentProperties().stream()
-            .filter(p -> p != null && p.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATEABLE, Boolean.class)).orElse(false))
+            .filter(p -> p != null && p.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATABLE, Boolean.class)).orElse(false))
             .forEach(p -> query.set(p.getName(), cb.parameter(null, new PersistentPropertyPath(p))));
 
         if (entity.getVersion() != null && !entity.getVersion().isGenerated() && criteriaUpdate.hasVersionRestriction()) {
@@ -270,7 +270,7 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             if (!dtoProjectionProperties.isEmpty()) {
                 List<Selection<?>> selectionList = dtoProjectionProperties.stream()
                     .map(p -> {
-                        if (matchContext.getQueryBuilder().shouldAliasProjections()) {
+                        if (matchContext.getQueryBuilder() instanceof SqlQueryBuilder) {
                             return root.get(p.getName()).alias(p.getName());
                         } else {
                             return root.get(p.getName());
@@ -293,7 +293,7 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         );
         QueryBuilder queryBuilder = matchContext.getQueryBuilder();
 
-        QueryResult queryResult = ((QueryResultPersistentEntityCriteriaQuery) criteriaQuery).buildQuery(annotationMetadataHierarchy, queryBuilder);
+        QueryResult queryResult = criteriaQuery.build(annotationMetadataHierarchy, queryBuilder);
 
         return new MethodMatchInfo(
             getOperationType(),

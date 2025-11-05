@@ -16,8 +16,8 @@
 package io.micronaut.data.cosmos.operations;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder2;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
+import io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.StoredQuery;
@@ -47,12 +47,12 @@ final class CosmosSqlPreparedQuery<E, R> extends DefaultSqlPreparedQuery<E, R> {
     @Override
     public void prepare(E entity) {
         if (isExpandableQuery()) {
-            SqlQueryBuilder2 queryBuilder = sqlStoredQuery.getQueryBuilder();
+            SqlQueryBuilder queryBuilder = sqlStoredQuery.getQueryBuilder();
             StringBuilder q = new StringBuilder(sqlStoredQuery.getExpandableQueryParts()[0]);
             int queryParamIndex = 1;
             int inx = 1;
             for (QueryParameterBinding parameter : sqlStoredQuery.getQueryBindings()) {
-                AbstractSqlLikeQueryBuilder2.Placeholder placeholder = queryBuilder.formatParameter(inx++);
+                AbstractSqlLikeQueryBuilder.Placeholder placeholder = queryBuilder.formatParameter(inx++);
                 if (!parameter.isExpandable()) {
                     q.append(placeholder.name());
                 } else {

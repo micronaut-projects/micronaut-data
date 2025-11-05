@@ -15,16 +15,26 @@
  */
 package io.micronaut.data.runtime.criteria;
 
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.NextMajorVersion;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaInsert;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractCriteriaBuilder;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.runtime.criteria.metamodel.StaticMetamodelInitializer;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.Expression;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The runtime implementation of {@link AbstractCriteriaBuilder}.
@@ -33,11 +43,50 @@ import jakarta.persistence.criteria.Expression;
  * @since 3.2
  */
 @Singleton
-public class RuntimeCriteriaBuilder extends AbstractCriteriaBuilder {
+public final class RuntimeCriteriaBuilder extends AbstractCriteriaBuilder {
 
     private final RuntimeEntityRegistry runtimeEntityRegistry;
     private final StaticMetamodelInitializer staticMetamodelInitializer = new StaticMetamodelInitializer();
 
+    public RuntimeCriteriaBuilder() {
+        this(new RuntimeEntityRegistry() {
+
+            private final Map<Class, RuntimePersistentEntity> map = new HashMap<>();
+
+            @Override
+            public EntityEventListener<Object> getEntityEventListener() {
+                throw new IllegalStateException("EntityEventListeners are not yet supported");
+            }
+
+            @Override
+            public Object autoPopulateRuntimeProperty(RuntimePersistentProperty<?> persistentProperty, Object previousValue) {
+                throw new IllegalStateException("AutoPopulateRuntimeProperty are not yet supported");
+            }
+
+            @Override
+            public <T> RuntimePersistentEntity<T> getEntity(Class<T> type) {
+                RuntimeEntityRegistry entityRegistry = this;
+                return map.computeIfAbsent(type, t -> new RuntimePersistentEntity<Object>(t) {
+                    @Override
+                    protected RuntimePersistentEntity<Object> getEntity(Class<Object> type) {
+                        return entityRegistry.getEntity(type);
+                    }
+                });
+            }
+
+            @Override
+            public <T> RuntimePersistentEntity<T> newEntity(Class<T> type) {
+                return new RuntimePersistentEntity<>(type);
+            }
+
+            @Override
+            public @NonNull ApplicationContext getApplicationContext() {
+                throw new IllegalStateException("ApplicationContext are not yet supported");
+            }
+        });
+    }
+
+    @Inject
     public RuntimeCriteriaBuilder(RuntimeEntityRegistry runtimeEntityRegistry) {
         this.runtimeEntityRegistry = runtimeEntityRegistry;
     }
@@ -68,9 +117,21 @@ public class RuntimeCriteriaBuilder extends AbstractCriteriaBuilder {
     }
 
     @Override
+    public <T> PersistentEntityCriteriaInsert<T> createCriteriaInsert(Class<T> targetEntity) {
+        return new RuntimePersistentEntityCriteriaInsert<>(this, targetEntity, runtimeEntityRegistry, staticMetamodelInitializer);
+    }
+
+    @Override
     @NextMajorVersion("Require non null")
     public <T> Expression<T> literal(T value) {
         // Runtime literals need to be bind as parameters not modifying the query to avoid the SQL injection
         return super.parameter(value == null ? (Class<T>) Object.class : (Class<T>) value.getClass(), null, value);
+    }
+
+    /**
+     * @return The runtime entity registry
+     */
+    public RuntimeEntityRegistry getRuntimeEntityRegistry() {
+        return runtimeEntityRegistry;
     }
 }

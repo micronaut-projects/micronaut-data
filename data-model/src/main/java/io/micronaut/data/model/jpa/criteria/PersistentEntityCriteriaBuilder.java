@@ -48,6 +48,16 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
     <T> PersistentEntityCriteriaDelete<T> createCriteriaDelete(Class<T> targetEntity);
 
     /**
+     * The insert criteria.
+     * @param targetEntity The target entity
+     * @param <T> The entity type
+     * @return The insert criteria
+     * @since 5.0
+     */
+    @NonNull
+    <T> PersistentEntityCriteriaInsert<T> createCriteriaInsert(Class<T> targetEntity);
+
+    /**
      * Create an ordering.
      *
      * @param x          expression used to define the ordering

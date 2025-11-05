@@ -22,7 +22,6 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.FindCursoredPageInterceptor
 import io.micronaut.data.intercept.FindPageInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
-import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person

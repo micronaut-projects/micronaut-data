@@ -220,7 +220,7 @@ public final class SourceParameterExpressionImpl extends IParameterExpression<Ob
         }
         boolean autopopulated = propertyPath.getProperty()
             .findAnnotation(AutoPopulated.class)
-            .map(ap -> ap.getRequiredValue(AutoPopulated.UPDATEABLE, Boolean.class))
+            .map(ap -> ap.getRequiredValue(AutoPopulated.UPDATABLE, Boolean.class))
             .orElse(false);
         DataType dataType = getDataType(propertyPath, parameterElement, expressionType);
         JsonDataType jsonDataType = getJsonDataType(propertyPath, parameterElement, expressionType);

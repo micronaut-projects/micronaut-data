@@ -27,7 +27,6 @@ import io.micronaut.data.model.runtime.StoredQuery;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -106,23 +105,8 @@ public interface DelegateStoredQuery<E, R> extends StoredQuery<E, R> {
     }
 
     @Override
-    default boolean useNumericPlaceholders() {
-        return getStoredQueryDelegate().useNumericPlaceholders();
-    }
-
-    @Override
     default boolean isDtoProjection() {
         return getStoredQueryDelegate().isDtoProjection();
-    }
-
-    @Override
-    default Optional<Class<?>> getEntityIdentifierType() {
-        return getStoredQueryDelegate().getEntityIdentifierType();
-    }
-
-    @Override
-    default Class<?>[] getArgumentTypes() {
-        return getStoredQueryDelegate().getArgumentTypes();
     }
 
     @Override
@@ -136,18 +120,8 @@ public interface DelegateStoredQuery<E, R> extends StoredQuery<E, R> {
     }
 
     @Override
-    default Set<JoinPath> getJoinFetchPaths() {
-        return getStoredQueryDelegate().getJoinFetchPaths();
-    }
-
-    @Override
     default Set<JoinPath> getJoinPaths() {
         return getStoredQueryDelegate().getJoinPaths();
-    }
-
-    @Override
-    default boolean isSingleResult() {
-        return getStoredQueryDelegate().isSingleResult();
     }
 
     @Override
@@ -178,16 +152,6 @@ public interface DelegateStoredQuery<E, R> extends StoredQuery<E, R> {
     @Override
     default Map<String, AnnotationValue<?>> getParameterExpressions() {
         return getStoredQueryDelegate().getParameterExpressions();
-    }
-
-    @Override
-    default int getLimit() {
-        return getStoredQueryDelegate().getLimit();
-    }
-
-    @Override
-    default int getOffset() {
-        return getStoredQueryDelegate().getOffset();
     }
 
     @Override
