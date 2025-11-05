@@ -807,11 +807,19 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 return new AbstractMap.SimpleEntry<>(propertyPath, e.getValue());
             })
             .filter(e -> {
-                PersistentProperty keyProperty = e.getKey().getProperty();
-                if (keyProperty.isGenerated()) {
-                    return keyProperty.getOwner() != entity;
+                PersistentProperty property = e.getKey().getProperty();
+                boolean generated = property.isGenerated();
+                if (generated) {
+                    List<Association> associations = e.getKey().getAssociations();
+                    if (CollectionUtils.isNotEmpty(associations)) {
+                        Association last = associations.get(associations.size() - 1);
+                        PersistentEntity assocEntity = last.getAssociatedEntity();
+                        if (assocEntity != null && assocEntity.getIdentityProperties().contains(property)) {
+                            generated = false;
+                        }
+                    }
                 }
-                return true;
+                return !generated;
             })
             .collect(Collectors.toList());
 
