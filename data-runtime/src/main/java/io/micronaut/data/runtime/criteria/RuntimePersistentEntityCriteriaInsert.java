@@ -23,6 +23,13 @@ import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.runtime.criteria.metamodel.StaticMetamodelInitializer;
 
+/**
+ * The runtime criteria insert.
+ *
+ * @param <T> The entity type
+ * @author Denis Stepanov
+ * @since 5.0
+ */
 @Internal
 final class RuntimePersistentEntityCriteriaInsert<T> extends AbstractPersistentEntityCriteriaInsert<T> {
 
