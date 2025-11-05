@@ -28,7 +28,7 @@ import jakarta.persistence.criteria.CommonAbstractCriteria;
  * @since 4.10
  */
 @Experimental
-public interface PersistentEntityCommonAbstractCriteria extends CommonAbstractCriteria, QueryResultPersistentEntityCriteriaQuery {
+public interface PersistentEntityCommonAbstractCriteria extends CommonAbstractCriteria, PersistentEntityCriteriaQueryBuilder {
 
     /**
      * Create a subquery from the expression type.

@@ -522,7 +522,7 @@ abstract class AbstractCriteriaSpec extends Specification {
     }
 
     protected String getSqlQuery(def query, Dialect dialect) {
-        return ((QueryResultPersistentEntityCriteriaQuery) query).build(AnnotationMetadata.EMPTY_METADATA, new SqlQueryBuilder(dialect)).getQuery()
+        return ((PersistentEntityCriteriaQueryBuilder) query).build(AnnotationMetadata.EMPTY_METADATA, new SqlQueryBuilder(dialect)).getQuery()
     }
 
     @CompileStatic

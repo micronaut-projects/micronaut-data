@@ -22,13 +22,13 @@ import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 
 /**
- * The query provider.
+ * The query builder.
  *
  * @author Denis Stepanov
- * @since 3.2
+ * @since 5.0
  */
 @Experimental
-public interface QueryResultPersistentEntityCriteriaQuery {
+public interface PersistentEntityCriteriaQueryBuilder {
 
     /**
      * Build the query.

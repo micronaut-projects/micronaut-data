@@ -31,7 +31,7 @@ import java.util.Set;
  * @since 5.0
  */
 @Experimental
-public interface PersistentEntityCriteriaInsert<T> extends QueryResultPersistentEntityCriteriaQuery {
+public interface PersistentEntityCriteriaInsert<T> extends PersistentEntityCriteriaQueryBuilder {
 
     /**
      * The root entity.
