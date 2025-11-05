@@ -27,8 +27,11 @@ import io.micronaut.data.processor.model.SourceAssociation;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Fetch;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.metamodel.Attribute;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,7 +50,7 @@ import java.util.stream.Collectors;
  */
 @Internal
 final class SourcePersistentAssociationPath<Owner, E> extends AbstractSourcePersistentEntityFrom<Owner, E>
-    implements SourcePersistentEntityPath<E>, SourcePersistentPropertyPath<E>, PersistentAssociationPath<Owner, E> {
+    implements SourcePersistentEntityPath<E>, SourcePersistentPropertyPath<E>, PersistentAssociationPath<Owner, E>, Fetch<Owner, E> {
 
     private final PersistentEntityFrom<?, Owner> parent;
     private final SourceAssociation association;
@@ -159,4 +162,13 @@ final class SourcePersistentAssociationPath<Owner, E> extends AbstractSourcePers
         return newAssociations;
     }
 
+    @Override
+    public Attribute<? super Owner, ?> getAttribute() {
+        return PersistentAssociationPath.super.getAttribute();
+    }
+
+    @Override
+    public JoinType getJoinType() {
+        return PersistentAssociationPath.super.getJoinType();
+    }
 }

@@ -31,7 +31,6 @@ import io.micronaut.data.model.jpa.criteria.PersistentListAssociationPath;
 import io.micronaut.data.model.jpa.criteria.PersistentSetAssociationPath;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Fetch;
-import jakarta.persistence.criteria.FetchParent;
 import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
@@ -286,43 +285,55 @@ public abstract class AbstractPersistentEntityFrom<J, E> implements PersistentEn
         throw notSupportedOperation();
     }
 
-    private FetchParent<J, E> asFetchParent() {
-        return new PersistentFetchParentImpl<>(this);
-    }
-
-    @Override
+     @Override
     public Set<Fetch<E, ?>> getFetches() {
-        return asFetchParent().getFetches();
+        return joins.values()
+            .stream()
+            .filter(p -> p.getAssociationJoinType() != null && p.getAssociationJoinType().isFetch())
+            .map(p -> (Fetch<E, ?>) p)
+            .collect(Collectors.toUnmodifiableSet());
     }
 
     @Override
     public <Y> Fetch<E, Y> fetch(SingularAttribute<? super E, Y> attribute) {
-        return asFetchParent().fetch(attribute);
+        return (Fetch<E, Y>) join(attribute, io.micronaut.data.annotation.Join.Type.FETCH);
     }
 
     @Override
     public <Y> Fetch<E, Y> fetch(SingularAttribute<? super E, Y> attribute, JoinType jt) {
-        return asFetchParent().fetch(attribute, jt);
+        return (Fetch<E, Y>) join(attribute, convertFetch(jt));
     }
 
     @Override
     public <Y> Fetch<E, Y> fetch(PluralAttribute<? super E, ?, Y> attribute) {
-        return asFetchParent().fetch(attribute);
+        return (Fetch<E, Y>) join(attribute.getName(), io.micronaut.data.annotation.Join.Type.FETCH);
     }
 
     @Override
     public <Y> Fetch<E, Y> fetch(PluralAttribute<? super E, ?, Y> attribute, JoinType jt) {
-        return asFetchParent().fetch(attribute, jt);
+        return (Fetch<E, Y>) join(attribute.getName(), convertFetch(jt));
     }
 
     @Override
     public <X, Y> Fetch<X, Y> fetch(String attributeName) {
-        return asFetchParent().fetch(attributeName);
+        return (Fetch<X, Y>) join(attributeName, io.micronaut.data.annotation.Join.Type.FETCH);
     }
 
     @Override
     public <X, Y> Fetch<X, Y> fetch(String attributeName, JoinType jt) {
-        return asFetchParent().fetch(attributeName, jt);
+        return (Fetch<X, Y>) join(attributeName, convertFetch(jt));
+    }
+
+    @Nullable
+    private io.micronaut.data.annotation.Join.Type convertFetch(@Nullable JoinType joinType) {
+        if (joinType == null) {
+            return null;
+        }
+        return switch (joinType) {
+            case LEFT -> io.micronaut.data.annotation.Join.Type.LEFT_FETCH;
+            case RIGHT -> io.micronaut.data.annotation.Join.Type.RIGHT_FETCH;
+            case INNER -> io.micronaut.data.annotation.Join.Type.INNER_FETCH;
+        };
     }
 
     @Override
