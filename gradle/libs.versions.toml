@@ -21,7 +21,7 @@ micronaut-logging = "1.7.1"
 micronaut-flyway = "7.9.1"
 micronaut-coherence = "5.0.6"
 
-groovy = "4.0.28"
+groovy = "4.0.29"
 
 managed-javax-persistence = "2.2"
 managed-jakarta-data = "1.0.1"
