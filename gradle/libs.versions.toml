@@ -44,7 +44,7 @@ jmh = "1.37"
 ksp-gradle-plugin = "2.2.20-2.0.4"
 kotlin-gradle-plugin = "2.2.20"
 jmh-gradle-plugin = "0.7.3"
-spring-boot-gradle-plugin = "3.5.6"
+spring-boot-gradle-plugin = "3.5.7"
 spring-dependency-management-gradle-plugin = "1.1.7"
 shadow-gradle-plugin = "9.2.2"
 
