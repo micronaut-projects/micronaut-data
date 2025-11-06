@@ -60,7 +60,7 @@ abstract class ProductRepository implements CrudRepository<Product, Long>, JpaSp
 
     @Transactional
     List<Product> findByName(String name, boolean caseInsensitive, boolean includeBlank) {
-        Specification<Product> specification
+        QuerySpecification<Product> specification
         if (caseInsensitive) {
             specification = Specifications.nameEqualsCaseInsensitive(name)
         } else {
