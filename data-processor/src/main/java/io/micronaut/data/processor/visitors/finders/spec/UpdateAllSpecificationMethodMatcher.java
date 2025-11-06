@@ -43,7 +43,7 @@ public class UpdateAllSpecificationMethodMatcher extends AbstractSpecificationMe
 
     @Override
     protected MethodMatch match(MethodMatchContext matchContext, Matcher matcher) {
-        if (TypeUtils.isValidBatchUpdateReturnType(matchContext.getMethodElement()) && isUpdateSpecification(matchContext.getMethodElement())) {
+        if (TypeUtils.isValidBatchUpdateReturnType(matchContext.getMethodElement()) && isUpdateSpecification(matchContext)) {
             FindersUtils.InterceptorMatch e = FindersUtils.pickUpdateAllSpecInterceptor(matchContext, matchContext.getReturnType());
             return mc -> new MethodMatchInfo(DataMethod.OperationType.UPDATE, e.returnType(), e.interceptor());
         }

@@ -48,7 +48,7 @@ public class FindAllSpecificationMethodMatcher extends AbstractSpecificationMeth
 
     @Override
     protected MethodMatch match(MethodMatchContext matchContext, Matcher matcher) {
-        if (TypeUtils.doesMethodProducesIterable(matchContext.getMethodElement()) && isQuerySpecification(matchContext.getMethodElement())) {
+        if (TypeUtils.doesMethodProducesIterable(matchContext.getMethodElement()) && isQuerySpecification(matchContext)) {
             FindersUtils.InterceptorMatch e = FindersUtils.pickFindAllSpecInterceptor(matchContext, matchContext.getReturnType());
             return mc -> new MethodMatchInfo(DataMethod.OperationType.QUERY, e.returnType(), e.interceptor());
         }

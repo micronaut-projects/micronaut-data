@@ -43,7 +43,7 @@ public class CountSpecificationMethodMatcher extends AbstractSpecificationMethod
 
     @Override
     protected MethodMatch match(MethodMatchContext matchContext, Matcher matcher) {
-        if (TypeUtils.isValidCountReturnType(matchContext) && isQuerySpecification(matchContext.getMethodElement())) {
+        if (TypeUtils.isValidCountReturnType(matchContext) && isQuerySpecification(matchContext)) {
             return mc -> {
                 FindersUtils.InterceptorMatch e = FindersUtils.pickCountSpecInterceptor(matchContext, matchContext.getReturnType());
                 return new MethodMatchInfo(DataMethod.OperationType.COUNT, e.returnType(), e.interceptor());

@@ -52,7 +52,7 @@ public class FindPageSpecificationMethodMatcher extends AbstractSpecificationMet
     protected MethodMatch match(MethodMatchContext matchContext, Matcher matcher) {
         ClassElement returnType = TypeUtils.getMethodProducingItemType(matchContext.getMethodElement());
         if ((matchContext.isTypeInRole(returnType, TypeRole.PAGE) || matchContext.isTypeInRole(returnType, TypeRole.CURSORED_PAGE))
-            && isQuerySpecification(matchContext.getMethodElement())) {
+            && isQuerySpecification(matchContext)) {
             FindersUtils.InterceptorMatch e = FindersUtils.pickFindPageSpecInterceptor(matchContext, matchContext.getReturnType());
             return mc -> new MethodMatchInfo(
                 DataMethod.OperationType.QUERY,

@@ -42,7 +42,7 @@ public class FindOneSpecificationMethodMatcher extends AbstractSpecificationMeth
 
     @Override
     protected MethodMatch match(MethodMatchContext matchContext, Matcher matcher) {
-        if (isQuerySpecification(matchContext.getMethodElement())) {
+        if (isQuerySpecification(matchContext)) {
             FindersUtils.InterceptorMatch e = FindersUtils.pickFindOneSpecInterceptor(matchContext, matchContext.getMethodElement().getGenericReturnType());
             return mc -> new MethodMatchInfo(DataMethod.OperationType.QUERY, e.returnType(), e.interceptor());
         }

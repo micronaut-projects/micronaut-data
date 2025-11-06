@@ -17,8 +17,8 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.inject.ast.MethodElement;
-import io.micronaut.inject.ast.ParameterElement;
+import io.micronaut.data.annotation.TypeRole;
+import io.micronaut.data.processor.visitors.MethodMatchContext;
 
 import java.util.Arrays;
 
@@ -45,41 +45,16 @@ public abstract class AbstractSpecificationMethodMatcher extends AbstractPrefixP
         return DEFAULT_POSITION - 200;
     }
 
-    private boolean isSpringPredicateSpecification(@NonNull MethodElement methodElement) {
-        return isFirstParameterAssignable(methodElement, "org.springframework.data.jpa.domain.Specification");
+    protected final boolean isQuerySpecification(@NonNull MethodMatchContext methodMatchContext) {
+        return methodMatchContext.hasParameterInRole(TypeRole.SPECIFICATION_PREDICATE) || methodMatchContext.hasParameterInRole(TypeRole.SPECIFICATION_QUERY);
     }
 
-    protected final boolean isQuerySpecification(@NonNull MethodElement methodElement) {
-        if (isPredicateSpecification(methodElement) || isSpringPredicateSpecification(methodElement)) {
-            return true;
-        }
-        return isFirstParameterAssignable(methodElement, "io.micronaut.data.repository.jpa.criteria.QuerySpecification")
-            || isFirstParameterAssignable(methodElement, "io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder");
+    protected final boolean isDeleteSpecification(@NonNull MethodMatchContext methodMatchContext) {
+        return methodMatchContext.hasParameterInRole(TypeRole.SPECIFICATION_PREDICATE) || methodMatchContext.hasParameterInRole(TypeRole.SPECIFICATION_DELETE);
     }
 
-    protected final boolean isDeleteSpecification(@NonNull MethodElement methodElement) {
-        if (isPredicateSpecification(methodElement) || isSpringPredicateSpecification(methodElement)) {
-            return true;
-        }
-        return isFirstParameterAssignable(methodElement, "io.micronaut.data.repository.jpa.criteria.DeleteSpecification")
-            || isFirstParameterAssignable(methodElement, "io.micronaut.data.repository.jpa.criteria.CriteriaDeleteBuilder");
-    }
-
-    protected final boolean isUpdateSpecification(@NonNull MethodElement methodElement) {
-        if (isPredicateSpecification(methodElement) || isSpringPredicateSpecification(methodElement)) {
-            return true;
-        }
-        return isFirstParameterAssignable(methodElement, "io.micronaut.data.repository.jpa.criteria.UpdateSpecification")
-            || isFirstParameterAssignable(methodElement, "io.micronaut.data.repository.jpa.criteria.CriteriaUpdateBuilder");
-    }
-
-    private boolean isPredicateSpecification(@NonNull MethodElement methodElement) {
-        return isFirstParameterAssignable(methodElement, "io.micronaut.data.repository.jpa.criteria.PredicateSpecification");
-    }
-
-    private boolean isFirstParameterAssignable(@NonNull MethodElement methodElement, String clazz) {
-        final ParameterElement[] parameters = methodElement.getParameters();
-        return parameters.length > 0 && parameters[0].getType().isAssignable(clazz);
+    protected final boolean isUpdateSpecification(@NonNull MethodMatchContext methodMatchContext) {
+        return methodMatchContext.hasParameterInRole(TypeRole.SPECIFICATION_PREDICATE) || methodMatchContext.hasParameterInRole(TypeRole.SPECIFICATION_UPDATE);
     }
 
 }
