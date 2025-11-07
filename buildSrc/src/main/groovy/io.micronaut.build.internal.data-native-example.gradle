@@ -5,11 +5,6 @@ plugins {
     id "io.micronaut.build.internal.java-base"
 }
 
-repositories {
-    mavenCentral()
-    mavenLocal()
-}
-
 tasks.register("testExamples") {
     dependsOn "test"
 }
