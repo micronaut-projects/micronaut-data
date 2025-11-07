@@ -20,19 +20,15 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.data.Limit;
 import jakarta.data.Order;
 import jakarta.data.Sort;
-import jakarta.data.exceptions.DataException;
 import jakarta.data.exceptions.EmptyResultException;
 import jakarta.data.exceptions.NonUniqueResultException;
 import jakarta.data.page.CursoredPage;
 import jakarta.data.page.Page;
 import jakarta.data.page.PageRequest;
 import jakarta.data.page.PageRequest.Cursor;
-import jakarta.data.page.impl.PageRecord;
 import jakarta.inject.Inject;
-import jakarta.persistence.PersistenceException;
 import org.hibernate.Session;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -1526,15 +1522,11 @@ public class EntityTests {
         }
     }
 
-    @Disabled // PENDING FEATURE
     @Test
     public void testLiteralTrue() {
         Page<Long> page1;
         try {
             page1 = numbers.oddsFrom21To(40L, PageRequest.ofSize(5));
-//            page1 = connectionOperations.executeRead(status -> {
-//                return oddsFrom21To(status.getConnection(), 40L, PageRequest.ofSize(5));
-//            });
         } catch (UnsupportedOperationException x) {
             if (type.isKeywordSupportAtOrBelow(DatabaseType.KEY_VALUE)) {
                 // Key-Value databases are not capable of JDQL BETWEEN
@@ -1568,26 +1560,6 @@ public class EntityTests {
             Page<Long> page3 = numbers.oddsFrom21To(40L, page2.nextPageRequest());
             assertEquals(false, page3.hasContent());
             assertEquals(false, page3.hasNext());
-        }
-    }
-
-    public Page<Long> oddsFrom21To(Session session, long max, PageRequest pageRequest) {
-        try {
-            String base = "FROM io.micronaut.data.hibernate.jakarta_data.read.only.NaturalNumber AS naturalNumber_ WHERE (naturalNumber_.isOdd = TRUE AND (naturalNumber_.id >= 21 AND naturalNumber_.id <= :p1))";
-            long _totalResults = pageRequest.requestTotal()
-                ? session.createSelectionQuery("SELECT COUNT(naturalNumber_.id) " + base, Long.class)
-                    .setParameter("p1", max)
-                    .getSingleResult()
-                : -1L;
-            List<Long> _results = session.createSelectionQuery("SELECT naturalNumber_.id " + base + " ORDER BY naturalNumber_.id ASC", Long.class)
-                .setParameter("p1", max)
-                .setFirstResult((int) ((pageRequest.page() - 1) * pageRequest.size()))
-                .setMaxResults(pageRequest.size())
-                .getResultList();
-            return new PageRecord(pageRequest, _results, _totalResults);
-        }
-        catch (PersistenceException _ex) {
-            throw new DataException(_ex.getMessage(), _ex);
         }
     }
 
