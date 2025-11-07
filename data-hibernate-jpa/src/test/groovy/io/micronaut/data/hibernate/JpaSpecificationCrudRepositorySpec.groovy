@@ -18,6 +18,7 @@ package io.micronaut.data.hibernate
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
@@ -29,7 +30,6 @@ import jakarta.persistence.criteria.CriteriaBuilder
 import jakarta.persistence.criteria.CriteriaQuery
 import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Root
-import java.util.stream.Collectors
 
 @MicronautTest(transactional = false, packages = "io.micronaut.data.tck.entities")
 @H2DBProperties
@@ -61,7 +61,7 @@ class JpaSpecificationCrudRepositorySpec extends Specification {
         crudRepository.findAll().size() == 3
         crudRepository.listPeople("Fred").size() == 1
         when:
-        def page = crudRepository.findAll(new io.micronaut.data.jpa.repository.criteria.Specification<Person>() {
+        def page = crudRepository.findAll(new QuerySpecification<Person>() {
             @Override
             Predicate toPredicate(Root<Person> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
                 return null
@@ -70,7 +70,7 @@ class JpaSpecificationCrudRepositorySpec extends Specification {
         then:
         page.size() == 3
         when:"findAll with null specification"
-        page = crudRepository.findAll((io.micronaut.data.jpa.repository.criteria.Specification<Person>) null, Pageable.from(0, 10))
+        page = crudRepository.findAll((QuerySpecification<Person>) null, Pageable.from(0, 10))
         then:"all results are returned"
         page.size() == 3
     }
@@ -96,7 +96,7 @@ class JpaSpecificationCrudRepositorySpec extends Specification {
     void "test JPA specification count"() {
         expect:
         crudRepository.count(JpaSpecificationCrudRepository.Specifications.ageGreaterThanThirty()) == 4
-        def cnt = crudRepository.count((io.micronaut.data.jpa.repository.criteria.Specification<Person>) null)
+        def cnt = crudRepository.count((QuerySpecification<Person>) null)
         cnt >= 4
         def results = crudRepository.findAll(JpaSpecificationCrudRepository.Specifications.ageGreaterThanThirty())
         results.size() == 4
@@ -205,7 +205,7 @@ class JpaSpecificationCrudRepositorySpec extends Specification {
         crudRepository.saveAll(people)
         then:"can be ordered case insensitively"
         def peopleIds = people.stream().map(p -> p.getId()).toList()
-        Page<Person> personsPaged = crudRepository.findAll(new io.micronaut.data.jpa.repository.criteria.Specification<Person>() {
+        Page<Person> personsPaged = crudRepository.findAll(new QuerySpecification<Person>() {
             @Override
             Predicate toPredicate(Root<Person> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
                 return root.get("id").in(peopleIds)

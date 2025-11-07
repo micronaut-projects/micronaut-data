@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.hibernate
 
+
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 
 @MicronautTest(packages = "io.micronaut.data.tck.entities", rollback = false, transactional = false)

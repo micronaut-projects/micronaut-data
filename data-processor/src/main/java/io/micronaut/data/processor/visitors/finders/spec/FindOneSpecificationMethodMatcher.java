@@ -15,15 +15,14 @@
  */
 package io.micronaut.data.processor.visitors.finders.spec;
 
-import java.util.regex.Matcher;
-
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.AbstractSpecificationMethodMatcher;
 import io.micronaut.data.processor.visitors.finders.FindersUtils;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
-import io.micronaut.inject.ast.ClassElement;
+
+import java.util.regex.Matcher;
 
 /**
  * JPA specification findOne.
@@ -43,28 +42,11 @@ public class FindOneSpecificationMethodMatcher extends AbstractSpecificationMeth
 
     @Override
     protected MethodMatch match(MethodMatchContext matchContext, Matcher matcher) {
-        if (isFirstParameterMicronautDataQuerySpecification(matchContext.getMethodElement())) {
+        if (isQuerySpecification(matchContext)) {
             FindersUtils.InterceptorMatch e = FindersUtils.pickFindOneSpecInterceptor(matchContext, matchContext.getMethodElement().getGenericReturnType());
             return mc -> new MethodMatchInfo(DataMethod.OperationType.QUERY, e.returnType(), e.interceptor());
         }
-        if (isFirstParameterSpringJpaSpecification(matchContext.getMethodElement())) {
-            return mc -> new MethodMatchInfo(
-                    DataMethod.OperationType.QUERY,
-                    mc.getReturnType(),
-                    getInterceptorElement(mc, "io.micronaut.data.spring.jpa.intercept.FindOneSpecificationInterceptor")
-            );
-        }
-        return mc -> {
-            ClassElement classElement = getInterceptorElement(mc, "io.micronaut.data.jpa.repository.intercept.FindOneSpecificationInterceptor");
-            return new MethodMatchInfo(
-                DataMethod.OperationType.QUERY,
-                mc.getReturnType(),
-                classElement);
-        };
+        return null;
     }
 
-    @Override
-    protected boolean isMatchesParameters(MethodMatchContext matchContext) {
-        return super.isMatchesParameters(matchContext) || isFirstParameterMicronautDataQuerySpecification(matchContext.getMethodElement());
-    }
 }

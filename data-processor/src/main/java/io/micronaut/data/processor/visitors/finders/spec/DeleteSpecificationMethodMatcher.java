@@ -15,15 +15,15 @@
  */
 package io.micronaut.data.processor.visitors.finders.spec;
 
-import java.util.regex.Matcher;
-
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.AbstractSpecificationMethodMatcher;
+import io.micronaut.data.processor.visitors.finders.FindersUtils;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
-import io.micronaut.inject.ast.ClassElement;
+
+import java.util.regex.Matcher;
 
 
 /**
@@ -44,28 +44,13 @@ public class DeleteSpecificationMethodMatcher extends AbstractSpecificationMetho
 
     @Override
     protected MethodMatch match(MethodMatchContext matchContext, Matcher matcher) {
-        if (TypeUtils.isValidBatchUpdateReturnType(matchContext.getMethodElement())) {
+        if (TypeUtils.isValidBatchUpdateReturnType(matchContext.getMethodElement()) && isDeleteSpecification(matchContext)) {
             return mc -> {
-                if (isFirstParameterSpringJpaSpecification(mc.getMethodElement())) {
-                    return new MethodMatchInfo(
-                        DataMethod.OperationType.DELETE,
-                        mc.getReturnType(),
-                        getInterceptorElement(mc, "io.micronaut.data.spring.jpa.intercept.DeleteSpecificationInterceptor")
-                    );
-                }
-                ClassElement classElement = getInterceptorElement(mc, "io.micronaut.data.jpa.repository.intercept.DeleteSpecificationInterceptor");
-                return new MethodMatchInfo(
-                    DataMethod.OperationType.DELETE,
-                    mc.getReturnType(),
-                    classElement
-                );
+                FindersUtils.InterceptorMatch e = FindersUtils.pickDeleteAllSpecInterceptor(matchContext, matchContext.getReturnType());
+                return new MethodMatchInfo(DataMethod.OperationType.DELETE, e.returnType(), e.interceptor());
             };
         }
         return null;
     }
 
-    @Override
-    protected boolean isMatchesParameters(MethodMatchContext matchContext) {
-        return super.isMatchesParameters(matchContext) || isFirstParameterMicronautDataDeleteSpecification(matchContext.getMethodElement());
-    }
 }
