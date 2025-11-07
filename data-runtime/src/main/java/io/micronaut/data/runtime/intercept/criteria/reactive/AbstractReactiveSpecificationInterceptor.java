@@ -58,12 +58,17 @@ public abstract class AbstractReactiveSpecificationInterceptor<T, R> extends Abs
         }
         if (reactiveOperations instanceof ReactiveCriteriaRepositoryOperations reactiveCriteriaRepositoryOperations) {
             reactiveCriteriaOperations = reactiveCriteriaRepositoryOperations;
+            criteriaBuilder = reactiveCriteriaRepositoryOperations.getCriteriaBuilder();
         } else if (operations instanceof ReactiveCriteriaRepositoryOperations reactiveCriteriaRepositoryOperations) {
             reactiveCriteriaOperations = reactiveCriteriaRepositoryOperations;
+            criteriaBuilder = reactiveCriteriaRepositoryOperations.getCriteriaBuilder();
         } else if (operations instanceof ReactiveCriteriaCapableRepository repository) {
             reactiveCriteriaOperations = repository.reactive();
         } else {
             reactiveCriteriaOperations = null;
+        }
+        if (reactiveCriteriaOperations != null) {
+            criteriaBuilder = reactiveCriteriaOperations.getCriteriaBuilder();
         }
     }
 

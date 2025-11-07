@@ -67,6 +67,11 @@ abstract sealed class AbstractRuntimePersistentEntityFrom<T, E> extends Abstract
 
     @Override
     public <Y> PersistentPropertyPath<Y> get(String attributeName) {
+        for (PersistentAssociationPath<E, ?> persistentJoin : getPersistentJoins()) {
+            if (persistentJoin.getProperty().getName().equalsIgnoreCase(attributeName)) {
+                return (PersistentPropertyPath<Y>) persistentJoin;
+            }
+        }
         RuntimePersistentProperty<?> property = getPersistentEntity().getPropertyByNameIgnoreCase(attributeName);
         if (property == null) {
             throw new IllegalStateException("Cannot query entity [" + getPersistentEntity().getSimpleName() + "] on non-existent property: " + attributeName);
@@ -86,13 +91,17 @@ abstract sealed class AbstractRuntimePersistentEntityFrom<T, E> extends Abstract
         } else {
             associations = List.of();
         }
-        if (property instanceof RuntimeAssociation<?> association && association.isEmbedded()) {
-            return new RuntimeEmbeddedPersistentPropertyPathImpl<>(
-                parentPath,
-                associations,
-                (RuntimeAssociation<Y>) association,
-                (path, persistentProperty) -> asPropertyPath(path, property, criteriaBuilder)
-            );
+        if (property instanceof RuntimeAssociation<?> association) {
+            if (association.isEmbedded()) {
+                return new RuntimeEmbeddedPersistentPropertyPathImpl<>(
+                    parentPath,
+                    associations,
+                    (RuntimeAssociation<Y>) association,
+                    (path, persistentProperty) -> asPropertyPath(path, property, criteriaBuilder)
+                );
+            }
+            // Not joined association is being accessed
+            // We might want to have an implementation that will fail if foreign property is accessed
         }
         return new RuntimePersistentPropertyPathImpl<>(parentPath, associations, property, criteriaBuilder);
     }

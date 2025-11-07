@@ -19,28 +19,27 @@ import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.hibernate.entities.Rating
 import io.micronaut.data.hibernate.entities.RelPerson
 import io.micronaut.data.hibernate.entities.UserWithWhere
-import io.micronaut.data.jpa.repository.criteria.Specification
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
-import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
+import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.EntityIdClass
 import io.micronaut.data.tck.entities.EntityWithIdClass
-import io.micronaut.data.tck.entities.Order
 import io.micronaut.data.tck.entities.Product
 import io.micronaut.data.tck.entities.Student
 import io.micronaut.data.tck.repositories.BookSpecifications
 import io.micronaut.data.tck.tests.AbstractQuerySpec
 import jakarta.inject.Inject
+import jakarta.persistence.OptimisticLockException
 import jakarta.persistence.criteria.CriteriaBuilder
 import jakarta.persistence.criteria.CriteriaQuery
+import jakarta.persistence.criteria.Predicate
+import jakarta.persistence.criteria.Root
 import org.hibernate.LazyInitializationException
 import spock.lang.Issue
 import spock.lang.Shared
-
-import jakarta.persistence.OptimisticLockException
 
 abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
 
@@ -737,12 +736,12 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
 
     void "test specification and pageable"() {
         when:
-            def value = bookRepository.findAll(testJoin("Stephen King"), Pageable.from(0));
+            def value = bookRepository.findAll(testJoin("Stephen King") , Pageable.from(0));
         then:
             value.totalSize == 2
             value.content.size() == 2
         when:
-            value = bookRepository.findAll((Specification<Book>)null, Pageable.from(0))
+            value = bookRepository.findAll((QuerySpecification<Book>)null, Pageable.from(0))
             def count = bookRepository.count((PredicateSpecification<Book>) null)
         then:
             count
@@ -895,8 +894,13 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
             book.title == "The Stand"
     }
 
-    private static Specification<Book> testJoin(String value) {
-        return ((root, query, criteriaBuilder) -> criteriaBuilder.equal(root.join("author").get("name"), value))
+    static QuerySpecification<Book> testJoin(String value) {
+        return new QuerySpecification<Book>() {
+            @Override
+            Predicate toPredicate(Root<Book> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+                return criteriaBuilder.equal(root.join("author").get("name"), value)
+            }
+        }
     }
 
     @Override
