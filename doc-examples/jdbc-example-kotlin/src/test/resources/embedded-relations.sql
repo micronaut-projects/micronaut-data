@@ -6,7 +6,7 @@ create table sample_entity (
     id bigint primary key not null,
     name text,
     example text,
-    part_text text
+    text text
 );
 
 create table relationship_status
