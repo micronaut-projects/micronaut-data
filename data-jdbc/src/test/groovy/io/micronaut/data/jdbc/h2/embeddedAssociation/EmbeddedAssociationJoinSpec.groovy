@@ -1,6 +1,7 @@
 package io.micronaut.data.jdbc.h2.embeddedAssociation
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.*
 import io.micronaut.data.annotation.repeatable.JoinSpecifications
 import io.micronaut.data.jdbc.annotation.JdbcRepository
@@ -170,7 +171,7 @@ interface MainEntityRepository extends CrudRepository<MainEntity, Long>, JpaSpec
     Page<MainEntity> findAll(Pageable pageable)
 
     @JoinSpecifications(@Join(value = "child", type = Join.Type.LEFT_FETCH))
-    Page<MainEntity> findAllByCriteria(PredicateSpecification<Order> spec, Pageable pageable)
+    Page<MainEntity> findAllByCriteria(@Nullable PredicateSpecification<Order> spec, Pageable pageable)
 }
 
 @JdbcRepository(dialect = Dialect.H2)

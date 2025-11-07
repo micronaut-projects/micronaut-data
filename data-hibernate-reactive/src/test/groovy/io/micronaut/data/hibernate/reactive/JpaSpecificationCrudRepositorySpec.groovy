@@ -17,6 +17,7 @@ package io.micronaut.data.hibernate.reactive
 
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
@@ -48,7 +49,7 @@ class JpaSpecificationCrudRepositorySpec extends Specification implements Postgr
         expect:
         crudRepository.count(ageGreaterThanThirty()).block() == 4
         // test with null specification as param is nullable
-        crudRepository.count((io.micronaut.data.jpa.repository.criteria.Specification<Person>) null).block() >= 4
+        crudRepository.count((QuerySpecification<Person>) null).block() >= 4
         def results = crudRepository.findAll(ageGreaterThanThirty()).collectList().block()
         results.size() == 4
         results.every({ it instanceof Person})
@@ -69,7 +70,7 @@ class JpaSpecificationCrudRepositorySpec extends Specification implements Postgr
         page1.content*.name == ["James", "Fred"]
 
         // test with null specification
-        crudRepository.findAll((io.micronaut.data.jpa.repository.criteria.Specification<Person>) null).collectList().block().size() >= 4
+        crudRepository.findAll((QuerySpecification<Person>) null).collectList().block().size() >= 4
     }
 
 }

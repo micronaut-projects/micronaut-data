@@ -19,6 +19,7 @@ import io.micronaut.data.hibernate.reactive.entities.Rating
 import io.micronaut.data.hibernate.reactive.entities.UserWithWhere
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.AuthorBooksDto
 import io.micronaut.data.tck.entities.Book
@@ -646,7 +647,7 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
             value.content[0].title == "Pet Cemetery"
     }
 
-    private static io.micronaut.data.jpa.repository.criteria.Specification<Book> testJoin(String value) {
+    private static QuerySpecification<Book> testJoin(String value) {
         return ((root, query, criteriaBuilder) -> {
             if (!criteriaBuilder.getClass().getName().startsWith("org.hibernate")) {
                 throw new IllegalStateException();

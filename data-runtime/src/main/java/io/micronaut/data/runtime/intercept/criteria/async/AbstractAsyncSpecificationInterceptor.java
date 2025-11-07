@@ -71,6 +71,9 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
         } else {
             asyncCriteriaOperations = null;
         }
+        if (asyncCriteriaOperations != null) {
+            criteriaBuilder = asyncCriteriaOperations.getCriteriaBuilder();
+        }
     }
 
     final AsyncCriteriaRepositoryOperations getAsyncCriteriaRepositoryOperations(RepositoryMethodKey methodKey,

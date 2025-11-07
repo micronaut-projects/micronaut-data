@@ -40,15 +40,11 @@ public final class ExistsSpecificationMethodMatcher extends AbstractSpecificatio
 
     @Override
     protected MethodMatch match(MethodMatchContext matchContext, Matcher matcher) {
-        if (TypeUtils.doesMethodProducesABoolean(matchContext.getMethodElement())) {
+        if (TypeUtils.doesMethodProducesABoolean(matchContext.getMethodElement()) && isQuerySpecification(matchContext)) {
             FindersUtils.InterceptorMatch e = FindersUtils.pickExistsSpecInterceptor(matchContext, matchContext.getReturnType());
             return mc -> new MethodMatchInfo(DataMethod.OperationType.EXISTS, e.returnType(), e.interceptor());
         }
         return null;
     }
 
-    @Override
-    protected boolean isMatchesParameters(MethodMatchContext matchContext) {
-        return super.isMatchesParameters(matchContext) || isFirstParameterMicronautDataQuerySpecification(matchContext.getMethodElement());
-    }
 }
