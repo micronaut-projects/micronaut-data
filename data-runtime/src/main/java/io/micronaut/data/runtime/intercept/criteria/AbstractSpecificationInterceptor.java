@@ -89,7 +89,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
     protected static final String PREPARED_QUERY_KEY = "PREPARED_QUERY";
 
     protected final CriteriaRepositoryOperations criteriaRepositoryOperations;
-    protected final CriteriaBuilder criteriaBuilder;
+    protected CriteriaBuilder criteriaBuilder;
     private final Map<RepositoryMethodKey, QueryBuilder> sqlQueryBuilderForRepositories = new ConcurrentHashMap<>();
     private final Map<RepositoryMethodKey, Set<JoinPath>> methodsJoinPaths = new ConcurrentHashMap<>();
 
