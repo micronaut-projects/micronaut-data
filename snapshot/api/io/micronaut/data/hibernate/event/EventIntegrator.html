@@ -141,9 +141,9 @@ implements org.hibernate.integrator.spi.Integrator</span></div>
  org.hibernate.service.spi.SessionFactoryServiceRegistry&nbsp;serviceRegistry)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#integrate(org.hibernate.boot.Metadata,org.hibernate.engine.spi.SessionFactoryImplementor,org.hibernate.service.spi.SessionFactoryServiceRegistry)" class="member-name-link">integrate</a><wbr>(org.hibernate.boot.Metadata&nbsp;metadata,
- org.hibernate.engine.spi.SessionFactoryImplementor&nbsp;sessionFactory,
- org.hibernate.service.spi.SessionFactoryServiceRegistry&nbsp;serviceRegistry)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#integrate(org.hibernate.boot.Metadata,org.hibernate.boot.spi.BootstrapContext,org.hibernate.engine.spi.SessionFactoryImplementor)" class="member-name-link">integrate</a><wbr>(org.hibernate.boot.Metadata&nbsp;metadata,
+ org.hibernate.boot.spi.BootstrapContext&nbsp;bootstrapContext,
+ org.hibernate.engine.spi.SessionFactoryImplementor&nbsp;sessionFactory)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
@@ -151,9 +151,6 @@ implements org.hibernate.integrator.spi.Integrator</span></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-java.lang.Object">Methods inherited from class&nbsp;java.lang.<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></h3>
 <code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#toString()" title="class or interface in java.lang" class="external-link">toString</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
-<div class="inherited-list">
-<h3 id="methods-inherited-from-class-org.hibernate.integrator.spi.Integrator">Methods inherited from interface&nbsp;org.hibernate.integrator.spi.Integrator</h3>
-<code>integrate</code></div>
 </section>
 </li>
 </ul>
@@ -185,11 +182,11 @@ implements org.hibernate.integrator.spi.Integrator</span></div>
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="integrate(org.hibernate.boot.Metadata,org.hibernate.engine.spi.SessionFactoryImplementor,org.hibernate.service.spi.SessionFactoryServiceRegistry)">
+<section class="detail" id="integrate(org.hibernate.boot.Metadata,org.hibernate.boot.spi.BootstrapContext,org.hibernate.engine.spi.SessionFactoryImplementor)">
 <h3>integrate</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">integrate</span><wbr><span class="parameters">(org.hibernate.boot.Metadata&nbsp;metadata,
- org.hibernate.engine.spi.SessionFactoryImplementor&nbsp;sessionFactory,
- org.hibernate.service.spi.SessionFactoryServiceRegistry&nbsp;serviceRegistry)</span></div>
+ org.hibernate.boot.spi.BootstrapContext&nbsp;bootstrapContext,
+ org.hibernate.engine.spi.SessionFactoryImplementor&nbsp;sessionFactory)</span></div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>integrate</code>&nbsp;in interface&nbsp;<code>org.hibernate.integrator.spi.Integrator</code></dd>

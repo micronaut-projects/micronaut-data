@@ -151,6 +151,9 @@ C extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/
 </div>
 </div>
 <div class="inherited-list">
+<h3 id="methods-inherited-from-class-jakarta.persistence.criteria.Expression">Methods inherited from interface&nbsp;jakarta.persistence.criteria.Expression</h3>
+<code>cast, equalTo, equalTo, notEqualTo, notEqualTo</code></div>
+<div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.model.jpa.criteria.IExpression">Methods inherited from interface&nbsp;io.micronaut.data.model.jpa.criteria.<a href="IExpression.html" title="interface in io.micronaut.data.model.jpa.criteria">IExpression</a></h3>
 <code><a href="IExpression.html#as(java.lang.Class)">as</a>, <a href="IExpression.html#getExpressionType()">getExpressionType</a>, <a href="IExpression.html#getJavaType()">getJavaType</a>, <a href="IExpression.html#in(jakarta.persistence.criteria.Expression...)">in</a>, <a href="IExpression.html#in(jakarta.persistence.criteria.Expression)">in</a>, <a href="IExpression.html#in(java.lang.Object...)">in</a>, <a href="IExpression.html#in(java.util.Collection)">in</a>, <a href="IExpression.html#isNotNull()">isNotNull</a>, <a href="IExpression.html#isNull()">isNull</a>, <a href="IExpression.html#visitExpression(io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor)">visitExpression</a>, <a href="IExpression.html#visitSelection(io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor)">visitSelection</a></code></div>
 <div class="inherited-list">
@@ -158,7 +161,7 @@ C extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/
 <code><a href="ISelection.html#alias(java.lang.String)">alias</a>, <a href="ISelection.html#getAlias()">getAlias</a>, <a href="ISelection.html#getCompoundSelectionItems()">getCompoundSelectionItems</a>, <a href="ISelection.html#isCompoundSelection()">isCompoundSelection</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-jakarta.persistence.criteria.Path">Methods inherited from interface&nbsp;jakarta.persistence.criteria.Path</h3>
-<code>getModel, getParentPath, type</code></div>
+<code>get, get, getModel, getParentPath, type</code></div>
 </section>
 </li>
 </ul>
@@ -216,10 +219,6 @@ C extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/
 <div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;E,<wbr>
 C extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;E&gt;&gt;</span>
 <span class="return-type">jakarta.persistence.criteria.Expression&lt;C&gt;</span>&nbsp;<span class="element-name">get</span><wbr><span class="parameters">(jakarta.persistence.metamodel.PluralAttribute&lt;<a href="PersistentEntityPath.html" title="type parameter in PersistentEntityPath">T</a>,<wbr>C,<wbr>E&gt;&nbsp;collection)</span></div>
-<dl class="notes">
-<dt>Specified by:</dt>
-<dd><code>get</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.Path&lt;<a href="PersistentEntityPath.html" title="type parameter in PersistentEntityPath">T</a>&gt;</code></dd>
-</dl>
 </section>
 </li>
 <li>
@@ -230,10 +229,6 @@ V,<wbr>
 M extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;K,<wbr>
 V&gt;&gt;</span>
 <span class="return-type">jakarta.persistence.criteria.Expression&lt;M&gt;</span>&nbsp;<span class="element-name">get</span><wbr><span class="parameters">(jakarta.persistence.metamodel.MapAttribute&lt;<a href="PersistentEntityPath.html" title="type parameter in PersistentEntityPath">T</a>,<wbr>K,<wbr>V&gt;&nbsp;map)</span></div>
-<dl class="notes">
-<dt>Specified by:</dt>
-<dd><code>get</code>&nbsp;in interface&nbsp;<code>jakarta.persistence.criteria.Path&lt;<a href="PersistentEntityPath.html" title="type parameter in PersistentEntityPath">T</a>&gt;</code></dd>
-</dl>
 </section>
 </li>
 </ul>
