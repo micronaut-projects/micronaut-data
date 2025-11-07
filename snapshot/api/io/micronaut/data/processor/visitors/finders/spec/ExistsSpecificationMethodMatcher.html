@@ -159,15 +159,10 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isMatchesParameters(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">isMatchesParameters</a><wbr>(<a href="../../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Is matches parameters.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="../MethodMatcher.MethodMatch.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher.MethodMatch</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#match(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.regex.Matcher)" class="member-name-link">match</a><wbr>(<a href="../../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="../MethodMatcher.MethodMatch.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher.MethodMatch</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#match(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.regex.Matcher)" class="member-name-link">match</a><wbr>(<a href="../../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/regex/Matcher.html" title="class or interface in java.util.regex" class="external-link">Matcher</a>&nbsp;matcher)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Handle the match.</div>
 </div>
 </div>
@@ -175,7 +170,10 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.data.processor.visitors.finders.AbstractSpecificationMethodMatcher">Methods inherited from class&nbsp;io.micronaut.data.processor.visitors.finders.<a href="../AbstractSpecificationMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractSpecificationMethodMatcher</a></h3>
-<code><a href="../AbstractSpecificationMethodMatcher.html#getInterceptorElement(io.micronaut.data.processor.visitors.MethodMatchContext,java.lang.String)">getInterceptorElement</a>, <a href="../AbstractSpecificationMethodMatcher.html#getOrder()">getOrder</a>, <a href="../AbstractSpecificationMethodMatcher.html#isFirstParameterMicronautDataDeleteSpecification(io.micronaut.inject.ast.MethodElement)">isFirstParameterMicronautDataDeleteSpecification</a>, <a href="../AbstractSpecificationMethodMatcher.html#isFirstParameterMicronautDataQuerySpecification(io.micronaut.inject.ast.MethodElement)">isFirstParameterMicronautDataQuerySpecification</a>, <a href="../AbstractSpecificationMethodMatcher.html#isFirstParameterMicronautDataUpdateSpecification(io.micronaut.inject.ast.MethodElement)">isFirstParameterMicronautDataUpdateSpecification</a>, <a href="../AbstractSpecificationMethodMatcher.html#isFirstParameterMicronautJpaSpecification(io.micronaut.inject.ast.MethodElement)">isFirstParameterMicronautJpaSpecification</a>, <a href="../AbstractSpecificationMethodMatcher.html#isFirstParameterSpringJpaSpecification(io.micronaut.inject.ast.MethodElement)">isFirstParameterSpringJpaSpecification</a>, <a href="../AbstractSpecificationMethodMatcher.html#match(io.micronaut.data.processor.visitors.MethodMatchContext)">match</a></code></div>
+<code><a href="../AbstractSpecificationMethodMatcher.html#getOrder()">getOrder</a>, <a href="../AbstractSpecificationMethodMatcher.html#isDeleteSpecification(io.micronaut.data.processor.visitors.MethodMatchContext)">isDeleteSpecification</a>, <a href="../AbstractSpecificationMethodMatcher.html#isQuerySpecification(io.micronaut.data.processor.visitors.MethodMatchContext)">isQuerySpecification</a>, <a href="../AbstractSpecificationMethodMatcher.html#isUpdateSpecification(io.micronaut.data.processor.visitors.MethodMatchContext)">isUpdateSpecification</a></code></div>
+<div class="inherited-list">
+<h3 id="methods-inherited-from-class-io.micronaut.data.processor.visitors.finders.AbstractPrefixPatternMethodMatcher">Methods inherited from class&nbsp;io.micronaut.data.processor.visitors.finders.<a href="../AbstractPrefixPatternMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractPrefixPatternMethodMatcher</a></h3>
+<code><a href="../AbstractPrefixPatternMethodMatcher.html#match(io.micronaut.data.processor.visitors.MethodMatchContext)">match</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-java.lang.Object">Methods inherited from class&nbsp;java.lang.<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></h3>
 <code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#toString()" title="class or interface in java.lang" class="external-link">toString</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
@@ -219,22 +217,6 @@ loadScripts(document, 'script');</script>
 <dd><code>matcher</code> - The matcher</dd>
 <dt>Returns:</dt>
 <dd>The method matcher</dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="isMatchesParameters(io.micronaut.data.processor.visitors.MethodMatchContext)">
-<h3>isMatchesParameters</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isMatchesParameters</span><wbr><span class="parameters">(<a href="../../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</span></div>
-<div class="block"><span class="description-from-type-label">Description copied from class:&nbsp;<code><a href="../AbstractSpecificationMethodMatcher.html#isMatchesParameters(io.micronaut.data.processor.visitors.MethodMatchContext)">AbstractSpecificationMethodMatcher</a></code></span></div>
-<div class="block">Is matches parameters.</div>
-<dl class="notes">
-<dt>Overrides:</dt>
-<dd><code><a href="../AbstractSpecificationMethodMatcher.html#isMatchesParameters(io.micronaut.data.processor.visitors.MethodMatchContext)">isMatchesParameters</a></code>&nbsp;in class&nbsp;<code><a href="../AbstractSpecificationMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractSpecificationMethodMatcher</a></code></dd>
-<dt>Parameters:</dt>
-<dd><code>matchContext</code> - The context</dd>
-<dt>Returns:</dt>
-<dd>true if matches</dd>
 </dl>
 </section>
 </li>

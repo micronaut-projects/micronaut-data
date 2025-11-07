@@ -40,8 +40,6 @@ io.micronaut.data.hibernate.event
 io.micronaut.data.hibernate.naming
 io.micronaut.data.hibernate.operations
 io.micronaut.data.hibernate.reactive.operations
-io.micronaut.data.hibernate.reactive.repository.jpa
-io.micronaut.data.hibernate.reactive.repository.jpa.intercept
 io.micronaut.data.intercept
 io.micronaut.data.intercept.annotation
 io.micronaut.data.intercept.async
@@ -56,7 +54,6 @@ io.micronaut.data.jdql
 io.micronaut.data.jpa.annotation
 io.micronaut.data.jpa.operations
 io.micronaut.data.jpa.repository
-io.micronaut.data.jpa.repository.criteria
 io.micronaut.data.jpa.repository.intercept
 io.micronaut.data.model
 io.micronaut.data.model.jpa.criteria
@@ -148,7 +145,6 @@ io.micronaut.data.runtime.support.convert
 io.micronaut.data.runtime.support.exceptions.jakarta.data
 io.micronaut.data.spring.jdbc
 io.micronaut.data.spring.jpa.hibernate
-io.micronaut.data.spring.jpa.intercept
 io.micronaut.data.spring.runtime
 io.micronaut.data.spring.runtime.http
 io.micronaut.data.spring.tx
