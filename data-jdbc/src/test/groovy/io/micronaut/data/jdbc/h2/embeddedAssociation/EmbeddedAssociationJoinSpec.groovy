@@ -58,85 +58,85 @@ class EmbeddedAssociationJoinSpec extends Specification implements H2TestPropert
 
     void 'test one-to-one update'() {
         given:
-        ChildEntity child = new ChildEntity(name: "child")
-        MainEntity main = new MainEntity(name: "test")
-        main.child = child
-        child.main = main
+            ChildEntity child = new ChildEntity(name: "child")
+            MainEntity main = new MainEntity(name: "test")
+            main.child = child
+            child.main = main
         when:
-        mainEntityRepository.save(main)
-        main.name = "diff-name"
-        child.name = "diff-child"
-        MainEntity updatedMain = mainEntityRepository.update(main)
+            mainEntityRepository.save(main)
+            main.name = "diff-name"
+            child.name = "diff-child"
+            MainEntity updatedMain = mainEntityRepository.update(main)
         then:
-        updatedMain.name == "diff-name"
-        updatedMain.child.name == "diff-child"
+            updatedMain.name == "diff-name"
+            updatedMain.child.name == "diff-child"
     }
 
     void 'test many-to-many hierarchy'() {
         given:
-        MainEntity e = new MainEntity(name: "test",
-                assoc: [
-                        new MainEntityAssociation(name: "A"),
-                        new MainEntityAssociation(name: "B"),
-                ], em: new MainEmbedded(
-                assoc: [
-                        new MainEntityAssociation(name: "C"),
-                        new MainEntityAssociation(name: "D"),
-                ]
-        ))
+            MainEntity e = new MainEntity(name: "test",
+                    assoc: [
+                    new MainEntityAssociation(name: "A"),
+                    new MainEntityAssociation(name: "B"),
+            ], em: new MainEmbedded(
+                    assoc: [
+                            new MainEntityAssociation(name: "C"),
+                            new MainEntityAssociation(name: "D"),
+                    ]
+            ))
         when:
-        mainEntityRepository.save(e)
-        e = mainEntityRepository.findById(e.id).get()
-        Sort.Order.Direction sortDirection = Sort.Order.Direction.ASC;
-        Pageable pageable = Pageable.UNPAGED.order(new Sort.Order("child.name", sortDirection, false));
-        mainEntityRepository.findAll(pageable).totalPages == 1
-        PredicateSpecification<Order> predicate = null
-        mainEntityRepository.findAllByCriteria(predicate, pageable).totalPages == 1
+            mainEntityRepository.save(e)
+            e = mainEntityRepository.findById(e.id).get()
+            Sort.Order.Direction sortDirection = Sort.Order.Direction.ASC;
+            Pageable pageable = Pageable.UNPAGED.order(new Sort.Order("child.name", sortDirection, false));
+            mainEntityRepository.findAll(pageable).totalPages == 1
+            PredicateSpecification<Order> predicate = null
+             mainEntityRepository.findAllByCriteria(predicate, pageable).totalPages == 1
         then:
-        e.id
-        e.assoc.size() == 2
-        e.assoc[0].name == "A"
-        e.assoc[1].name == "B"
-        e.em
-        e.em.assoc.size() == 2
-        e.em.assoc[0].name == "C"
-        e.em.assoc[1].name == "D"
+            e.id
+            e.assoc.size() == 2
+            e.assoc[0].name == "A"
+            e.assoc[1].name == "B"
+            e.em
+            e.em.assoc.size() == 2
+            e.em.assoc[0].name == "C"
+            e.em.assoc[1].name == "D"
         when:
-        mainEntityRepository.update(e)
-        e = mainEntityRepository.findById(e.id).get()
+            mainEntityRepository.update(e)
+            e = mainEntityRepository.findById(e.id).get()
         then:
-        e.id
-        e.assoc.size() == 2
-        e.assoc[0].name == "A"
-        e.assoc[1].name == "B"
-        e.em.assoc.size() == 2
-        e.em.assoc[0].name == "C"
-        e.em.assoc[1].name == "D"
+            e.id
+            e.assoc.size() == 2
+            e.assoc[0].name == "A"
+            e.assoc[1].name == "B"
+            e.em.assoc.size() == 2
+            e.em.assoc[0].name == "C"
+            e.em.assoc[1].name == "D"
         when:
-        def o = new OneMainEntity(one: e)
-        o = oneMainEntityRepository.save(o)
-        o = oneMainEntityRepository.findById(o.id).get()
+            def o = new OneMainEntity(one: e)
+            o = oneMainEntityRepository.save(o)
+            o = oneMainEntityRepository.findById(o.id).get()
         then:
-        o.one.id
-        o.one.assoc.size() == 2
-        o.one.assoc[0].name == "A"
-        o.one.assoc[1].name == "B"
-        o.one.em.assoc.size() == 2
-        o.one.em.assoc[0].name == "C"
-        o.one.em.assoc[1].name == "D"
+            o.one.id
+            o.one.assoc.size() == 2
+            o.one.assoc[0].name == "A"
+            o.one.assoc[1].name == "B"
+            o.one.em.assoc.size() == 2
+            o.one.em.assoc[0].name == "C"
+            o.one.em.assoc[1].name == "D"
         when:
-        def oem = new OneMainEntityEm(id: new EmId(one: e), name: "Embedded is crazy")
-        oem = oneMainEntityEmRepository.save(oem)
-        oem = oneMainEntityEmRepository.findById(oem.id).get()
+            def oem = new OneMainEntityEm(id: new EmId(one: e), name: "Embedded is crazy")
+            oem = oneMainEntityEmRepository.save(oem)
+            oem = oneMainEntityEmRepository.findById(oem.id).get()
         then:
-        oem.name == "Embedded is crazy"
-        oem.id.one.id
-        oem.id.one.assoc.size() == 2
-        oem.id.one.assoc[0].name == "A"
-        oem.id.one.assoc[1].name == "B"
-        oem.id.one.em.assoc.size() == 2
-        oem.id.one.em.assoc[0].name == "C"
-        oem.id.one.em.assoc[1].name == "D"
+            oem.name == "Embedded is crazy"
+            oem.id.one.id
+            oem.id.one.assoc.size() == 2
+            oem.id.one.assoc[0].name == "A"
+            oem.id.one.assoc[1].name == "B"
+            oem.id.one.em.assoc.size() == 2
+            oem.id.one.em.assoc[0].name == "C"
+            oem.id.one.em.assoc[1].name == "D"
     }
 
     void 'embedded with generated values are saved'() {
