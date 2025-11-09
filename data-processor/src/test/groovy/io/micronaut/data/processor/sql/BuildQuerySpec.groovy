@@ -1710,6 +1710,7 @@ class CountyPk {
 @MappedEntity("comp_country")
 class County {
     @EmbeddedId
+    @MappedProperty(value = "id")
     CountyPk id;
     @MappedProperty
     String countyName;
@@ -1734,6 +1735,7 @@ class SettlementPk {
 @MappedEntity("comp_settlement")
 class Settlement {
     @EmbeddedId
+    @MappedProperty(value = "id")
     SettlementPk id;
     @MappedProperty
     String description;
@@ -1769,7 +1771,7 @@ class Zone {
         when:
             def update = repository.findPossibleMethods("update").findFirst().get()
         then:
-            getQuery(update) == "UPDATE `comp_settlement` SET `description`=?,`settlement_type_id`=?,`zone_id`=?,`is_enabled`=? WHERE (`code` = ? AND `code_id` = ? AND `county_id` = ? AND `county_state_id` = ?)"
+            getQuery(update) == "UPDATE `comp_settlement` SET `description`=?,`settlement_type_id`=?,`zone_id`=?,`is_enabled`=? WHERE (`code` = ? AND `code_id` = ? AND `id_county_id_id` = ? AND `id_county_id_state_id` = ?)"
     }
 
     void "test combined id"() {

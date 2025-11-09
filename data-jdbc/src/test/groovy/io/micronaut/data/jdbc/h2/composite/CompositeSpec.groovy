@@ -588,7 +588,7 @@ class State {
 
 @Embeddable
 class CountyPk {
-    @MappedProperty("id")
+    @MappedProperty(value = "id")
     Integer id
     @MappedProperty(value = "state_id")
     @Relation(Relation.Kind.MANY_TO_ONE)
