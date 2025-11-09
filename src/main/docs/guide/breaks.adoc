@@ -37,4 +37,42 @@ The new implementation has a newly added connection management, allowing to shar
 
 Async and reactive repositories are no longer throw `EmptyResultException` if the entity is not found.
 
+== 5.0.0
 
+=== Composite Id Naming Strategy
+
+Before Micronaut Data 5.0.0 version, for classes using composite key using `@EmbeddedId` annotation
+Micronaut Data would generate column names using field name annotated with `@EmbeddedId` annotation.
+
+For such entity class:
+
+snippet::example.Project[project-base="doc-examples/jdbc-example", source="main"]
+
+and composite id class:
+
+snippet::example.ProjectId[project-base="doc-examples/jdbc-example", source="main"]
+
+create table before Micronaut Data 5.0.0 SQL script would look like this:
+
+[source,sql]
+----
+CREATE TABLE `project` (`project_id_department_id` INT NOT NULL,`project_id_project_id` INT NOT NULL,`name` VARCHAR(255) NOT NULL, PRIMARY KEY(`project_id_department_id`,`project_id_project_id`));
+----
+
+which is not correct since `project_id_` prefix is not really needed. After 5.0.0, create table SQL script will look like this:
+
+[source,sql]
+----
+CREATE TABLE `project` (`department_id` INT NOT NULL,`project_id` INT NOT NULL,`name` VARCHAR(255) NOT NULL, PRIMARY KEY(`department_id`,`project_id`));
+----
+
+If you have such tables in your system, after 5.0.0 you might need to annotate your composite id like this:
+
+[source,java]
+----
+@EmbeddedId
+@MappedProperty("project_id_")
+private ProjectId projectId;
+----
+
+which will generate column names to be backward compatible.
