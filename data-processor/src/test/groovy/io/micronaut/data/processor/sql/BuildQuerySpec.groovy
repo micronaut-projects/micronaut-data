@@ -27,6 +27,7 @@ import io.micronaut.data.model.entities.Invoice
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.processor.entity.ActivityPeriodEntity
+import io.micronaut.data.processor.entity.SomeEntity
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
 import io.micronaut.data.tck.entities.Author
@@ -2304,5 +2305,39 @@ interface ProductRepository extends GenericRepository<Product, Long> {
         getStockOperationMethod.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
         getExtendedStockOperationsMethod.classValue(DataMethod, "interceptor").get() == FindAllInterceptor
         selectCustomStringMethod.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
+    }
+
+    void "test EmbeddedId naming strategy"() {
+        given:
+        def repository = buildRepository('test.SomeEntityRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.processor.entity.SomeEntity;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+import java.util.Optional;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface SomeEntityRepository extends GenericRepository<SomeEntity, SomeEntity.PrimaryKey> {
+
+    Optional<SomeEntity> findById(SomeEntity.PrimaryKey id);
+
+    SomeEntity save(SomeEntity entity);
+
+    List<SomeEntity> findAll();
+}
+
+""")
+
+        def findByIdQuery = getQuery(repository.getRequiredMethod("findById", SomeEntity.PrimaryKey))
+        def saveQuery = getQuery(repository.getRequiredMethod("save", SomeEntity))
+        def findAllQuery = getQuery(repository.getRequiredMethod("findAll"))
+        expect:
+        findByIdQuery == 'SELECT some_entity_.`some_column`,some_entity_.`other_entity_id`,some_entity_.`col` FROM `some_table` some_entity_ WHERE (some_entity_.`some_column` = ? AND some_entity_.`other_entity_id` = ?)'
+        saveQuery == 'INSERT INTO `some_table` (`col`,`some_column`,`other_entity_id`) VALUES (?,?,?)'
+        findAllQuery == 'SELECT some_entity_.`some_column`,some_entity_.`other_entity_id`,some_entity_.`col` FROM `some_table` some_entity_'
     }
 }
