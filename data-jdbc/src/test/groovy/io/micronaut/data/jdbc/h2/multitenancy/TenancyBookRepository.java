@@ -8,7 +8,7 @@ import io.micronaut.data.repository.CrudRepository;
 
 @Requires(property = "spec.name", value = "TenancyBookControllerSpec")
 @JdbcRepository(dialect = Dialect.H2) // <1>
-public interface TenancyBookRepository extends CrudRepository<TenancyBook, Long> {  // <2>
+interface TenancyBookRepository extends CrudRepository<TenancyBook, Long> {  // <2>
     Long save(String title);
 
     @WithoutTenantId
