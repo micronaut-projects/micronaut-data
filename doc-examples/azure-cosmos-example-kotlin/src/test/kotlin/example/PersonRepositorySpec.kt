@@ -12,8 +12,14 @@ import io.micronaut.data.runtime.criteria.get
 import io.micronaut.data.runtime.criteria.query
 import io.micronaut.data.runtime.criteria.where
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 
 @MicronautTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -54,18 +60,18 @@ class PersonRepositorySpec : AbstractAzureCosmosTest() {
 
         val people = personRepository.findAll(PredicateSpecification.where(nameEquals("Denis").or(nameEquals("Josh"))))
         // end::find[]
-        Assertions.assertNotNull(denis)
-        Assertions.assertEquals(2, countAgeLess30)
-        Assertions.assertEquals(1, countAgeLess20)
-        Assertions.assertEquals(1, countAgeLess30NotDenis)
-        Assertions.assertEquals(2, people.size)
+        assertNotNull(denis)
+        assertEquals(2, countAgeLess30)
+        assertEquals(1, countAgeLess20)
+        assertEquals(1, countAgeLess30NotDenis)
+        assertEquals(2, people.size)
     }
 
     @Test
     fun testNameAndAgeMatch() {
         personRepository.save(Person("Josh", 14))
         val peopleWithNameOrAge = personRepository.findAll(nameAndAgeMatch(25, "Josh"))
-        Assertions.assertEquals(2, peopleWithNameOrAge.size)
+        assertEquals(2, peopleWithNameOrAge.size)
     }
 
     @Test
@@ -84,73 +90,73 @@ class PersonRepositorySpec : AbstractAzureCosmosTest() {
             }
         })
 
-        Assertions.assertEquals(22, stats.maxAge)
-        Assertions.assertEquals(13, stats.minAge)
-        Assertions.assertEquals(17.5, stats.avgAge)
+        assertEquals(22, stats.maxAge)
+        assertEquals(13, stats.minAge)
+        assertEquals(17.5, stats.avgAge)
     }
 
     @Test
     fun testDelete() {
         val empty: PredicateSpecification<Person>? = null
         var all = personRepository.findAll(empty)
-        Assertions.assertEquals(2, all.size)
+        assertEquals(2, all.size)
 
         // tag::delete[]
         val recordsDeleted = personRepository.deleteAll(PredicateSpecification.where(nameEquals("Denis")))
         // end::delete[]
-        Assertions.assertEquals(1, recordsDeleted)
+        assertEquals(1, recordsDeleted)
         all = personRepository.findAll(empty)
-        Assertions.assertEquals(1, all.size)
+        assertEquals(1, all.size)
     }
 
     @Test
     fun testUpdate() {
         val empty: PredicateSpecification<Person>? = null
         var all = personRepository.findAll(empty)
-        Assertions.assertEquals(2, all.size)
-        Assertions.assertTrue(all.stream().anyMatch { p: Person -> p.name == "Denis" })
-        Assertions.assertTrue(all.stream().anyMatch { p: Person -> p.name == "Josh" })
+        assertEquals(2, all.size)
+        assertTrue(all.stream().anyMatch { p: Person -> p.name == "Denis" })
+        assertTrue(all.stream().anyMatch { p: Person -> p.name == "Josh" })
 
         // tag::update[]
         val recordsUpdated = personRepository.updateAll(updateName("Steven", "Denis"))
         // end::update[]
-        Assertions.assertEquals(1, recordsUpdated)
+        assertEquals(1, recordsUpdated)
         all = personRepository.findAll(empty)
-        Assertions.assertEquals(2, all.size)
-        Assertions.assertTrue(all.stream().anyMatch { p: Person -> p.name == "Steven" })
-        Assertions.assertTrue(all.stream().anyMatch { p: Person -> p.name == "Josh" })
+        assertEquals(2, all.size)
+        assertTrue(all.stream().anyMatch { p: Person -> p.name == "Steven" })
+        assertTrue(all.stream().anyMatch { p: Person -> p.name == "Josh" })
     }
 
     @Test
     fun testDeleteUsingCriteriaBuilder() {
         val empty: PredicateSpecification<Person>? = null
         var all = personRepository.findAll(empty)
-        Assertions.assertEquals(2, all.size)
+        assertEquals(2, all.size)
 
         // tag::delete[]
         val recordsDeleted = personRepository.deleteAll(where {
             root[Person::name] eq "Denis"
         })
         // end::delete[]
-        Assertions.assertEquals(1, recordsDeleted)
+        assertEquals(1, recordsDeleted)
         all = personRepository.findAll(empty)
-        Assertions.assertEquals(1, all.size)
+        assertEquals(1, all.size)
     }
 
     @Test
     fun testDeleteUsingCriteriaBuilder2() {
         val empty: PredicateSpecification<Person>? = null
         var all = personRepository.findAll(empty)
-        Assertions.assertEquals(2, all.size)
+        assertEquals(2, all.size)
 
         // tag::delete[]
         val recordsDeleted = personRepository.deleteAll(where {
             root[Person::name] eq "Denis"
         })
         // end::delete[]
-        Assertions.assertEquals(1, recordsDeleted)
+        assertEquals(1, recordsDeleted)
         all = personRepository.findAll(empty)
-        Assertions.assertEquals(1, all.size)
+        assertEquals(1, all.size)
     }
 
     @Test
@@ -159,10 +165,10 @@ class PersonRepositorySpec : AbstractAzureCosmosTest() {
         val denis = personRepository.findAll(PredicateSpecification.where(nameInList(listOf("Denis"))))
         val josh = personRepository.findAll(PredicateSpecification.where(nameInList(listOf("Josh"))))
 
-        Assertions.assertEquals(2, twoPeople.size)
-        Assertions.assertEquals(1, denis.size)
-        Assertions.assertEquals("Denis", denis.first().name)
-        Assertions.assertEquals(1, josh.size)
-        Assertions.assertEquals("Josh", josh.first().name)
+        assertEquals(2, twoPeople.size)
+        assertEquals(1, denis.size)
+        assertEquals("Denis", denis.first().name)
+        assertEquals(1, josh.size)
+        assertEquals("Josh", josh.first().name)
     }
 }

@@ -17,4 +17,3 @@ micronaut:
   http:
     client:
       read-timeout: 5m
-

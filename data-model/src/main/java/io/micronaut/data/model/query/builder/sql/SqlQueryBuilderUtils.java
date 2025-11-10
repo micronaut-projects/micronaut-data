@@ -262,19 +262,25 @@ final class SqlQueryBuilderUtils {
     }
 
     /**
-     * Checks whether a given property is considered generated within the context of a specific entity.
+     * Checks whether a given property is considered generated within the context of the association path.
      *
      * A property is considered generated if it is annotated with {@link io.micronaut.data.annotation.GeneratedValue} and its owner is either the same as the given entity or is an embeddable entity.
      *
-     * @param property the persistent property to check
-     * @param entity the entity to check against
-     * @return true if the property is generated, false otherwise
+     * @param property     the persistent property to check
+     * @param associations the association path leading to the property (can be empty)
+     * @return true if the property is generated for this context, false otherwise
      */
-    static boolean isGeneratedProperty(PersistentProperty property, PersistentEntity entity) {
+    static boolean isGeneratedProperty(PersistentProperty property, List<Association> associations) {
         boolean generated = property.isGenerated();
         if (generated) {
-            if (property.getOwner() != entity && !property.getOwner().isEmbeddable()) {
-                generated = false;
+            // If this property is an identity of the associated entity being referenced,
+            // treat it as NOT generated so we can set the FK value.
+            if (generated && CollectionUtils.isNotEmpty(associations)) {
+                Association last = associations.get(associations.size() - 1);
+                PersistentEntity assocEntity = last.getAssociatedEntity();
+                if (assocEntity != null && assocEntity.getIdentityProperties().contains(property)) {
+                    generated = false;
+                }
             }
         }
         return generated;
