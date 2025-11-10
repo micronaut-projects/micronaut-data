@@ -4056,7 +4056,7 @@ interface PersonRepository : CrudRepository&lt;Person, Long&gt;, JpaSpecificatio
 
 Optional&lt;Person&gt; findOne(QuerySpecification&lt;Person&gt; spec);
 
-List&lt;Person&gt; findAll(PredicateSpecification&lt;Person&gt; spec);
+List&lt;Person&gt; findAll(@Nullable PredicateSpecification&lt;Person&gt; spec);
 
 List&lt;Person&gt; findAll(QuerySpecification&lt;Person&gt; spec);
 
@@ -4075,7 +4075,7 @@ Page&lt;Person&gt; findAll(QuerySpecification&lt;Person&gt; spec, Pageable pagea
 
 Optional&lt;Person&gt; findOne(QuerySpecification&lt;Person&gt; spec)
 
-List&lt;Person&gt; findAll(PredicateSpecification&lt;Person&gt; spec)
+List&lt;Person&gt; findAll(@Nullable PredicateSpecification&lt;Person&gt; spec)
 
 List&lt;Person&gt; findAll(QuerySpecification&lt;Person&gt; spec)
 
@@ -4288,9 +4288,9 @@ long countAgeLess30 = personRepository.count(ageIsLessThan(30))
 
 long countAgeLess20 = personRepository.count(ageIsLessThan(20))
 
-long countAgeLess30NotDenis = personRepository.count(ageIsLessThan(30) &amp; not(nameEquals("Denis")))
+long countAgeLess30NotDenis = personRepository.count(ageIsLessThan(30) &amp; PredicateSpecification.not(nameEquals("Denis")))
 
-List&lt;Person&gt; people = personRepository.findAll(where(nameEquals("Denis") | nameEquals("Josh")))</code></pre>
+List&lt;Person&gt; people = personRepository.findAll(PredicateSpecification.where(nameEquals("Denis") | nameEquals("Josh")))</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -4675,7 +4675,7 @@ public interface DeleteSpecification&lt;T&gt; {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">long recordsDeleted = personRepository.deleteAll(where(nameEquals("Denis")))</code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">long recordsDeleted = personRepository.deleteAll(PredicateSpecification.where(nameEquals("Denis")))</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -14938,7 +14938,7 @@ Optional&lt;Person&gt; findOne(PredicateSpecification&lt;Person&gt; spec);
 Optional&lt;Person&gt; findOne(QuerySpecification&lt;Person&gt; spec);
 
 @Override
-List&lt;Person&gt; findAll(PredicateSpecification&lt;Person&gt; spec);
+List&lt;Person&gt; findAll(@Nullable PredicateSpecification&lt;Person&gt; spec);
 
 @Override
 List&lt;Person&gt; findAll(QuerySpecification&lt;Person&gt; spec);
@@ -14962,7 +14962,7 @@ Page&lt;Person&gt; findAll(QuerySpecification&lt;Person&gt; spec, Pageable pagea
 
 Optional&lt;Person&gt; findOne(QuerySpecification&lt;Person&gt; spec)
 
-List&lt;Person&gt; findAll(PredicateSpecification&lt;Person&gt; spec)
+List&lt;Person&gt; findAll(@Nullable PredicateSpecification&lt;Person&gt; spec)
 
 List&lt;Person&gt; findAll(QuerySpecification&lt;Person&gt; spec)
 
@@ -15177,9 +15177,9 @@ long countAgeLess30 = personRepository.count(ageIsLessThan(30))
 
 long countAgeLess20 = personRepository.count(ageIsLessThan(20))
 
-long countAgeLess30NotDenis = personRepository.count(ageIsLessThan(30) &amp; not(nameEquals("Denis")))
+long countAgeLess30NotDenis = personRepository.count(ageIsLessThan(30) &amp; PredicateSpecification.not(nameEquals("Denis")))
 
-List&lt;Person&gt; people = personRepository.findAll(where(nameEquals("Denis") | nameEquals("Josh")))</code></pre>
+List&lt;Person&gt; people = personRepository.findAll(PredicateSpecification.where(nameEquals("Denis") | nameEquals("Josh")))</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -15569,7 +15569,7 @@ public interface DeleteSpecification&lt;T&gt; {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">long recordsDeleted = personRepository.deleteAll(where(nameEquals("Denis")))</code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">long recordsDeleted = personRepository.deleteAll(PredicateSpecification.where(nameEquals("Denis")))</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
