@@ -2309,6 +2309,28 @@ interface ProductRepository extends GenericRepository<Product, Long> {
         selectCustomStringMethod.classValue(DataMethod, "interceptor").get() == FindOneInterceptor
     }
 
+    void "test raw REPLACE INTO is treated as INSERT (MySQL)"() {
+        given:
+        def repository = buildRepository('test.Repo', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface Repo extends GenericRepository<Book, Long> {
+
+    @Query("REPLACE INTO book (id, title, total_pages) VALUES (:id, :title, :totalPages)")
+    int replaceCustom(Long id, String title, int totalPages);
+}
+""")
+        def method = repository.getRequiredMethod("replaceCustom", Long, String, int)
+
+        expect:
+        getOperationType(method) == DataMethod.OperationType.UPDATE
+        getRawQuery(method) == 'REPLACE INTO book (id, title, total_pages) VALUES (?, ?, ?)'
+    }
+
     void "test EmbeddedId naming strategy"() {
         given:
         def repository = buildRepository('test.SomeEntityRepository', """
@@ -2321,17 +2343,12 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import java.util.Optional;
-
 @JdbcRepository(dialect = Dialect.H2)
 interface SomeEntityRepository extends GenericRepository<SomeEntity, SomeEntity.PrimaryKey> {
-
     Optional<SomeEntity> findById(SomeEntity.PrimaryKey id);
-
     SomeEntity save(SomeEntity entity);
-
     List<SomeEntity> findAll();
 }
-
 """)
 
         def findByIdQuery = getQuery(repository.getRequiredMethod("findById", SomeEntity.PrimaryKey))

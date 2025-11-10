@@ -23,4 +23,5 @@ dependencies {
     )
     testRuntimeOnly mnSerde.micronaut.serde.jackson
     runtimeOnly mn.snakeyaml
+    testImplementation mnTest.junit.platform.suite
 }
