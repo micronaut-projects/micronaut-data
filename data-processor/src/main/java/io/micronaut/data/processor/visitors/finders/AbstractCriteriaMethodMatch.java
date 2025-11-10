@@ -30,6 +30,7 @@ import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.RepositoryConfiguration;
@@ -56,6 +57,7 @@ import io.micronaut.data.processor.visitors.MatchFailedException;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
 import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.ast.PrimitiveElement;
 import jakarta.persistence.criteria.Expression;
@@ -233,11 +235,13 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                             predicates.add(cb.equal(root.get(property.getName()), param));
                         } else {
                             // TODO: support embedded ID
-                            Association association = propPath.getAssociations().get(0);
+                            Association association = propPath.getAssociations().getFirst();
                             if (propPath.getAssociations().size() == 1) {
                                 if (association.isEmbedded()) {
                                     predicates.add(cb.equal(root.get(association.getName()).get(property.getName()), param));
                                 } else if (PersistentEntityUtils.isAccessibleWithoutJoin(association, property)) {
+                                    predicates.add(cb.equal(root.join(association.getName()).get(property.getName()), param));
+                                } else {
                                     predicates.add(cb.equal(root.join(association.getName()).get(property.getName()), param));
                                 }
                             } else {
@@ -700,7 +704,8 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         ClassElement resultType = interceptorMatch.returnType();
 
         boolean isRuntimeDto = false;
-        boolean isDto = resultType != null
+        boolean isVoid = resultType != null && isVoid(resultType);
+        boolean isDto = resultType != null && !isVoid
             && !TypeUtils.areTypesCompatible(resultType, queryResultType)
             && (isDtoType(matchContext.getRepositoryClass(), resultType) || resultType.hasStereotype(Introspected.class) && queryResultType.hasStereotype(MappedEntity.class));
 
@@ -708,7 +713,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             isRuntimeDto = isDtoType(matchContext.getRepositoryClass(), resultType);
         } else if (interceptorMatch.validateReturnType()) {
             if (queryResultType != null) {
-                if (resultType == null || !isVoid(resultType)) {
+                if (resultType == null || !isVoid) {
                     if (resultType == null || TypeUtils.areTypesCompatible(resultType, queryResultType)) {
                         if (!queryResultType.isPrimitive() || resultType == null) {
                             resultType = queryResultType;
@@ -734,12 +739,19 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     /**
      * Find DTO properties.
      *
-     * @param entity     The entity
-     * @param returnType The result
+     * @param entity        The entity
+     * @param methodElement The method element
+     * @param returnType    The result
      * @return DTO properties
      */
     protected List<SourcePersistentProperty> getDtoProjectionProperties(SourcePersistentEntity entity,
+                                                                        MethodElement methodElement,
                                                                         ClassElement returnType) {
+        List<String> projectionList = methodElement.getAnnotationValuesByType(Projection.class)
+            .stream()
+            .flatMap(a -> a.stringValue().stream())
+            .toList();
+        Iterator<String> iterator = projectionList.iterator();
         return returnType.getBeanProperties().stream()
             .filter(dtoProperty -> {
                 String propertyName = dtoProperty.getName();
@@ -751,6 +763,12 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                 if ("metaClass".equals(propertyName) && dtoProperty.getType().isAssignable("groovy.lang.MetaClass")) {
                     // ignore Groovy meta class
                     return null;
+                }
+                AnnotationValue<Projection> selectAnnotation = dtoProperty.getAnnotation(Projection.class);
+                if (selectAnnotation != null) {
+                    propertyName = selectAnnotation.stringValue().orElse(propertyName);
+                } else if (iterator.hasNext()) {
+                    propertyName = iterator.next();
                 }
                 SourcePersistentProperty pp = entity.getPropertyByName(propertyName);
 

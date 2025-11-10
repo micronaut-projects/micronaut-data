@@ -24,6 +24,7 @@ dependencies {
 	testImplementation projects.micronautDataTck
 	testImplementation projects.micronautDataTx
 	testImplementation projects.micronautDataJdbc
+    testImplementation libs.managed.jakarta.data.api
 
     antlr libs.antlr
 }

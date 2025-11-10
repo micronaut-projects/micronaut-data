@@ -180,7 +180,7 @@ interface MyInterface2 extends CrudRepository<CustomBook, Long> {
             )
         then:
             def e = thrown(Exception)
-            e.message.contains "Unable to implement Repository method: MyInterface2.somethingWithCast(). Expected an expression '#{...}' found a string!"
+            e.message.contains "Expected an expression '#{...}' found a string!"
     }
 
     @PendingFeature
@@ -1821,6 +1821,40 @@ interface BookRepository extends GenericRepository<Book, Long> {
 """)
         when:
             def queryTop3ByAuthorNameOrderByTitle = repository.findPossibleMethods("queryTop3ByAuthorNameOrderByTitle").findFirst().get()
+        then:
+            getQuery(queryTop3ByAuthorNameOrderByTitle) == '''SELECT book_."id",book_."author_id",book_."genre_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated" FROM "book" book_ INNER JOIN "author" book_author_ ON book_."author_id"=book_author_."id" WHERE (book_author_."name" = ?) ORDER BY book_."title" ASC LIMIT 3'''
+            getParameterBindingPaths(queryTop3ByAuthorNameOrderByTitle) == [""] as String[]
+            getParameterPropertyPaths(queryTop3ByAuthorNameOrderByTitle) == ["author.name"] as String[]
+    }
+
+    void "test projection find annotation"() {
+
+        given:
+        def repository = buildRepository('test.BookRepository', """
+
+import io.micronaut.data.annotation.By;
+import io.micronaut.data.annotation.Find;
+import io.micronaut.data.annotation.First;
+import io.micronaut.data.annotation.OrderBy;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+
+import java.util.List;
+
+import static io.micronaut.data.model.query.builder.sql.Dialect.*;
+
+@JdbcRepository(dialect = POSTGRES)
+interface BookRepository extends GenericRepository<Book, Long> {
+    @Find
+    @First(3)
+    @OrderBy("title")
+    List<Book> find(@By("author.name") String name);
+}
+
+""")
+        when:
+            def queryTop3ByAuthorNameOrderByTitle = repository.findPossibleMethods("find").findFirst().get()
         then:
             getQuery(queryTop3ByAuthorNameOrderByTitle) == '''SELECT book_."id",book_."author_id",book_."genre_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated" FROM "book" book_ INNER JOIN "author" book_author_ ON book_."author_id"=book_author_."id" WHERE (book_author_."name" = ?) ORDER BY book_."title" ASC LIMIT 3'''
             getParameterBindingPaths(queryTop3ByAuthorNameOrderByTitle) == [""] as String[]

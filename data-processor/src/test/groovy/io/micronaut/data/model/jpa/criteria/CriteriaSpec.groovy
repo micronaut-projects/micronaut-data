@@ -146,6 +146,9 @@ class CriteriaSpec extends AbstractCriteriaSpec {
         where:
             specification << [
                     { root, query, cb ->
+                        cb.equal(cb.prod(cb.sum(root.get("amount"), 100), 2), 123)
+                    } as Specification,
+                    { root, query, cb ->
                         root.get("amount").in(100, 200)
                     } as Specification,
                     { root, query, cb ->
@@ -195,6 +198,7 @@ class CriteriaSpec extends AbstractCriteriaSpec {
                     } as Specification
             ]
             expectedWhereQuery << [
+                    '(((test_."amount" + 100) * 2) = 123)',
                     '(test_."amount" IN (100,200))',
                     '(test_."amount" NOT IN (100,200))',
                     '(test_."amount" IN (100,200))',

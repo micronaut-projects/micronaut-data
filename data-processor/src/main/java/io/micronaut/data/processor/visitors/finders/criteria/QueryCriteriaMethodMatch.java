@@ -20,8 +20,11 @@ import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.By;
+import io.micronaut.data.annotation.First;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.OrderBy;
+import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.Embedded;
@@ -50,6 +53,7 @@ import io.micronaut.data.processor.visitors.finders.QueryMatchId;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.Element;
+import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.From;
@@ -60,7 +64,6 @@ import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Selection;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -135,15 +138,14 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
         PersistentEntityCriteriaQuery<Object> query = cb.createQuery();
         PersistentEntityRoot<Object> root = query.from(matchContext.getRootEntity());
-
+        applyJoinSpecs(root, joinSpecs);
         applyDistinct(query);
         applyProjection(matchContext, cb, root, query);
         applyPredicate(matchContext, cb, root, query);
         applyOrder(cb, root, query);
         applyOrderByAnnotation(cb, root, query, matchContext.getMethodElement());
         applyForUpdate(query);
-        applyLimit(query);
-        applyJoinSpecs(root, joinSpecs);
+        applyLimit(query, matchContext.getMethodElement());
 
         return query;
     }
@@ -199,7 +201,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
         applyForUpdate(mainQuery);
 
-        applyLimit(filteredSubquery);
+        applyLimit(filteredSubquery, matchContext.getMethodElement());
 
         applyDistinct(mainQuery);
 
@@ -277,6 +279,9 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
     }
 
     private <T> Expression<?> findOrderProperty(PersistentEntityRoot<T> root, String propertyName) {
+        if (By.ID.equals(propertyName)) {
+            return root.id();
+        }
         if (root.getPersistentEntity().getPropertyByName(propertyName) != null) {
             return root.get(propertyName);
         }
@@ -310,21 +315,27 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             .ifPresent(text -> setDistinct(mainQuery));
     }
 
-    private void applyLimit(PersistentEntityQuery<Object> query) {
-        findMatchPart(matches, QueryMatchId.LIMIT)
-            .ifPresent(text -> {
-                try {
-                    int max = StringUtils.isNotEmpty(text) ? Integer.parseInt(text) : 1;
-                    if (max > -1) {
-                        query.limit(max);
-                    }
-                } catch (NumberFormatException e) {
-                    throw new MatchFailedException("Invalid number specified to top: " + text);
+    private void applyLimit(PersistentEntityQuery<Object> query, MethodElement methodElement) {
+        Optional<String> limit = findMatchPart(matches, QueryMatchId.LIMIT);
+        Optional<String> first = findMatchPart(matches, QueryMatchId.FIRST);
+        if (limit.isPresent()) {
+            String text = limit.get();
+            try {
+                int max = StringUtils.isNotEmpty(text) ? Integer.parseInt(text) : 1;
+                if (max > -1) {
+                    query.limit(max);
                 }
-            });
-
-        findMatchPart(matches, QueryMatchId.FIRST)
-            .ifPresent(text -> query.limit(1));
+            } catch (NumberFormatException e) {
+                throw new MatchFailedException("Invalid number specified to top: " + text);
+            }
+        } else if (first.isPresent()) {
+            query.limit(1);
+        } else {
+            AnnotationValue<First> firstAnnotation = methodElement.getAnnotation(First.class);
+            if (firstAnnotation != null) {
+                query.limit(firstAnnotation.intValue().orElse(1));
+            }
+        }
     }
 
     private void applyPredicate(MethodMatchContext matchContext,
@@ -332,7 +343,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                                 PersistentEntityRoot<Object> root,
                                 PersistentEntityQuery<Object> entityQuery) {
         findMatchPart(matches, QueryMatchId.PREDICATE)
-            .ifPresentOrElse(text -> applyPredicates(matchContext, text, matchContext.getParameters(), root, entityQuery, cb),
+            .ifPresentOrElse(text -> applyPredicates(matchContext, text, matchContext.getParametersNotInRole(), root, entityQuery, cb),
                 () -> applyPredicates(matchContext, matchContext.getParametersNotInRole(), root, entityQuery, cb));
     }
 
@@ -354,11 +365,11 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
     private <T> void applyPredicates(MethodMatchContext matchContext,
                                      String querySequence,
-                                     ParameterElement[] parameters,
+                                     List<ParameterElement> parameters,
                                      PersistentEntityRoot<T> root,
                                      PersistentEntityQuery<?> query,
                                      PersistentEntityCriteriaBuilder cb) {
-        Predicate predicate = extractPredicates(querySequence, Arrays.asList(parameters).iterator(), root, cb);
+        Predicate predicate = extractPredicates(querySequence, parameters.iterator(), root, cb);
         predicate = interceptPredicate(matchContext, List.of(), root, cb, predicate);
         if (predicate != null) {
             query.where(predicate);
@@ -417,15 +428,15 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         );
 
         if (result.isDto() && !result.isRuntimeDtoConversion()) {
-            List<SourcePersistentProperty> dtoProjectionProperties = getDtoProjectionProperties(persistentEntity, resultType);
+            List<SourcePersistentProperty> dtoProjectionProperties = getDtoProjectionProperties(persistentEntity, matchContext.getMethodElement(), resultType);
             if (!dtoProjectionProperties.isEmpty()) {
                 Root<?> root = query.getRoots().iterator().next();
                 List<Selection<?>> selectionList = dtoProjectionProperties.stream()
                     .map(p -> {
-                        if (!(matchContext.getQueryBuilder() instanceof SqlQueryBuilder)) {
-                            return root.get(p.getName()).alias(p.getName());
-                        } else {
+                        if (matchContext.getQueryBuilder() instanceof SqlQueryBuilder) {
                             return root.get(p.getName());
+                        } else {
+                            return root.get(p.getName()).alias(p.getName());
                         }
                     })
                     .collect(Collectors.toList());
@@ -498,6 +509,21 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                                       PersistentEntityRoot<T> root,
                                       PersistentEntityCriteriaQuery<T> query,
                                       PersistentEntityCriteriaBuilder cb) {
+        if (projection.isBlank()) {
+            List<AnnotationValue<Projection>> selectAnnotations = matchContext.getMethodElement().getAnnotationValuesByType(Projection.class);
+            List<Selection<?>> selections = new ArrayList<>(selectAnnotations.size());
+            for (AnnotationValue<Projection> selectAnnotation : selectAnnotations) {
+                selectAnnotation.stringValue().ifPresent(select ->  selections.add(findProperty(root, select)));
+            }
+            if (!selections.isEmpty()) {
+                if (selectAnnotations.size() == 1) {
+                    query.select((Selection<? extends T>) selections.getFirst());
+                } else {
+                    query.multiselect(selections);
+                }
+                return;
+            }
+        }
         applyProjections(projection, root, query, cb, matchContext.getReturnType().getSimpleName());
     }
 

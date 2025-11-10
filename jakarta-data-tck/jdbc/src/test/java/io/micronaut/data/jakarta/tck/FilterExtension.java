@@ -24,7 +24,9 @@ public class FilterExtension implements ExecutionCondition {
                 case "testBasicRepositoryBuiltInMethods",  "testBasicRepositoryMethods" -> {
                     return DISABLED; // Support deciding between persist or update when save is called
                 }
-
+                case "testReturnStreamOfRecordThatSelectsAttributesFindEntity" -> {
+                    return DISABLED; // https://github.com/jakartaee/data/issues/1290
+                }
             }
         }
         if (testClass == ValidationTests.class) {

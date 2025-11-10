@@ -43,7 +43,6 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Selection;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -87,7 +86,7 @@ public class DeleteCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         boolean predicatedApplied = false;
         for (MethodNameParser.Match match : matches) {
             if (match.id() == QueryMatchId.PREDICATE) {
-                applyPredicates(matchContext, match.part(), matchContext.getParameters(), root, query, cb);
+                applyPredicates(matchContext, match.part(), matchContext.getParametersNotInRole(), root, query, cb);
                 predicatedApplied = true;
             }
             if (match.id() == QueryMatchId.RETURNING) {
@@ -150,13 +149,13 @@ public class DeleteCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
      */
     private <T> void applyPredicates(MethodMatchContext matchContext,
                                      String querySequence,
-                                     ParameterElement[] parameters,
+                                     List<ParameterElement> parameters,
                                      PersistentEntityRoot<T> root,
                                      PersistentEntityCriteriaDelete<T> query,
                                      SourcePersistentEntityCriteriaBuilder cb) {
-        Iterator<ParameterElement> parametersIterator = Arrays.asList(parameters).iterator();
+        Iterator<ParameterElement> parametersIterator = parameters.iterator();
         Predicate predicate = extractPredicates(querySequence, parametersIterator, root, cb);
-        List<ParameterElement> remainingParameters = new ArrayList<>(parameters.length);
+        List<ParameterElement> remainingParameters = new ArrayList<>(parameters.size());
         while (parametersIterator.hasNext()) {
             remainingParameters.add(parametersIterator.next());
         }
@@ -221,14 +220,14 @@ public class DeleteCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         );
 
         if (result.isDto() && !result.isRuntimeDtoConversion()) {
-            List<SourcePersistentProperty> dtoProjectionProperties = getDtoProjectionProperties(matchContext.getRootEntity(), resultType);
+            List<SourcePersistentProperty> dtoProjectionProperties = getDtoProjectionProperties(matchContext.getRootEntity(), matchContext.getMethodElement(), resultType);
             if (!dtoProjectionProperties.isEmpty()) {
                 List<Selection<?>> selectionList = dtoProjectionProperties.stream()
                     .map(p -> {
                         if (matchContext.getQueryBuilder() instanceof SqlQueryBuilder) {
-                            return root.get(p.getName()).alias(p.getName());
-                        } else {
                             return root.get(p.getName());
+                        } else {
+                            return root.get(p.getName()).alias(p.getName());
                         }
                     })
                     .collect(Collectors.toList());

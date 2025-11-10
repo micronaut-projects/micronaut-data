@@ -109,8 +109,8 @@ class JakartaDataQueryLanguageBuilderSpec extends Specification {
                     "UPDATE Box SET length = length + ?1, width = width - ?1, height = height * ?2"
             ]
             sql << [
-                    """UPDATE "coordinate" SET "x"=?,"y"="y" / ? WHERE ("id" = ?)""",
-                    """UPDATE "box" SET "length"="length" + ?,"width"="width" - ?,"height"="height" * ?"""
+                    """UPDATE "coordinate" SET "x"=?,"y"=("y" / ?) WHERE ("id" = ?)""",
+                    """UPDATE "box" SET "length"=("length" + ?),"width"=("width" - ?),"height"=("height" * ?)"""
             ]
     }
 
@@ -120,18 +120,32 @@ class JakartaDataQueryLanguageBuilderSpec extends Specification {
         then:
             result == sql
         where:
-            rootEntityName << ["Box", "AsciiCharacter", "NaturalNumber", "Box"]
+            rootEntityName << ["Box", "AsciiCharacter", "NaturalNumber", "Box", "Box", "Box", "Box", "Box", "Box", "Box", "Box"]
             jdql << [
                     "WHERE id = :id",
                     "select thisCharacter where hexadecimal like '4_' and hexadecimal not like '%0' and thisCharacter not in ('E', 'G') and id not between 72 and 78 order by id asc",
                     "WHERE isOdd = false AND numType = test.NaturalNumber.NumberType.PRIME",
-                    "WHERE LENGTH(name) = ?1 AND length < ?2 ORDER BY name"
+                    "WHERE LENGTH(name) = ?1 AND length < ?2 ORDER BY name",
+                    "SELECT ID(THIS) WHERE id = :id",
+                    "SELECT id, name WHERE length > 10",
+                    "WHERE ID(THIS) = :entityId",
+                    "SELECT name ORDER BY ID(THIS) ASC",
+                    "WHERE ID(THIS) IN (1,2)",
+                    "WHERE ID(THIS) IS NULL",
+                    "WHERE ID(THIS) > 10"
             ]
             sql << [
                     """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (box_."id" = ?)""",
                     """SELECT ascii_character_."this_character" FROM "ascii_character" ascii_character_ WHERE (ascii_character_."hexadecimal" LIKE '4_' AND ascii_character_."hexadecimal" NOT LIKE '%0' AND ascii_character_."this_character" NOT IN ('E','G') AND NOT((ascii_character_."id" >= 72 AND ascii_character_."id" <= 78))) ORDER BY ascii_character_."id" ASC""",
                     """SELECT natural_number_."id",natural_number_."odd",natural_number_."num_bits_required",natural_number_."num_type",natural_number_."num_type_ordinal",natural_number_."floor_of_square_root",natural_number_."is_odd" FROM "natural_number" natural_number_ WHERE (natural_number_."is_odd" = FALSE AND natural_number_."num_type" = 'PRIME')""",
-                    """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (LENGTH(box_."name") = ? AND box_."length" < ?) ORDER BY box_."name" ASC"""
+                    """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (LENGTH(box_."name") = ? AND box_."length" < ?) ORDER BY box_."name" ASC""",
+                    """SELECT box_."id" FROM "box" box_ WHERE (box_."id" = ?)""",
+                    """SELECT box_."id" AS id,box_."name" AS name FROM "box" box_ WHERE (box_."length" > 10)""",
+                    """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (box_."id" = ?)""",
+                    """SELECT box_."name" FROM "box" box_ ORDER BY box_."id" ASC""",
+                    """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (box_."id" IN (1,2))""",
+                    """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (box_."id" IS NULL)""",
+                    """SELECT box_."id",box_."name",box_."length",box_."width",box_."height" FROM "box" box_ WHERE (box_."id" > 10)"""
             ]
     }
 

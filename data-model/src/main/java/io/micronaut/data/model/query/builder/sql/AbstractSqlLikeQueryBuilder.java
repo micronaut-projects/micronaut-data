@@ -24,6 +24,7 @@ import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.By;
 import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.DataTransformer;
 import io.micronaut.data.annotation.EntityRepresentation;
@@ -1125,7 +1126,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             return propertyName;
         }
 
-        PersistentPropertyPath path = entity.getPropertyPath(propertyName);
+        PersistentPropertyPath path;
+        if (By.ID.equals(propertyName)) {
+            path = new PersistentPropertyPath(entity.getIdentity());
+        } else {
+            path = entity.getPropertyPath(propertyName);
+        }
         if (path == null) {
             throw new IllegalArgumentException("Cannot sort on non-existent property path: " + propertyName);
         }
@@ -2556,24 +2562,32 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             Expression<?> right = binaryExpression.getRight();
             switch (binaryExpression.getType()) {
                 case SUM -> {
+                    query.append("(");
                     appendExpression(left);
                     query.append(" + ");
                     appendExpression(right);
+                    query.append(")");
                 }
                 case DIFF -> {
+                    query.append("(");
                     appendExpression(left);
                     query.append(" - ");
                     appendExpression(right);
+                    query.append(")");
                 }
                 case QUOT -> {
+                    query.append("(");
                     appendExpression(left);
                     query.append(" / ");
                     appendExpression(right);
+                    query.append(")");
                 }
                 case PROD -> {
+                    query.append("(");
                     appendExpression(left);
                     query.append(" * ");
                     appendExpression(right);
+                    query.append(")");
                 }
                 case CONCAT -> appendFunction("CONCAT", List.of(left, right));
                 default ->

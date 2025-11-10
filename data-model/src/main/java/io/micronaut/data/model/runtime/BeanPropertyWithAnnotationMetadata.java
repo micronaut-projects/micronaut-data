@@ -37,11 +37,17 @@ import java.util.Optional;
 @Internal
 public final class BeanPropertyWithAnnotationMetadata<B, T> implements BeanProperty<B, T> {
 
+    private final String name;
     private final BeanProperty<B, T> delegate;
     private final Argument<T> argument;
     private final AnnotationMetadata annotationMetadata;
 
     public BeanPropertyWithAnnotationMetadata(BeanProperty<B, T> delegate, AnnotationMetadata annotationMetadata) {
+        this(delegate.getName(), delegate, annotationMetadata);
+    }
+
+    public BeanPropertyWithAnnotationMetadata(String name, BeanProperty<B, T> delegate, AnnotationMetadata annotationMetadata) {
+        this.name = name;
         this.delegate = delegate;
         this.annotationMetadata = annotationMetadata;
         Argument<T> originalArgument = delegate.asArgument();
@@ -136,7 +142,7 @@ public final class BeanPropertyWithAnnotationMetadata<B, T> implements BeanPrope
 
     @Override
     public @NonNull String getName() {
-        return delegate.getName();
+        return name;
     }
 
     @Override

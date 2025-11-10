@@ -83,11 +83,11 @@ abstract sealed class AbstractRuntimePersistentEntityFrom<T, E> extends Abstract
                                                                 @NonNull RuntimePersistentProperty<?> property,
                                                                 CriteriaBuilder criteriaBuilder) {
         List<Association> associations;
-        if (parentPath instanceof PersistentAssociationPath<?, ?> associationPath) {
-            List<Association> pathAssociations = associationPath.getAssociations();
+        if (parentPath instanceof PersistentPropertyPath<?> persistentPropertyPath && persistentPropertyPath.getProperty() instanceof Association association) {
+            List<Association> pathAssociations = persistentPropertyPath.getAssociations();
             associations = new ArrayList<>(pathAssociations.size() + 1);
             associations.addAll(pathAssociations);
-            associations.add(associationPath.getAssociation());
+            associations.add(association);
         } else {
             associations = List.of();
         }

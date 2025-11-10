@@ -18,6 +18,7 @@ package io.micronaut.data.hibernate.operations;
 import io.micronaut.aop.InvocationContext;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
@@ -27,6 +28,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.model.Limit;
@@ -68,6 +70,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -371,15 +374,24 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
                 q = createQuery(session, queryStr, Tuple.class);
             }
             bindPreparedQuery(q, preparedQuery, limit, session);
+            List<String> projection = preparedQuery.getAnnotationMetadata().getAnnotationValuesByType(Projection.class)
+                .stream()
+                .flatMap(a -> a.stringValue().stream())
+                .toList();
             resultCollector.collectTuple(q, tuple -> {
                 Set<String> properties = tuple.getElements().stream().map(TupleElement::getAlias).collect(Collectors.toCollection(() -> new TreeSet<>(String.CASE_INSENSITIVE_ORDER)));
+                Iterator<String> iterator = projection.iterator();
                 return (new BeanIntrospectionMapper<Tuple, R>() {
                     @Override
                     public Object read(Tuple tuple1, String alias) {
-                        if (!properties.contains(alias)) {
+                        String propertyName = alias;
+                        if (iterator.hasNext()) {
+                            propertyName = iterator.next();
+                        }
+                        if (!properties.contains(propertyName)) {
                             return null;
                         }
-                        return tuple1.get(alias);
+                        return tuple1.get(propertyName);
                     }
 
                     @Override

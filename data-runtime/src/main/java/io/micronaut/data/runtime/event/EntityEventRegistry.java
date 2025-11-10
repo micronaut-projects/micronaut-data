@@ -279,7 +279,7 @@ public class EntityEventRegistry implements EntityEventListener<Object>, Executa
     }
 
     private boolean isApplicableListener(RuntimePersistentEntity<Object> entity, List<Argument<?>> typeArguments) {
-        return typeArguments.isEmpty() || typeArguments.get(0).getType().isAssignableFrom(entity.getIntrospection().getBeanType());
+        return typeArguments.isEmpty() || typeArguments.getFirst().getType().isAssignableFrom(entity.getIntrospection().getBeanType());
     }
 
     @Override

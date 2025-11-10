@@ -27,6 +27,9 @@ public class FilterExtension implements ExecutionCondition {
                 case "testIgnoreCase" -> {
                     return DISABLED; // Between doesn't support case insensitive
                 }
+                case "testReturnStreamOfRecordThatSelectsAttributesFindEntity" -> {
+                    return DISABLED; // https://github.com/jakartaee/data/issues/1290
+                }
             }
         }
         if (testClass == ValidationTests.class) {

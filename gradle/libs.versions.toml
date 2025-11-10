@@ -20,11 +20,12 @@ micronaut-validation = "4.12.0"
 micronaut-logging = "1.7.1"
 micronaut-flyway = "7.9.2"
 micronaut-coherence = "5.0.6"
+#micronaut-sourcegen = "1.8.2"
 
 groovy = "4.0.29"
 
 managed-javax-persistence = "2.2"
-managed-jakarta-data = "1.0.1"
+managed-jakarta-data = "1.1.0-M1"
 
 spring-data = "3.5.5"
 
@@ -77,6 +78,7 @@ micronaut-r2dbc = { module = "io.micronaut.r2dbc:micronaut-r2dbc-bom", version.r
 micronaut-flyway = { module = "io.micronaut.flyway:micronaut-flyway-bom", version.ref = "micronaut-flyway" }
 micronaut-serde = { module = "io.micronaut.serde:micronaut-serde-bom", version.ref = "micronaut-serde" }
 micronaut-coherence = { module = "io.micronaut.coherence:micronaut-coherence-bom", version.ref = "micronaut-coherence" }
+#micronaut-sourcegen = { module = "io.micronaut.sourcegen:micronaut-sourcegen-bom", version.ref = "micronaut-sourcegen" }
 
 micronaut-docs = { module = "io.micronaut.docs:micronaut-docs-asciidoc-config-props", version.ref = "micronaut-docs" }
 
@@ -91,6 +93,7 @@ kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }
 
 managed-javax-persistence-api = { module = "javax.persistence:javax.persistence-api", version.ref = "managed-javax-persistence" }
 managed-jakarta-data-api = { module = 'jakarta.data:jakarta.data-api', version.ref = "managed-jakarta-data" }
+managed-jakarta-data-stateful = { module = 'jakarta.data:jakarta.data-stateful', version.ref = "managed-jakarta-data" }
 
 # JPA
 

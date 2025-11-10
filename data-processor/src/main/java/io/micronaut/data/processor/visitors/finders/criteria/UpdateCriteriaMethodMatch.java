@@ -266,14 +266,14 @@ public class UpdateCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         );
 
         if (result.isDto() && !result.isRuntimeDtoConversion()) {
-            List<SourcePersistentProperty> dtoProjectionProperties = getDtoProjectionProperties(matchContext.getRootEntity(), resultType);
+            List<SourcePersistentProperty> dtoProjectionProperties = getDtoProjectionProperties(matchContext.getRootEntity(), matchContext.getMethodElement(), resultType);
             if (!dtoProjectionProperties.isEmpty()) {
                 List<Selection<?>> selectionList = dtoProjectionProperties.stream()
                     .map(p -> {
                         if (matchContext.getQueryBuilder() instanceof SqlQueryBuilder) {
-                            return root.get(p.getName()).alias(p.getName());
-                        } else {
                             return root.get(p.getName());
+                        } else {
+                            return root.get(p.getName()).alias(p.getName());
                         }
                     })
                     .collect(Collectors.toList());

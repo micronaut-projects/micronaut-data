@@ -23,6 +23,7 @@ import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.EntityRepresentation;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Update;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
@@ -40,6 +41,7 @@ import io.micronaut.data.processor.visitors.finders.criteria.UpdateCriteriaMetho
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
+import io.micronaut.inject.processing.ProcessingException;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Path;
 
@@ -63,6 +65,17 @@ public final class UpdateMethodMatcher extends AbstractMethodMatcher {
             .tryMatchLastOccurrencePrefixed(QueryMatchId.RETURNING, null, RETURNING)
             .tryMatchFirstOccurrencePrefixed(QueryMatchId.PREDICATE, BY)
             .build());
+    }
+
+    @Override
+    public MethodMatch match(MethodMatchContext matchContext) {
+        if (matchContext.getMethodElement().hasStereotype(Update.class)) {
+            if (matchContext.getRootEntity() == null) {
+                throw new ProcessingException(matchContext.getMethodElement(), "Repository does not have a well-defined primary entity type");
+            }
+            return match(matchContext, List.of());
+        }
+        return super.match(matchContext);
     }
 
     @Override
