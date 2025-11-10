@@ -97,7 +97,7 @@ abstract sealed class AbstractRuntimePersistentEntityFrom<T, E> extends Abstract
                     parentPath,
                     associations,
                     (RuntimeAssociation<Y>) association,
-                    (path, persistentProperty) -> asPropertyPath(path, property, criteriaBuilder)
+                    (path, persistentProperty) -> asPropertyPath(path, (RuntimePersistentProperty<?>) persistentProperty, criteriaBuilder)
                 );
             }
             // Not joined association is being accessed
