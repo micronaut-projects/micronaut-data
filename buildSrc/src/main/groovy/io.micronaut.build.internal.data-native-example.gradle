@@ -35,6 +35,7 @@ graalvmNative {
                 logger.quiet("Enabling strict image heap!")
                 buildArgs.add("--strict-image-heap")
             }
+            buildArgs("--initialize-at-build-time=org.junit.platform.commons.logging.LoggerFactory\$DelegatingLogger")
         }
     }
 }
