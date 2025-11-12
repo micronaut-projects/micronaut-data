@@ -97,11 +97,10 @@ interface MyInterface extends GenericRepository<Company, Long> {
         given:
         def repository = buildRepository('test.MyInterface', """
 import io.micronaut.data.tck.entities.*;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
-
-@Repository
-@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class)
+@JdbcRepository(dialect = Dialect.ANSI)
 @io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<Company, Long> {
 

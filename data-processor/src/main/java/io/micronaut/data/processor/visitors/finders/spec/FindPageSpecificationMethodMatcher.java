@@ -15,10 +15,8 @@
  */
 package io.micronaut.data.processor.visitors.finders.spec;
 
-import java.util.regex.Matcher;
-
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.AbstractSpecificationMethodMatcher;
@@ -26,8 +24,8 @@ import io.micronaut.data.processor.visitors.finders.FindersUtils;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
 import io.micronaut.inject.ast.ClassElement;
-import io.micronaut.inject.ast.MethodElement;
-import io.micronaut.inject.ast.ParameterElement;
+
+import java.util.regex.Matcher;
 
 /**
  * Compilation time implementation of {@code Page find(Specification, Pageable)} for JPA.
@@ -53,46 +51,15 @@ public class FindPageSpecificationMethodMatcher extends AbstractSpecificationMet
     @Override
     protected MethodMatch match(MethodMatchContext matchContext, Matcher matcher) {
         ClassElement returnType = TypeUtils.getMethodProducingItemType(matchContext.getMethodElement());
-        if (returnType != null && (returnType.isAssignable("org.springframework.data.domain.Page") || returnType.isAssignable("io.micronaut.data.model.Page"))
-                && areParametersValid(matchContext.getMethodElement())) {
-            if (isFirstParameterMicronautDataQuerySpecification(matchContext.getMethodElement())) {
-                FindersUtils.InterceptorMatch e = FindersUtils.pickFindPageSpecInterceptor(matchContext, matchContext.getReturnType());
-                return mc -> new MethodMatchInfo(
-                        DataMethod.OperationType.QUERY,
-                        e.returnType(),
-                        e.interceptor()
-                );
-            }
-            if (isFirstParameterSpringJpaSpecification(matchContext.getMethodElement())) {
-                return mc -> new MethodMatchInfo(
-                        DataMethod.OperationType.QUERY,
-                        mc.getReturnType(),
-                        getInterceptorElement(mc, "io.micronaut.data.spring.jpa.intercept.FindPageSpecificationInterceptor")
-                );
-            }
-            return mc -> {
-                ClassElement classElement = getInterceptorElement(mc, "io.micronaut.data.jpa.repository.intercept.FindPageSpecificationInterceptor");
-                return new MethodMatchInfo(
-                    DataMethod.OperationType.QUERY,
-                    mc.getReturnType(),
-                    classElement);
-            };
+        if ((matchContext.isTypeInRole(returnType, TypeRole.PAGE) || matchContext.isTypeInRole(returnType, TypeRole.CURSORED_PAGE))
+            && isQuerySpecification(matchContext)) {
+            FindersUtils.InterceptorMatch e = FindersUtils.pickFindPageSpecInterceptor(matchContext, matchContext.getReturnType());
+            return mc -> new MethodMatchInfo(
+                DataMethod.OperationType.QUERY,
+                e.returnType(),
+                e.interceptor()
+            );
         }
         return null;
-    }
-
-    private boolean areParametersValid(@NonNull MethodElement methodElement) {
-        final ParameterElement[] parameters = methodElement.getParameters();
-        final int len = parameters.length;
-        if (len != 2) {
-            return false;
-        }
-        return parameters[1].getType().isAssignable("org.springframework.data.domain.Pageable") ||
-                parameters[1].getType().isAssignable("io.micronaut.data.model.Pageable");
-    }
-
-    @Override
-    protected boolean isMatchesParameters(MethodMatchContext matchContext) {
-        return super.isMatchesParameters(matchContext) || isFirstParameterMicronautDataQuerySpecification(matchContext.getMethodElement());
     }
 }

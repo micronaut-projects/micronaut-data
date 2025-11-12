@@ -279,22 +279,6 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
     }
 
     @Override
-    public int getOffset() {
-        if (limit != null) {
-            return (int) limit.offset();
-        }
-        return DelegateStoredQuery.super.getOffset();
-    }
-
-    @Override
-    public int getLimit() {
-        if (limit != null) {
-            return limit.maxResults();
-        }
-        return DelegateStoredQuery.super.getLimit();
-    }
-
-    @Override
     public Sort getSort() {
         return pageable.getSort();
     }

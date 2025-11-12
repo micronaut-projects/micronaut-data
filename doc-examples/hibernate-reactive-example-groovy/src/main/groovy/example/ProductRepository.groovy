@@ -3,7 +3,7 @@ package example
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.Repository
 import io.micronaut.data.jpa.annotation.EntityGraph
-import io.micronaut.data.jpa.repository.JpaSpecificationExecutor
+import io.micronaut.data.repository.jpa.JpaSpecificationExecutor
 import io.micronaut.data.repository.reactive.ReactorCrudRepository
 import reactor.core.publisher.Flux
 // tag::join[]

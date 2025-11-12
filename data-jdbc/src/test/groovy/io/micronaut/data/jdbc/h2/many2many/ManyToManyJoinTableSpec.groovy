@@ -2,27 +2,30 @@ package io.micronaut.data.jdbc.h2.many2many
 
 import groovy.transform.EqualsAndHashCode
 import io.micronaut.context.ApplicationContext
-import io.micronaut.core.annotation.AnnotationMetadata
-import io.micronaut.data.annotation.*
-import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.annotation.Embeddable
+import io.micronaut.data.annotation.EmbeddedId
+import io.micronaut.data.annotation.GeneratedValue
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.Join
+import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.MappedProperty
+import io.micronaut.data.annotation.Relation
 import io.micronaut.data.annotation.sql.JoinColumn
 import io.micronaut.data.annotation.sql.JoinTable
+import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.h2.H2DBProperties
 import io.micronaut.data.jdbc.h2.H2TestPropertyProvider
 import io.micronaut.data.model.Association
-import io.micronaut.data.model.query.QueryModel
-import io.micronaut.data.model.query.QueryParameter
 import io.micronaut.data.model.query.builder.QueryBuilder
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.repository.CrudRepository
+import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
+import jakarta.inject.Inject
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
-
-import jakarta.inject.Inject
 
 @H2DBProperties
 class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyProvider {
@@ -96,7 +99,7 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
 
     void "test build create Student tables"() {
         when:
-            SqlQueryBuilder2 encoder = new SqlQueryBuilder2()
+            SqlQueryBuilder encoder = new SqlQueryBuilder()
             def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Student))
 
         then:
@@ -108,7 +111,7 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
 
     void "test build create CourseRating tables"() {
         when:
-            SqlQueryBuilder2 encoder = new SqlQueryBuilder2()
+            SqlQueryBuilder encoder = new SqlQueryBuilder()
             def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(CourseRating))
 
         then:
@@ -119,7 +122,7 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
 
     void "test build create Course tables"() {
         when:
-            SqlQueryBuilder2 encoder = new SqlQueryBuilder2()
+            SqlQueryBuilder encoder = new SqlQueryBuilder()
             def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Course))
 
         then:
@@ -130,10 +133,11 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
 
     void "test build Student select with courses"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
-            def queryModel = QueryModel.from(getRuntimePersistentEntity(Student))
-            queryModel.join("courses", Join.Type.FETCH, null)
-            def q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel.idEq(new QueryParameter("id")))
+            RuntimeCriteriaBuilder builder = new RuntimeCriteriaBuilder()
+            def query = builder.createQuery(Student)
+            def root = query.from(Student)
+            root.join("courses", Join.Type.FETCH)
+            def q = query.where(builder.equal(root.id(), builder.parameter(Object))).build(new SqlQueryBuilder())
         then:
             q.query == 'SELECT student_."id",student_."name",student_courses_."id" AS courses_id,student_courses_."name" AS courses_name FROM "students"."m2m_student" student_ INNER JOIN "students"."m2m_student_course_association" student_courses_m2m_student_course_association_ ON student_."id"=student_courses_m2m_student_course_association_."st_id"  INNER JOIN "students"."m2m_course" student_courses_ ON student_courses_m2m_student_course_association_."cs_id"=student_courses_."id" WHERE (student_."id" = ?)'
             q.parameters == ['1': 'id']
@@ -141,10 +145,11 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
 
     void "test build Student select with ratings"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
-            def queryModel = QueryModel.from(getRuntimePersistentEntity(Student))
-            queryModel.join("ratings", Join.Type.FETCH, null)
-            def q = encoder.buildQuery(AnnotationMetadata.EMPTY_METADATA, queryModel.idEq(new QueryParameter("id")))
+            RuntimeCriteriaBuilder builder = new RuntimeCriteriaBuilder()
+            def query = builder.createQuery(Student)
+            def root = query.from(Student)
+            root.join("ratings", Join.Type.FETCH)
+            def q = query.where(builder.equal(root.id(), builder.parameter(Object))).build(new SqlQueryBuilder())
         then:
             q.query == 'SELECT student_."id",student_."name",student_ratings_."id" AS ratings_id,student_ratings_."student_id" AS ratings_student_id,student_ratings_."course_id" AS ratings_course_id,student_ratings_."rating" AS ratings_rating FROM "students"."m2m_student" student_ INNER JOIN "students"."m2m_course_rating" student_ratings_ ON student_."id"=student_ratings_."student_id" WHERE (student_."id" = ?)'
             q.parameters == ['1': 'id']
@@ -162,9 +167,8 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
 
     void "test build CourseRatingCompositeKey insert"() {
         when:
-            QueryBuilder encoder = new SqlQueryBuilder()
-            def e = getRuntimePersistentEntity(CourseRatingCompositeKey)
-            def insert = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, e)
+            RuntimeCriteriaBuilder builder = new RuntimeCriteriaBuilder()
+            def insert = builder.createCriteriaInsert(CourseRatingCompositeKey).build(new SqlQueryBuilder())
 
         then:
             insert.query == 'INSERT INTO "students"."m2m_course_rating_ck" ("rating","xyz_student_id","abc_course_id") VALUES (?,?,?)'

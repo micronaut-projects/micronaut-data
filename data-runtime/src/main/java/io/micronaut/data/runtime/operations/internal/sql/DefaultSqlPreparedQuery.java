@@ -37,10 +37,9 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.Sort.Order;
-import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder2;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.QueryResultInfo;
@@ -117,7 +116,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
     }
 
     @Override
-    public SqlQueryBuilder2 getQueryBuilder() {
+    public SqlQueryBuilder getQueryBuilder() {
         return sqlStoredQuery.getQueryBuilder();
     }
 
@@ -139,7 +138,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
     @Override
     public void prepare(E entity) {
         if (isExpandableQuery()) {
-            SqlQueryBuilder2 queryBuilder = sqlStoredQuery.getQueryBuilder();
+            SqlQueryBuilder queryBuilder = sqlStoredQuery.getQueryBuilder();
             String positionalParameterFormat = queryBuilder.positionalParameterFormat();
             StringBuilder q = new StringBuilder(sqlStoredQuery.getExpandableQueryParts()[0]);
             int queryParamIndex = 1;
@@ -311,7 +310,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
                                 Sort sort,
                                 String tableAlias,
                                 int paramIndex) {
-        SqlQueryBuilder2 queryBuilder = sqlStoredQuery.getQueryBuilder();
+        SqlQueryBuilder queryBuilder = sqlStoredQuery.getQueryBuilder();
         if (pageable instanceof CursoredPageable cursored) {
             cursored = enhancePageable(cursored, getPersistentEntity());
             query.append(buildCursorPagination(cursored, paramIndex, tableAlias));
@@ -326,12 +325,12 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
                                              Limit limit,
                                              Sort sort,
                                              String tableAlias) {
-        SqlQueryBuilder2 queryBuilder = sqlStoredQuery.getQueryBuilder();
+        SqlQueryBuilder queryBuilder = sqlStoredQuery.getQueryBuilder();
         appendSort(sort, query, queryBuilder, tableAlias);
         query.append(queryBuilder.buildLimitAndOffset(limit.maxResults(), limit.offset()));
     }
 
-    private void appendSort(Sort sort, StringBuilder added, SqlQueryBuilder2 queryBuilder, String tableAlias) {
+    private void appendSort(Sort sort, StringBuilder added, SqlQueryBuilder queryBuilder, String tableAlias) {
         RuntimePersistentEntity<E> persistentEntity = getPersistentEntity();
         if (sort.isSorted()) {
             added.append(queryBuilder.buildOrderBy("", persistentEntity, sqlStoredQuery.getAnnotationMetadata(), sort, isNative(), tableAlias));

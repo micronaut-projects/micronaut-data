@@ -16,6 +16,7 @@ import jakarta.persistence.criteria.CriteriaDelete
 import jakarta.persistence.criteria.CriteriaQuery
 import jakarta.persistence.criteria.CriteriaUpdate
 import jakarta.persistence.criteria.Expression
+import jakarta.persistence.criteria.Join
 import jakarta.persistence.criteria.JoinType
 import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Selection
@@ -232,6 +233,50 @@ class StaticCriteriaSpec extends AbstractCriteriaSpec {
                     'SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget" FROM "test" test_ INNER JOIN "other_entity" test_others_ ON test_."id"=test_others_."test_id"',
                     'SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget" FROM "test" test_ INNER JOIN "other_entity" test_others_ ON test_."id"=test_others_."test_id"',
                     'SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget" FROM "test" test_ INNER JOIN "other_entity" test_others_ ON test_."id"=test_others_."test_id"'
+            ]
+    }
+
+    @Unroll
+    void "test fetch"(Specification specification) {
+        given:
+            PersistentEntityRoot entityRoot = createRoot(criteriaQuery)
+            def predicate = specification.toPredicate(entityRoot, criteriaQuery, criteriaBuilder)
+            if (predicate) {
+                criteriaQuery.where(predicate)
+            }
+            String sqlQuery = getSqlQuery(criteriaQuery)
+
+        expect:
+            sqlQuery == expectedQuery
+
+        where:
+            specification << [
+                    { root, query, cb ->
+                        def fetch = root.fetch(Test_.others)
+                        assert fetch instanceof Join
+                        assert root.getFetches().contains(fetch)
+                        assert root.getFetches().size() == 1
+                        def fetch2 = root.fetch(Test_.others)
+                        assert fetch2 instanceof Join
+                        assert root.getFetches().contains(fetch2)
+                        assert root.getFetches().size() == 1
+                        return null
+                    } as Specification,
+                    { root, query, cb ->
+                        def fetch = root.fetch("others")
+                        assert fetch instanceof Join
+                        assert root.getFetches().contains(fetch)
+                        assert root.getFetches().size() == 1
+                        def fetch2 = root.fetch("others")
+                        assert fetch2 instanceof Join
+                        assert root.getFetches().contains(fetch2)
+                        assert root.getFetches().size() == 1
+                        return null
+                    } as Specification,
+            ]
+            expectedQuery << [
+                    'SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget",test_others_."id" AS others_id,test_others_."name" AS others_name,test_others_."enabled2" AS others_enabled2,test_others_."enabled" AS others_enabled,test_others_."age" AS others_age,test_others_."amount" AS others_amount,test_others_."budget" AS others_budget,test_others_."test_id" AS others_test_id,test_others_."simple_id" AS others_simple_id FROM "test" test_ INNER JOIN "other_entity" test_others_ ON test_."id"=test_others_."test_id"',
+                    'SELECT test_."id",test_."name",test_."enabled2",test_."enabled",test_."age",test_."amount",test_."budget",test_others_."id" AS others_id,test_others_."name" AS others_name,test_others_."enabled2" AS others_enabled2,test_others_."enabled" AS others_enabled,test_others_."age" AS others_age,test_others_."amount" AS others_amount,test_others_."budget" AS others_budget,test_others_."test_id" AS others_test_id,test_others_."simple_id" AS others_simple_id FROM "test" test_ INNER JOIN "other_entity" test_others_ ON test_."id"=test_others_."test_id"'
             ]
     }
 

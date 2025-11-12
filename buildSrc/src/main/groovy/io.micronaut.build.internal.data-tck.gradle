@@ -1,12 +1,7 @@
 plugins {
     id "groovy"
     id "io.micronaut.build.internal.data-base"
-}
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
-    }
+    id "io.micronaut.build.internal.java-base"
 }
 
 ext {

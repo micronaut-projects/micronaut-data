@@ -18,7 +18,7 @@ package io.micronaut.data.runtime.criteria;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.ExpressionType;
-import io.micronaut.data.model.jpa.criteria.PersistentEntityCommonAbstractCriteria;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -39,17 +39,14 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupport
  * @since 3.2
  */
 @Internal
-final class RuntimePersistentEntityRoot<T> extends AbstractRuntimePersistentEntityJoinSupport<T, T>
-    implements RuntimePersistentEntityPath<T>, PersistentEntityRoot<T> {
+final class RuntimePersistentEntityRoot<T> extends AbstractRuntimePersistentEntityFrom<T, T>
+    implements PersistentEntityPath<T>, PersistentEntityRoot<T> {
 
-    private final PersistentEntityCommonAbstractCriteria commonAbstractCriteria;
     private final RuntimePersistentEntity<T> runtimePersistentEntity;
 
-    public RuntimePersistentEntityRoot(PersistentEntityCommonAbstractCriteria commonAbstractCriteria,
-                                       RuntimePersistentEntity<T> runtimePersistentEntity,
+    public RuntimePersistentEntityRoot(RuntimePersistentEntity<T> runtimePersistentEntity,
                                        CriteriaBuilder criteriaBuilder) {
         super(criteriaBuilder);
-        this.commonAbstractCriteria = commonAbstractCriteria;
         this.runtimePersistentEntity = runtimePersistentEntity;
     }
 

@@ -21,6 +21,9 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaInsert;
+import io.micronaut.data.processor.model.SourcePersistentEntity;
+import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ParameterElement;
 import jakarta.persistence.criteria.ParameterExpression;
 
@@ -95,6 +98,24 @@ public interface SourcePersistentEntityCriteriaBuilder extends PersistentEntityC
 
     @Override
     <T> SourcePersistentEntityCriteriaUpdate<T> createCriteriaUpdate(Class<T> targetEntity);
+
+    /**
+     * The criteria insert.
+     * @param targetEntity The target entity
+     * @param <T> The type
+     * @return The criteria insert
+     */
+    @NonNull
+    <T> PersistentEntityCriteriaInsert<T> createCriteriaInsert(ClassElement targetEntity);
+
+    /**
+     * The criteria insert.
+     * @param targetEntity The target entity
+     * @param <T> The type
+     * @return The criteria insert
+     */
+    @NonNull
+    <T> PersistentEntityCriteriaInsert<T> createCriteriaInsert(SourcePersistentEntity targetEntity);
 
     @Override
     SourcePersistentEntityCriteriaQuery<Object> createQuery();

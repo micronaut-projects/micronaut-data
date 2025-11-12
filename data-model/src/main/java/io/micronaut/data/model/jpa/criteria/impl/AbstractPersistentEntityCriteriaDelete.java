@@ -26,7 +26,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
-import io.micronaut.data.model.query.builder.QueryBuilder2;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
@@ -49,8 +49,7 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupport
  * @since 3.2
  */
 @Internal
-public abstract class AbstractPersistentEntityCriteriaDelete<T> implements PersistentEntityCriteriaDelete<T>,
-    QueryResultPersistentEntityCriteriaQuery {
+public abstract class AbstractPersistentEntityCriteriaDelete<T> implements PersistentEntityCriteriaDelete<T> {
 
     protected Predicate predicate;
     protected PersistentEntityRoot<T> entityRoot;
@@ -62,7 +61,7 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
     }
 
     @Override
-    public QueryResult buildQuery(AnnotationMetadata annotationMetadata, QueryBuilder2 queryBuilder) {
+    public QueryResult build(AnnotationMetadata annotationMetadata, QueryBuilder queryBuilder) {
         return queryBuilder.buildDelete(
             annotationMetadata,
             new DeleteQueryDefinitionImpl(entityRoot.getPersistentEntity(), predicate, returning)
@@ -154,7 +153,7 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
         return this;
     }
 
-    private static final class DeleteQueryDefinitionImpl extends AbstractPersistentEntityCriteriaQuery.BaseQueryDefinitionImpl implements QueryBuilder2.DeleteQueryDefinition {
+    private static final class DeleteQueryDefinitionImpl extends AbstractPersistentEntityCriteriaQuery.BaseQueryDefinitionImpl implements QueryBuilder.DeleteQueryDefinition {
 
         private final Selection<?> returningSelection;
 

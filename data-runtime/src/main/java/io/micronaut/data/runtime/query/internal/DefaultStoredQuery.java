@@ -80,7 +80,6 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     private final boolean isOptimisticLock;
     private final boolean isNative;
     private final boolean isProcedure;
-    private final boolean isNumericPlaceHolder;
     private final boolean hasPageable;
     private final AnnotationMetadata annotationMetadata;
     private final boolean isCount;
@@ -151,7 +150,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
         this.annotationMetadata = method.getAnnotationMetadata();
         this.isProcedure = dataMethodQuery.isTrue(DataMethodQuery.META_MEMBER_PROCEDURE);
         this.hasResultConsumer = method.stringValue(DATA_METHOD_ANN_NAME, "sqlMappingFunction").isPresent();
-        this.isNumericPlaceHolder = method
+        boolean isNumericPlaceHolder = method
                 .classValue(RepositoryConfiguration.class, "queryBuilder")
                 .map(c -> c == SqlQueryBuilder.class).orElse(false);
         this.hasPageable = dataMethodQuery.stringValue(TypeRole.PAGEABLE).isPresent() ||
@@ -325,15 +324,6 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
         return queryParameters;
     }
 
-    @NonNull
-    @Override
-    public Set<JoinPath> getJoinFetchPaths() {
-        if (joinFetchPaths == null) {
-            this.joinFetchPaths = Collections.unmodifiableSet(AssociationUtils.getJoinFetchPaths(method));
-        }
-        return joinFetchPaths;
-    }
-
     @Override
     public Set<JoinPath> getJoinPaths() {
         if (joinPaths == null) {
@@ -347,11 +337,6 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
      */
     public ExecutableMethod<?, ?> getMethod() {
         return method;
-    }
-
-    @Override
-    public boolean isSingleResult() {
-        return !isCount() && getJoinFetchPaths().isEmpty();
     }
 
     @Override
@@ -389,16 +374,6 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     }
 
     /**
-     * Is this a raw SQL query.
-     *
-     * @return The raw sql query.
-     */
-    @Override
-    public boolean useNumericPlaceholders() {
-        return isNumericPlaceHolder;
-    }
-
-    /**
      * @return Whether the query is a DTO query
      */
     @Override
@@ -419,16 +394,6 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     @Override
     public DataType getResultDataType() {
         return resultDataType;
-    }
-
-    /**
-     * @return The ID type
-     */
-    @SuppressWarnings("unchecked")
-    @Override
-    public Optional<Class<?>> getEntityIdentifierType() {
-        Optional o = annotationMetadata.classValue(DATA_METHOD_ANN_NAME, DataMethod.META_MEMBER_ID_TYPE);
-        return o;
     }
 
     /**
@@ -460,12 +425,6 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     @Override
     public String getName() {
         return method.getMethodName();
-    }
-
-    @Override
-    @NonNull
-    public Class<?>[] getArgumentTypes() {
-        return method.getArgumentTypes();
     }
 
     @Override

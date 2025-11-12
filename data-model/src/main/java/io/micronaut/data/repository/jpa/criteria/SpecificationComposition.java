@@ -30,7 +30,7 @@ import java.io.Serializable;
 /**
  * Helper class to support specification compositions.
  * <p>
- * Based on Spring Data's {@link org.springframework.data.jpa.domain.SpecificationComposition}.
+ * Based on Spring Data's org.springframework.data.jpa.domain.SpecificationComposition.
  *
  * @author Sebastian Staudt
  * @author Oliver Gierke

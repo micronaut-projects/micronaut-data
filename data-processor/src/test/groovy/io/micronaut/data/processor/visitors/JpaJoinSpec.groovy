@@ -83,13 +83,13 @@ interface MyInterface extends GenericRepository<Book, Long> {
 
     @Join("author")
     List<Book> list();
-    
+
     @Join("author")
     Book find(String title);
-    
+
     @Join("author")
     Book findByTitle(String title);
-    
+
     @Join("author")
     @Join("publisher")
     Book getByTitle(String title);

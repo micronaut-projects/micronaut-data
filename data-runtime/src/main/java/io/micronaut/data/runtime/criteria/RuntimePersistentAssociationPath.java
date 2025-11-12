@@ -21,10 +21,14 @@ import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityPath;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Fetch;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Path;
+import jakarta.persistence.metamodel.Attribute;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,8 +42,8 @@ import java.util.List;
  * @since 3.2
  */
 @Internal
-class RuntimePersistentAssociationPath<Owner, E> extends AbstractRuntimePersistentEntityJoinSupport<Owner, E>
-    implements RuntimePersistentEntityPath<E>, PersistentAssociationPath<Owner, E> {
+sealed class RuntimePersistentAssociationPath<Owner, E> extends AbstractRuntimePersistentEntityFrom<Owner, E>
+    implements PersistentEntityPath<E>, PersistentAssociationPath<Owner, E>, Fetch<Owner, E> permits RuntimePersistentCollectionAssociationPath, RuntimePersistentListAssociationPath, RuntimePersistentSetAssociationPath {
 
     private final PersistentEntityFrom<?, Owner> parent;
     private final RuntimeAssociation<Owner> association;
@@ -123,6 +127,16 @@ class RuntimePersistentAssociationPath<Owner, E> extends AbstractRuntimePersiste
         newAssociations.addAll(associations);
         newAssociations.add(association);
         return newAssociations;
+    }
+
+    @Override
+    public Attribute<? super Owner, ?> getAttribute() {
+        return PersistentAssociationPath.super.getAttribute();
+    }
+
+    @Override
+    public JoinType getJoinType() {
+        return PersistentAssociationPath.super.getJoinType();
     }
 
     @Override

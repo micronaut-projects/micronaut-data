@@ -355,7 +355,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
                                                ResultCollector<R> resultCollector) {
         if (sort != null && sort.isSorted()) {
             queryStr += QUERY_BUILDER.buildOrderBy(queryStr, getEntity(preparedQuery.getRootEntity()), AnnotationMetadata.EMPTY_METADATA, sort,
-                preparedQuery.isNative()).getQuery();
+                preparedQuery.isNative(), null);
         }
         if (preparedQuery.isDtoProjection()) {
             P q;
@@ -568,7 +568,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
             }
             String[] parts = path.split("\\.");
             if (parts.length == 1) {
-                AttributeNode<?> attrNode = rootGraph.findAttributeNode(path);
+                AttributeNode<?> attrNode = rootGraph.getAttributeNode(path);
                 if (attrNode == null) {
                     rootGraph.addAttributeNode(path);
                 }
@@ -577,12 +577,12 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
                 for (int i = 0; i < parts.length; i++) {
                     String part = parts[i];
                     // Check if the node already exists at this level
-                    AttributeNode<?> attrNode = graph.findAttributeNode(part);
+                    AttributeNode<?> attrNode = graph.getAttributeNode(part);
                     if (attrNode != null) {
                         SubGraph<?> subGraph = attrNode.getSubGraphs().isEmpty() ? null : attrNode.getSubGraphs().values().iterator().next();
                         // If this is not a leaf and the subgraph doesn't exist, create it
                         if (subGraph == null && i < parts.length - 1) {
-                            graph = graph.addSubGraph(part);
+                            graph = graph.addSubgraph(part);
                         } else if (subGraph != null) {
                             // Otherwise, keep the existing one for the child node
                             graph = subGraph;
@@ -592,7 +592,7 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
                         graph.addAttributeNode(part);
                     } else {
                         // Otherwise, create a subgraph
-                        graph = graph.addSubGraph(part);
+                        graph = graph.addSubgraph(part);
                     }
                 }
             }

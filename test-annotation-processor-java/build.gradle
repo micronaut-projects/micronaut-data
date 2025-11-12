@@ -1,4 +1,3 @@
-
 plugins {
     id "io.micronaut.build.internal.data-tck"
 }
@@ -12,6 +11,7 @@ dependencies {
     testImplementation mn.micronaut.inject.java.test
     testImplementation libs.jupiter.api
     testRuntimeOnly libs.jupiter.engine
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
 
 configurations.configureEach {

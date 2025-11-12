@@ -199,10 +199,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
 
     @Override
     protected Stage.SelectionQuery<?> createQuery(Stage.Session session, String query, Class<?> resultType) {
-        if (resultType == null) {
-            return session.createQuery(query);
-        }
-        return session.createQuery(query, resultType);
+        return session.createSelectionQuery(query, resultType);
     }
 
     @Override
@@ -467,12 +464,12 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
 
     @Override
     public Mono<Number> updateAll(CriteriaUpdate<Number> query) {
-        return withSession(session -> helper.monoFromCompletionStage(() -> session.createQuery(query).executeUpdate()).map(n -> n));
+        return withSession(session -> helper.monoFromCompletionStage(() -> session.createMutationQuery(query).executeUpdate()).map(n -> n));
     }
 
     @Override
     public Mono<Number> deleteAll(CriteriaDelete<Number> query) {
-        return withSession(session -> helper.monoFromCompletionStage(() -> session.createQuery(query).executeUpdate()).map(n -> n));
+        return withSession(session -> helper.monoFromCompletionStage(() -> session.createMutationQuery(query).executeUpdate()).map(n -> n));
     }
 
     private final class ListResultCollector<R> extends ResultCollector<R> {

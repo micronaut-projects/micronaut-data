@@ -36,7 +36,7 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.notSupport
  * @since 3.2
  */
 @Internal
-final class SourcePersistentEntityRoot<T> extends AbstractSourcePersistentEntityJoinSupport<T, T>
+final class SourcePersistentEntityRoot<T> extends AbstractSourcePersistentEntityFrom<T, T>
     implements SourcePersistentEntityPath<T>, PersistentEntityRoot<T> {
 
     private final SourcePersistentEntity sourcePersistentEntity;

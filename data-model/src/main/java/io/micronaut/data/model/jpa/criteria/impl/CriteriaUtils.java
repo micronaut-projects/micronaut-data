@@ -182,31 +182,36 @@ public final class CriteriaUtils {
     }
 
     private static void extractPredicateParameters(Expression<?> predicate, Set<ParameterExpression<?>> parameters) {
-        if (predicate instanceof LiteralExpression<?>) {
-            return;
-        } else if (predicate instanceof BinaryPredicate binaryPredicate) {
-            if (binaryPredicate.getLeftExpression() instanceof ParameterExpression<?> parameterExpression) {
-                parameters.add(parameterExpression);
+        switch (predicate) {
+            case LiteralExpression<?> ignored -> {
             }
-            if (binaryPredicate.getRightExpression() instanceof ParameterExpression<?> parameterExpression) {
-                parameters.add(parameterExpression);
-            }
-        } else if (predicate instanceof InPredicate<?> pp) {
-            for (Expression<?> expression : pp.getValues()) {
-                if (expression instanceof ParameterExpression<?> parameterExpression) {
+            case BinaryPredicate binaryPredicate -> {
+                if (binaryPredicate.getLeftExpression() instanceof ParameterExpression<?> parameterExpression) {
+                    parameters.add(parameterExpression);
+                }
+                if (binaryPredicate.getRightExpression() instanceof ParameterExpression<?> parameterExpression) {
                     parameters.add(parameterExpression);
                 }
             }
-        } else if (predicate instanceof ConjunctionPredicate conjunctionPredicate) {
-            for (IExpression<Boolean> pred : conjunctionPredicate.getPredicates()) {
-                extractPredicateParameters(pred, parameters);
+            case InPredicate<?> pp -> {
+                for (Expression<?> expression : pp.getValues()) {
+                    if (expression instanceof ParameterExpression<?> parameterExpression) {
+                        parameters.add(parameterExpression);
+                    }
+                }
             }
-        } else if (predicate instanceof DisjunctionPredicate disjunctionPredicate) {
-            for (IExpression<Boolean> pred : disjunctionPredicate.getPredicates()) {
-                extractPredicateParameters(pred, parameters);
+            case ConjunctionPredicate conjunctionPredicate -> {
+                for (IExpression<Boolean> pred : conjunctionPredicate.getPredicates()) {
+                    extractPredicateParameters(pred, parameters);
+                }
             }
-        } else {
-            throw new IllegalStateException("Unsupported predicate type: " + predicate.getClass().getSimpleName());
+            case DisjunctionPredicate disjunctionPredicate -> {
+                for (IExpression<Boolean> pred : disjunctionPredicate.getPredicates()) {
+                    extractPredicateParameters(pred, parameters);
+                }
+            }
+            default ->
+                throw new IllegalStateException("Unsupported predicate type: " + predicate.getClass().getSimpleName());
         }
     }
 

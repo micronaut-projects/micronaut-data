@@ -20,7 +20,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
-import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityJoinSupport;
+import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityFrom;
 import io.micronaut.data.model.jpa.criteria.impl.DefaultEmbeddedPersistentPropertyPath;
 import io.micronaut.data.processor.model.SourceAssociation;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The internal source implementation of {@link AbstractPersistentEntityJoinSupport}.
+ * The internal source implementation of {@link AbstractPersistentEntityFrom}.
  *
  * @param <T> The association entity type
  * @param <E> The association entity type
@@ -40,11 +40,11 @@ import java.util.List;
  * @since 3.2
  */
 @Internal
-abstract class AbstractSourcePersistentEntityJoinSupport<T, E> extends AbstractPersistentEntityJoinSupport<T, E> {
+abstract class AbstractSourcePersistentEntityFrom<T, E> extends AbstractPersistentEntityFrom<T, E> {
 
     protected final CriteriaBuilder criteriaBuilder;
 
-    AbstractSourcePersistentEntityJoinSupport(CriteriaBuilder criteriaBuilder) {
+    AbstractSourcePersistentEntityFrom(CriteriaBuilder criteriaBuilder) {
         this.criteriaBuilder = criteriaBuilder;
     }
 

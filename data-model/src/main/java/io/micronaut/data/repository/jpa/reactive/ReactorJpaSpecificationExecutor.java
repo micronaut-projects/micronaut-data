@@ -53,10 +53,10 @@ public interface ReactorJpaSpecificationExecutor<T> extends ReactiveStreamsJpaSp
     Flux<T> findAll(@Nullable PredicateSpecification<T> spec);
 
     @Override
-    Mono<Page<T>> findAll(QuerySpecification<T> spec, Pageable pageable);
+    Mono<Page<T>> findAll(@Nullable QuerySpecification<T> spec, Pageable pageable);
 
     @Override
-    Mono<Page<T>> findAll(PredicateSpecification<T> spec, Pageable pageable);
+    Mono<Page<T>> findAll(@Nullable PredicateSpecification<T> spec, Pageable pageable);
 
     @Override
     @NonNull
@@ -76,11 +76,11 @@ public interface ReactorJpaSpecificationExecutor<T> extends ReactiveStreamsJpaSp
 
     @Override
     @NonNull
-    Mono<Boolean> exists(QuerySpecification<T> spec);
+    Mono<Boolean> exists(@Nullable QuerySpecification<T> spec);
 
     @Override
     @NonNull
-    Mono<Boolean> exists(PredicateSpecification<T> spec);
+    Mono<Boolean> exists(@Nullable PredicateSpecification<T> spec);
 
     @Override
     @NonNull

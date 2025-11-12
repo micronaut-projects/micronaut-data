@@ -232,6 +232,20 @@ public class PersistentPropertyPath {
     }
 
     /**
+     * @return The array path
+     */
+    @NonNull
+    public List<PersistentProperty> getPropertyPath() {
+        if (associations.isEmpty()) {
+            return List.of(property);
+        }
+        List<PersistentProperty> props = new ArrayList<>(associations.size() + 1);
+        props.addAll(associations);
+        props.add(property);
+        return props;
+    }
+
+    /**
      * Find the owner of the possible embedded property.
      *
      * @return the optional owner
