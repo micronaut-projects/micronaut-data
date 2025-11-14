@@ -121,12 +121,16 @@ import static io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils.requirePro
 public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     public static final String ORDER_BY_CLAUSE = " ORDER BY ";
     protected static final String SELECT_CLAUSE = "SELECT ";
+    protected static final String SELECT_JSON_CLAUSE = "SELECT JSON ";
     protected static final String AS_CLAUSE = " AS ";
     protected static final String FROM_CLAUSE = " FROM ";
     protected static final String WHERE_CLAUSE = " WHERE ";
+    protected static final String WITH_CLAUSE = " WITH ";
     protected static final char COMMA = ',';
     protected static final char CLOSE_BRACKET = ')';
     protected static final char OPEN_BRACKET = '(';
+    protected static final char CLOSE_CURLY_BRACKET = '}';
+    protected static final char OPEN_CURLY_BRACKET = '{';
     protected static final char SPACE = ' ';
     protected static final char DOT = '.';
     protected static final String NOT = "NOT";
@@ -372,7 +376,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                              PersistentAssociationPath joinAssociation,
                              PersistentEntity associationOwner,
                              String currentJoinAlias,
-                             String lastJoinAlias) {
+                             String lastJoinAlias,
+                             boolean buildForJsonView) {
     }
 
     /**
@@ -1733,7 +1738,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 joinAssociation,
                 findOwner(entity, joinAssociation),
                 joinPath.getAlias().orElseThrow(),
-                lastJoinAlias
+                lastJoinAlias,
+                false
             );
         }
 

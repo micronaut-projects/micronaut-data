@@ -8,7 +8,7 @@ import io.micronaut.data.annotation.Relation;
 
 import java.time.LocalDateTime;
 
-@JsonView(value = "CONTACT_VIEW", alias = "cv")
+@JsonView(value = "CONTACT_VIEW", alias = "cv", entity = Contact.class)
 public class ContactView {
     @Id
     @GeneratedValue(GeneratedValue.Type.IDENTITY)

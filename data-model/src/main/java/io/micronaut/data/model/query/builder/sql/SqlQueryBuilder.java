@@ -25,11 +25,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.EntityRepresentation;
-import io.micronaut.data.annotation.GeneratedValue;
-import io.micronaut.data.annotation.Join;
-import io.micronaut.data.annotation.Relation;
-import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.*;
 import io.micronaut.data.annotation.sql.JoinColumn;
 import io.micronaut.data.annotation.sql.JoinColumns;
 import io.micronaut.data.annotation.sql.SqlMembers;
@@ -235,11 +231,16 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     @Experimental
     @NonNull
     public String[] buildDropTableStatements(@NonNull PersistentEntity entity) {
+        List<String> dropStatements = new ArrayList<>();
+        if (entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
+            String sql = "DROP " + getTableName(entity);
+            dropStatements.add(sql);
+            return dropStatements.toArray(new String[0]);
+        }
         String tableName = getTableName(entity);
         boolean escape = shouldEscape(entity);
         String sql = "DROP TABLE " + tableName;
         Collection<Association> foreignKeyAssociations = SqlQueryBuilderUtils.getJoinTableAssociations(entity);
-        List<String> dropStatements = new ArrayList<>();
         for (Association association : foreignKeyAssociations) {
             AnnotationMetadata associationMetadata = association.getAnnotationMetadata();
             NamingStrategy namingStrategy = getNamingStrategy(entity);
@@ -316,12 +317,17 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     @Experimental
     @NonNull
     public String[] buildCreateTableStatements(@NonNull PersistentEntity entity) {
+        List<String> createStatements = new ArrayList<>();
+        if (entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
+            if (dialect != Dialect.ORACLE) throw new UnsupportedOperationException("JSON View is not supported for dialect " + dialect);
+            addViewCreateStatement(createStatements, entity);
+            return createStatements.toArray(new String[0]);
+        }
         List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(entity);
         assert CollectionUtils.isNotEmpty(tables);
         boolean escape = shouldEscape(entity);
         String schema = SqlQueryBuilderUtils.getSchemaName(entity);
 
-        List<String> createStatements = new ArrayList<>();
         if (StringUtils.isNotEmpty(schema)) {
             createStatements.add("CREATE SCHEMA " + (escape ? quote(schema, true) : schema) + ";");
         }
@@ -349,6 +355,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         for (PersistentEntity entity : entities) {
             String schema = SqlQueryBuilderUtils.getSchemaName(entity);
             boolean escape = shouldEscape(entity);
+            if (entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
+                addViewCreateStatement(createStatements, entity);
+                continue;
+            }
             List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(entity);
             if (StringUtils.isNotEmpty(schema)) {
                 String createSchemaStatement = "CREATE SCHEMA " + (escape ? quote(schema) : schema) + ";";
@@ -366,6 +376,126 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
 
         return createStatements.toArray(new String[0]);
+    }
+
+    private void addViewCreateStatement(List<String> createStatements, PersistentEntity viewEntity) {
+        Optional<PersistentEntity> entityOptional = viewEntity.getJsonViewEntity();
+        if (entityOptional.isEmpty()) return;
+        PersistentEntity entity = entityOptional.get();
+        String viewName = viewEntity.getPersistedName();
+        StringBuilder sb = new StringBuilder("CREATE JSON RELATIONAL DUALITY VIEW ")
+            .append(viewName)
+            .append(AS_CLAUSE)
+            .append(SELECT_JSON_CLAUSE)
+            .append(OPEN_CURLY_BRACKET);
+        generateMainPart(sb, viewEntity, entity);
+        sb.append(";");
+        createStatements.add(sb.toString());
+    }
+
+    private void generateMainPart(StringBuilder sb, PersistentEntity viewEntity, PersistentEntity entity) {
+        String entityName = entity.getPersistedName();
+        String alias = entity.getAliasName();
+        for (PersistentProperty identity: viewEntity.getIdentityProperties()) {
+            String viewPropertyName = identity.getName();
+            String entityPersistedPropertyName;
+            if (identity.getAnnotationMetadata().hasAnnotation(MappedProperty.class)) {
+                entityPersistedPropertyName = identity.getPersistedName();
+            } else {
+                entityPersistedPropertyName = entity.getPropertyByName(viewPropertyName).getPersistedName();
+            }
+            sb.append("'")
+                .append(viewPropertyName)
+                .append("': ")
+                .append(alias)
+                .append(DOT)
+                .append(entityPersistedPropertyName)
+                .append(COMMA);
+        }
+        for (PersistentProperty column : viewEntity.getPersistentProperties()) {
+            String columnPropertyName = column.getName();
+            if (column instanceof Association association) {
+                Relation.Kind kind = association.getKind();
+                switch (kind) {
+                    case ONE_TO_ONE, MANY_TO_ONE, EMBEDDED -> {
+                        sb.append("'").append(columnPropertyName).append("': (");
+                        sb.append(generateCreateAssociationQuery(association));
+                        sb.append("), ");
+                    }
+                    case ONE_TO_MANY, MANY_TO_MANY -> {
+                        sb.append("'").append(columnPropertyName).append("': [");
+                        sb.append(generateCreateAssociationQuery(association));
+                        sb.append("], ");
+                    }
+                }
+            }
+            else if (column.getDataType() != DataType.OBJECT) {
+                String entityPersistedPropertyName;
+                if (column.getAnnotationMetadata().hasAnnotation(MappedProperty.class)) {
+                    entityPersistedPropertyName = column.getPersistedName();
+                } else {
+                    entityPersistedPropertyName = entity.getPropertyByName(columnPropertyName).getPersistedName();
+                }
+                sb.append("'")
+                    .append(columnPropertyName)
+                    .append("': ")
+                    .append(alias)
+                    .append(DOT)
+                    .append(entityPersistedPropertyName)
+                    .append(COMMA);
+            }
+        }
+        sb.append(CLOSE_CURLY_BRACKET)
+            .append(FROM_CLAUSE)
+            .append(entityName)
+            .append(SPACE)
+            .append(alias)
+            .append(WITH_CLAUSE);
+        JsonView.Operation[] supportedOperations = viewEntity.getViewSupportedOperations();
+        for (JsonView.Operation operation: supportedOperations) {
+            sb.append(operation).append(SPACE);
+        }
+    }
+
+    private String generateCreateAssociationQuery(Association association) {
+        PersistentEntity associatedViewEntity = association.getAssociatedEntity();
+        Optional<PersistentEntity> associatedEntityOptional = associatedViewEntity.getJsonSubViewEntity();
+        // This return here just to satisfy to compiler
+        if (associatedEntityOptional.isEmpty()) return "";
+        PersistentEntity associatedEntity = associatedEntityOptional.get();
+        StringBuilder sb = new StringBuilder(SELECT_JSON_CLAUSE).append(OPEN_CURLY_BRACKET);
+        generateMainPart(sb, associatedViewEntity, associatedEntity);
+
+        PersistentEntity associationOwner = association.getOwner();
+        PersistentEntity associationOwnerEntity = null;
+        if (associationOwner.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
+            Optional<PersistentEntity> associationOwnerEntityOptional = associationOwner.getJsonViewEntity();
+            if (associationOwnerEntityOptional.isPresent()) {
+                associationOwnerEntity = associationOwnerEntityOptional.get();
+            }
+        } else {
+            Optional<PersistentEntity> associationOwnerEntityOptional = associationOwner.getJsonSubViewEntity();
+            if (associationOwnerEntityOptional.isPresent()) {
+                associationOwnerEntity = associationOwnerEntityOptional.get();
+            }
+        }
+
+        PersistentAssociationPath joinAssociation;
+
+        if (associationOwnerEntity.getPropertyByName(association.getName()) != null) {
+            joinAssociation = new PersistentAssociationPath(
+                new ArrayList<>(),
+                (Association) associationOwnerEntity.getPropertyByName(association.getName())
+            );
+        } else {
+            joinAssociation = new PersistentAssociationPath(
+                new ArrayList<>(),
+                association
+            );
+        }
+
+        buildJoin(null, sb, null, joinAssociation, associationOwnerEntity, associatedEntity.getAliasName(), associationOwnerEntity.getAliasName(), true);
+        return sb.toString();
     }
 
     private void addTable(SqlTableMapping table, Map<String, SqlTableMapping> sqlTableMappingByTableName) {
@@ -474,7 +604,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 addToCollectionIfNotContains(createStatements, sequence.definition());
             } else {
                 GeneratedValue.Type idGeneratorType = sequence.generatedValueType().orElseGet(() -> defaultSelectAutoStrategy(sequence.dataType(), dialect));
-                boolean isSequence = idGeneratorType == GeneratedValue.Type.SEQUENCE;
+                boolean isSequence = idGeneratorType == SEQUENCE;
                 if (isSequence) {
                     addToCollectionIfNotContains(createStatements, createSequenceStmt(table.schema(), table.name(), sequence.definedName(), escape));
                 }
@@ -847,7 +977,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                             GeneratedValue.Type idGeneratorType = generated
                                 .flatMap(av -> av.enumValue(GeneratedValue.Type.class))
                                 .orElseGet(() -> selectAutoStrategy(property));
-                            if (idGeneratorType == GeneratedValue.Type.SEQUENCE) {
+                            if (idGeneratorType == SEQUENCE) {
                                 isSequence = true;
                             } else if (dialect != Dialect.MYSQL || property.getDataType() != DataType.UUID) {
                                 // Property skipped
@@ -1025,13 +1155,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     @Override
-    protected void buildJoin(String joinType,
+    protected void buildJoin(@Nullable String joinType,
                              StringBuilder query,
-                             QueryState queryState,
+                             @Nullable QueryState queryState,
                              PersistentAssociationPath joinAssociation,
                              PersistentEntity associationOwner,
                              String currentJoinAlias,
-                             String lastJoinAlias) {
+                             String lastJoinAlias,
+                             boolean buildForJsonView) {
         Association association = joinAssociation.getAssociation();
         List<Association> joinAssociationsPath = joinAssociation.getAssociations();
         PersistentEntity associatedEntity = association.getAssociatedEntity();
@@ -1090,7 +1221,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 joinTableAlias,
                 lastJoinAlias,
                 ownerJoinColumns,
-                ownerJoinTableColumns
+                ownerJoinTableColumns,
+                buildForJsonView
             );
             query.append(SPACE);
             join(query,
@@ -1100,7 +1232,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 currentJoinAlias,
                 joinTableAlias,
                 associationJoinTableColumns,
-                associationJoinColumns
+                associationJoinColumns,
+                buildForJsonView
             );
         } else {
             if (StringUtils.isNotEmpty(mappedBy)) {
@@ -1120,7 +1253,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     lastJoinAlias,
                     currentJoinAlias,
                     new PersistentPropertyPath(joinAssociationsPath, ownerIdentity),
-                    mappedByPropertyPath);
+                    mappedByPropertyPath,
+                    buildForJsonView);
             } else {
                 PersistentProperty associatedProperty = associatedEntity.getIdentity();
                 if (associatedProperty == null) {
@@ -1134,7 +1268,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     lastJoinAlias,
                     currentJoinAlias,
                     joinAssociation,
-                    new PersistentPropertyPath(List.of(), associatedProperty));
+                    new PersistentPropertyPath(List.of(), associatedProperty),
+                    buildForJsonView);
             }
         }
 
@@ -1146,13 +1281,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     private void join(StringBuilder sb,
                       String joinType,
-                      QueryState queryState,
+                      @Nullable QueryState queryState,
                       PersistentEntity associatedEntity,
                       PersistentEntity associationOwner,
                       String leftTableAlias,
                       String rightTableAlias,
                       PersistentPropertyPath leftPropertyPath,
-                      PersistentPropertyPath rightPropertyPath) {
+                      PersistentPropertyPath rightPropertyPath,
+                      boolean buildForJsonView) {
 
         final boolean escape = shouldEscape(associationOwner);
         List<String> onLeftColumns = new ArrayList<>();
@@ -1203,38 +1339,53 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             });
         }
         join(sb,
-            queryState.baseQueryDefinition(),
+            queryState == null ? null : queryState.baseQueryDefinition(),
             joinType,
             getTableName(associatedEntity),
             rightTableAlias,
             leftTableAlias,
             escape ? onLeftColumns.stream().map(this::quote).toList() : onLeftColumns,
-            escape ? onRightColumns.stream().map(this::quote).toList() : onRightColumns
+            escape ? onRightColumns.stream().map(this::quote).toList() : onRightColumns,
+            buildForJsonView
         );
     }
 
     private void join(StringBuilder builder,
-                      BaseQueryDefinition queryDefinition,
+                      @Nullable BaseQueryDefinition queryDefinition,
                       String joinType,
                       String tableName,
                       String tableAlias,
                       String onTableName,
                       List<String> onLeftColumns,
-                      List<String> onRightColumns) {
+                      List<String> onRightColumns,
+                      boolean buildForJsonView) {
 
         if (onLeftColumns.size() != onRightColumns.size()) {
             throw new IllegalStateException("Un-matching join columns size: " + onLeftColumns.size() + " != " + onRightColumns.size() + " " + onLeftColumns + ", " + onRightColumns);
         }
 
-        builder
-            .append(joinType)
-            .append(tableName)
-            .append(SPACE)
-            .append(tableAlias);
-        if (queryDefinition instanceof SelectQueryDefinition selectQueryDefinition) {
-            appendForUpdate(QueryPosition.AFTER_TABLE_NAME, selectQueryDefinition, builder);
+        if (!buildForJsonView) {
+            builder
+                .append(joinType)
+                .append(tableName)
+                .append(SPACE)
+                .append(tableAlias);
+            if (queryDefinition instanceof SelectQueryDefinition selectQueryDefinition) {
+                appendForUpdate(QueryPosition.AFTER_TABLE_NAME, selectQueryDefinition, builder);
+            }
+            builder.append(" ON ");
+        } else {
+            builder.append(WHERE_CLAUSE);
         }
-        builder.append(" ON ");
+
+        buildJoinColumnMatchPart(builder, tableAlias, onTableName, onLeftColumns, onRightColumns);
+    }
+
+    private void buildJoinColumnMatchPart(StringBuilder builder,
+                                          String tableAlias,
+                                          String onTableName,
+                                          List<String> onLeftColumns,
+                                          List<String> onRightColumns) {
         for (int i = 0; i < onLeftColumns.size(); i++) {
             String leftColumn = onLeftColumns.get(i);
             String rightColumn = onRightColumns.get(i);
@@ -1337,7 +1488,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         if (dialect == Dialect.ORACLE) {
             return SEQUENCE;
         }
-        return GeneratedValue.Type.AUTO;
+        return AUTO;
     }
 
     /**

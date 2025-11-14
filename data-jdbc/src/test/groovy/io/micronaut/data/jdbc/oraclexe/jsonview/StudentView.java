@@ -5,13 +5,14 @@ import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.sql.JoinColumn;
 import io.micronaut.data.tck.entities.Metadata;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@JsonView
+@JsonView(entity = Student.class)
 public class StudentView {
     @Id
     @GeneratedValue(GeneratedValue.Type.IDENTITY)
@@ -26,6 +27,7 @@ public class StudentView {
 
     private boolean active;
 
+    @JoinColumn(name = "id", referencedColumnName = "student_id")
     @Relation(Relation.Kind.ONE_TO_MANY)
     private List<StudentScheduleView> schedule;
 

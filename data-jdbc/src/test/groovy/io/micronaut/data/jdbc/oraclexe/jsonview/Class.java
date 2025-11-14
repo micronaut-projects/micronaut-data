@@ -10,7 +10,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalTime;
 
-@MappedEntity("TBL_CLASS")
+@MappedEntity(value = "TBL_CLASS", alias = "c")
 public class Class {
     @Id
     @GeneratedValue(GeneratedValue.Type.IDENTITY)

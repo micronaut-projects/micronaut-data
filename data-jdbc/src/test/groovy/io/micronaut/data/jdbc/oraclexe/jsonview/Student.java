@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 
-@MappedEntity("TBL_STUDENT")
+@MappedEntity(value = "TBL_STUDENT", alias = "s")
 public class Student {
     @Id
     @GeneratedValue(GeneratedValue.Type.IDENTITY)

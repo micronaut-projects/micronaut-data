@@ -2,10 +2,12 @@ package io.micronaut.data.jdbc.oraclexe.jsonview;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.JsonSubView;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.serde.annotation.Serdeable;
 
 @Serdeable
+@JsonSubView(entity = StudentClass.class)
 public class StudentScheduleView {
     @Id
     private Long id;

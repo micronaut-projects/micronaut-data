@@ -17,6 +17,7 @@ package io.micronaut.data.annotation;
 import io.micronaut.context.annotation.AliasFor;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.serde.annotation.Serdeable;
+import io.micronaut.data.annotation.JsonView.Operation;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -25,10 +26,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * The annotation defining Json Duality View. Currently supported only by Oracle database.
+ * The annotation defining Json Duality SubView. Currently supported only by Oracle database.
  *
- * @author radovanradic
- * @since 4.0.0
+ * @author dimitrijezravkovic
+ * @since 5.0.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.FIELD})
@@ -37,7 +38,7 @@ import java.lang.annotation.Target;
 @Experimental
 @MappedEntity
 @EntityRepresentation(type = EntityRepresentation.Type.COLUMN, columnType = EntityRepresentation.ColumnType.JSON)
-public @interface JsonView {
+public @interface JsonSubView {
 
     String DEFAULT_COLUMN_NAME = "DATA";
 
@@ -48,14 +49,12 @@ public @interface JsonView {
      */
     Class<?> entity() default void.class;
 
-    enum Operation {UPDATE, INSERT, DELETE};
-
     /**
      * The supported sql operations array.
      *
      * @return the supported operations array (default [UPDATE, INSERT, DELETE])
      */
-    Operation[] operations() default {Operation.INSERT, Operation.UPDATE, Operation.DELETE};
+    JsonView.Operation[] operations() default {Operation.INSERT, Operation.UPDATE, Operation.DELETE};
 
     /**
      * The name of the single column in the view.

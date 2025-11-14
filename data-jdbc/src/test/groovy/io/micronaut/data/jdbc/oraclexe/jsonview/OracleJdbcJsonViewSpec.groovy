@@ -2,11 +2,17 @@ package io.micronaut.data.jdbc.oraclexe.jsonview
 
 import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.Sort
+import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
+import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.tck.entities.Metadata
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import spock.lang.Shared
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -62,6 +68,23 @@ class OracleJdbcJsonViewSpec extends Specification {
         studentClassRepository.save(new StudentClass(denis, german))
         studentClassRepository.save(new StudentClass(josh, english))
         studentClassRepository.save(new StudentClass(fred, german))
+    }
+
+    @Shared
+    Map<java.lang.Class, RuntimePersistentEntity> entities = [:]
+
+    private RuntimePersistentEntity getRuntimePersistentEntity(java.lang.Class type) {
+        RuntimePersistentEntity entity = entities.get(type)
+        if (entity == null) {
+            entity = new RuntimePersistentEntity(type) {
+                @Override
+                protected RuntimePersistentEntity getEntity(java.lang.Class t) {
+                    return getRuntimePersistentEntity(t)
+                }
+            }
+            entities.put(type, entity)
+        }
+        return entity
     }
 
     /**
@@ -342,5 +365,39 @@ class OracleJdbcJsonViewSpec extends Specification {
         // After deleted should not be present
         !optFredStudentView.present
         count == 0
+    }
+
+    @Unroll
+    def "test_dialect_without_json_view_support"() {
+        when:
+        SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
+        PersistentEntity studentViewEntity = getRuntimePersistentEntity(StudentView)
+        builder.buildCreateTableStatements(studentViewEntity)
+
+        then:
+        thrown(UnsupportedOperationException)
+
+        where:
+        dialect << [Dialect.H2, Dialect.ANSI, Dialect.MYSQL, Dialect.POSTGRES, Dialect.SQL_SERVER]
+    }
+
+    def "test_generate_create_json_view"() {
+        when:
+        Dialect dialect = Dialect.ORACLE
+        SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
+        PersistentEntity studentViewEntity = getRuntimePersistentEntity(StudentView)
+        String[] sql = builder.buildCreateTableStatements(studentViewEntity)
+        then:
+        sql[0] == ""
+    }
+
+    def "test_generate_drop_json_vew"() {
+        when:
+        Dialect dialect = Dialect.ORACLE
+        SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
+        PersistentEntity studentViewEntity = getRuntimePersistentEntity(StudentView)
+        String[] sql = builder.buildDropTableStatements(studentViewEntity)
+        then:
+        sql[0] == "DROP " + builder.getTableName(studentViewEntity)
     }
 }

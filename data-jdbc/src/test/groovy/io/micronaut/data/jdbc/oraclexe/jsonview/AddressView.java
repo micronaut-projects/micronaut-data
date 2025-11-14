@@ -2,8 +2,10 @@ package io.micronaut.data.jdbc.oraclexe.jsonview;
 
 import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.JsonSubView;
 
 @Embeddable
+@JsonSubView(entity = Address.class)
 public class AddressView {
 
     @Id

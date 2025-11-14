@@ -1,15 +1,15 @@
 package io.micronaut.data.jdbc.oraclexe.jsonview;
 
-import io.micronaut.data.annotation.Embeddable;
-import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.*;
 
 import java.time.LocalTime;
 
 @Embeddable
+@JsonSubView(entity = Class.class)
 public class StudentScheduleClassView {
 
     @Id
+    @MappedProperty(value = "id")
     private Long classID;
 
     private String name;
