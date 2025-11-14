@@ -52,6 +52,16 @@ final class SpecificationConverters implements TypeConverterRegistrar {
             UpdateSpecification.class,
             specification -> (root, query, criteriaBuilder) -> specification.toPredicate(root, null, criteriaBuilder)
         );
+        conversionService.addConverter(
+            org.springframework.data.jpa.domain.UpdateSpecification.class,
+            UpdateSpecification.class,
+            specification -> specification::toPredicate
+        );
+        conversionService.addConverter(
+            org.springframework.data.jpa.domain.DeleteSpecification.class,
+            DeleteSpecification.class,
+            specification -> specification::toPredicate
+        );
         conversionService.addConverter(org.springframework.data.domain.Sort.class, Sort.class, springSort -> Sort.of(
             springSort.get().map(sort -> new Sort.Order(
                     sort.getProperty(),
