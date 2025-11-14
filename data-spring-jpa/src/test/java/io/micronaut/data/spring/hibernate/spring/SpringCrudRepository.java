@@ -70,6 +70,9 @@ public interface SpringCrudRepository extends CrudRepository<Person, Long>, JpaS
 
     List<Person> findByNameLikeOrderByAgeDesc(String name);
 
+    // Explicitly declare delete(Specification) so Micronaut Data annotation processor
+    // can generate @DataMethod for specification-based delete with Spring Data 4.
+    long delete(Specification<Person> spec);
 
     class Specifications {
         public static Specification<Person> ageGreaterThanThirty() {

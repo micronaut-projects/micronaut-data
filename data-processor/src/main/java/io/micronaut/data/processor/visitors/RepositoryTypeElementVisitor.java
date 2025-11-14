@@ -170,6 +170,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         roles.put("org.springframework.data.domain.Slice", TypeRole.SLICE);
         roles.put("org.springframework.data.domain.Sort", TypeRole.SORT);
         roles.put("org.springframework.data.jpa.domain.Specification", TypeRole.SPECIFICATION_PREDICATE);
+        roles.put("org.springframework.data.jpa.domain.UpdateSpecification", TypeRole.SPECIFICATION_UPDATE);
+        roles.put("org.springframework.data.jpa.domain.DeleteSpecification", TypeRole.SPECIFICATION_DELETE);
 
         // Jakarta Data
         roles.put("jakarta.data.page.Page", TypeRole.PAGE);
