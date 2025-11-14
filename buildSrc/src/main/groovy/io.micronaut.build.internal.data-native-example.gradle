@@ -30,11 +30,18 @@ graalvmNative {
     }
     binaries {
         configureEach {
-            if (System.getenv("GRAALVM_HOME")?.contains("graal") && System.getenv("GRAALVM_HOME")?.contains("21")) {
-                logger.quiet("GRAALVM_HOME:  {}", (String) System.getenv("GRAALVM_HOME"))
-                logger.quiet("Enabling strict image heap!")
-                buildArgs.add("--strict-image-heap")
+            if (System.getenv("GRAALVM_HOME")?.contains("graal")) {
+                if (System.getenv("GRAALVM_HOME")?.contains("21")) {
+                    logger.quiet("GRAALVM_HOME:  {}", (String) System.getenv("GRAALVM_HOME"))
+                    logger.quiet("Enabling strict image heap!")
+                    buildArgs.add("--strict-image-heap")
+                }
+                if (System.getenv("GRAALVM_HOME")?.contains("25")) {
+                    logger.quiet("Enabling SharedArenaSupport for GraalVM 25")
+                    buildArgs.add("-H:+SharedArenaSupport")
+                }
             }
+            buildArgs("--initialize-at-build-time=org.junit.platform.commons.logging.LoggerFactory\$DelegatingLogger")
         }
     }
 }
