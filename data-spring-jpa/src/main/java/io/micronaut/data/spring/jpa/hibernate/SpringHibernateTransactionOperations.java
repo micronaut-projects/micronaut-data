@@ -30,7 +30,7 @@ import io.micronaut.transaction.support.TransactionSynchronization;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.engine.spi.SessionImplementor;
-import org.springframework.orm.hibernate5.HibernateTransactionManager;
+import org.springframework.orm.jpa.hibernate.HibernateTransactionManager;
 
 import java.sql.Connection;
 import java.util.Optional;
