@@ -27,6 +27,9 @@ import io.micronaut.data.annotation.event.PreUpdate;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.model.runtime.PropertyAutoPopulator;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.model.runtime.RuntimeAssociation;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import jakarta.inject.Singleton;
@@ -36,6 +39,7 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -107,9 +111,30 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
         return now;
     }
 
+    private Object computePropertyNow(@NonNull AnnotationMetadata annotationMetadata, boolean isUpdate, Object now) {
+        ChronoUnit truncateToValue;
+        if (isUpdate) {
+            truncateToValue = truncateToDateUpdated(annotationMetadata);
+        } else {
+            truncateToValue = truncateToDateCreated(annotationMetadata);
+            if (truncateToValue == null) {
+                truncateToValue = truncateToDateUpdated(annotationMetadata);
+            }
+        }
+        return truncate(now, truncateToValue);
+    }
+
+    private @Nullable Object convertIfNeeded(@NonNull Object value, @NonNull Class<?> targetType) {
+        if (targetType.isInstance(value)) {
+            return value;
+        }
+        return conversionService.convert(value, targetType).orElse(null);
+    }
+
     private void autoTimestampIfNecessary(@NonNull EntityEventContext<Object> context, boolean isUpdate) {
         final RuntimePersistentProperty<Object>[] applicableProperties = getApplicableProperties(context);
         Object now = dateTimeProvider.getNow();
+        // 1) Top-level properties
         for (RuntimePersistentProperty<Object> property : applicableProperties) {
             if (isUpdate) {
                 if (!property.getAnnotationMetadata().booleanValue(AutoPopulated.class, AutoPopulated.UPDATEABLE).orElse(true)) {
@@ -119,20 +144,58 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
 
             final BeanProperty<Object, Object> beanProperty = property.getProperty();
             final Class<?> propertyType = property.getType();
-            ChronoUnit truncateToValue;
-            if (isUpdate) {
-                truncateToValue = truncateToDateUpdated(property.getAnnotationMetadata());
-            } else {
-                truncateToValue = truncateToDateCreated(property.getAnnotationMetadata());
-                if (truncateToValue == null) {
-                    truncateToValue = truncateToDateUpdated(property.getAnnotationMetadata());
-                }
+            Object propertyNow = computePropertyNow(property.getAnnotationMetadata(), isUpdate, now);
+            Object newValue = convertIfNeeded(propertyNow, propertyType);
+            if (newValue != null) {
+                context.setProperty(beanProperty, newValue);
             }
-            Object propertyNow = truncate(now, truncateToValue);
-            if (propertyType.isInstance(propertyNow)) {
-                context.setProperty(beanProperty, propertyNow);
-            } else {
-                conversionService.convert(propertyNow, propertyType).ifPresent(o -> context.setProperty(beanProperty, o));
+        }
+        // 2) Embedded properties
+        final RuntimePersistentEntity<Object> persistentEntity = context.getPersistentEntity();
+        for (RuntimeAssociation<Object> association : persistentEntity.getAssociations()) {
+            if (!association.isEmbedded()) {
+                continue;
+            }
+            // Obtain or create embedded instance
+            BeanProperty<Object, Object> embeddedProperty = association.getProperty();
+            Object entity = context.getEntity();
+            Object embedded = embeddedProperty.get(entity);
+            if (embedded == null) {
+                BeanIntrospection<?> embeddedIntrospection = association.getAssociatedEntity().getIntrospection();
+                Object newEmbedded = embeddedIntrospection.instantiate();
+                context.setProperty(embeddedProperty, newEmbedded);
+                embedded = newEmbedded;
+            }
+            // Iterate embedded persistent properties and populate dates
+            for (RuntimePersistentProperty<Object> embeddedPersistentProperty : (Collection<RuntimePersistentProperty<Object>>) (Collection<?>) association.getAssociatedEntity().getPersistentProperties()) {
+                final AnnotationMetadata am = embeddedPersistentProperty.getAnnotationMetadata();
+                final boolean hasDateCreated = am.hasAnnotation(DateCreated.class);
+                final boolean hasDateUpdated = am.hasAnnotation(DateUpdated.class);
+                if (!hasDateCreated && !hasDateUpdated) {
+                    continue;
+                }
+                if (isUpdate) {
+                    if (!am.booleanValue(AutoPopulated.class, AutoPopulated.UPDATEABLE).orElse(true)) {
+                        continue;
+                    }
+                }
+                Object propertyNow = computePropertyNow(am, isUpdate, now);
+                BeanProperty<Object, Object> prop = embeddedPersistentProperty.getProperty();
+                Class<?> propertyType = embeddedPersistentProperty.getType();
+                Object newValue = convertIfNeeded(propertyNow, propertyType);
+                if (newValue == null) {
+                    continue;
+                }
+                if (prop.hasSetterOrConstructorArgument()) {
+                    if (prop.isReadOnly()) {
+                        Object newEmbedded = prop.withValue(embedded, newValue);
+                        // Assign possibly new embedded instance back to root
+                        context.setProperty(embeddedProperty, newEmbedded);
+                        embedded = newEmbedded;
+                    } else {
+                        prop.set(embedded, newValue);
+                    }
+                }
             }
         }
     }

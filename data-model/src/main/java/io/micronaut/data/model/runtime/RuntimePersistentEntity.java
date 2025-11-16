@@ -415,9 +415,19 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
      */
     public boolean hasAutoPopulatedProperties() {
         if (this.hasAutoPopulatedProperties == null) {
-            this.hasAutoPopulatedProperties = Arrays.stream(allPersistentProperties)
+            boolean direct = Arrays.stream(allPersistentProperties)
                     .filter(Objects::nonNull)
                     .anyMatch(PersistentProperty::isAutoPopulated);
+            if (!direct) {
+                // Also consider embedded associated entities
+                for (RuntimeAssociation<?> association : getAssociations()) {
+                    if (association.isEmbedded() && association.getAssociatedEntity().hasAutoPopulatedProperties()) {
+                        direct = true;
+                        break;
+                    }
+                }
+            }
+            this.hasAutoPopulatedProperties = direct;
         }
         return this.hasAutoPopulatedProperties;
     }
