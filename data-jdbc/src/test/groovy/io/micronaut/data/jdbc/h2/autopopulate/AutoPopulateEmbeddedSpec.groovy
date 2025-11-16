@@ -1,6 +1,7 @@
 package io.micronaut.data.jdbc.h2.autopopulate
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.data.annotation.AutoPopulated
 import io.micronaut.data.annotation.DateCreated
 import io.micronaut.data.annotation.DateUpdated
 import io.micronaut.data.annotation.Embeddable
@@ -19,7 +20,7 @@ import spock.lang.Specification
 
 import java.time.LocalDateTime
 
-class AutoPopulateDatesSpec extends Specification implements H2TestPropertyProvider {
+class AutoPopulateEmbeddedSpec extends Specification implements H2TestPropertyProvider {
 
     @AutoCleanup
     @Shared
@@ -37,9 +38,13 @@ class AutoPopulateDatesSpec extends Specification implements H2TestPropertyProvi
         loaded
         loaded.id == saved.id
         loaded.firstName == "Peter"
+        loaded.createdAt
+        loaded.updatedAt
+        loaded.guid
         loaded.auditFields
-        loaded.auditFields.createdAt
-        loaded.auditFields.updatedAt
+        loaded.auditFields.innerCreatedAt
+        loaded.auditFields.innerUpdatedAt
+        loaded.auditFields.innerGuid
     }
 
 }
@@ -48,10 +53,13 @@ class AutoPopulateDatesSpec extends Specification implements H2TestPropertyProvi
 class AuditFields {
 
     @DateCreated
-    LocalDateTime createdAt
+    LocalDateTime innerCreatedAt
 
     @DateUpdated
-    LocalDateTime updatedAt
+    LocalDateTime innerUpdatedAt
+
+    @AutoPopulated
+    UUID innerGuid
 }
 
 @Serdeable
@@ -61,6 +69,15 @@ class MyAuditableEntity {
     String id
 
     String firstName
+
+    @DateCreated
+    LocalDateTime createdAt
+
+    @DateUpdated
+    LocalDateTime updatedAt
+
+    @AutoPopulated
+    UUID guid
 
     @Relation(value = Relation.Kind.EMBEDDED)
     AuditFields auditFields
