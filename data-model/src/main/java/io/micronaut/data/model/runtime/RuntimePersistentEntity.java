@@ -25,6 +25,8 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Transient;
 import io.micronaut.data.annotation.Version;
+import io.micronaut.data.annotation.AutoPopulated;
+import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
@@ -419,11 +421,21 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
                     .filter(Objects::nonNull)
                     .anyMatch(PersistentProperty::isAutoPopulated);
             if (!direct) {
-                // Also consider embedded associated entities
+                // Also consider embedded associated entities without triggering registry lookups
+                // to avoid potential recursive ConcurrentHashMap updates during entity construction.
+                Set<Class<?>> visited = new HashSet<>();
+                visited.add(getIntrospection().getBeanType());
                 for (RuntimeAssociation<?> association : getAssociations()) {
-                    if (association.isEmbedded() && association.getAssociatedEntity().hasAutoPopulatedProperties()) {
-                        direct = true;
-                        break;
+                    if (!association.isEmbedded()) {
+                        continue;
+                    }
+                    Class<?> embeddedType = association.getProperty().getType();
+                    if (visited.add(embeddedType)) {
+                        BeanIntrospection<?> embeddedIntrospection = BeanIntrospection.getIntrospection(embeddedType);
+                        if (hasAutoPopulatedInEmbedded(embeddedIntrospection, visited)) {
+                            direct = true;
+                            break;
+                        }
                     }
                 }
             }
@@ -432,4 +444,32 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
         return this.hasAutoPopulatedProperties;
     }
 
+    /**
+     * Recursively checks if the given embedded bean introspection has any auto-populated properties,
+     * without going through the RuntimeEntityRegistry to avoid recursive map updates.
+     */
+    private static boolean hasAutoPopulatedInEmbedded(BeanIntrospection<?> introspection, Set<Class<?>> visited) {
+        for (BeanProperty<?, ?> bp : introspection.getBeanProperties()) {
+            if (bp.hasStereotype(Transient.class)) {
+                continue;
+            }
+            // Check direct auto-populated (but not @GeneratedValue)
+            var am = bp.getAnnotationMetadata();
+            if (!am.hasAnnotation(GeneratedValue.class) && am.hasStereotype(AutoPopulated.class)) {
+                return true;
+            }
+            // Recurse into nested embedded associations
+            Relation.Kind kind = am.enumValue(Relation.class, Relation.Kind.class).orElse(null);
+            if (kind == Relation.Kind.EMBEDDED) {
+                Class<?> type = bp.getType();
+                if (visited.add(type)) {
+                    BeanIntrospection<?> ei = BeanIntrospection.getIntrospection(type);
+                    if (hasAutoPopulatedInEmbedded(ei, visited)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
 }

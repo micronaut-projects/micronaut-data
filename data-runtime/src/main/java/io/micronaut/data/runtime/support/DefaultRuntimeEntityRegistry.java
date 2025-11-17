@@ -117,13 +117,13 @@ final class DefaultRuntimeEntityRegistry implements RuntimeEntityRegistry, Appli
     @Override
     public <T> RuntimePersistentEntity<T> newEntity(@NonNull Class<T> type) {
         return new RuntimePersistentEntity<>(type) {
-            final boolean hasPrePersistEventListeners = eventRegistry.supports((RuntimePersistentEntity) this, PrePersist.class);
-            final boolean hasPreRemoveEventListeners = eventRegistry.supports((RuntimePersistentEntity) this, PreRemove.class);
-            final boolean hasPreUpdateEventListeners = eventRegistry.supports((RuntimePersistentEntity) this, PreUpdate.class);
-            final boolean hasPostPersistEventListeners = eventRegistry.supports((RuntimePersistentEntity) this, PostPersist.class);
-            final boolean hasPostRemoveEventListeners = eventRegistry.supports((RuntimePersistentEntity) this, PostRemove.class);
-            final boolean hasPostUpdateEventListeners = eventRegistry.supports((RuntimePersistentEntity) this, PostUpdate.class);
-            final boolean hasPostLoadEventListeners = eventRegistry.supports((RuntimePersistentEntity) this, PostLoad.class);
+            private volatile Boolean prePersistSupported;
+            private volatile Boolean preRemoveSupported;
+            private volatile Boolean preUpdateSupported;
+            private volatile Boolean postPersistSupported;
+            private volatile Boolean postRemoveSupported;
+            private volatile Boolean postUpdateSupported;
+            private volatile Boolean postLoadSupported;
 
             @Override
             protected AttributeConverter<Object, Object> resolveConverter(Class<?> converterClass) {
@@ -137,37 +137,107 @@ final class DefaultRuntimeEntityRegistry implements RuntimeEntityRegistry, Appli
 
             @Override
             public boolean hasPostUpdateEventListeners() {
-                return hasPostUpdateEventListeners;
+                Boolean v = postUpdateSupported;
+                if (v == null) {
+                    synchronized (this) {
+                        v = postUpdateSupported;
+                        if (v == null) {
+                            v = eventRegistry.supports((RuntimePersistentEntity) this, PostUpdate.class);
+                            postUpdateSupported = v;
+                        }
+                    }
+                }
+                return v;
             }
 
             @Override
             public boolean hasPostRemoveEventListeners() {
-                return hasPostRemoveEventListeners;
+                Boolean v = postRemoveSupported;
+                if (v == null) {
+                    synchronized (this) {
+                        v = postRemoveSupported;
+                        if (v == null) {
+                            v = eventRegistry.supports((RuntimePersistentEntity) this, PostRemove.class);
+                            postRemoveSupported = v;
+                        }
+                    }
+                }
+                return v;
             }
 
             @Override
             public boolean hasPostLoadEventListeners() {
-                return hasPostLoadEventListeners;
+                Boolean v = postLoadSupported;
+                if (v == null) {
+                    synchronized (this) {
+                        v = postLoadSupported;
+                        if (v == null) {
+                            v = eventRegistry.supports((RuntimePersistentEntity) this, PostLoad.class);
+                            postLoadSupported = v;
+                        }
+                    }
+                }
+                return v;
             }
 
             @Override
             public boolean hasPrePersistEventListeners() {
-                return hasPrePersistEventListeners;
+                Boolean v = prePersistSupported;
+                if (v == null) {
+                    synchronized (this) {
+                        v = prePersistSupported;
+                        if (v == null) {
+                            v = eventRegistry.supports((RuntimePersistentEntity) this, PrePersist.class);
+                            prePersistSupported = v;
+                        }
+                    }
+                }
+                return v;
             }
 
             @Override
             public boolean hasPreUpdateEventListeners() {
-                return hasPreUpdateEventListeners;
+                Boolean v = preUpdateSupported;
+                if (v == null) {
+                    synchronized (this) {
+                        v = preUpdateSupported;
+                        if (v == null) {
+                            v = eventRegistry.supports((RuntimePersistentEntity) this, PreUpdate.class);
+                            preUpdateSupported = v;
+                        }
+                    }
+                }
+                return v;
             }
 
             @Override
             public boolean hasPreRemoveEventListeners() {
-                return hasPreRemoveEventListeners;
+                Boolean v = preRemoveSupported;
+                if (v == null) {
+                    synchronized (this) {
+                        v = preRemoveSupported;
+                        if (v == null) {
+                            v = eventRegistry.supports((RuntimePersistentEntity) this, PreRemove.class);
+                            preRemoveSupported = v;
+                        }
+                    }
+                }
+                return v;
             }
 
             @Override
             public boolean hasPostPersistEventListeners() {
-                return hasPostPersistEventListeners;
+                Boolean v = postPersistSupported;
+                if (v == null) {
+                    synchronized (this) {
+                        v = postPersistSupported;
+                        if (v == null) {
+                            v = eventRegistry.supports((RuntimePersistentEntity) this, PostPersist.class);
+                            postPersistSupported = v;
+                        }
+                    }
+                }
+                return v;
             }
         };
     }
