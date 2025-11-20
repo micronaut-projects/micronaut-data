@@ -18,7 +18,6 @@ package io.micronaut.data.hibernate.operations;
 import io.micronaut.aop.InvocationContext;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
-import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;

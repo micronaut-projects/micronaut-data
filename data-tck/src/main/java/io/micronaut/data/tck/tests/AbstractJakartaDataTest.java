@@ -21,6 +21,8 @@ import io.micronaut.data.tck.entities.Train;
 import io.micronaut.data.tck.entities.TrainCZ;
 import io.micronaut.data.tck.entities.TrainCZProjection;
 import io.micronaut.data.tck.entities.TrainManufacturer;
+import io.micronaut.data.tck.entities.TrainNameCapacityDto;
+import io.micronaut.data.tck.entities.TrainNameModelDto;
 import io.micronaut.data.tck.entities.TrainSpecs;
 import io.micronaut.data.tck.entities._Train;
 import io.micronaut.data.tck.entities._TrainManufacturer;
@@ -63,7 +65,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public abstract class AbstractJakartaDataRestrictionsTest {
+public abstract class AbstractJakartaDataTest {
 
     @Inject
     protected TrainRepository trainRepository;
@@ -80,7 +82,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @BeforeEach
-    void setup() {
+    public void setup() {
         // Create test data
         LocalDateTime baseTime = LocalDateTime.of(2023, 1, 1, 8, 0);
         LocalDate baseDate = baseTime.toLocalDate();
@@ -133,7 +135,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @AfterEach
-    void cleanup() {
+    public void cleanup() {
         trainRepository.deleteAll();
     }
 
@@ -141,7 +143,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     private JakartaDataTrainEventListener trainEventListener;
 
     @Test
-    void testEvents() {
+    public void testEvents() {
         trainEventListener.getEvents().clear();
 
         Train someTrain = new Train("TestTrain", "Model", 100, 200.0, true);
@@ -154,7 +156,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
         trainEventListener.getEvents().clear();
 
         Train myTrain = trainRepository.findByName("TestTrain").getFirst();
-        myTrain.setName("XXX");
+        myTrain.setName("Updated");
         trainRepository.update(myTrain);
 
         Assertions.assertEquals(2, trainEventListener.getEvents().size());
@@ -169,32 +171,32 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testPrepend() {
+    public void testPrepend() {
         List<Train> trains = trainRepository.findTrains(_Train.name.prepend("The ").equalTo("The Express 1"));
         assertEquals(1, trains.size());
         assertEquals("Express 1", trains.getFirst().getName());
     }
 
     @Test
-    void testAppend() {
+    public void testAppend() {
         List<Train> trains = trainRepository.findTrains(_Train.name.append(" Model").equalTo("Express 1 Model"));
         assertEquals(1, trains.size());
         assertEquals("Express 1", trains.getFirst().getName());
     }
 
     @Test
-    void testUnmatchable() {
+    public void testUnmatchable() {
         assertEquals(0, trainRepository.trains(Restrict.<Train>unrestricted().negate()).size());
     }
 
     @Test
-    void testSelect() {
+    public void testSelect() {
         String model = trainsRepository.getModel("Express 1").orElseThrow();
         assertEquals("HighSpeed", model);
     }
 
     @Test
-    void testProjection() {
+    public void testProjection() {
         Train express1 = trainRepository.findByName("Express 1").getFirst();
         TrainCZProjection trainCZ = trainRepository.projection(express1.getId());
         assertEquals("HighSpeed", trainCZ.model());
@@ -203,7 +205,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testMethodProjection() {
+    public void testMethodProjection() {
         Train express1 = trainRepository.findByName("Express 1").getFirst();
         TrainCZ trainCZ = trainRepository.methodProjection(express1.getId());
         assertEquals("HighSpeed", trainCZ.model());
@@ -212,28 +214,28 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testEqualToConstraint() {
+    public void testEqualToConstraint() {
         List<Train> trains = trainRepository.findByName("Express 1");
         assertEquals(1, trains.size());
         assertEquals("Express 1", trains.getFirst().getName());
     }
 
     @Test
-    void testFindByNameEqualsConstrain() {
+    public void testFindByNameEqualsConstrain() {
         List<Train> trains = trainRepository.findByNameEqualsConstrain("Express 1");
         assertEquals(1, trains.size());
         assertEquals("Express 1", trains.getFirst().getName());
     }
 
     @Test
-    void testFindByNameEqualsConstrainValue() {
+    public void testFindByNameEqualsConstrainValue() {
         List<Train> trains = trainRepository.findByNameEqualsConstrain(EqualTo.value("Express 1"));
         assertEquals(1, trains.size());
         assertEquals("Express 1", trains.getFirst().getName());
     }
 
     @Test
-    void testFindByNameEqualsConstrainAndRestriction() {
+    public void testFindByNameEqualsConstrainAndRestriction() {
         List<Train> trains = trainRepository.findByNameEqualsConstrainWithRestriction(EqualTo.value("Express 1"), _Train.electric.equalTo(true));
         assertEquals(1, trains.size());
         assertEquals("Express 1", trains.getFirst().getName());
@@ -243,7 +245,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testFindByNameEqualsConstrainAndElectricConstraint() {
+    public void testFindByNameEqualsConstrainAndElectricConstraint() {
         List<Train> trains = trainRepository.findByNameEqualsConstrainAndElectricConstraint(EqualTo.value("Express 1"), EqualTo.value(true));
         assertEquals(1, trains.size());
         assertEquals("Express 1", trains.getFirst().getName());
@@ -253,34 +255,34 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testFindByNameNotEqualsConstrain() {
+    public void testFindByNameNotEqualsConstrain() {
         List<Train> trains = trainRepository.findByNameNotEqualsConstrain("Express 1");
         assertEquals(5, trains.size());
     }
 
     @Test
-    void testFindByCapacityAtLeast() {
+    public void testFindByCapacityAtLeast() {
         List<Train> trains = trainRepository.findByCapacityAtLeast(200);
         assertEquals(3, trains.size());
         trains.forEach(train -> assertTrue(train.getCapacity() >= 200));
     }
 
     @Test
-    void testFindBySpeedAtMost() {
+    public void testFindBySpeedAtMost() {
         List<Train> trains = trainRepository.findBySpeedAtMost(120.0);
         assertEquals(3, trains.size());
         trains.forEach(train -> assertTrue(train.getSpeed() <= 120.0));
     }
 
     @Test
-    void testFindByCapacityGreaterThanConstrain() {
+    public void testFindByCapacityGreaterThanConstrain() {
         List<Train> trains = trainRepository.findByCapacityGreaterThanConstrain(200);
         assertEquals(2, trains.size());
         trains.forEach(train -> assertTrue(train.getCapacity() > 200));
     }
 
     @Test
-    void testFindByModelInConstrain() {
+    public void testFindByModelInConstrain() {
         List<Train> trains = trainRepository.findByModelInConstrain(Arrays.asList("HighSpeed", "Freight"));
         assertEquals(4, trains.size());
         trains.forEach(train ->
@@ -289,21 +291,21 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testFindBySpeedLessThanConstrain() {
+    public void testFindBySpeedLessThanConstrain() {
         List<Train> trains = trainRepository.findBySpeedLessThanConstrain(150.0);
         assertEquals(3, trains.size());
         trains.forEach(train -> assertTrue(train.getSpeed() < 150.0));
     }
 
     @Test
-    void testFindByNameLikeConstrain() {
+    public void testFindByNameLikeConstrain() {
         List<Train> trains = trainRepository.findByNameLikeConstrain("Express%");
         assertEquals(3, trains.size());
         trains.forEach(train -> assertTrue(train.getName().startsWith("Express")));
     }
 
     @Test
-    void testFindByNameNotInConstrain() {
+    public void testFindByNameNotInConstrain() {
         List<Train> trains = trainRepository.findByNameNotInConstrain(Arrays.asList("Express 1", "Local 1"));
         assertEquals(4, trains.size());
         trains.forEach(train ->
@@ -312,14 +314,14 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testFindByModelNotLikeConstrain() {
+    public void testFindByModelNotLikeConstrain() {
         List<Train> trains = trainRepository.findByModelNotLikeConstrain("HighSpeed");
         assertEquals(3, trains.size());
         trains.forEach(train -> assertNotEquals("HighSpeed", train.getModel()));
     }
 
     @Test
-    void testRuntimeRestrictionsWithEqualTo() {
+    public void testRuntimeRestrictionsWithEqualTo() {
         Restriction<Train> restriction = _Train.name.equalTo("Express 1");
         List<Train> trains = trainRepository.findTrains(restriction);
         assertEquals(1, trains.size());
@@ -330,14 +332,14 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testNotEqualToConstraint() {
+    public void testNotEqualToConstraint() {
         List<Train> trains = trainRepository.findByModelNot("HighSpeed");
         assertEquals(3, trains.size());
         trains.forEach(train -> assertNotEquals("HighSpeed", train.getModel()));
     }
 
     @Test
-    void testRuntimeRestrictionsWithNotEqualTo() {
+    public void testRuntimeRestrictionsWithNotEqualTo() {
         Restriction<Train> restriction = _Train.model.notEqualTo("HighSpeed");
         List<Train> trains = trainRepository.findTrains(restriction);
         assertEquals(3, trains.size());
@@ -345,21 +347,21 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testGreaterThanConstraint() {
+    public void testGreaterThanConstraint() {
         List<Train> trains = trainRepository.findByCapacityGreaterThan(200);
         assertEquals(2, trains.size());
         trains.forEach(train -> assertTrue(train.getCapacity() > 200));
     }
 
     @Test
-    void testLessThanConstraint() {
+    public void testLessThanConstraint() {
         List<Train> trains = trainRepository.findBySpeedLessThan(150.0);
         assertEquals(3, trains.size());
         trains.forEach(train -> assertTrue(train.getSpeed() < 150.0));
     }
 
     @Test
-    void testRuntimeRestrictionsWithLessThan() {
+    public void testRuntimeRestrictionsWithLessThan() {
         Restriction<Train> restriction = _Train.speed.lessThan(150.0);
         List<Train> trains = trainRepository.findTrains(restriction);
         assertEquals(3, trains.size());
@@ -367,14 +369,14 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testAtLeastConstraint() {
+    public void testAtLeastConstraint() {
         List<Train> trains = trainRepository.findByCapacityGreaterThanEquals(200);
         assertEquals(3, trains.size());
         trains.forEach(train -> assertTrue(train.getCapacity() >= 200));
     }
 
     @Test
-    void testRuntimeRestrictionsWithAtLeast() {
+    public void testRuntimeRestrictionsWithAtLeast() {
         Restriction<Train> restriction = _Train.capacity.greaterThanEqual(200);
         List<Train> trains = trainRepository.findTrains(restriction);
         assertEquals(3, trains.size());
@@ -382,14 +384,14 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testAtMostConstraint() {
+    public void testAtMostConstraint() {
         List<Train> trains = trainRepository.findBySpeedLessThanEquals(120.0);
         assertEquals(3, trains.size());
         trains.forEach(train -> assertTrue(train.getSpeed() <= 120.0));
     }
 
     @Test
-    void testBetweenConstraint() {
+    public void testBetweenConstraint() {
         List<Train> trains = trainRepository.findByCapacityBetween(180, 230);
         assertEquals(3, trains.size());
         trains.forEach(train -> {
@@ -399,7 +401,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testNotBetweenConstraint() {
+    public void testNotBetweenConstraint() {
         List<Train> trains = trainRepository.findBySpeedNotBetween(100.0, 300.0);
         assertEquals(3, trains.size());
         trains.forEach(train -> {
@@ -408,7 +410,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testInConstraint() {
+    public void testInConstraint() {
         List<Train> trains = trainRepository.findByModelIn(Arrays.asList("HighSpeed", "Freight"));
         assertEquals(4, trains.size());
         trains.forEach(train ->
@@ -417,7 +419,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testNotInConstraint() {
+    public void testNotInConstraint() {
         List<Train> trains = trainRepository.findByNameNotIn(Arrays.asList("Express 1", "Local 1"));
         assertEquals(4, trains.size());
         trains.forEach(train ->
@@ -426,7 +428,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testNullConstraint() {
+    public void testNullConstraint() {
         // Add a train with null model
         Train nullModelTrain = new Train("TestTrain", null, 100, 200.0, true);
         nullModelTrain.setSpecs(new TrainSpecs("TestTrain", 100, 200.0));
@@ -441,7 +443,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testNotNullConstraint() {
+    public void testNotNullConstraint() {
         List<Train> trains = trainRepository.findByModelIsNotNull();
         assertEquals(6, trains.size());
         trains.forEach(train -> assertNotNull(train.getModel()));
@@ -459,21 +461,21 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testLikeConstraint() {
+    public void testLikeConstraint() {
         List<Train> trains = trainRepository.findByNameLike("Express%");
         assertEquals(3, trains.size());
         trains.forEach(train -> assertTrue(train.getName().startsWith("Express")));
     }
 
     @Test
-    void testNotLikeConstraint() {
+    public void testNotLikeConstraint() {
         List<Train> trains = trainRepository.findByModelNotLike("HighSpeed");
         assertEquals(3, trains.size());
         trains.forEach(train -> assertNotEquals("HighSpeed", train.getModel()));
     }
 
     @Test
-    void testRuntimeRestrictionsWithGreaterThan() {
+    public void testRuntimeRestrictionsWithGreaterThan() {
         Restriction<Train> restriction = _Train.capacity.greaterThan(200);
         List<Train> trains = trainRepository.findTrains(restriction);
         assertEquals(2, trains.size());
@@ -481,7 +483,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithBetween() {
+    public void testRuntimeRestrictionsWithBetween() {
         Restriction<Train> restriction = _Train.speed.between(100.0, 300.0);
         List<Train> trains = trainRepository.findTrains(restriction);
         assertEquals(3, trains.size());
@@ -492,7 +494,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithIn() {
+    public void testRuntimeRestrictionsWithIn() {
         Restriction<Train> restriction = _Train.model.in("HighSpeed", "Freight");
         List<Train> trains = trainRepository.findTrains(restriction);
         assertEquals(4, trains.size());
@@ -502,7 +504,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithContains() {
+    public void testRuntimeRestrictionsWithContains() {
         List<Train> trains = trainRepository.findTrains(_Train.model.contains("High"));
         assertEquals(3, trains.size());
         trains.forEach(train ->
@@ -511,7 +513,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithNotContains() {
+    public void testRuntimeRestrictionsWithNotContains() {
         List<Train> trains = trainRepository.findTrains(_Train.name.notContains("Local"));
         assertEquals(4, trains.size());
         trains.forEach(train ->
@@ -520,14 +522,14 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithStartsWith() {
+    public void testRuntimeRestrictionsWithStartsWith() {
         List<Train> trains = trainRepository.findTrains(_Train.name.startsWith("Express"));
         assertEquals(3, trains.size());
         trains.forEach(train -> assertTrue(train.getName().startsWith("Express")));
     }
 
     @Test
-    void testRuntimeRestrictionsWithEndsWith() {
+    public void testRuntimeRestrictionsWithEndsWith() {
         List<Train> trains = trainRepository.findTrains(_Train.name.endsWith("1"));
         assertEquals(3, trains.size());
         assertEquals(3, trainRepository.findTrains(Restrict.unrestricted()).stream().filter(train -> train.getName().endsWith("1")).count());
@@ -535,7 +537,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithLike() {
+    public void testRuntimeRestrictionsWithLike() {
         Restriction<Train> restriction = _Train.name.like("Local%");
         List<Train> trains = trainRepository.findTrains(restriction);
         assertEquals(2, trains.size());
@@ -543,7 +545,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithNull() {
+    public void testRuntimeRestrictionsWithNull() {
         // Add a train with null model
         Train nullModelTrain = new Train("Null Model Train", null, 100, 200.0, true);
         nullModelTrain.setSpecs(new TrainSpecs("TestTrain", 100, 200.0));
@@ -559,7 +561,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithNotNull() {
+    public void testRuntimeRestrictionsWithNotNull() {
         Restriction<Train> restriction = _Train.name.isNull().negate();
         List<Train> trains = trainRepository.findTrains(restriction);
         assertEquals(6, trains.size());
@@ -567,7 +569,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsCombined() {
+    public void testRuntimeRestrictionsCombined() {
         Restriction<Train> restriction = Restrict.all(
             _Train.capacity.greaterThan(150),
             _Train.electric.equalTo(true)
@@ -581,7 +583,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithAtMost() {
+    public void testRuntimeRestrictionsWithAtMost() {
         Restriction<Train> restriction = _Train.speed.lessThanEqual(120.0);
         List<Train> trains = trainRepository.findTrains(restriction);
         assertEquals(3, trains.size());
@@ -589,7 +591,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithNotBetween() {
+    public void testRuntimeRestrictionsWithNotBetween() {
         Restriction<Train> restriction = _Train.speed.notBetween(100.0, 300.0);
         List<Train> selected = trainRepository.findTrains(restriction);
         assertEquals(3, selected.size());
@@ -605,7 +607,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithNotIn() {
+    public void testRuntimeRestrictionsWithNotIn() {
         Restriction<Train> restriction = _Train.name.notIn("Express 1", "Local 1");
         List<Train> trains = trainRepository.findTrains(restriction);
         assertEquals(4, trains.size());
@@ -615,7 +617,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithNotLike() {
+    public void testRuntimeRestrictionsWithNotLike() {
         Restriction<Train> restriction = _Train.model.notLike("HighSpeed");
         List<Train> trains = trainRepository.findTrains(restriction);
         assertEquals(3, trains.size());
@@ -623,7 +625,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithAfterLocalDateTime() {
+    public void testRuntimeRestrictionsWithAfterLocalDateTime() {
         LocalDateTime threshold = LocalDateTime.of(2023, 1, 1, 12, 0); // 12:00
         Restriction<Train> restriction = _Train.departureTime.greaterThan(threshold);
         List<Train> trains = trainRepository.findTrains(restriction);
@@ -632,7 +634,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithAfterLocalDateTimeCurrentDateTime() {
+    public void testRuntimeRestrictionsWithAfterLocalDateTimeCurrentDateTime() {
         LocalDateTime threshold = LocalDateTime.of(2023, 1, 1, 12, 0); // 12:00
 
         when(dateTimeProvider.getNow()).then(invocation -> threshold.atOffset(ZoneOffset.UTC));
@@ -643,7 +645,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithAfterLocalDateCurrentDate() {
+    public void testRuntimeRestrictionsWithAfterLocalDateCurrentDate() {
         LocalDate threshold = LocalDate.of(2023, 1, 1);
 
         when(dateTimeProvider.getNow()).then(invocation -> threshold.atStartOfDay().atOffset(ZoneOffset.UTC));
@@ -663,7 +665,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithAfterLocalTimeCurrentTime() {
+    public void testRuntimeRestrictionsWithAfterLocalTimeCurrentTime() {
         LocalTime threshold = LocalTime.of(12, 0); // 12:00
 
         when(dateTimeProvider.getNow()).then(invocation -> LocalDateTime.of(LocalDate.of(2023, 1, 1), threshold).atOffset(ZoneOffset.UTC));
@@ -675,7 +677,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithBeforeInstant() {
+    public void testRuntimeRestrictionsWithBeforeInstant() {
         Instant threshold = Instant.ofEpochSecond(1672531200 + 18000); // 2023-01-01T05:00:00Z
         Restriction<Train> restriction = _Train.createdAt.lessThan(threshold);
         List<Train> trains = trainRepository.findTrains(restriction);
@@ -684,7 +686,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithAfterInstant() {
+    public void testRuntimeRestrictionsWithAfterInstant() {
         Instant threshold = Instant.ofEpochSecond(1672531200 + 18000); // 2023-01-01T05:00:00Z
         Restriction<Train> restriction = _Train.createdAt.greaterThan(threshold);
         List<Train> trains = trainRepository.findTrains(restriction);
@@ -693,7 +695,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithBeforeLocalDateTime() {
+    public void testRuntimeRestrictionsWithBeforeLocalDateTime() {
         LocalDateTime threshold = LocalDateTime.of(2023, 1, 1, 12, 0); // 12:00
         Restriction<Train> restriction = _Train.departureTime.lessThan(threshold);
         List<Train> trains = trainRepository.findTrains(restriction);
@@ -702,7 +704,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithEmbeddedPropertyEqualTo() {
+    public void testRuntimeRestrictionsWithEmbeddedPropertyEqualTo() {
         Restriction<Train> restriction = _Train.specs.navigate(_TrainSpecs.engineType).equalTo("Electric");
         List<Train> trains = trainRepository.findTrains(restriction);
         assertEquals(3, trains.size());
@@ -710,7 +712,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithEmbeddedPropertyGreaterThan() {
+    public void testRuntimeRestrictionsWithEmbeddedPropertyGreaterThan() {
         Restriction<Train> restriction = _Train.specs.navigate(_TrainSpecs.maxLoad).greaterThan(500);
         List<Train> trains = trainRepository.findTrains(restriction);
         assertEquals(3, trains.size());
@@ -719,7 +721,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithEmbeddedPropertyBetween() {
+    public void testRuntimeRestrictionsWithEmbeddedPropertyBetween() {
         Restriction<Train> restriction = _Train.specs.navigate(_TrainSpecs.weight).between(120.0, 160.0);
         List<Train> trains = trainRepository.findTrains(restriction);
         assertEquals(5, trains.size());
@@ -736,7 +738,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithEmbeddedPropertyIn() {
+    public void testRuntimeRestrictionsWithEmbeddedPropertyIn() {
         Restriction<Train> restriction = _Train.specs.navigate(_TrainSpecs.engineType).in("Electric", "Diesel");
         List<Train> trains = trainRepository.trains(restriction);
         assertEquals(6, trains.size());
@@ -752,7 +754,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithAssociationPropertyEqualTo() {
+    public void testRuntimeRestrictionsWithAssociationPropertyEqualTo() {
         Restriction<Train> restriction = _Train.manufacturer.navigate(_TrainManufacturer.name).equalTo("Siemens");
         List<Train> trains = trainRepository.findTrains$joinedManufacturer(restriction);
         assertEquals(2, trains.size());
@@ -766,7 +768,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithAssociationPropertyGreaterThan() {
+    public void testRuntimeRestrictionsWithAssociationPropertyGreaterThan() {
         Restriction<Train> restriction = _Train.manufacturer.navigate(_TrainManufacturer.foundedYear).greaterThan(1900);
         List<Train> trains = trainRepository.findTrains$joinedManufacturer(restriction);
         assertEquals(4, trains.size());
@@ -780,7 +782,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithAssociationPropertyBetween() {
+    public void testRuntimeRestrictionsWithAssociationPropertyBetween() {
         Restriction<Train> restriction = _Train.manufacturer.navigate(_TrainManufacturer.foundedYear).between(1840, 1950);
         List<Train> trains = trainRepository.findTrains$joinedManufacturer(restriction);
         assertEquals(6, trains.size());
@@ -791,7 +793,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithAssociationPropertyIn() {
+    public void testRuntimeRestrictionsWithAssociationPropertyIn() {
         Restriction<Train> restriction = _Train.manufacturer.navigate(_TrainManufacturer.country).in("Germany", "France");
         List<Train> trains = trainRepository.findTrains$joinedManufacturer(restriction);
         assertEquals(4, trains.size());
@@ -801,7 +803,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsCombinedEmbeddedAndAssociation() {
+    public void testRuntimeRestrictionsCombinedEmbeddedAndAssociation() {
         Restriction<Train> restriction = Restrict.all(
             _Train.specs.navigate(_TrainSpecs.engineType).equalTo("Electric"),
             _Train.manufacturer.navigate(_TrainManufacturer.country).equalTo("Germany")
@@ -821,7 +823,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithOrder() {
+    public void testRuntimeRestrictionsWithOrder() {
         Restriction<Train> restriction = _Train.capacity.greaterThan(150);
         Sort<Train> sort = _Train.name.asc();
         jakarta.data.Order<Train> order = jakarta.data.Order.by(sort);
@@ -845,7 +847,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithOrder2() {
+    public void testRuntimeRestrictionsWithOrder2() {
         Restriction<Train> restriction = _Train.capacity.greaterThan(150);
         List<Train> trains = trainRepository.findTrainsWithOrderByName(restriction);
         assertEquals(4, trains.size());
@@ -858,7 +860,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithOrderDescending() {
+    public void testRuntimeRestrictionsWithOrderDescending() {
         Restriction<Train> restriction = _Train.electric.equalTo(true);
         Sort<Train> sort = _Train.name.desc();
         jakarta.data.Order<Train> order = jakarta.data.Order.by(sort);
@@ -878,7 +880,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithMultipleSorts() {
+    public void testRuntimeRestrictionsWithMultipleSorts() {
         Restriction<Train> restriction = _Train.capacity.greaterThan(150);
         List<Train> trains = trainRepository.findTrainsWithOrder(restriction, Order.by(_Train.electric.asc(), _Train.capacity.desc()));
         assertEquals(4, trains.size());
@@ -900,7 +902,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithEmbeddedPropertyOrder() {
+    public void testRuntimeRestrictionsWithEmbeddedPropertyOrder() {
         Restriction<Train> restriction = _Train.specs.navigate(_TrainSpecs.engineType).equalTo("Electric");
         jakarta.data.Order<Train> order = jakarta.data.Order.by(Sort.asc("specs.weight"));
 //        NumericExpression<Train, Double> navigate = _Train.specs.navigate(_TrainSpecs.weight);
@@ -924,7 +926,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithEmbeddedPropertyMultipleSorts() {
+    public void testRuntimeRestrictionsWithEmbeddedPropertyMultipleSorts() {
         Restriction<Train> restriction = _Train.capacity.greaterThan(180);
         List<Train> trains = trainRepository.findTrainsWithSorts(restriction,
             Sort.asc("specs.engineType"),
@@ -937,7 +939,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithAssociationPropertyMultipleSorts() {
+    public void testRuntimeRestrictionsWithAssociationPropertyMultipleSorts() {
         Restriction<Train> restriction = _Train.electric.equalTo(true);
         List<Train> trains = trainRepository.findTrainsWithSortsWithJoinedManufacturer(restriction,
             Sort.asc("manufacturer.country"),
@@ -953,7 +955,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testPagedTrainsWithRestriction() {
+    public void testPagedTrainsWithRestriction() {
         Restriction<Train> restriction = _Train.capacity.greaterThan(150);
         PageRequest pageRequest = PageRequest.ofSize(2);
 
@@ -968,7 +970,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testPagedTrainsWithRestrictionAndOrder() {
+    public void testPagedTrainsWithRestrictionAndOrder() {
         Restriction<Train> restriction = _Train.capacity.greaterThan(150);
         PageRequest pageRequest = PageRequest.ofSize(2);
         Order<Train> order = Order.by(_Train.name.asc());
@@ -988,7 +990,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testPagedTrainsWithRestrictionAndSort() {
+    public void testPagedTrainsWithRestrictionAndSort() {
         Restriction<Train> restriction = _Train.capacity.greaterThan(150);
         PageRequest pageRequest = PageRequest.ofSize(2);
         Sort<Train> sort = _Train.name.desc();
@@ -1008,7 +1010,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testPagedTrainsWithPageRequestFirst() {
+    public void testPagedTrainsWithPageRequestFirst() {
         PageRequest pageRequest = PageRequest.ofSize(2);
         Restriction<Train> restriction = _Train.capacity.greaterThan(150);
 
@@ -1027,7 +1029,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testCursoredPagedTrainsWithRestriction() {
+    public void testCursoredPagedTrainsWithRestriction() {
         if (!supportsCursorPaginationWithRestrictions()) {
             return;
         }
@@ -1044,7 +1046,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testCursoredPagedTrainsWithRestrictionAndOrder() {
+    public void testCursoredPagedTrainsWithRestrictionAndOrder() {
         if (!supportsCursorPaginationWithRestrictions()) {
             return;
         }
@@ -1066,7 +1068,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testCursoredPagedTrainsWithRestrictionAndSort() {
+    public void testCursoredPagedTrainsWithRestrictionAndSort() {
         if (!supportsCursorPaginationWithRestrictions()) {
             return;
         }
@@ -1088,7 +1090,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testCursoredPagedTrainsWithPageRequestFirst() {
+    public void testCursoredPagedTrainsWithPageRequestFirst() {
         if (!supportsCursorPaginationWithRestrictions()) {
             return;
         }
@@ -1105,7 +1107,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testPagedTrainsNavigation() {
+    public void testPagedTrainsNavigation() {
         Restriction<Train> restriction = _Train.capacity.greaterThan(150);
         PageRequest firstPage = PageRequest.ofSize(2);
 
@@ -1125,7 +1127,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testCursoredPagedTrainsNavigation() {
+    public void testCursoredPagedTrainsNavigation() {
         if (!supportsCursorPaginationWithRestrictions()) {
             return;
         }
@@ -1147,7 +1149,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testPagedTrainsWithEmptyRestriction() {
+    public void testPagedTrainsWithEmptyRestriction() {
         Restriction<Train> restriction = _Train.capacity.greaterThan(1000); // No trains match
         PageRequest pageRequest = PageRequest.ofSize(5);
 
@@ -1160,7 +1162,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testCursoredPagedTrainsWithEmptyRestriction() {
+    public void testCursoredPagedTrainsWithEmptyRestriction() {
         if (!supportsCursorPaginationWithRestrictions()) {
             return;
         }
@@ -1175,21 +1177,21 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithUpper() {
+    public void testRuntimeRestrictionsWithUpper() {
         List<Train> trains = trainRepository.findTrains(_Train.name.upper().equalTo("EXPRESS 1"));
         assertEquals(1, trains.size());
         assertEquals("Express 1", trains.getFirst().getName());
     }
 
     @Test
-    void testRuntimeRestrictionsWithLower() {
+    public void testRuntimeRestrictionsWithLower() {
         List<Train> trains = trainRepository.findTrains(_Train.name.lower().equalTo("express 1"));
         assertEquals(1, trains.size());
         assertEquals("Express 1", trains.getFirst().getName());
     }
 
     @Test
-    void testRuntimeRestrictionsWithLeft() {
+    public void testRuntimeRestrictionsWithLeft() {
         List<Train> trains = trainRepository.findTrains(_Train.name.left(7).equalTo("Express"));
         assertEquals(3, trainRepository.findTrains(Restrict.unrestricted()).stream().filter(train -> train.getName().substring(0, 7).startsWith("Express")).count());
         assertEquals(3, trains.size());
@@ -1197,7 +1199,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithRight() {
+    public void testRuntimeRestrictionsWithRight() {
         List<Train> trains = trainRepository.findTrains(_Train.name.right(1).equalTo("1"));
         assertEquals(3, trainRepository.findTrains(Restrict.unrestricted()).stream().filter(train -> train.getName().substring(train.getName().length() - 1).startsWith("1")).count());
         assertEquals(3, trains.size());
@@ -1205,7 +1207,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithLength() {
+    public void testRuntimeRestrictionsWithLength() {
         List<Train> trains = trainRepository.findTrains(_Train.name.length().equalTo(9));
         assertEquals(3, trainRepository.findTrains(Restrict.unrestricted()).stream().filter(train -> train.getName().length() == 9).count());
         assertEquals(3, trains.size()); // "Express 1" and "Express 2" are both 9 characters
@@ -1213,7 +1215,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithLengthGreaterThan() {
+    public void testRuntimeRestrictionsWithLengthGreaterThan() {
         List<Train> trains = trainRepository.findTrains(_Train.name.length().greaterThan(8));
         assertEquals(3, trainRepository.findTrains(Restrict.unrestricted()).stream().filter(train -> train.getName().length() > 8).count());
         assertEquals(3, trains.size()); // "Express 1", "Express 2", "Express 3", "Local 2" are > 8 chars
@@ -1221,7 +1223,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithLikeCustomWildcards() {
+    public void testRuntimeRestrictionsWithLikeCustomWildcards() {
         List<Train> trains = trainRepository.findTrains(_Train.name.like("Express F", 'F', 'B'));
         assertEquals(3, trainRepository.findTrains(Restrict.unrestricted()).stream().filter(train -> train.getName().substring(0, train.getName().length() - 1).equals("Express ")).count());
         assertEquals(3, trains.size());
@@ -1229,7 +1231,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithLikeCustomWildcards2() {
+    public void testRuntimeRestrictionsWithLikeCustomWildcards2() {
         List<Train> trains = trainRepository.findTrains(_Train.name.like("ExpressB", 'F', 'B'));
         assertEquals(3, trainRepository.findTrains(Restrict.unrestricted()).stream().filter(train -> train.getName().startsWith("Express")).count());
         assertEquals(3, trains.size());
@@ -1237,7 +1239,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithLikeCustomWildcardsAndEscape() {
+    public void testRuntimeRestrictionsWithLikeCustomWildcardsAndEscape() {
         // Add a train with special characters to test escape functionality
         Train specialTrain = new Train("Test%Train", "Special", 100, 200.0, true);
         specialTrain.setSpecs(new TrainSpecs("Test", 100, 200.0));
@@ -1254,21 +1256,21 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithNotLikeCustomWildcards() {
+    public void testRuntimeRestrictionsWithNotLikeCustomWildcards() {
         List<Train> trains = trainRepository.findTrains(_Train.name.notLike("Express F", 'F', 'B'));
         assertEquals(3, trains.size());
         trains.forEach(train -> assertFalse(train.getName().startsWith("Express")));
     }
 
     @Test
-    void testRuntimeRestrictionsWithNotLikeCustomWildcards2() {
+    public void testRuntimeRestrictionsWithNotLikeCustomWildcards2() {
         List<Train> trains = trainRepository.findTrains(_Train.name.notLike("ExpressB", 'F', 'B'));
         assertEquals(3, trains.size());
         trains.forEach(train -> assertFalse(train.getName().startsWith("Express")));
     }
 
     @Test
-    void testRuntimeRestrictionsWithNotLikeCustomWildcardsAndEscape() {
+    public void testRuntimeRestrictionsWithNotLikeCustomWildcardsAndEscape() {
         // Add a train with special characters to test escape functionality
         Train specialTrain = new Train("Test%Train", "Special", 100, 200.0, true);
         specialTrain.setSpecs(new TrainSpecs("Test", 100, 200.0));
@@ -1285,7 +1287,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testAbs() {
+    public void testAbs() {
         Train specialTrain = new Train("NegativeTestTrain", "Special", 100, 200.0, true);
         specialTrain.setSpecs(new TrainSpecs("Test", -100, 200.0));
         trainRepository.save(specialTrain);
@@ -1300,21 +1302,21 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithNotStartsWith() {
+    public void testRuntimeRestrictionsWithNotStartsWith() {
         List<Train> trains = trainRepository.findTrains(_Train.name.notStartsWith("Express"));
         assertEquals(3, trains.size());
         trains.forEach(train -> assertFalse(train.getName().startsWith("Express")));
     }
 
     @Test
-    void testRuntimeRestrictionsWithNotEndsWith() {
+    public void testRuntimeRestrictionsWithNotEndsWith() {
         List<Train> trains = trainRepository.findTrains(_Train.name.notEndsWith("1"));
         assertEquals(3, trains.size());
         trains.forEach(train -> assertFalse(train.getName().endsWith("1")));
     }
 
     @Test
-    void testRuntimeRestrictionsWithNumericNegated() {
+    public void testRuntimeRestrictionsWithNumericNegated() {
         // Test negated on speed (all positive values, so negated will be negative)
         assertEquals(
             4,
@@ -1329,7 +1331,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithNumericPlus() {
+    public void testRuntimeRestrictionsWithNumericPlus() {
         // Test capacity + 50 > 250 (should match trains with capacity > 200)
         assertEquals(
             2,
@@ -1344,7 +1346,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithNumericMinus() {
+    public void testRuntimeRestrictionsWithNumericMinus() {
         // Test capacity - 50 > 150 (should match trains with capacity > 200)
         assertEquals(
             2,
@@ -1359,7 +1361,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithNumericTimes() {
+    public void testRuntimeRestrictionsWithNumericTimes() {
         // Test capacity * 2 > 400 (should match trains with capacity > 200)
         assertEquals(
             2,
@@ -1374,7 +1376,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithNumericDivide() {
+    public void testRuntimeRestrictionsWithNumericDivide() {
         // Test capacity / 2 > 100 (should match trains with capacity > 200)
         assertEquals(
             2,
@@ -1389,7 +1391,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithNumericExpressionOperations() {
+    public void testRuntimeRestrictionsWithNumericExpressionOperations() {
         // Test capacity + capacity > 400 (should match trains with capacity > 200)
         assertEquals(
             2,
@@ -1404,7 +1406,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithNumericEqualTo() {
+    public void testRuntimeRestrictionsWithNumericEqualTo() {
         // Test capacity equal to 200
         Restriction<Train> restriction = _Train.capacity.equalTo(200);
         List<Train> trains = trainRepository.findTrains(restriction);
@@ -1419,7 +1421,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithNumericEqualToExpression() {
+    public void testRuntimeRestrictionsWithNumericEqualToExpression() {
         // Test capacity equal to capacity (should match all trains)
         Restriction<Train> restriction = _Train.capacity.equalTo(_Train.capacity);
         List<Train> trains = trainRepository.findTrains(restriction);
@@ -1427,7 +1429,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithNumericComplexExpression() {
+    public void testRuntimeRestrictionsWithNumericComplexExpression() {
         // Test (capacity + 50) * 2 > 500 (should match trains with capacity > 200)
         Restriction<Train> restriction = _Train.capacity.plus(50).times(2).greaterThan(500);
         assertEquals(
@@ -1442,7 +1444,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testRuntimeRestrictionsWithNumericAbsOnEmbedded() {
+    public void testRuntimeRestrictionsWithNumericAbsOnEmbedded() {
         // Test abs on embedded weight (all positive values, so abs should return same)
         Restriction<Train> restriction = _Train.specs.navigate(_TrainSpecs.weight).abs().greaterThan(140.0);
         List<Train> trains = trainRepository.findTrains(restriction);
@@ -1457,7 +1459,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testFirstAnnotationWithRestriction() {
+    public void testFirstAnnotationWithRestriction() {
         Restriction<Train> restriction = _Train.capacity.greaterThan(150);
         List<Train> trains = trainRepository.findFirst2Trains(restriction);
         assertEquals(2, trains.size());
@@ -1472,7 +1474,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testFirstAnnotationWithRestrictionSingle() {
+    public void testFirstAnnotationWithRestrictionSingle() {
         Restriction<Train> restriction = _Train.electric.equalTo(true);
         List<Train> trains = trainRepository.findFirstTrain(restriction);
         assertEquals(1, trains.size());
@@ -1487,7 +1489,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testFirstAnnotationWithRestrictionThree() {
+    public void testFirstAnnotationWithRestrictionThree() {
         Restriction<Train> restriction = _Train.capacity.greaterThan(180);
         List<Train> trains = trainRepository.findFirst3Trains(restriction);
         assertEquals(3, trains.size());
@@ -1502,7 +1504,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testFindOrderByFirstSelectSingleField() {
+    public void testFindOrderByFirstSelectSingleField() {
         Restriction<Train> restriction = _Train.capacity.greaterThan(150);
         List<String> trainNames = trainRepository.findFirst2TrainNamesOrderedByName(restriction);
         assertEquals(2, trainNames.size());
@@ -1520,9 +1522,9 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testFindOrderByFirstSelectMultipleFields() {
+    public void testFindOrderByFirstSelectMultipleFields() {
         Restriction<Train> restriction = _Train.capacity.greaterThan(180);
-        List<Train> trains = trainRepository.findFirst3TrainsOrderedByCapacity(restriction);
+        List<TrainNameCapacityDto> trains = trainRepository.findFirst3TrainsOrderedByCapacity(restriction);
         assertEquals(3, trains.size());
         assertEquals(
             trains.size(),
@@ -1533,19 +1535,13 @@ public abstract class AbstractJakartaDataRestrictionsTest {
                 .count()
         );
         // Verify ordering by capacity
-        assertEquals(200, trains.get(0).getCapacity());
-        assertEquals(220, trains.get(1).getCapacity());
-        assertEquals(250, trains.get(2).getCapacity());
-        // Verify only selected fields are populated
-        trains.forEach(train -> {
-            assertNotNull(train.getName());
-            assertTrue(train.getCapacity() > 0);
-            // Other fields might be null/default due to @Select
-        });
+        assertEquals(200, trains.get(0).capacity());
+        assertEquals(220, trains.get(1).capacity());
+        assertEquals(250, trains.get(2).capacity());
     }
 
     @Test
-    void testFindOrderByFirstNoSelect() {
+    public void testFindOrderByFirstNoSelect() {
         Restriction<Train> restriction = _Train.electric.equalTo(true);
         List<Train> trains = trainRepository.findFirstTrainOrderedBySpeed(restriction);
         assertEquals(1, trains.size());
@@ -1567,9 +1563,9 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testFindOrderByFirstSelectTwoFields() {
+    public void testFindOrderByFirstSelectTwoFields() {
         Restriction<Train> restriction = _Train.capacity.greaterThan(150);
-        List<Train> trains = trainRepository.findFirst4TrainsOrderedByName(restriction);
+        List<TrainNameModelDto> trains = trainRepository.findFirst4TrainsOrderedByName(restriction);
         assertEquals(4, trains.size());
         assertEquals(
             trains.size(),
@@ -1580,19 +1576,14 @@ public abstract class AbstractJakartaDataRestrictionsTest {
                 .count()
         );
         // Verify ordering by name
-        assertEquals("Express 1", trains.get(0).getName());
-        assertEquals("Express 2", trains.get(1).getName());
-        assertEquals("Express 3", trains.get(2).getName());
-        assertEquals("Local 2", trains.get(3).getName());
-        // Verify selected fields are populated
-        trains.forEach(train -> {
-            assertNotNull(train.getName());
-            assertNotNull(train.getModel());
-        });
+        assertEquals("Express 1", trains.get(0).name());
+        assertEquals("Express 2", trains.get(1).name());
+        assertEquals("Express 3", trains.get(2).name());
+        assertEquals("Local 2", trains.get(3).name());
     }
 
     @Test
-    void testFindOrderByFirstSelectSingleFieldNoRestriction() {
+    public void testFindOrderByFirstSelectSingleFieldNoRestriction() {
         List<String> trainNames = trainRepository.findFirst2TrainNamesOrderedByName();
         assertEquals(2, trainNames.size());
         assertEquals(
@@ -1609,7 +1600,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testFindOrderByFirstSelectMultipleFieldsNoRestriction() {
+    public void testFindOrderByFirstSelectMultipleFieldsNoRestriction() {
         List<Train> trains = trainRepository.findFirst3TrainsOrderedByCapacity();
         assertEquals(3, trains.size());
         assertEquals(
@@ -1626,7 +1617,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testFindOrderByFirstNoSelectNoRestriction() {
+    public void testFindOrderByFirstNoSelectNoRestriction() {
         List<Train> trains = trainRepository.findFirstTrainOrderedBySpeed();
         assertEquals(1, trains.size());
         assertEquals(
@@ -1644,7 +1635,7 @@ public abstract class AbstractJakartaDataRestrictionsTest {
     }
 
     @Test
-    void testFindOrderByFirstSelectTwoFieldsNoRestriction() {
+    public void testFindOrderByFirstSelectTwoFieldsNoRestriction() {
         List<Train> trains = trainRepository.findFirst4TrainsOrderedByName();
         assertEquals(4, trains.size());
         assertEquals(

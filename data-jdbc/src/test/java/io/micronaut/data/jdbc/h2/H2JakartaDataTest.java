@@ -13,21 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.hibernate;
+package io.micronaut.data.jdbc.h2;
 
-import io.micronaut.data.tck.tests.AbstractJakartaDataRestrictionsTest;
+import io.micronaut.data.tck.tests.AbstractJakartaDataTest;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.TestInstance;
 
-@Disabled // Enable after https://github.com/jakartaee/data/issues/1290
-@H2DBProperties
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @MicronautTest(transactional = false)
-public class HibernateJakartaDataRestrictionsTest extends AbstractJakartaDataRestrictionsTest {
-
-    @Override
-    protected boolean supportsCursorPaginationWithRestrictions() {
-        return false;
-    }
+public class H2JakartaDataTest extends AbstractJakartaDataTest implements H2TestingPropertyProvider {
 }

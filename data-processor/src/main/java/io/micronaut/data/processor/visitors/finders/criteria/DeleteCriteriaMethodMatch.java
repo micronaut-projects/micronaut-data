@@ -35,6 +35,7 @@ import io.micronaut.data.processor.visitors.finders.AbstractCriteriaMethodMatch;
 import io.micronaut.data.processor.visitors.finders.FindersUtils;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.data.processor.visitors.finders.MethodNameParser;
+import io.micronaut.data.processor.visitors.finders.MethodResult;
 import io.micronaut.data.processor.visitors.finders.QueryMatchId;
 import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
 import io.micronaut.inject.ast.ClassElement;

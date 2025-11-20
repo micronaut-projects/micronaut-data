@@ -31,7 +31,6 @@ import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
-import io.micronaut.data.annotation.OrderBy;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.EmptyResultException;
@@ -84,7 +83,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Stream;
 
 import static io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_LIMIT;
 import static io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_OFFSET;
@@ -462,16 +460,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
         }
         Pageable finalPageable = pageable;
-        List<Sort.Order> orders = Stream.concat(
-            getParametersInRole(context, TypeRole.SORT, Sort.class).stream().filter(sort -> finalPageable != sort).flatMap(s -> s.getOrderBy().stream()),
-            context.getExecutableMethod().getAnnotationValuesByStereotype(OrderBy.class.getName())
-                .stream()
-                .map(av -> new Sort.Order(
-                        av.stringValue().orElseThrow(),
-                        av.booleanValue("descending").orElse(false) ? Sort.Order.Direction.DESC : Sort.Order.Direction.ASC,
-                        av.booleanValue("ignoreCase").orElse(false)
-                ))
-        ).toList();
+        List<Sort> sorts = getParametersInRole(context, TypeRole.SORT, Sort.class);
+        List<Sort.Order> orders = sorts.stream()
+            .filter(sort -> finalPageable != sort)
+            .flatMap(s -> s.getOrderBy().stream())
+            .toList();
         if (!orders.isEmpty()) {
             pageable = pageable.orders(orders);
         }

@@ -18,7 +18,6 @@ package io.micronaut.data.processor.visitors.finders;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.expressions.EvaluatedExpressionReference;
@@ -29,11 +28,9 @@ import io.micronaut.data.annotation.By;
 import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
-import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.annotation.Relation;
-import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.annotation.TenantId;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Where;
@@ -701,39 +698,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                                                      ClassElement queryResultType,
                                                      FindersUtils.InterceptorMatch interceptorMatch,
                                                      boolean allowEntityResultByDefault) {
-        ClassElement resultType = interceptorMatch.returnType();
-
-        boolean isRuntimeDto = false;
-        boolean isVoid = resultType != null && isVoid(resultType);
-        boolean isDto = resultType != null && !isVoid
-            && !TypeUtils.areTypesCompatible(resultType, queryResultType)
-            && (isDtoType(matchContext.getRepositoryClass(), resultType) || resultType.hasStereotype(Introspected.class) && queryResultType.hasStereotype(MappedEntity.class));
-
-        if (isDto) {
-            isRuntimeDto = isDtoType(matchContext.getRepositoryClass(), resultType);
-        } else if (interceptorMatch.validateReturnType()) {
-            if (queryResultType != null) {
-                if (resultType == null || !isVoid) {
-                    if (resultType == null || TypeUtils.areTypesCompatible(resultType, queryResultType)) {
-                        if (!queryResultType.isPrimitive() || resultType == null) {
-                            resultType = queryResultType;
-                        }
-                    } else if (!allowEntityResultByDefault || !matchContext.getRootEntity().getClassElement().equals(resultType)) {
-                        throw new MatchFailedException("Query results in a type [" + queryResultType.getName() + "] whilst method returns an incompatible type: " + resultType.getName());
-                    }
-                }
-            }
-        }
-        return new MethodResult(resultType, isDto, isRuntimeDto);
-    }
-
-    private boolean isVoid(ClassElement resultType) {
-        return resultType.isAssignable(void.class) || resultType.isAssignable(Void.class) || resultType.getName().equals("kotlin.Unit");
-    }
-
-    private boolean isDtoType(ClassElement repositoryElement, ClassElement classElement) {
-        return Arrays.stream(repositoryElement.stringValues(RepositoryConfiguration.class, "queryDtoTypes"))
-            .anyMatch(type -> classElement.getName().equals(type));
+        return MatchUtils.analyzeMethodResult(matchContext.getRepositoryClass(), matchContext.getRootEntity().getClassElement(), queryResultType, interceptorMatch, allowEntityResultByDefault);
     }
 
     /**
@@ -790,18 +755,6 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                 }
                 return pp;
             }).toList();
-    }
-
-    /**
-     * Method result.
-     *
-     * @param resultType             The result type
-     * @param isDto                  Is DTO
-     * @param isRuntimeDtoConversion Is DTO converted at the runtime
-     */
-    protected record MethodResult(ClassElement resultType,
-                                  boolean isDto,
-                                  boolean isRuntimeDtoConversion) {
     }
 
 }

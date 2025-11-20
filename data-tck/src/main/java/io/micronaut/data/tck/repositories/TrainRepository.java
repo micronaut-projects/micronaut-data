@@ -20,6 +20,8 @@ import io.micronaut.data.annotation.Join;
 import io.micronaut.data.tck.entities.Train;
 import io.micronaut.data.tck.entities.TrainCZ;
 import io.micronaut.data.tck.entities.TrainCZProjection;
+import io.micronaut.data.tck.entities.TrainNameCapacityDto;
+import io.micronaut.data.tck.entities.TrainNameModelDto;
 import jakarta.data.Order;
 import jakarta.data.Sort;
 import jakarta.data.constraint.AtLeast;
@@ -211,7 +213,7 @@ public interface TrainRepository extends CrudRepository<Train, Long> {
     @First(3)
     @Select("name")
     @Select("capacity")
-    List<Train> findFirst3TrainsOrderedByCapacity(Restriction<Train> restriction);
+    List<TrainNameCapacityDto> findFirst3TrainsOrderedByCapacity(Restriction<Train> restriction);
 
     @Find
     @OrderBy("speed")
@@ -223,7 +225,7 @@ public interface TrainRepository extends CrudRepository<Train, Long> {
     @First(4)
     @Select("name")
     @Select("model")
-    List<Train> findFirst4TrainsOrderedByName(Restriction<Train> restriction);
+    List<TrainNameModelDto> findFirst4TrainsOrderedByName(Restriction<Train> restriction);
 
     // Methods for testing @Find @OrderBy @First @Select combinations without restrictions
     @Find

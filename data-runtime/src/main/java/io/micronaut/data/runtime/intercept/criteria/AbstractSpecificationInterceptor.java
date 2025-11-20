@@ -26,6 +26,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.First;
+import io.micronaut.data.annotation.OrderBy;
 import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.annotation.TypeRole;
@@ -115,6 +116,24 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
             criteriaRepositoryOperations = null;
             criteriaBuilder = operations.getApplicationContext().getBean(RuntimeCriteriaBuilder.class);
         }
+    }
+
+    @Override
+    protected Pageable getPageable(MethodInvocationContext<?, ?> context) {
+        Pageable pageable = super.getPageable(context);
+        List<Sort.Order> orders =
+            context.getExecutableMethod().getAnnotationValuesByStereotype(OrderBy.class.getName())
+                .stream()
+                .map(av -> new Sort.Order(
+                    av.stringValue().orElseThrow(),
+                    av.booleanValue("descending").orElse(false) ? Sort.Order.Direction.DESC : Sort.Order.Direction.ASC,
+                    av.booleanValue("ignoreCase").orElse(false)
+                ))
+                .toList();
+        if (!orders.isEmpty()) {
+            pageable = pageable.orders(orders);
+        }
+        return pageable;
     }
 
     final CriteriaRepositoryOperations getCriteriaRepositoryOperations(RepositoryMethodKey methodKey,
@@ -393,8 +412,16 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         }
         return criteriaBuilder -> {
             List<AnnotationValue<Projection>> projections = context.getAnnotationValuesByType(Projection.class);
+            AnnotationValue<DataMethod> dataAnnotation = context.getAnnotation(DataMethod.class);
+            boolean isDto = dataAnnotation.isTrue(DataMethod.META_MEMBER_DTO);
             QuerySpecification<K> specification = getQuerySpecification(context, rootEntity);
-            CriteriaQuery<Object> criteriaQuery = projections.isEmpty() ? (CriteriaQuery<Object>) criteriaBuilder.createQuery(rootEntity) : criteriaBuilder.createQuery();
+            CriteriaQuery<Object> criteriaQuery;
+            if (isDto || !projections.isEmpty()) {
+                Class<?> dtoClass = dataAnnotation.classValue(DataMethod.META_MEMBER_RESULT_TYPE).orElse(Object.class);
+                criteriaQuery = (CriteriaQuery<Object>) criteriaBuilder.createQuery(dtoClass);
+            } else {
+                criteriaQuery = (CriteriaQuery<Object>) criteriaBuilder.createQuery(rootEntity);
+            }
             Root<K> root = criteriaQuery.from(rootEntity);
             if (CollectionUtils.isNotEmpty(joinPaths)) {
                 for (JoinPath joinPath : sortJoinPaths(joinPaths)) {

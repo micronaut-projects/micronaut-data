@@ -13,13 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.h2;
+package io.micronaut.data.processor.visitors.finders;
 
-import io.micronaut.data.tck.tests.AbstractJakartaDataRestrictionsTest;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import org.junit.jupiter.api.TestInstance;
+import io.micronaut.core.annotation.Internal;
+import io.micronaut.inject.ast.ClassElement;
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@MicronautTest(transactional = false)
-public class H2JakartaDataRestrictionsTest extends AbstractJakartaDataRestrictionsTest implements H2TestingPropertyProvider {
+/**
+ * Method result.
+ *
+ * @param resultType             The result type
+ * @param isDto                  Is DTO
+ * @param isRuntimeDtoConversion Is DTO converted at the runtime
+ */
+@Internal
+public record MethodResult(ClassElement resultType,
+                           boolean isDto,
+                           boolean isRuntimeDtoConversion) {
 }

@@ -201,7 +201,7 @@ public class MatchContext implements AnnotationMetadataProvider {
      * @return The message to print in the case of no possible implementations.
      */
     public String getUnableToImplementMessage() {
-        return "Unable to implement Repository method: " + repositoryClass.getSimpleName() + "." + methodElement.getName() + "(" + Arrays.stream(methodElement.getParameters()).map(p -> p.getType().getSimpleName() + " " + p.getName()).collect(Collectors.joining(",")) + "). ";
+        return "Unable to implement Repository method: " + repositoryClass.getName() + "." + methodElement.getName() + "(" + Arrays.stream(methodElement.getParameters()).map(p -> p.getType().getSimpleName() + " " + p.getName()).collect(Collectors.joining(",")) + "). ";
     }
 
     /**
