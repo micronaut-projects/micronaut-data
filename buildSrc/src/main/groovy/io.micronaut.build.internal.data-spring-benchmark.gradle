@@ -11,7 +11,7 @@ springBoot {
 dependencyManagement {
     imports {
         mavenBom libs.benchmark.spring.data.bom.get().toString()
-        // Ensure Spring Boot's BOM wins to align Spring Framework/Data with Boot 4.x
+        // Ensure Spring Boot's BOM wins to align Spring Framework/Data with Boot version
         mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
     }
 }
