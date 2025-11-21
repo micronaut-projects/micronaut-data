@@ -9,7 +9,7 @@ micronaut-azure = "5.12.0"
 micronaut-reactor = "3.9.1"
 micronaut-rxjava2 = "2.9.0"
 micronaut-r2dbc = "7.0.0"
-micronaut-sql = "7.0.0-M3"
+micronaut-sql = "7.0.0-M4"
 micronaut-serde = "2.16.2"
 micronaut-spring = "5.12.0"
 micronaut-test = "4.10.2"
@@ -34,17 +34,17 @@ lombok = "1.18.42"
 
 # Testing and benchmarking
 
-benchmark-spring-data = "2025.0.5"
+benchmark-spring-data = "2025.1.0"
 spock = "2.2-groovy-4.0"
 testcontainers = "1.19.4"
 jmh = "1.37"
 
 # Gradle plugins
 
-ksp-gradle-plugin = "2.3.2"
+ksp-gradle-plugin = "2.3.3"
 kotlin-gradle-plugin = "2.2.21"
 jmh-gradle-plugin = "0.7.3"
-spring-boot-gradle-plugin = "3.5.7"
+spring-boot-gradle-plugin = "4.0.0"
 spring-dependency-management-gradle-plugin = "1.1.7"
 shadow-gradle-plugin = "9.2.2"
 
