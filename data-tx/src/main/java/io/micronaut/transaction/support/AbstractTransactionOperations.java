@@ -18,7 +18,6 @@ package io.micronaut.transaction.support;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
@@ -33,6 +32,7 @@ import io.micronaut.transaction.exceptions.NestedTransactionNotSupportedExceptio
 import io.micronaut.transaction.exceptions.TransactionException;
 import io.micronaut.transaction.exceptions.TransactionUsageException;
 import io.micronaut.transaction.exceptions.UnexpectedRollbackException;
+import io.micronaut.transaction.impl.DefaultTransactionStatus;
 import io.micronaut.transaction.impl.InternalTransaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,6 +64,14 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
                                          @Nullable SynchronousConnectionManager<C> synchronousConnectionManager) {
         this.connectionOperations = connectionOperations;
         this.synchronousConnectionManager = synchronousConnectionManager;
+    }
+
+    @Override
+    public boolean managesTransaction(TransactionStatus<C> transactionStatus) {
+        if (transactionStatus instanceof DefaultTransactionStatus<C> status) {
+            return status.isTransactionOf(this);
+        }
+        return false;
     }
 
     /**
@@ -497,13 +505,6 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
             definition,
             existingTransaction
         );
-        PropagatedContext.Scope scope = extendCurrentPropagatedContext(transactionStatus).propagate();
-        transactionStatus.registerInvocationSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCompletion(Status status) {
-                scope.close();
-            }
-        });
         begin(transactionStatus);
         return transactionStatus;
     }
@@ -513,12 +514,10 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         doSuspend(existingTransaction);
         ConnectionStatus<C> newConnectionStatus = synchronousConnectionManager.getConnection(ConnectionDefinition.REQUIRES_NEW);
         T transactionStatus = createNewTransactionStatus(newConnectionStatus, definition);
-        PropagatedContext.Scope scope = extendCurrentPropagatedContext(transactionStatus).propagate();
         transactionStatus.registerInvocationSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCompletion(Status status) {
                 doResume(existingTransaction);
-                scope.close();
                 synchronousConnectionManager.complete(newConnectionStatus);
             }
         });
@@ -531,12 +530,10 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         doSuspend(existingTransaction);
         ConnectionStatus<C> newConnectionStatus = synchronousConnectionManager.getConnection(ConnectionDefinition.REQUIRES_NEW);
         T transactionStatus = createNoTxTransactionStatus(newConnectionStatus, definition);
-        PropagatedContext.Scope scope = extendCurrentPropagatedContext(transactionStatus).propagate();
         transactionStatus.registerInvocationSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCompletion(Status status) {
                 doResume(existingTransaction);
-                scope.close();
                 synchronousConnectionManager.complete(newConnectionStatus);
             }
         });
@@ -548,11 +545,9 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
     private T openNewConnectionAndTransaction(TransactionDefinition definition) {
         ConnectionStatus<C> newConnectionStatus = synchronousConnectionManager.getConnection(ConnectionDefinition.REQUIRES_NEW);
         T transactionStatus = createNewTransactionStatus(newConnectionStatus, definition);
-        PropagatedContext.Scope scope = extendCurrentPropagatedContext(transactionStatus).propagate();
         transactionStatus.registerInvocationSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCompletion(Status status) {
-                scope.close();
                 synchronousConnectionManager.complete(newConnectionStatus);
             }
         });
@@ -563,13 +558,6 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
     @NonNull
     private T openNewTransaction(ConnectionStatus<C> connectionStatus, TransactionDefinition definition) {
         T transactionStatus = createNewTransactionStatus(connectionStatus, definition);
-        PropagatedContext.Scope scope = extendCurrentPropagatedContext(transactionStatus).propagate();
-        transactionStatus.registerInvocationSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCompletion(Status status) {
-                scope.close();
-            }
-        });
         begin(transactionStatus);
         return transactionStatus;
     }
@@ -577,13 +565,6 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
     @NonNull
     private T withNoTransactionStatus(ConnectionStatus<C> connectionStatus, TransactionDefinition definition) {
         T transactionStatus = createNoTxTransactionStatus(connectionStatus, definition);
-        PropagatedContext.Scope scope = extendCurrentPropagatedContext(transactionStatus).propagate();
-        transactionStatus.registerInvocationSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCompletion(Status status) {
-                scope.close();
-            }
-        });
         begin(transactionStatus);
         return transactionStatus;
     }

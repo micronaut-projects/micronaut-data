@@ -71,9 +71,9 @@ public final class SynchronousTransactionOperationsFromReactiveTransactionOperat
     @Override
     public <R> R execute(TransactionDefinition definition, TransactionCallback<T, R> callback) {
         Mono<R> result = reactiveTransactionOperations.withTransactionMono(definition, status -> Mono.deferContextual(contextView -> {
-            try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView).orElseGet(PropagatedContext::getOrEmpty).propagate()) {
-                return Mono.justOrEmpty(callback.apply(new DefaultTransactionStatus<>(status)));
-            }
+            DefaultTransactionStatus<T> transactionStatus = new DefaultTransactionStatus<>(status, this);
+            PropagatedContext propagatedContext = ReactorPropagation.findPropagatedContext(contextView).orElseGet(PropagatedContext::getOrEmpty);
+            return Mono.justOrEmpty(transactionStatus.propagate(propagatedContext, () -> callback.apply(transactionStatus)));
         }).subscribeOn(scheduler)).contextWrite(ctx -> ReactorPropagation.addPropagatedContext(ctx, PropagatedContext.getOrEmpty()));
         return result.onErrorMap(e -> {
             if (e instanceof UndeclaredThrowableException) {
@@ -89,12 +89,26 @@ public final class SynchronousTransactionOperationsFromReactiveTransactionOperat
             "and only supports 'execute', 'executeRead' and 'executeWrite' methods.");
     }
 
+    @Override
+    public boolean managesTransaction(TransactionStatus<T> transactionStatus) {
+        if (transactionStatus instanceof DefaultTransactionStatus<T> status) {
+            return status.isTransactionOf(this);
+        }
+        return false;
+    }
+
     private final class DefaultTransactionStatus<K> implements TransactionStatus<K> {
 
         private final ReactiveTransactionStatus<K> transactionStatus;
+        private final TransactionOperations<K> transactionOperations;
 
-        private DefaultTransactionStatus(ReactiveTransactionStatus<K> transactionStatus) {
+        private DefaultTransactionStatus(ReactiveTransactionStatus<K> transactionStatus, TransactionOperations<K> transactionOperations) {
             this.transactionStatus = transactionStatus;
+            this.transactionOperations = transactionOperations;
+        }
+
+        public boolean isTransactionOf(TransactionOperations<K> transactionOperations) {
+            return this.transactionOperations ==  transactionOperations;
         }
 
         @Override

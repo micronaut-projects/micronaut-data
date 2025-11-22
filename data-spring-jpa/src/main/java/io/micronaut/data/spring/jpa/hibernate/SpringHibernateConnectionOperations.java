@@ -64,11 +64,20 @@ public final class SpringHibernateConnectionOperations implements ConnectionOper
         return new HibernateTemplate(sessionFactory).execute(session -> callback.apply(createStatus(session)));
     }
 
+    @Override
+    public boolean managesConnection(ConnectionStatus<Session> connectionStatus) {
+        if (connectionStatus instanceof DefaultConnectionStatus<Session> status) {
+            return status.isConnectionOf(this);
+        }
+        return false;
+    }
+
     private DefaultConnectionStatus<Session> createStatus(Session session) {
         return new DefaultConnectionStatus<>(
             session,
             ConnectionDefinition.DEFAULT,
-            true
+            true,
+            this
         );
     }
 

@@ -17,7 +17,6 @@ package io.micronaut.transaction.support;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.propagation.PropagatedContext;
-import io.micronaut.core.propagation.PropagatedContextElement;
 import io.micronaut.transaction.TransactionCallback;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionOperations;
@@ -47,45 +46,23 @@ public abstract class AbstractPropagatedStatusTransactionOperations<T extends Tr
 
     @Override
     public final Optional<T> findTransactionStatus() {
-        return findTransactionPropagatedContextElement()
-            .map(PropagatedTransactionStatusElement::status)
-            .map(status -> (T) status);
-    }
-
-    private Optional<PropagatedTransactionStatusElement> findTransactionPropagatedContextElement() {
         return PropagatedContext.getOrEmpty()
-            .findAll(PropagatedTransactionStatusElement.class)
-            .filter(element -> element.transactionOperations == this)
-            .findFirst();
+            .findAll(TransactionStatus.class)
+            .filter(this::managesTransaction)
+            .findFirst()
+            .map(status -> (T) status);
     }
 
     @Override
     public final <R> R execute(@NonNull TransactionDefinition definition,
                                @NonNull TransactionCallback<C, R> callback) {
-        return doExecute(definition, status -> {
-            try (PropagatedContext.Scope ignore = extendCurrentPropagatedContext(status)
-                .propagate()) {
+        return doExecute(definition, status -> status.propagate(() -> {
+            try {
                 return callback.call(status);
+            } catch (Exception e) {
+                return ExceptionUtil.sneakyThrow(e);
             }
-        });
-    }
-
-    /**
-     * Extends the propagated context with the transaction status.
-     *
-     * @param status The transaction status
-     * @return new propagated context
-     */
-    @NonNull
-    protected PropagatedContext extendCurrentPropagatedContext(TransactionStatus<C> status) {
-        return PropagatedContext.getOrEmpty()
-            .plus(new PropagatedTransactionStatusElement<>(AbstractPropagatedStatusTransactionOperations.this, status));
-    }
-
-    private record PropagatedTransactionStatusElement<T extends TransactionStatus<?>>(
-        TransactionOperations<?> transactionOperations,
-        TransactionStatus<?> status
-    ) implements PropagatedContextElement {
+        }));
     }
 
 }

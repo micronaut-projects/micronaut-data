@@ -86,4 +86,14 @@ public interface TransactionOperations<T> {
     default <R> R executeWrite(@NonNull TransactionCallback<T, R> callback) {
         return execute(TransactionDefinition.DEFAULT, callback);
     }
+
+    /**
+     * Determine whether the given transaction status refers to a transaction
+     * managed by this {@link TransactionOperations} instance.
+     *
+     * @param transactionStatus The transaction status to verify
+     * @return true if the transaction is managed (i.e. created/supplied) by this operations instance
+     * @since 5.0
+     */
+    boolean managesTransaction(@NonNull TransactionStatus<T> transactionStatus);
 }

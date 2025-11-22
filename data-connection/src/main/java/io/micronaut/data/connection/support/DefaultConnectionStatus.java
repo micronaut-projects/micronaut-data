@@ -18,6 +18,7 @@ package io.micronaut.data.connection.support;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.order.OrderUtil;
 import io.micronaut.data.connection.ConnectionDefinition;
+import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.ConnectionSynchronization;
 
@@ -27,7 +28,7 @@ import java.util.ListIterator;
 import java.util.function.Consumer;
 
 /**
- * The default connection status.
+ * The default propagated connection status.
  *
  * @param <C> The connection type
  * @author Denis Stepanov
@@ -39,13 +40,19 @@ public final class DefaultConnectionStatus<C> implements ConnectionStatus<C> {
     private final C connection;
     private final ConnectionDefinition definition;
     private final boolean isNew;
+    private final ConnectionOperations<C> connectionOperations;
 
     private List<ConnectionSynchronization> connectionSynchronizations;
 
-    public DefaultConnectionStatus(C connection, ConnectionDefinition definition, boolean isNew) {
+    public DefaultConnectionStatus(C connection, ConnectionDefinition definition, boolean isNew, ConnectionOperations<C> connectionOperations) {
         this.connection = connection;
         this.definition = definition;
         this.isNew = isNew;
+        this.connectionOperations = connectionOperations;
+    }
+
+    public boolean isConnectionOf(ConnectionOperations<C> connectionOperations) {
+        return this.connectionOperations == connectionOperations;
     }
 
     @Override
@@ -96,4 +103,5 @@ public final class DefaultConnectionStatus<C> implements ConnectionStatus<C> {
             forEachSynchronizations(ConnectionSynchronization::afterClosed);
         }
     }
+
 }
