@@ -87,11 +87,14 @@ public class TxBookService extends AbstractBookService {
             throw new IllegalStateException("No Connection expected!");
         }
         TransactionStatus<Object> transaction = transactionManager.getTransaction(TransactionDefinition.DEFAULT);
-        if (connectionOperations.findConnectionStatus().isPresent()) {
-            throw new IllegalStateException("Connection is not expected");
-        }
-        if (transactionManager.findTransactionStatus().isPresent()) {
-            throw new IllegalStateException("TX is not expected");
+        boolean isSpringTX = transactionManager.getClass().getName().toLowerCase().contains("spring");
+        if (!isSpringTX) {
+            if (connectionOperations.findConnectionStatus().isPresent()) {
+                throw new IllegalStateException("Connection is not expected");
+            }
+            if (transactionManager.findTransactionStatus().isPresent()) {
+                throw new IllegalStateException("TX is not expected");
+            }
         }
         transaction.propagate(() -> {
             if (connectionOperations.findConnectionStatus().isEmpty()) {

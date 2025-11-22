@@ -48,7 +48,11 @@ abstract class AbstractConnectableSpec extends Specification implements TestProp
         when:
             def connectionStatus = synchronousConnectionManager.getConnection(ConnectionDefinition.DEFAULT)
         then:
-            connectionOperations.findConnectionStatus().get() == connectionStatus
+            connectionOperations.findConnectionStatus().isEmpty()
+        and:
+            connectionStatus.propagate {
+                connectionOperations.findConnectionStatus().get() == connectionStatus
+            }
         when:
             synchronousConnectionManager.complete(connectionStatus)
         then:
