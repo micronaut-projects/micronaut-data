@@ -169,11 +169,6 @@ public final class SpringHibernateTransactionOperations implements SynchronousTr
         }
 
         @Override
-        public <V> V propagate(Supplier<V> supplier) {
-            return PropagatedContext.getOrEmpty().plus(this).propagate(supplier);
-        }
-
-        @Override
         public boolean isNewTransaction() {
             return status.isNewTransaction();
         }
@@ -201,6 +196,21 @@ public final class SpringHibernateTransactionOperations implements SynchronousTr
         @Override
         public void registerSynchronization(TransactionSynchronization synchronization) {
             status.registerSynchronization(synchronization);
+        }
+
+        @Override
+        public <V> V propagate(PropagatedContext propagatedContext, Supplier<V> supplier) {
+            return status.propagate(propagatedContext, supplier);
+        }
+
+        @Override
+        public void propagate(Runnable runnable) {
+            status.propagate(runnable);
+        }
+
+        @Override
+        public <V> V propagate(Supplier<V> supplier) {
+            return status.propagate(supplier);
         }
     }
 }
