@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * The abstract connection operations.
@@ -103,70 +102,18 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
 
     @Override
     public final <R> R execute(@NonNull ConnectionDefinition definition, @NonNull Function<ConnectionStatus<C>, R> callback) {
-        ConnectionStatus<C> existingConnection = findConnectionStatus().orElse(null);
-        for (ConnectionCustomizer<C> connectionCustomizer : connectionCustomizers) {
-            callback = connectionCustomizer.intercept(callback);
-        }
-        @NonNull Function<ConnectionStatus<C>, R> finalCallback = callback;
-        return switch (definition.getPropagationBehavior()) {
-            case REQUIRED -> {
-                if (existingConnection == null) {
-                    yield executeWithNewConnection(definition, callback);
-                }
-                yield withExistingConnectionInternal(existingConnection, callback);
-            }
-            case MANDATORY -> {
-                if (existingConnection == null) {
-                    throw new NoConnectionException("No existing connection found for connection marked with propagation 'mandatory'");
-                }
-                yield withExistingConnectionInternal(existingConnection, callback);
-            }
-            case REQUIRES_NEW -> {
-                if (existingConnection == null) {
-                    yield executeWithNewConnection(definition, callback);
-                }
-                yield suspend(existingConnection, () -> executeWithNewConnection(definition, finalCallback));
-            }
-        };
-    }
-
-    private <R> R suspend(ConnectionStatus<C> existingConnection,
-                          @NonNull Supplier<R> callback) {
-        return PropagatedContext.getOrEmpty()
-            .minus(existingConnection)
-            .propagate(callback);
-    }
-
-    private <R> R withExistingConnectionInternal(@NonNull ConnectionStatus<C> existingStatus, @NonNull Function<ConnectionStatus<C>, R> callback) {
-        DefaultConnectionStatus<C> newStatus = new DefaultConnectionStatus<>(
-            existingStatus.getConnection(),
-            existingStatus.getDefinition(),
-            false,
-            this
-        );
+        DefaultConnectionStatus<C> connection = getConnection(definition);
         try {
-            setupConnection(newStatus);
-            return PropagatedContext.getOrEmpty().minus(existingStatus).plus(newStatus).propagate(() -> callback.apply(newStatus));
+            setupConnection(connection);
+            return connection.propagate(() -> callback.apply(connection));
         } finally {
-            complete(newStatus);
-        }
-    }
-
-    private <R> R executeWithNewConnection(@NonNull ConnectionDefinition definition,
-                                           @NonNull Function<ConnectionStatus<C>, R> callback) {
-        C connection = openConnection(definition);
-        DefaultConnectionStatus<C> status = new DefaultConnectionStatus<>(connection, definition, true, this);
-        try {
-            setupConnection(status);
-            return status.propagate(() -> callback.apply(status));
-        } finally {
-            complete(status);
+            complete(connection);
         }
     }
 
     @NonNull
     @Override
-    public ConnectionStatus<C> getConnection(@NonNull ConnectionDefinition definition) {
+    public DefaultConnectionStatus<C> getConnection(@NonNull ConnectionDefinition definition) {
         ConnectionStatus<C> existingConnection = findConnectionStatus().orElse(null);
         return switch (definition.getPropagationBehavior()) {
             case REQUIRED -> {
@@ -177,7 +124,7 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
             }
             case MANDATORY -> {
                 if (existingConnection == null) {
-                    throw new NoConnectionException();
+                    throw new NoConnectionException("No existing connection found for connection marked with propagation 'mandatory'");
                 }
                 yield reuseExistingConnectionInternal(existingConnection);
             }

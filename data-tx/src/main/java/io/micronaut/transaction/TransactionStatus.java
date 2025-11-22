@@ -90,7 +90,7 @@ public interface TransactionStatus<T> extends TransactionExecution, PropagatedCo
      * @since 5.0
      */
     default <V> V propagate(Supplier<V> supplier) {
-        return propagate(PropagatedContext.getOrEmpty(), supplier);
+        return PropagatedContext.getOrEmpty().plus(getConnectionStatus()).plus(this).propagate(supplier);
     }
 
     /**
