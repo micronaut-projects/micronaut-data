@@ -136,7 +136,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         }
         T existingTransaction = existingTransactionOptional.get();
         checkNeverTransactionPropagation(definition);
-        if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.REQUIRES_NEW) {
+        if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.REQUIRES_NEW ||  definition.getPropagationBehavior() == TransactionDefinition.Propagation.NOT_SUPPORTED) {
             doSuspend(existingTransaction);
             return connectionOperations.execute(
                 ConnectionDefinition.REQUIRES_NEW,
@@ -153,6 +153,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
             );
         }
         T existingTransactionStatus = createExistingTransactionStatus(definition, existingTransaction);
+        begin(existingTransactionStatus);
         return executeTransactional(existingTransactionStatus, callback, definition);
     }
 
@@ -179,7 +180,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
             return createAndBeginTransaction(definition, connectionStatus);
         }
         checkNeverTransactionPropagation(definition);
-        if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.REQUIRES_NEW) {
+        if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.REQUIRES_NEW || definition.getPropagationBehavior() == TransactionDefinition.Propagation.NOT_SUPPORTED) {
             doSuspend(existingTransaction);
             ConnectionStatus<C> newConnection = synchronousConnectionManager.getConnection(ConnectionDefinition.REQUIRES_NEW);
             T newTransaction = createAndBeginTransaction(definition, newConnection);
@@ -192,7 +193,9 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
             });
             return newTransaction;
         }
-        return createExistingTransactionStatus(definition, existingTransaction);
+        T existingTransactionStatus = createExistingTransactionStatus(definition, existingTransaction);
+        begin(existingTransactionStatus);
+        return existingTransactionStatus;
     }
 
     /**
