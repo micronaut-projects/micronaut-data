@@ -15,7 +15,6 @@
  */
 package io.micronaut.transaction;
 
-import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Blocking;
 
@@ -52,8 +51,7 @@ public interface TransactionOperations<T> {
      * Find optional propagated transaction status.
      * @return The transaction status.
      */
-    @Experimental
-    Optional<? extends TransactionStatus<?>> findTransactionStatus();
+    Optional<TransactionStatus<T>> findTransactionStatus();
 
     /**
      * Execute a transaction within the context of the function.

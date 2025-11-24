@@ -75,8 +75,8 @@ public final class DefaultConnectionStatus<C> implements ConnectionStatus<C> {
         if (connectionSynchronizations == null) {
             connectionSynchronizations = new ArrayList<>(5);
         }
-        OrderUtil.sort(connectionSynchronizations);
         connectionSynchronizations.add(synchronization);
+        OrderUtil.sort(connectionSynchronizations);
     }
 
     private void forEachSynchronizations(Consumer<ConnectionSynchronization> consumer) {

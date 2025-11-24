@@ -45,7 +45,11 @@ public abstract class AbstractPropagatedStatusTransactionOperations<T extends Tr
     protected abstract <R> R doExecute(TransactionDefinition definition, TransactionCallback<C, R> callback);
 
     @Override
-    public final Optional<T> findTransactionStatus() {
+    public final Optional<TransactionStatus<C>> findTransactionStatus() {
+        return findTransactionStatusInternal().map(status -> status);
+    }
+
+    public final Optional<T> findTransactionStatusInternal() {
         return PropagatedContext.getOrEmpty()
             .findAll(TransactionStatus.class)
             .filter(this::managesTransaction)

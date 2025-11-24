@@ -75,7 +75,7 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
     @Override
     public boolean managesTransaction(ReactiveTransactionStatus<C> transactionStatus) {
         if (transactionStatus instanceof DefaultReactiveTransactionStatus<C> status) {
-            return status.isTransactionOf(this);
+            return status.reactiveTransactionOperations == this;
         }
         return false;
     }
@@ -410,10 +410,6 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
             this.isNew = isNew;
             this.transactionDefinition = transactionDefinition;
             this.reactiveTransactionOperations = reactiveTransactionOperations;
-        }
-
-        boolean isTransactionOf(@NonNull ReactiveTransactionOperations<C> reactiveTransactionOperations) {
-            return this.reactiveTransactionOperations == reactiveTransactionOperations;
         }
 
         @Override

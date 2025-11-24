@@ -65,8 +65,9 @@ public final class SpringHibernateTransactionOperations implements SynchronousTr
     }
 
     @Override
-    public Optional<? extends TransactionStatus<?>> findTransactionStatus() {
-        return transactionOperations.findTransactionStatus();
+    public Optional<TransactionStatus<Session>> findTransactionStatus() {
+        return transactionOperations.findTransactionStatus()
+            .map(status -> new SessionTransactionStatus(status, status.getTransactionDefinition(), this));
     }
 
     @Override

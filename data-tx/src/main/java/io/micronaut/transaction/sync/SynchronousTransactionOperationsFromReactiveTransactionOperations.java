@@ -64,7 +64,7 @@ public final class SynchronousTransactionOperationsFromReactiveTransactionOperat
     }
 
     @Override
-    public Optional<? extends TransactionStatus<?>> findTransactionStatus() {
+    public Optional<TransactionStatus<T>> findTransactionStatus() {
         return Optional.empty();
     }
 

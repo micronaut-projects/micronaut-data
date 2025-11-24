@@ -127,7 +127,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
     }
 
     private <R> R doExecuteWithoutSynchronousConnectionManager(TransactionDefinition definition, TransactionCallback<C, R> callback) {
-        Optional<T> existingTransactionOptional = findTransactionStatus();
+        Optional<T> existingTransactionOptional = findTransactionStatusInternal();
         if (existingTransactionOptional.isEmpty()) {
             return connectionOperations.execute(
                 txConnectionDefinition(definition),
@@ -163,7 +163,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         if (synchronousConnectionManager == null) {
             throw new TransactionUsageException("Synchronous connection manager not supported!");
         }
-        final T existingTransaction = findTransactionStatus().orElse(null);
+        final T existingTransaction = findTransactionStatusInternal().orElse(null);
         if (existingTransaction == null) {
             ConnectionStatus<C> connectionStatus = connectionOperations.findConnectionStatus().orElse(null);
             if (connectionStatus == null) {
