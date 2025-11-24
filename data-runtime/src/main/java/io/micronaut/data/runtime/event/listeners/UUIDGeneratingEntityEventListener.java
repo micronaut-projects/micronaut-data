@@ -62,7 +62,7 @@ public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventL
             context.setProperty(property, UUID.randomUUID());
         }
 
-        // 2) Embedded properties (recursive)
+        // 2) Embedded properties (recursive via util)
         final RuntimePersistentEntity<Object> persistentEntity = context.getPersistentEntity();
         final Object rootEntity = context.getEntity();
         for (RuntimeAssociation<?> association : persistentEntity.getAssociations()) {
@@ -70,57 +70,33 @@ public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventL
                 continue;
             }
             @SuppressWarnings("unchecked")
-            BeanProperty<Object, Object> embeddedProperty = (BeanProperty<Object, Object>) (BeanProperty<?, ?>) association.getProperty();
+            BeanProperty<Object, Object> embeddedProperty = (BeanProperty<Object, Object>) association.getProperty();
             Object embedded = embeddedProperty.get(rootEntity);
             if (embedded == null) {
                 embedded = association.getAssociatedEntity().getIntrospection().instantiate();
             }
-            Object updated = processEmbeddedUuids(association.getAssociatedEntity(), embedded);
+            Object updated = EmbeddedAutoPopulateUtil.populateEmbedded(association.getAssociatedEntity(), embedded, (embeddedPersistentProperty, current) -> {
+                if (embeddedPersistentProperty.getType() != UUID.class) {
+                    return current;
+                }
+                if (!embeddedPersistentProperty.isAutoPopulated() && !embeddedPersistentProperty.getAnnotationMetadata().hasStereotype(AutoPopulated.class)) {
+                    return current;
+                }
+                BeanProperty<Object, Object> prop = embeddedPersistentProperty.getProperty();
+                if (!prop.hasSetterOrConstructorArgument()) {
+                    return current;
+                }
+                UUID value = UUID.randomUUID();
+                if (prop.isReadOnly()) {
+                    return prop.withValue(current, value);
+                } else {
+                    prop.set(current, value);
+                    return current;
+                }
+            });
             context.setProperty(embeddedProperty, updated);
         }
 
         return true;
-    }
-
-    private Object processEmbeddedUuids(RuntimePersistentEntity<?> embeddedEntity, Object instance) {
-        Object current = instance;
-        // Populate @AutoPopulated UUID fields inside this embedded bean
-        for (RuntimePersistentProperty<Object> embeddedPersistentProperty : (java.util.Collection<RuntimePersistentProperty<Object>>) (java.util.Collection<?>) embeddedEntity.getPersistentProperties()) {
-            if (embeddedPersistentProperty.getType() != UUID.class) {
-                continue;
-            }
-            if (!embeddedPersistentProperty.isAutoPopulated() && !embeddedPersistentProperty.getAnnotationMetadata().hasStereotype(AutoPopulated.class)) {
-                continue;
-            }
-            BeanProperty<Object, Object> prop = embeddedPersistentProperty.getProperty();
-            if (!prop.hasSetterOrConstructorArgument()) {
-                continue;
-            }
-            UUID value = UUID.randomUUID();
-            if (prop.isReadOnly()) {
-                current = prop.withValue(current, value);
-            } else {
-                prop.set(current, value);
-            }
-        }
-        // Recurse into nested embedded associations
-        for (RuntimeAssociation<?> nested : embeddedEntity.getAssociations()) {
-            if (!nested.isEmbedded()) {
-                continue;
-            }
-            @SuppressWarnings("unchecked")
-            BeanProperty<Object, Object> ep = (BeanProperty<Object, Object>) (BeanProperty<?, ?>) nested.getProperty();
-            Object child = ep.get(current);
-            if (child == null) {
-                child = nested.getAssociatedEntity().getIntrospection().instantiate();
-            }
-            Object updatedChild = processEmbeddedUuids(nested.getAssociatedEntity(), child);
-            if (ep.isReadOnly()) {
-                current = ep.withValue(current, updatedChild);
-            } else {
-                ep.set(current, updatedChild);
-            }
-        }
-        return current;
     }
 }

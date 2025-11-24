@@ -38,7 +38,6 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -149,7 +148,7 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
                 context.setProperty(beanProperty, newValue);
             }
         }
-        // 2) Embedded properties (recursive)
+        // 2) Embedded properties (recursive via util)
         final RuntimePersistentEntity<Object> persistentEntity = context.getPersistentEntity();
         final Object rootEntity = context.getEntity();
         for (RuntimeAssociation<?> association : persistentEntity.getAssociations()) {
@@ -157,68 +156,40 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
                 continue;
             }
             @SuppressWarnings("unchecked")
-            BeanProperty<Object, Object> embeddedProperty = (BeanProperty<Object, Object>) (BeanProperty<?, ?>) association.getProperty();
+            BeanProperty<Object, Object> embeddedProperty = (BeanProperty<Object, Object>) association.getProperty();
             Object embedded = embeddedProperty.get(rootEntity);
             if (embedded == null) {
                 embedded = association.getAssociatedEntity().getIntrospection().instantiate();
             }
-            Object updated = processEmbeddedTimestamps(association.getAssociatedEntity(), embedded, isUpdate, now);
+            Object updated = EmbeddedAutoPopulateUtil.populateEmbedded(association.getAssociatedEntity(), embedded, (embeddedPersistentProperty, current) -> {
+                final AnnotationMetadata am = embeddedPersistentProperty.getAnnotationMetadata();
+                final boolean hasDateCreated = am.hasAnnotation(DateCreated.class);
+                final boolean hasDateUpdated = am.hasAnnotation(DateUpdated.class);
+                if (!hasDateCreated && !hasDateUpdated) {
+                    return current;
+                }
+                if (isUpdate && !am.booleanValue(AutoPopulated.class, AutoPopulated.UPDATEABLE).orElse(true)) {
+                    return current;
+                }
+                Object propertyNow = computePropertyNow(am, isUpdate, now);
+                Class<?> propertyType = embeddedPersistentProperty.getType();
+                Object newValue = convertIfNeeded(propertyNow, propertyType);
+                if (newValue == null) {
+                    return current;
+                }
+                BeanProperty<Object, Object> prop = embeddedPersistentProperty.getProperty();
+                if (prop.hasSetterOrConstructorArgument()) {
+                    if (prop.isReadOnly()) {
+                        return prop.withValue(current, newValue);
+                    } else {
+                        prop.set(current, newValue);
+                        return current;
+                    }
+                }
+                return current;
+            });
             context.setProperty(embeddedProperty, updated);
         }
-    }
-
-    private Object processEmbeddedTimestamps(RuntimePersistentEntity<?> embeddedEntity,
-                                             Object instance,
-                                             boolean isUpdate,
-                                             Object now) {
-        Object current = instance;
-        // Populate DateCreated/DateUpdated in this embedded level
-        for (RuntimePersistentProperty<Object> embeddedPersistentProperty : (Collection<RuntimePersistentProperty<Object>>) (Collection<?>) embeddedEntity.getPersistentProperties()) {
-            final AnnotationMetadata am = embeddedPersistentProperty.getAnnotationMetadata();
-            final boolean hasDateCreated = am.hasAnnotation(DateCreated.class);
-            final boolean hasDateUpdated = am.hasAnnotation(DateUpdated.class);
-            if (!hasDateCreated && !hasDateUpdated) {
-                continue;
-            }
-            if (isUpdate) {
-                if (!am.booleanValue(AutoPopulated.class, AutoPopulated.UPDATEABLE).orElse(true)) {
-                    continue;
-                }
-            }
-            Object propertyNow = computePropertyNow(am, isUpdate, now);
-            Class<?> propertyType = embeddedPersistentProperty.getType();
-            Object newValue = convertIfNeeded(propertyNow, propertyType);
-            if (newValue == null) {
-                continue;
-            }
-            BeanProperty<Object, Object> prop = embeddedPersistentProperty.getProperty();
-            if (prop.hasSetterOrConstructorArgument()) {
-                if (prop.isReadOnly()) {
-                    current = prop.withValue(current, newValue);
-                } else {
-                    prop.set(current, newValue);
-                }
-            }
-        }
-        // Recurse into nested embedded associations
-        for (RuntimeAssociation<?> nested : embeddedEntity.getAssociations()) {
-            if (!nested.isEmbedded()) {
-                continue;
-            }
-            @SuppressWarnings("unchecked")
-            BeanProperty<Object, Object> ep = (BeanProperty<Object, Object>) (BeanProperty<?, ?>) nested.getProperty();
-            Object child = ep.get(current);
-            if (child == null) {
-                child = nested.getAssociatedEntity().getIntrospection().instantiate();
-            }
-            Object updatedChild = processEmbeddedTimestamps(nested.getAssociatedEntity(), child, isUpdate, now);
-            if (ep.isReadOnly()) {
-                current = ep.withValue(current, updatedChild);
-            } else {
-                ep.set(current, updatedChild);
-            }
-        }
-        return current;
     }
 
     @Nullable
