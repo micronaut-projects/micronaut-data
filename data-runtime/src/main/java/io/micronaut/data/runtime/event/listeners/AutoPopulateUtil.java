@@ -16,6 +16,7 @@
 package io.micronaut.data.runtime.event.listeners;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
@@ -69,9 +70,9 @@ final class AutoPopulateUtil {
      * @return The possibly new instance for this level after applying property updates and recursing into nested embeddeds
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
-    static Object populateEmbedded(RuntimePersistentEntity<?> embeddedEntity,
-                                          Object instance,
-                                          BiFunction<RuntimePersistentProperty<Object>, Object, Object> propertySetter) {
+    static Object populateEmbedded(@NonNull RuntimePersistentEntity<?> embeddedEntity,
+                                   @NonNull Object instance,
+                                   BiFunction<RuntimePersistentProperty<Object>, Object, Object> propertySetter) {
         Object current = instance;
 
         // Apply property population at this level

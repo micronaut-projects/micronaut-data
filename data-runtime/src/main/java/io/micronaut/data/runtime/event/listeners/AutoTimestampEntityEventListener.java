@@ -32,6 +32,8 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import jakarta.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.time.Instant;
@@ -49,6 +51,9 @@ import java.util.function.Predicate;
  */
 @Singleton
 public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventListener implements PropertyAutoPopulator<DateUpdated> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(AutoTimestampEntityEventListener.class);
+
     private final DateTimeProvider<?> dateTimeProvider;
     private final DataConversionService conversionService;
 
@@ -151,7 +156,12 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
             BeanProperty<Object, Object> embeddedProperty = (BeanProperty<Object, Object>) association.getProperty();
             Object embedded = embeddedProperty.get(rootEntity);
             if (embedded == null) {
-                embedded = association.getAssociatedEntity().getIntrospection().instantiate();
+                try {
+                    embedded = association.getAssociatedEntity().getIntrospection().instantiate();
+                } catch (Exception e) {
+                    LOG.warn("Unable to instantiate embedded property: {}", embeddedProperty.getName(), e);
+                    continue;
+                }
             }
             Object updated = AutoPopulateUtil.populateEmbedded(association.getAssociatedEntity(), embedded, (embeddedPersistentProperty, current) -> {
                 final AnnotationMetadata am = embeddedPersistentProperty.getAnnotationMetadata();

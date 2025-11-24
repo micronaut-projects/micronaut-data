@@ -48,6 +48,9 @@ class AutoPopulateEmbeddedSpec extends Specification implements H2TestPropertyPr
         loaded.auditFields.innerFields
         loaded.auditFields.innerFields.subInnerCreatedAt
         loaded.auditFields.innerFields.subInnerGuid
+        // Currently embedded entity without default constructor cannot be created
+        // in order to populate fields in timestamp and uuid entity event listeners
+        !loaded.otherAuditFields
     }
 
 }
@@ -66,6 +69,25 @@ class AuditFields {
 
     @Relation(value = Relation.Kind.EMBEDDED)
     InnerFields innerFields
+}
+
+@Embeddable
+class OtherAuditFields {
+
+    @DateCreated
+    LocalDateTime otherInnerCreatedAt
+
+    @DateUpdated
+    LocalDateTime otherInnerUpdatedAt
+
+    @AutoPopulated
+    UUID otherInnerGuid
+
+    OtherAuditFields(LocalDateTime otherInnerCreatedAt, LocalDateTime otherInnerUpdatedAt, UUID otherInnerGuid) {
+        this.otherInnerCreatedAt = otherInnerCreatedAt
+        this.otherInnerUpdatedAt = otherInnerUpdatedAt
+        this.otherInnerGuid = otherInnerGuid
+    }
 }
 
 @Serdeable
@@ -87,6 +109,9 @@ class MyAuditableEntity {
 
     @Relation(value = Relation.Kind.EMBEDDED)
     AuditFields auditFields
+
+    @Relation(value = Relation.Kind.EMBEDDED)
+    OtherAuditFields otherAuditFields
 }
 
 @JdbcRepository(dialect = Dialect.H2)

@@ -25,6 +25,9 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 
 import jakarta.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.lang.annotation.Annotation;
 import java.util.Collections;
 import java.util.List;
@@ -39,6 +42,9 @@ import java.util.function.Predicate;
  */
 @Singleton
 public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventListener {
+
+    private static final Logger LOG = LoggerFactory.getLogger(UUIDGeneratingEntityEventListener.class);
+
     private static final Predicate<RuntimePersistentProperty<Object>> UUID_PREDICATE = p -> p.getType() == UUID.class;
 
     @NonNull
@@ -70,7 +76,12 @@ public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventL
             BeanProperty<Object, Object> embeddedProperty = (BeanProperty<Object, Object>) association.getProperty();
             Object embedded = embeddedProperty.get(rootEntity);
             if (embedded == null) {
-                embedded = association.getAssociatedEntity().getIntrospection().instantiate();
+                try {
+                    embedded = association.getAssociatedEntity().getIntrospection().instantiate();
+                }  catch (Exception e) {
+                    LOG.warn("Unable to instantiate embedded property: {}", embeddedProperty.getName(), e);
+                    continue;
+                }
             }
             Object updated = AutoPopulateUtil.populateEmbedded(association.getAssociatedEntity(), embedded, (embeddedPersistentProperty, current) -> {
                 if (embeddedPersistentProperty.getType() != UUID.class) {
