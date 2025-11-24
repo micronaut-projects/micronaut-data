@@ -45,6 +45,8 @@ class AutoPopulateEmbeddedSpec extends Specification implements H2TestPropertyPr
         loaded.auditFields.innerCreatedAt
         loaded.auditFields.innerUpdatedAt
         loaded.auditFields.innerGuid
+        loaded.auditFields.dateFields
+        loaded.auditFields.dateFields.subInnerCreatedAt
     }
 
 }
@@ -60,6 +62,15 @@ class AuditFields {
 
     @AutoPopulated
     UUID innerGuid
+
+    @Relation(value = Relation.Kind.EMBEDDED)
+    DateFields dateFields
+}
+
+@Embeddable
+class DateFields {
+    @DateCreated
+    LocalDateTime subInnerCreatedAt
 }
 
 @Serdeable

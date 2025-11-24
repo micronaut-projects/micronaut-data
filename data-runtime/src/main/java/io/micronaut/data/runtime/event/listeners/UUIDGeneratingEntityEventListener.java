@@ -16,7 +16,6 @@
 package io.micronaut.data.runtime.event.listeners;
 
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.event.PrePersist;
@@ -63,47 +62,65 @@ public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventL
             context.setProperty(property, UUID.randomUUID());
         }
 
-        // 2) Embedded properties: iterate embedded associations 1 level deep (like AutoTimestampEntityEventListener)
+        // 2) Embedded properties (recursive)
         final RuntimePersistentEntity<Object> persistentEntity = context.getPersistentEntity();
-        for (RuntimeAssociation<Object> association : persistentEntity.getAssociations()) {
+        final Object rootEntity = context.getEntity();
+        for (RuntimeAssociation<?> association : persistentEntity.getAssociations()) {
             if (!association.isEmbedded()) {
                 continue;
             }
-            // Obtain or create embedded instance
-            BeanProperty<Object, Object> embeddedProperty = association.getProperty();
-            Object entity = context.getEntity();
-            Object embedded = embeddedProperty.get(entity);
+            @SuppressWarnings("unchecked")
+            BeanProperty<Object, Object> embeddedProperty = (BeanProperty<Object, Object>) (BeanProperty<?, ?>) association.getProperty();
+            Object embedded = embeddedProperty.get(rootEntity);
             if (embedded == null) {
-                BeanIntrospection<?> embeddedIntrospection = association.getAssociatedEntity().getIntrospection();
-                Object newEmbedded = embeddedIntrospection.instantiate();
-                context.setProperty(embeddedProperty, newEmbedded);
-                embedded = newEmbedded;
+                embedded = association.getAssociatedEntity().getIntrospection().instantiate();
             }
-            // Populate @AutoPopulated UUID fields inside the embedded bean
-            for (RuntimePersistentProperty<Object> embeddedPersistentProperty : (java.util.Collection<RuntimePersistentProperty<Object>>) (java.util.Collection<?>) association.getAssociatedEntity().getPersistentProperties()) {
-                if (embeddedPersistentProperty.getType() != UUID.class) {
-                    continue;
-                }
-                // Only when explicitly marked for auto-population
-                if (!embeddedPersistentProperty.isAutoPopulated() && !embeddedPersistentProperty.getAnnotationMetadata().hasStereotype(AutoPopulated.class)) {
-                    continue;
-                }
-                BeanProperty<Object, Object> prop = embeddedPersistentProperty.getProperty();
-                if (!prop.hasSetterOrConstructorArgument()) {
-                    continue;
-                }
-                UUID value = UUID.randomUUID();
-                if (prop.isReadOnly()) {
-                    Object newEmbedded = prop.withValue(embedded, value);
-                    // Assign possibly new embedded instance back to root
-                    context.setProperty(embeddedProperty, newEmbedded);
-                    embedded = newEmbedded;
-                } else {
-                    prop.set(embedded, value);
-                }
-            }
+            Object updated = processEmbeddedUuids(association.getAssociatedEntity(), embedded);
+            context.setProperty(embeddedProperty, updated);
         }
 
         return true;
+    }
+
+    private Object processEmbeddedUuids(RuntimePersistentEntity<?> embeddedEntity, Object instance) {
+        Object current = instance;
+        // Populate @AutoPopulated UUID fields inside this embedded bean
+        for (RuntimePersistentProperty<Object> embeddedPersistentProperty : (java.util.Collection<RuntimePersistentProperty<Object>>) (java.util.Collection<?>) embeddedEntity.getPersistentProperties()) {
+            if (embeddedPersistentProperty.getType() != UUID.class) {
+                continue;
+            }
+            if (!embeddedPersistentProperty.isAutoPopulated() && !embeddedPersistentProperty.getAnnotationMetadata().hasStereotype(AutoPopulated.class)) {
+                continue;
+            }
+            BeanProperty<Object, Object> prop = embeddedPersistentProperty.getProperty();
+            if (!prop.hasSetterOrConstructorArgument()) {
+                continue;
+            }
+            UUID value = UUID.randomUUID();
+            if (prop.isReadOnly()) {
+                current = prop.withValue(current, value);
+            } else {
+                prop.set(current, value);
+            }
+        }
+        // Recurse into nested embedded associations
+        for (RuntimeAssociation<?> nested : embeddedEntity.getAssociations()) {
+            if (!nested.isEmbedded()) {
+                continue;
+            }
+            @SuppressWarnings("unchecked")
+            BeanProperty<Object, Object> ep = (BeanProperty<Object, Object>) (BeanProperty<?, ?>) nested.getProperty();
+            Object child = ep.get(current);
+            if (child == null) {
+                child = nested.getAssociatedEntity().getIntrospection().instantiate();
+            }
+            Object updatedChild = processEmbeddedUuids(nested.getAssociatedEntity(), child);
+            if (ep.isReadOnly()) {
+                current = ep.withValue(current, updatedChild);
+            } else {
+                ep.set(current, updatedChild);
+            }
+        }
+        return current;
     }
 }
