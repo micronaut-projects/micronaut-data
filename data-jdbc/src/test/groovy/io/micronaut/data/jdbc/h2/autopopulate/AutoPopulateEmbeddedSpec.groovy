@@ -68,14 +68,6 @@ class AuditFields {
     InnerFields innerFields
 }
 
-@Embeddable
-class InnerFields {
-    @DateCreated
-    LocalDateTime subInnerCreatedAt
-    @AutoPopulated
-    UUID subInnerGuid
-}
-
 @Serdeable
 @MappedEntity(value = "my_auditable_entity")
 class MyAuditableEntity {

@@ -133,21 +133,13 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
         final RuntimePersistentProperty<Object>[] applicableProperties = getApplicableProperties(context);
         Object now = dateTimeProvider.getNow();
         // 1) Top-level properties
-        for (RuntimePersistentProperty<Object> property : applicableProperties) {
-            if (isUpdate) {
-                if (!property.getAnnotationMetadata().booleanValue(AutoPopulated.class, AutoPopulated.UPDATEABLE).orElse(true)) {
-                    continue;
-                }
+        AutoPopulateUtil.applyTopLevel(context, applicableProperties, prop -> {
+            if (isUpdate && !prop.getAnnotationMetadata().booleanValue(AutoPopulated.class, AutoPopulated.UPDATEABLE).orElse(true)) {
+                return null;
             }
-
-            final BeanProperty<Object, Object> beanProperty = property.getProperty();
-            final Class<?> propertyType = property.getType();
-            Object propertyNow = computePropertyNow(property.getAnnotationMetadata(), isUpdate, now);
-            Object newValue = convertIfNeeded(propertyNow, propertyType);
-            if (newValue != null) {
-                context.setProperty(beanProperty, newValue);
-            }
-        }
+            Object propertyNow = computePropertyNow(prop.getAnnotationMetadata(), isUpdate, now);
+            return convertIfNeeded(propertyNow, prop.getType());
+        });
         // 2) Embedded properties (recursive via util)
         final RuntimePersistentEntity<Object> persistentEntity = context.getPersistentEntity();
         final Object rootEntity = context.getEntity();
@@ -161,7 +153,7 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
             if (embedded == null) {
                 embedded = association.getAssociatedEntity().getIntrospection().instantiate();
             }
-            Object updated = EmbeddedAutoPopulateUtil.populateEmbedded(association.getAssociatedEntity(), embedded, (embeddedPersistentProperty, current) -> {
+            Object updated = AutoPopulateUtil.populateEmbedded(association.getAssociatedEntity(), embedded, (embeddedPersistentProperty, current) -> {
                 final AnnotationMetadata am = embeddedPersistentProperty.getAnnotationMetadata();
                 final boolean hasDateCreated = am.hasAnnotation(DateCreated.class);
                 final boolean hasDateUpdated = am.hasAnnotation(DateUpdated.class);
@@ -174,19 +166,16 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
                 Object propertyNow = computePropertyNow(am, isUpdate, now);
                 Class<?> propertyType = embeddedPersistentProperty.getType();
                 Object newValue = convertIfNeeded(propertyNow, propertyType);
-                if (newValue == null) {
+                BeanProperty<Object, Object> prop = embeddedPersistentProperty.getProperty();
+                if (!prop.hasSetterOrConstructorArgument()) {
                     return current;
                 }
-                BeanProperty<Object, Object> prop = embeddedPersistentProperty.getProperty();
-                if (prop.hasSetterOrConstructorArgument()) {
-                    if (prop.isReadOnly()) {
-                        return prop.withValue(current, newValue);
-                    } else {
-                        prop.set(current, newValue);
-                        return current;
-                    }
+                if (prop.isReadOnly()) {
+                    return prop.withValue(current, newValue);
+                } else {
+                    prop.set(current, newValue);
+                    return current;
                 }
-                return current;
             });
             context.setProperty(embeddedProperty, updated);
         }

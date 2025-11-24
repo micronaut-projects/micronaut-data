@@ -57,10 +57,7 @@ public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventL
     public boolean prePersist(@NonNull EntityEventContext<Object> context) {
         // 1) Top-level @AutoPopulated UUID properties resolved by getApplicableProperties
         final RuntimePersistentProperty<Object>[] persistentProperties = getApplicableProperties(context);
-        for (RuntimePersistentProperty<Object> persistentProperty : persistentProperties) {
-            final BeanProperty<Object, Object> property = persistentProperty.getProperty();
-            context.setProperty(property, UUID.randomUUID());
-        }
+        AutoPopulateUtil.applyTopLevel(context, persistentProperties, p -> UUID.randomUUID());
 
         // 2) Embedded properties (recursive via util)
         final RuntimePersistentEntity<Object> persistentEntity = context.getPersistentEntity();
@@ -75,7 +72,7 @@ public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventL
             if (embedded == null) {
                 embedded = association.getAssociatedEntity().getIntrospection().instantiate();
             }
-            Object updated = EmbeddedAutoPopulateUtil.populateEmbedded(association.getAssociatedEntity(), embedded, (embeddedPersistentProperty, current) -> {
+            Object updated = AutoPopulateUtil.populateEmbedded(association.getAssociatedEntity(), embedded, (embeddedPersistentProperty, current) -> {
                 if (embeddedPersistentProperty.getType() != UUID.class) {
                     return current;
                 }
