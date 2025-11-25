@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.processor.visitors.finders.annotated;
+package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCommonAbstractCriteria;
@@ -27,22 +28,24 @@ import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteri
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityQuery;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.processor.jdql.JDQLCriteriaBuilderUtils;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
+import io.micronaut.data.processor.model.SourcePersistentProperty;
+import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaQuery;
 import io.micronaut.data.processor.model.criteria.impl.MethodMatchSourcePersistentEntityCriteriaBuilderImpl;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
-import io.micronaut.data.processor.visitors.finders.AbstractCriteriaMethodMatch;
-import io.micronaut.data.processor.visitors.finders.FindersUtils;
-import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
-import io.micronaut.data.processor.visitors.finders.MethodMatcher;
 import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.Element;
 import io.micronaut.inject.processing.ProcessingException;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Selection;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * The Jakarta Data Query annotation matcher.
@@ -51,7 +54,7 @@ import java.util.function.Function;
  * @since 4.13
  */
 @Internal
-public final class JakartaDataQueryAnnotatedMethodMatcher implements MethodMatcher {
+public final class JakartaDataQueryMethodMatcher implements MethodMatcher {
 
     @Override
     public MethodMatch match(MethodMatchContext matchContext) {
@@ -179,7 +182,6 @@ public final class JakartaDataQueryAnnotatedMethodMatcher implements MethodMatch
             @Override
             protected MethodMatchInfo build(MethodMatchContext matchContext) {
                 FindersUtils.InterceptorMatch interceptorMatch = resolveReturnTypeAndInterceptor(matchContext);
-                ClassElement resultType = interceptorMatch.returnType();
                 ClassElement interceptorType = interceptorMatch.interceptor();
 
                 final AnnotationMetadataHierarchy annotationMetadataHierarchy = new AnnotationMetadataHierarchy(
@@ -203,7 +205,36 @@ public final class JakartaDataQueryAnnotatedMethodMatcher implements MethodMatch
                     abstractPersistentEntityQuery.getParametersInRole().put(List.of(matchContext.getParameters()).indexOf(limitParameter), TypeRole.LIMIT);
                 }
 
+                SourcePersistentEntityCriteriaQuery<?> criteriaQueryInternal = (SourcePersistentEntityCriteriaQuery) criteriaQuery;
+
+                MethodResult result = analyzeMethodResult(
+                    matchContext,
+                    criteriaQueryInternal.getQueryResultTypeName(),
+                    matchContext.getRootEntity().getClassElement(),
+                    interceptorMatch,
+                    false
+                );
+
+                if (result.isDto() && criteriaQueryInternal.getSelection() == null) {
+                    List<SourcePersistentProperty> dtoProjectionProperties = getDtoProjectionProperties(matchContext.getRootEntity(), matchContext.getMethodElement(), result.resultType());
+                    if (!dtoProjectionProperties.isEmpty()) {
+                        Root<?> root = criteriaQueryInternal.getRoots().iterator().next();
+                        List<Selection<?>> selectionList = dtoProjectionProperties.stream()
+                            .map(p -> {
+                                matchContext.getMethodElement().annotate(Projection.class, b -> b.value(p.getName()));
+                                if (matchContext.getQueryBuilder() instanceof SqlQueryBuilder) {
+                                    return root.get(p.getName());
+                                } else {
+                                    return root.get(p.getName()).alias(p.getName());
+                                }
+                            })
+                            .collect(Collectors.toList());
+                        criteriaQueryInternal.multiselect(selectionList);
+                    }
+                }
+
                 QueryResult queryResult = criteriaQuery.build(annotationMetadataHierarchy, queryBuilder);
+
 
                 ClassElement genericReturnType = matchContext.getReturnType();
                 if (matchContext.isTypeInRole(genericReturnType, TypeRole.PAGE)
@@ -220,18 +251,18 @@ public final class JakartaDataQueryAnnotatedMethodMatcher implements MethodMatch
                     QueryResult countQueryResult = countCriteriaQuery.build(annotationMetadataHierarchy, queryBuilder);
                     return new MethodMatchInfo(
                         getOperationType(),
-                        resultType,
+                        result.resultType(),
                         interceptorType
-                    )
+                    )   .dto(result.isDto())
                         .queryResult(queryResult)
                         .countQueryResult(countQueryResult);
                 }
 
                 return new MethodMatchInfo(
                     getOperationType(),
-                    resultType,
+                    result.resultType(),
                     interceptorType
-                )
+                )   .dto(result.isDto())
                     .queryResult(queryResult);
             }
         };

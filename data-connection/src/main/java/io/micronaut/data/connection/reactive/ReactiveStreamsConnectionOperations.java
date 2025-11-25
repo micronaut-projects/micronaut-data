@@ -53,4 +53,14 @@ public interface ReactiveStreamsConnectionOperations<C> {
         return withConnection(ConnectionDefinition.DEFAULT, handler);
     }
 
+    /**
+     * Determine whether the given connection status refers to a connection
+     * managed by this {@link ReactiveStreamsConnectionOperations} instance.
+     *
+     * @param connectionStatus The connection status to verify
+     * @return true if the connection is managed (i.e. created/supplied) by this operations instance
+     * @since 5.0
+     */
+    boolean managesConnection(@NonNull ConnectionStatus<C> connectionStatus);
+
 }

@@ -27,11 +27,13 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.exceptions.DataAccessException;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -53,6 +55,15 @@ public interface BeanIntrospectionMapper<D, R> extends TypeMapper<D, R> {
         try {
             BeanIntrospection<R> introspection = BeanIntrospection.getIntrospection(type);
             Argument<?>[] arguments = introspection.getConstructorArguments();
+            Collection<BeanProperty<R, Object>> beanProperties = introspection.getBeanProperties();
+            Map<String, String> projections = CollectionUtils.newLinkedHashMap(beanProperties.size());
+            for (BeanProperty<R, Object> beanProperty : beanProperties) {
+                String projectionName = beanProperty.getAnnotationMetadata().stringValue(Projection.class).orElse(null);
+                if (projectionName != null) {
+                    projections.put(beanProperty.getName(), projectionName);
+                }
+            }
+
             R instance;
             if (ArrayUtils.isEmpty(arguments)) {
                 instance = introspection.instantiate();
@@ -60,26 +71,26 @@ public interface BeanIntrospectionMapper<D, R> extends TypeMapper<D, R> {
                 Object[] args = new Object[arguments.length];
                 for (int i = 0; i < arguments.length; i++) {
                     Argument<?> argument = arguments[i];
-                    Object o = read(object, argument);
+                    String argumentName = argument.getName();
+                    String name = projections.getOrDefault(argumentName, argumentName);
+                    Object o = read(object, name);
                     if (o == null) {
+                        args[i] = null;
+                    } else if (argument.getType().isInstance(o)) {
                         args[i] = o;
                     } else {
-                        if (argument.getType().isInstance(o)) {
-                            args[i] = o;
+                        Object convertFrom;
+                        if (Collection.class.isAssignableFrom(argument.getType()) && !(o instanceof Collection)) {
+                            convertFrom = MapperUtils.toCollection(o);
                         } else {
-                            Object convertFrom;
-                            if (Collection.class.isAssignableFrom(argument.getType()) && !(o instanceof Collection)) {
-                                convertFrom = MapperUtils.toCollection(o);
-                            } else {
-                                convertFrom = o;
-                            }
-                            args[i] = convert(convertFrom, argument);
+                            convertFrom = o;
                         }
+                        args[i] = convert(convertFrom, argument);
                     }
                 }
                 instance = introspection.instantiate(args);
             }
-            Collection<BeanProperty<R, Object>> properties = introspection.getBeanProperties();
+            Collection<BeanProperty<R, Object>> properties = beanProperties;
             for (BeanProperty<R, Object> property : properties) {
                 if (property.isReadOnly()) {
                     continue;
@@ -117,7 +128,7 @@ public interface BeanIntrospectionMapper<D, R> extends TypeMapper<D, R> {
         }
         ConversionContext acc = ConversionContext.of(argument);
         Optional<?> result = getConversionService().convert(value, argument);
-        if (!result.isPresent()) {
+        if (result.isEmpty()) {
             Optional<ConversionError> lastError = acc.getLastError();
             if (lastError.isPresent()) {
                 throw new ConversionErrorException(argument, lastError.get());

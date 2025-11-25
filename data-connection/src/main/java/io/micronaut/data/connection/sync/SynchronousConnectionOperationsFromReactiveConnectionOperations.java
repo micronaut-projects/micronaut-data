@@ -58,9 +58,8 @@ public final class SynchronousConnectionOperationsFromReactiveConnectionOperatio
     @Override
     public <R> R execute(ConnectionDefinition definition, Function<ConnectionStatus<T>, R> callback) {
         Mono<R> result = reactorConnectionOperations.withConnectionMono(definition, status -> Mono.deferContextual(contextView -> {
-            try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView).orElseGet(PropagatedContext::getOrEmpty).propagate()) {
-                return Mono.justOrEmpty(callback.apply(status));
-            }
+            PropagatedContext propagatedContext = ReactorPropagation.findPropagatedContext(contextView).orElseGet(PropagatedContext::getOrEmpty);
+            return status.propagate(propagatedContext, () -> Mono.justOrEmpty(callback.apply(status)));
         }).subscribeOn(scheduler)).contextWrite(ctx -> ReactorPropagation.addPropagatedContext(ctx, PropagatedContext.getOrEmpty()));
         return result.onErrorMap(e -> {
             if (e instanceof UndeclaredThrowableException) {
@@ -68,5 +67,10 @@ public final class SynchronousConnectionOperationsFromReactiveConnectionOperatio
             }
             return e;
         }).block();
+    }
+
+    @Override
+    public boolean managesConnection(ConnectionStatus<T> connectionStatus) {
+        return reactorConnectionOperations.managesConnection(connectionStatus);
     }
 }

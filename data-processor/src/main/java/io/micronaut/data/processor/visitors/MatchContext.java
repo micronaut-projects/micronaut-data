@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.processor.visitors;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
@@ -37,12 +38,14 @@ import java.util.stream.Collectors;
  * @author graemerocher
  * @since 1.0.0
  */
+@Internal
 public class MatchContext implements AnnotationMetadataProvider {
     @NonNull
     protected final VisitorContext visitorContext;
     @NonNull
     protected final MethodElement methodElement;
     protected final Map<String, String> typeRoles;
+    protected final List<Map.Entry<String, String>> annotationRoles;
     protected final ClassElement returnType;
     @NonNull
     protected final ParameterElement[] parameters;
@@ -59,6 +62,7 @@ public class MatchContext implements AnnotationMetadataProvider {
      * @param visitorContext   The visitor context
      * @param methodElement    The method element
      * @param typeRoles        The type roles
+     * @param annotationRoles  The annotation roles
      * @param returnType       The return type
      * @param parameters       The parameters
      * @param findInterceptors The find interceptors
@@ -69,6 +73,7 @@ public class MatchContext implements AnnotationMetadataProvider {
         @NonNull VisitorContext visitorContext,
         @NonNull MethodElement methodElement,
         @NonNull Map<String, String> typeRoles,
+        @NonNull List<Map.Entry<String, String>> annotationRoles,
         @NonNull ClassElement returnType,
         @NonNull ParameterElement[] parameters,
         @NonNull Map<ClassElement, FindInterceptorDef> findInterceptors) {
@@ -77,6 +82,7 @@ public class MatchContext implements AnnotationMetadataProvider {
         this.visitorContext = visitorContext;
         this.methodElement = methodElement;
         this.typeRoles = typeRoles;
+        this.annotationRoles = annotationRoles;
         this.returnType = returnType;
         this.parameters = parameters;
         this.findInterceptors = findInterceptors;
@@ -104,7 +110,14 @@ public class MatchContext implements AnnotationMetadataProvider {
         //noinspection ConstantConditions
         if (type != null && role != null) {
             String r = this.typeRoles.get(type.getName());
-            return r != null && r.equalsIgnoreCase(role);
+            if (r != null) {
+                return r.equalsIgnoreCase(role);
+            }
+            for (Map.Entry<String, String> e : annotationRoles) {
+                if (e.getValue().equalsIgnoreCase(role) && type.hasStereotype(e.getKey())) {
+                    return true;
+                }
+            }
         }
         return false;
     }
@@ -188,7 +201,7 @@ public class MatchContext implements AnnotationMetadataProvider {
      * @return The message to print in the case of no possible implementations.
      */
     public String getUnableToImplementMessage() {
-        return "Unable to implement Repository method: " + repositoryClass.getSimpleName() + "." + methodElement.getName() + "(" + Arrays.stream(methodElement.getParameters()).map(p -> p.getType().getSimpleName() + " " + p.getName()).collect(Collectors.joining(",")) + "). ";
+        return "Unable to implement Repository method: " + repositoryClass.getName() + "." + methodElement.getName() + "(" + Arrays.stream(methodElement.getParameters()).map(p -> p.getType().getSimpleName() + " " + p.getName()).collect(Collectors.joining(",")) + "). ";
     }
 
     /**

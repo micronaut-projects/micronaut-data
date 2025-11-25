@@ -27,8 +27,13 @@ public class FilterExtension implements ExecutionCondition {
             }
         }
         if (testClass == EntityTests.class) {
-            if (testMethodName.equals("testLiteralTrue")) {
-                return DISABLED; // https://hibernate.atlassian.net/browse/HHH-19177
+            switch (testMethodName) {
+                case "testLiteralTrue" -> {
+                    return DISABLED; // https://hibernate.atlassian.net/browse/HHH-19177
+                }
+                case "testReturnStreamOfRecordThatSelectsAttributesFindEntity" -> {
+                    return DISABLED; // https://github.com/jakartaee/data/issues/1290
+                }
             }
         }
         return ConditionEvaluationResult.enabled(null);

@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory
 import java.lang.Thread.currentThread
 import java.util.*
 import jakarta.transaction.Transactional
+import kotlinx.coroutines.currentCoroutineContext
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 
@@ -54,7 +55,7 @@ open class PersonSuspendRepositoryService(
 
     @io.micronaut.transaction.annotation.Transactional("custom")
     open suspend fun deleteAllForCustomDb2(): TransactionExecution {
-        val txStatus: TransactionExecution = getCustomTxStatus(coroutineContext)!!
+        val txStatus: TransactionExecution = getCustomTxStatus(currentCoroutineContext())!!
         if (txStatus.isCompleted || !txStatus.isNewTransaction) {
             throw RuntimeException()
         }
@@ -64,7 +65,7 @@ open class PersonSuspendRepositoryService(
 
     @io.micronaut.transaction.annotation.Transactional("custom")
     open suspend fun saveForCustomDb2(p: Parent): TransactionExecution {
-        val txStatus: TransactionExecution = getCustomTxStatus(coroutineContext)!!
+        val txStatus: TransactionExecution = getCustomTxStatus(currentCoroutineContext())!!
         if (txStatus.isCompleted || !txStatus.isNewTransaction) {
             throw RuntimeException()
         }
@@ -74,7 +75,7 @@ open class PersonSuspendRepositoryService(
 
     @Transactional
     open suspend fun saveTwo(p1: Parent, p2: Parent) {
-        val current: TransactionExecution = getTxStatus(coroutineContext)!!
+        val current: TransactionExecution = getTxStatus(currentCoroutineContext())!!
         if (!current.isNewTransaction && current.isCompleted) {
             throw IllegalStateException()
         }
@@ -90,7 +91,7 @@ open class PersonSuspendRepositoryService(
 
     @Transactional(Transactional.TxType.MANDATORY)
     open suspend fun saveOneMandatory(p: Parent): TransactionExecution {
-        val txStatus: TransactionExecution = getTxStatus(coroutineContext)!!
+        val txStatus: TransactionExecution = getTxStatus(currentCoroutineContext())!!
         if (txStatus.isNewTransaction && txStatus.isCompleted) {
             throw IllegalStateException()
         }

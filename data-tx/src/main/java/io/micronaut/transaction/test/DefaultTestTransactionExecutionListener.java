@@ -80,7 +80,9 @@ public class DefaultTestTransactionExecutionListener implements TestExecutionLis
     @Override
     public Object interceptTest(TestMethodInvocationContext<Object> methodInvocationContext) throws Throwable {
         if (transactionMode == TransactionMode.SINGLE_TRANSACTION) {
-            return TestMethodInterceptor.super.interceptTest(methodInvocationContext);
+            if (tx != null) {
+                return propagate(methodInvocationContext);
+            }
         }
         // Not all testing frameworks supports intercepting the invocation
         TestContext testContext = methodInvocationContext.getTestContext();
@@ -104,10 +106,22 @@ public class DefaultTestTransactionExecutionListener implements TestExecutionLis
         }
     }
 
+    private Object propagate(TestMethodInvocationContext<Object> methodInvocationContext) {
+        return tx.propagate(() -> {
+            try {
+                return TestMethodInterceptor.super.interceptAfterEach(methodInvocationContext);
+            } catch (Throwable e) {
+                return ExceptionUtil.sneakyThrow(e);
+            }
+        });
+    }
+
     @Override
     public Object interceptBeforeEach(TestMethodInvocationContext<Object> methodInvocationContext) throws Throwable {
         if (transactionMode == TransactionMode.SINGLE_TRANSACTION) {
-            return TestMethodInterceptor.super.interceptBeforeEach(methodInvocationContext);
+            if (tx != null) {
+                return propagate(methodInvocationContext);
+            }
         }
         // Not all testing frameworks supports intercepting the invocation
         TestContext testContext = methodInvocationContext.getTestContext();
@@ -130,6 +144,9 @@ public class DefaultTestTransactionExecutionListener implements TestExecutionLis
     @Override
     public Object interceptAfterEach(TestMethodInvocationContext<Object> methodInvocationContext) throws Throwable {
         if (transactionMode == TransactionMode.SINGLE_TRANSACTION) {
+            if (tx != null) {
+                return propagate(methodInvocationContext);
+            }
             return TestMethodInterceptor.super.interceptAfterEach(methodInvocationContext);
         }
         // Not all testing frameworks supports intercepting the invocation
@@ -142,7 +159,7 @@ public class DefaultTestTransactionExecutionListener implements TestExecutionLis
                 try {
                     return TestMethodInterceptor.super.interceptAfterEach(methodInvocationContext);
                 } catch (Throwable e) {
-                    throw new UncheckedException(e);
+                    return ExceptionUtil.sneakyThrow(e);
                 }
             });
         } catch (UncheckedException e) {

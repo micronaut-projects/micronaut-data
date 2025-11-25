@@ -23,8 +23,6 @@ import io.micronaut.data.processor.visitors.finders.FindersUtils;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
 
-import java.util.regex.Matcher;
-
 /**
  * Exists specification method.
  *
@@ -39,7 +37,7 @@ public final class ExistsSpecificationMethodMatcher extends AbstractSpecificatio
     }
 
     @Override
-    protected MethodMatch match(MethodMatchContext matchContext, Matcher matcher) {
+    protected MethodMatch doMatch(MethodMatchContext matchContext) {
         if (TypeUtils.doesMethodProducesABoolean(matchContext.getMethodElement()) && isQuerySpecification(matchContext)) {
             FindersUtils.InterceptorMatch e = FindersUtils.pickExistsSpecInterceptor(matchContext, matchContext.getReturnType());
             return mc -> new MethodMatchInfo(DataMethod.OperationType.EXISTS, e.returnType(), e.interceptor());

@@ -745,6 +745,9 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
     @NonNull
     public <T> Expression<T> literal(@Nullable T value) {
+        if (value instanceof Expression<?> expression) {
+            throw new IllegalArgumentException("An expression cannot be literal");
+        }
         return new LiteralExpression<>(value);
     }
 

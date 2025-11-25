@@ -46,7 +46,7 @@ public abstract class AbstractMethodMatcher implements MethodMatcher {
     }
 
     @Override
-    public final MethodMatch match(MethodMatchContext matchContext) {
+    public MethodMatch match(MethodMatchContext matchContext) {
         String methodName = matchContext.getMethodElement().getName();
         List<MethodNameParser.Match> matches = parser.tryMatch(methodName);
         if (matches.isEmpty()) {

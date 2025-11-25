@@ -63,7 +63,12 @@ public class DefaultPersistentPropertyPath<T> implements PersistentPropertyPath<
 
     @Override
     public Predicate in(Collection<?> values) {
-        List<Expression<?>> expressions = Objects.requireNonNull(values).stream().map(criteriaBuilder::literal).collect(Collectors.toList());
+        List<Expression<?>> expressions = Objects.requireNonNull(values).stream().map(value -> {
+            if (value instanceof Expression<?> expression) {
+                return expression;
+            }
+            return criteriaBuilder.literal(value);
+        }).collect(Collectors.toList());
         return new InPredicate<>(this, expressions, criteriaBuilder);
     }
 
@@ -109,7 +114,10 @@ public class DefaultPersistentPropertyPath<T> implements PersistentPropertyPath<
 
     @Override
     public <Y> PersistentPropertyPath<Y> get(String attributeName) {
-        throw new IllegalArgumentException("Property path doesn't support get operation: " + propertyPath);
+        if (propertyPath.getProperty() instanceof Association) {
+            throw new IllegalStateException("An association: " + Arrays.toString(propertyPath.getArrayPath()) + " needs to be joined before it can be accessed");
+        }
+        throw new IllegalArgumentException("Property path doesn't support get operation: " + Arrays.toString(propertyPath.getArrayPath()));
     }
 
     @Override
