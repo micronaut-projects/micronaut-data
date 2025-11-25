@@ -19,7 +19,7 @@ import io.micronaut.configuration.hibernate.jpa.HibernateCurrentSessionContextCl
 import io.micronaut.core.annotation.TypeHint;
 import jakarta.inject.Singleton;
 import org.hibernate.context.spi.CurrentSessionContext;
-import org.springframework.orm.hibernate5.SpringSessionContext;
+import org.springframework.orm.jpa.hibernate.SpringSessionContext;
 
 /**
  * Spring integration implementation of {@link HibernateCurrentSessionContextClassProvider}.

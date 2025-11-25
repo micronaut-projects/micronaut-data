@@ -177,7 +177,7 @@ class SpringCrudRepositoryJpaSpec extends Specification implements H2Properties 
         found.name == p1.name
 
         when:"A new person deleted"
-        def deletedCount = crudRepository.delete(SpringCrudRepository.Specifications.nameEquals(found.name))
+        def deletedCount = crudRepository.delete(SpringCrudRepository.Specifications.whereNameEquals(found.name))
 
         then:"Person is deleted"
         deletedCount == 1
