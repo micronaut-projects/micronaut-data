@@ -53,10 +53,6 @@ public class FindPageSpecificationInterceptor extends AbstractSpecificationInter
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        if (context.getParameterValues().length != 2) {
-            throw new IllegalStateException("Expected exactly 2 arguments to method");
-        }
-
         Pageable pageable = getPageable(context);
         CriteriaQuery<Object> criteriaQuery = buildQuery(methodKey, context);
         Root<?> root = criteriaQuery.getRoots().iterator().next();

@@ -196,7 +196,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
                 QUERY_LOG.debug("Executing Mongo 'aggregate' with pipeline: {}", aggregation.getPipeline().stream().map(e -> e.toBsonDocument().toJson()).toList());
             }
             R result = aggregate(clientSession, preparedQuery, BsonDocument.class)
-                    .map(bsonDocument -> convertResult(database.getCodecRegistry(), resultType, bsonDocument, false))
+                    .map(bsonDocument -> convertResult(preparedQuery, database.getCodecRegistry(), resultType, bsonDocument, false))
                     .first();
             if (result == null) {
                 result = conversionService.convertRequired(0, resultType);
@@ -318,7 +318,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
         Class<R> resultType = preparedQuery.getResultType();
         if (!resultType.isAssignableFrom(type)) {
             BsonDocument result = aggregate(clientSession, preparedQuery, BsonDocument.class).first();
-            return convertResult(database.getCodecRegistry(), resultType, result, preparedQuery.isDtoProjection());
+            return convertResult(preparedQuery, database.getCodecRegistry(), resultType, result, preparedQuery.isDtoProjection());
         }
         return findOne(aggregate(clientSession, preparedQuery).map(r -> {
             RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
@@ -356,7 +356,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
         if (!resultType.isAssignableFrom(type)) {
             MongoDatabase database = getDatabase(preparedQuery);
             aggregate = aggregate(clientSession, preparedQuery, BsonDocument.class)
-                    .map(result -> convertResult(database.getCodecRegistry(), resultType, result, preparedQuery.isDtoProjection()));
+                    .map(result -> convertResult(preparedQuery, database.getCodecRegistry(), resultType, result, preparedQuery.isDtoProjection()));
         } else {
             aggregate = aggregate(clientSession, preparedQuery, resultType);
         }
@@ -377,7 +377,7 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
         if (!resultType.isAssignableFrom(type)) {
             MongoDatabase database = getDatabase(preparedQuery);
             findIterable = find(clientSession, preparedQuery, BsonDocument.class)
-                    .map(result -> convertResult(database.getCodecRegistry(), resultType, result, preparedQuery.isDtoProjection()));
+                    .map(result -> convertResult(preparedQuery, database.getCodecRegistry(), resultType, result, preparedQuery.isDtoProjection()));
         } else {
             findIterable = find(clientSession, preparedQuery);
         }

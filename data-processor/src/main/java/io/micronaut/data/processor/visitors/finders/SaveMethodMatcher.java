@@ -20,6 +20,8 @@ import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.DataAnnotationUtils;
+import io.micronaut.data.annotation.Insert;
+import io.micronaut.data.annotation.Save;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.PersistentProperty;
@@ -63,6 +65,17 @@ public class SaveMethodMatcher extends AbstractMethodMatcher {
             .tryMatchLastOccurrencePrefixed(QueryMatchId.RETURNING, null, RETURNING)
             .takeRest(QueryMatchId.PROJECTION)
             .build());
+    }
+
+    @Override
+    public MethodMatch match(MethodMatchContext matchContext) {
+        if (matchContext.getMethodElement().hasStereotype(Insert.class) || matchContext.getMethodElement().hasStereotype(Save.class)) {
+            if (matchContext.getRootEntity() == null) {
+                throw new ProcessingException(matchContext.getMethodElement(), "Repository does not have a well-defined primary entity type");
+            }
+            return match(matchContext, List.of());
+        }
+        return super.match(matchContext);
     }
 
     @Override

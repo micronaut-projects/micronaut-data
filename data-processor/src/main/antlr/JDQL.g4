@@ -15,15 +15,20 @@ where_clause : WHERE conditional_expression;
 set_clause : SET update_item (COMMA update_item)*;
 update_item : state_field_path_expression EQ (scalar_expression | NULL);
 
-select_clause : SELECT select_list;
-select_list
-    : state_field_path_expression (COMMA state_field_path_expression)*
+select_clause : SELECT (select_item | select_items);
+select_item
+    : state_field_path_expression
+    | id_expression
     | aggregate_expression
     ;
+select_items
+    : state_field_path_expression (',' state_field_path_expression)+
+    ;
+
 aggregate_expression : COUNT '(' THIS ')';
 
 orderby_clause : ORDER BY orderby_item (COMMA orderby_item)*;
-orderby_item : state_field_path_expression (ASC | DESC)?;
+orderby_item : scalar_expression (ASC | DESC)?;
 
 conditional_expression
     // highest to lowest precedence
@@ -44,10 +49,10 @@ comparison_operator : EQ | GT | GTEQ | LT | LTEQ | NEQ;
 between_expression : scalar_expression NOT? BETWEEN scalar_expression AND scalar_expression;
 like_expression : scalar_expression NOT? LIKE (STRING | input_parameter);
 
-in_expression : state_field_path_expression NOT? IN '(' in_item (',' in_item)* ')';
+in_expression : scalar_expression NOT? IN '(' in_item (',' in_item)* ')';
 in_item : literal | enum_literal | input_parameter; // could simplify to just literal
 
-null_comparison_expression : state_field_path_expression IS NOT? NULL;
+null_comparison_expression : scalar_expression IS NOT? NULL;
 
 scalar_expression
     // highest to lowest precedence
@@ -63,11 +68,14 @@ scalar_expression
 primary_expression
     : function_expression
     | special_expression
+    | id_expression
     | state_field_path_expression
     | enum_literal
     | input_parameter
     | literal
     ;
+
+id_expression : IDENTIFIER LPAREN THIS RPAREN ;
 
 function_expression
     : ('abs(' | 'ABS(') scalar_expression ')'

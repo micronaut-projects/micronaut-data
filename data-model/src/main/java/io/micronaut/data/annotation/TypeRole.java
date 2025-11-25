@@ -94,6 +94,11 @@ public @interface TypeRole {
     String SPECIFICATION_PREDICATE = "specificationPredicate";
 
     /**
+     * The parameter that is used to represent a constraint specification.
+     */
+    String SPECIFICATION_CONSTRAINT = "specificationConstraint";
+
+    /**
      * The parameter that is used to represent an update specification.
      */
     String SPECIFICATION_UPDATE = "specificationUpdate";
