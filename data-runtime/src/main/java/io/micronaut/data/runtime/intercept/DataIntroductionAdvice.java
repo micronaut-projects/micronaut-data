@@ -95,15 +95,16 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
         CompletionStage<Object> completionStage = (CompletionStage<Object>) dataInterceptor.intercept(key, context);
         CompletableFuture<Object> completableFuture = new CompletableFuture<>();
         completionStage.whenComplete((value, throwable) -> {
-            try (PropagatedContext.Scope ignore = propagatedContext.propagate()) {
+            propagatedContext.propagate(() -> {
                 if (throwable == null) {
                     Class<Object> target = context.getReturnType().asArgument().getType();
-                    if (value == null) {
-                        value = conversionService.convert(new NullValue(), target).orElse(value);
+                    Object v = value;
+                    if (v == null) {
+                        v = conversionService.convert(new NullValue(), target).orElse(v);
                     } else {
-                        value = conversionService.convert(value, target).orElse(value);
+                        v = conversionService.convert(v, target).orElse(v);
                     }
-                    completableFuture.complete(value);
+                    completableFuture.complete(v);
                 } else {
                     Throwable finalThrowable = throwable;
                     if (finalThrowable instanceof CompletionException) {
@@ -111,7 +112,8 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
                     }
                     completableFuture.completeExceptionally(finalThrowable);
                 }
-            }
+                return null;
+            });
         });
         return completableFuture;
     }
