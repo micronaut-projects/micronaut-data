@@ -56,6 +56,7 @@ io.micronaut.data.jpa.operations
 io.micronaut.data.jpa.repository
 io.micronaut.data.jpa.repository.intercept
 io.micronaut.data.model
+io.micronaut.data.model.jd
 io.micronaut.data.model.jpa.criteria
 io.micronaut.data.model.jpa.criteria.impl
 io.micronaut.data.model.jpa.criteria.impl.expression
@@ -99,7 +100,6 @@ io.micronaut.data.processor.model.criteria
 io.micronaut.data.processor.model.criteria.impl
 io.micronaut.data.processor.visitors
 io.micronaut.data.processor.visitors.finders
-io.micronaut.data.processor.visitors.finders.annotated
 io.micronaut.data.processor.visitors.finders.criteria
 io.micronaut.data.processor.visitors.finders.spec
 io.micronaut.data.r2dbc.annotation

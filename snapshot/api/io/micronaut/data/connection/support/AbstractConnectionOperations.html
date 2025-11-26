@@ -182,19 +182,25 @@ implements <a href="../ConnectionOperations.html" title="interface in io.microna
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Obtains the current connection.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a><wbr>&lt;<a href="AbstractConnectionOperations.html" title="type parameter in AbstractConnectionOperations">C</a>&gt;</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="DefaultConnectionStatus.html" title="class in io.micronaut.data.connection.support">DefaultConnectionStatus</a><wbr>&lt;<a href="AbstractConnectionOperations.html" title="type parameter in AbstractConnectionOperations">C</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getConnection(io.micronaut.data.connection.ConnectionDefinition)" class="member-name-link">getConnection</a><wbr>(@NonNull <a href="../ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Opens or reuses the existing connection based on the definition.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="AbstractConnectionOperations.html" title="type parameter in AbstractConnectionOperations">C</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#openConnection(io.micronaut.data.connection.ConnectionDefinition)" class="member-name-link">openConnection</a><wbr>(<a href="../ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#managesConnection(io.micronaut.data.connection.ConnectionStatus)" class="member-name-link">managesConnection</a><wbr>(<a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractConnectionOperations.html" title="type parameter in AbstractConnectionOperations">C</a>&gt;&nbsp;connectionStatus)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Determine whether the given connection status refers to a connection
+ managed by this <a href="../ConnectionOperations.html" title="interface in io.micronaut.data.connection"><code>ConnectionOperations</code></a> instance.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="AbstractConnectionOperations.html" title="type parameter in AbstractConnectionOperations">C</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#openConnection(io.micronaut.data.connection.ConnectionDefinition)" class="member-name-link">openConnection</a><wbr>(<a href="../ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Opens a new connection.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#setupConnection(io.micronaut.data.connection.ConnectionStatus)" class="member-name-link">setupConnection</a><wbr>(<a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractConnectionOperations.html" title="type parameter in AbstractConnectionOperations">C</a>&gt;&nbsp;connectionStatus)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#setupConnection(io.micronaut.data.connection.ConnectionStatus)" class="member-name-link">setupConnection</a><wbr>(<a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractConnectionOperations.html" title="type parameter in AbstractConnectionOperations">C</a>&gt;&nbsp;connectionStatus)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Setups the connection after it have been open.</div>
 </div>
 </div>
@@ -246,13 +252,30 @@ implements <a href="../ConnectionOperations.html" title="interface in io.microna
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
+<section class="detail" id="managesConnection(io.micronaut.data.connection.ConnectionStatus)">
+<h3>managesConnection</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">managesConnection</span><wbr><span class="parameters">(<a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractConnectionOperations.html" title="type parameter in AbstractConnectionOperations">C</a>&gt;&nbsp;connectionStatus)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../ConnectionOperations.html#managesConnection(io.micronaut.data.connection.ConnectionStatus)">ConnectionOperations</a></code></span></div>
+<div class="block">Determine whether the given connection status refers to a connection
+ managed by this <a href="../ConnectionOperations.html" title="interface in io.micronaut.data.connection"><code>ConnectionOperations</code></a> instance.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../ConnectionOperations.html#managesConnection(io.micronaut.data.connection.ConnectionStatus)">managesConnection</a></code>&nbsp;in interface&nbsp;<code><a href="../ConnectionOperations.html" title="interface in io.micronaut.data.connection">ConnectionOperations</a>&lt;<a href="AbstractConnectionOperations.html" title="type parameter in AbstractConnectionOperations">C</a>&gt;</code></dd>
+<dt>Parameters:</dt>
+<dd><code>connectionStatus</code> - The connection status to verify</dd>
+<dt>Returns:</dt>
+<dd>true if the connection is managed (i.e. created/supplied) by this operations instance</dd>
+</dl>
+</section>
+</li>
+<li>
 <section class="detail" id="addConnectionCustomizer(io.micronaut.data.connection.support.ConnectionCustomizer)">
 <h3>addConnectionCustomizer</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">addConnectionCustomizer</span><wbr><span class="parameters">(@NonNull
  @NonNull <a href="ConnectionCustomizer.html" title="interface in io.micronaut.data.connection.support">ConnectionCustomizer</a>&lt;<a href="AbstractConnectionOperations.html" title="type parameter in AbstractConnectionOperations">C</a>&gt;&nbsp;connectionCustomizer)</span></div>
 <div class="block">Adds a connection customizer to the list of customizers that will be notified before or after a call to the underlying data repository
  is issues.
-
+ <p>
  The added customizer will be sorted according to its order using the <code>OrderUtil.sort(List)</code> method.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -337,7 +360,7 @@ implements <a href="../ConnectionOperations.html" title="interface in io.microna
 <section class="detail" id="getConnection(io.micronaut.data.connection.ConnectionDefinition)">
 <h3>getConnection</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractConnectionOperations.html" title="type parameter in AbstractConnectionOperations">C</a>&gt;</span>&nbsp;<span class="element-name">getConnection</span><wbr><span class="parameters">(@NonNull
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="DefaultConnectionStatus.html" title="class in io.micronaut.data.connection.support">DefaultConnectionStatus</a>&lt;<a href="AbstractConnectionOperations.html" title="type parameter in AbstractConnectionOperations">C</a>&gt;</span>&nbsp;<span class="element-name">getConnection</span><wbr><span class="parameters">(@NonNull
  @NonNull <a href="../ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../SynchronousConnectionManager.html#getConnection(io.micronaut.data.connection.ConnectionDefinition)">SynchronousConnectionManager</a></code></span></div>
 <div class="block">Opens or reuses the existing connection based on the definition.

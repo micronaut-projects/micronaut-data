@@ -98,7 +98,8 @@ loadScripts(document, 'script');</script>
 <dd><code><a href="MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a></code></dd>
 </dl>
 <hr>
-<div class="type-signature"><span class="modifiers">public class </span><span class="element-name type-name-label">MatchContext</span>
+<div class="type-signature"><span class="annotations">@Internal
+</span><span class="modifiers">public class </span><span class="element-name type-name-label">MatchContext</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>
 implements io.micronaut.core.annotation.AnnotationMetadataProvider</span></div>
 <div class="block">A match context when matching methods.</div>
@@ -120,21 +121,24 @@ implements io.micronaut.core.annotation.AnnotationMetadataProvider</span></div>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Field</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code>protected final @NonNull io.micronaut.inject.ast.MethodElement</code></div>
-<div class="col-second even-row-color"><code><a href="#methodElement" class="member-name-link">methodElement</a></code></div>
+<div class="col-first even-row-color"><code>protected final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.Entry.html" title="class or interface in java.util" class="external-link">Map.Entry</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&gt;</code></div>
+<div class="col-second even-row-color"><code><a href="#annotationRoles" class="member-name-link">annotationRoles</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code>protected final @NonNull io.micronaut.inject.ast.ParameterElement[]</code></div>
-<div class="col-second odd-row-color"><code><a href="#parameters" class="member-name-link">parameters</a></code></div>
+<div class="col-first odd-row-color"><code>protected final @NonNull io.micronaut.inject.ast.MethodElement</code></div>
+<div class="col-second odd-row-color"><code><a href="#methodElement" class="member-name-link">methodElement</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code>protected final io.micronaut.inject.ast.ClassElement</code></div>
-<div class="col-second even-row-color"><code><a href="#returnType" class="member-name-link">returnType</a></code></div>
+<div class="col-first even-row-color"><code>protected final @NonNull io.micronaut.inject.ast.ParameterElement[]</code></div>
+<div class="col-second even-row-color"><code><a href="#parameters" class="member-name-link">parameters</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code>protected final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second odd-row-color"><code><a href="#typeRoles" class="member-name-link">typeRoles</a></code></div>
+<div class="col-first odd-row-color"><code>protected final io.micronaut.inject.ast.ClassElement</code></div>
+<div class="col-second odd-row-color"><code><a href="#returnType" class="member-name-link">returnType</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code>protected final @NonNull io.micronaut.inject.visitor.VisitorContext</code></div>
-<div class="col-second even-row-color"><code><a href="#visitorContext" class="member-name-link">visitorContext</a></code></div>
+<div class="col-first even-row-color"><code>protected final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second even-row-color"><code><a href="#typeRoles" class="member-name-link">typeRoles</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>protected final @NonNull io.micronaut.inject.visitor.VisitorContext</code></div>
+<div class="col-second odd-row-color"><code><a href="#visitorContext" class="member-name-link">visitorContext</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
 </div>
 <div class="inherited-list">
 <h3 id="fields-inherited-from-class-io.micronaut.core.annotation.AnnotationSource">Fields inherited from interface&nbsp;io.micronaut.core.annotation.AnnotationSource</h3>
@@ -246,6 +250,12 @@ implements io.micronaut.core.annotation.AnnotationMetadataProvider</span></div>
 <section class="detail" id="typeRoles">
 <h3>typeRoles</h3>
 <div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">typeRoles</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="annotationRoles">
+<h3>annotationRoles</h3>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.Entry.html" title="class or interface in java.util" class="external-link">Map.Entry</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&gt;</span>&nbsp;<span class="element-name">annotationRoles</span></div>
 </section>
 </li>
 <li>

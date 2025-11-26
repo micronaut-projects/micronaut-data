@@ -69,9 +69,14 @@ loadScripts(document, 'script');</script>
 <h2 title="Interface Hierarchy">Interface Hierarchy</h2>
 <ul>
 <li class="circle">io.micronaut.transaction.async.<a href="AsyncTransactionOperations.html" class="type-name-link" title="interface in io.micronaut.transaction.async">AsyncTransactionOperations</a>&lt;C&gt;</li>
+<li class="circle">io.micronaut.core.propagation.PropagatedContextElement
+<ul>
+<li class="circle">io.micronaut.transaction.async.<a href="AsyncTransactionStatus.html" class="type-name-link" title="interface in io.micronaut.transaction.async">AsyncTransactionStatus</a>&lt;T&gt; (also extends io.micronaut.transaction.<a href="../TransactionExecution.html" title="interface in io.micronaut.transaction">TransactionExecution</a>)</li>
+</ul>
+</li>
 <li class="circle">io.micronaut.transaction.<a href="../TransactionExecution.html" class="type-name-link" title="interface in io.micronaut.transaction">TransactionExecution</a>
 <ul>
-<li class="circle">io.micronaut.transaction.async.<a href="AsyncTransactionStatus.html" class="type-name-link" title="interface in io.micronaut.transaction.async">AsyncTransactionStatus</a>&lt;T&gt;</li>
+<li class="circle">io.micronaut.transaction.async.<a href="AsyncTransactionStatus.html" class="type-name-link" title="interface in io.micronaut.transaction.async">AsyncTransactionStatus</a>&lt;T&gt; (also extends io.micronaut.core.propagation.PropagatedContextElement)</li>
 </ul>
 </li>
 </ul>

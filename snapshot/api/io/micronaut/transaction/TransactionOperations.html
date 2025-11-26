@@ -137,7 +137,7 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Execute a default transaction within the context of the function.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;? extends <a href="TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;?&gt;&gt;</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="TransactionOperations.html" title="type parameter in TransactionOperations">T</a>&gt;&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findTransactionStatus()" class="member-name-link">findTransactionStatus</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Find optional propagated transaction status.</div>
@@ -151,6 +151,12 @@ loadScripts(document, 'script');</script>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#hasConnection()" class="member-name-link">hasConnection</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Check if the connection exists.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#managesTransaction(io.micronaut.transaction.TransactionStatus)" class="member-name-link">managesTransaction</a><wbr>(@NonNull <a href="TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="TransactionOperations.html" title="type parameter in TransactionOperations">T</a>&gt;&nbsp;transactionStatus)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Determine whether the given transaction status refers to a transaction
+ managed by this <a href="TransactionOperations.html" title="interface in io.micronaut.transaction"><code>TransactionOperations</code></a> instance.</div>
 </div>
 </div>
 </div>
@@ -197,7 +203,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="findTransactionStatus()">
 <h3>findTransactionStatus</h3>
-<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;? extends <a href="TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;?&gt;&gt;</span>&nbsp;<span class="element-name">findTransactionStatus</span>()</div>
+<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="TransactionOperations.html" title="type parameter in TransactionOperations">T</a>&gt;&gt;</span>&nbsp;<span class="element-name">findTransactionStatus</span>()</div>
 <div class="block">Find optional propagated transaction status.</div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -253,6 +259,23 @@ loadScripts(document, 'script');</script>
 <dd><code>callback</code> - The call back</dd>
 <dt>Returns:</dt>
 <dd>The result</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="managesTransaction(io.micronaut.transaction.TransactionStatus)">
+<h3>managesTransaction</h3>
+<div class="member-signature"><span class="return-type">boolean</span>&nbsp;<span class="element-name">managesTransaction</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="TransactionOperations.html" title="type parameter in TransactionOperations">T</a>&gt;&nbsp;transactionStatus)</span></div>
+<div class="block">Determine whether the given transaction status refers to a transaction
+ managed by this <a href="TransactionOperations.html" title="interface in io.micronaut.transaction"><code>TransactionOperations</code></a> instance.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>transactionStatus</code> - The transaction status to verify</dd>
+<dt>Returns:</dt>
+<dd>true if the transaction is managed (i.e. created/supplied) by this operations instance</dd>
+<dt>Since:</dt>
+<dd>5.0</dd>
 </dl>
 </section>
 </li>

@@ -121,15 +121,21 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;T&gt;&nbsp;@NonNull org.reactivestreams.Publisher<wbr>&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#withConnection(io.micronaut.data.connection.ConnectionDefinition,java.util.function.Function)" class="member-name-link">withConnection</a><wbr>(@NonNull <a href="../ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition,
- @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="ReactiveStreamsConnectionOperations.html" title="type parameter in ReactiveStreamsConnectionOperations">C</a>&gt;,<wbr>org.reactivestreams.Publisher&lt;T&gt;&gt;&nbsp;handler)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#managesConnection(io.micronaut.data.connection.ConnectionStatus)" class="member-name-link">managesConnection</a><wbr>(@NonNull <a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="ReactiveStreamsConnectionOperations.html" title="type parameter in ReactiveStreamsConnectionOperations">C</a>&gt;&nbsp;connectionStatus)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Determine whether the given connection status refers to a connection
+ managed by this <a href="ReactiveStreamsConnectionOperations.html" title="interface in io.micronaut.data.connection.reactive"><code>ReactiveStreamsConnectionOperations</code></a> instance.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;T&gt;&nbsp;@NonNull org.reactivestreams.Publisher<wbr>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#withConnection(io.micronaut.data.connection.ConnectionDefinition,java.util.function.Function)" class="member-name-link">withConnection</a><wbr>(@NonNull <a href="../ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="ReactiveStreamsConnectionOperations.html" title="type parameter in ReactiveStreamsConnectionOperations">C</a>&gt;,<wbr>org.reactivestreams.Publisher&lt;T&gt;&gt;&nbsp;handler)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Execute the given handler with a new connection.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;T&gt;&nbsp;@NonNull org.reactivestreams.Publisher<wbr>&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#withConnection(java.util.function.Function)" class="member-name-link">withConnection</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="ReactiveStreamsConnectionOperations.html" title="type parameter in ReactiveStreamsConnectionOperations">C</a>&gt;,<wbr>org.reactivestreams.Publisher&lt;T&gt;&gt;&nbsp;handler)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;T&gt;&nbsp;@NonNull org.reactivestreams.Publisher<wbr>&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#withConnection(java.util.function.Function)" class="member-name-link">withConnection</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="ReactiveStreamsConnectionOperations.html" title="type parameter in ReactiveStreamsConnectionOperations">C</a>&gt;,<wbr>org.reactivestreams.Publisher&lt;T&gt;&gt;&nbsp;handler)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Execute the given handler with a new connection.</div>
 </div>
 </div>
@@ -181,6 +187,23 @@ loadScripts(document, 'script');</script>
 <dd><code>handler</code> - The handler</dd>
 <dt>Returns:</dt>
 <dd>A publisher that emits the result type</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="managesConnection(io.micronaut.data.connection.ConnectionStatus)">
+<h3>managesConnection</h3>
+<div class="member-signature"><span class="return-type">boolean</span>&nbsp;<span class="element-name">managesConnection</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="ReactiveStreamsConnectionOperations.html" title="type parameter in ReactiveStreamsConnectionOperations">C</a>&gt;&nbsp;connectionStatus)</span></div>
+<div class="block">Determine whether the given connection status refers to a connection
+ managed by this <a href="ReactiveStreamsConnectionOperations.html" title="interface in io.micronaut.data.connection.reactive"><code>ReactiveStreamsConnectionOperations</code></a> instance.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>connectionStatus</code> - The connection status to verify</dd>
+<dt>Returns:</dt>
+<dd>true if the connection is managed (i.e. created/supplied) by this operations instance</dd>
+<dt>Since:</dt>
+<dd>5.0</dd>
 </dl>
 </section>
 </li>

@@ -92,11 +92,11 @@ loadScripts(document, 'script');</script>
 </dl>
 <dl class="notes">
 <dt>All Superinterfaces:</dt>
-<dd><code><a href="../TransactionExecution.html" title="interface in io.micronaut.transaction">TransactionExecution</a></code></dd>
+<dd><code>io.micronaut.core.propagation.PropagatedContextElement</code>, <code><a href="../TransactionExecution.html" title="interface in io.micronaut.transaction">TransactionExecution</a></code></dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="modifiers">public interface </span><span class="element-name type-name-label">AsyncTransactionStatus&lt;T&gt;</span><span class="extends-implements">
-extends <a href="../TransactionExecution.html" title="interface in io.micronaut.transaction">TransactionExecution</a></span></div>
+extends <a href="../TransactionExecution.html" title="interface in io.micronaut.transaction">TransactionExecution</a>, io.micronaut.core.propagation.PropagatedContextElement</span></div>
 <div class="block">Status object for async transactions.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -112,15 +112,34 @@ extends <a href="../TransactionExecution.html" title="interface in io.micronaut.
 <section class="method-summary" id="method-summary">
 <h2>Method Summary</h2>
 <div id="method-summary-table">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab3" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab3', 3)" class="table-tab">Abstract Methods</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab3" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab3', 3)" class="table-tab">Abstract Methods</button><button id="method-summary-table-tab5" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab5', 3)" class="table-tab">Default Methods</button></div>
 <div id="method-summary-table.tabpanel" role="tabpanel">
 <div class="summary-table three-column-summary" aria-labelledby="method-summary-table-tab0">
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="AsyncTransactionStatus.html" title="type parameter in AsyncTransactionStatus">T</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getConnection()" class="member-name-link">getConnection</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="AsyncTransactionStatus.html" title="type parameter in AsyncTransactionStatus">T</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getConnection()" class="member-name-link">getConnection</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a><wbr>&lt;<a href="AsyncTransactionStatus.html" title="type parameter in AsyncTransactionStatus">T</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getConnectionStatus()" class="member-name-link">getConnectionStatus</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;V&gt;&nbsp;V</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#propagate(io.micronaut.core.propagation.PropagatedContext,java.util.function.Supplier)" class="member-name-link">propagate</a><wbr>(io.micronaut.core.propagation.PropagatedContext&nbsp;propagatedContext,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Supplier.html" title="class or interface in java.util.function" class="external-link">Supplier</a>&lt;V&gt;&nbsp;supplier)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Propagated the current <code>PropagatedContext</code> with added connection status.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#propagate(java.lang.Runnable)" class="member-name-link">propagate</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Runnable.html" title="class or interface in java.lang" class="external-link">Runnable</a>&nbsp;runnable)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Propagated the current <code>PropagatedContext</code> with added connection status.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;V&gt;&nbsp;V</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#propagate(java.util.function.Supplier)" class="member-name-link">propagate</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Supplier.html" title="class or interface in java.util.function" class="external-link">Supplier</a>&lt;V&gt;&nbsp;supplier)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="block">Propagated the current <code>PropagatedContext</code> with added connection status.</div>
+</div>
 </div>
 </div>
 </div>
@@ -139,13 +158,73 @@ extends <a href="../TransactionExecution.html" title="interface in io.micronaut.
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
+<section class="detail" id="getConnectionStatus()">
+<h3>getConnectionStatus</h3>
+<div class="member-signature"><span class="annotations">@NonNull
+</span><span class="return-type">@NonNull <a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AsyncTransactionStatus.html" title="type parameter in AsyncTransactionStatus">T</a>&gt;</span>&nbsp;<span class="element-name">getConnectionStatus</span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>The connection status.</dd>
+</dl>
+</section>
+</li>
+<li>
 <section class="detail" id="getConnection()">
 <h3>getConnection</h3>
 <div class="member-signature"><span class="annotations">@NonNull
-</span><span class="return-type"><a href="AsyncTransactionStatus.html" title="type parameter in AsyncTransactionStatus">T</a></span>&nbsp;<span class="element-name">getConnection</span>()</div>
+</span><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="AsyncTransactionStatus.html" title="type parameter in AsyncTransactionStatus">T</a></span>&nbsp;<span class="element-name">getConnection</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The current connection.</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="propagate(io.micronaut.core.propagation.PropagatedContext,java.util.function.Supplier)">
+<h3>propagate</h3>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;V&gt;</span>&nbsp;<span class="return-type">V</span>&nbsp;<span class="element-name">propagate</span><wbr><span class="parameters">(io.micronaut.core.propagation.PropagatedContext&nbsp;propagatedContext,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Supplier.html" title="class or interface in java.util.function" class="external-link">Supplier</a>&lt;V&gt;&nbsp;supplier)</span></div>
+<div class="block">Propagated the current <code>PropagatedContext</code> with added connection status.</div>
+<dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><code>V</code> - The value type</dd>
+<dt>Parameters:</dt>
+<dd><code>propagatedContext</code> - The propagated context</dd>
+<dd><code>supplier</code> - The supplier</dd>
+<dt>Returns:</dt>
+<dd>The value</dd>
+<dt>Since:</dt>
+<dd>5.0</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="propagate(java.util.function.Supplier)">
+<h3>propagate</h3>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="type-parameters">&lt;V&gt;</span>&nbsp;<span class="return-type">V</span>&nbsp;<span class="element-name">propagate</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Supplier.html" title="class or interface in java.util.function" class="external-link">Supplier</a>&lt;V&gt;&nbsp;supplier)</span></div>
+<div class="block">Propagated the current <code>PropagatedContext</code> with added connection status.</div>
+<dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><code>V</code> - The value type</dd>
+<dt>Parameters:</dt>
+<dd><code>supplier</code> - The supplier</dd>
+<dt>Returns:</dt>
+<dd>The value</dd>
+<dt>Since:</dt>
+<dd>5.0</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="propagate(java.lang.Runnable)">
+<h3>propagate</h3>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">propagate</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Runnable.html" title="class or interface in java.lang" class="external-link">Runnable</a>&nbsp;runnable)</span></div>
+<div class="block">Propagated the current <code>PropagatedContext</code> with added connection status.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>runnable</code> - The runnable</dd>
+<dt>Since:</dt>
+<dd>5.0</dd>
 </dl>
 </section>
 </li>

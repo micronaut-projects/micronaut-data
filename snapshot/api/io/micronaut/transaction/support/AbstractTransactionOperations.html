@@ -172,8 +172,7 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 <div class="block">Commit the given transaction, with regard to its status.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createExistingTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,T)" class="member-name-link">createExistingTransactionStatus</a><wbr>(@NonNull <a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">C</a>&gt;&nbsp;connectionStatus,
- @NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createExistingTransactionStatus(io.micronaut.transaction.TransactionDefinition,T)" class="member-name-link">createExistingTransactionStatus</a><wbr>(@NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
  <a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a>&nbsp;existingTransaction)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Create transaction status with existing transaction.</div>
@@ -247,7 +246,7 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns connection definition.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a><wbr>&lt;<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">C</a>&gt;</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getTransaction(io.micronaut.transaction.TransactionDefinition)" class="member-name-link">getTransaction</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Return a currently active transaction or create a new one, according to
@@ -258,23 +257,23 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Check if the connection exists.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#rollback(io.micronaut.transaction.TransactionStatus)" class="member-name-link">rollback</a><wbr>(<a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">C</a>&gt;&nbsp;status)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#managesTransaction(io.micronaut.transaction.TransactionStatus)" class="member-name-link">managesTransaction</a><wbr>(<a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">C</a>&gt;&nbsp;transactionStatus)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Perform a rollback of the given transaction.</div>
+<div class="block">Determine whether the given transaction status refers to a transaction
+ managed by this <a href="../TransactionOperations.html" title="interface in io.micronaut.transaction"><code>TransactionOperations</code></a> instance.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;R&gt;&nbsp;R</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#suspend(T,java.util.function.Supplier)" class="member-name-link">suspend</a><wbr>(<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a>&nbsp;transaction,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Supplier.html" title="class or interface in java.util.function" class="external-link">Supplier</a>&lt;R&gt;&nbsp;callback)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#rollback(io.micronaut.transaction.TransactionStatus)" class="member-name-link">rollback</a><wbr>(<a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">C</a>&gt;&nbsp;status)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Do suspend the transaction.</div>
+<div class="block">Perform a rollback of the given transaction.</div>
 </div>
 </div>
 </div>
 </div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.transaction.support.AbstractPropagatedStatusTransactionOperations">Methods inherited from class&nbsp;io.micronaut.transaction.support.<a href="AbstractPropagatedStatusTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractPropagatedStatusTransactionOperations</a></h3>
-<code><a href="AbstractPropagatedStatusTransactionOperations.html#execute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)">execute</a>, <a href="AbstractPropagatedStatusTransactionOperations.html#extendCurrentPropagatedContext(io.micronaut.transaction.TransactionStatus)">extendCurrentPropagatedContext</a>, <a href="AbstractPropagatedStatusTransactionOperations.html#findTransactionStatus()">findTransactionStatus</a></code></div>
+<code><a href="AbstractPropagatedStatusTransactionOperations.html#execute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)">execute</a>, <a href="AbstractPropagatedStatusTransactionOperations.html#findTransactionStatus()">findTransactionStatus</a>, <a href="AbstractPropagatedStatusTransactionOperations.html#findTransactionStatusInternal()">findTransactionStatusInternal</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-java.lang.Object">Methods inherited from class&nbsp;java.lang.<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></h3>
 <code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#toString()" title="class or interface in java.lang" class="external-link">toString</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
@@ -336,6 +335,23 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
+<section class="detail" id="managesTransaction(io.micronaut.transaction.TransactionStatus)">
+<h3>managesTransaction</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">managesTransaction</span><wbr><span class="parameters">(<a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">C</a>&gt;&nbsp;transactionStatus)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../TransactionOperations.html#managesTransaction(io.micronaut.transaction.TransactionStatus)">TransactionOperations</a></code></span></div>
+<div class="block">Determine whether the given transaction status refers to a transaction
+ managed by this <a href="../TransactionOperations.html" title="interface in io.micronaut.transaction"><code>TransactionOperations</code></a> instance.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../TransactionOperations.html#managesTransaction(io.micronaut.transaction.TransactionStatus)">managesTransaction</a></code>&nbsp;in interface&nbsp;<code><a href="../TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a> extends <a href="../impl/InternalTransaction.html" title="interface in io.micronaut.transaction.impl">InternalTransaction</a>&lt;<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">C</a>&gt;&gt;</code></dd>
+<dt>Parameters:</dt>
+<dd><code>transactionStatus</code> - The transaction status to verify</dd>
+<dt>Returns:</dt>
+<dd>true if the transaction is managed (i.e. created/supplied) by this operations instance</dd>
+</dl>
+</section>
+</li>
+<li>
 <section class="detail" id="getConnectionDefinition(io.micronaut.transaction.TransactionDefinition)">
 <h3>getConnectionDefinition</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="../../data/connection/ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a></span>&nbsp;<span class="element-name">getConnectionDefinition</span><wbr><span class="parameters">(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;transactionDefinition)</span></div>
@@ -383,18 +399,15 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 </section>
 </li>
 <li>
-<section class="detail" id="createExistingTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,T)">
-<h3 id="createExistingTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.impl.InternalTransaction)">createExistingTransactionStatus</h3>
+<section class="detail" id="createExistingTransactionStatus(io.micronaut.transaction.TransactionDefinition,T)">
+<h3 id="createExistingTransactionStatus(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.impl.InternalTransaction)">createExistingTransactionStatus</h3>
 <div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type"><a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a></span>&nbsp;<span class="element-name">createExistingTransactionStatus</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">C</a>&gt;&nbsp;connectionStatus,
- @NonNull
  @NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
  @NonNull
  <a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a>&nbsp;existingTransaction)</span></div>
 <div class="block">Create transaction status with existing transaction.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
-<dd><code>connectionStatus</code> - The connection status</dd>
 <dd><code>definition</code> - The transaction definition</dd>
 <dd><code>existingTransaction</code> - The existing transaction</dd>
 <dt>Returns:</dt>
@@ -435,6 +448,45 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 <dd><code>callback</code> - The callback</dd>
 <dt>Returns:</dt>
 <dd>The result</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="getTransaction(io.micronaut.transaction.TransactionDefinition)">
+<h3>getTransaction</h3>
+<div class="member-signature"><span class="annotations">@NonNull
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a></span>&nbsp;<span class="element-name">getTransaction</span><wbr><span class="parameters">(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</span>
+                 throws <span class="exceptions"><a href="../exceptions/TransactionException.html" title="class in io.micronaut.transaction.exceptions">TransactionException</a></span></div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../SynchronousTransactionManager.html#getTransaction(io.micronaut.transaction.TransactionDefinition)">SynchronousTransactionManager</a></code></span></div>
+<div class="block">Return a currently active transaction or create a new one, according to
+ the specified propagation behavior.
+ <p>Note that parameters like isolation level or timeout will only be applied
+ to new transactions, and thus be ignored when participating in active ones.
+ <p>Furthermore, not all transaction definition settings will be supported
+ by every transaction manager: A proper transaction manager implementation
+ should throw an exception when unsupported settings are encountered.
+ <p>An exception to the above rule is the read-only flag, which should be
+ ignored if no explicit read-only mode is supported. Essentially, the
+ read-only flag is just a hint for potential optimization.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../SynchronousTransactionManager.html#getTransaction(io.micronaut.transaction.TransactionDefinition)">getTransaction</a></code>&nbsp;in interface&nbsp;<code><a href="../SynchronousTransactionManager.html" title="interface in io.micronaut.transaction">SynchronousTransactionManager</a>&lt;<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a> extends <a href="../impl/InternalTransaction.html" title="interface in io.micronaut.transaction.impl">InternalTransaction</a>&lt;<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">C</a>&gt;&gt;</code></dd>
+<dt>Parameters:</dt>
+<dd><code>definition</code> - the TransactionDefinition instance (can be <code>null</code> for defaults),
+ describing propagation behavior, isolation level, timeout etc.</dd>
+<dt>Returns:</dt>
+<dd>transaction status object representing the new or current transaction</dd>
+<dt>Throws:</dt>
+<dd><code><a href="../exceptions/TransactionException.html" title="class in io.micronaut.transaction.exceptions">TransactionException</a></code> - in case of lookup, creation, or system errors</dd>
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list-long">
+<li><a href="../TransactionDefinition.html#getPropagationBehavior()"><code>TransactionDefinition.getPropagationBehavior()</code></a></li>
+<li><a href="../TransactionDefinition.html#getIsolationLevel()"><code>TransactionDefinition.getIsolationLevel()</code></a></li>
+<li><a href="../TransactionDefinition.html#getTimeout()"><code>TransactionDefinition.getTimeout()</code></a></li>
+<li><a href="../TransactionDefinition.html#isReadOnly()"><code>TransactionDefinition.isReadOnly()</code></a></li>
+</ul>
+</dd>
 </dl>
 </section>
 </li>
@@ -556,62 +608,6 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>transaction</code> - The transaction</dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="suspend(T,java.util.function.Supplier)">
-<h3 id="suspend(io.micronaut.transaction.impl.InternalTransaction,java.util.function.Supplier)">suspend</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">suspend</span><wbr><span class="parameters">(<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a>&nbsp;transaction,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Supplier.html" title="class or interface in java.util.function" class="external-link">Supplier</a>&lt;R&gt;&nbsp;callback)</span></div>
-<div class="block">Do suspend the transaction.</div>
-<dl class="notes">
-<dt>Type Parameters:</dt>
-<dd><code>R</code> - The result type</dd>
-<dt>Parameters:</dt>
-<dd><code>transaction</code> - The transaction</dd>
-<dd><code>callback</code> - The callback</dd>
-<dt>Returns:</dt>
-<dd>The callback result</dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="getTransaction(io.micronaut.transaction.TransactionDefinition)">
-<h3>getTransaction</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">C</a>&gt;</span>&nbsp;<span class="element-name">getTransaction</span><wbr><span class="parameters">(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</span>
-                                             throws <span class="exceptions"><a href="../exceptions/TransactionException.html" title="class in io.micronaut.transaction.exceptions">TransactionException</a></span></div>
-<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../SynchronousTransactionManager.html#getTransaction(io.micronaut.transaction.TransactionDefinition)">SynchronousTransactionManager</a></code></span></div>
-<div class="block">Return a currently active transaction or create a new one, according to
- the specified propagation behavior.
- <p>Note that parameters like isolation level or timeout will only be applied
- to new transactions, and thus be ignored when participating in active ones.
- <p>Furthermore, not all transaction definition settings will be supported
- by every transaction manager: A proper transaction manager implementation
- should throw an exception when unsupported settings are encountered.
- <p>An exception to the above rule is the read-only flag, which should be
- ignored if no explicit read-only mode is supported. Essentially, the
- read-only flag is just a hint for potential optimization.</div>
-<dl class="notes">
-<dt>Specified by:</dt>
-<dd><code><a href="../SynchronousTransactionManager.html#getTransaction(io.micronaut.transaction.TransactionDefinition)">getTransaction</a></code>&nbsp;in interface&nbsp;<code><a href="../SynchronousTransactionManager.html" title="interface in io.micronaut.transaction">SynchronousTransactionManager</a>&lt;<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">T</a> extends <a href="../impl/InternalTransaction.html" title="interface in io.micronaut.transaction.impl">InternalTransaction</a>&lt;<a href="AbstractTransactionOperations.html" title="type parameter in AbstractTransactionOperations">C</a>&gt;&gt;</code></dd>
-<dt>Parameters:</dt>
-<dd><code>definition</code> - the TransactionDefinition instance (can be <code>null</code> for defaults),
- describing propagation behavior, isolation level, timeout etc.</dd>
-<dt>Returns:</dt>
-<dd>transaction status object representing the new or current transaction</dd>
-<dt>Throws:</dt>
-<dd><code><a href="../exceptions/TransactionException.html" title="class in io.micronaut.transaction.exceptions">TransactionException</a></code> - in case of lookup, creation, or system errors</dd>
-<dt>See Also:</dt>
-<dd>
-<ul class="tag-list-long">
-<li><a href="../TransactionDefinition.html#getPropagationBehavior()"><code>TransactionDefinition.getPropagationBehavior()</code></a></li>
-<li><a href="../TransactionDefinition.html#getIsolationLevel()"><code>TransactionDefinition.getIsolationLevel()</code></a></li>
-<li><a href="../TransactionDefinition.html#getTimeout()"><code>TransactionDefinition.getTimeout()</code></a></li>
-<li><a href="../TransactionDefinition.html#isReadOnly()"><code>TransactionDefinition.isReadOnly()</code></a></li>
-</ul>
-</dd>
 </dl>
 </section>
 </li>

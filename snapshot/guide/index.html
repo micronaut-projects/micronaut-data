@@ -794,7 +794,58 @@ fun testAnnotationMetadata() {
 <p>This section documents breaking changes between Micronaut versions</p>
 </div>
 <div class="sect1">
-<h2 id="_4_0_0">4.0.0</h2>
+<h2 id="_5_0">5.0</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_interactions_with_synchronous_transaction_and_connection_manager">Interactions with synchronous transaction and connection manager</h3>
+<div class="paragraph">
+<p>Creating a new transaction with <code>io.micronaut.transaction.SynchronousTransactionManager</code> or a connection with <code>io.micronaut.data.connection.SynchronousConnectionManager</code> no longer places the resulting status into the current <code>PropagatedContext</code> automatically.
+Code that subsequently looks up the active transaction or connection (for example via <code>TransactionOperations#findTransactionStatus</code> or <code>ConnectionOperations#findConnectionStatus</code>) must now explicitly propagate the status when manual transaction or connection demarcation is used.
+Use <code>TransactionStatus#propagate</code> or <code>ConnectionStatus#propagate</code> to wrap the code section that should observe the newly created context element.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">TransactionStatus&lt;Object&gt; status = transactionManager.getTransaction(TransactionDefinition.DEFAULT);
+
+// No propagation: downstream code cannot observe the transaction
+Optional&lt;TransactionStatus&lt;Object&gt;&gt; missing = transactionOperations.findTransactionStatus(); // empty
+
+// Use TransactionStatus#propagate so that downstream lookups succeed
+status.propagate(() -&gt; {
+    TransactionStatus&lt;Object&gt; present = transactionOperations.getTransactionStatus();
+    bookRepository.saveWithMandatoryTransaction(newBook);
+});
+
+ConnectionStatus&lt;Connection&gt; connection = connectionManager.getConnection(ConnectionDefinition.DEFAULT);
+
+// Without propagate the connection is invisible to ConnectionOperations
+Optional&lt;ConnectionStatus&lt;Connection&gt;&gt; absent = connectionOperations.findConnectionStatus(); // empty
+
+// Use ConnectionStatus#propagate to make the connection available to participating components
+connection.propagate(() -&gt; {
+    ConnectionStatus&lt;Connection&gt; current = connectionOperations.getConnectionStatus();
+    Connection jdbc = current.getConnection();
+    // perform work with the managed connection
+});</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+These changes are required for Micronaut 5 to support propagating context with scoped values.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_4_0">4.0</h2>
 <div class="sectionbody">
 <div class="sect2">
 <h3 id="_repositories_validation">Repositories validation</h3>

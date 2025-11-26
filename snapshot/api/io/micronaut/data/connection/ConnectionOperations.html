@@ -147,6 +147,12 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Obtains the current required connection.</div>
 </div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#managesConnection(io.micronaut.data.connection.ConnectionStatus)" class="member-name-link">managesConnection</a><wbr>(@NonNull <a href="ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="ConnectionOperations.html" title="type parameter in ConnectionOperations">C</a>&gt;&nbsp;connectionStatus)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Determine whether the given connection status refers to a connection
+ managed by this <a href="ConnectionOperations.html" title="interface in io.micronaut.data.connection"><code>ConnectionOperations</code></a> instance.</div>
+</div>
 </div>
 </div>
 </div>
@@ -233,6 +239,23 @@ loadScripts(document, 'script');</script>
 <dd><code>callback</code> - The call back</dd>
 <dt>Returns:</dt>
 <dd>The result</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="managesConnection(io.micronaut.data.connection.ConnectionStatus)">
+<h3>managesConnection</h3>
+<div class="member-signature"><span class="return-type">boolean</span>&nbsp;<span class="element-name">managesConnection</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="ConnectionOperations.html" title="type parameter in ConnectionOperations">C</a>&gt;&nbsp;connectionStatus)</span></div>
+<div class="block">Determine whether the given connection status refers to a connection
+ managed by this <a href="ConnectionOperations.html" title="interface in io.micronaut.data.connection"><code>ConnectionOperations</code></a> instance.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>connectionStatus</code> - The connection status to verify</dd>
+<dt>Returns:</dt>
+<dd>true if the connection is managed (i.e. created/supplied) by this operations instance</dd>
+<dt>Since:</dt>
+<dd>5.0</dd>
 </dl>
 </section>
 </li>

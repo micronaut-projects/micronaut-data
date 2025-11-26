@@ -151,21 +151,27 @@ implements <a href="../reactive/ReactorConnectionOperations.html" title="interfa
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Obtains the current connection.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract @NonNull org.reactivestreams.Publisher<wbr>&lt;<a href="AbstractReactorConnectionOperations.html" title="type parameter in AbstractReactorConnectionOperations">C</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#openConnection(io.micronaut.data.connection.ConnectionDefinition)" class="member-name-link">openConnection</a><wbr>(@NonNull <a href="../ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#managesConnection(io.micronaut.data.connection.ConnectionStatus)" class="member-name-link">managesConnection</a><wbr>(<a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractReactorConnectionOperations.html" title="type parameter in AbstractReactorConnectionOperations">C</a>&gt;&nbsp;connectionStatus)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Determine whether the given connection status refers to a connection
+ managed by this <a href="../reactive/ReactiveStreamsConnectionOperations.html" title="interface in io.micronaut.data.connection.reactive"><code>ReactiveStreamsConnectionOperations</code></a> instance.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract @NonNull org.reactivestreams.Publisher<wbr>&lt;<a href="AbstractReactorConnectionOperations.html" title="type parameter in AbstractReactorConnectionOperations">C</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#openConnection(io.micronaut.data.connection.ConnectionDefinition)" class="member-name-link">openConnection</a><wbr>(@NonNull <a href="../ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Open a new connection.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;@NonNull reactor.core.publisher.Flux<wbr>&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#withConnectionFlux(io.micronaut.data.connection.ConnectionDefinition,java.util.function.Function)" class="member-name-link">withConnectionFlux</a><wbr>(@NonNull <a href="../ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;@NonNull reactor.core.publisher.Flux<wbr>&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#withConnectionFlux(io.micronaut.data.connection.ConnectionDefinition,java.util.function.Function)" class="member-name-link">withConnectionFlux</a><wbr>(@NonNull <a href="../ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractReactorConnectionOperations.html" title="type parameter in AbstractReactorConnectionOperations">C</a>&gt;,<wbr>reactor.core.publisher.Flux&lt;T&gt;&gt;&nbsp;callback)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Execute the given handler with a new transaction.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;@NonNull reactor.core.publisher.Mono<wbr>&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#withConnectionMono(io.micronaut.data.connection.ConnectionDefinition,java.util.function.Function)" class="member-name-link">withConnectionMono</a><wbr>(@NonNull <a href="../ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>&lt;T&gt;&nbsp;@NonNull reactor.core.publisher.Mono<wbr>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#withConnectionMono(io.micronaut.data.connection.ConnectionDefinition,java.util.function.Function)" class="member-name-link">withConnectionMono</a><wbr>(@NonNull <a href="../ConnectionDefinition.html" title="interface in io.micronaut.data.connection">ConnectionDefinition</a>&nbsp;definition,
  @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractReactorConnectionOperations.html" title="type parameter in AbstractReactorConnectionOperations">C</a>&gt;,<wbr>reactor.core.publisher.Mono&lt;T&gt;&gt;&nbsp;callback)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Execute the given handler with a new connection.</div>
 </div>
 </div>
@@ -235,6 +241,23 @@ implements <a href="../reactive/ReactorConnectionOperations.html" title="interfa
 <dd><code>definition</code> - The connection definition</dd>
 <dt>Returns:</dt>
 <dd>closed publisher</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="managesConnection(io.micronaut.data.connection.ConnectionStatus)">
+<h3>managesConnection</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">managesConnection</span><wbr><span class="parameters">(<a href="../ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractReactorConnectionOperations.html" title="type parameter in AbstractReactorConnectionOperations">C</a>&gt;&nbsp;connectionStatus)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../reactive/ReactiveStreamsConnectionOperations.html#managesConnection(io.micronaut.data.connection.ConnectionStatus)">ReactiveStreamsConnectionOperations</a></code></span></div>
+<div class="block">Determine whether the given connection status refers to a connection
+ managed by this <a href="../reactive/ReactiveStreamsConnectionOperations.html" title="interface in io.micronaut.data.connection.reactive"><code>ReactiveStreamsConnectionOperations</code></a> instance.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="../reactive/ReactiveStreamsConnectionOperations.html#managesConnection(io.micronaut.data.connection.ConnectionStatus)">managesConnection</a></code>&nbsp;in interface&nbsp;<code><a href="../reactive/ReactiveStreamsConnectionOperations.html" title="interface in io.micronaut.data.connection.reactive">ReactiveStreamsConnectionOperations</a>&lt;<a href="AbstractReactorConnectionOperations.html" title="type parameter in AbstractReactorConnectionOperations">C</a>&gt;</code></dd>
+<dt>Parameters:</dt>
+<dd><code>connectionStatus</code> - The connection status to verify</dd>
+<dt>Returns:</dt>
+<dd>true if the connection is managed (i.e. created/supplied) by this operations instance</dd>
 </dl>
 </section>
 </li>

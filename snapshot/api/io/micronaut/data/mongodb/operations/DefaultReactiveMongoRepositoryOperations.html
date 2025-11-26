@@ -170,13 +170,15 @@ implements <a href="MongoReactorRepositoryOperations.html" title="interface in i
  <a href="../../model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&nbsp;childPersistentEntity)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;R&gt;&nbsp;R</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#convertResult(org.bson.codecs.configuration.CodecRegistry,java.lang.Class,org.bson.BsonDocument,boolean)" class="member-name-link">convertResult</a><wbr>(org.bson.codecs.configuration.CodecRegistry&nbsp;codecRegistry,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#convertResult(io.micronaut.data.model.runtime.PreparedQuery,org.bson.codecs.configuration.CodecRegistry,java.lang.Class,org.bson.BsonDocument,boolean)" class="member-name-link">convertResult</a><wbr>(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>?&gt;&nbsp;preparedQuery,
+ org.bson.codecs.configuration.CodecRegistry&nbsp;codecRegistry,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;R&gt;&nbsp;resultType,
  org.bson.BsonDocument&nbsp;result,
  boolean&nbsp;isDtoProjection)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected &lt;R&gt;&nbsp;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;R&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#convertUsingIntrospected(org.bson.BsonDocument,java.lang.Class)" class="member-name-link">convertUsingIntrospected</a><wbr>(org.bson.BsonDocument&nbsp;result,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#convertUsingIntrospected(io.micronaut.data.model.runtime.PreparedQuery,org.bson.BsonDocument,java.lang.Class)" class="member-name-link">convertUsingIntrospected</a><wbr>(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>?&gt;&nbsp;preparedQuery,
+ org.bson.BsonDocument&nbsp;result,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;R&gt;&nbsp;resultType)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Attempts to convert a BSON document into an instance of the specified result type using introspection.</div>
@@ -1033,29 +1035,32 @@ R&gt;</span>&nbsp;<span class="return-type"><a href="../../model/runtime/StoredQ
 </section>
 </li>
 <li>
-<section class="detail" id="convertResult(org.bson.codecs.configuration.CodecRegistry,java.lang.Class,org.bson.BsonDocument,boolean)">
+<section class="detail" id="convertResult(io.micronaut.data.model.runtime.PreparedQuery,org.bson.codecs.configuration.CodecRegistry,java.lang.Class,org.bson.BsonDocument,boolean)">
 <h3>convertResult</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">convertResult</span><wbr><span class="parameters">(org.bson.codecs.configuration.CodecRegistry&nbsp;codecRegistry,
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type">R</span>&nbsp;<span class="element-name">convertResult</span><wbr><span class="parameters">(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>?&gt;&nbsp;preparedQuery,
+ org.bson.codecs.configuration.CodecRegistry&nbsp;codecRegistry,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;R&gt;&nbsp;resultType,
  org.bson.BsonDocument&nbsp;result,
  boolean&nbsp;isDtoProjection)</span></div>
 </section>
 </li>
 <li>
-<section class="detail" id="convertUsingIntrospected(org.bson.BsonDocument,java.lang.Class)">
+<section class="detail" id="convertUsingIntrospected(io.micronaut.data.model.runtime.PreparedQuery,org.bson.BsonDocument,java.lang.Class)">
 <h3>convertUsingIntrospected</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;R&gt;</span>&nbsp;<span class="element-name">convertUsingIntrospected</span><wbr><span class="parameters">(org.bson.BsonDocument&nbsp;result,
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="type-parameters">&lt;R&gt;</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;R&gt;</span>&nbsp;<span class="element-name">convertUsingIntrospected</span><wbr><span class="parameters">(<a href="../../model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,<wbr>?&gt;&nbsp;preparedQuery,
+ org.bson.BsonDocument&nbsp;result,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;R&gt;&nbsp;resultType)</span></div>
 <div class="block">Attempts to convert a BSON document into an instance of the specified result type using introspection.
-
+ <p>
  If the result type has been annotated with `@Introspection`, this method will attempt to use the provided
  `BeanIntrospection` to map the BSON document onto an instance of the result type.
-
+ <p>
  If the mapping fails or if no `BeanIntrospection` is found for the result type, an empty `Optional` is returned.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
 <dd><code>R</code> - The type parameter representing the result type</dd>
 <dt>Parameters:</dt>
+<dd><code>preparedQuery</code> - The preparedQuery</dd>
 <dd><code>result</code> - The BSON document containing the data to be mapped</dd>
 <dd><code>resultType</code> - The type of the object being mapped</dd>
 <dt>Returns:</dt>

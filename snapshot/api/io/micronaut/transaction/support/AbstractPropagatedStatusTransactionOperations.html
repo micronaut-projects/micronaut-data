@@ -152,16 +152,14 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Execute a transaction within the context of the function.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected @NonNull io.micronaut.core.propagation.PropagatedContext</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#extendCurrentPropagatedContext(io.micronaut.transaction.TransactionStatus)" class="member-name-link">extendCurrentPropagatedContext</a><wbr>(<a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="AbstractPropagatedStatusTransactionOperations.html" title="type parameter in AbstractPropagatedStatusTransactionOperations">C</a>&gt;&nbsp;status)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="AbstractPropagatedStatusTransactionOperations.html" title="type parameter in AbstractPropagatedStatusTransactionOperations">C</a>&gt;&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findTransactionStatus()" class="member-name-link">findTransactionStatus</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Extends the propagated context with the transaction status.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="AbstractPropagatedStatusTransactionOperations.html" title="type parameter in AbstractPropagatedStatusTransactionOperations">T</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findTransactionStatus()" class="member-name-link">findTransactionStatus</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Find optional propagated transaction status.</div>
 </div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="AbstractPropagatedStatusTransactionOperations.html" title="type parameter in AbstractPropagatedStatusTransactionOperations">T</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findTransactionStatusInternal()" class="member-name-link">findTransactionStatusInternal</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -170,7 +168,7 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 <code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#toString()" title="class or interface in java.lang" class="external-link">toString</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.transaction.TransactionOperations">Methods inherited from interface&nbsp;io.micronaut.transaction.<a href="../TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a></h3>
-<code><a href="../TransactionOperations.html#executeRead(io.micronaut.transaction.TransactionCallback)">executeRead</a>, <a href="../TransactionOperations.html#executeWrite(io.micronaut.transaction.TransactionCallback)">executeWrite</a>, <a href="../TransactionOperations.html#getConnection()">getConnection</a>, <a href="../TransactionOperations.html#hasConnection()">hasConnection</a></code></div>
+<code><a href="../TransactionOperations.html#executeRead(io.micronaut.transaction.TransactionCallback)">executeRead</a>, <a href="../TransactionOperations.html#executeWrite(io.micronaut.transaction.TransactionCallback)">executeWrite</a>, <a href="../TransactionOperations.html#getConnection()">getConnection</a>, <a href="../TransactionOperations.html#hasConnection()">hasConnection</a>, <a href="../TransactionOperations.html#managesTransaction(io.micronaut.transaction.TransactionStatus)">managesTransaction</a></code></div>
 </section>
 </li>
 </ul>
@@ -216,7 +214,7 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 <li>
 <section class="detail" id="findTransactionStatus()">
 <h3>findTransactionStatus</h3>
-<div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="AbstractPropagatedStatusTransactionOperations.html" title="type parameter in AbstractPropagatedStatusTransactionOperations">T</a>&gt;</span>&nbsp;<span class="element-name">findTransactionStatus</span>()</div>
+<div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="AbstractPropagatedStatusTransactionOperations.html" title="type parameter in AbstractPropagatedStatusTransactionOperations">C</a>&gt;&gt;</span>&nbsp;<span class="element-name">findTransactionStatus</span>()</div>
 <div class="block"><span class="description-from-type-label">Description copied from interface:&nbsp;<code><a href="../TransactionOperations.html#findTransactionStatus()">TransactionOperations</a></code></span></div>
 <div class="block">Find optional propagated transaction status.</div>
 <dl class="notes">
@@ -225,6 +223,12 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 <dt>Returns:</dt>
 <dd>The transaction status.</dd>
 </dl>
+</section>
+</li>
+<li>
+<section class="detail" id="findTransactionStatusInternal()">
+<h3>findTransactionStatusInternal</h3>
+<div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="AbstractPropagatedStatusTransactionOperations.html" title="type parameter in AbstractPropagatedStatusTransactionOperations">T</a>&gt;</span>&nbsp;<span class="element-name">findTransactionStatusInternal</span>()</div>
 </section>
 </li>
 <li>
@@ -246,20 +250,6 @@ implements <a href="../TransactionOperations.html" title="interface in io.micron
 <dd><code>callback</code> - The call back</dd>
 <dt>Returns:</dt>
 <dd>The result</dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="extendCurrentPropagatedContext(io.micronaut.transaction.TransactionStatus)">
-<h3>extendCurrentPropagatedContext</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">@NonNull io.micronaut.core.propagation.PropagatedContext</span>&nbsp;<span class="element-name">extendCurrentPropagatedContext</span><wbr><span class="parameters">(<a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="AbstractPropagatedStatusTransactionOperations.html" title="type parameter in AbstractPropagatedStatusTransactionOperations">C</a>&gt;&nbsp;status)</span></div>
-<div class="block">Extends the propagated context with the transaction status.</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>status</code> - The transaction status</dd>
-<dt>Returns:</dt>
-<dd>new propagated context</dd>
 </dl>
 </section>
 </li>

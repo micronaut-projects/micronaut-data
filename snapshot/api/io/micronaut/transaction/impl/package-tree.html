@@ -72,9 +72,18 @@ loadScripts(document, 'script');</script>
 <section class="hierarchy">
 <h2 title="Interface Hierarchy">Interface Hierarchy</h2>
 <ul>
+<li class="circle">io.micronaut.core.propagation.PropagatedContextElement
+<ul>
+<li class="circle">io.micronaut.transaction.<a href="../TransactionStatus.html" class="type-name-link" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;T&gt; (also extends io.micronaut.transaction.<a href="../TransactionExecution.html" title="interface in io.micronaut.transaction">TransactionExecution</a>)
+<ul>
+<li class="circle">io.micronaut.transaction.impl.<a href="InternalTransaction.html" class="type-name-link" title="interface in io.micronaut.transaction.impl">InternalTransaction</a>&lt;T&gt;</li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="circle">io.micronaut.transaction.<a href="../TransactionExecution.html" class="type-name-link" title="interface in io.micronaut.transaction">TransactionExecution</a>
 <ul>
-<li class="circle">io.micronaut.transaction.<a href="../TransactionStatus.html" class="type-name-link" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;T&gt;
+<li class="circle">io.micronaut.transaction.<a href="../TransactionStatus.html" class="type-name-link" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;T&gt; (also extends io.micronaut.core.propagation.PropagatedContextElement)
 <ul>
 <li class="circle">io.micronaut.transaction.impl.<a href="InternalTransaction.html" class="type-name-link" title="interface in io.micronaut.transaction.impl">InternalTransaction</a>&lt;T&gt;</li>
 </ul>

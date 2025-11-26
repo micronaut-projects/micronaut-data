@@ -95,14 +95,14 @@ loadScripts(document, 'script');</script>
 </dl>
 <dl class="notes">
 <dt>All Implemented Interfaces:</dt>
-<dd><code><a href="../reactive/ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;C&gt;</code>, <code><a href="../TransactionExecution.html" title="interface in io.micronaut.transaction">TransactionExecution</a></code></dd>
+<dd><code>io.micronaut.core.propagation.PropagatedContextElement</code>, <code><a href="../reactive/ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;C&gt;</code>, <code><a href="../TransactionExecution.html" title="interface in io.micronaut.transaction">TransactionExecution</a></code></dd>
 </dl>
 <dl class="notes">
 <dt>Enclosing class:</dt>
 <dd><code><a href="AbstractReactorTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractReactorTransactionOperations</a>&lt;<a href="AbstractReactorTransactionOperations.html" title="type parameter in AbstractReactorTransactionOperations">C</a>&gt;</code></dd>
 </dl>
 <hr>
-<div class="type-signature"><span class="modifiers">protected static final class </span><span class="element-name type-name-label">AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus&lt;C&gt;</span>
+<div class="type-signature"><span class="modifiers">protected static class </span><span class="element-name type-name-label">AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus&lt;C&gt;</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>
 implements <a href="../reactive/ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a>&lt;C&gt;</span></div>
 <div class="block">Represents the current reactive transaction status.</div>
@@ -117,9 +117,10 @@ implements <a href="../reactive/ReactiveTransactionStatus.html" title="interface
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.data.connection.ConnectionStatus,boolean,io.micronaut.transaction.TransactionDefinition)" class="member-name-link">DefaultReactiveTransactionStatus</a><wbr>(<a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus.html" title="type parameter in AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus">C</a>&gt;&nbsp;connectionStatus,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.data.connection.ConnectionStatus,boolean,io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.reactive.ReactiveTransactionOperations)" class="member-name-link">DefaultReactiveTransactionStatus</a><wbr>(<a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus.html" title="type parameter in AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus">C</a>&gt;&nbsp;connectionStatus,
  boolean&nbsp;isNew,
- <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;transactionDefinition)</code></div>
+ <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;transactionDefinition,
+ <a href="../reactive/ReactiveTransactionOperations.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations</a>&lt;<a href="AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus.html" title="type parameter in AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus">C</a>&gt;&nbsp;reactiveTransactionOperations)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
@@ -176,6 +177,9 @@ implements <a href="../reactive/ReactiveTransactionStatus.html" title="interface
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-java.lang.Object">Methods inherited from class&nbsp;java.lang.<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></h3>
 <code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#toString()" title="class or interface in java.lang" class="external-link">toString</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
+<div class="inherited-list">
+<h3 id="methods-inherited-from-class-io.micronaut.transaction.reactive.ReactiveTransactionStatus">Methods inherited from interface&nbsp;io.micronaut.transaction.reactive.<a href="../reactive/ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a></h3>
+<code><a href="../reactive/ReactiveTransactionStatus.html#propagate(io.micronaut.core.propagation.PropagatedContext,java.util.function.Supplier)">propagate</a>, <a href="../reactive/ReactiveTransactionStatus.html#propagate(java.lang.Runnable)">propagate</a>, <a href="../reactive/ReactiveTransactionStatus.html#propagate(java.util.function.Supplier)">propagate</a></code></div>
 </section>
 </li>
 </ul>
@@ -188,11 +192,12 @@ implements <a href="../reactive/ReactiveTransactionStatus.html" title="interface
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(io.micronaut.data.connection.ConnectionStatus,boolean,io.micronaut.transaction.TransactionDefinition)">
+<section class="detail" id="&lt;init&gt;(io.micronaut.data.connection.ConnectionStatus,boolean,io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.reactive.ReactiveTransactionOperations)">
 <h3>DefaultReactiveTransactionStatus</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">DefaultReactiveTransactionStatus</span><wbr><span class="parameters">(<a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus.html" title="type parameter in AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus">C</a>&gt;&nbsp;connectionStatus,
  boolean&nbsp;isNew,
- <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;transactionDefinition)</span></div>
+ <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;transactionDefinition,
+ <a href="../reactive/ReactiveTransactionOperations.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations</a>&lt;<a href="AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus.html" title="type parameter in AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus">C</a>&gt;&nbsp;reactiveTransactionOperations)</span></div>
 </section>
 </li>
 </ul>

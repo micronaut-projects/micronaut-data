@@ -162,10 +162,14 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="../MethodMatcher.MethodMatch.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher.MethodMatch</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#match(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.regex.Matcher)" class="member-name-link">match</a><wbr>(<a href="../../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/regex/Matcher.html" title="class or interface in java.util.regex" class="external-link">Matcher</a>&nbsp;matcher)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#doMatch(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">doMatch</a><wbr>(<a href="../../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Handle the match.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#matches(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">matches</a><wbr>(<a href="../../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Check if matches.</div>
 </div>
 </div>
 </div>
@@ -206,18 +210,32 @@ loadScripts(document, 'script');</script>
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="match(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.regex.Matcher)">
-<h3>match</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="../MethodMatcher.MethodMatch.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher.MethodMatch</a></span>&nbsp;<span class="element-name">match</span><wbr><span class="parameters">(<a href="../../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/regex/Matcher.html" title="class or interface in java.util.regex" class="external-link">Matcher</a>&nbsp;matcher)</span></div>
-<div class="block"><span class="description-from-type-label">Description copied from class:&nbsp;<code><a href="../AbstractPrefixPatternMethodMatcher.html#match(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.regex.Matcher)">AbstractPrefixPatternMethodMatcher</a></code></span></div>
+<section class="detail" id="matches(io.micronaut.data.processor.visitors.MethodMatchContext)">
+<h3>matches</h3>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">matches</span><wbr><span class="parameters">(<a href="../../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from class:&nbsp;<code><a href="../AbstractPrefixPatternMethodMatcher.html#matches(io.micronaut.data.processor.visitors.MethodMatchContext)">AbstractPrefixPatternMethodMatcher</a></code></span></div>
+<div class="block">Check if matches.</div>
+<dl class="notes">
+<dt>Overrides:</dt>
+<dd><code><a href="../AbstractPrefixPatternMethodMatcher.html#matches(io.micronaut.data.processor.visitors.MethodMatchContext)">matches</a></code>&nbsp;in class&nbsp;<code><a href="../AbstractPrefixPatternMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractPrefixPatternMethodMatcher</a></code></dd>
+<dt>Parameters:</dt>
+<dd><code>matchContext</code> - The context</dd>
+<dt>Returns:</dt>
+<dd>true if matches</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="doMatch(io.micronaut.data.processor.visitors.MethodMatchContext)">
+<h3>doMatch</h3>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="../MethodMatcher.MethodMatch.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodMatcher.MethodMatch</a></span>&nbsp;<span class="element-name">doMatch</span><wbr><span class="parameters">(<a href="../../MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from class:&nbsp;<code><a href="../AbstractPrefixPatternMethodMatcher.html#doMatch(io.micronaut.data.processor.visitors.MethodMatchContext)">AbstractPrefixPatternMethodMatcher</a></code></span></div>
 <div class="block">Handle the match.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
-<dd><code><a href="../AbstractPrefixPatternMethodMatcher.html#match(io.micronaut.data.processor.visitors.MethodMatchContext,java.util.regex.Matcher)">match</a></code>&nbsp;in class&nbsp;<code><a href="../AbstractPrefixPatternMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractPrefixPatternMethodMatcher</a></code></dd>
+<dd><code><a href="../AbstractPrefixPatternMethodMatcher.html#doMatch(io.micronaut.data.processor.visitors.MethodMatchContext)">doMatch</a></code>&nbsp;in class&nbsp;<code><a href="../AbstractPrefixPatternMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractPrefixPatternMethodMatcher</a></code></dd>
 <dt>Parameters:</dt>
 <dd><code>matchContext</code> - The match context</dd>
-<dd><code>matcher</code> - The matcher</dd>
 <dt>Returns:</dt>
 <dd>The method matcher</dd>
 </dl>

@@ -120,15 +120,21 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Find optional propagated transaction status.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;T&gt;&nbsp;@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletionStage.html" title="class or interface in java.util.concurrent" class="external-link">CompletionStage</a><wbr>&lt;T&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#withTransaction(io.micronaut.transaction.TransactionDefinition,java.util.function.Function)" class="member-name-link">withTransaction</a><wbr>(@NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
- @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="AsyncTransactionStatus.html" title="interface in io.micronaut.transaction.async">AsyncTransactionStatus</a>&lt;<a href="AsyncTransactionOperations.html" title="type parameter in AsyncTransactionOperations">C</a>&gt;,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletionStage.html" title="class or interface in java.util.concurrent" class="external-link">CompletionStage</a>&lt;T&gt;&gt;&nbsp;handler)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#managesTransaction(io.micronaut.transaction.async.AsyncTransactionStatus)" class="member-name-link">managesTransaction</a><wbr>(@NonNull <a href="AsyncTransactionStatus.html" title="interface in io.micronaut.transaction.async">AsyncTransactionStatus</a>&lt;<a href="AsyncTransactionOperations.html" title="type parameter in AsyncTransactionOperations">C</a>&gt;&nbsp;transactionStatus)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Determine whether the given transaction status refers to a transaction
+ managed by this <a href="AsyncTransactionOperations.html" title="interface in io.micronaut.transaction.async"><code>AsyncTransactionOperations</code></a> instance.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;T&gt;&nbsp;@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletionStage.html" title="class or interface in java.util.concurrent" class="external-link">CompletionStage</a><wbr>&lt;T&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#withTransaction(io.micronaut.transaction.TransactionDefinition,java.util.function.Function)" class="member-name-link">withTransaction</a><wbr>(@NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
+ @NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="AsyncTransactionStatus.html" title="interface in io.micronaut.transaction.async">AsyncTransactionStatus</a>&lt;<a href="AsyncTransactionOperations.html" title="type parameter in AsyncTransactionOperations">C</a>&gt;,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletionStage.html" title="class or interface in java.util.concurrent" class="external-link">CompletionStage</a>&lt;T&gt;&gt;&nbsp;handler)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Execute the given handler with a new transaction.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;T&gt;&nbsp;@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletionStage.html" title="class or interface in java.util.concurrent" class="external-link">CompletionStage</a><wbr>&lt;T&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#withTransaction(java.util.function.Function)" class="member-name-link">withTransaction</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="AsyncTransactionStatus.html" title="interface in io.micronaut.transaction.async">AsyncTransactionStatus</a>&lt;<a href="AsyncTransactionOperations.html" title="type parameter in AsyncTransactionOperations">C</a>&gt;,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletionStage.html" title="class or interface in java.util.concurrent" class="external-link">CompletionStage</a>&lt;T&gt;&gt;&nbsp;handler)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default &lt;T&gt;&nbsp;@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletionStage.html" title="class or interface in java.util.concurrent" class="external-link">CompletionStage</a><wbr>&lt;T&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#withTransaction(java.util.function.Function)" class="member-name-link">withTransaction</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html" title="class or interface in java.util.function" class="external-link">Function</a>&lt;<a href="AsyncTransactionStatus.html" title="interface in io.micronaut.transaction.async">AsyncTransactionStatus</a>&lt;<a href="AsyncTransactionOperations.html" title="type parameter in AsyncTransactionOperations">C</a>&gt;,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletionStage.html" title="class or interface in java.util.concurrent" class="external-link">CompletionStage</a>&lt;T&gt;&gt;&nbsp;handler)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Execute the given handler with a new transaction.</div>
 </div>
 </div>
@@ -190,6 +196,23 @@ loadScripts(document, 'script');</script>
 <dd><code>handler</code> - The handler</dd>
 <dt>Returns:</dt>
 <dd>A publisher that emits the result type</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="managesTransaction(io.micronaut.transaction.async.AsyncTransactionStatus)">
+<h3>managesTransaction</h3>
+<div class="member-signature"><span class="return-type">boolean</span>&nbsp;<span class="element-name">managesTransaction</span><wbr><span class="parameters">(@NonNull
+ @NonNull <a href="AsyncTransactionStatus.html" title="interface in io.micronaut.transaction.async">AsyncTransactionStatus</a>&lt;<a href="AsyncTransactionOperations.html" title="type parameter in AsyncTransactionOperations">C</a>&gt;&nbsp;transactionStatus)</span></div>
+<div class="block">Determine whether the given transaction status refers to a transaction
+ managed by this <a href="AsyncTransactionOperations.html" title="interface in io.micronaut.transaction.async"><code>AsyncTransactionOperations</code></a> instance.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>transactionStatus</code> - The transaction status to verify</dd>
+<dt>Returns:</dt>
+<dd>true if the transaction is managed (i.e. created/supplied) by this operations instance</dd>
+<dt>Since:</dt>
+<dd>5.0</dd>
 </dl>
 </section>
 </li>
