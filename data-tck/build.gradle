@@ -30,3 +30,7 @@ dependencies {
     compileOnly projects.micronautDataJdbc
     compileOnly mn.micronaut.inject.groovy
 }
+
+tasks.withType(Javadoc).configureEach {
+    exclude("io/micronaut/data/tck/tests/AbstractJakartaDataTest.java")
+}
