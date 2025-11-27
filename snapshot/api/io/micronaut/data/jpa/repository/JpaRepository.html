@@ -119,31 +119,51 @@ extends <a href="../../repository/CrudRepository.html" title="interface in io.mi
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="JpaRepository.html" title="type parameter in JpaRepository">E</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findAll()" class="member-name-link">findAll</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;S extends <a href="JpaRepository.html" title="type parameter in JpaRepository">E</a>&gt;<br>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#detach(S)" class="member-name-link">detach</a><wbr>(S&nbsp;entity)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
-<div class="block">Returns all instances of the type.</div>
+<div class="block">Detach the given entity from the persistence context.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="JpaRepository.html" title="type parameter in JpaRepository">E</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findAll(io.micronaut.data.model.Sort)" class="member-name-link">findAll</a><wbr>(@NonNull <a href="../../model/Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findAll()" class="member-name-link">findAll</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Returns all instances of the type.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="JpaRepository.html" title="type parameter in JpaRepository">E</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#findAll(io.micronaut.data.model.Sort)" class="member-name-link">findAll</a><wbr>(@NonNull <a href="../../model/Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Find all results for the given sort order.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#flush()" class="member-name-link">flush</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#flush()" class="member-name-link">flush</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Adds a flush method.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;S extends <a href="JpaRepository.html" title="type parameter in JpaRepository">E</a>&gt;<br>S</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#load(java.lang.Object)" class="member-name-link">load</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;id)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;S extends <a href="JpaRepository.html" title="type parameter in JpaRepository">E</a>&gt;<br>S</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#load(java.lang.Object)" class="member-name-link">load</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;id)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Adds a load method.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;S extends <a href="JpaRepository.html" title="type parameter in JpaRepository">E</a>&gt;<br>S</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#merge(S)" class="member-name-link">merge</a><wbr>(S&nbsp;entity)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;S extends <a href="JpaRepository.html" title="type parameter in JpaRepository">E</a>&gt;<br>S</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#merge(S)" class="member-name-link">merge</a><wbr>(S&nbsp;entity)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Merge the state of the given entity into the
  current persistence context.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;S extends <a href="JpaRepository.html" title="type parameter in JpaRepository">E</a>&gt;<br>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#persist(S)" class="member-name-link">persist</a><wbr>(S&nbsp;entity)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Persist an entity instance into the persistence context.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;S extends <a href="JpaRepository.html" title="type parameter in JpaRepository">E</a>&gt;<br>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#refresh(S)" class="member-name-link">refresh</a><wbr>(S&nbsp;entity)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Refresh the state of the given entity from the database.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;S extends <a href="JpaRepository.html" title="type parameter in JpaRepository">E</a>&gt;<br>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#remove(S)" class="member-name-link">remove</a><wbr>(S&nbsp;entity)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Remove the given entity from the persistence context.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>&lt;S extends <a href="JpaRepository.html" title="type parameter in JpaRepository">E</a>&gt;<br>@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;S&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#saveAll(java.lang.Iterable)" class="member-name-link">saveAll</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Iterable.html" title="class or interface in java.lang" class="external-link">Iterable</a>&lt;S&gt;&nbsp;entities)</code></div>
@@ -283,6 +303,62 @@ extends <a href="../../repository/CrudRepository.html" title="interface in io.mi
 <dd><code>entity</code> - entity instance</dd>
 <dt>Returns:</dt>
 <dd>the managed instance that the state was merged to</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="persist(S)">
+<h3 id="persist(java.lang.Object)">persist</h3>
+<div class="member-signature"><span class="type-parameters">&lt;S extends <a href="JpaRepository.html" title="type parameter in JpaRepository">E</a>&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">persist</span><wbr><span class="parameters">(@NonNull
+ S&nbsp;entity)</span></div>
+<div class="block">Persist an entity instance into the persistence context.</div>
+<dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><code>S</code> - The entity type</dd>
+<dt>Parameters:</dt>
+<dd><code>entity</code> - entity instance</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="refresh(S)">
+<h3 id="refresh(java.lang.Object)">refresh</h3>
+<div class="member-signature"><span class="type-parameters">&lt;S extends <a href="JpaRepository.html" title="type parameter in JpaRepository">E</a>&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">refresh</span><wbr><span class="parameters">(@NonNull
+ S&nbsp;entity)</span></div>
+<div class="block">Refresh the state of the given entity from the database.</div>
+<dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><code>S</code> - The entity type</dd>
+<dt>Parameters:</dt>
+<dd><code>entity</code> - entity instance</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="remove(S)">
+<h3 id="remove(java.lang.Object)">remove</h3>
+<div class="member-signature"><span class="type-parameters">&lt;S extends <a href="JpaRepository.html" title="type parameter in JpaRepository">E</a>&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">remove</span><wbr><span class="parameters">(@NonNull
+ S&nbsp;entity)</span></div>
+<div class="block">Remove the given entity from the persistence context.</div>
+<dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><code>S</code> - The entity type</dd>
+<dt>Parameters:</dt>
+<dd><code>entity</code> - entity instance</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="detach(S)">
+<h3 id="detach(java.lang.Object)">detach</h3>
+<div class="member-signature"><span class="type-parameters">&lt;S extends <a href="JpaRepository.html" title="type parameter in JpaRepository">E</a>&gt;</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">detach</span><wbr><span class="parameters">(@NonNull
+ S&nbsp;entity)</span></div>
+<div class="block">Detach the given entity from the persistence context.</div>
+<dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><code>S</code> - The entity type</dd>
+<dt>Parameters:</dt>
+<dd><code>entity</code> - entity instance</dd>
 </dl>
 </section>
 </li>

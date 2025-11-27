@@ -155,6 +155,7 @@ io.micronaut.data.tck.jdbc.entities
 io.micronaut.data.tck.repositories
 io.micronaut.data.tck.repositories.embedded
 io.micronaut.data.tck.services
+io.micronaut.data.tck.tests
 io.micronaut.transaction
 io.micronaut.transaction.annotation
 io.micronaut.transaction.async

@@ -5207,6 +5207,18 @@ loadScripts(document, 'script');</script>
 <div class="block">Indicate whether to use descending order
  when sorting by this attribute.</div>
 </dd>
+<dt><a href="io/micronaut/data/jpa/repository/JpaRepository.html#detach(S)" class="member-name-link">detach(S)</a> - Method in interface io.micronaut.data.jpa.repository.<a href="io/micronaut/data/jpa/repository/JpaRepository.html" title="interface in io.micronaut.data.jpa.repository">JpaRepository</a></dt>
+<dd>
+<div class="block">Detach the given entity from the persistence context.</div>
+</dd>
+<dt><a href="io/micronaut/data/jpa/operations/JpaRepositoryOperations.html#detach(T)" class="member-name-link">detach(T)</a> - Method in interface io.micronaut.data.jpa.operations.<a href="io/micronaut/data/jpa/operations/JpaRepositoryOperations.html" title="interface in io.micronaut.data.jpa.operations">JpaRepositoryOperations</a></dt>
+<dd>
+<div class="block">Detach the entity from the persistence context.</div>
+</dd>
+<dt><a href="io/micronaut/data/jpa/repository/intercept/DetachInterceptor.html" class="type-name-link" title="class in io.micronaut.data.jpa.repository.intercept">DetachInterceptor&lt;T&gt;</a> - Class in <a href="io/micronaut/data/jpa/repository/intercept/package-summary.html">io.micronaut.data.jpa.repository.intercept</a></dt>
+<dd>
+<div class="block">Interceptor for <code>Detach</code> methods.</div>
+</dd>
 <dt><a href="io/micronaut/transaction/impl/TransactionManagerConfiguration.html#determineTimeout(io.micronaut.transaction.TransactionDefinition)" class="member-name-link">determineTimeout(TransactionDefinition)</a> - Method in class io.micronaut.transaction.impl.<a href="io/micronaut/transaction/impl/TransactionManagerConfiguration.html" title="class in io.micronaut.transaction.impl">TransactionManagerConfiguration</a></dt>
 <dd>
 <div class="block">Determine the actual timeout to use for the given definition.</div>
@@ -11102,17 +11114,27 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataDeleteMapper.html#getName()" class="member-name-link">getName()</a> - Method in class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataDeleteMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataDeleteMapper</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataDetachMapper.html#getName()" class="member-name-link">getName()</a> - Method in class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataDetachMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataDetachMapper</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataFindMapper.html#getName()" class="member-name-link">getName()</a> - Method in class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataFindMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataFindMapper</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataFirstByMapper.html#getName()" class="member-name-link">getName()</a> - Method in class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataFirstByMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataFirstByMapper</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataInsertMapper.html#getName()" class="member-name-link">getName()</a> - Method in class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataInsertMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataInsertMapper</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataMergeStatefulMapper.html#getName()" class="member-name-link">getName()</a> - Method in class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataMergeStatefulMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataMergeStatefulMapper</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataOrderByListMapper.html#getName()" class="member-name-link">getName()</a> - Method in class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataOrderByListMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataOrderByListMapper</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataOrderByMapper.html#getName()" class="member-name-link">getName()</a> - Method in class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataOrderByMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataOrderByMapper</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataParamsMapper.html#getName()" class="member-name-link">getName()</a> - Method in class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataParamsMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataParamsMapper</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataPersistMapper.html#getName()" class="member-name-link">getName()</a> - Method in class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataPersistMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataPersistMapper</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataRefreshMapper.html#getName()" class="member-name-link">getName()</a> - Method in class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataRefreshMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataRefreshMapper</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataRemoveMapper.html#getName()" class="member-name-link">getName()</a> - Method in class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataRemoveMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataRemoveMapper</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataRepositoryMapper.html#getName()" class="member-name-link">getName()</a> - Method in class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataRepositoryMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataRepositoryMapper</a></dt>
 <dd>&nbsp;</dd>
@@ -11528,6 +11550,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns the time to be used for the timestamp.</div>
 </dd>
+<dt><a href="io/micronaut/data/tck/tests/MockedDateTimeProvider.html#getNow()" class="member-name-link">getNow()</a> - Method in class io.micronaut.data.tck.tests.<a href="io/micronaut/data/tck/tests/MockedDateTimeProvider.html" title="class in io.micronaut.data.tck.tests">MockedDateTimeProvider</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/UuidEntity.html#getNullableValue()" class="member-name-link">getNullableValue()</a> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/UuidEntity.html" title="class in io.micronaut.data.tck.entities">UuidEntity</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/document/tck/entities/Page.html#getNum()" class="member-name-link">getNum()</a> - Method in class io.micronaut.data.document.tck.entities.<a href="io/micronaut/data/document/tck/entities/Page.html" title="class in io.micronaut.data.document.tck.entities">Page</a></dt>
@@ -14369,7 +14393,15 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/DefaultUpdateInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, Object&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultUpdateInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultUpdateInterceptor</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jpa/repository/intercept/DetachInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, Void&gt;)</a> - Method in class io.micronaut.data.jpa.repository.intercept.<a href="io/micronaut/data/jpa/repository/intercept/DetachInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept">DetachInterceptor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jpa/repository/intercept/FlushInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, Void&gt;)</a> - Method in class io.micronaut.data.jpa.repository.intercept.<a href="io/micronaut/data/jpa/repository/intercept/FlushInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept">FlushInterceptor</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jpa/repository/intercept/PersistInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, Void&gt;)</a> - Method in class io.micronaut.data.jpa.repository.intercept.<a href="io/micronaut/data/jpa/repository/intercept/PersistInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept">PersistInterceptor</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jpa/repository/intercept/RefreshInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, Void&gt;)</a> - Method in class io.micronaut.data.jpa.repository.intercept.<a href="io/micronaut/data/jpa/repository/intercept/RefreshInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept">RefreshInterceptor</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jpa/repository/intercept/RemoveInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, Void&gt;)</a> - Method in class io.micronaut.data.jpa.repository.intercept.<a href="io/micronaut/data/jpa/repository/intercept/RemoveInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept">RemoveInterceptor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/async/DefaultProcedureReturningManyAsyncInterceptor.html#intercept(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, CompletionStage&lt;? extends Iterable&lt;R&gt;&gt;&gt;)</a> - Method in class io.micronaut.data.runtime.intercept.async.<a href="io/micronaut/data/runtime/intercept/async/DefaultProcedureReturningManyAsyncInterceptor.html" title="class in io.micronaut.data.runtime.intercept.async">DefaultProcedureReturningManyAsyncInterceptor</a></dt>
 <dd>&nbsp;</dd>
@@ -14950,6 +14982,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/tck/repositories/embedded/package-summary.html">io.micronaut.data.tck.repositories.embedded</a> - package io.micronaut.data.tck.repositories.embedded</dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/services/package-summary.html">io.micronaut.data.tck.services</a> - package io.micronaut.data.tck.services</dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/tck/tests/package-summary.html">io.micronaut.data.tck.tests</a> - package io.micronaut.data.tck.tests</dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/package-summary.html">io.micronaut.transaction</a> - package io.micronaut.transaction</dt>
 <dd>
@@ -15812,6 +15846,12 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataDeleteMapper.html#%3Cinit%3E()" class="member-name-link">JakartaDataDeleteMapper()</a> - Constructor for class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataDeleteMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataDeleteMapper</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataDetachMapper.html" class="type-name-link" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataDetachMapper</a> - Class in <a href="io/micronaut/data/processor/mappers/jakarta/data/package-summary.html">io.micronaut.data.processor.mappers.jakarta.data</a></dt>
+<dd>
+<div class="block">Maps Jakarta Data @stateful.Detach annotation to the Micronaut interceptor.</div>
+</dd>
+<dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataDetachMapper.html#%3Cinit%3E()" class="member-name-link">JakartaDataDetachMapper()</a> - Constructor for class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataDetachMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataDetachMapper</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/support/exceptions/jakarta/data/JakartaDataExceptionConverter.html" class="type-name-link" title="interface in io.micronaut.data.runtime.support.exceptions.jakarta.data">JakartaDataExceptionConverter</a> - Interface in <a href="io/micronaut/data/runtime/support/exceptions/jakarta/data/package-summary.html">io.micronaut.data.runtime.support.exceptions.jakarta.data</a></dt>
 <dd>
 <div class="block">The Jakarta Data exception converter.</div>
@@ -15838,6 +15878,12 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataInsertMapper.html#%3Cinit%3E()" class="member-name-link">JakartaDataInsertMapper()</a> - Constructor for class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataInsertMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataInsertMapper</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataMergeStatefulMapper.html" class="type-name-link" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataMergeStatefulMapper</a> - Class in <a href="io/micronaut/data/processor/mappers/jakarta/data/package-summary.html">io.micronaut.data.processor.mappers.jakarta.data</a></dt>
+<dd>
+<div class="block">Maps Jakarta Data <code>@Merge</code> to the Micronaut interceptor.</div>
+</dd>
+<dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataMergeStatefulMapper.html#%3Cinit%3E()" class="member-name-link">JakartaDataMergeStatefulMapper()</a> - Constructor for class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataMergeStatefulMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataMergeStatefulMapper</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataOrderByListMapper.html" class="type-name-link" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataOrderByListMapper</a> - Class in <a href="io/micronaut/data/processor/mappers/jakarta/data/package-summary.html">io.micronaut.data.processor.mappers.jakarta.data</a></dt>
 <dd>
 <div class="block">Maps Jakarta Data @OrderBy.List annotation.</div>
@@ -15856,11 +15902,29 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataParamsMapper.html#%3Cinit%3E()" class="member-name-link">JakartaDataParamsMapper()</a> - Constructor for class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataParamsMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataParamsMapper</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataPersistMapper.html" class="type-name-link" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataPersistMapper</a> - Class in <a href="io/micronaut/data/processor/mappers/jakarta/data/package-summary.html">io.micronaut.data.processor.mappers.jakarta.data</a></dt>
+<dd>
+<div class="block">Maps Jakarta Data @Persist annotation to the Micronaut interceptor.</div>
+</dd>
+<dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataPersistMapper.html#%3Cinit%3E()" class="member-name-link">JakartaDataPersistMapper()</a> - Constructor for class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataPersistMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataPersistMapper</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/JakartaDataQueryMethodMatcher.html" class="type-name-link" title="class in io.micronaut.data.processor.visitors.finders">JakartaDataQueryMethodMatcher</a> - Class in <a href="io/micronaut/data/processor/visitors/finders/package-summary.html">io.micronaut.data.processor.visitors.finders</a></dt>
 <dd>
 <div class="block">The Jakarta Data Query annotation matcher.</div>
 </dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/JakartaDataQueryMethodMatcher.html#%3Cinit%3E()" class="member-name-link">JakartaDataQueryMethodMatcher()</a> - Constructor for class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/JakartaDataQueryMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">JakartaDataQueryMethodMatcher</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataRefreshMapper.html" class="type-name-link" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataRefreshMapper</a> - Class in <a href="io/micronaut/data/processor/mappers/jakarta/data/package-summary.html">io.micronaut.data.processor.mappers.jakarta.data</a></dt>
+<dd>
+<div class="block">Maps Jakarta Data @stateful.Refresh annotation to the Micronaut interceptor.</div>
+</dd>
+<dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataRefreshMapper.html#%3Cinit%3E()" class="member-name-link">JakartaDataRefreshMapper()</a> - Constructor for class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataRefreshMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataRefreshMapper</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataRemoveMapper.html" class="type-name-link" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataRemoveMapper</a> - Class in <a href="io/micronaut/data/processor/mappers/jakarta/data/package-summary.html">io.micronaut.data.processor.mappers.jakarta.data</a></dt>
+<dd>
+<div class="block">Maps Jakarta Data @stateful.Remove annotation to the Micronaut interceptor.</div>
+</dd>
+<dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataRemoveMapper.html#%3Cinit%3E()" class="member-name-link">JakartaDataRemoveMapper()</a> - Constructor for class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataRemoveMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataRemoveMapper</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataRepositoryMapper.html" class="type-name-link" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataRepositoryMapper</a> - Class in <a href="io/micronaut/data/processor/mappers/jakarta/data/package-summary.html">io.micronaut.data.processor.mappers.jakarta.data</a></dt>
 <dd>
@@ -16793,17 +16857,27 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataDeleteMapper.html#map(io.micronaut.core.annotation.AnnotationValue,io.micronaut.inject.visitor.VisitorContext)" class="member-name-link">map(AnnotationValue&lt;Annotation&gt;, VisitorContext)</a> - Method in class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataDeleteMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataDeleteMapper</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataDetachMapper.html#map(io.micronaut.core.annotation.AnnotationValue,io.micronaut.inject.visitor.VisitorContext)" class="member-name-link">map(AnnotationValue&lt;Annotation&gt;, VisitorContext)</a> - Method in class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataDetachMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataDetachMapper</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataFindMapper.html#map(io.micronaut.core.annotation.AnnotationValue,io.micronaut.inject.visitor.VisitorContext)" class="member-name-link">map(AnnotationValue&lt;Annotation&gt;, VisitorContext)</a> - Method in class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataFindMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataFindMapper</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataFirstByMapper.html#map(io.micronaut.core.annotation.AnnotationValue,io.micronaut.inject.visitor.VisitorContext)" class="member-name-link">map(AnnotationValue&lt;Annotation&gt;, VisitorContext)</a> - Method in class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataFirstByMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataFirstByMapper</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataInsertMapper.html#map(io.micronaut.core.annotation.AnnotationValue,io.micronaut.inject.visitor.VisitorContext)" class="member-name-link">map(AnnotationValue&lt;Annotation&gt;, VisitorContext)</a> - Method in class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataInsertMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataInsertMapper</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataMergeStatefulMapper.html#map(io.micronaut.core.annotation.AnnotationValue,io.micronaut.inject.visitor.VisitorContext)" class="member-name-link">map(AnnotationValue&lt;Annotation&gt;, VisitorContext)</a> - Method in class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataMergeStatefulMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataMergeStatefulMapper</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataOrderByListMapper.html#map(io.micronaut.core.annotation.AnnotationValue,io.micronaut.inject.visitor.VisitorContext)" class="member-name-link">map(AnnotationValue&lt;Annotation&gt;, VisitorContext)</a> - Method in class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataOrderByListMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataOrderByListMapper</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataOrderByMapper.html#map(io.micronaut.core.annotation.AnnotationValue,io.micronaut.inject.visitor.VisitorContext)" class="member-name-link">map(AnnotationValue&lt;Annotation&gt;, VisitorContext)</a> - Method in class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataOrderByMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataOrderByMapper</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataParamsMapper.html#map(io.micronaut.core.annotation.AnnotationValue,io.micronaut.inject.visitor.VisitorContext)" class="member-name-link">map(AnnotationValue&lt;Annotation&gt;, VisitorContext)</a> - Method in class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataParamsMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataParamsMapper</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataPersistMapper.html#map(io.micronaut.core.annotation.AnnotationValue,io.micronaut.inject.visitor.VisitorContext)" class="member-name-link">map(AnnotationValue&lt;Annotation&gt;, VisitorContext)</a> - Method in class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataPersistMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataPersistMapper</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataRefreshMapper.html#map(io.micronaut.core.annotation.AnnotationValue,io.micronaut.inject.visitor.VisitorContext)" class="member-name-link">map(AnnotationValue&lt;Annotation&gt;, VisitorContext)</a> - Method in class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataRefreshMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataRefreshMapper</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataRemoveMapper.html#map(io.micronaut.core.annotation.AnnotationValue,io.micronaut.inject.visitor.VisitorContext)" class="member-name-link">map(AnnotationValue&lt;Annotation&gt;, VisitorContext)</a> - Method in class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataRemoveMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataRemoveMapper</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataRepositoryMapper.html#map(io.micronaut.core.annotation.AnnotationValue,io.micronaut.inject.visitor.VisitorContext)" class="member-name-link">map(AnnotationValue&lt;Annotation&gt;, VisitorContext)</a> - Method in class io.micronaut.data.processor.mappers.jakarta.data.<a href="io/micronaut/data/processor/mappers/jakarta/data/JakartaDataRepositoryMapper.html" title="class in io.micronaut.data.processor.mappers.jakarta.data">JakartaDataRepositoryMapper</a></dt>
 <dd>&nbsp;</dd>
@@ -17534,6 +17608,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Mixed outcome state.</div>
 </dd>
+<dt><a href="io/micronaut/data/tck/tests/MockedDateTimeProvider.html" class="type-name-link" title="class in io.micronaut.data.tck.tests">MockedDateTimeProvider</a> - Class in <a href="io/micronaut/data/tck/tests/package-summary.html">io.micronaut.data.tck.tests</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/tck/tests/MockedDateTimeProvider.html#%3Cinit%3E()" class="member-name-link">MockedDateTimeProvider()</a> - Constructor for class io.micronaut.data.tck.tests.<a href="io/micronaut/data/tck/tests/MockedDateTimeProvider.html" title="class in io.micronaut.data.tck.tests">MockedDateTimeProvider</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html#mod(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">mod(Expression&lt;Integer&gt;, Expression&lt;Integer&gt;)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractCriteriaBuilder</a></dt>
 <dd>
 <div class="block">Not supported yet.</div>
@@ -19083,6 +19161,14 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html#persist(io.micronaut.data.model.runtime.InsertOperation)" class="member-name-link">persist(InsertOperation&lt;T&gt;)</a> - Method in class io.micronaut.data.mongodb.operations.<a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jpa/repository/JpaRepository.html#persist(S)" class="member-name-link">persist(S)</a> - Method in interface io.micronaut.data.jpa.repository.<a href="io/micronaut/data/jpa/repository/JpaRepository.html" title="interface in io.micronaut.data.jpa.repository">JpaRepository</a></dt>
+<dd>
+<div class="block">Persist an entity instance into the persistence context.</div>
+</dd>
+<dt><a href="io/micronaut/data/jpa/operations/JpaRepositoryOperations.html#persist(T)" class="member-name-link">persist(T)</a> - Method in interface io.micronaut.data.jpa.operations.<a href="io/micronaut/data/jpa/operations/JpaRepositoryOperations.html" title="interface in io.micronaut.data.jpa.operations">JpaRepositoryOperations</a></dt>
+<dd>
+<div class="block">Persist the entity.</div>
+</dd>
 <dt><a href="io/micronaut/data/annotation/Relation.Cascade.html#PERSIST" class="member-name-link">PERSIST</a> - Enum constant in enum class io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/Relation.Cascade.html" title="enum class in io.micronaut.data.annotation">Relation.Cascade</a></dt>
 <dd>
 <div class="block">Cascade insert operations.</div>
@@ -19306,6 +19392,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/data/model/jpa/criteria/PersistentSetAssociationPath.html" class="type-name-link" title="interface in io.micronaut.data.model.jpa.criteria">PersistentSetAssociationPath&lt;OwnerType,<wbr>AssociatedEntityType&gt;</a> - Interface in <a href="io/micronaut/data/model/jpa/criteria/package-summary.html">io.micronaut.data.model.jpa.criteria</a></dt>
 <dd>
 <div class="block">The persistent entity association path.</div>
+</dd>
+<dt><a href="io/micronaut/data/jpa/repository/intercept/PersistInterceptor.html" class="type-name-link" title="class in io.micronaut.data.jpa.repository.intercept">PersistInterceptor&lt;T&gt;</a> - Class in <a href="io/micronaut/data/jpa/repository/intercept/package-summary.html">io.micronaut.data.jpa.repository.intercept</a></dt>
+<dd>
+<div class="block">Interceptor for <code>Persist</code> methods.</div>
 </dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/ReactiveCascadeOperations.ReactiveCascadeOperationsHelper.html#persistManyAssociation(Ctx,io.micronaut.data.model.runtime.RuntimeAssociation,java.lang.Object,io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Object,io.micronaut.data.model.runtime.RuntimePersistentEntity)" class="member-name-link">persistManyAssociation(Ctx, RuntimeAssociation, Object, RuntimePersistentEntity&lt;Object&gt;, Object, RuntimePersistentEntity&lt;Object&gt;)</a> - Method in interface io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/ReactiveCascadeOperations.ReactiveCascadeOperationsHelper.html" title="interface in io.micronaut.data.runtime.operations.internal">ReactiveCascadeOperations.ReactiveCascadeOperationsHelper</a></dt>
 <dd>
@@ -21270,6 +21360,18 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">The name of the column referenced by this foreign column.</div>
 </dd>
+<dt><a href="io/micronaut/data/jpa/repository/JpaRepository.html#refresh(S)" class="member-name-link">refresh(S)</a> - Method in interface io.micronaut.data.jpa.repository.<a href="io/micronaut/data/jpa/repository/JpaRepository.html" title="interface in io.micronaut.data.jpa.repository">JpaRepository</a></dt>
+<dd>
+<div class="block">Refresh the state of the given entity from the database.</div>
+</dd>
+<dt><a href="io/micronaut/data/jpa/operations/JpaRepositoryOperations.html#refresh(T)" class="member-name-link">refresh(T)</a> - Method in interface io.micronaut.data.jpa.operations.<a href="io/micronaut/data/jpa/operations/JpaRepositoryOperations.html" title="interface in io.micronaut.data.jpa.operations">JpaRepositoryOperations</a></dt>
+<dd>
+<div class="block">Refresh the entity state from the database.</div>
+</dd>
+<dt><a href="io/micronaut/data/jpa/repository/intercept/RefreshInterceptor.html" class="type-name-link" title="class in io.micronaut.data.jpa.repository.intercept">RefreshInterceptor&lt;T&gt;</a> - Class in <a href="io/micronaut/data/jpa/repository/intercept/package-summary.html">io.micronaut.data.jpa.repository.intercept</a></dt>
+<dd>
+<div class="block">Interceptor for <code>Refresh</code> methods.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html#regex(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">regex(Expression&lt;String&gt;, Expression&lt;String&gt;)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractCriteriaBuilder</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaBuilder.html#regex(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">regex(Expression&lt;String&gt;, Expression&lt;String&gt;)</a> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaBuilder.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaBuilder</a></dt>
@@ -21328,6 +21430,18 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/data/tck/repositories/PersonAsyncRepository.html#remove(java.lang.Long)" class="member-name-link">remove(Long)</a> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/PersonAsyncRepository.html" title="interface in io.micronaut.data.tck.repositories">PersonAsyncRepository</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jpa/repository/JpaRepository.html#remove(S)" class="member-name-link">remove(S)</a> - Method in interface io.micronaut.data.jpa.repository.<a href="io/micronaut/data/jpa/repository/JpaRepository.html" title="interface in io.micronaut.data.jpa.repository">JpaRepository</a></dt>
+<dd>
+<div class="block">Remove the given entity from the persistence context.</div>
+</dd>
+<dt><a href="io/micronaut/data/jpa/operations/JpaRepositoryOperations.html#remove(T)" class="member-name-link">remove(T)</a> - Method in interface io.micronaut.data.jpa.operations.<a href="io/micronaut/data/jpa/operations/JpaRepositoryOperations.html" title="interface in io.micronaut.data.jpa.operations">JpaRepositoryOperations</a></dt>
+<dd>
+<div class="block">Remove the entity from the persistence context and schedule deletion.</div>
+</dd>
+<dt><a href="io/micronaut/data/jpa/repository/intercept/RemoveInterceptor.html" class="type-name-link" title="class in io.micronaut.data.jpa.repository.intercept">RemoveInterceptor&lt;T&gt;</a> - Class in <a href="io/micronaut/data/jpa/repository/intercept/package-summary.html">io.micronaut.data.jpa.repository.intercept</a></dt>
+<dd>
+<div class="block">Interceptor for <code>Remove</code> methods.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/RenderablePredicate.html" class="type-name-link" title="class in io.micronaut.data.model.query.builder.sql">RenderablePredicate</a> - Class in <a href="io/micronaut/data/model/query/builder/sql/package-summary.html">io.micronaut.data.model.query.builder.sql</a></dt>
 <dd>
 <div class="block">The negated predicate implementation.</div>
@@ -24017,6 +24131,8 @@ loadScripts(document, 'script');</script>
 <div class="block">Set update value.</div>
 </dd>
 <dt><a href="io/micronaut/data/jdbc/mapper/JdbcQueryStatement.html#setValue(java.sql.PreparedStatement,java.lang.Integer,java.lang.Object)" class="member-name-link">setValue(PreparedStatement, Integer, Object)</a> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/JdbcQueryStatement.html" title="class in io.micronaut.data.jdbc.mapper">JdbcQueryStatement</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/tck/tests/MockedDateTimeProvider.html#setValue(java.time.OffsetDateTime)" class="member-name-link">setValue(OffsetDateTime)</a> - Method in class io.micronaut.data.tck.tests.<a href="io/micronaut/data/tck/tests/MockedDateTimeProvider.html" title="class in io.micronaut.data.tck.tests">MockedDateTimeProvider</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/mapper/QueryStatement.html#setValue(PS,IDX,java.lang.Object)" class="member-name-link">setValue(PS, IDX, Object)</a> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a></dt>
 <dd>
