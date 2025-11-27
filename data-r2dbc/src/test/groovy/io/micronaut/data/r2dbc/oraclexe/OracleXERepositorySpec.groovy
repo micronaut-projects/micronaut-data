@@ -176,6 +176,12 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleXET
         return context.getBean(OracleExampleEntityRepository)
     }
 
+    @Memoized
+    @Override
+    IntervalRepository getIntervalRepository() {
+        return context.getBean(OracleIntervalRepository)
+    }
+
     @Override
     protected boolean skipCustomSchemaAndCatalogTest() {
         // ORA-04043: object "FORD"."CARS" does not exist
