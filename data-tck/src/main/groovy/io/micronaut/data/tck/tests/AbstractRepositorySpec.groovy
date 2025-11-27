@@ -3575,10 +3575,10 @@ abstract class AbstractRepositorySpec extends Specification {
         def period4 = Period.ofMonths(11)
 
         when:
-        intervalRepository.saveCustom(101, duration1, period1)
-        intervalRepository.saveCustom(102, duration2, period2)
-        intervalRepository.saveCustom(103, duration3, period3)
-        intervalRepository.saveCustom(104, duration4, period4)
+        intervalRepository.saveCustom(duration1, period1)
+        intervalRepository.saveCustom(duration2, period2)
+        intervalRepository.saveCustom(duration3, period3)
+        intervalRepository.saveCustom(duration4, period4)
         def savedEntities = intervalRepository.findAll(Sort.of(Sort.Order.asc("id")))
 
         then:

@@ -8,7 +8,6 @@ on:
   push:
     branches:
       - master
-      - interval-data-type-2
       - '[0-9]+.[0-9]+.x'
   pull_request:
     branches:

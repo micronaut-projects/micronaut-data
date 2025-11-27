@@ -179,7 +179,7 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleXET
     @Memoized
     @Override
     IntervalRepository getIntervalRepository() {
-        return context.getBean(OracleIntervalRepository)
+        return context.getBean(OracleXEIntervalRepository)
     }
 
     @Override

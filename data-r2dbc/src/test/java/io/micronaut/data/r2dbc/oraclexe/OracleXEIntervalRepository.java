@@ -1,15 +1,15 @@
-package io.micronaut.data.jdbc.oraclexe;
+package io.micronaut.data.r2dbc.oraclexe;
 
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Query;
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.tck.repositories.IntervalRepository;
 
 import java.time.Duration;
 import java.time.Period;
 
-@JdbcRepository(dialect = Dialect.ORACLE)
+@R2dbcRepository(dialect = Dialect.ORACLE)
 public interface OracleXEIntervalRepository extends IntervalRepository {
 
     @Override

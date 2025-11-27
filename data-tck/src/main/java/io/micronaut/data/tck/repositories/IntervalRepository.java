@@ -11,8 +11,8 @@ import java.util.List;
 
 public interface IntervalRepository extends PageableRepository<IntervalEntity, Integer> {
 
-    @Query("INSERT INTO interval_entity(id, duration, period) VALUES (:id, :dur, :per)")
-    void saveCustom(Integer id, @Parameter("dur") Duration duration, @Parameter("per") Period period);
+    @Query("INSERT INTO interval_entity(duration, period) VALUES (:dur, :per)")
+    void saveCustom(@Parameter("dur") Duration duration, @Parameter("per") Period period);
 
     @Query("SELECT * FROM interval_entity WHERE duration = :dur AND period = :per ORDER BY id ASC")
     List<IntervalEntity> findCustom(@Parameter("dur") Duration duration, @Parameter("per") Period period);
