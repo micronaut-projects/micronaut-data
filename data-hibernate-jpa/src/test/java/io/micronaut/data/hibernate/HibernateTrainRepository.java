@@ -16,8 +16,59 @@
 package io.micronaut.data.hibernate;
 
 import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.tck.entities.Train;
 import io.micronaut.data.tck.repositories.TrainRepository;
+import jakarta.data.repository.stateful.Detach;
+import jakarta.data.repository.stateful.Merge;
+import jakarta.data.repository.stateful.Persist;
+import jakarta.data.repository.stateful.Refresh;
+import jakarta.data.repository.stateful.Remove;
 
 @Repository
 public interface HibernateTrainRepository extends TrainRepository {
+
+    @Persist
+    void makePersistent(Train entity);
+
+    @Persist
+    void makePersistentAll(Iterable<Train> entities);
+
+    @Persist
+    void makePersistentArray(Train[] entities);
+
+    @Merge
+    Train mergeTrain(Train entity);
+
+    @Merge
+    Iterable<Train> mergeTrains(Iterable<Train> entities);
+
+    @Merge
+    Train[] mergeTrainArray(Train[] entities);
+
+    @Refresh
+    void refreshTrain(Train entity);
+
+    @Refresh
+    void refreshTrains(Iterable<Train> entities);
+
+    @Refresh
+    void refreshTrainArray(Train[] entities);
+
+    @Remove
+    void removeTrain(Train entity);
+
+    @Remove
+    void removeTrains(Iterable<Train> entities);
+
+    @Remove
+    void removeTrainArray(Train[] entities);
+
+    @Detach
+    void detachTrain(Train entity);
+
+    @Detach
+    void detachTrains(Iterable<Train> entities);
+
+    @Detach
+    void detachTrainArray(Train[] entities);
 }

@@ -279,6 +279,38 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
         return executeWrite(session -> session.merge(entity));
     }
 
+    @Override
+    public <T> void persist(@NonNull T entity) {
+        executeWrite(session -> {
+            session.persist(entity);
+            return null;
+        });
+    }
+
+    @Override
+    public <T> void refresh(@NonNull T entity) {
+        executeWrite(session -> {
+            session.refresh(entity);
+            return null;
+        });
+    }
+
+    @Override
+    public <T> void remove(@NonNull T entity) {
+        executeWrite(session -> {
+            session.remove(entity);
+            return null;
+        });
+    }
+
+    @Override
+    public <T> void detach(@NonNull T entity) {
+        executeWrite(session -> {
+            session.detach(entity);
+            return null;
+        });
+    }
+
     @Nullable
     @Override
     public <T, R> R findOne(@NonNull PreparedQuery<T, R> preparedQuery) {

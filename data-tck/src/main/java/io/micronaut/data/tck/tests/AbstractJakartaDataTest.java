@@ -16,7 +16,6 @@
  */
 package io.micronaut.data.tck.tests;
 
-import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.tck.entities.Train;
 import io.micronaut.data.tck.entities.TrainCZ;
 import io.micronaut.data.tck.entities.TrainCZProjection;
@@ -30,7 +29,6 @@ import io.micronaut.data.tck.entities._TrainSpecs;
 import io.micronaut.data.tck.repositories.TrainRepository;
 import io.micronaut.data.tck.repositories.TrainsRepository;
 import io.micronaut.data.tck.services.JakartaDataTrainEventListener;
-import io.micronaut.test.annotation.MockBean;
 import jakarta.data.Order;
 import jakarta.data.Sort;
 import jakarta.data.constraint.EqualTo;
@@ -50,7 +48,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -62,8 +59,6 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public abstract class AbstractJakartaDataTest {
 
@@ -74,12 +69,7 @@ public abstract class AbstractJakartaDataTest {
     protected TrainsRepository trainsRepository;
 
     @Inject
-    protected DateTimeProvider<OffsetDateTime> dateTimeProvider;
-
-    @MockBean(DateTimeProvider.class)
-    DateTimeProvider<OffsetDateTime> dateTimeProvider() {
-        return mock(DateTimeProvider.class);
-    }
+    protected MockedDateTimeProvider dateTimeProvider;
 
     @BeforeEach
     public void setup() {
@@ -637,7 +627,7 @@ public abstract class AbstractJakartaDataTest {
     public void testRuntimeRestrictionsWithAfterLocalDateTimeCurrentDateTime() {
         LocalDateTime threshold = LocalDateTime.of(2023, 1, 1, 12, 0); // 12:00
 
-        when(dateTimeProvider.getNow()).then(invocation -> threshold.atOffset(ZoneOffset.UTC));
+        dateTimeProvider.setValue(threshold.atOffset(ZoneOffset.UTC));
 
         Restriction<Train> restriction = _Train.departureTime.greaterThan(TemporalExpression.localDateTime());
         List<Train> trains = trainRepository.findTrains(restriction);
@@ -648,7 +638,7 @@ public abstract class AbstractJakartaDataTest {
     public void testRuntimeRestrictionsWithAfterLocalDateCurrentDate() {
         LocalDate threshold = LocalDate.of(2023, 1, 1);
 
-        when(dateTimeProvider.getNow()).then(invocation -> threshold.atStartOfDay().atOffset(ZoneOffset.UTC));
+        dateTimeProvider.setValue(threshold.atStartOfDay().atOffset(ZoneOffset.UTC));
 
         Restriction<Train> restriction = _Train.departureDate.greaterThan(TemporalExpression.localDate());
         List<Train> trains = trainRepository.findTrains(restriction);
@@ -656,7 +646,7 @@ public abstract class AbstractJakartaDataTest {
 
         // Test with a threshold that would match some trains
         LocalDate earlierThreshold = LocalDate.of(2022, 12, 31);
-        when(dateTimeProvider.getNow()).then(invocation -> earlierThreshold.atStartOfDay().atOffset(ZoneOffset.UTC));
+        dateTimeProvider.setValue(earlierThreshold.atStartOfDay().atOffset(ZoneOffset.UTC));
 
         restriction = _Train.departureDate.greaterThan(TemporalExpression.localDate());
         trains = trainRepository.findTrains(restriction);
@@ -668,7 +658,7 @@ public abstract class AbstractJakartaDataTest {
     public void testRuntimeRestrictionsWithAfterLocalTimeCurrentTime() {
         LocalTime threshold = LocalTime.of(12, 0); // 12:00
 
-        when(dateTimeProvider.getNow()).then(invocation -> LocalDateTime.of(LocalDate.of(2023, 1, 1), threshold).atOffset(ZoneOffset.UTC));
+        dateTimeProvider.setValue(LocalDateTime.of(LocalDate.of(2023, 1, 1), threshold).atOffset(ZoneOffset.UTC));
 
         Restriction<Train> restriction = _Train.departureTimeOnly.greaterThan(TemporalExpression.localTime());
         List<Train> trains = trainRepository.findTrains(restriction);

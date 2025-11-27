@@ -15,24 +15,34 @@
  */
 package io.micronaut.data.hibernate;
 
+import io.micronaut.data.tck.entities.Train;
+import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.tck.tests.AbstractJakartaDataTest;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.data.restrict.Restrict;
 import jakarta.inject.Inject;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
+import org.hibernate.Session;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.PositiveOrZero;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @H2DBProperties
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @MicronautTest(transactional = false)
 public class HibernateJakartaDataTest extends AbstractJakartaDataTest {
+
+    @Inject
+    HibernateTrainRepository hibernateTrainRepository;
+
+    @Inject
+    ConnectionOperations<Session> connectionOperations;
 
     @Override
     protected boolean supportsCursorPaginationWithRestrictions() {
@@ -60,6 +70,73 @@ public class HibernateJakartaDataTest extends AbstractJakartaDataTest {
     }
 
     public void testRuntimeRestrictionsWithNumericAbsOnEmbedded() {
+    }
+
+    @Test
+    public void testStatefulAnnotations() {
+        connectionOperations.executeWrite(status -> {
+            Train train = trainRepository.findAll().iterator().next();
+            Train detachedTrain = new Train(train.getName(), train.getModel(), train.getCapacity(), train.getSpeed(), train.isElectric());
+            detachedTrain.setId(train.getId());
+
+            Train merged = hibernateTrainRepository.mergeTrain(detachedTrain);
+            Assertions.assertNotSame(detachedTrain, merged);
+            Assertions.assertEquals(detachedTrain.getName(), merged.getName());
+
+            merged.setName("Merged Train" + System.nanoTime());
+            hibernateTrainRepository.refreshTrain(merged);
+            Assertions.assertEquals(trainRepository.findById(merged.getId()).orElseThrow().getName(), merged.getName());
+
+            hibernateTrainRepository.detachTrain(merged);
+            merged.setName("Detached Change" + System.nanoTime());
+            Train finalMerged = merged;
+            Assertions.assertThrows(IllegalArgumentException.class, () -> hibernateTrainRepository.refreshTrain(finalMerged));
+            merged = hibernateTrainRepository.mergeTrain(merged);
+
+            Train newTrain = new Train("Persisted Statefull", "Model", 100, 100.0, true);
+            hibernateTrainRepository.makePersistent(newTrain);
+            Assertions.assertNotNull(newTrain.getId());
+
+            Train newTrain2 = new Train("Persisted Stateful 2", "Model", 120, 150.0, false);
+            Train newTrain3 = new Train("Persisted Stateful 3", "Model", 130, 160.0, false);
+            List<Train> persistedList = new ArrayList<>(List.of(newTrain2, newTrain3));
+            hibernateTrainRepository.makePersistentAll(persistedList);
+            persistedList.forEach(t -> Assertions.assertNotNull(t.getId()));
+
+            Train newTrain4 = new Train("Persisted Stateful 4", "Model", 140, 170.0, false);
+            Train newTrain5 = new Train("Persisted Stateful 5", "Model", 150, 180.0, false);
+            Train[] persistedArray = {newTrain4, newTrain5};
+            hibernateTrainRepository.makePersistentArray(persistedArray);
+            Arrays.stream(persistedArray).forEach(t -> Assertions.assertNotNull(t.getId()));
+
+            List<Train> toMergeList = persistedList.stream().map(trainRepository::update).collect(Collectors.toList());
+            Iterable<Train> mergedList = hibernateTrainRepository.mergeTrains(toMergeList);
+            List<Train> mergedListCopy = mergedList instanceof List<?> list ? (List<Train>) list : new ArrayList<>();
+            if (!(mergedList instanceof List<?>)) {
+                mergedList.forEach(mergedListCopy::add);
+            }
+            Assertions.assertEquals(toMergeList.size(), mergedListCopy.size());
+
+            Train[] toMergeArray = Arrays.stream(persistedArray).map(trainRepository::update).toArray(Train[]::new);
+            Train[] mergedArray = hibernateTrainRepository.mergeTrainArray(toMergeArray);
+            Assertions.assertEquals(toMergeArray.length, mergedArray.length);
+
+            hibernateTrainRepository.detachTrains(mergedListCopy);
+            mergedListCopy.forEach(detached -> Assertions.assertThrows(IllegalArgumentException.class, () -> hibernateTrainRepository.refreshTrain(detached)));
+            List<Train> reattachedList = StreamSupport.stream(hibernateTrainRepository.mergeTrains(mergedListCopy).spliterator(), false)
+                .collect(Collectors.toList());
+
+            hibernateTrainRepository.detachTrainArray(mergedArray);
+            Arrays.stream(mergedArray).forEach(detached -> Assertions.assertThrows(IllegalArgumentException.class, () -> hibernateTrainRepository.refreshTrain(detached)));
+            Train[] reattachedArray = hibernateTrainRepository.mergeTrainArray(mergedArray);
+
+            hibernateTrainRepository.removeTrains(reattachedList);
+            hibernateTrainRepository.removeTrainArray(reattachedArray);
+            hibernateTrainRepository.removeTrain(newTrain);
+
+            Assertions.assertThrows(IllegalArgumentException.class, () -> hibernateTrainRepository.refreshTrain(detachedTrain));
+            return null;
+        });
     }
 
 }
