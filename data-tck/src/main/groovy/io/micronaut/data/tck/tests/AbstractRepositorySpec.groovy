@@ -57,6 +57,7 @@ import io.micronaut.data.tck.entities.PersonDto
 import io.micronaut.data.tck.entities.PersonDto2
 import io.micronaut.data.tck.entities.Student
 import io.micronaut.data.tck.entities.TimezoneBasicTypes
+import io.micronaut.data.tck.jdbc.entities.IntervalEntity
 import io.micronaut.data.tck.jdbc.entities.Role
 import io.micronaut.data.tck.jdbc.entities.UserRole
 import io.micronaut.data.tck.repositories.*
@@ -77,7 +78,9 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import java.sql.Connection
+import java.time.Duration
 import java.time.LocalDate
+import java.time.Period
 import java.time.ZoneId
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -124,6 +127,7 @@ abstract class AbstractRepositorySpec extends Specification {
     abstract EntityWithIdClassRepository getEntityWithIdClassRepository()
     abstract EntityWithIdClass2Repository getEntityWithIdClass2Repository()
     abstract ExampleEntityRepository getExampleEntityRepository()
+    abstract IntervalRepository getIntervalRepository()
 
     abstract Map<String, String> getProperties()
 
@@ -192,6 +196,7 @@ abstract class AbstractRepositorySpec extends Specification {
         bookRepository.deleteAll()
         authorRepository.deleteAll()
         personRepository.deleteAll()
+        intervalRepository.deleteAll()
     }
 
     protected void cleanupMeals() {
@@ -3475,6 +3480,40 @@ abstract class AbstractRepositorySpec extends Specification {
         entity.uppercaseColumn() == "foo"
         cleanup:
         exampleEntityRepository.deleteById(1)
+    }
+
+    void "test save, find and update single interval entity"() {
+        given:
+        def entity = new IntervalEntity()
+        entity.setDuration(Duration.ofHours(4).negated())
+        entity.setPeriod(Period.ofMonths(7))
+
+        when:
+        def savedEntity = intervalRepository.save(entity)
+
+        then:
+        savedEntity.id > 0
+
+        when:
+        def foundEntityOpt = intervalRepository.findById(savedEntity.id)
+        def foundEntity = foundEntityOpt.orElse(null)
+
+        then:
+        foundEntity != null
+        foundEntity.duration == entity.duration
+        foundEntity.period == entity.period
+
+        when:
+        foundEntity.setDuration(Duration.ofHours(8))
+        foundEntity.setPeriod(Period.ofMonths(10))
+        intervalRepository.update(foundEntity)
+        def updatedEntityOpt = intervalRepository.findById(savedEntity.id)
+        def updatedEntity = updatedEntityOpt.orElse(null)
+
+        then:
+        updatedEntity != null
+        updatedEntity.duration == foundEntity.duration
+        updatedEntity.period == foundEntity.period
     }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {
