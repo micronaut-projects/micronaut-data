@@ -24,8 +24,6 @@ dependencies {
     implementation(libs.jupiter.engine)
     implementation(mnTest.micronaut.test.junit5)
     implementation(libs.managed.jakarta.data.api)
-    api(mnTest.mockito.core)
-    api(mnTest.mockito.junit.jupiter)
 
     compileOnly projects.micronautDataJdbc
     compileOnly mn.micronaut.inject.groovy
