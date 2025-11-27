@@ -363,6 +363,18 @@ public final class SqlColumnMapping {
                 }
             }
             case BOOLEAN_ARRAY -> "BOOLEAN ARRAY";
+            case DURATION -> {
+                if (dialect == Dialect.ORACLE) {
+                    yield "INTERVAL DAY TO SECOND";
+                }
+                yield "VARCHAR(255)";
+            }
+            case PERIOD -> {
+                if (dialect == Dialect.ORACLE) {
+                    yield "INTERVAL YEAR TO MONTH";
+                }
+                yield "VARCHAR(255)";
+            }
             default -> {
                 if (dbType == SqlDbType.ENUM) {
                     // Special case for enum
