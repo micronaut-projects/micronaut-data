@@ -173,8 +173,9 @@ public interface ResultReader<RS, IDX> {
      * @param resultSet The result set
      * @param name The name (such as the column name)
      * @return The duration value
+     * @since 5.0
      */
-    default Duration readDuration(RS resultSet, IDX name) {
+    default @Nullable Duration readDuration(RS resultSet, IDX name) {
         return getRequiredValue(resultSet, name, Duration.class);
     }
 
@@ -183,8 +184,9 @@ public interface ResultReader<RS, IDX> {
      * @param resultSet The result set
      * @param name The name (such as the column name)
      * @return The period value
+     * @since 5.0
      */
-    default Period readPeriod(RS resultSet, IDX name) {
+    default @Nullable Period readPeriod(RS resultSet, IDX name) {
         return getRequiredValue(resultSet, name, Period.class);
     }
 

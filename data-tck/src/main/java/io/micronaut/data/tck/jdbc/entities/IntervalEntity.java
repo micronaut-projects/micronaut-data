@@ -1,5 +1,6 @@
 package io.micronaut.data.tck.jdbc.entities;
 
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
@@ -14,8 +15,10 @@ public class IntervalEntity {
     @GeneratedValue
     private Integer id;
 
+    @Nullable
     private Duration duration;
 
+    @Nullable
     private Period period;
 
     public Integer getId() {

@@ -194,10 +194,10 @@ public final class SqlColumnMapping {
             return this.sqlType;
         }
         this.sqlType = switch (dataType) {
-            case STRING -> "VARCHAR(" + length + ")";
+            case STRING -> varcharType(length);
             case UUID -> {
                 if (dialect == Dialect.ORACLE || dialect == Dialect.MYSQL) {
-                    yield "VARCHAR(36)";
+                    yield varcharType(36);
                 } else if (dialect == Dialect.SQL_SERVER) {
                     yield "UNIQUEIDENTIFIER";
                 } else {
@@ -367,18 +367,18 @@ public final class SqlColumnMapping {
                 if (dialect == Dialect.ORACLE) {
                     yield "INTERVAL DAY TO SECOND";
                 }
-                yield "VARCHAR(255)";
+                yield varcharType(255);
             }
             case PERIOD -> {
                 if (dialect == Dialect.ORACLE) {
                     yield "INTERVAL YEAR TO MONTH";
                 }
-                yield "VARCHAR(255)";
+                yield varcharType(255);
             }
             default -> {
                 if (dbType == SqlDbType.ENUM) {
                     // Special case for enum
-                    yield "VARCHAR(255)";
+                    yield varcharType(255);
                 } else if (dbType == SqlDbType.CLOB) {
                     if (dialect == Dialect.POSTGRES) {
                         yield "TEXT";
@@ -424,5 +424,9 @@ public final class SqlColumnMapping {
 
     private static String floatType(Integer precision) {
         return "FLOAT(" + precision + ")";
+    }
+
+    private static String varcharType(Integer length) {
+        return "VARCHAR(" + length + ")";
     }
 }

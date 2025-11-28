@@ -3615,6 +3615,25 @@ abstract class AbstractRepositorySpec extends Specification {
         foundEntities.get(0).period == period2
     }
 
+    void "test save and find when interval properties are null"() {
+        given:
+        def entity = new IntervalEntity()
+
+        when:
+        def savedEntity = intervalRepository.save(entity)
+
+        then:
+        savedEntity.id > 0
+
+        when:
+        def foundEntityOpt = intervalRepository.findById(savedEntity.id)
+        def foundEntity = foundEntityOpt.orElse(null)
+
+        then:
+        foundEntity != null
+        foundEntity.id == savedEntity.id
+    }
+
     private GregorianCalendar getYearMonthDay(Date dateCreated) {
         def cal = dateCreated.toCalendar()
         def localDate = LocalDate.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH))

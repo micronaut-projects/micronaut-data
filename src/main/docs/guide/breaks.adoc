@@ -9,8 +9,6 @@ The following Java time types are now mapped to INTERVAL database types instead 
 - `java.time.Duration` is mapped to `INTERVAL DAY TO SECOND (INTERVALDS)`
 - `java.time.Period` is mapped to `INTERVAL YEAR TO MONTH (INTERVALYM)`
 
-Only year and month components are supported for `java.time.Period`, day component must be zero.
-
 === Interactions with synchronous transaction and connection manager
 
 Creating a new transaction with `io.micronaut.transaction.SynchronousTransactionManager` or a connection with `io.micronaut.data.connection.SynchronousConnectionManager` no longer places the resulting status into the current `PropagatedContext` automatically.
