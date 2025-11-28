@@ -16,8 +16,12 @@
 package io.micronaut.data.runtime.intercept.criteria;
 
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.data.annotation.First;
+import io.micronaut.data.annotation.TypeRole;
+import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQueryBuilder;
@@ -32,6 +36,7 @@ import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryResolver;
 import io.micronaut.data.runtime.query.StoredQueryDecorator;
+import io.micronaut.data.runtime.query.internal.DefaultPreparedQuery;
 import io.micronaut.data.runtime.query.internal.QueryResultStoredQuery;
 import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -56,6 +61,7 @@ public abstract class AbstractPreparedQueryCriteriaRepositoryOperations {
     private final QueryBuilder queryBuilder;
     private final Class<?> entityRoot;
     private final Pageable pageable;
+    private final ConversionService conversionService;
 
     protected AbstractPreparedQueryCriteriaRepositoryOperations(RepositoryOperations operations,
                                                                 MethodInvocationContext<?, ?> context,
@@ -95,6 +101,7 @@ public abstract class AbstractPreparedQueryCriteriaRepositoryOperations {
                 return operations.getConversionService();
             }
         };
+        this.conversionService = operations.getConversionService();
     }
 
     protected final PreparedQuery<Object, Boolean> createExists(CriteriaQuery<?> query) {
@@ -127,10 +134,21 @@ public abstract class AbstractPreparedQueryCriteriaRepositoryOperations {
 
     private <E, T> StoredQuery<E, T> buildFind(CriteriaQuery<T> criteriaQuery,
                                                boolean isSingle) {
-
+        Limit limit = DefaultPreparedQuery.getParameterInRole(TypeRole.LIMIT, Limit.class, context, conversionService).orElse(Limit.UNLIMITED);
+        if (!limit.isLimited()) {
+            AnnotationValue<First> annotation = context.getAnnotationMetadata().getAnnotation(First.class);
+            if (annotation != null) {
+                limit = Limit.of(annotation.intValue().orElse(1), 0);
+            }
+        }
+        AbstractPersistentEntityCriteriaQuery<?> persistentCriteriaQuery = (AbstractPersistentEntityCriteriaQuery<?>) criteriaQuery;
+        if (limit.isLimited()) {
+            persistentCriteriaQuery.limit(limit.maxResults());
+            persistentCriteriaQuery.offset((int) limit.offset());
+        }
         QueryResult queryResult = ((PersistentEntityCriteriaQueryBuilder) criteriaQuery).build(context, queryBuilder);
         Collection<JoinPath> joinPaths = queryResult.getJoinPaths();
-        Selection<?> selection = ((AbstractPersistentEntityCriteriaQuery<?>) criteriaQuery).getSelection();
+        Selection<?> selection = persistentCriteriaQuery.getSelection();
         boolean isCompoundSelection = selection != null && selection.isCompoundSelection();
         if (isSingle) {
             return QueryResultStoredQuery.single(StoredQuery.OperationType.QUERY, context.getName(), context.getAnnotationMetadata(),

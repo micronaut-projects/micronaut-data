@@ -25,7 +25,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 import org.hibernate.SessionFactory;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.orm.hibernate5.HibernateTransactionManager;
+import org.springframework.orm.jpa.hibernate.HibernateTransactionManager;
 
 import javax.sql.DataSource;
 

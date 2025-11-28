@@ -21,7 +21,14 @@ dependencies {
     implementation libs.groovy.dateutil
     implementation(libs.managed.javax.persistence.api)
     implementation(mnSql.jakarta.persistence.api)
+    implementation(libs.jupiter.engine)
+    implementation(mnTest.micronaut.test.junit5)
+    implementation(libs.managed.jakarta.data.api)
 
     compileOnly projects.micronautDataJdbc
     compileOnly mn.micronaut.inject.groovy
+}
+
+tasks.withType(Javadoc).configureEach {
+    exclude("io/micronaut/data/tck/tests/AbstractJakartaDataTest.java")
 }

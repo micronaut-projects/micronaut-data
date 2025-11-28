@@ -48,7 +48,11 @@ abstract class AbstractConnectableSpec extends Specification implements TestProp
         when:
             def connectionStatus = synchronousConnectionManager.getConnection(ConnectionDefinition.DEFAULT)
         then:
-            connectionOperations.findConnectionStatus().get() == connectionStatus
+            connectionOperations.findConnectionStatus().isEmpty()
+        and:
+            connectionStatus.propagate {
+                connectionOperations.findConnectionStatus().get() == connectionStatus
+            }
         when:
             synchronousConnectionManager.complete(connectionStatus)
         then:
@@ -175,41 +179,43 @@ abstract class AbstractConnectableSpec extends Specification implements TestProp
                 }
             })
 
-            connectionOperations.execute(ConnectionDefinition.DEFAULT, status2 -> {
-                status2.registerSynchronization(new ConnectionSynchronization() {
-                    @Override
-                    void executionComplete() {
-                        events.add("con2 executionComplete1")
-                    }
+            status.propagate {
+                connectionOperations.execute(ConnectionDefinition.DEFAULT, status2 -> {
+                    status2.registerSynchronization(new ConnectionSynchronization() {
+                        @Override
+                        void executionComplete() {
+                            events.add("con2 executionComplete1")
+                        }
 
-                    @Override
-                    void beforeClosed() {
-                        events.add("con2 beforeClosed1")
-                    }
+                        @Override
+                        void beforeClosed() {
+                            events.add("con2 beforeClosed1")
+                        }
 
-                    @Override
-                    void afterClosed() {
-                        events.add("con2 afterClosed1")
-                    }
+                        @Override
+                        void afterClosed() {
+                            events.add("con2 afterClosed1")
+                        }
+                    })
+
+                    status2.registerSynchronization(new ConnectionSynchronization() {
+                        @Override
+                        void executionComplete() {
+                            events.add("con2 executionComplete2")
+                        }
+
+                        @Override
+                        void beforeClosed() {
+                            events.add("con2 beforeClosed2")
+                        }
+
+                        @Override
+                        void afterClosed() {
+                            events.add("con2 afterClosed2")
+                        }
+                    })
                 })
-
-                status2.registerSynchronization(new ConnectionSynchronization() {
-                    @Override
-                    void executionComplete() {
-                        events.add("con2 executionComplete2")
-                    }
-
-                    @Override
-                    void beforeClosed() {
-                        events.add("con2 beforeClosed2")
-                    }
-
-                    @Override
-                    void afterClosed() {
-                        events.add("con2 afterClosed2")
-                    }
-                })
-            })
+            }
 
             synchronousConnectionManager.complete(status)
 

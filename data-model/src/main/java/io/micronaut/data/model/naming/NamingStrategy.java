@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.model.naming;
 
+import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.naming.NameUtils;
@@ -22,6 +24,7 @@ import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Embedded;
@@ -97,9 +100,18 @@ public interface NamingStrategy {
         if (property instanceof Association association) {
             return mappedName(association);
         } else {
-            return property.getAnnotationMetadata()
-                    .stringValue(MappedProperty.class)
-                    .filter(StringUtils::isNotEmpty)
+            Optional<String> mappedProperty = property.getAnnotationMetadata()
+                .stringValue(MappedProperty.class)
+                .filter(StringUtils::isNotEmpty);
+            return mappedProperty
+                    .or(() -> {
+                        AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
+                        AnnotationValue<Projection> annotation = annotationMetadata.getAnnotation(Projection.class);
+                        if (annotation == null) {
+                            return Optional.empty();
+                        }
+                        return annotation.stringValue().map(this::mappedName);
+                    })
                     .orElseGet(() -> mappedName(property.getName()));
         }
     }

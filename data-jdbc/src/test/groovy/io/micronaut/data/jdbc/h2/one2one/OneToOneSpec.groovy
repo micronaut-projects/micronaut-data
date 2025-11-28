@@ -46,24 +46,24 @@ DROP TABLE IF EXISTS `TestXyzCustomerDetails`;
 CREATE OR REPLACE TABLE `TestXyzCategory` (
   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `active` boolean DEFAULT NULL,
-  `createdAt` datetime(6) NOT NULL,
+  `createdAt` timestamp(6) NOT NULL,
   `name` varchar(255) DEFAULT NULL,
   `priority` bigint DEFAULT NULL
 );
 
 CREATE OR REPLACE TABLE `TestXyzCustomer` (
   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `createdAt` datetime(6) NOT NULL,
+  `createdAt` timestamp(6) NOT NULL,
   `name` varchar(255) DEFAULT NULL,
   `showCustomer` boolean DEFAULT NULL
 );
 
 CREATE OR REPLACE TABLE `TestXyzCustomerDetails` (
   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `createdAt` datetime(6) NOT NULL,
+  `createdAt` timestamp(6) NOT NULL,
   `detail` varchar(255) DEFAULT NULL,
   `label` varchar(255) DEFAULT NULL,
-  `updatedAt` datetime(6) NOT NULL,
+  `updatedAt` timestamp(6) NOT NULL,
   `categoryId` bigint DEFAULT NULL,
   `customerId` bigint DEFAULT NULL
 );

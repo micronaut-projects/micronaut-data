@@ -60,15 +60,14 @@ public final class AsyncUsingReactiveConnectionOperations<C> implements AsyncCon
 
     @Override
     public <T> CompletionStage<T> withConnection(ConnectionDefinition definition, Function<ConnectionStatus<C>, CompletionStage<T>> handler) {
-        Mono<T> result = Mono.fromDirect(reactorConnectionOperations.withConnection(definition,
-            status -> Mono.deferContextual(contextView -> Mono.fromCompletionStage(() -> {
-                try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView)
-                    .orElseGet(PropagatedContext::getOrEmpty)
-                    .propagate()) {
-                    return handler.apply(status);
-                }
-            }))));
-        return onCompleteCompleteFuture(result);
+        return onCompleteCompleteFuture(Mono.fromDirect(reactorConnectionOperations.withConnection(definition,
+            status ->
+                Mono.deferContextual(contextView ->
+                    Mono.fromCompletionStage(() -> {
+                        PropagatedContext propagatedContext = ReactorPropagation.findPropagatedContext(contextView).orElseGet(PropagatedContext::getOrEmpty);
+                        return status.propagate(propagatedContext, () ->
+                            handler.apply(status));
+                    })))));
     }
 
     private static <T> CompletableFuture<T> onCompleteCompleteFuture(Publisher<T> publisher) {
@@ -96,16 +95,18 @@ public final class AsyncUsingReactiveConnectionOperations<C> implements AsyncCon
 
             @Override
             public void onError(Throwable t) {
-                try (PropagatedContext.Scope ignore = propagatedContext.propagate()) {
+                propagatedContext.propagate(() -> {
                     completableFuture.completeExceptionally(t);
-                }
+                    return null;
+                });
             }
 
             @Override
             public void onComplete() {
-                try (PropagatedContext.Scope ignore = propagatedContext.propagate()) {
+                propagatedContext.propagate(() -> {
                     completableFuture.complete(result);
-                }
+                    return null;
+                });
             }
         });
         return completableFuture;

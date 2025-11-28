@@ -33,6 +33,8 @@ import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Restaurant
 import io.micronaut.data.tck.jdbc.entities.EmployeeGroup
+import jakarta.data.page.PageRequest
+import jakarta.data.restrict.Restriction
 import spock.lang.Issue
 import spock.lang.PendingFeature
 import spock.lang.Unroll
@@ -181,7 +183,7 @@ interface MyInterface2 extends CrudRepository<CustomBook, Long> {
             )
         then:
             def e = thrown(Exception)
-            e.message.contains "Unable to implement Repository method: MyInterface2.somethingWithCast(). Expected an expression '#{...}' found a string!"
+            e.message.contains "Expected an expression '#{...}' found a string!"
     }
 
     @PendingFeature
@@ -743,7 +745,113 @@ interface ProductDtoRepository extends GenericRepository<Product, Long> {
         expect:
         method.isTrue(DataMethod, DataMethod.META_MEMBER_DTO)
         query == 'SELECT product_.`name`,product_.`price`,product_.`loooooooooooooooooooooooooooooooooooooooooooooooooooooooong_name` AS long_name,product_.`date_created`,product_.`last_updated` FROM `product` product_ WHERE (product_.`name` LIKE ?)'
+    }
 
+    void "test build restriction DTO Jakarta Data"() {
+        given:
+        def repository = buildRepository('test.TrainRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Train;
+import io.micronaut.data.tck.entities.TrainNameCapacityDto;
+import jakarta.data.repository.Find;
+import jakarta.data.repository.First;
+import jakarta.data.repository.OrderBy;
+import jakarta.data.repository.Select;
+import jakarta.data.restrict.Restriction;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface TrainRepository extends GenericRepository<Train, Long> {
+
+    @Find
+    @OrderBy("capacity")
+    @First(3)
+    @Select("name")
+    @Select("capacity")
+    List<TrainNameCapacityDto> find(Restriction<Train> restriction);
+
+}
+""")
+        def method = repository.getRequiredMethod("find", Restriction)
+
+
+        expect:
+        method.isTrue(DataMethod, DataMethod.META_MEMBER_DTO)
+        method.stringValue(DataMethod, DataMethod.META_MEMBER_RESULT_TYPE).get() == "io.micronaut.data.tck.entities.TrainNameCapacityDto"
+        method.stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == "io.micronaut.data.runtime.intercept.criteria.FindAllSpecificationInterceptor"
+    }
+
+    void "test build restriction page DTO Jakarta Data"() {
+        given:
+        def repository = buildRepository('test.TrainRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Train;
+import io.micronaut.data.tck.entities.TrainNameCapacityDto;
+import jakarta.data.page.Page;
+import jakarta.data.page.PageRequest;
+import jakarta.data.repository.Find;
+import jakarta.data.repository.First;
+import jakarta.data.repository.OrderBy;
+import jakarta.data.repository.Select;
+import jakarta.data.restrict.Restriction;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface TrainRepository extends GenericRepository<Train, Long> {
+
+    @Find
+    @OrderBy("capacity")
+    @First(3)
+    @Select("name")
+    @Select("capacity")
+    Page<TrainNameCapacityDto> find(Restriction<Train> restriction, PageRequest pageRequest);
+
+}
+""")
+        def method = repository.getRequiredMethod("find", Restriction, PageRequest)
+
+
+        expect:
+        method.isTrue(DataMethod, DataMethod.META_MEMBER_DTO)
+        method.stringValue(DataMethod, DataMethod.META_MEMBER_RESULT_TYPE).get() == "io.micronaut.data.tck.entities.TrainNameCapacityDto"
+        method.stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == "io.micronaut.data.runtime.intercept.criteria.FindPageSpecificationInterceptor"
+    }
+
+    void "test build restriction async page DTO Jakarta Data"() {
+        given:
+        def repository = buildRepository('test.TrainRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Train;
+import io.micronaut.data.tck.entities.TrainNameCapacityDto;
+import jakarta.data.page.Page;
+import jakarta.data.page.PageRequest;
+import jakarta.data.repository.Find;
+import jakarta.data.repository.First;
+import jakarta.data.repository.OrderBy;
+import jakarta.data.repository.Select;
+import jakarta.data.restrict.Restriction;
+import java.util.concurrent.CompletionStage;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface TrainRepository extends GenericRepository<Train, Long> {
+
+    @Find
+    @OrderBy("capacity")
+    @First(3)
+    @Select("name")
+    @Select("capacity")
+    CompletionStage<Page<TrainNameCapacityDto>> find(Restriction<Train> restriction, PageRequest pageRequest);
+
+}
+""")
+        def method = repository.getRequiredMethod("find", Restriction, PageRequest)
+
+
+        expect:
+        method.isTrue(DataMethod, DataMethod.META_MEMBER_DTO)
+        method.stringValue(DataMethod, DataMethod.META_MEMBER_RESULT_TYPE).get() == "io.micronaut.data.tck.entities.TrainNameCapacityDto"
+        method.stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == "io.micronaut.data.runtime.intercept.criteria.async.FindPageAsyncSpecificationInterceptor"
     }
 
     void "test join query in repo via mapped entity"() {
@@ -1824,6 +1932,40 @@ interface BookRepository extends GenericRepository<Book, Long> {
 """)
         when:
             def queryTop3ByAuthorNameOrderByTitle = repository.findPossibleMethods("queryTop3ByAuthorNameOrderByTitle").findFirst().get()
+        then:
+            getQuery(queryTop3ByAuthorNameOrderByTitle) == '''SELECT book_."id",book_."author_id",book_."genre_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated" FROM "book" book_ INNER JOIN "author" book_author_ ON book_."author_id"=book_author_."id" WHERE (book_author_."name" = ?) ORDER BY book_."title" ASC LIMIT 3'''
+            getParameterBindingPaths(queryTop3ByAuthorNameOrderByTitle) == [""] as String[]
+            getParameterPropertyPaths(queryTop3ByAuthorNameOrderByTitle) == ["author.name"] as String[]
+    }
+
+    void "test projection find annotation"() {
+
+        given:
+        def repository = buildRepository('test.BookRepository', """
+
+import io.micronaut.data.annotation.By;
+import io.micronaut.data.annotation.Find;
+import io.micronaut.data.annotation.First;
+import io.micronaut.data.annotation.OrderBy;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.entities.Book;
+
+import java.util.List;
+
+import static io.micronaut.data.model.query.builder.sql.Dialect.*;
+
+@JdbcRepository(dialect = POSTGRES)
+interface BookRepository extends GenericRepository<Book, Long> {
+    @Find
+    @First(3)
+    @OrderBy("title")
+    List<Book> find(@By("author.name") String name);
+}
+
+""")
+        when:
+            def queryTop3ByAuthorNameOrderByTitle = repository.findPossibleMethods("find").findFirst().get()
         then:
             getQuery(queryTop3ByAuthorNameOrderByTitle) == '''SELECT book_."id",book_."author_id",book_."genre_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated" FROM "book" book_ INNER JOIN "author" book_author_ ON book_."author_id"=book_author_."id" WHERE (book_author_."name" = ?) ORDER BY book_."title" ASC LIMIT 3'''
             getParameterBindingPaths(queryTop3ByAuthorNameOrderByTitle) == [""] as String[]

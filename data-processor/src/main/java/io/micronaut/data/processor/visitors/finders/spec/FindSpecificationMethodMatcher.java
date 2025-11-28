@@ -16,14 +16,13 @@
 package io.micronaut.data.processor.visitors.finders.spec;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.annotation.Find;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.AbstractSpecificationMethodMatcher;
 import io.micronaut.data.processor.visitors.finders.FindersUtils;
+import io.micronaut.data.processor.visitors.finders.MatchUtils;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
-import io.micronaut.data.processor.visitors.finders.TypeUtils;
-
-import java.util.regex.Matcher;
 
 /**
  * Find all specification method.
@@ -32,25 +31,29 @@ import java.util.regex.Matcher;
  * @since 1.0
  */
 @Internal
-public class FindAllSpecificationMethodMatcher extends AbstractSpecificationMethodMatcher {
+public class FindSpecificationMethodMatcher extends AbstractSpecificationMethodMatcher {
 
     /**
      * Find one method.
      */
-    public FindAllSpecificationMethodMatcher() {
+    public FindSpecificationMethodMatcher() {
         super("get", "find", "search", "query");
     }
 
     @Override
-    public int getOrder() {
-        return DEFAULT_POSITION - 300;
+    protected boolean matches(MethodMatchContext matchContext) {
+        return matchContext.getMethodElement().hasStereotype(Find.class) || super.matches(matchContext);
     }
 
     @Override
-    protected MethodMatch match(MethodMatchContext matchContext, Matcher matcher) {
-        if (TypeUtils.doesMethodProducesIterable(matchContext.getMethodElement()) && isQuerySpecification(matchContext)) {
-            FindersUtils.InterceptorMatch e = FindersUtils.pickFindAllSpecInterceptor(matchContext, matchContext.getReturnType());
-            return mc -> new MethodMatchInfo(DataMethod.OperationType.QUERY, e.returnType(), e.interceptor());
+    protected MethodMatch doMatch(MethodMatchContext matchContext) {
+        if (isQuerySpecification(matchContext)) {
+            FindersUtils.InterceptorMatch interceptorMatch = FindersUtils.pickSpecInterceptor(matchContext, matchContext.getMethodElement().getGenericReturnType());
+            return mc -> new MethodMatchInfo(
+                DataMethod.OperationType.QUERY,
+                interceptorMatch.returnType(),
+                interceptorMatch.interceptor()
+            ).dto(MatchUtils.isDto(matchContext.getRootEntity().getType(), interceptorMatch.returnType()));
         }
         return null;
     }

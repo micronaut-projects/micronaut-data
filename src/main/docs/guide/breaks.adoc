@@ -1,43 +1,40 @@
 This section documents breaking changes between Micronaut versions
 
-== 4.0.0
+== 5.0
 
-=== Repositories validation
+=== Interactions with synchronous transaction and connection manager
 
-Default repository interfaces no longer have Jakarta Validation annotations to validate the entity and the ID.
-To add the validation, annotate the repository's generic type argument with Jakarta Validation annotations:
-
-[source,java]
-----
-@Repository
-public interface BookRepository implements CrudRepository<@jakarta.validation.Valid Book, @jakarta.validation.constraints.NotNull Long> {
-}
-----
-
-=== Repositories now return `List`
-
-Find all return type changed to be `List` instead of `Iterable`
-
-=== Hibernate transaction manager
-
-The signature of the Hibernate transaction manager has changed to include `org.hibernate.Session` instead of a data source connection:
+Creating a new transaction with `io.micronaut.transaction.SynchronousTransactionManager` or a connection with `io.micronaut.data.connection.SynchronousConnectionManager` no longer places the resulting status into the current `PropagatedContext` automatically.
+Code that subsequently looks up the active transaction or connection (for example via `TransactionOperations#findTransactionStatus` or `ConnectionOperations#findConnectionStatus`) must now explicitly propagate the status when manual transaction or connection demarcation is used.
+Use `TransactionStatus#propagate` or `ConnectionStatus#propagate` to wrap the code section that should observe the newly created context element.
 
 [source,java]
 ----
-@Inject
-public TransactionOperations<org.hibernate.Session> hibernateTransactionOperations;
+TransactionStatus<Object> status = transactionManager.getTransaction(TransactionDefinition.DEFAULT);
+
+// No propagation: downstream code cannot observe the transaction
+Optional<TransactionStatus<Object>> missing = transactionOperations.findTransactionStatus(); // empty
+
+// Use TransactionStatus#propagate so that downstream lookups succeed
+status.propagate(() -> {
+    TransactionStatus<Object> present = transactionOperations.getTransactionStatus();
+    bookRepository.saveWithMandatoryTransaction(newBook);
+});
+
+ConnectionStatus<Connection> connection = connectionManager.getConnection(ConnectionDefinition.DEFAULT);
+
+// Without propagate the connection is invisible to ConnectionOperations
+Optional<ConnectionStatus<Connection>> absent = connectionOperations.findConnectionStatus(); // empty
+
+// Use ConnectionStatus#propagate to make the connection available to participating components
+connection.propagate(() -> {
+    ConnectionStatus<Connection> current = connectionOperations.getConnectionStatus();
+    Connection jdbc = current.getConnection();
+    // perform work with the managed connection
+});
 ----
 
-=== Transaction manager
-
-Micronaut 4 comes with a rewritten transaction propagation and management. It replaces the previous implementation forked form Spring Framework.
-The new implementation has a newly added connection management, allowing to share a connection between multiple repositories and services without an open transaction. The new method supporting extracting the current transaction status `TransactionOperations#findTransactionStatus`. The `TransactionStatus` now includes information about the connection and the transaction definition.
-
-=== Async and Reactive repositories
-
-Async and reactive repositories are no longer throw `EmptyResultException` if the entity is not found.
-
-== 5.0.0
+NOTE: These changes are required for Micronaut 5 to support propagating context with scoped values.
 
 === Embedded Fields Naming Strategy
 
@@ -104,7 +101,6 @@ public record Restaurant(
     Address hqAddress
 ) {
 }
-
 @Embeddable
 public record Address(
     String street,
@@ -181,3 +177,40 @@ CREATE TABLE `restaurant` (
     `hq_address_zip_code` VARCHAR(255)
 );
 ----
+
+== 4.0
+
+=== Repositories validation
+
+Default repository interfaces no longer have Jakarta Validation annotations to validate the entity and the ID.
+To add the validation, annotate the repository's generic type argument with Jakarta Validation annotations:
+
+[source,java]
+----
+@Repository
+public interface BookRepository implements CrudRepository<@jakarta.validation.Valid Book, @jakarta.validation.constraints.NotNull Long> {
+}
+----
+
+=== Repositories now return `List`
+
+Find all return type changed to be `List` instead of `Iterable`
+
+=== Hibernate transaction manager
+
+The signature of the Hibernate transaction manager has changed to include `org.hibernate.Session` instead of a data source connection:
+
+[source,java]
+----
+@Inject
+public TransactionOperations<org.hibernate.Session> hibernateTransactionOperations;
+----
+
+=== Transaction manager
+
+Micronaut 4 comes with a rewritten transaction propagation and management. It replaces the previous implementation forked form Spring Framework.
+The new implementation has a newly added connection management, allowing to share a connection between multiple repositories and services without an open transaction. The new method supporting extracting the current transaction status `TransactionOperations#findTransactionStatus`. The `TransactionStatus` now includes information about the connection and the transaction definition.
+
+=== Async and Reactive repositories
+
+Async and reactive repositories are no longer throw `EmptyResultException` if the entity is not found.

@@ -39,7 +39,7 @@ import static io.micronaut.data.processor.visitors.TestUtils.getQuery
 
 class PageSpec extends AbstractDataSpec {
 
-    void "test compile error on incorrect property order"() {
+    void "test no compile error on incorrect property order because pageable has a role and it's skipped"() {
         when:
         buildRepository('test.MyInterface' , """
 
@@ -53,11 +53,10 @@ interface MyInterface extends GenericRepository<Person, Long> {
 """)
 
         then:
-        def e = thrown(RuntimeException)
-        e.message.contains('Unable to implement Repository method: MyInterface.findAllByNameNotStartsWith(Pageable pageable,String name). Parameter [io.micronaut.data.model.Pageable pageable] is not compatible with property [java.lang.String name] of entity: io.micronaut.data.model.entities.Person')
+        noExceptionThrown()
     }
 
-    void "test compile error on incorrect property order with multiple items"() {
+    void "test no compile error on incorrect property order with multiple items because pageable has a role"() {
         when:
         buildRepository('test.MyInterface' , """
 
@@ -71,8 +70,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
 """)
 
         then:
-        def e = thrown(RuntimeException)
-        e.message.contains('Unable to implement Repository method: MyInterface.findByNameOrAge(Pageable pageable,String name,int age). Parameter [io.micronaut.data.model.Pageable pageable] is not compatible with property [java.lang.String name] of entity')
+        noExceptionThrown()
     }
 
     void "test page method match"() {
