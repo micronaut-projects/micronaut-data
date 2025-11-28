@@ -1,5 +1,5 @@
 [versions]
-micronaut = "4.10.9"
+micronaut = "5.0.0-M1"
 micronaut-platform = "4.10.1"
 micronaut-docs = "3.0.0"
 micronaut-gradle-plugin = "4.6.1"
@@ -22,7 +22,7 @@ micronaut-flyway = "7.9.2"
 micronaut-coherence = "5.0.6"
 #micronaut-sourcegen = "1.8.2"
 
-groovy = "4.0.29"
+groovy = "5.0.2"
 
 managed-javax-persistence = "2.2"
 managed-jakarta-data = "1.1.0-M1"
@@ -36,7 +36,7 @@ lombok = "1.18.42"
 # Testing and benchmarking
 
 benchmark-spring-data = "2025.1.0"
-spock = "2.2-groovy-4.0"
+spock = "2.4-M7-groovy-5.0"
 testcontainers = "1.19.4"
 jmh = "1.37"
 
