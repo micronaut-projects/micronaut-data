@@ -133,7 +133,7 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
         Object now = dateTimeProvider.getNow();
         // 1) Top-level properties
         AutoPopulateUtil.applyTopLevel(context, applicableProperties, prop -> {
-            if (isUpdate && !prop.getAnnotationMetadata().booleanValue(AutoPopulated.class, AutoPopulated.UPDATEABLE).orElse(true)) {
+            if (isUpdate && !prop.getAnnotationMetadata().booleanValue(AutoPopulated.class, AutoPopulated.UPDATABLE).orElse(true)) {
                 return null;
             }
             Object propertyNow = computePropertyNow(prop.getAnnotationMetadata(), isUpdate, now);
@@ -147,7 +147,7 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
             if (!hasDateCreated && !hasDateUpdated) {
                 return current;
             }
-            if (isUpdate && !am.booleanValue(AutoPopulated.class, AutoPopulated.UPDATEABLE).orElse(true)) {
+            if (isUpdate && !am.booleanValue(AutoPopulated.class, AutoPopulated.UPDATABLE).orElse(true)) {
                 return current;
             }
             Object propertyNow = computePropertyNow(am, isUpdate, now);
