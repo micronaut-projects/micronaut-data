@@ -417,31 +417,30 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
      */
     public boolean hasAutoPopulatedProperties() {
         if (this.hasAutoPopulatedProperties == null) {
-            boolean direct = Arrays.stream(allPersistentProperties)
-                    .filter(Objects::nonNull)
-                    .anyMatch(PersistentProperty::isAutoPopulated);
-            if (!direct) {
-                // Also consider embedded associated entities without triggering registry lookups
-                // to avoid potential recursive ConcurrentHashMap updates during entity construction.
-                Set<Class<?>> visited = new HashSet<>();
-                visited.add(getIntrospection().getBeanType());
-                for (RuntimeAssociation<?> association : getAssociations()) {
-                    if (!association.isEmbedded()) {
-                        continue;
-                    }
-                    Class<?> embeddedType = association.getProperty().getType();
-                    if (visited.add(embeddedType)) {
-                        BeanIntrospection<?> embeddedIntrospection = BeanIntrospection.getIntrospection(embeddedType);
-                        if (hasAutoPopulatedInEmbedded(embeddedIntrospection, visited)) {
-                            direct = true;
-                            break;
-                        }
-                    }
-                }
-            }
-            this.hasAutoPopulatedProperties = direct;
+            this.hasAutoPopulatedProperties = hasDirectAutoPopulated() || hasAutoPopulatedInEmbeddeds();
         }
         return this.hasAutoPopulatedProperties;
+    }
+
+    private boolean hasDirectAutoPopulated() {
+        return Arrays.stream(allPersistentProperties)
+            .filter(Objects::nonNull)
+            .anyMatch(PersistentProperty::isAutoPopulated);
+    }
+
+    private boolean hasAutoPopulatedInEmbeddeds() {
+        // Avoid RuntimeEntityRegistry lookups, keep track of visited to prevent cycles
+        Set<Class<?>> visited = new HashSet<>();
+        visited.add(getIntrospection().getBeanType());
+
+        return getAssociations().stream()
+            .filter(RuntimeAssociation::isEmbedded)
+            .map(a -> a.getProperty().getType())
+            .filter(visited::add)
+            .anyMatch(type -> {
+                BeanIntrospection<?> embeddedIntrospection = BeanIntrospection.getIntrospection(type);
+                return hasAutoPopulatedInEmbedded(embeddedIntrospection, visited);
+            });
     }
 
     /**
