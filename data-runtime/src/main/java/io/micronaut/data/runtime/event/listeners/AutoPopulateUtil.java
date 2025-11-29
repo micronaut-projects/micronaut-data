@@ -109,7 +109,7 @@ final class AutoPopulateUtil {
      * Recursively traverse the provided embedded entity graph, applying the provided property setter at each level.
      *
      * @param embeddedEntity The runtime metadata for the current embedded entity
-     * @param instance       The current instance to update (may be immutable)
+     * @param instance       The current instance to update (maybe immutable)
      * @param propertySetter A function called for every persistent property at this level. It must return the (possibly new) instance.
      * @return The possibly new instance for this level after applying property updates and recursing into nested embeddeds
      */
@@ -133,6 +133,7 @@ final class AutoPopulateUtil {
                         child = nested.getAssociatedEntity().getIntrospection().instantiate();
                     } catch (Exception e) {
                         LOG.warn("Unable to instantiate embedded property: {}", ep.getName(), e);
+                        continue;
                     }
                 }
                 Object updatedChild = populateEmbedded(nested.getAssociatedEntity(), child, propertySetter);
