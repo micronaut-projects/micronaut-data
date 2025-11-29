@@ -20,13 +20,9 @@ import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.event.PrePersist;
 import io.micronaut.data.event.EntityEventContext;
-import io.micronaut.data.model.runtime.RuntimeAssociation;
-import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 
 import jakarta.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.util.Collections;
@@ -42,8 +38,6 @@ import java.util.function.Predicate;
  */
 @Singleton
 public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventListener {
-
-    private static final Logger LOG = LoggerFactory.getLogger(UUIDGeneratingEntityEventListener.class);
 
     private static final Predicate<RuntimePersistentProperty<Object>> UUID_PREDICATE = p -> p.getType() == UUID.class;
 
@@ -66,44 +60,25 @@ public class UUIDGeneratingEntityEventListener extends AutoPopulatedEntityEventL
         AutoPopulateUtil.applyTopLevel(context, persistentProperties, p -> UUID.randomUUID());
 
         // 2) Embedded properties (recursive via util)
-        final RuntimePersistentEntity<Object> persistentEntity = context.getPersistentEntity();
-        final Object rootEntity = context.getEntity();
-        for (RuntimeAssociation<?> association : persistentEntity.getAssociations()) {
-            if (!association.isEmbedded()) {
-                continue;
+        AutoPopulateUtil.applyEmbedded(context, (embeddedPersistentProperty, current) -> {
+            if (embeddedPersistentProperty.getType() != UUID.class) {
+                return current;
             }
-            @SuppressWarnings("unchecked")
-            BeanProperty<Object, Object> embeddedProperty = (BeanProperty<Object, Object>) association.getProperty();
-            Object embedded = embeddedProperty.get(rootEntity);
-            if (embedded == null) {
-                try {
-                    embedded = association.getAssociatedEntity().getIntrospection().instantiate();
-                }  catch (Exception e) {
-                    LOG.warn("Unable to instantiate embedded property: {}", embeddedProperty.getName(), e);
-                    continue;
-                }
+            if (!embeddedPersistentProperty.isAutoPopulated() && !embeddedPersistentProperty.getAnnotationMetadata().hasStereotype(AutoPopulated.class)) {
+                return current;
             }
-            Object updated = AutoPopulateUtil.populateEmbedded(association.getAssociatedEntity(), embedded, (embeddedPersistentProperty, current) -> {
-                if (embeddedPersistentProperty.getType() != UUID.class) {
-                    return current;
-                }
-                if (!embeddedPersistentProperty.isAutoPopulated() && !embeddedPersistentProperty.getAnnotationMetadata().hasStereotype(AutoPopulated.class)) {
-                    return current;
-                }
-                BeanProperty<Object, Object> prop = embeddedPersistentProperty.getProperty();
-                if (!prop.hasSetterOrConstructorArgument()) {
-                    return current;
-                }
-                UUID value = UUID.randomUUID();
-                if (prop.isReadOnly()) {
-                    return prop.withValue(current, value);
-                } else {
-                    prop.set(current, value);
-                    return current;
-                }
-            });
-            context.setProperty(embeddedProperty, updated);
-        }
+            BeanProperty<Object, Object> prop = embeddedPersistentProperty.getProperty();
+            if (!prop.hasSetterOrConstructorArgument()) {
+                return current;
+            }
+            UUID value = UUID.randomUUID();
+            if (prop.isReadOnly()) {
+                return prop.withValue(current, value);
+            } else {
+                prop.set(current, value);
+                return current;
+            }
+        });
 
         return true;
     }

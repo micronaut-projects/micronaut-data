@@ -26,6 +26,8 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import java.util.Collection;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Internal utility to apply top-level auto-populated properties uniformly.
@@ -38,6 +40,8 @@ import java.util.function.Function;
  */
 @Internal
 final class AutoPopulateUtil {
+
+    private static final Logger LOG = LoggerFactory.getLogger(AutoPopulateUtil.class);
 
     private AutoPopulateUtil() {
     }
@@ -62,6 +66,47 @@ final class AutoPopulateUtil {
     }
 
     /**
+     * Traverse all embedded associations at the root level of the given context, instantiate missing
+     * embedded instances if necessary, delegate recursive population to {@link #populateEmbedded(RuntimePersistentEntity, Object, BiFunction)},
+     * and reattach the resulting instance via {@link EntityEventContext#setProperty(BeanProperty, Object)}.
+     *
+     * This method centralizes the boilerplate to:
+     * - find embedded associations of the root entity
+     * - lazily instantiate null embedded instances
+     * - apply the provided propertySetter within the embedded graph (recursively)
+     * - support immutable entities by reattaching the updated instance through the context
+     *
+     * @param context        The entity event context providing the root entity and its metadata
+     * @param propertySetter A function applied to each persistent property encountered during recursion.
+     *                       It receives the current persistent property and the current instance for that level,
+     *                       and must return the (possibly new) instance for that level.
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    static void applyEmbedded(@NonNull EntityEventContext<Object> context,
+                              BiFunction<RuntimePersistentProperty<Object>, Object, Object> propertySetter) {
+        final RuntimePersistentEntity<Object> persistentEntity = context.getPersistentEntity();
+        final Object rootEntity = context.getEntity();
+        for (RuntimeAssociation<?> association : persistentEntity.getAssociations()) {
+            if (!association.isEmbedded()) {
+                continue;
+            }
+            @SuppressWarnings("unchecked")
+            BeanProperty<Object, Object> embeddedProperty = (BeanProperty<Object, Object>) association.getProperty();
+            Object embedded = embeddedProperty.get(rootEntity);
+            if (embedded == null) {
+                try {
+                    embedded = association.getAssociatedEntity().getIntrospection().instantiate();
+                } catch (Exception e) {
+                    LOG.warn("Unable to instantiate embedded property: {}", embeddedProperty.getName(), e);
+                    continue;
+                }
+            }
+            Object updated = populateEmbedded(association.getAssociatedEntity(), embedded, propertySetter);
+            context.setProperty(embeddedProperty, updated);
+        }
+    }
+
+    /**
      * Recursively traverse the provided embedded entity graph, applying the provided property setter at each level.
      *
      * @param embeddedEntity The runtime metadata for the current embedded entity
@@ -69,7 +114,6 @@ final class AutoPopulateUtil {
      * @param propertySetter A function called for every persistent property at this level. It must return the (possibly new) instance.
      * @return The possibly new instance for this level after applying property updates and recursing into nested embeddeds
      */
-    @SuppressWarnings({"unchecked", "rawtypes"})
     static Object populateEmbedded(@NonNull RuntimePersistentEntity<?> embeddedEntity,
                                    @NonNull Object instance,
                                    BiFunction<RuntimePersistentProperty<Object>, Object, Object> propertySetter) {

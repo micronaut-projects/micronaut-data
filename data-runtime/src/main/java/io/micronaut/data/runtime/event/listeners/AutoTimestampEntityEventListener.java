@@ -27,13 +27,9 @@ import io.micronaut.data.annotation.event.PreUpdate;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.model.runtime.PropertyAutoPopulator;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
-import io.micronaut.data.model.runtime.RuntimeAssociation;
-import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import jakarta.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.time.Instant;
@@ -51,8 +47,6 @@ import java.util.function.Predicate;
  */
 @Singleton
 public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventListener implements PropertyAutoPopulator<DateUpdated> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(AutoTimestampEntityEventListener.class);
 
     private final DateTimeProvider<?> dateTimeProvider;
     private final DataConversionService conversionService;
@@ -146,49 +140,30 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
             return convertIfNeeded(propertyNow, prop.getType());
         });
         // 2) Embedded properties (recursive via util)
-        final RuntimePersistentEntity<Object> persistentEntity = context.getPersistentEntity();
-        final Object rootEntity = context.getEntity();
-        for (RuntimeAssociation<?> association : persistentEntity.getAssociations()) {
-            if (!association.isEmbedded()) {
-                continue;
+        AutoPopulateUtil.applyEmbedded(context, (embeddedPersistentProperty, current) -> {
+            final AnnotationMetadata am = embeddedPersistentProperty.getAnnotationMetadata();
+            final boolean hasDateCreated = am.hasAnnotation(DateCreated.class);
+            final boolean hasDateUpdated = am.hasAnnotation(DateUpdated.class);
+            if (!hasDateCreated && !hasDateUpdated) {
+                return current;
             }
-            @SuppressWarnings("unchecked")
-            BeanProperty<Object, Object> embeddedProperty = (BeanProperty<Object, Object>) association.getProperty();
-            Object embedded = embeddedProperty.get(rootEntity);
-            if (embedded == null) {
-                try {
-                    embedded = association.getAssociatedEntity().getIntrospection().instantiate();
-                } catch (Exception e) {
-                    LOG.warn("Unable to instantiate embedded property: {}", embeddedProperty.getName(), e);
-                    continue;
-                }
+            if (isUpdate && !am.booleanValue(AutoPopulated.class, AutoPopulated.UPDATEABLE).orElse(true)) {
+                return current;
             }
-            Object updated = AutoPopulateUtil.populateEmbedded(association.getAssociatedEntity(), embedded, (embeddedPersistentProperty, current) -> {
-                final AnnotationMetadata am = embeddedPersistentProperty.getAnnotationMetadata();
-                final boolean hasDateCreated = am.hasAnnotation(DateCreated.class);
-                final boolean hasDateUpdated = am.hasAnnotation(DateUpdated.class);
-                if (!hasDateCreated && !hasDateUpdated) {
-                    return current;
-                }
-                if (isUpdate && !am.booleanValue(AutoPopulated.class, AutoPopulated.UPDATEABLE).orElse(true)) {
-                    return current;
-                }
-                Object propertyNow = computePropertyNow(am, isUpdate, now);
-                Class<?> propertyType = embeddedPersistentProperty.getType();
-                Object newValue = convertIfNeeded(propertyNow, propertyType);
-                BeanProperty<Object, Object> prop = embeddedPersistentProperty.getProperty();
-                if (!prop.hasSetterOrConstructorArgument()) {
-                    return current;
-                }
-                if (prop.isReadOnly()) {
-                    return prop.withValue(current, newValue);
-                } else {
-                    prop.set(current, newValue);
-                    return current;
-                }
-            });
-            context.setProperty(embeddedProperty, updated);
-        }
+            Object propertyNow = computePropertyNow(am, isUpdate, now);
+            Class<?> propertyType = embeddedPersistentProperty.getType();
+            Object newValue = convertIfNeeded(propertyNow, propertyType);
+            BeanProperty<Object, Object> prop = embeddedPersistentProperty.getProperty();
+            if (!prop.hasSetterOrConstructorArgument()) {
+                return current;
+            }
+            if (prop.isReadOnly()) {
+                return prop.withValue(current, newValue);
+            } else {
+                prop.set(current, newValue);
+                return current;
+            }
+        });
     }
 
     @Nullable
