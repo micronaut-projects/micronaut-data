@@ -431,7 +431,12 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
 
     @Override
     public JsonView.Operation[] getViewSupportedOperations() {
-        JsonView.Operation[] operations = getAnnotationMetadata().enumValues(JsonView.class, "operations", JsonView.Operation.class);
+        JsonView.Operation[] operations;
+        if (getAnnotationMetadata().hasAnnotation(JsonView.class)) {
+            operations = getAnnotationMetadata().enumValues(JsonView.class, "operations", JsonView.Operation.class);
+        } else {
+            operations = getAnnotationMetadata().enumValues(JsonSubView.class, "operations", JsonView.Operation.class);
+        }
         if (operations.length == 0) return JsonView.Operation.values();
         return operations;
     }

@@ -103,14 +103,14 @@ interface MySqlContactViewRepository extends CrudRepository<ContactView, Long> {
         when:
         buildEntity('test.Person', '''
 import io.micronaut.data.annotation.JsonView;
-import io.micronaut.data.annotation.MappedProperty;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonView
-record Person(@Id @GeneratedValue @MappedProperty("id") Long id, String name, int age) {}
+record Person(@Id @GeneratedValue @JsonProperty("id") Long id, String name, int age) {}
 ''')
         then:
         def ex = thrown(RuntimeException)
-        ex.message.contains("@JsonView identity @MappedProperty value cannot be set to value different than '_id'")
+        ex.message.contains("@JsonView identity @JsonProperty value cannot be set to value different than '_id'")
     }
 
     void "test JsonView entity with @Version not supported"() {

@@ -245,7 +245,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         entityResolver = new Function<>() {
 
             final MappedEntityVisitor mappedEntityVisitor = new MappedEntityVisitor();
-            final MappedEntityVisitor embeddedMappedEntityVisitor = new MappedEntityVisitor(false);
+            final MappedEntityVisitor embeddedMappedEntityVisitor = new MappedEntityVisitor();
 
             @Override
             public SourcePersistentEntity apply(ClassElement classElement) {

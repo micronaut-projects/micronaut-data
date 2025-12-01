@@ -2,15 +2,13 @@ package io.micronaut.data.jdbc.oraclexe.jsonview;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.data.annotation.*;
-import io.micronaut.data.annotation.sql.JoinColumn;
 import io.micronaut.data.tck.entities.Metadata;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 
-@JsonView(entity = Student.class)
-public class StudentView {
+@JsonSubView(entity = Student.class)
+public class StudentSubView {
     @Id
     @GeneratedValue(GeneratedValue.Type.IDENTITY)
     private Long id;
@@ -23,10 +21,6 @@ public class StudentView {
     private LocalDateTime startDateTime;
 
     private boolean active;
-
-    @JoinColumn(name = "id", referencedColumnName = "student_id")
-    @Relation(Relation.Kind.ONE_TO_MANY)
-    private List<StudentScheduleSubView> schedule;
 
     @Relation(Relation.Kind.EMBEDDED)
     private AddressSubView address;
@@ -80,14 +74,6 @@ public class StudentView {
 
     public void setActive(boolean active) {
         this.active = active;
-    }
-
-    public List<StudentScheduleSubView> getSchedule() {
-        return schedule;
-    }
-
-    public void setSchedule(List<StudentScheduleSubView> schedule) {
-        this.schedule = schedule;
     }
 
     public AddressSubView getAddress() {

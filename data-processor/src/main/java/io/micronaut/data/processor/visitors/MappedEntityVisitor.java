@@ -65,7 +65,6 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
     private static final String JSON_PROPERTY_ANNOTATION = "com.fasterxml.jackson.annotation.JsonProperty";
     private static final String SERDE_CONFIG_ANNOTATION = "io.micronaut.serde.config.annotation.SerdeConfig";
     private static final String JSON_VIEW_ID = "_id";
-    private static final String VALUE = "value";
     private static final String PROPERTY = "property";
 
     private final Map<String, SourcePersistentEntity> entityMap = new HashMap<>(50);
@@ -75,21 +74,6 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
             return entityMap.computeIfAbsent(classElement.getName(), s -> new SourcePersistentEntity(classElement, this));
         }
     };
-    private final boolean mappedEntity;
-
-    /**
-     * Default constructor.
-     */
-    public MappedEntityVisitor() {
-        mappedEntity = true;
-    }
-
-    /**
-     * @param mappedEntity Whether this applies to Mapped entity
-     */
-    MappedEntityVisitor(boolean mappedEntity) {
-        this.mappedEntity = mappedEntity;
-    }
 
     @Override
     public int getOrder() {
@@ -305,12 +289,6 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
      */
     private void handleJsonViewIdentity(SourcePersistentProperty identity) {
         PropertyElement identityPropertyElement = identity.getPropertyElement();
-        String mappedPropertyIdName = identity.stringValue(MappedProperty.class).orElse(null);
-        if (mappedPropertyIdName == null) {
-            identityPropertyElement.annotate(MappedProperty.class, builder -> builder.member(VALUE, JSON_VIEW_ID));
-        } else if (!mappedPropertyIdName.equals(JSON_VIEW_ID)) {
-            throw new ProcessingException(identity, "@JsonView identity @MappedProperty value cannot be set to value different than '" + JSON_VIEW_ID + "'");
-        }
         String jsonPropertyIdName = identity.stringValue(JSON_PROPERTY_ANNOTATION).orElse(null);
         if (jsonPropertyIdName != null && !jsonPropertyIdName.equals(JSON_VIEW_ID)) {
             throw new ProcessingException(identity, "@JsonView identity @JsonProperty value cannot be set to value different than '" + JSON_VIEW_ID + "'");

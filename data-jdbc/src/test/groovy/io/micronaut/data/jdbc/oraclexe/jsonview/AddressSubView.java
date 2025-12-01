@@ -1,14 +1,14 @@
 package io.micronaut.data.jdbc.oraclexe.jsonview;
 
-import io.micronaut.data.annotation.Embeddable;
-import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.JsonSubView;
+import io.micronaut.data.annotation.*;
 
 @Embeddable
-@JsonSubView(entity = Address.class)
-public class AddressView {
+@JsonSubView(entity = Address.class, operations = { JsonView.Operation.UPDATE, JsonView.Operation.INSERT })
+public class AddressSubView {
 
     @Id
+    @GeneratedValue(GeneratedValue.Type.IDENTITY)
+    @MappedProperty("id")
     private Long addressID;
     private String street;
 
@@ -38,11 +38,11 @@ public class AddressView {
         this.city = city;
     }
 
-    public static AddressView fromAddress(Address address) {
-        AddressView addressView = new AddressView();
-        addressView.setAddressID(address.getId());
-        addressView.setCity(addressView.getCity());
-        addressView.setStreet(addressView.getStreet());
-        return addressView;
+    public static AddressSubView fromAddress(Address address) {
+        AddressSubView addressSubView = new AddressSubView();
+        addressSubView.setAddressID(address.getId());
+        addressSubView.setCity(addressSubView.getCity());
+        addressSubView.setStreet(addressSubView.getStreet());
+        return addressSubView;
     }
 }

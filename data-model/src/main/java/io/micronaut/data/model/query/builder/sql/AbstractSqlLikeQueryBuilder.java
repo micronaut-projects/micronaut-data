@@ -142,6 +142,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     protected static final String DISTINCT = "DISTINCT ";
     protected static final String ALIAS_REPLACE_QUOTED = "@\\.";
     protected static final String CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID = "Cannot query on ID with entity that has no ID";
+    protected static final String JSON_PROPERTY_ANNOTATION = "com.fasterxml.jackson.annotation.JsonProperty";
+    protected static final String SERDE_CONFIG_ANNOTATION = "io.micronaut.serde.config.annotation.SerdeConfig";
 
     private static final String UNSUPPORTED_EXPRESSION = "Unsupported expression: ";
 
@@ -1375,7 +1377,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     query.append(jsonEntityColumn).append(DOT);
                     PersistentProperty property = propertyPath.getProperty();
                     if (property == queryState.entity.getIdentity()) {
-                        query.append('"').append(property.getPersistedName()).append('"');
+                            String persistedName = property.getAnnotationMetadata().stringValue(SERDE_CONFIG_ANNOTATION, "property")
+                                .orElse(property.getAnnotationMetadata().stringValue(JSON_PROPERTY_ANNOTATION)
+                                    .orElse(property.getName()));
+                            query.append('"').append(persistedName).append('"');
                     } else {
                         query.append(propertyPath.getPath());
                     }

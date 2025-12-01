@@ -1,5 +1,6 @@
 package io.micronaut.data.jdbc.oraclexe.jsonview;
 
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
@@ -18,8 +19,10 @@ public class Student {
     private Long id;
     private String name;
     private LocalDate birthDate;
+    @Nullable
     private Double averageGrade;
 
+    @Nullable
     private LocalDateTime startDateTime;
 
     private boolean active;

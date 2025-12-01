@@ -39,6 +39,9 @@ class OracleJdbcJsonViewSpec extends Specification {
     @Inject
     StudentViewRepository studentViewRepository
 
+    @Inject
+    TeacherViewRepository teacherViewRepository
+
     def setup() {
         studentClassRepository.deleteAll()
         classRepository.deleteAll()
@@ -56,10 +59,12 @@ class OracleJdbcJsonViewSpec extends Specification {
         Student denis = studentRepository.save(new Student("Denis", birthDate, 8.5, startDateTime.minusDays(1), address1))
         Student josh = studentRepository.save(new Student("Josh", birthDate.minusMonths(3), 9.1, startDateTime, address1))
         Student fred = studentRepository.save(new Student("Fred", birthDate.plusMonths(1), 7.6, startDateTime.plusDays(2), address2))
+        Student dimitrije = studentRepository.save(new Student("Dimitrije", birthDate.minusMonths(4), 9.0, startDateTime.minusDays(2), address1))
 
         Class math = classRepository.save(new Class("Math", "A101", LocalTime.of(10, 00), teacherAnna))
         Class english = classRepository.save(new Class("English", "A102", LocalTime.of(11, 00), teacherJeff))
         Class german = classRepository.save(new Class("German", "A103", LocalTime.of(12, 00), teacherAnna))
+        Class serbian = classRepository.save(new Class("Serbian", "A104", LocalTime.of(13, 00), teacherJeff))
 
         studentClassRepository.save(new StudentClass(denis, math))
         studentClassRepository.save(new StudentClass(josh, math))
@@ -68,6 +73,7 @@ class OracleJdbcJsonViewSpec extends Specification {
         studentClassRepository.save(new StudentClass(denis, german))
         studentClassRepository.save(new StudentClass(josh, english))
         studentClassRepository.save(new StudentClass(fred, german))
+        studentClassRepository.save(new StudentClass(dimitrije, serbian))
     }
 
     @Shared
@@ -95,7 +101,7 @@ class OracleJdbcJsonViewSpec extends Specification {
         def all = studentViewRepository.findAll()
         def first = all[0]
         then:
-        all.size() == 3
+        all.size() == 4
 
         when:
         def name = studentViewRepository.findNameById(first.id)
@@ -126,23 +132,25 @@ class OracleJdbcJsonViewSpec extends Specification {
         when:
         def allSorted = studentViewRepository.findAll(Sort.of(Sort.Order.asc("name")))
         then:
-        allSorted.size() == 3
+        allSorted.size() == 4
         allSorted[0].name == "Denis"
-        allSorted[1].name == "Fred"
-        allSorted[2].name == "Josh"
+        allSorted[1].name == "Dimitrije"
+        allSorted[2].name == "Fred"
+        allSorted[3].name == "Josh"
         when:
         allSorted = studentViewRepository.findAll(Sort.of(Sort.Order.asc("startDateTime")))
         then:
-        allSorted.size() == 3
-        allSorted[0].name == "Denis"
-        allSorted[1].name == "Josh"
-        allSorted[2].name == "Fred"
+        allSorted.size() == 4
+        allSorted[0].name == "Dimitrije"
+        allSorted[1].name == "Denis"
+        allSorted[2].name == "Josh"
+        allSorted[3].name == "Fred"
 
         when:
         def allPages = studentViewRepository.findAll(Pageable.from(0, 2, Sort.of(Sort.Order.desc("name"))))
         then:
         allPages.totalPages == 2
-        allPages.totalSize == 3
+        allPages.totalSize == 4
         allPages.content.size() == 2
         allPages.content[0].name == "Josh"
         allPages.content[1].name == "Fred"
@@ -204,7 +212,7 @@ class OracleJdbcJsonViewSpec extends Specification {
         studentViewRepository.update(denisStudentView)
         allSorted = studentViewRepository.findAllOrderByActive()
         then:
-        allSorted.size() == 3
+        allSorted.size() == 4
         allSorted[0].name == "Denis"
         when:
         def inActives = studentViewRepository.findAllByActive(false)
@@ -212,7 +220,7 @@ class OracleJdbcJsonViewSpec extends Specification {
         then:
         inActives.size() == 1
         inActives[0].name == "Denis"
-        actives.size() == 2
+        actives.size() == 3
 
         when:
         def birthDate = studentViewRepository.findBirthDateById(denisStudentView.id)
@@ -221,10 +229,11 @@ class OracleJdbcJsonViewSpec extends Specification {
         when:
         allSorted = studentViewRepository.findAllOrderByBirthDate()
         then:
-        allSorted.size() == 3
-        allSorted[0].name == "Josh_"
-        allSorted[1].name == "Denis"
-        allSorted[2].name == "Fred_"
+        allSorted.size() == 4
+        allSorted[0].name == "Dimitrije_"
+        allSorted[1].name == "Josh_"
+        allSorted[2].name == "Denis"
+        allSorted[3].name == "Fred_"
     }
 
     def "find and update partial"() {
@@ -275,17 +284,17 @@ class OracleJdbcJsonViewSpec extends Specification {
         peterStudentView.name = peterStudentName
         peterStudentView.birthDate = LocalDate.now().minusYears(20).minusDays(10)
 
-        def newStudentScheduleView = new StudentScheduleView()
+        def newStudentScheduleView = new StudentScheduleSubView()
 
         def teacherName = "Mrs. Anna"
         def teacherAnna = teacherRepository.findByName(teacherName)
         def className = "Math"
-        def teacherView = new TeacherView()
+        def teacherView = new TeacherSubView()
         teacherView.setTeacher(teacherAnna.getName())
         teacherView.setTeachID(teacherAnna.getId())
 
         def classMath = classRepository.findByName(className)
-        def studentScheduleClassView = new StudentScheduleClassView()
+        def studentScheduleClassView = new StudentScheduleClassSubView()
         // By inserting new student class, we can also update class time as class is marked as updatable in the view
         def classTime = classMath.getTime()
         studentScheduleClassView.setTime(classTime.plusMinutes(30))
@@ -295,7 +304,7 @@ class OracleJdbcJsonViewSpec extends Specification {
         studentScheduleClassView.setTeacher(teacherView)
 
         def address = addressRepository.save(new Address("My Street", "My City"))
-        def addressView = AddressView.fromAddress(address)
+        def addressView = AddressSubView.fromAddress(address)
 
         newStudentScheduleView.setClazz(studentScheduleClassView)
         ivoneStudentView.setAddress(addressView)
@@ -364,7 +373,7 @@ class OracleJdbcJsonViewSpec extends Specification {
         then:
         // After deleted should not be present
         !optFredStudentView.present
-        count == 0
+        count == 1
     }
 
     @Unroll
@@ -388,7 +397,7 @@ class OracleJdbcJsonViewSpec extends Specification {
         PersistentEntity studentViewEntity = getRuntimePersistentEntity(StudentView)
         String[] sql = builder.buildCreateTableStatements(studentViewEntity)
         then:
-        sql[0] == ""
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW student_view AS SELECT JSON {'_id': s.id,'name': s.name, 'birthDate': s.birth_date, 'averageGrade': s.average_grade, 'startDateTime': s.start_date_time, 'active': s.active, 'schedule': [SELECT JSON {'id': sc.id,'class': (SELECT JSON {'classID': c.id,'teacher': (SELECT JSON {'teachID': t.id,'teacher': t.name} FROM TBL_TEACHER t WITH UPDATE INSERT  WHERE c.\"TEACHER_ID\"=t.\"ID\"), 'room': c.room, 'time': c.time, 'name': c.name} FROM TBL_CLASS c WITH UPDATE  WHERE sc.\"CLASS_ID\"=c.\"ID\")} FROM TBL_STUDENT_CLASSES sc WITH UPDATE INSERT DELETE  WHERE s.\"ID\"=sc.\"STUDENT_ID\"], 'address': (SELECT JSON {'addressID': a.id,'street': a.street, 'city': a.city} FROM TBL_ADDRESS a WITH UPDATE INSERT  WHERE s.\"ADDRESS_ID\"=a.\"ID\")} FROM TBL_STUDENT s WITH UPDATE INSERT DELETE "
     }
 
     def "test_generate_drop_json_vew"() {
@@ -399,5 +408,16 @@ class OracleJdbcJsonViewSpec extends Specification {
         String[] sql = builder.buildDropTableStatements(studentViewEntity)
         then:
         sql[0] == "DROP " + builder.getTableName(studentViewEntity)
+    }
+
+    def "test_teacher_json_view"() {
+        when:
+        def teacherView = teacherViewRepository.findByName("Mr. Jeff").get()
+        teacherView.setName("Mr. Dimitrije")
+        teacherViewRepository.update(teacherView)
+        def teacherPersistedView = teacherViewRepository.findById(teacherView.teachID).get()
+        then:
+        teacherPersistedView.name == "Mr. Dimitrije"
+        teacherPersistedView.schedule.name.get(0) == "English"
     }
 }

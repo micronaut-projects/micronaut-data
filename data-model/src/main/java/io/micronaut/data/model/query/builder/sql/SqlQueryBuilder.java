@@ -352,11 +352,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         Map<String, SqlTableMapping> sqlTableMappingByTableName = CollectionUtils.newLinkedHashMap(entities.length);
         // Entity can generate indexes, sequences, join tables so need some longer map
         List<String> createStatements = new ArrayList<>(entities.length * 5);
+        List<String> jsonViewCreateStatements = new ArrayList<>(entities.length);
         for (PersistentEntity entity : entities) {
             String schema = SqlQueryBuilderUtils.getSchemaName(entity);
             boolean escape = shouldEscape(entity);
             if (entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
-                addViewCreateStatement(createStatements, entity);
+                addViewCreateStatement(jsonViewCreateStatements, entity);
                 continue;
             }
             List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(entity);
@@ -375,6 +376,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             addTableCreateStatements(createStatements, table, table.schema(), escape);
         }
 
+        createStatements.addAll(jsonViewCreateStatements);
         return createStatements.toArray(new String[0]);
     }
 
@@ -383,13 +385,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         if (entityOptional.isEmpty()) return;
         PersistentEntity entity = entityOptional.get();
         String viewName = viewEntity.getPersistedName();
-        StringBuilder sb = new StringBuilder("CREATE JSON RELATIONAL DUALITY VIEW ")
+        StringBuilder sb = new StringBuilder("CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW ")
             .append(viewName)
             .append(AS_CLAUSE)
             .append(SELECT_JSON_CLAUSE)
             .append(OPEN_CURLY_BRACKET);
         generateMainPart(sb, viewEntity, entity);
-        sb.append(";");
         createStatements.add(sb.toString());
     }
 
@@ -397,7 +398,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         String entityName = entity.getPersistedName();
         String alias = entity.getAliasName();
         for (PersistentProperty identity: viewEntity.getIdentityProperties()) {
-            String viewPropertyName = identity.getName();
+            String viewPropertyName = identity.getAnnotationMetadata().stringValue(SERDE_CONFIG_ANNOTATION, "property")
+                .orElse(identity.getAnnotationMetadata().stringValue(JSON_PROPERTY_ANNOTATION)
+                    .orElse(identity.getName()));
             String entityPersistedPropertyName;
             if (identity.getAnnotationMetadata().hasAnnotation(MappedProperty.class)) {
                 entityPersistedPropertyName = identity.getPersistedName();
@@ -412,20 +415,32 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 .append(entityPersistedPropertyName)
                 .append(COMMA);
         }
-        for (PersistentProperty column : viewEntity.getPersistentProperties()) {
-            String columnPropertyName = column.getName();
+        List<PersistentProperty> allColumns = (List<PersistentProperty>) viewEntity.getPersistentProperties();
+        List<PersistentProperty> columns = allColumns.stream().filter(column -> column.getDataType() != DataType.OBJECT).toList();
+        Iterator<PersistentProperty> it = columns.iterator();
+        while (it.hasNext()) {
+            PersistentProperty column = it.next();
+            boolean isLast = !it.hasNext();
+            String columnPropertyName = column.getAnnotationMetadata().stringValue(SERDE_CONFIG_ANNOTATION, "property")
+                .orElse(column.getAnnotationMetadata().stringValue(JSON_PROPERTY_ANNOTATION)
+                    .orElse(column.getName()));
             if (column instanceof Association association) {
                 Relation.Kind kind = association.getKind();
                 switch (kind) {
                     case ONE_TO_ONE, MANY_TO_ONE, EMBEDDED -> {
-                        sb.append("'").append(columnPropertyName).append("': (");
-                        sb.append(generateCreateAssociationQuery(association));
-                        sb.append("), ");
+                        sb.append("'")
+                            .append(columnPropertyName)
+                            .append("': ")
+                            .append(OPEN_BRACKET)
+                            .append(generateCreateAssociationQuery(association))
+                            .append(CLOSE_BRACKET);
                     }
                     case ONE_TO_MANY, MANY_TO_MANY -> {
-                        sb.append("'").append(columnPropertyName).append("': [");
-                        sb.append(generateCreateAssociationQuery(association));
-                        sb.append("], ");
+                        sb.append("'")
+                            .append(columnPropertyName)
+                            .append("': [")
+                            .append(generateCreateAssociationQuery(association))
+                            .append("]");
                     }
                 }
             }
@@ -441,8 +456,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     .append("': ")
                     .append(alias)
                     .append(DOT)
-                    .append(entityPersistedPropertyName)
-                    .append(COMMA);
+                    .append(entityPersistedPropertyName);
+            }
+            if (!isLast) {
+                sb.append(COMMA)
+                    .append(SPACE);
             }
         }
         sb.append(CLOSE_CURLY_BRACKET)
@@ -747,7 +765,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     column += " NOT NULL DEFAULT SYS_GUID()";
                 } else if (type == IDENTITY) {
                     if (isPk) {
-                        column += " GENERATED ALWAYS AS IDENTITY (MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE)";
+//                        column += " GENERATED ALWAYS AS IDENTITY (MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE)";
+                        column += " GENERATED BY DEFAULT ON NULL AS IDENTITY (MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE)";
                     } else {
                         column += " NOT NULL";
                     }
@@ -831,7 +850,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             builder = INSERT_INTO + getTableName(entity) + " VALUES (" + formatParameter(key) + ")";
             for (PersistentProperty identity : entity.getIdentityProperties()) {
                 if (identity.isGenerated()) {
-                    String identityName = identity.getPersistedName();
+                    String identityName = identity.getAnnotationMetadata().stringValue(SERDE_CONFIG_ANNOTATION, "property")
+                        .orElse(identity.getAnnotationMetadata().stringValue(JSON_PROPERTY_ANNOTATION)
+                            .orElse(identity.getName()));
                     builder = "BEGIN " + builder + " RETURNING JSON_VALUE(" + columnName + ",'$." + identityName + "') INTO " + formatParameter(key + 1) + "; END;";
                 }
                 parameterBindings.add(new QueryParameterBinding() {
