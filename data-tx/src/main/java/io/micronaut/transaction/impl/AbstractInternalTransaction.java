@@ -16,7 +16,7 @@
 package io.micronaut.transaction.impl;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.order.OrderUtil;
 import io.micronaut.transaction.support.TransactionSynchronization;
 

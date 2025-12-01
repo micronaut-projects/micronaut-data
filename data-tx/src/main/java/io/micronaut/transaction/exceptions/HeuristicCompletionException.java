@@ -15,7 +15,7 @@
  */
 package io.micronaut.transaction.exceptions;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import java.util.Locale;
 
 /**

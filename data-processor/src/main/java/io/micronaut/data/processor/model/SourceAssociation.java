@@ -16,7 +16,7 @@
 package io.micronaut.data.processor.model;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;

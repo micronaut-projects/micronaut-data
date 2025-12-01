@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.jpa.repository;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.jpa.repository.intercept.DetachInterceptor;

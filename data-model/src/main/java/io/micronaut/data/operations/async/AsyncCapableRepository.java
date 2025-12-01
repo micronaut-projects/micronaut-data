@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.operations.async;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.operations.RepositoryOperations;
 
 /**

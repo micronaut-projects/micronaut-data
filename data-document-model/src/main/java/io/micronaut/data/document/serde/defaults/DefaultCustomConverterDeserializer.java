@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.document.serde.defaults;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.MappedProperty;

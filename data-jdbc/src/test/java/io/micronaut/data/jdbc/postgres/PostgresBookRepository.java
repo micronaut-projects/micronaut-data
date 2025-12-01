@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.jdbc.postgres;
 
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.Expandable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;

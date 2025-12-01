@@ -1,6 +1,6 @@
 package example;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.cosmos.config.StorageUpdatePolicy;
 import io.micronaut.test.support.TestPropertyProvider;
 import org.junit.Rule;

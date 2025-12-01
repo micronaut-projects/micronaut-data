@@ -1,6 +1,6 @@
 package io.micronaut.data.hibernate.reactive.sort;
 
-import io.micronaut.core.annotation.NonNull;
+import org.jspecify.annotations.NonNull;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.model.Sort;

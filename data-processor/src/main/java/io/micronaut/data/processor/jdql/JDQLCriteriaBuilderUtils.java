@@ -17,7 +17,7 @@ package io.micronaut.data.processor.jdql;
 
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.OrderBy;
 import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.jdql.JDQLBaseListener;
