@@ -617,6 +617,6 @@ interface PersonRepository extends GenericRepository<Person, String> {
         )
         then:
         def ex = thrown(Exception)
-        ex.message.contains('Unable to implement Repository method: PersonRepository.countDistinctName(). Count distinct against property is not supported by Micronaut Data MongoDB')
+        ex.message.contains('Count distinct against property is not supported by Micronaut Data MongoDB')
     }
 }

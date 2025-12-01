@@ -44,14 +44,20 @@ public final class DefaultReactiveConnectionStatus<C> implements ReactiveConnect
 
     private final C connection;
     private final ConnectionDefinition definition;
+    private final ReactorConnectionOperations<C> connectionOperations;
     private final boolean isNew;
 
     private List<ReactiveConnectionSynchronization> connectionSynchronizations;
 
-    public DefaultReactiveConnectionStatus(C connection, ConnectionDefinition definition, boolean isNew) {
+    public DefaultReactiveConnectionStatus(C connection, ConnectionDefinition definition, ReactorConnectionOperations<C> connectionOperations, boolean isNew) {
         this.connection = connection;
         this.definition = definition;
+        this.connectionOperations = connectionOperations;
         this.isNew = isNew;
+    }
+
+    public boolean isConnectionOf(ReactorConnectionOperations<C> connectionOperations) {
+        return this.connectionOperations == connectionOperations;
     }
 
     @Override

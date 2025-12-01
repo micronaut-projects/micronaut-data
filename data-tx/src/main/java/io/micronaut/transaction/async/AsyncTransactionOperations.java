@@ -62,4 +62,14 @@ public interface AsyncTransactionOperations<C> {
     default @NonNull <T> CompletionStage<T> withTransaction(@NonNull Function<AsyncTransactionStatus<C>, CompletionStage<T>> handler) {
         return withTransaction(TransactionDefinition.DEFAULT, handler);
     }
+
+    /**
+     * Determine whether the given transaction status refers to a transaction
+     * managed by this {@link AsyncTransactionOperations} instance.
+     *
+     * @param transactionStatus The transaction status to verify
+     * @return true if the transaction is managed (i.e. created/supplied) by this operations instance
+     * @since 5.0
+     */
+    boolean managesTransaction(@NonNull AsyncTransactionStatus<C> transactionStatus);
 }

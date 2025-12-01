@@ -24,15 +24,18 @@ import io.micronaut.data.model.Association;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import org.bson.BsonDocument;
-import org.bson.BsonDocumentWrapper;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonNull;
 import org.bson.BsonObjectId;
+import org.bson.BsonDateTime;
+import org.bson.BsonDocumentWriter;
 import org.bson.BsonString;
 import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.codecs.DecoderContext;
+import org.bson.codecs.Codec;
+import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.annotations.BsonRepresentation;
 import org.bson.conversions.Bson;
@@ -152,7 +155,25 @@ public final class MongoUtils {
         if (value instanceof ObjectId objectId) {
             return new BsonObjectId(objectId);
         }
-        return BsonDocumentWrapper.asBsonDocument(value, codecRegistry).toBsonDocument();
+        // Temporal types
+        if (value instanceof Instant instant) {
+            return new BsonDateTime(instant.toEpochMilli());
+        }
+        if (value instanceof Date date) {
+            return new BsonDateTime(date.getTime());
+        }
+        // Fallback: use the codec to encode the value into a named field within a document,
+        // then extract that field to obtain the proper BsonValue. This avoids writing a scalar
+        // at the root of a BsonDocumentWriter (which causes NPE for dates).
+        Codec codec = codecRegistry.get(value.getClass());
+        BsonDocument holder = new BsonDocument();
+        BsonDocumentWriter writer = new BsonDocumentWriter(holder);
+        writer.writeStartDocument();
+        writer.writeName("value");
+        // Use default encoder context
+        codec.encode(writer, value, EncoderContext.builder().build());
+        writer.writeEndDocument();
+        return holder.get("value");
     }
 
     static BsonValue toBsonValue(ConversionService conversionService, BsonType bsonType, Object value) {

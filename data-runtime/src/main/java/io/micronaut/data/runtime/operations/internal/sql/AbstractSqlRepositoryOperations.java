@@ -21,6 +21,7 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.context.env.PropertyPlaceholderResolver;
 import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.beans.BeanProperty;
@@ -28,6 +29,7 @@ import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -69,6 +71,7 @@ import io.micronaut.data.runtime.query.internal.BasicStoredQuery;
 import io.micronaut.data.runtime.query.internal.QueryResultStoredQuery;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.annotation.AnnotationMetadataHierarchy;
+import io.micronaut.inject.annotation.MutableAnnotationMetadata;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.json.JsonMapper;
 import jakarta.persistence.Tuple;
@@ -79,6 +82,7 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -724,10 +728,10 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     /**
      * Creates a result mapper.
      *
-     * @param preparedQuery The prepared query
-     * @param rsType        The result set type
-     * @param <E>           The entity type
-     * @param <R>           The result type
+     * @param preparedQuery     The prepared query
+     * @param rsType            The result set type
+     * @param <E>               The entity type
+     * @param <R>               The result type
      * @return The new mapper
      * @since 4.2.0
      */
@@ -768,23 +772,36 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         }
         if (preparedQuery.isDtoProjection()) {
             RuntimePersistentEntity<R> resultPersistentEntity = getEntity(preparedQuery.getResultType());
-            Collection<BeanProperty<R, Object>> beanProperties = resultPersistentEntity.getIntrospection().getBeanProperties();
-            RuntimePersistentEntity<R> dtoPersistentEntity = new RuntimePersistentEntity<>(
-                resultPersistentEntity.getIntrospection(),
-                beanProperties.stream().map(p -> {
-                    if (p.hasAnnotation(MappedProperty.class)) {
-                        return p;
-                    }
-                    RuntimePersistentProperty<E> entityProperty = persistentEntity.getPropertyByName(p.getName());
-                    if (entityProperty == null || !ReflectionUtils.getWrapperType(entityProperty.getType()).equals(ReflectionUtils.getWrapperType(p.getType()))) {
-                        return p;
-                    }
-                    return new BeanPropertyWithAnnotationMetadata<>(
-                        p,
-                        new AnnotationMetadataHierarchy(p.getAnnotationMetadata(), entityProperty.getAnnotationMetadata())
-                    );
-                }).toList()
-            );
+            List<AnnotationValue<Projection>> projections = preparedQuery.getAnnotationMetadata().getAnnotationValuesByType(Projection.class);
+            RuntimePersistentEntity<R> dtoPersistentEntity;
+            if (projections != null && !projections.isEmpty()) {
+                if (projections.size() != resultPersistentEntity.getPersistentProperties().size()) {
+                    throw new IllegalStateException("Number of projections does not match persistent entity properties");
+                }
+                Collection<RuntimePersistentProperty<R>> dtoProps = resultPersistentEntity.getPersistentProperties();
+                Iterator<RuntimePersistentProperty<R>> dtoIter = dtoProps.iterator();
+                List<BeanProperty<R, Object>> properties = new ArrayList<>(projections.size());
+                for (AnnotationValue<Projection> projectionAnnotationValue : projections) {
+                    RuntimePersistentProperty<R> dtoProp = dtoIter.next();
+                    BeanProperty<R, Object> entityProperty = (BeanProperty<R, Object>) persistentEntity.getPropertyByName(projectionAnnotationValue.stringValue().orElseThrow()).getProperty();
+                    MutableAnnotationMetadata annotationMetadata = new  MutableAnnotationMetadata();
+                    annotationMetadata.addAnnotation(Projection.class.getName(), projectionAnnotationValue.getValues());
+                    properties.add(new BeanPropertyWithAnnotationMetadata<>(
+                        dtoProp.getName(),
+                        dtoProp.getProperty(),
+                        new AnnotationMetadataHierarchy(dtoProp.getAnnotationMetadata(), entityProperty.getAnnotationMetadata(), annotationMetadata)
+                    ));
+                }
+                dtoPersistentEntity = new RuntimePersistentEntity<>(
+                    resultPersistentEntity.getIntrospection(),
+                    properties
+                );
+            } else {
+                dtoPersistentEntity = new RuntimePersistentEntity<>(
+                    resultPersistentEntity.getIntrospection(),
+                    getDtoProperties(resultPersistentEntity, persistentEntity)
+                );
+            }
             return new SqlResultEntityTypeMapper<>(
                 dtoPersistentEntity,
                 columnNameResultSetReader,
@@ -816,6 +833,28 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 throw new IllegalStateException("Not supported!");
             }
         };
+    }
+
+    private <E, R> List<BeanProperty<R, Object>> getDtoProperties(RuntimePersistentEntity<R> resultPersistentEntity,
+                                                                  RuntimePersistentEntity<E> persistentEntity) {
+        return resultPersistentEntity.getIntrospection().getBeanProperties().stream().map(p -> {
+            if (p.hasAnnotation(MappedProperty.class)) {
+                return p;
+            }
+            String name = p.getName();
+            AnnotationValue<Projection> projection = p.getAnnotation(Projection.class);
+            if (projection != null) {
+                name = projection.stringValue().orElse(name);
+            }
+            RuntimePersistentProperty<E> entityProperty = persistentEntity.getPropertyByName(name);
+            if (entityProperty == null || !ReflectionUtils.getWrapperType(entityProperty.getType()).equals(ReflectionUtils.getWrapperType(p.getType()))) {
+                return p;
+            }
+            return new BeanPropertyWithAnnotationMetadata<>(
+                p,
+                new AnnotationMetadataHierarchy(p.getAnnotationMetadata(), entityProperty.getAnnotationMetadata())
+            );
+        }).toList();
     }
 
     private String resolveEnvPlaceholderValues(String value) {

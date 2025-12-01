@@ -108,12 +108,12 @@ public abstract class AbstractReactiveEntityOperations<Ctx extends OperationCont
                 return Mono.just(d);
             }
             return Mono.deferContextual(contextView -> {
-                try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate()) {
+                return ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate(() -> {
                     final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, d.entity);
                     d.vetoed = !fn.apply((EntityEventContext<Object>) event);
                     d.entity = event.getEntity();
                     return Mono.just(d);
-                }
+                });
             });
         });
         return false;
@@ -126,11 +126,11 @@ public abstract class AbstractReactiveEntityOperations<Ctx extends OperationCont
                 return Mono.just(d);
             }
             return Mono.deferContextual(contextView -> {
-                try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate()) {
+                return ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate(() -> {
                     final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, d.entity);
                     fn.accept((EntityEventContext<Object>) event);
                     return Mono.just(d);
-                }
+                });
             });
         });
     }

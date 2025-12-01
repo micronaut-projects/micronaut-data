@@ -590,17 +590,23 @@ public class TypeUtils {
      * @return True if they are
      */
     public static boolean areTypesCompatible(ClassElement leftType, ClassElement rightType) {
+        if (leftType == null || rightType == null) {
+            return false;
+        }
         String rightTypeName = rightType.getName();
         if (leftType.getName().equals(rightTypeName)) {
             return true;
-        } else if (leftType.isAssignable(rightTypeName)) {
+        }
+        if (leftType.isAssignable(rightTypeName)) {
+            return true;
+        }
+        if (getTypeName(leftType).equals(getTypeName(rightType))) {
+            return true;
+        }
+        if (isNumber(leftType) && isNumber(rightType)) {
             return true;
         } else {
-            if (isNumber(leftType) && isNumber(rightType)) {
-                return true;
-            } else {
-                return isBoolean(leftType) && isBoolean(rightType);
-            }
+            return isBoolean(leftType) && isBoolean(rightType);
         }
     }
 

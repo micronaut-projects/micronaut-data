@@ -18,6 +18,7 @@ package io.micronaut.transaction.async;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.propagation.PropagatedContext;
+import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionStatus;
@@ -43,29 +44,38 @@ public final class AsyncUsingSyncTransactionOperations<C> implements AsyncTransa
     }
 
     @Override
+    public boolean managesTransaction(AsyncTransactionStatus<C> transactionStatus) {
+        if (transactionStatus instanceof DefaultAsyncTransactionStatus<C> status) {
+            return status.operations == this;
+        }
+        return false;
+    }
+
+    @Override
     public <T> CompletionStage<T> withTransaction(TransactionDefinition definition,
                                                   Function<AsyncTransactionStatus<C>, CompletionStage<T>> handler) {
         CompletableFuture<T> newResult = new CompletableFuture<>();
+        TransactionStatus<C> status = synchronousTransactionManager.getTransaction(definition);
+        CompletionStage<T> result;
         PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
-        try (PropagatedContext.Scope ignore = propagatedContext.propagate()) { // Propagate to clean up the scope
-            TransactionStatus<C> status = synchronousTransactionManager.getTransaction(definition);
-            CompletionStage<T> result;
-            try {
-                result = handler.apply(new DefaultAsyncTransactionStatus<>(status));
-            } catch (Throwable e) {
-                CompletableFuture<T> r = new CompletableFuture<>();
-                r.completeExceptionally(e);
-                result = r;
-            }
+        try {
+            DefaultAsyncTransactionStatus<C> txStatus = new DefaultAsyncTransactionStatus<>(status, this);
+            result = txStatus.propagate(propagatedContext.plus(status), () -> handler.apply(txStatus));
+        } catch (Throwable e) {
+            CompletableFuture<T> r = new CompletableFuture<>();
+            r.completeExceptionally(e);
+            result = r;
+        }
 
-            // Last step to complete the TX, we need to use `withState` to properly setup thread-locals for the TX manager
-            result.whenComplete((o, throwable) -> {
+        // Last step to complete the TX, we need to use `withState` to properly setup thread-locals for the TX manager
+        result.whenComplete((o, throwable) -> {
+            propagatedContext.propagate(() -> {
                 if (throwable == null) {
                     try {
                         synchronousTransactionManager.commit(status);
                     } catch (Throwable e) {
                         newResult.completeExceptionally(e);
-                        return;
+                        return null;
                     }
                     newResult.complete(o);
                 } else {
@@ -76,13 +86,20 @@ public final class AsyncUsingSyncTransactionOperations<C> implements AsyncTransa
                     }
                     newResult.completeExceptionally(throwable);
                 }
+                return null;
             });
-        }
+        });
         return newResult;
     }
 
     private record DefaultAsyncTransactionStatus<T>(
-        TransactionStatus<T> status) implements AsyncTransactionStatus<T> {
+        TransactionStatus<T> status,
+        AsyncTransactionOperations<T> operations) implements AsyncTransactionStatus<T> {
+
+        @Override
+        public ConnectionStatus<T> getConnectionStatus() {
+            return status.getConnectionStatus();
+        }
 
         @Override
         public boolean isNewTransaction() {

@@ -37,6 +37,8 @@ import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.model.CursoredPage;
+import io.micronaut.data.model.CursoredPageable;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
@@ -382,9 +384,51 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @param <RT>    The generic type
      * @return An optional result
      */
+    protected <RT> Optional<RT> getParameterInRole(MethodInvocationContext<?, ?> context, @NonNull String role, @NonNull Argument<RT> type) {
+        return DefaultPreparedQuery.getParameterInRole(role, type, context, conversionService);
+    }
+
+    /**
+     * Retrieve a parameter in the given role for the given type.
+     *
+     * @param context The context
+     * @param role    The role
+     * @param type    The type
+     * @param <RT>    The generic type
+     * @return An optional result
+     */
     @NonNull
     protected <RT> List<RT> getParametersInRole(@NonNull MethodInvocationContext<?, ?> context, @NonNull String role, @NonNull Class<RT> type) {
         return DefaultPreparedQuery.getParametersInRole(role, type, context, conversionService);
+    }
+
+    /**
+     * Retrieve a parameter in the given role for the given type.
+     *
+     * @param context The context
+     * @param role    The role
+     * @param type    The type
+     * @param <RT>    The generic type
+     * @return An optional result
+     */
+    @NonNull
+    protected <RT> List<RT> getParametersInRole(@NonNull MethodInvocationContext<?, ?> context, @NonNull String role, @NonNull Argument<RT> type) {
+        return DefaultPreparedQuery.getParametersInRole(role, type, context, conversionService);
+    }
+
+    /**
+     * Check the return role from the method context.
+     *
+     * @param context The method context
+     * @param role          The role
+     * @param type          The type
+     * @return The optional parameter
+     */
+    @NonNull
+    protected boolean hasReturnTypeInRole(@NonNull MethodInvocationContext<?, ?> context,
+                                          @NonNull String role,
+                                          @NonNull Class<?> type) {
+        return DefaultPreparedQuery.hasReturnTypeInRole(role, type, context, conversionService);
     }
 
     /**
@@ -404,10 +448,25 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                 pageable = Pageable.from(0, limit);
             }
         }
-        for (Sort sort : getParametersInRole(context, TypeRole.SORT, Sort.class)) {
-            if (pageable != sort) {
-                pageable = pageable.orders(sort.getOrderBy());
+        if (pageable.getMode() == Pageable.Mode.OFFSET && hasReturnTypeInRole(context, TypeRole.CURSORED_PAGE, CursoredPage.class)) {
+            if (pageable.getOffset() != 0) {
+                throw new IllegalStateException("Cursored page cannot be requested with an offset pageable");
             }
+            boolean requestTotal = pageable.getOffset() == 0;
+            pageable = CursoredPageable.from(pageable.getSize(), pageable.getSort());
+            if (!requestTotal) {
+                pageable = pageable.withoutTotal();
+            }
+
+        }
+        Pageable finalPageable = pageable;
+        List<Sort> sorts = getParametersInRole(context, TypeRole.SORT, Sort.class);
+        List<Sort.Order> orders = sorts.stream()
+            .filter(sort -> finalPageable != sort)
+            .flatMap(s -> s.getOrderBy().stream())
+            .toList();
+        if (!orders.isEmpty()) {
+            pageable = pageable.orders(orders);
         }
         return pageable;
     }
