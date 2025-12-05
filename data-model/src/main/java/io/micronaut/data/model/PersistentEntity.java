@@ -439,19 +439,23 @@ public interface PersistentEntity extends PersistentElement {
     Optional<NamingStrategy> findNamingStrategy();
 
     /**
-     * Get JSON view persistent entity
+     * Get JSON view persistent entity.
      * @return The persistent entity
      */
     default Optional<PersistentEntity> getJsonViewEntity() {
         return Optional.empty();
     }
 
+    /**
+     * Get JSON subview persistent entity.
+     * @return The persistent entity
+     */
     default Optional<PersistentEntity> getJsonSubViewEntity() {
         return Optional.empty();
     }
 
     /**
-     * Get view's sql supported operations
+     * Get view's sql supported operations.
      * @return The supported operations array
      */
     default JsonView.Operation[] getViewSupportedOperations() {

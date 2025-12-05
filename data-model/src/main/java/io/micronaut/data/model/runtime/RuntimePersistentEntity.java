@@ -437,7 +437,9 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
         } else {
             operations = getAnnotationMetadata().enumValues(JsonSubView.class, "operations", JsonView.Operation.class);
         }
-        if (operations.length == 0) return JsonView.Operation.values();
+        if (operations.length == 0) {
+            return JsonView.Operation.values();
+        }
         return operations;
     }
 

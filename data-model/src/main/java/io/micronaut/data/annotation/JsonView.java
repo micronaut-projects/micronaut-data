@@ -48,14 +48,17 @@ public @interface JsonView {
      */
     Class<?> entity() default void.class;
 
-    enum Operation {UPDATE, INSERT, DELETE};
+    /**
+     * The sql operations enum.
+     */
+    enum Operation { UPDATE, INSERT, DELETE }
 
     /**
      * The supported sql operations array.
      *
      * @return the supported operations array (default [UPDATE, INSERT, DELETE])
      */
-    Operation[] operations() default {Operation.INSERT, Operation.UPDATE, Operation.DELETE};
+    Operation[] operations() default { Operation.INSERT, Operation.UPDATE, Operation.DELETE };
 
     /**
      * The name of the single column in the view.
