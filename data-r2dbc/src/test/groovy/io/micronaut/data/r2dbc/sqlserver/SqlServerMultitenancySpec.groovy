@@ -23,7 +23,8 @@ class SqlServerMultitenancySpec extends AbstractR2dbcMultitenancySpec implements
         return [
                 'db-type'        : 'mssql',
                 'schema-generate': 'CREATE_DROP',
-                'dialect'        : 'SQL_SERVER'
+                'dialect'        : 'SQL_SERVER',
+                'packages'       : 'io.micronaut.data.tck.entities'
         ]
     }
 }

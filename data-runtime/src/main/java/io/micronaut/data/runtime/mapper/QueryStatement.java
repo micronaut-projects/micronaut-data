@@ -20,14 +20,19 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.Vector;
 
 import java.math.BigDecimal;
 import java.sql.Array;
 import java.sql.Time;
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * An abstract interface over prepared statements.
@@ -209,6 +214,24 @@ public interface QueryStatement<PS, IDX> {
                         throw new DataAccessException("Cannot set null value");
                     }
                 }
+            case VECTOR:
+                if (value instanceof double[]) {
+                    return setValue(statement, index, Arrays.toString((double[]) value));
+                } else if (value instanceof float[]) {
+                    return setValue(statement, index, Arrays.toString((float[]) value));
+                } else if (value instanceof int[]) {
+                    return setValue(statement, index, Arrays.toString((int[]) value));
+                } else if (value instanceof byte[]) {
+                    return setValue(statement, index, Arrays.toString((byte[]) value));
+                }
+            case VECTOR_DOUBLE:
+                return setValue(statement, index, Arrays.toString((double[]) value));
+            case VECTOR_FLOAT:
+                return setValue(statement, index, Arrays.toString((float[]) value));
+            case VECTOR_INT:
+                return setValue(statement, index, Arrays.toString((int[]) value));
+            case VECTOR_BYTE:
+                return setValue(statement, index, Arrays.toString((byte[]) value));
             case OBJECT:
             default:
                 if (dataType.isArray()) {

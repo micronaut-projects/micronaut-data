@@ -19,9 +19,12 @@ import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.model.Vector;
 import io.micronaut.data.runtime.convert.DataTypeConverter;
+import oracle.jdbc.OracleType;
 import oracle.sql.DATE;
 import oracle.sql.TIMESTAMP;
+import oracle.sql.VECTOR;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -83,6 +86,32 @@ final class OracleTypeConvertersFactory {
                 return Optional.of(timestamp.timestampValue().toInstant());
             } catch (SQLException e) {
                 throw new DataAccessException("Cannot extract timestamp from: " + timestamp);
+            }
+        };
+    }
+
+    @Prototype
+    DataTypeConverter<VECTOR, Vector> fromOracleVectorToVector() {
+        return (oracleVector, targetType, context) -> {
+            try {
+                OracleType type = oracleVector.getType();
+                switch (type) {
+                    case VECTOR_FLOAT32 -> {
+                        return Optional.of(Vector.of(oracleVector.toFloatArray()));
+                    }
+                    case VECTOR_FLOAT64 -> {
+                        return Optional.of(Vector.of(oracleVector.toDoubleArray()));
+                    }
+                    case VECTOR_INT8 -> {
+                        return Optional.of(Vector.of(oracleVector.toIntArray()));
+                    }
+                    case VECTOR_BINARY -> {
+                        return Optional.of(Vector.of(oracleVector.toByteArray()));
+                    }
+                    default -> throw new DataAccessException("Cannot extract vector from: " + oracleVector);
+                }
+            } catch (SQLException e) {
+                throw new DataAccessException("Cannot extract vector from: " + oracleVector);
             }
         };
     }

@@ -68,7 +68,7 @@ abstract class AbstractMultitenancySpec extends Specification {
                     'micronaut.data.multi-tenancy.mode'                       : 'SCHEMA',
                     'micronaut.multitenancy.tenantresolver.httpheader.enabled': 'true',
                     (sourcePrefix() + '.default.schema-generate-names[0]')    : 'foo',
-                    (sourcePrefix() + '.default.schema-generate-names[1]')    : 'bar'
+                    (sourcePrefix() + '.default.schema-generate-names[1]')    : 'bar',
             ], Environment.TEST)
             def context = embeddedServer.applicationContext
             FooBookClient fooBookClient = context.getBean(FooBookClient)

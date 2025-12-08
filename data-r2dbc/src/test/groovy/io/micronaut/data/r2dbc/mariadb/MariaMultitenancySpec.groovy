@@ -24,7 +24,8 @@ class MariaMultitenancySpec extends AbstractR2dbcMultitenancySpec implements Cle
         return [
                 'db-type'        : 'mariadb',
                 'schema-generate': 'CREATE_DROP',
-                'dialect'        : 'MYSQL'
+                'dialect'        : 'MYSQL',
+                'packages'       : 'io.micronaut.data.tck.entities'
         ]
     }
 }

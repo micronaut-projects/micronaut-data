@@ -48,7 +48,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Implementation of {@link BindableParametersStoredQuery}.
+ * Implementation of {@link io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery}.
  *
  * @param <E> The entity type
  * @param <R> The result type
@@ -234,6 +234,20 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
             values = null;
         }
         if (values == null) {
+            // Unwrap Micronaut Vector/Score abstractions into JDBC-friendly primitives
+            if (value instanceof io.micronaut.data.model.Vector.FloatVector vec) {
+                value = vec.toFloatArray();
+            }
+            else if (value instanceof io.micronaut.data.model.Vector.DoubleVector vec) {
+                value = vec.toDoubleArray();
+            }
+            else if (value instanceof io.micronaut.data.model.Vector.IntVector vec) {
+                value = vec.toIntegerArray();
+            }
+            else if (value instanceof io.micronaut.data.model.Vector.ByteVector vec) {
+                value = vec.toByteArray();
+            }
+
             if (parameterConverter != null) {
                 value = binder.convert(parameterConverter, value, argument);
             } else if (persistentProperty != null && !binding.isAutoPopulated()) {

@@ -19,7 +19,8 @@ class PostgresMultitenancySpec extends AbstractR2dbcMultitenancySpec implements 
         return [
                 'db-type'        : 'postgresql',
                 'schema-generate': 'CREATE_DROP',
-                'dialect'        : 'POSTGRES'
+                'dialect'        : 'POSTGRES',
+                'packages'       : 'io.micronaut.data.tck.entities'
         ]
     }
 }

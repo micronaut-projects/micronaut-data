@@ -1,0 +1,155 @@
+= Oracle VECTOR Column Support
+
+Micronaut Data adds first-class support for Oracle Database 23ai VECTOR columns when using the JDBC module and the Oracle dialect.
+
+This feature enables:
+- Mapping entity properties to Oracle VECTOR columns
+- Reading/writing Micronaut vectors as JDBC parameters and result values
+- Schema generation/validation awareness of VECTOR on Oracle (and filtering on non-Oracle dialects)
+
+Note: VECTOR columns are only supported when Dialect = ORACLE. Entities with VECTOR properties are automatically filtered out during schema generation/validation on other dialects.
+
+== Data types
+
+Micronaut Data provides a lightweight, immutable vector abstraction in io.micronaut.data.model.Vector with specialized implementations:
+
+- Vector.DoubleVector (backed by double[])
+- Vector.FloatVector (backed by float[])
+- Vector.IntVector (backed by int[])
+- Vector.ByteVector (backed by byte[])
+
+The DataType enum includes:
+- VECTOR (generic, defaults to double[])
+- VECTOR_DOUBLE, VECTOR_FLOAT, VECTOR_INT, VECTOR_BYTE
+
+At runtime, Micronaut will unwrap Vector.* parameters to primitive arrays for JDBC binding, and will reconstruct Vector.* from primitive arrays when reading results.
+
+== DDL and schema generation
+
+- For Oracle, VECTOR properties are mapped to a database type of VECTOR.
+- On non-Oracle dialects, entities containing VECTOR properties are filtered out to avoid DDL errors.
+- If you need to specify VECTOR dimensions and element type, provide a column definition with @MappedProperty(definition = "...").
+
+Examples:
+[source,sql]
+----
+-- Manual DDL (recommended to be executed by migrations or @MappedProperty)
+CREATE TABLE vector_doc (id NUMBER PRIMARY KEY, embedding VECTOR(3, FLOAT64));
+CREATE TABLE vector_float_doc (id NUMBER PRIMARY KEY, embedding VECTOR(3, FLOAT32));
+CREATE TABLE vector_int_doc (id NUMBER PRIMARY KEY, embedding VECTOR(3, INT8));
+CREATE TABLE vector_byte_doc (id NUMBER PRIMARY KEY, embedding VECTOR(3, BINARY));
+----
+NOTE: Oracle drivers expose VECTOR column values as primitive arrays depending on the element type:
+- VECTOR(*, *) and VECTOR(..., FLOAT64) -> double[]
+- VECTOR(..., FLOAT32) -> float[]
+- VECTOR(..., INT8) -> int[]
+- VECTOR(..., BINARY) -> byte[]
+This aligns with Oracle documentation. Micronaut maps these to:
+- double[] -> Vector.DoubleVector (also used for generic VECTOR)
+- int[] -> Vector.IntVector
+- float[] -> Vector.FloatVector
+- byte[] -> Vector.ByteVector
+When creating entities and repositories, prefer the corresponding Vector.* type for the column definition you use.
+
+Using @MappedProperty to override column definition:
+[source,java]
+----
+import io.micronaut.data.annotation.*;
+
+@MappedEntity("vector_doc")
+class VectorDoc {
+    @Id
+    @GeneratedValue(value = GeneratedValue.Type.SEQUENCE, ref = "VECTOR_DOC_SEQ")
+    Long id;
+
+    // Override DDL to include dimensions and element type:
+    @MappedProperty(definition = "VECTOR(3, FLOAT64)")
+    Vector.DoubleVector embedding;
+}
+----
+
+If no definition is provided, schema generation for Oracle will use the generic VECTOR type. For production systems, prefer supplying the exact VECTOR definition (dimensions and element type) with @MappedProperty or manage DDL via migrations.
+
+== JDBC binding and reading
+
+- Write path: Vector.* parameters are unwrapped to primitive arrays (double[], float[], int[], byte[]) before binding. The Oracle JDBC driver maps those arrays to VECTOR when the target column is VECTOR.
+- Read path: Result sets are read as primitive arrays using ResultSet.getObject(name, primitiveArrayType) and then converted back into the appropriate Vector.* variant.
+
+Micronaut also includes a DataTypeConverter for oracle.sql.VECTOR -> Vector for cases where the driver returns Oracle VECTOR objects directly.
+
+== Example: default repository CRUD
+
+Entity:
+[source,java]
+----
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.model.Vector;
+
+@MappedEntity("vector_double_doc")
+public class VectorDoubleDoc {
+    @Id
+    @GeneratedValue(value = GeneratedValue.Type.SEQUENCE, ref = "VECTOR_DOC_SEQ")
+    Long id;
+
+    // Defaults to FLOAT64 (double[])
+    Vector.DoubleVector embedding;
+
+    // getters/setters omitted for brevity
+}
+----
+
+Repository (JDBC, Oracle):
+[source,java]
+----
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.CrudRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+public interface VectorDoubleDocRepository extends CrudRepository<VectorDoubleDoc, Long> {
+}
+----
+
+Usage:
+[source,java]
+----
+Vector.DoubleVector v1 = Vector.of(1d, 2.5d, -3.75d);
+VectorDoubleDoc doc = new VectorDoubleDoc();
+doc.setEmbedding(v1);
+
+VectorDoubleDoc saved = vectorDoubleDocRepository.save(doc);
+VectorDoubleDoc fetched = vectorDoubleDocRepository.findById(saved.getId()).orElseThrow();
+
+Vector.DoubleVector v2 = Vector.of(3d, 0d, 7.25d);
+fetched.setEmbedding(v2);
+vectorDoubleDocRepository.update(fetched);
+----
+
+== Example: custom SQL queries
+
+When issuing custom SQL with @Query, pass Vector or a specific Vector.*:
+[source,java]
+----
+import io.micronaut.data.annotation.Query;
+import io.micronaut.context.annotation.Parameter;
+import java.util.Optional;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+interface VectorDoubleDocRepositoryCustom {
+    @Query("INSERT INTO vector_double_doc(id, embedding) VALUES (VECTOR_DOC_SEQ.nextval, :vec)")
+    void saveCustom(@Parameter("vec") Vector vec);
+
+    @Query("UPDATE vector_double_doc SET embedding = :vec WHERE id = :id")
+    void updateCustom(Long id, @Parameter("vec") Vector.DoubleVector vec);
+
+    @Query("SELECT * FROM vector_double_doc WHERE id = :id")
+    Optional<VectorDoubleDoc> findById(Long id);
+}
+----
+
+== Requirements and notes
+
+- Oracle Database 23ai and a compatible JDBC driver (ojdbc) with VECTOR support are required.
+- JDBC and R2DBC are covered by this feature.
+- VECTOR entities are schema-generated and validated only on the Oracle dialect.
+- Ensure appropriate dimensions and VECTOR element type in DDL via migrations or @MappedProperty(definition = "...").

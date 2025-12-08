@@ -26,6 +26,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Slice;
+import io.micronaut.data.model.Vector;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
@@ -563,8 +564,29 @@ public class TypeUtils {
             } else if (type.isAssignable(UUID.class)) {
                 return DataType.UUID;
             }
-            if (Stream.of(Charset.class, TimeZone.class, Locale.class, URL.class, URI.class).anyMatch(type::isAssignable)) {
+
+            if (DataType.STRING.getJavaTypes().stream().anyMatch(type::isAssignable)) {
                 return DataType.STRING;
+            }
+
+            if (type.isAssignable(Vector.class)) {
+                return DataType.VECTOR;
+            }
+
+            if (type.isAssignable(Vector.DoubleVector.class)) {
+                return DataType.VECTOR_DOUBLE;
+            }
+
+            if (type.isAssignable(Vector.IntVector.class)) {
+                return DataType.VECTOR_INT;
+            }
+
+            if (type.isAssignable(Vector.FloatVector.class)) {
+                return DataType.VECTOR_FLOAT;
+            }
+
+            if (type.isAssignable(Vector.ByteVector.class)) {
+                return DataType.VECTOR_BYTE;
             }
 
             String configured = dataTypes.keySet()
@@ -590,10 +612,27 @@ public class TypeUtils {
      * @return True if they are
      */
     public static boolean areTypesCompatible(ClassElement leftType, ClassElement rightType) {
+        // Accept Micronaut Vector parameters for vector-backed properties:
+        // - array-backed vector properties (e.g. float[], double[], byte[], int[])
+        // - nested Vector subtypes (Vector.DoubleVector, Vector.FloatVector, Vector.IntVector, Vector.ByteVector)
+        if (leftType != null && "io.micronaut.data.model.Vector".equals(leftType.getName())) {
+            if (rightType != null && (rightType.isArray() || rightType.isAssignable("io.micronaut.data.model.Vector"))) {
+                return true;
+            }
+        }
+        // Special-case: allow Score/Similarity threshold parameters to be used alongside a vector property,
+        // they are not bound to the property type and act as scalar thresholds. Consider them compatible with
+        // array-backed vector properties or numeric properties.
+        if (leftType != null && ("io.micronaut.data.model.Score".equals(leftType.getName())
+                || "io.micronaut.data.model.Similarity".equals(leftType.getName()))) {
+            if (rightType != null && (rightType.isArray() || isNumber(rightType))) {
+                return true;
+            }
+        }
         String rightTypeName = rightType.getName();
         if (leftType.getName().equals(rightTypeName)) {
             return true;
-        } else if (leftType.isAssignable(rightTypeName)) {
+        } else if (leftType.isAssignable(rightTypeName) || rightType.isAssignable(leftType.getName())) {
             return true;
         } else {
             if (isNumber(leftType) && isNumber(rightType)) {
@@ -615,4 +654,5 @@ public class TypeUtils {
             ReflectionUtils.getWrapperType(t).getName()
         ).orElse(typeName);
     }
+
 }
