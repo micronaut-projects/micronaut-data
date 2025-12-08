@@ -27,7 +27,24 @@ import java.lang.annotation.Target;
 
 /**
  * The annotation defining Json Duality SubView. Currently supported only by Oracle database.
+ * A JsonView can contain JsonSubViews, which have the same structure as JsonViews.
+ * Since only JsonView creation scripts are generated, we need both annotations to differ them.
  *
+ * <pre>
+ * {@code
+ * @JsonSubView(entity = Class.class, operations = { JsonView.Operation.UPDATE, JsonView.Operation.INSERT })
+ * public class TeacherScheduleSubView {
+ *     \@Id
+ *     \@GeneratedValue(GeneratedValue.Type.IDENTITY)
+ *     \@MappedProperty(value = "id")
+ *     private Long classID;
+ *
+ *     private String name;
+ * }
+ * }
+ * </pre>
+ *
+ * @see io.micronaut.data.annotation.JsonView
  * @author dimitrijezravkovic
  * @since 5.0.0
  */
@@ -44,6 +61,8 @@ public @interface JsonSubView {
 
     /**
      * The entity class.
+     * User can specify which entity class this JsonSubView corresponds to.
+     * Valid entity class is one that defines the properties used in this class.
      *
      * @return the entity class (default void)
      */

@@ -419,16 +419,29 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
         return this.hasAutoPopulatedProperties;
     }
 
+    /**
+     * Get JSON view persistent entity.
+     * @return The persistent entity
+     */
     @Override
     public Optional<PersistentEntity> getJsonViewEntity() {
         return getAnnotationMetadata().classValue(JsonView.class, "entity").map(this::getEntity);
     }
 
+    /**
+     * Get JSON subview persistent entity.
+     * @return The persistent entity
+     */
     @Override
     public Optional<PersistentEntity> getJsonSubViewEntity() {
         return getAnnotationMetadata().classValue(JsonSubView.class, "entity").map(this::getEntity);
     }
 
+    /**
+     * Get view's sql supported operations.
+     * Possible values: { INSERT, UPDATE, DELETE }
+     * @return The supported operations array
+     */
     @Override
     public JsonView.Operation[] getViewSupportedOperations() {
         JsonView.Operation[] operations;

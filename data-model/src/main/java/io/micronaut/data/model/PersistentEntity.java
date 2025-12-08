@@ -23,7 +23,6 @@ import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Embeddable;
-import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 
@@ -44,7 +43,7 @@ import static io.micronaut.data.model.AssociationUtils.CAMEL_CASE_SPLIT_PATTERN;
  * @author Graeme Rocher
  * @since 1.0
  */
-public interface PersistentEntity extends PersistentElement {
+public interface PersistentEntity extends PersistentElement, JsonViewPersistentEntity {
 
     /**
      * The entity name including any package prefix.
@@ -437,30 +436,6 @@ public interface PersistentEntity extends PersistentElement {
      */
     @NonNull
     Optional<NamingStrategy> findNamingStrategy();
-
-    /**
-     * Get JSON view persistent entity.
-     * @return The persistent entity
-     */
-    default Optional<PersistentEntity> getJsonViewEntity() {
-        return Optional.empty();
-    }
-
-    /**
-     * Get JSON subview persistent entity.
-     * @return The persistent entity
-     */
-    default Optional<PersistentEntity> getJsonSubViewEntity() {
-        return Optional.empty();
-    }
-
-    /**
-     * Get view's sql supported operations.
-     * @return The supported operations array
-     */
-    default JsonView.Operation[] getViewSupportedOperations() {
-        return new JsonView.Operation[0];
-    }
 
     /**
      * Creates a new persistent entity representation of the given type. The type

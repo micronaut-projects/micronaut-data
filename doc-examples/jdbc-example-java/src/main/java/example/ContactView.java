@@ -1,4 +1,4 @@
-package io.micronaut.data.tck.entities;
+package example;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.data.annotation.GeneratedValue;
@@ -17,11 +17,6 @@ public class ContactView {
     private int age;
     private LocalDateTime startDateTime;
     private boolean active;
-
-    @Relation(Relation.Kind.EMBEDDED)
-    private Address address;
-    @JsonProperty("_metadata")
-    private Metadata metadata;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -44,21 +39,5 @@ public class ContactView {
 
     public void setActive(boolean active) {
         this.active = active;
-    }
-
-    public Address getAddress() {
-        return address;
-    }
-
-    public void setAddress(Address address) {
-        this.address = address;
-    }
-
-    public Metadata getMetadata() {
-        return metadata;
-    }
-
-    public void setMetadata(Metadata metadata) {
-        this.metadata = metadata;
     }
 }

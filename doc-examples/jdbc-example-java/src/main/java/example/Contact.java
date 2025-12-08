@@ -1,4 +1,4 @@
-package io.micronaut.data.tck.entities;
+package example;
 
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
