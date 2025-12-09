@@ -47,6 +47,7 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
 
     private List<String> allPersistentPropertiesNames;
     private List<SourcePersistentProperty> persistentPropertiesValues;
+    private Optional<PersistentEntity> jsonViewEntity = Optional.empty();
 
     /**
      * Default constructor.
@@ -108,6 +109,7 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
         }
         this.ids = ids.stream().toArray(SourcePersistentProperty[]::new);
         this.version = version;
+        this.jsonViewEntity = getAnnotationMetadata().classValue(JsonView.class, "entity").map(entityResolver::apply);
     }
 
     @NonNull
@@ -268,5 +270,10 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
     @Override
     public String toString() {
         return getName();
+    }
+
+    @Override
+    public Optional<PersistentEntity> getJsonViewEntity() {
+        return jsonViewEntity;
     }
 }
