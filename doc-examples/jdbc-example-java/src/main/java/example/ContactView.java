@@ -8,8 +8,9 @@ import io.micronaut.data.annotation.Relation;
 
 import java.time.LocalDateTime;
 
+// tag::record-example[]
 @JsonView(value = "CONTACT_VIEW", alias = "cv", entity = Contact.class)
-public class ContactView {
+public record ContactView {
     @Id
     @GeneratedValue(GeneratedValue.Type.IDENTITY)
     private Long id;
@@ -17,27 +18,5 @@ public class ContactView {
     private int age;
     private LocalDateTime startDateTime;
     private boolean active;
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    public int getAge() { return age; }
-    public void setAge(int age) { this.age = age; }
-
-    public LocalDateTime getStartDateTime() {
-        return startDateTime;
-    }
-
-    public void setStartDateTime(LocalDateTime startDateTime) {
-        this.startDateTime = startDateTime;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
-    }
 }
+// end::record-example[]
