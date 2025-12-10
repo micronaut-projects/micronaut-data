@@ -38,8 +38,6 @@ import io.micronaut.data.model.query.builder.sql.IdentifierNamingStrategy;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils;
 import io.micronaut.data.model.query.builder.sql.validation.SqlTableMappingValidator;
-import io.micronaut.data.model.PersistentProperty;
-import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
 import io.micronaut.data.model.schema.sql.metadata.SqlColumnMetadata;
@@ -405,12 +403,6 @@ public class SchemaGenerator {
         java.util.ArrayList<PersistentEntity> filtered = new java.util.ArrayList<>(entities.length);
         for (PersistentEntity entity : entities) {
             boolean hasVector = false;
-            for (PersistentProperty property : entity.getPersistentProperties()) {
-                if (property.getDataType() == DataType.VECTOR || property.getDataType() == DataType.VECTOR_BYTE || property.getDataType() == DataType.VECTOR_FLOAT || property.getDataType() == DataType.VECTOR_INT || property.getDataType() == DataType.VECTOR_DOUBLE) {
-                    hasVector = true;
-                    break;
-                }
-            }
             if (!hasVector) {
                 filtered.add(entity);
             } else if (LOG.isDebugEnabled()) {

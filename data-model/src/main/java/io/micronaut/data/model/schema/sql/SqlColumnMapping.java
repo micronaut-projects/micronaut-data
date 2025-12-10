@@ -366,12 +366,6 @@ public final class SqlColumnMapping {
                 }
             }
             case BOOLEAN_ARRAY -> "BOOLEAN ARRAY";
-            case VECTOR, VECTOR_FLOAT, VECTOR_BYTE, VECTOR_INT, VECTOR_DOUBLE -> {
-                if (dialect == Dialect.ORACLE) {
-                    yield "VECTOR";
-                }
-                throw new MappingException("Vector data type is supported only for ORACLE dialect");
-            }
             default -> {
                 if (dbType == SqlDbType.ENUM) {
                     // Special case for enum

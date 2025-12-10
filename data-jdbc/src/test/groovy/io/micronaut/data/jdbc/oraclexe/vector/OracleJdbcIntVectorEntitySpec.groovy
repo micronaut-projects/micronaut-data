@@ -151,6 +151,25 @@ class OracleJdbcIntVectorEntitySpec extends Specification implements OracleTestP
         }
     }
 
+    void "test paging over VectorIntDoc"() {
+        given:
+        Vector.IntVector v1 = Vector.of([1, 2, 3] as int[])
+        Vector.IntVector v2 = Vector.of([4, 5, 6] as int[])
+        vectorRepository.saveCustom(v1)
+        vectorRepository.saveCustom(v2)
+
+        when:
+        def p0 = vectorRepository.findAll(io.micronaut.data.model.Pageable.from(0, 1))
+        def p1 = vectorRepository.findAll(io.micronaut.data.model.Pageable.from(1, 1))
+
+        then:
+        p0 != null
+        p1 != null
+        p0.getContent().size() == 1
+        p1.getContent().size() == 1
+        p0.getTotalSize() >= 2
+    }
+
     private void executeSilently(String sql) {
         Connection c = null
         Statement st = null

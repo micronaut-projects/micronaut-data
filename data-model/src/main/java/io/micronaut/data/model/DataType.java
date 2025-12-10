@@ -92,30 +92,6 @@ public enum DataType {
      */
     SHORT(Short.class),
 
-    /**
-     * A {@link Vector} value.
-     */
-    VECTOR(true, Vector.class),
-
-    /**
-     * A {@link Vector} value.
-     */
-    VECTOR_DOUBLE(true, Vector.DoubleVector.class),
-
-    /**
-     * A {@link Vector} value.
-     */
-    VECTOR_FLOAT(true, Vector.FloatVector.class),
-
-    /**
-     * A {@link Vector} value.
-     */
-    VECTOR_BYTE(true, Vector.ByteVector.class),
-
-    /**
-     * A {@link Vector} value.
-     */
-    VECTOR_INT(true, Vector.IntVector.class),
 
     /**
      * A {@link String} value.

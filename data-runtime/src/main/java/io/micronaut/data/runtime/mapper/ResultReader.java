@@ -21,7 +21,6 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.Vector;
 
 import java.math.BigDecimal;
 import java.sql.Time;
@@ -117,7 +116,6 @@ public interface ResultReader<RS, IDX> {
             case DOUBLE -> readDouble(resultSet, index);
             case BYTE_ARRAY -> readBytes(resultSet, index);
             case BIGDECIMAL -> readBigDecimal(resultSet, index);
-            case VECTOR, VECTOR_DOUBLE, VECTOR_FLOAT,  VECTOR_BYTE ,VECTOR_INT -> readVector(resultSet, index, dataType);
             default -> getRequiredValue(resultSet, index, Object.class);
         };
     }
@@ -127,6 +125,7 @@ public interface ResultReader<RS, IDX> {
      * @param resultSet The result set
      * @param index The name
      * @param dataType The data type
+     * @param persistType The persisted Java type to read as when dataType is OBJECT
      * @return The value, can be null
      * @throws DataAccessException if the value cannot be read
      */
@@ -134,20 +133,9 @@ public interface ResultReader<RS, IDX> {
         @NonNull RS resultSet,
         @NonNull IDX index,
         @NonNull DataType dataType,
-        Argument<Object> argument) {
-        if (dataType == DataType.VECTOR) {
-            if (argument.getType().isAssignableFrom(Vector.DoubleVector.class)) {
-                return readVector(resultSet, index, DataType.VECTOR_DOUBLE);
-            }
-            if (argument.getType().isAssignableFrom(Vector.FloatVector.class)) {
-                return readVector(resultSet, index, DataType.VECTOR_FLOAT);
-            }
-            if (argument.getType().isAssignableFrom(Vector.IntVector.class)) {
-                return readVector(resultSet, index, DataType.VECTOR_INT);
-            }
-            if (argument.getType().isAssignableFrom(Vector.ByteVector.class)) {
-                return readVector(resultSet, index, DataType.VECTOR_BYTE);
-            }
+        Class<?> persistType) {
+        if (dataType == DataType.OBJECT && persistType != null) {
+          return getRequiredValue(resultSet, index, persistType);
         }
         return readDynamic(resultSet, index, dataType);
     }
@@ -270,23 +258,6 @@ public interface ResultReader<RS, IDX> {
      */
     default short readShort(RS resultSet, IDX name) {
         return getRequiredValue(resultSet, name, short.class);
-    }
-
-    /**
-     * Read a vector value for the given name.
-     * @param resultSet The result set
-     * @param name The name (such as the column name)
-     * @return The short value
-     */
-    default Vector readVector(RS resultSet, IDX name, DataType dataType) {
-        return switch (dataType) {
-            case VECTOR_DOUBLE -> Vector.of(getRequiredValue(resultSet, name, double[].class));
-            case VECTOR_FLOAT -> Vector.of(getRequiredValue(resultSet, name, float[].class));
-            case VECTOR_BYTE -> Vector.of(getRequiredValue(resultSet, name, byte[].class));
-            case VECTOR_INT -> Vector.of(getRequiredValue(resultSet, name, int[].class));
-            case VECTOR -> Vector.of(getRequiredValue(resultSet, name, double[].class));
-            default -> Vector.of(getRequiredValue(resultSet, name, double[].class));
-        };
     }
 
     /**

@@ -234,19 +234,6 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
             values = null;
         }
         if (values == null) {
-            // Unwrap Micronaut Vector/Score abstractions into JDBC-friendly primitives
-            if (value instanceof io.micronaut.data.model.Vector.FloatVector vec) {
-                value = vec.toFloatArray();
-            }
-            else if (value instanceof io.micronaut.data.model.Vector.DoubleVector vec) {
-                value = vec.toDoubleArray();
-            }
-            else if (value instanceof io.micronaut.data.model.Vector.IntVector vec) {
-                value = vec.toIntegerArray();
-            }
-            else if (value instanceof io.micronaut.data.model.Vector.ByteVector vec) {
-                value = vec.toByteArray();
-            }
 
             if (parameterConverter != null) {
                 value = binder.convert(parameterConverter, value, argument);

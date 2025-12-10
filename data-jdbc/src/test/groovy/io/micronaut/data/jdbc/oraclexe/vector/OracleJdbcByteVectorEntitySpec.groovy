@@ -149,6 +149,25 @@ class OracleJdbcByteVectorEntitySpec extends Specification implements OracleTest
         }
     }
 
+    void "test paging over VectorByteDoc"() {
+        given:
+        Vector.ByteVector v1 = Vector.of([1, 2, 3] as byte[])
+        Vector.ByteVector v2 = Vector.of([4, 5, 6] as byte[])
+        vectorRepository.saveCustom(v1)
+        vectorRepository.saveCustom(v2)
+
+        when:
+        def p0 = vectorRepository.findAll(io.micronaut.data.model.Pageable.from(0, 1))
+        def p1 = vectorRepository.findAll(io.micronaut.data.model.Pageable.from(1, 1))
+
+        then:
+        p0 != null
+        p1 != null
+        p0.getContent().size() == 1
+        p1.getContent().size() == 1
+        p0.getTotalSize() >= 2
+    }
+
     private void executeSilently(String sql) {
         Connection c = null
         Statement st = null

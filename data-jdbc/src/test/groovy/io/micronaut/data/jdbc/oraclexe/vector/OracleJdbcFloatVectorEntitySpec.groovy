@@ -143,6 +143,25 @@ class OracleJdbcFloatVectorEntitySpec extends Specification implements OracleTes
         }
     }
 
+    void "test paging over VectorFloatDoc"() {
+        given:
+        Vector.FloatVector v1 = Vector.of([1f, 2f, 3f] as float[])
+        Vector.FloatVector v2 = Vector.of([4f, 5f, 6f] as float[])
+        vectorRepository.saveCustom(v1)
+        vectorRepository.saveCustom(v2)
+
+        when:
+        def p0 = vectorRepository.findAll(io.micronaut.data.model.Pageable.from(0, 1))
+        def p1 = vectorRepository.findAll(io.micronaut.data.model.Pageable.from(1, 1))
+
+        then:
+        p0 != null
+        p1 != null
+        p0.getContent().size() == 1
+        p1.getContent().size() == 1
+        p0.getTotalSize() >= 2
+    }
+
     private void executeSilently(String sql) {
         java.sql.Connection c = null
         java.sql.Statement st = null

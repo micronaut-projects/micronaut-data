@@ -15,9 +15,14 @@
  */
 package io.micronaut.data.model;
 
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.annotation.TypeDef;
+import io.micronaut.data.model.runtime.convert.vector.ByteVectorAttributeConverter;
+import io.micronaut.data.model.runtime.convert.vector.DoubleVectorAttributeConverter;
+import io.micronaut.data.model.runtime.convert.vector.FloatVectorAttributeConverter;
+import io.micronaut.data.model.runtime.convert.vector.IntVectorAttributeConverter;
+import io.micronaut.data.model.runtime.convert.vector.VectorAttributeConverter;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -31,7 +36,7 @@ import java.util.Objects;
  *
  * @since 4.5
  */
-@Introspected
+@TypeDef(type = DataType.OBJECT, converter = VectorAttributeConverter.class, definition = "VECTOR")
 public sealed interface Vector permits Vector.DoubleVector, Vector.FloatVector, Vector.ByteVector, Vector.IntVector {
 
     /**
@@ -203,6 +208,7 @@ public sealed interface Vector permits Vector.DoubleVector, Vector.FloatVector, 
     /**
      * Float-backed immutable vector.
      */
+    @TypeDef(type = DataType.OBJECT, converter = FloatVectorAttributeConverter.class, definition = "VECTOR")
     final class FloatVector implements Vector {
         private final float[] data;
 
@@ -269,6 +275,7 @@ public sealed interface Vector permits Vector.DoubleVector, Vector.FloatVector, 
     /**
      * Double-backed immutable vector.
      */
+    @TypeDef(type = DataType.OBJECT,  converter = DoubleVectorAttributeConverter.class, definition = "VECTOR")
     final class DoubleVector implements Vector {
         private final double[] data;
 
@@ -336,6 +343,7 @@ public sealed interface Vector permits Vector.DoubleVector, Vector.FloatVector, 
      * Int-backed immutable vector.
      * @since 4.7
      */
+    @TypeDef(type = DataType.OBJECT, converter = IntVectorAttributeConverter.class, definition = "VECTOR")
     final class IntVector implements Vector {
         private final int[] data;
 
@@ -403,6 +411,7 @@ public sealed interface Vector permits Vector.DoubleVector, Vector.FloatVector, 
      * Byte-backed immutable vector.
      * @since 4.7
      */
+    @TypeDef(type = DataType.OBJECT, converter = ByteVectorAttributeConverter.class, definition = "VECTOR")
     final class ByteVector implements Vector {
         private final byte[] data;
 

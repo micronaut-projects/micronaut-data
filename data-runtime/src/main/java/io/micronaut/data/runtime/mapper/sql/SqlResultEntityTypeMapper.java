@@ -701,11 +701,20 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         }
         DataType dataType = prop.getDataType();
         Object result;
+        AttributeConverter<?, ?> converterForType = prop.getConverter();
+        Class<?> persistType = null;
+        if (converterForType != null) {
+            try {
+                persistType = converterForType.getPersistedType();
+            } catch (UnsupportedOperationException e) {
+            }
+        }
+
         if (dataType == DataType.JSON && jsonColumnReader != null) {
             JsonDataType jsonDataType = prop.getJsonDataType();
             result = jsonColumnReader.readJsonColumn(resultReader, rs, columnName, jsonDataType, prop.getArgument());
         } else {
-            result = resultReader.readDynamic(rs, columnName, dataType, prop.getArgument());
+            result = resultReader.readDynamic(rs, columnName, dataType, persistType);
         }
         AttributeConverter<Object, Object> converter = prop.getConverter();
         if (converter != null) {

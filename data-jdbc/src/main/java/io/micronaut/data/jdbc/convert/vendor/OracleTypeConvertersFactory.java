@@ -116,4 +116,24 @@ final class OracleTypeConvertersFactory {
         };
     }
 
+    @Prototype
+    DataTypeConverter<Vector.DoubleVector, double[]> fromVectorDoubleToArray() {
+        return (vector, targetType, context) -> Optional.of(vector.toDoubleArray());
+    }
+
+    @Prototype
+    DataTypeConverter<Vector.FloatVector, float[]> fromVectorFloatToArray() {
+        return (vector, targetType, context) -> Optional.of(vector.toFloatArray());
+    }
+
+    @Prototype
+    DataTypeConverter<Vector.IntVector, int[]> fromVectorIntToArray() {
+        return (vector, targetType, context) -> Optional.of(vector.toIntegerArray());
+    }
+
+    @Prototype
+    DataTypeConverter<Vector.ByteVector, byte[]> fromVectorByteToArray() {
+        return (vector, targetType, context) -> Optional.of(vector.toByteArray());
+    }
+
 }

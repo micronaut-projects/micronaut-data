@@ -172,6 +172,25 @@ class OracleJdbcDoubleVectorEntitySpec extends Specification implements OracleTe
         }
     }
 
+    void "test paging over VectorDoubleDoc"() {
+        given:
+        Vector.DoubleVector v1 = Vector.of([1d, 2d, 3d] as double[])
+        Vector.DoubleVector v2 = Vector.of([4d, 5d, 6d] as double[])
+        vectorRepository.saveCustom(v1)
+        vectorRepository.saveCustom(v2)
+
+        when:
+        def p0 = vectorRepository.findAll(io.micronaut.data.model.Pageable.from(0, 1))
+        def p1 = vectorRepository.findAll(io.micronaut.data.model.Pageable.from(1, 1))
+
+        then:
+        p0 != null
+        p1 != null
+        p0.getContent().size() == 1
+        p1.getContent().size() == 1
+        p0.getTotalSize() >= 2
+    }
+
     private void executeSilently(String sql) {
         java.sql.Connection c = null
         java.sql.Statement st = null

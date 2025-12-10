@@ -26,7 +26,6 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Slice;
-import io.micronaut.data.model.Vector;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
@@ -35,9 +34,6 @@ import org.reactivestreams.Publisher;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.net.URI;
-import java.net.URL;
-import java.nio.charset.Charset;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Year;
@@ -50,7 +46,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
@@ -458,13 +453,10 @@ public class TypeUtils {
      */
     public static @Nullable String resolveDataConverter(@NonNull ClassElement type, Map<String, String> dataConverters) {
         Optional<String> explicitConverter = type.stringValue(TypeDef.class, "converter");
-        if (explicitConverter.isPresent()) {
-            return explicitConverter.get();
-        }
-        return dataConverters.keySet()
-                .stream()
-                .filter(type::isAssignable)
-                .findFirst().orElse(null);
+        return explicitConverter.orElseGet(() -> dataConverters.keySet()
+            .stream()
+            .filter(type::isAssignable)
+            .findFirst().orElse(null));
     }
 
     /**
@@ -567,26 +559,6 @@ public class TypeUtils {
 
             if (DataType.STRING.getJavaTypes().stream().anyMatch(type::isAssignable)) {
                 return DataType.STRING;
-            }
-
-            if (type.isAssignable(Vector.class)) {
-                return DataType.VECTOR;
-            }
-
-            if (type.isAssignable(Vector.DoubleVector.class)) {
-                return DataType.VECTOR_DOUBLE;
-            }
-
-            if (type.isAssignable(Vector.IntVector.class)) {
-                return DataType.VECTOR_INT;
-            }
-
-            if (type.isAssignable(Vector.FloatVector.class)) {
-                return DataType.VECTOR_FLOAT;
-            }
-
-            if (type.isAssignable(Vector.ByteVector.class)) {
-                return DataType.VECTOR_BYTE;
             }
 
             String configured = dataTypes.keySet()

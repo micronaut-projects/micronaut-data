@@ -245,6 +245,10 @@ public interface PersistentProperty extends PersistentElement {
         return false;
     }
 
+    default String getDefinition() {
+        return null;
+    }
+
     /**
      * The enum constant.
      *

@@ -157,21 +157,32 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
                 .orElse(null);
         String converter = annotationMetadata.stringValue(MappedProperty.class, "converter")
                 .orElseGet(() -> annotationMetadata.stringValue(TypeDef.class, "converter").orElse(null));
+
+        String definition = annotationMetadata.stringValue(TypeDef.class, "definition").orElse(property.getDefinition());
+
         if (Objects.equals(converter, Object.class.getName())) {
             converter = null;
         }
         if (converter == null) {
             ClassElement type = propertyElement.getGenericType();
             converter = TypeUtils.resolveDataConverter(type, dataConverters);
+            if (definition == null) {
+                definition = type.stringValue(TypeDef.class, "definition").orElse(null);
+            }
         }
+
         if (converter != null) {
             if (isRelation) {
                 throw new ProcessingException(propertyElement, "Relation cannot have converter specified");
             }
             ClassElement persistedClassFromConverter = getPersistedClassFromConverter(converter, context);
             if (persistedClassFromConverter != null) {
+                String finalDefinition = definition;
                 propertyElement.annotate(MappedProperty.class, builder -> {
                     builder.member("converterPersistedType", new AnnotationClassValue<>(persistedClassFromConverter.getCanonicalName()));
+                    if (finalDefinition != null) {
+                        builder.member("definition", new AnnotationClassValue<>(finalDefinition));
+                    }
                 });
             }
             if (dataType == null) {

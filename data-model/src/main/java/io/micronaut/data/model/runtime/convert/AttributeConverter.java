@@ -51,4 +51,12 @@ public interface AttributeConverter<X, Y> {
     @Nullable
     X convertToEntityValue(@Nullable Y persistedValue, @NonNull ConversionContext context);
 
+    default Class<X> getEntityType() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    default Class<Y> getPersistedType() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
 }
