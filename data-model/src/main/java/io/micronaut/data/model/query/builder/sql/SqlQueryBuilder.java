@@ -328,7 +328,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             if (dialect != Dialect.ORACLE) {
                 throw new UnsupportedOperationException("JSON View is not supported for dialect " + dialect);
             }
-            addViewCreateStatement(createStatements, entity);
+            addJsonViewCreateStatement(createStatements, entity);
             return createStatements.toArray(new String[0]);
         }
         List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(entity);
@@ -365,7 +365,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             String schema = SqlQueryBuilderUtils.getSchemaName(entity);
             boolean escape = shouldEscape(entity);
             if (entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
-                addViewCreateStatement(jsonViewCreateStatements, entity);
+                addJsonViewCreateStatement(jsonViewCreateStatements, entity);
                 continue;
             }
             List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(entity);
@@ -388,7 +388,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         return createStatements.toArray(new String[0]);
     }
 
-    private void addViewCreateStatement(List<String> createStatements, PersistentEntity viewEntity) {
+    private void addJsonViewCreateStatement(List<String> createStatements, PersistentEntity viewEntity) {
         Optional<PersistentEntity> entityOptional = viewEntity.getJsonViewEntity();
         if (entityOptional.isEmpty()) {
             return;
@@ -400,12 +400,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             .append(AS_CLAUSE)
             .append(SELECT_JSON_CLAUSE)
             .append(OPEN_CURLY_BRACKET);
-        generateMainPart(sb, viewEntity, entity);
+        createJsonViewQuery(sb, viewEntity, entity);
         createStatements.add(sb.toString());
     }
 
-    private void generateMainPart(StringBuilder sb, PersistentEntity viewEntity, PersistentEntity entity) {
-        String entityName = entity.getPersistedName();
+    private void createJsonViewQuery(StringBuilder sb, PersistentEntity viewEntity, PersistentEntity entity) {
         String alias = entity.getAliasName();
         for (PersistentProperty identity: viewEntity.getIdentityProperties()) {
             String viewPropertyName = identity.getAnnotationMetadata().stringValue(SERDE_CONFIG_ANNOTATION, "property")
@@ -430,7 +429,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         Iterator<PersistentProperty> it = columns.iterator();
         while (it.hasNext()) {
             PersistentProperty column = it.next();
-            boolean isLast = !it.hasNext();
             String columnPropertyName = column.getAnnotationMetadata().stringValue(SERDE_CONFIG_ANNOTATION, "property")
                 .orElse(column.getAnnotationMetadata().stringValue(JSON_PROPERTY_ANNOTATION)
                     .orElse(column.getName()));
@@ -442,13 +440,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                             .append(columnPropertyName)
                             .append("': ")
                             .append(OPEN_BRACKET)
-                            .append(generateCreateAssociationQuery(association))
+                            .append(createJsonSubViewQuery(association))
                             .append(CLOSE_BRACKET);
                     case ONE_TO_MANY, MANY_TO_MANY ->
                         sb.append("'")
                             .append(columnPropertyName)
                             .append("': [")
-                            .append(generateCreateAssociationQuery(association))
+                            .append(createJsonSubViewQuery(association))
                             .append("]");
                     default -> {
                         return;
@@ -468,14 +466,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     .append(DOT)
                     .append(entityPersistedPropertyName);
             }
-            if (!isLast) {
+            if (it.hasNext()) {
                 sb.append(COMMA)
                     .append(SPACE);
             }
         }
         sb.append(CLOSE_CURLY_BRACKET)
             .append(FROM_CLAUSE)
-            .append(entityName)
+            .append(entity.getPersistedName())
             .append(SPACE)
             .append(alias)
             .append(WITH_CLAUSE);
@@ -485,16 +483,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
     }
 
-    private String generateCreateAssociationQuery(Association association) {
+    private String createJsonSubViewQuery(Association association) {
         PersistentEntity associatedViewEntity = association.getAssociatedEntity();
         Optional<PersistentEntity> associatedEntityOptional = associatedViewEntity.getJsonSubViewEntity();
-        // This return here just to satisfy to compiler
-        if (associatedEntityOptional.isEmpty()) {
-            return "";
-        }
-        PersistentEntity associatedEntity = associatedEntityOptional.get();
+
+        PersistentEntity associatedEntity = associatedEntityOptional.orElseThrow(IllegalStateException::new);
         StringBuilder sb = new StringBuilder(SELECT_JSON_CLAUSE).append(OPEN_CURLY_BRACKET);
-        generateMainPart(sb, associatedViewEntity, associatedEntity);
+        createJsonViewQuery(sb, associatedViewEntity, associatedEntity);
 
         PersistentEntity associationOwner = association.getOwner();
         PersistentEntity associationOwnerEntity = null;
