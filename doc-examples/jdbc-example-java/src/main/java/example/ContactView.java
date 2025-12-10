@@ -10,13 +10,13 @@ import java.time.LocalDateTime;
 
 // tag::record-example[]
 @JsonView(value = "CONTACT_VIEW", alias = "cv", entity = Contact.class)
-public record ContactView {
+public record ContactView (
     @Id
     @GeneratedValue(GeneratedValue.Type.IDENTITY)
-    private Long id;
-    private String name;
-    private int age;
-    private LocalDateTime startDateTime;
-    private boolean active;
-}
+    Long id,
+    String name,
+    int age,
+    LocalDateTime startDateTime,
+    boolean active
+) {}
 // end::record-example[]
