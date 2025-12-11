@@ -359,7 +359,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
                 QUERY_LOG.debug("Executing Mongo 'aggregate' with pipeline: {}", aggregation.getPipeline().stream().map(e -> e.toBsonDocument().toJson()).toList());
             }
             return Mono.from(aggregate(clientSession, preparedQuery, BsonDocument.class).first())
-                .map(bsonDocument -> convertResult(database.getCodecRegistry(), resultType, bsonDocument, false))
+                .map(bsonDocument -> convertResult(preparedQuery, database.getCodecRegistry(), resultType, bsonDocument, false))
                 .switchIfEmpty(Mono.defer(() -> Mono.just(conversionService.convertRequired(0, resultType))));
         } else {
             MongoFind find = preparedQuery.getFind();
@@ -393,7 +393,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
         if (!resultType.isAssignableFrom(type)) {
             MongoDatabase database = getDatabase(preparedQuery);
             return Mono.from(aggregate(clientSession, preparedQuery, BsonDocument.class).first())
-                .map(bsonDocument -> convertResult(database.getCodecRegistry(), resultType, bsonDocument, preparedQuery.isDtoProjection()));
+                .map(bsonDocument -> convertResult(preparedQuery, database.getCodecRegistry(), resultType, bsonDocument, preparedQuery.isDtoProjection()));
         }
         return Mono.from(aggregate(clientSession, preparedQuery).first())
             .map(r -> {
@@ -412,7 +412,7 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
         if (!resultType.isAssignableFrom(type)) {
             MongoDatabase database = getDatabase(preparedQuery);
             aggregate = Flux.from(aggregate(clientSession, preparedQuery, BsonDocument.class))
-                .map(result -> convertResult(database.getCodecRegistry(), resultType, result, isDtoProjection));
+                .map(result -> convertResult(preparedQuery, database.getCodecRegistry(), resultType, result, isDtoProjection));
         } else {
             aggregate = Flux.from(aggregate(clientSession, preparedQuery));
         }

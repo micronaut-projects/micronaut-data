@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.processor.visitors;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.query.builder.QueryBuilder;
@@ -37,6 +38,7 @@ import java.util.function.Function;
  * @author graemerocher
  * @since 1.0
  */
+@Internal
 public class MethodMatchContext extends MatchContext {
 
     private SourcePersistentEntity entity;
@@ -67,11 +69,12 @@ public class MethodMatchContext extends MatchContext {
             @NonNull MethodElement methodElement,
             @NonNull Map<Element, String> parametersInRole,
             @NonNull Map<String, String> typeRoles,
+            @NonNull List<Map.Entry<String, String>> annotationRoles,
             @NonNull ParameterElement[] parameters,
             @NonNull Function<ClassElement, SourcePersistentEntity> entityResolver,
             @NonNull Map<ClassElement, FindInterceptorDef> findInterceptors,
             @NonNull Function<String, SourcePersistentEntity> entityBySimplyNameResolver) {
-        super(queryBuilder, repositoryClass, visitorContext, methodElement, typeRoles, returnType, parameters, findInterceptors);
+        super(queryBuilder, repositoryClass, visitorContext, methodElement, typeRoles, annotationRoles, returnType, parameters, findInterceptors);
         this.entity = entity;
         this.parametersInRole = Collections.unmodifiableMap(parametersInRole);
         this.entityResolver = entityResolver;

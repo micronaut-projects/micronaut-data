@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.async.propagation.ReactorPropagation;
 import io.micronaut.core.propagation.PropagatedContext;
+import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
@@ -50,12 +51,20 @@ public final class AsyncUsingReactiveTransactionOperations<C> implements AsyncTr
     }
 
     @Override
+    public boolean managesTransaction(AsyncTransactionStatus<C> transactionStatus) {
+        if (transactionStatus instanceof DefaultAsyncTransactionStatus<C> status) {
+            return status.asyncTransactionOperations == this;
+        }
+        return false;
+    }
+
+    @Override
     public Optional<? extends AsyncTransactionStatus<?>> findTransactionStatus() {
         return Optional.ofNullable(
             reactiveTransactionOperations.getTransactionStatus(
                 ReactorPropagation.addPropagatedContext(Context.empty(), PropagatedContext.getOrEmpty())
             )
-        ).map(DefaultAsyncTransactionStatus::new);
+        ).map(status -> new DefaultAsyncTransactionStatus<>(status, this));
     }
 
     @Override
@@ -63,11 +72,9 @@ public final class AsyncUsingReactiveTransactionOperations<C> implements AsyncTr
                                                   Function<AsyncTransactionStatus<C>, CompletionStage<T>> handler) {
         Mono<T> result = Mono.fromDirect(reactiveTransactionOperations.withTransaction(definition,
             status -> Mono.deferContextual(contextView -> Mono.fromCompletionStage(() -> {
-                try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView)
-                    .orElseGet(PropagatedContext::getOrEmpty)
-                    .propagate()) {
-                    return handler.apply(new DefaultAsyncTransactionStatus<>(status));
-                }
+                DefaultAsyncTransactionStatus<C> asyncStatus = new DefaultAsyncTransactionStatus<>(status, this);
+                PropagatedContext propagatedContext = ReactorPropagation.findPropagatedContext(contextView).orElseGet(PropagatedContext::getOrEmpty);
+                return asyncStatus.propagate(propagatedContext, () -> handler.apply(asyncStatus));
             }))));
         return onCompleteCompleteFuture(result);
     }
@@ -97,23 +104,25 @@ public final class AsyncUsingReactiveTransactionOperations<C> implements AsyncTr
 
             @Override
             public void onError(Throwable t) {
-                try (PropagatedContext.Scope ignore = propagatedContext.propagate()) {
-                    completableFuture.completeExceptionally(t);
-                }
+                propagatedContext.propagate(() -> completableFuture.completeExceptionally(t));
             }
 
             @Override
             public void onComplete() {
-                try (PropagatedContext.Scope ignore = propagatedContext.propagate()) {
-                    completableFuture.complete(result);
-                }
+                propagatedContext.propagate(() -> completableFuture.complete(result));
             }
         });
         return completableFuture;
     }
 
     private record DefaultAsyncTransactionStatus<T>(
-        ReactiveTransactionStatus<T> status) implements AsyncTransactionStatus<T> {
+        ReactiveTransactionStatus<T> status,
+        AsyncTransactionOperations<T> asyncTransactionOperations) implements AsyncTransactionStatus<T> {
+
+        @Override
+        public ConnectionStatus<T> getConnectionStatus() {
+            return status.getConnectionStatus();
+        }
 
         @Override
         public boolean isNewTransaction() {

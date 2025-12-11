@@ -1,6 +1,42 @@
 This section documents breaking changes between Micronaut versions
 
-== 4.0.0
+== 5.0
+
+=== Interactions with synchronous transaction and connection manager
+
+Creating a new transaction with `io.micronaut.transaction.SynchronousTransactionManager` or a connection with `io.micronaut.data.connection.SynchronousConnectionManager` no longer places the resulting status into the current `PropagatedContext` automatically.
+Code that subsequently looks up the active transaction or connection (for example via `TransactionOperations#findTransactionStatus` or `ConnectionOperations#findConnectionStatus`) must now explicitly propagate the status when manual transaction or connection demarcation is used.
+Use `TransactionStatus#propagate` or `ConnectionStatus#propagate` to wrap the code section that should observe the newly created context element.
+
+[source,java]
+----
+TransactionStatus<Object> status = transactionManager.getTransaction(TransactionDefinition.DEFAULT);
+
+// No propagation: downstream code cannot observe the transaction
+Optional<TransactionStatus<Object>> missing = transactionOperations.findTransactionStatus(); // empty
+
+// Use TransactionStatus#propagate so that downstream lookups succeed
+status.propagate(() -> {
+    TransactionStatus<Object> present = transactionOperations.getTransactionStatus();
+    bookRepository.saveWithMandatoryTransaction(newBook);
+});
+
+ConnectionStatus<Connection> connection = connectionManager.getConnection(ConnectionDefinition.DEFAULT);
+
+// Without propagate the connection is invisible to ConnectionOperations
+Optional<ConnectionStatus<Connection>> absent = connectionOperations.findConnectionStatus(); // empty
+
+// Use ConnectionStatus#propagate to make the connection available to participating components
+connection.propagate(() -> {
+    ConnectionStatus<Connection> current = connectionOperations.getConnectionStatus();
+    Connection jdbc = current.getConnection();
+    // perform work with the managed connection
+});
+----
+
+NOTE: These changes are required for Micronaut 5 to support propagating context with scoped values.
+
+== 4.0
 
 === Repositories validation
 
@@ -36,5 +72,3 @@ The new implementation has a newly added connection management, allowing to shar
 === Async and Reactive repositories
 
 Async and reactive repositories are no longer throw `EmptyResultException` if the entity is not found.
-
-

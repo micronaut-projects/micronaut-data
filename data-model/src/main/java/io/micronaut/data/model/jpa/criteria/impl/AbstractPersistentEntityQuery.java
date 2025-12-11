@@ -274,7 +274,26 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
     @Override
     public Self where(Expression<Boolean> restriction) {
         if (restriction instanceof ConjunctionPredicate conjunctionPredicate) {
-            predicate = conjunctionPredicate;
+            int size = conjunctionPredicate.getPredicates().size();
+            if (size == 1) {
+                return where(conjunctionPredicate.getPredicates().iterator().next());
+            }
+            if (size == 0) {
+                predicate = null;
+            } else {
+                predicate = conjunctionPredicate;
+            }
+        } else if (restriction instanceof DisjunctionPredicate disjunctionPredicate) {
+            int size = disjunctionPredicate.getPredicates().size();
+            if (size == 1) {
+                return where(disjunctionPredicate.getPredicates().iterator().next());
+            }
+            if (size == 0) {
+                // Empty disjunction should result into unmatchable query
+                predicate = criteriaBuilder.equal(criteriaBuilder.literal(1), criteriaBuilder.literal(2));
+            } else {
+                predicate = disjunctionPredicate;
+            }
         } else {
             predicate = new ConjunctionPredicate(Collections.singleton((IExpression<Boolean>) restriction));
         }
@@ -284,8 +303,11 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
     @Override
     public Self where(Predicate... restrictions) {
         Objects.requireNonNull(restrictions);
+        if (restrictions.length == 1) {
+            return where(restrictions[0]);
+        }
         if (restrictions.length > 0) {
-            predicate = restrictions.length == 1 ? restrictions[0] : new ConjunctionPredicate(
+            predicate = new ConjunctionPredicate(
                 Arrays.stream(restrictions).sequential().map(x -> (IExpression<Boolean>) x).toList()
             );
         } else {
@@ -345,6 +367,11 @@ public abstract class AbstractPersistentEntityQuery<T, Self extends PersistentEn
 
     @Override
     public Class<T> getResultType() {
+        if (resultType.getJavaType() == Object.class && selection != null) {
+            if (!selection.isCompoundSelection()) {
+                return (Class<T>) selection.getJavaType();
+            }
+        }
         return resultType.getJavaType();
     }
 

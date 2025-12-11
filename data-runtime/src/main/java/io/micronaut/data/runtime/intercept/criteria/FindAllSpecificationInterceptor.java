@@ -22,6 +22,8 @@ import io.micronaut.data.operations.RepositoryOperations;
 import jakarta.persistence.criteria.CriteriaQuery;
 
 import java.util.Collections;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * Implementation of the unpaged version of {@code findAll(Specification)}.
@@ -46,6 +48,9 @@ public class FindAllSpecificationInterceptor extends AbstractSpecificationInterc
         Class<Object> rt = context.getReturnType().getType();
         CriteriaQuery<Object> criteriaQuery = buildQuery(methodKey, context);
         Iterable<?> iterable = findAll(methodKey, context, getPageable(context), criteriaQuery);
+        if (rt.equals(Stream.class)) {
+            return StreamSupport.stream(iterable.spliterator(), false);
+        }
         if (rt.isInstance(iterable)) {
             return iterable;
         }

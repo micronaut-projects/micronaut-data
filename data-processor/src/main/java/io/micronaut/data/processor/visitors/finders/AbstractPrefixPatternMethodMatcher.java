@@ -47,22 +47,30 @@ public abstract class AbstractPrefixPatternMethodMatcher implements MethodMatche
 
     @Override
     public MethodMatch match(MethodMatchContext matchContext) {
-        String methodName = matchContext.getMethodElement().getName();
-        Matcher matcher = pattern.matcher(methodName);
-        if (matcher.find()) {
-            return match(matchContext, matcher);
+        if (matches(matchContext)) {
+            return doMatch(matchContext);
         }
         return null;
+    }
+
+    /**
+     * Check if matches.
+     * @param matchContext The context
+     * @return true if matches
+     */
+    protected boolean matches(MethodMatchContext matchContext) {
+        String methodName = matchContext.getMethodElement().getName();
+        Matcher matcher = pattern.matcher(methodName);
+        return matcher.find();
     }
 
     /**
      * Handle the match.
      *
      * @param matchContext The match context
-     * @param matcher The matcher
      * @return The method matcher
      */
-    protected abstract MethodMatch match(MethodMatchContext matchContext, Matcher matcher);
+    protected abstract MethodMatch doMatch(MethodMatchContext matchContext);
 
     private static Pattern computePattern(List<String> prefixes) {
         String prefixPattern = prefixes.stream()

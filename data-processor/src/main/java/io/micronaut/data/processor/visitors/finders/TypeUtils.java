@@ -584,34 +584,23 @@ public class TypeUtils {
      * @return True if they are
      */
     public static boolean areTypesCompatible(ClassElement leftType, ClassElement rightType) {
-        // Accept Micronaut Vector parameters for vector-backed properties:
-        // - array-backed vector properties (e.g. float[], double[], byte[], int[])
-        // - nested Vector subtypes (Vector.DoubleVector, Vector.FloatVector, Vector.IntVector, Vector.ByteVector)
-        if (leftType != null && "io.micronaut.data.model.Vector".equals(leftType.getName())) {
-            if (rightType != null && (rightType.isArray() || rightType.isAssignable("io.micronaut.data.model.Vector"))) {
-                return true;
-            }
-        }
-        // Special-case: allow Score/Similarity threshold parameters to be used alongside a vector property,
-        // they are not bound to the property type and act as scalar thresholds. Consider them compatible with
-        // array-backed vector properties or numeric properties.
-        if (leftType != null && ("io.micronaut.data.model.Score".equals(leftType.getName())
-                || "io.micronaut.data.model.Similarity".equals(leftType.getName()))) {
-            if (rightType != null && (rightType.isArray() || isNumber(rightType))) {
-                return true;
-            }
+        if (leftType == null || rightType == null) {
+            return false;
         }
         String rightTypeName = rightType.getName();
         if (leftType.getName().equals(rightTypeName)) {
             return true;
-        } else if (leftType.isAssignable(rightTypeName) || rightType.isAssignable(leftType.getName())) {
+        }
+        if (leftType.isAssignable(rightTypeName) || rightType.isAssignable(leftType.getName())) {
+            return true;
+        }
+        if (getTypeName(leftType).equals(getTypeName(rightType))) {
+            return true;
+        }
+        if (isNumber(leftType) && isNumber(rightType)) {
             return true;
         } else {
-            if (isNumber(leftType) && isNumber(rightType)) {
-                return true;
-            } else {
-                return isBoolean(leftType) && isBoolean(rightType);
-            }
+            return isBoolean(leftType) && isBoolean(rightType);
         }
     }
 

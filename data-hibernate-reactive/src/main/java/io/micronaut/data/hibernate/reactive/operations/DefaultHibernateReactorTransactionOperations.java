@@ -60,6 +60,14 @@ final class DefaultHibernateReactorTransactionOperations extends AbstractReactor
     }
 
     @Override
+    public boolean managesTransaction(ReactiveTransactionStatus<Stage.Session> transactionStatus) {
+        if (transactionStatus instanceof HibernateReactiveTransactionStatus status) {
+            return status.operations == this;
+        }
+        return super.managesTransaction(transactionStatus);
+    }
+
+    @Override
     protected <R> Flux<R> executeTransactionFlux(AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus<Stage.Session> txStatus,
                                                  TransactionalCallback<Stage.Session, R> handler) {
         Flux<R> error = validateTransaction(txStatus);
@@ -85,37 +93,7 @@ final class DefaultHibernateReactorTransactionOperations extends AbstractReactor
     }
 
     private ReactiveTransactionStatus<Stage.Session> createTxStatus(DefaultReactiveTransactionStatus<Stage.Session> txStatus, Stage.Transaction transaction) {
-        return new ReactiveTransactionStatus<>() {
-            @Override
-            public ConnectionStatus<Stage.Session> getConnectionStatus() {
-                return txStatus.getConnectionStatus();
-            }
-
-            @Override
-            public boolean isNewTransaction() {
-                return txStatus.isNewTransaction();
-            }
-
-            @Override
-            public void setRollbackOnly() {
-                transaction.markForRollback();
-            }
-
-            @Override
-            public boolean isRollbackOnly() {
-                return transaction.isMarkedForRollback();
-            }
-
-            @Override
-            public boolean isCompleted() {
-                return txStatus.isCompleted();
-            }
-
-            @Override
-            public TransactionDefinition getTransactionDefinition() {
-                return txStatus.getTransactionDefinition();
-            }
-        };
+        return new HibernateReactiveTransactionStatus(txStatus, transaction, this);
     }
 
     private <R> Flux<R> validateTransaction(DefaultReactiveTransactionStatus<Stage.Session> txStatus) {
@@ -149,5 +127,41 @@ final class DefaultHibernateReactorTransactionOperations extends AbstractReactor
 
     private IllegalStateException notSupported() {
         return new IllegalStateException("Not supported");
+    }
+
+    private record HibernateReactiveTransactionStatus(
+        DefaultReactiveTransactionStatus<Stage.Session> txStatus,
+        Stage.Transaction transaction,
+        DefaultHibernateReactorTransactionOperations operations) implements ReactiveTransactionStatus<Stage.Session> {
+
+        @Override
+        public ConnectionStatus<Stage.Session> getConnectionStatus() {
+            return txStatus.getConnectionStatus();
+        }
+
+        @Override
+        public boolean isNewTransaction() {
+            return txStatus.isNewTransaction();
+        }
+
+        @Override
+        public void setRollbackOnly() {
+            transaction.markForRollback();
+        }
+
+        @Override
+        public boolean isRollbackOnly() {
+            return transaction.isMarkedForRollback();
+        }
+
+        @Override
+        public boolean isCompleted() {
+            return txStatus.isCompleted();
+        }
+
+        @Override
+        public TransactionDefinition getTransactionDefinition() {
+            return txStatus.getTransactionDefinition();
+        }
     }
 }

@@ -46,15 +46,19 @@ public abstract class AbstractSpecificationMethodMatcher extends AbstractPrefixP
     }
 
     protected final boolean isQuerySpecification(@NonNull MethodMatchContext methodMatchContext) {
-        return methodMatchContext.hasParameterInRole(TypeRole.SPECIFICATION_PREDICATE) || methodMatchContext.hasParameterInRole(TypeRole.SPECIFICATION_QUERY);
+        return isPredicateSpecification(methodMatchContext) || methodMatchContext.hasParameterInRole(TypeRole.SPECIFICATION_QUERY);
     }
 
     protected final boolean isDeleteSpecification(@NonNull MethodMatchContext methodMatchContext) {
-        return methodMatchContext.hasParameterInRole(TypeRole.SPECIFICATION_PREDICATE) || methodMatchContext.hasParameterInRole(TypeRole.SPECIFICATION_DELETE);
+        return isPredicateSpecification(methodMatchContext) || methodMatchContext.hasParameterInRole(TypeRole.SPECIFICATION_DELETE);
     }
 
     protected final boolean isUpdateSpecification(@NonNull MethodMatchContext methodMatchContext) {
-        return methodMatchContext.hasParameterInRole(TypeRole.SPECIFICATION_PREDICATE) || methodMatchContext.hasParameterInRole(TypeRole.SPECIFICATION_UPDATE);
+        return isPredicateSpecification(methodMatchContext) || methodMatchContext.hasParameterInRole(TypeRole.SPECIFICATION_UPDATE);
+    }
+
+    private boolean isPredicateSpecification(MethodMatchContext methodMatchContext) {
+        return methodMatchContext.hasParameterInRole(TypeRole.SPECIFICATION_PREDICATE) || methodMatchContext.hasParameterInRole(TypeRole.SPECIFICATION_CONSTRAINT);
     }
 
 }

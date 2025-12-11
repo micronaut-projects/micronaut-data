@@ -109,6 +109,26 @@ final class DefaultHibernateReactiveSynchronousRepositoryOperations implements B
     }
 
     @Override
+    public <T> void persist(T entity) {
+        notSupported();
+    }
+
+    @Override
+    public <T> void refresh(T entity) {
+        notSupported();
+    }
+
+    @Override
+    public <T> void remove(T entity) {
+        notSupported();
+    }
+
+    @Override
+    public <T> void detach(T entity) {
+        notSupported();
+    }
+
+    @Override
     public void flush() {
         notSupported();
     }

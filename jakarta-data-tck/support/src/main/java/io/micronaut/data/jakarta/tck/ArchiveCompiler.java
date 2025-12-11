@@ -17,6 +17,7 @@ package io.micronaut.data.jakarta.tck;
 
 import io.micronaut.annotation.processing.AggregatingTypeElementVisitorProcessor;
 import io.micronaut.annotation.processing.BeanDefinitionInjectProcessor;
+import io.micronaut.annotation.processing.MixinVisitorProcessor;
 import io.micronaut.annotation.processing.TypeElementVisitorProcessor;
 import io.micronaut.core.annotation.Internal;
 import org.jboss.shrinkwrap.api.Archive;
@@ -172,6 +173,7 @@ final class ArchiveCompiler {
 
     private List<Processor> getAnnotationProcessors() {
         List<Processor> result = new ArrayList<>();
+        result.add(new MixinVisitorProcessor());
         result.add(new TypeElementVisitorProcessor());
         result.add(new AggregatingTypeElementVisitorProcessor());
         result.add(new BeanDefinitionInjectProcessor() {

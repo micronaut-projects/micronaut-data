@@ -706,9 +706,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             if (tx != null) {
                 try {
                     return Flux.deferContextual(contextView -> {
-                        try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate()) {
-                            return callback.apply(tx.getConnection());
-                        }
+                        PropagatedContext propagatedContext = ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty());
+                        return tx.propagate(propagatedContext, () -> callback.apply(tx.getConnection()));
                     });
                 } catch (Exception e) {
                     return Flux.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
@@ -717,9 +716,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             return connectionOperations.withConnectionFlux(
                 isWrite ? ConnectionDefinition.DEFAULT : ConnectionDefinition.READ_ONLY,
                 status -> Flux.deferContextual(contextView -> {
-                    try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate()) {
-                        return callback.apply(status.getConnection());
-                    }
+                    PropagatedContext propagatedContext = ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty());
+                    return status.propagate(propagatedContext, () -> callback.apply(status.getConnection()));
                 })
             );
         }
@@ -733,9 +731,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             if (tx != null) {
                 try {
                     return Mono.deferContextual(contextView -> {
-                        try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate()) {
-                            return callback.apply(tx.getConnection());
-                        }
+                        PropagatedContext propagatedContext = ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty());
+                        return tx.propagate(propagatedContext, () -> callback.apply(tx.getConnection()));
                     });
                 } catch (Exception e) {
                     return Mono.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
@@ -744,9 +741,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             return connectionOperations.withConnectionMono(
                 isWrite ? ConnectionDefinition.DEFAULT : ConnectionDefinition.READ_ONLY,
                 status -> Mono.deferContextual(contextView -> {
-                    try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate()) {
-                        return callback.apply(status.getConnection());
-                    }
+                    PropagatedContext propagatedContext = ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty());
+                    return status.propagate(propagatedContext, () -> callback.apply(status.getConnection()));
                 })
             );
         }
@@ -998,10 +994,10 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     return Mono.just(d);
                 }
                 return Mono.deferContextual(contextView -> {
-                    try (PropagatedContext.Scope ignore = ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate()) {
+                    return ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate(() -> {
                         storedQuery.bindParameters(new R2dbcParameterBinder(ctx, stmt, storedQuery), ctx.invocationContext, d.entity, d.previousValues);
-                    }
-                    return Mono.just(d);
+                        return Mono.just(d);
+                    });
                 });
             });
         }
