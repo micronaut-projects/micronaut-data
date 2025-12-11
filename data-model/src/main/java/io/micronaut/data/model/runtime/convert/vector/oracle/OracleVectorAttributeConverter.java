@@ -15,12 +15,14 @@
  */
 package io.micronaut.data.model.runtime.convert.vector.oracle;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.data.model.Vector;
 import io.micronaut.data.model.runtime.convert.vector.VectorAttributeConverter;
 import jakarta.inject.Singleton;
+import oracle.sql.VECTOR;
 
 import java.util.Arrays;
 
@@ -40,6 +42,7 @@ import java.util.Arrays;
  * can be inspected to branch accordingly (e.g. DatabaseMetaData#getDatabaseProductName for JDBC).
  */
 @Singleton
+@Requires(classes = VECTOR.class)
 public final class OracleVectorAttributeConverter implements OracleVectorAttributeConverterToString<Vector, double[]>, VectorAttributeConverter<double[]> {
 
     @Override

@@ -15,12 +15,14 @@
  */
 package io.micronaut.data.model.runtime.convert.vector.oracle;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.data.model.Vector;
 import io.micronaut.data.model.runtime.convert.vector.FloatVectorAttributeConverter;
 import jakarta.inject.Singleton;
+import oracle.sql.VECTOR;
 
 import java.util.Arrays;
 
@@ -28,6 +30,7 @@ import java.util.Arrays;
  * Attribute converter for Vector.FloatVector <-> float[].
  */
 @Singleton
+@Requires(classes = VECTOR.class)
 public final class OracleFloatVectorAttributeConverter implements OracleVectorAttributeConverterToString<Vector.FloatVector, float[]>, FloatVectorAttributeConverter<float[]> {
 
     @Override

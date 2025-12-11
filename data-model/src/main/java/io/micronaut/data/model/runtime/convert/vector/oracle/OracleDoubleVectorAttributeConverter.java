@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.model.runtime.convert.vector.oracle;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionContext;
@@ -22,6 +23,7 @@ import io.micronaut.data.model.Vector;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.convert.vector.DoubleVectorAttributeConverter;
 import jakarta.inject.Singleton;
+import oracle.sql.VECTOR;
 
 import java.util.Arrays;
 
@@ -32,6 +34,7 @@ import java.util.Arrays;
  * to the persisted driver-friendly primitive array double[] and back.
  */
 @Singleton
+@Requires(classes = VECTOR.class)
 public final class OracleDoubleVectorAttributeConverter implements OracleVectorAttributeConverterToString<Vector.DoubleVector, double[]>, DoubleVectorAttributeConverter<double[]> {
 
     @Override

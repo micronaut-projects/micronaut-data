@@ -15,7 +15,9 @@
  */
 package io.micronaut.data.model.runtime.convert.vector.oracle;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import oracle.sql.VECTOR;
 
 /**
  * Contract for Oracle vector attribute converters that also provide a string representation of the
@@ -24,6 +26,7 @@ import io.micronaut.data.model.runtime.convert.AttributeConverter;
  * @param <X> The entity type (converted from/to)
  * @param <Y> The persisted JDBC/R2DBC type
  */
+@Requires(classes = VECTOR.class)
 public interface OracleVectorAttributeConverterToString<X, Y> extends AttributeConverter<X, Y> {
 
     /**

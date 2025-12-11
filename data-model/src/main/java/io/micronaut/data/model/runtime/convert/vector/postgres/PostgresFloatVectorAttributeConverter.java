@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.model.runtime.convert.vector.postgres;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionContext;
@@ -34,6 +35,7 @@ import org.postgresql.util.PGobject;
  * @since 5.0
  */
 @Singleton
+@Requires(classes = PGobject.class)
 public final class PostgresFloatVectorAttributeConverter implements FloatVectorAttributeConverter<PGobject> {
 
     @Override
