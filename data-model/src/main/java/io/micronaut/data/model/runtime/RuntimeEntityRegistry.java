@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.event.EntityEventListener;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 
 /**
  * A registry for looking up entities across repositories.
@@ -50,13 +51,25 @@ public interface RuntimeEntityRegistry extends ApplicationContextProvider {
      * @param <T> The generic type
      * @return The entity
      */
-    @NonNull <T> RuntimePersistentEntity<T> getEntity(@NonNull Class<T> type);
+    default @NonNull <T> RuntimePersistentEntity<T> getEntity(@NonNull Class<T> type) {
+        return this.getEntity(type, null);
+    }
 
     /**
      * Get a new, non-cached instance.
      * @param type The type
+     * @param dialect The SQL dialect to consider when building the entity metadata.
      * @param <T> The generic type
      * @return The entity
      */
-    @NonNull <T> RuntimePersistentEntity<T> newEntity(@NonNull Class<T> type);
+    @NonNull <T> RuntimePersistentEntity<T> getEntity(@NonNull Class<T> type, Dialect dialect);
+
+    /**
+     * Get a new, non-cached instance.
+     * @param type The type
+     * @param dialect The SQL dialect to consider when building the entity metadata.
+     * @param <T> The generic type
+     * @return The entity
+     */
+    @NonNull <T> RuntimePersistentEntity<T> newEntity(@NonNull Class<T> type, Dialect dialect);
 }

@@ -18,6 +18,8 @@ package io.micronaut.data.model.runtime;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 
+import java.util.List;
+
 /**
  * Attribute converter registry.
  *
@@ -37,4 +39,6 @@ public interface AttributeConverterRegistry {
     @NonNull
     AttributeConverter<Object, Object> getConverter(@NonNull Class<?> converterClass);
 
+    @NonNull
+    List<AttributeConverter<Object, Object>> getConverters(@NonNull Class<?> converterClass);
 }

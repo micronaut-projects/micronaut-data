@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.annotation.Definition;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.Indexes;
 import io.micronaut.data.annotation.MappedEntity;
@@ -160,15 +161,17 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
 
         String definition = annotationMetadata.stringValue(TypeDef.class, "definition").orElse(property.getDefinition());
 
+        ClassElement type = propertyElement.getGenericType();
+
+        if (definition == null) {
+            definition = type.stringValue(TypeDef.class, "definition").orElse(null);
+        }
+
         if (Objects.equals(converter, Object.class.getName())) {
             converter = null;
         }
         if (converter == null) {
-            ClassElement type = propertyElement.getGenericType();
             converter = TypeUtils.resolveDataConverter(type, dataConverters);
-            if (definition == null) {
-                definition = type.stringValue(TypeDef.class, "definition").orElse(null);
-            }
         }
 
         if (converter != null) {
@@ -182,6 +185,13 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
                     builder.member("converterPersistedType", new AnnotationClassValue<>(persistedClassFromConverter.getCanonicalName()));
                     if (finalDefinition != null) {
                         builder.member("definition", new AnnotationClassValue<>(finalDefinition));
+                    }
+                    AnnotationValue<TypeDef> annotation = type.getAnnotation(TypeDef.class);
+                    if (annotation != null) {
+                        List<AnnotationValue<Definition>> definitions = annotation.getAnnotations("definitions", Definition.class);
+                        if (!definitions.isEmpty()) {
+                            builder.member("definitions", definitions.toArray(new AnnotationValue[0]));
+                        }
                     }
                 });
             }
@@ -201,7 +211,6 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
             }
 
             if (dataType == null) {
-                ClassElement type = propertyElement.getGenericType();
                 dataType = TypeUtils.resolveDataType(type, dataTypes);
             }
         }

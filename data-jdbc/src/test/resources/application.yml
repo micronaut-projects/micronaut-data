@@ -13,6 +13,7 @@ test-resources:
       db-name: test
     postgres:
       startup-timeout: 300s
+      image-name: pgvector/pgvector:pg16
 
 micronaut:
   http:

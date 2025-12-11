@@ -55,7 +55,7 @@ final class RuntimePersistentEntitySubquery<T> extends AbstractPersistentEntityS
 
     @Override
     public <X> PersistentEntityRoot<X> from(Class<X> entityClass) {
-        return from(runtimeEntityRegistry.getEntity(entityClass));
+        return from(runtimeEntityRegistry.getEntity(entityClass, null));
     }
 
     @Override

@@ -65,6 +65,12 @@ $$;
                     e.printStackTrace();
                     // Ignore if already exists
                 }
+                // Ensure pgvector extension and demo table for vector tests
+                try (CallableStatement st = connection.prepareCall("CREATE EXTENSION IF NOT EXISTS vector;")) {
+                    st.execute();
+                } catch (SQLException e) {
+                    // Ignore if not available or already exists
+                }
 
             }
         } catch (Exception e) {

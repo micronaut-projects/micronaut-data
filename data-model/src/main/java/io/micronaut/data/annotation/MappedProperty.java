@@ -69,6 +69,13 @@ public @interface MappedProperty {
     String definition() default "";
 
     /**
+     * Used to define the mapping. For example in the case of SQL this would be the column definition. Example: BLOB NOT NULL.
+     *
+     * @return A string-based definition of the property type.
+     */
+    Definition[] definitions() default {};
+
+    /**
      * @return The column alias to use for the query
      * @since 3.8.0
      */

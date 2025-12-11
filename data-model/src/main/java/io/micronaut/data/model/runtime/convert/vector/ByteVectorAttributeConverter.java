@@ -15,42 +15,17 @@
  */
 package io.micronaut.data.model.runtime.convert.vector;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.core.annotation.Indexed;
 import io.micronaut.data.model.Vector;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
-import jakarta.inject.Singleton;
 
 /**
- * Attribute converter for Vector.ByteVector <-> byte[].
+ * The attribute converter is used for converting mapped entity value to the persisted value and back.
+ *
+ * @param <X> The entity value type
+ * @author Denis Stepanov
+ * @since 3.1
  */
-@Singleton
-public final class ByteVectorAttributeConverter implements AttributeConverter<Vector.ByteVector, byte[]> {
-
-    @Override
-    public @Nullable byte[] convertToPersistedValue(@Nullable Vector.ByteVector entityValue, @NonNull ConversionContext context) {
-        if (entityValue == null) {
-            return null;
-        }
-        return entityValue.toByteArray();
-    }
-
-    @Override
-    public @Nullable Vector.ByteVector convertToEntityValue(@Nullable byte[] persistedValue, @NonNull ConversionContext context) {
-        if (persistedValue == null) {
-            return null;
-        }
-        return (Vector.ByteVector) Vector.of(persistedValue);
-    }
-
-    @Override
-    public Class<Vector.ByteVector> getEntityType() {
-        return Vector.ByteVector.class;
-    }
-
-    @Override
-    public Class<byte[]> getPersistedType() {
-        return byte[].class;
-    }
+@Indexed(ByteVectorAttributeConverter.class)
+public interface ByteVectorAttributeConverter<X> extends AttributeConverter<Vector.ByteVector, X> {
 }

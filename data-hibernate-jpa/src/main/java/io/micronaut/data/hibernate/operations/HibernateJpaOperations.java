@@ -153,7 +153,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
 
     @Override
     public <T> RuntimePersistentEntity<T> getEntity(Class<T> type) {
-        return runtimeEntityRegistry.getEntity(type);
+        return runtimeEntityRegistry.getEntity(type, null);
     }
 
     @Override

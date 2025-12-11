@@ -25,11 +25,13 @@ import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
@@ -49,7 +51,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     private final JsonDataType jsonDataType;
     private final boolean constructorArg;
     private final Argument<Object> argument;
-    private final Supplier<AttributeConverter<Object, Object>> converter;
+    private final Supplier<List<AttributeConverter<Object, Object>>> converter;
     private String persistedName;
     private final String alias;
 
@@ -82,7 +84,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
         this.constructorArg = constructorArg;
         this.argument = argument;
         this.converter = annotationMetadata.classValue(MappedProperty.class, "converter")
-                .map(converter -> SupplierUtil.memoized(() -> owner.resolveConverter(converter)))
+                .map(converter -> SupplierUtil.memoized(() -> owner.resolveConverters(converter)))
                 .orElse(null);
         this.alias = property.getAnnotationMetadata().stringValue(MappedProperty.class, MappedProperty.ALIAS).orElse(null);
     }
@@ -197,12 +199,36 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
         return property;
     }
 
-    @Override
-    public AttributeConverter<Object, Object> getConverter() {
+        @Override
+    public AttributeConverter<Object, Object> getConverter(Dialect dialect) {
         if (converter == null) {
             return null;
         }
-        return converter.get();
+
+        List<AttributeConverter<Object, Object>> attributeConverters = converter.get();
+
+        if (attributeConverters.isEmpty()) {
+            throw new IllegalStateException("No converter for " + owner.getName());
+        }
+
+        if (dialect != null) {
+            Optional<AttributeConverter<Object, Object>> first = attributeConverters.stream().filter(x -> dialect.equals(x.getDialect())).findFirst();
+            if (first.isEmpty()) {
+                first = attributeConverters.stream().filter(x -> x.getDialect() == null).findFirst();
+                if (first.isEmpty()) {
+                    throw new IllegalStateException("No converter for " + owner.getName() + " for " + dialect);
+                }
+            }
+            return first.get();
+        }
+
+        Optional<AttributeConverter<Object, Object>> first = attributeConverters.stream().filter(x -> x.getDialect() == null).findFirst();
+
+        if (first.isPresent()) {
+            return first.get();
+        }
+
+        throw new IllegalStateException("There are no default for " + owner.getName());
     }
 
     @NonNull

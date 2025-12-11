@@ -26,7 +26,6 @@ import java.sql.Array;
 import java.sql.Time;
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.UUID;
 
@@ -211,20 +210,7 @@ public interface QueryStatement<PS, IDX> {
                     }
                 }
             case OBJECT:
-                // No implicit conversion for OBJECT here. Converters must be applied earlier at parameter binding time.
-                // However, if a previous binding step already normalized values to primitive numeric arrays,
-                // format them as string literals here (generic, not vector-specific).
-                if (value instanceof double[] newValue) {
-                    value = Arrays.toString(newValue);
-                } else if (value instanceof float[] newValue) {
-                    value = Arrays.toString(newValue);
-                } else if (value instanceof int[] newValue) {
-                    value = Arrays.toString(newValue);
-                } else if (value instanceof byte[] newValue) {
-                    value = Arrays.toString(newValue);
-                }
-                // Fall through to default handling.
-            default:
+                default:
                 if (dataType.isArray()) {
                     if (value != null && !(value instanceof Array)) {
                         // Always convert primitive arrays to wrappers array. H2 doesn't support primitive arrays.

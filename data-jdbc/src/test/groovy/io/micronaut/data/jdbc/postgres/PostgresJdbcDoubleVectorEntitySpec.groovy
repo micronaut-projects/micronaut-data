@@ -1,4 +1,4 @@
-package io.micronaut.data.jdbc.oraclexe.vector
+package io.micronaut.data.jdbc.postgres
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Parameter
@@ -7,17 +7,17 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
-import io.micronaut.data.jdbc.oraclexe.OracleTestPropertyProvider
 import io.micronaut.data.model.Vector
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Sort
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.PageableRepository
 import jakarta.persistence.Column
-import jakarta.validation.constraints.Size
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
-class OracleJdbcDoubleVectorEntitySpec extends Specification implements OracleTestPropertyProvider {
+class PostgresJdbcDoubleVectorEntitySpec extends Specification implements PostgresTestPropertyProvider {
 
     @AutoCleanup
     @Shared
@@ -35,20 +35,6 @@ class OracleJdbcDoubleVectorEntitySpec extends Specification implements OracleTe
         return [getClass().package.name]
     }
 
-    def setupSpec() {
-        // Create sequence and table if not exists (ignore errors if already present)
-        executeSilently "CREATE SEQUENCE VECTOR_DOC_SEQ"
-        // Oracle 23ai VECTOR: use 3 dims for tests (FLOAT64 by default)
-//        executeSilently "CREATE TABLE vector_double_doc (id NUMBER PRIMARY KEY, embedding VECTOR(3, FLOAT64))"
-    }
-
-    def cleanup() {
-        // Clean table between tests
-        executeSilently "DELETE FROM vector_double_doc"
-        // no-op transaction boundary to flush
-        context.getBean(io.micronaut.transaction.SynchronousTransactionManager).executeWrite { status -> null }
-    }
-
     void "test save, find and update single entity (using custom queries with io.micronaut.data.model.Vector)"() {
         given:
         double[] dv = [1d, 2.5d, -3.75d] as double[]
@@ -56,7 +42,7 @@ class OracleJdbcDoubleVectorEntitySpec extends Specification implements OracleTe
 
         when: "save via custom @Query using Vector parameter"
         vectorRepository.saveCustom(v1)
-        def list = vectorRepository.findAll(io.micronaut.data.model.Sort.of(io.micronaut.data.model.Sort.Order.asc("id")))
+        def list = vectorRepository.findAll(Sort.of(Sort.Order.asc("id")))
         def e = list.find { it.embedding.toDoubleArray().toList() == dv.toList() }
 
         then: "entity persisted and read conversion to Micronaut Vector works"
@@ -118,7 +104,7 @@ class OracleJdbcDoubleVectorEntitySpec extends Specification implements OracleTe
         when:
         vectorRepository.saveCustom(vA)
         vectorRepository.saveCustom(vB)
-        def rows = vectorRepository.findAll(io.micronaut.data.model.Sort.of(io.micronaut.data.model.Sort.Order.asc("id")))
+        def rows = vectorRepository.findAll(Sort.of(Sort.Order.asc("id")))
 
         then:
         def idA = rows.find { it.embedding.toDoubleArray().toList() == [1d, 2d, 3d] }?.id
@@ -132,7 +118,7 @@ class OracleJdbcDoubleVectorEntitySpec extends Specification implements OracleTe
         Vector.DoubleVector vB2 = Vector.of([0d, -1d, -2d] as double[])
         vectorRepository.updateCustom(idA, vA2)
         vectorRepository.updateCustom(idB, vB2)
-        def rows2 = vectorRepository.findAll(io.micronaut.data.model.Sort.of(io.micronaut.data.model.Sort.Order.asc("id")))
+        def rows2 = vectorRepository.findAll(Sort.of(Sort.Order.asc("id")))
 
         then:
         def updatedA = rows2.find { it.id == idA }?.embedding?.toDoubleArray()?.toList()
@@ -152,7 +138,7 @@ class OracleJdbcDoubleVectorEntitySpec extends Specification implements OracleTe
         saveFut.get(10, java.util.concurrent.TimeUnit.SECONDS) == 1
 
         when:
-        def all = vectorRepository.findAll(io.micronaut.data.model.Sort.of(io.micronaut.data.model.Sort.Order.asc("id")))
+        def all = vectorRepository.findAll(Sort.of(Sort.Order.asc("id")))
         def last = all.last()
         java.util.concurrent.Future<java.util.List<VectorDoubleDoc>> findFut = vectorRepository.findAsync(last.id)
 
@@ -182,8 +168,8 @@ class OracleJdbcDoubleVectorEntitySpec extends Specification implements OracleTe
         vectorRepository.saveCustom(v2)
 
         when:
-        def p0 = vectorRepository.findAll(io.micronaut.data.model.Pageable.from(0, 1))
-        def p1 = vectorRepository.findAll(io.micronaut.data.model.Pageable.from(1, 1))
+        def p0 = vectorRepository.findAll(Pageable.from(0, 1))
+        def p1 = vectorRepository.findAll(Pageable.from(1, 1))
 
         then:
         p0 != null
@@ -200,7 +186,8 @@ class OracleJdbcDoubleVectorEntitySpec extends Specification implements OracleTe
             c = dataSource.getConnection()
             st = c.createStatement()
             st.execute(sql)
-        } catch (Throwable ignored) {
+        } catch (Throwable e) {
+            println e
             // ignore if already exists or unsupported in current XE version
         } finally {
             try { st?.close() } catch (ignored) {}
@@ -212,9 +199,9 @@ class OracleJdbcDoubleVectorEntitySpec extends Specification implements OracleTe
 @MappedEntity("vector_double_doc")
 class VectorDoubleDoc {
     @Id
-    @GeneratedValue(value = GeneratedValue.Type.SEQUENCE, ref = "VECTOR_DOC_SEQ")
+    @GeneratedValue
     Long id
-    @Column(length=3)
+    @Column(length = 3)
     Vector.DoubleVector embedding
 
     Long getId() { return id }
@@ -224,13 +211,13 @@ class VectorDoubleDoc {
     void setEmbedding(Vector.DoubleVector embedding) { this.embedding = embedding }
 }
 
-@JdbcRepository(dialect = Dialect.ORACLE)
+@JdbcRepository(dialect = Dialect.POSTGRES)
 interface VectorDoubleDocRepository extends PageableRepository<VectorDoubleDoc, Long> {
 
-    @Query("INSERT INTO vector_double_doc(id, embedding) VALUES (VECTOR_DOC_SEQ.nextval, :vec)")
+    @Query("INSERT INTO vector_double_doc(embedding) VALUES (:vec)")
     void saveCustom(@Parameter("vec") Vector vec)
 
-    @Query("INSERT INTO vector_double_doc(id, embedding) VALUES (VECTOR_DOC_SEQ.nextval, :vec)")
+    @Query("INSERT INTO vector_double_doc(embedding) VALUES (:vec)")
     void saveCustom(@Parameter("vec") Vector.DoubleVector vec)
 
     @Query("SELECT * FROM vector_double_doc WHERE id = :id")
@@ -242,10 +229,10 @@ interface VectorDoubleDocRepository extends PageableRepository<VectorDoubleDoc, 
     @Query("UPDATE vector_double_doc SET embedding = :vec WHERE id = :id")
     void updateCustom(Long id, @Parameter("vec") Vector.DoubleVector vec)
 
-    @Query("INSERT INTO vector_double_doc(id, embedding) VALUES (VECTOR_DOC_SEQ.nextval, :vec)")
+    @Query("INSERT INTO vector_double_doc(embedding) VALUES (:vec)")
     java.util.concurrent.Future<Integer> saveAsync(@Parameter("vec") Vector vec)
 
-    @Query("INSERT INTO vector_double_doc(id, embedding) VALUES (VECTOR_DOC_SEQ.nextval, :vec)")
+    @Query("INSERT INTO vector_double_doc(embedding) VALUES (:vec)")
     java.util.concurrent.Future<Integer> saveAsync(@Parameter("vec") Vector.DoubleVector vec)
 
     @Query("SELECT * FROM vector_double_doc WHERE id = :id")

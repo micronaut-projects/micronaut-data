@@ -15,42 +15,17 @@
  */
 package io.micronaut.data.model.runtime.convert.vector;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.core.annotation.Indexed;
 import io.micronaut.data.model.Vector;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
-import jakarta.inject.Singleton;
 
 /**
- * Attribute converter for Vector.FloatVector <-> float[].
+ * The attribute converter is used for converting mapped entity value to the persisted value and back.
+ *
+ * @param <X> The entity value type
+ * @author Denis Stepanov
+ * @since 3.1
  */
-@Singleton
-public final class FloatVectorAttributeConverter implements AttributeConverter<Vector.FloatVector, float[]> {
-
-    @Override
-    public @Nullable float[] convertToPersistedValue(@Nullable Vector.FloatVector entityValue, @NonNull ConversionContext context) {
-        if (entityValue == null) {
-            return null;
-        }
-        return entityValue.toFloatArray();
-    }
-
-    @Override
-    public @Nullable Vector.FloatVector convertToEntityValue(@Nullable float[] persistedValue, @NonNull ConversionContext context) {
-        if (persistedValue == null) {
-            return null;
-        }
-        return (Vector.FloatVector) Vector.of(persistedValue);
-    }
-
-    @Override
-    public Class<Vector.FloatVector> getEntityType() {
-        return Vector.FloatVector.class;
-    }
-
-    @Override
-    public Class<float[]> getPersistedType() {
-        return float[].class;
-    }
+@Indexed(FloatVectorAttributeConverter.class)
+public interface FloatVectorAttributeConverter<X> extends AttributeConverter<Vector.FloatVector, X> {
 }

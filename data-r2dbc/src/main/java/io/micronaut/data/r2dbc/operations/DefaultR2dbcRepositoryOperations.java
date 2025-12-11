@@ -524,7 +524,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     }
                     SqlResultEntityTypeMapper.PushingMapper<Row, R> rowsMapper = entityTypeMapper.readOneMapper();
                     return executeAndMapEachRow(statement, row -> {
-                        rowsMapper.processRow(row);
+                        rowsMapper.processRow(row, preparedQuery.getDialect());
                         return "";
                     }).collectList().flatMap(ignore -> Mono.justOrEmpty(rowsMapper.getResult()));
                 }
@@ -544,7 +544,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 if (mapper instanceof SqlResultEntityTypeMapper<Row, R> entityTypeMapper) {
                     SqlResultEntityTypeMapper.PushingMapper<Row, List<R>> rowsMapper = entityTypeMapper.readManyMapper();
                     return executeAndMapEachRow(statement, row -> {
-                        rowsMapper.processRow(row);
+                        rowsMapper.processRow(row, preparedQuery.getDialect());
                         return "";
                     }).collectList().flatMapIterable(ignore -> rowsMapper.getResult());
                 }

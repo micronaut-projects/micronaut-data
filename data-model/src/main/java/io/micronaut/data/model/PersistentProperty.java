@@ -24,6 +24,7 @@ import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.JsonRepresentation;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.TypeDef;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 
 import java.util.List;
@@ -208,6 +209,15 @@ public interface PersistentProperty extends PersistentElement {
      */
     @Nullable
     default AttributeConverter<Object, Object> getConverter() {
+        return getConverter(null);
+    }
+
+    /**
+     * @return Returns possible property convertor.
+     * @param dialect The SQL dialect used to select a dialect-specific converter (may be null to select the default).
+     */
+    @Nullable
+    default AttributeConverter<Object, Object> getConverter(Dialect dialect) {
         return null;
     }
 

@@ -181,6 +181,16 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
     }
 
     /**
+     * Resolves a converter instance.
+     * @param converterClass The converter class
+     * @return converter instance
+     */
+    @NonNull
+    protected List<AttributeConverter<Object, Object>> resolveConverters(@NonNull Class<?> converterClass) {
+        throw new MappingException("Converters not supported");
+    }
+
+    /**
      * Does cascade the persist to any of the associations.
      *
      * @return True if it does

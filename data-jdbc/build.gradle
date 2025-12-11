@@ -21,6 +21,7 @@ dependencies {
     compileOnly mnRxjava2.micronaut.rxjava2
     compileOnly projects.micronautDataHibernateJpa
     compileOnly mnSql.ojdbc11
+    compileOnly mnSql.postgresql
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.micronautDataProcessor

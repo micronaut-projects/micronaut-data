@@ -16,8 +16,9 @@
 package io.micronaut.data.model;
 
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.annotation.Definition;
 import io.micronaut.data.annotation.TypeDef;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.convert.vector.ByteVectorAttributeConverter;
 import io.micronaut.data.model.runtime.convert.vector.DoubleVectorAttributeConverter;
 import io.micronaut.data.model.runtime.convert.vector.FloatVectorAttributeConverter;
@@ -64,9 +65,9 @@ public sealed interface Vector permits Vector.DoubleVector, Vector.FloatVector, 
     double[] toDoubleArray();
 
     /**
-     * Convert this vector to a new double array copy.
+     * Convert this vector to a new byte array copy.
      *
-     * @return a new double[] with the vector content
+     * @return a new byte[] with the vector content
      */
     @NonNull
     byte[] toByteArray();
@@ -123,7 +124,7 @@ public sealed interface Vector permits Vector.DoubleVector, Vector.FloatVector, 
       * @return a new vector backed by byte[], int[], float[] or double[]
       */
      @NonNull
-     static Vector of(@Nullable Collection<? extends Number> values) {
+     static Vector of(@NonNull Collection<? extends Number> values) {
          Objects.requireNonNull(values, "values");
          if (values.isEmpty()) {
              return new DoubleVector(new double[0]);
@@ -208,7 +209,10 @@ public sealed interface Vector permits Vector.DoubleVector, Vector.FloatVector, 
     /**
      * Float-backed immutable vector.
      */
-    @TypeDef(type = DataType.OBJECT, converter = FloatVectorAttributeConverter.class, definition = "VECTOR")
+    @TypeDef(type = DataType.OBJECT,  converter = FloatVectorAttributeConverter.class, definition = "vector", definitions = {
+        @Definition(value = "VECTOR", dialect = Dialect.ORACLE, format = "VECTOR(%d,FLOAT32)"),
+        @Definition(value = "vector", dialect = Dialect.POSTGRES, format = "vector(%d)"),
+    })
     final class FloatVector implements Vector {
         private final float[] data;
 
@@ -238,7 +242,7 @@ public sealed interface Vector permits Vector.DoubleVector, Vector.FloatVector, 
         @Override
         public @NonNull byte[] toByteArray() {
             byte[] out = new byte[data.length];
-            for (byte i = 0; i < data.length; i++) {
+            for (int i = 0; i < data.length; i++) {
                 out[i] = (byte) data[i];
             }
             return out;
@@ -275,7 +279,10 @@ public sealed interface Vector permits Vector.DoubleVector, Vector.FloatVector, 
     /**
      * Double-backed immutable vector.
      */
-    @TypeDef(type = DataType.OBJECT,  converter = DoubleVectorAttributeConverter.class, definition = "VECTOR")
+    @TypeDef(type = DataType.OBJECT,  converter = DoubleVectorAttributeConverter.class, definition = "vector", definitions = {
+        @Definition(value = "VECTOR", dialect = Dialect.ORACLE, format = "VECTOR(%d,FLOAT64)"),
+        @Definition(value = "vector", dialect = Dialect.POSTGRES, format = "vector(%d)"),
+    })
     final class DoubleVector implements Vector {
         private final double[] data;
 
@@ -314,7 +321,7 @@ public sealed interface Vector permits Vector.DoubleVector, Vector.FloatVector, 
         @Override
         public @NonNull byte[] toByteArray() {
             byte[] out = new byte[data.length];
-            for (byte i = 0; i < data.length; i++) {
+            for (int i = 0; i < data.length; i++) {
                 out[i] = (byte) data[i];
             }
             return out;
@@ -343,7 +350,10 @@ public sealed interface Vector permits Vector.DoubleVector, Vector.FloatVector, 
      * Int-backed immutable vector.
      * @since 4.7
      */
-    @TypeDef(type = DataType.OBJECT, converter = IntVectorAttributeConverter.class, definition = "VECTOR")
+    @TypeDef(type = DataType.OBJECT,  converter = IntVectorAttributeConverter.class, definition = "vector", definitions = {
+        @Definition(value = "VECTOR", dialect = Dialect.ORACLE, format = "VECTOR(%d,INT8)"),
+        @Definition(value = "vector", dialect = Dialect.POSTGRES, format = "vector(%d)"),
+    })
     final class IntVector implements Vector {
         private final int[] data;
 
@@ -377,7 +387,7 @@ public sealed interface Vector permits Vector.DoubleVector, Vector.FloatVector, 
         @Override
         public @NonNull byte[] toByteArray() {
             byte[] out = new byte[data.length];
-            for (byte i = 0; i < data.length; i++) {
+            for (int i = 0; i < data.length; i++) {
                 out[i] = (byte) data[i];
             }
             return out;
@@ -411,7 +421,10 @@ public sealed interface Vector permits Vector.DoubleVector, Vector.FloatVector, 
      * Byte-backed immutable vector.
      * @since 4.7
      */
-    @TypeDef(type = DataType.OBJECT, converter = ByteVectorAttributeConverter.class, definition = "VECTOR")
+    @TypeDef(type = DataType.OBJECT,  converter = ByteVectorAttributeConverter.class, definition = "vector", definitions = {
+        @Definition(value = "VECTOR", dialect = Dialect.ORACLE, format = "VECTOR(%d,INT8)"),
+        @Definition(value = "vector", dialect = Dialect.POSTGRES, format = "vector(%d)"),
+    })
     final class ByteVector implements Vector {
         private final byte[] data;
 

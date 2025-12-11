@@ -153,7 +153,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
                         value = pp.getPropertyValue(entity);
                     }
                 }
-                value = binder.convert(value, persistentProperty);
+                value = binder.convert(value, persistentProperty, binder.getDialect());
                 parameterConverter = null;
             } else if (entity != null) {
                 if (isJsonEntity() && binding.getDataType() == DataType.JSON) {
@@ -236,9 +236,9 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
         if (values == null) {
 
             if (parameterConverter != null) {
-                value = binder.convert(parameterConverter, value, argument);
+                value = binder.convert(parameterConverter, value, argument, binder.getDialect());
             } else if (persistentProperty != null && !binding.isAutoPopulated()) {
-                value = binder.convert(value, persistentProperty);
+                value = binder.convert(value, persistentProperty, binder.getDialect());
             }
             binder.bindOne(binding, value);
         } else {
@@ -246,9 +246,9 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
             for (ListIterator<Object> iterator = values.listIterator(); iterator.hasNext(); ) {
                 Object v = iterator.next();
                 if (parameterConverter != null) {
-                    v = binder.convert(parameterConverter, v, argument);
+                    v = binder.convert(parameterConverter, v, argument, binder.getDialect());
                 } else if (persistentProperty != null && !binding.isAutoPopulated()) {
-                    v = binder.convert(v, persistentProperty);
+                    v = binder.convert(v, persistentProperty, binder.getDialect());
                 }
                 iterator.set(v);
             }

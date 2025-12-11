@@ -72,6 +72,7 @@ import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import io.micronaut.data.model.runtime.convert.vector.oracle.OracleVectorAttributeConverterToString;
 import io.micronaut.data.operations.DeleteReturningRepositoryOperations;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
@@ -366,11 +367,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
                     SqlResultEntityTypeMapper.PushingMapper<ResultSet, R> oneMapper = entityTypeMapper.readOneMapper();
                     if (rs.next()) {
-                        oneMapper.processRow(rs);
+                        oneMapper.processRow(rs, preparedQuery.getDialect());
                     }
                     if (hasJoins) {
                         while (rs.next()) {
-                            oneMapper.processRow(rs);
+                            oneMapper.processRow(rs, preparedQuery.getDialect());
                         }
                     } else if (jdbcConfiguration.isUniqueResultOnFindOne() && rs.next()) {
                         throw new NonUniqueResultException("Multiple results found for query: " + preparedQuery.getQuery());
@@ -417,7 +418,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         if (mapper instanceof SqlResultEntityTypeMapper<ResultSet, R> entityTypeMapper) {
             SqlResultEntityTypeMapper.PushingMapper<ResultSet, List<R>> manyMapper = entityTypeMapper.readManyMapper();
             while (rs.next()) {
-                manyMapper.processRow(rs);
+                manyMapper.processRow(rs, sqlStoredQuery.getDialect());
             }
             result = manyMapper.getResult();
             if (result == null) {
@@ -495,7 +496,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     try {
                         SqlResultEntityTypeMapper.PushingMapper<ResultSet, List<R>> manyMapper = entityTypeMapper.readManyMapper();
                         while (rs.next()) {
-                            manyMapper.processRow(rs);
+                            manyMapper.processRow(rs, preparedQuery.getDialect());
                         }
                         return manyMapper.getResult().stream();
                     } finally {
@@ -1115,22 +1116,43 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
 
         @Override
-        public Object convert(Object value, RuntimePersistentProperty<?> property) {
-            AttributeConverter<Object, Object> converter = property.getConverter();
+        public Object convert(Object value, RuntimePersistentProperty<?> property, Dialect dialect) {
+            AttributeConverter<Object, Object> converter = property.getConverter(dialect);
             if (converter != null) {
+                if (converter instanceof OracleVectorAttributeConverterToString<?, Object> olc) {
+                    return olc.convertToString(converter.convertToPersistedValue(value,  createTypeConversionContext(property, property.getArgument())));
+                }
                 return converter.convertToPersistedValue(value, createTypeConversionContext(property, property.getArgument()));
             }
             return value;
         }
 
         @Override
-        public Object convert(Class<?> converterClass, Object value, Argument<?> argument) {
+        public Object convert(Object value, RuntimePersistentProperty<?> property) {
+            return convert(value, property, null);
+        }
+
+        @Override
+        public Object convert(Class<?> converterClass, Object value, Argument<?> argument, Dialect dialect) {
             if (converterClass == null) {
                 return value;
             }
-            AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
+            @NonNull List<AttributeConverter<Object, Object>> converters = attributeConverterRegistry.getConverters(converterClass);
+            AttributeConverter<Object, Object> converter = converters.stream().filter(x -> x.getDialect() == dialect).findFirst().orElse(converters.stream().filter(x -> x.getDialect() == null).findFirst().orElse(null));
+            if (converter == null) {
+                throw  new DataAccessException("No converter found for " + converterClass.getName());
+            }
+
             ConversionContext conversionContext = createTypeConversionContext(null, argument);
+            if (converter instanceof OracleVectorAttributeConverterToString<?, Object> olc) {
+                return olc.convertToString(converter.convertToPersistedValue(value, conversionContext));
+            }
             return converter.convertToPersistedValue(value, conversionContext);
+        }
+
+        @Override
+        public Object convert(Class<?> converterClass, Object value, Argument<?> argument) {
+            return convert(converterClass,  value, argument, null);
         }
 
         private ConversionContext createTypeConversionContext(RuntimePersistentProperty<?> property,
@@ -1165,6 +1187,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         @Override
         public int currentIndex() {
             return index;
+        }
+
+        @Override
+        public Dialect getDialect() {
+            return this.sqlStoredQuery.getDialect();
         }
 
     }

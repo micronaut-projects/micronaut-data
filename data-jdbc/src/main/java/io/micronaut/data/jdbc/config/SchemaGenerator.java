@@ -137,7 +137,7 @@ public class SchemaGenerator {
                 .filter(i -> !i.getBeanType().getName().contains("$"))
                 .filter(i -> !Modifier.isAbstract(i.getBeanType().getModifiers()))
                 .filter(i -> !i.hasAnnotation(JsonView.class))
-                .map(beanIntrospection -> runtimeEntityRegistry.getEntity(beanIntrospection.getBeanType()))
+                .map(beanIntrospection -> runtimeEntityRegistry.getEntity(beanIntrospection.getBeanType(), null))
                 .toArray(PersistentEntity[]::new);
             if (ArrayUtils.isNotEmpty(entities)) {
                 DataSource dataSource = DelegatingDataSource.unwrapDataSource(beanLocator.getBean(DataSource.class, Qualifiers.byName(name)));
@@ -236,7 +236,7 @@ public class SchemaGenerator {
                         }
                     }
                 case CREATE:
-                    String[] sql = builder.buildCreateTableStatements(entities);
+                    String[] sql = builder.buildCreateTableStatements(entities, dialect);
                     for (String stmt : sql) {
                         stmt = resolveSql(propertyPlaceholderResolver, stmt);
                         if (DataSettings.QUERY_LOG.isDebugEnabled()) {
@@ -274,7 +274,7 @@ public class SchemaGenerator {
         // that represents join and ad-hoc SqlTableMapping for the same entity based on relation mappings (to be removed/skipped)
         Map<String, SqlTableMapping> sqlTableMappingByTableName = CollectionUtils.newLinkedHashMap(entities.length);
         for (PersistentEntity entity : entities) {
-            List<SqlTableMapping> sqlTableMappings = SqlSchemaUtils.getSqlTableMappings(entity);
+            List<SqlTableMapping> sqlTableMappings = SqlSchemaUtils.getSqlTableMappings(entity, dialect);
             for (SqlTableMapping sqlTableMapping : sqlTableMappings) {
                 String tableName = sqlTableMapping.name();
                 String tableNameLowerCase = tableName.toLowerCase();

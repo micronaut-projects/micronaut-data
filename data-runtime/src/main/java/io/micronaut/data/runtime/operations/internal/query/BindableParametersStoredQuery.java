@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
@@ -71,10 +72,37 @@ public interface BindableParametersStoredQuery<E, R> extends StoredQuery<E, R>, 
          *
          * @param value    The value
          * @param property The property
+         * @param dialect  The SQL dialect (nullable).
+         * @return The converted value
+         */
+        @Nullable
+        default Object convert(@Nullable Object value, @Nullable RuntimePersistentProperty<?> property, @Nullable Dialect dialect) {
+            return convert(value, property);
+        }
+
+        /**
+         * Convert value according to the property definition.
+         *
+         * @param value    The value
+         * @param property The property
          * @return The converted value
          */
         @Nullable
         Object convert(@Nullable Object value, @Nullable RuntimePersistentProperty<?> property);
+
+        /**
+         * Convert value using the converter class.
+         *
+         * @param converterClass The converterClass
+         * @param value          The value
+         * @param argument       The argument
+         * @param dialect        The SQL dialect (nullable).
+         * @return The converted value
+         */
+        @Nullable
+        default Object convert(@Nullable Class<?> converterClass, @Nullable Object value, @Nullable Argument<?> argument, @Nullable Dialect dialect)  {
+            return convert(converterClass, value, argument);
+        }
 
         /**
          * Convert value using the converter class.
@@ -110,5 +138,8 @@ public interface BindableParametersStoredQuery<E, R> extends StoredQuery<E, R>, 
             return -1;
         }
 
+        default Dialect getDialect() {
+            return null;
+        }
     }
 }

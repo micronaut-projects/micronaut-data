@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Indexed;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 
 /**
  * The attribute converter is used for converting mapped entity value to the persisted value and back.
@@ -51,12 +52,17 @@ public interface AttributeConverter<X, Y> {
     @Nullable
     X convertToEntityValue(@Nullable Y persistedValue, @NonNull ConversionContext context);
 
-    default Class<X> getEntityType() {
+    default Class<?> getPersistedType() {
         throw new UnsupportedOperationException("Not implemented");
     }
 
-    default Class<Y> getPersistedType() {
-        throw new UnsupportedOperationException("Not implemented");
+    /**
+     * Get dialect.
+     *
+     * @return dialect
+     */
+    default Dialect getDialect() {
+        return null;
     }
 
 }

@@ -21,6 +21,7 @@ import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import jakarta.inject.Singleton;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -48,6 +49,27 @@ final class DefaultAttributeConverterRegistry implements AttributeConverterRegis
                 return transformer.provide(beanLocator, converterClass);
             }
         }
+        throw new IllegalStateException("Unknown converter type: " + converterClass);
+    }
+
+    @Override
+    public List<AttributeConverter<Object, Object>> getConverters(Class<?> converterClass) {
+        if (AttributeConverter.class.isAssignableFrom(converterClass)) {
+            return (List<AttributeConverter<Object, Object>>) beanLocator.getBeansOfType(converterClass);
+        }
+
+        List<AttributeConverter<Object, Object>>  converters = new ArrayList<>();
+
+        for (AttributeConverterProvider transformer : attributeConverterTransformers) {
+            if (transformer.supports(converterClass)) {
+                converters.add(transformer.provide(beanLocator, converterClass));
+            }
+        }
+
+        if (!converters.isEmpty()) {
+            return converters;
+        }
+
         throw new IllegalStateException("Unknown converter type: " + converterClass);
     }
 }

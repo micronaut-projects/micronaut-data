@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 original authors
+ * Copyright 2017-2025 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.model.runtime.convert.vector;
+package io.micronaut.data.model.runtime.convert.vector.oracle;
 
-import io.micronaut.core.annotation.Indexed;
-import io.micronaut.data.model.Vector;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 
 /**
- * The attribute converter is used for converting mapped entity value to the persisted value and back.
+ * Contract for Oracle vector attribute converters that also provide a string representation of the
+ * persisted value.
  *
- * @param <X> The entity value type
- * @author Denis Stepanov
- * @since 3.1
+ * @param <X> The entity type (converted from/to)
+ * @param <Y> The persisted JDBC/R2DBC type
  */
-@Indexed(IntVectorAttributeConverter.class)
-public interface IntVectorAttributeConverter<X> extends AttributeConverter<Vector.IntVector, X> {
+public interface OracleVectorAttributeConverterToString<X, Y> extends AttributeConverter<X, Y> {
+
+    /**
+     * Convert the persisted value to a string representation.
+     *
+     * @param value The persisted value.
+     * @return The string representation.
+     */
+    String convertToString(Y value);
 }

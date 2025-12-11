@@ -15,18 +15,15 @@
  */
 package io.micronaut.data.processor.visitors
 
-import io.micronaut.core.annotation.AnnotationValue
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.intercept.annotation.DataMethodQueryParameter
 import io.micronaut.data.model.DataType
-import spock.lang.Specification
 
 class ParameterTypeDefConverterFallbackSpec extends AbstractDataSpec {
 
     void "converter is resolved from parameter TYPE when parameter itself has no @TypeDef"() {
         given:
         def repository = buildRepository('test.FallbackRepository', '''
-import java.util.*;
 import java.util.UUID;
 
 import io.micronaut.data.annotation.MappedEntity;

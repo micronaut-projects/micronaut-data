@@ -15,45 +15,17 @@
  */
 package io.micronaut.data.model.runtime.convert.vector;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.core.annotation.Indexed;
 import io.micronaut.data.model.Vector;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
-import jakarta.inject.Singleton;
 
 /**
- * Attribute converter for Vector.DoubleVector <-> double[].
+ * The attribute converter is used for converting mapped entity value to the persisted value and back.
  *
- * This enables mapping entity fields of type {@link Vector.DoubleVector}
- * to the persisted driver-friendly primitive array double[] and back.
+ * @param <X> The entity value type
+ * @author Denis Stepanov
+ * @since 3.1
  */
-@Singleton
-public final class DoubleVectorAttributeConverter implements AttributeConverter<Vector.DoubleVector, double[]> {
-
-    @Override
-    public @Nullable double[] convertToPersistedValue(@Nullable Vector.DoubleVector entityValue, @NonNull ConversionContext context) {
-        if (entityValue == null) {
-            return null;
-        }
-        return entityValue.toDoubleArray();
-    }
-
-    @Override
-    public @Nullable Vector.DoubleVector convertToEntityValue(@Nullable double[] persistedValue, @NonNull ConversionContext context) {
-        if (persistedValue == null) {
-            return null;
-        }
-        return (Vector.DoubleVector) Vector.of(persistedValue);
-    }
-
-    @Override
-    public Class<Vector.DoubleVector> getEntityType() {
-        return Vector.DoubleVector.class;
-    }
-
-    @Override
-    public Class<double[]> getPersistedType() {
-        return double[].class;
-    }
+@Indexed(DoubleVectorAttributeConverter.class)
+public interface DoubleVectorAttributeConverter<X> extends AttributeConverter<Vector.DoubleVector, X> {
 }

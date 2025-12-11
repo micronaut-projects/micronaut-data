@@ -35,6 +35,7 @@ import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.JoinPath;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
@@ -205,7 +206,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      */
     @NonNull
     public R readEntity(@NonNull RS rs) {
-        R entityInstance = readEntity(rs, MappingContext.of(entity, startingPrefix), null, null);
+        R entityInstance = readEntity(rs, MappingContext.of(entity, startingPrefix), null, null, null);
         if (entityInstance == null) {
             throw new DataAccessException("Unable to map result to entity of type [" + entity.getIntrospection().getBeanType() + "]. Missing result data.");
         }
@@ -267,17 +268,17 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                 R entityInstance;
 
                 @Override
-                public void processRow(RS row) {
-                    Object id = readEntityId(row, ctx);
+                public void processRow(RS row, Dialect dialect) {
+                    Object id = readEntityId(row, ctx, dialect);
                     if (id == null) {
                         throw new IllegalStateException("Entity needs to have an ID when JOINs are used!");
                     }
                     if (entityId == null) {
                         entityId = id;
-                        entityInstance = readEntity(row, ctx, null, null);
+                        entityInstance = readEntity(row, ctx, null, null, dialect);
                     } else if (entityId.equals(id)) {
                         // We want only one entity, everything else should be skipped
-                        readChildren(row, entityInstance, null, ctx);
+                        readChildren(row, entityInstance, null, ctx, dialect);
                     }
                 }
 
@@ -299,9 +300,9 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             R entityInstance;
 
             @Override
-            public void processRow(RS row) {
+            public void processRow(RS row, Dialect dialect) {
                 if (entityInstance == null) {
-                    entityInstance = readEntity(row, ctx, null, null);
+                    entityInstance = readEntity(row, ctx, null, null, dialect);
                 } else {
                     throw new NonUniqueResultException();
                 }
@@ -330,17 +331,17 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                 final List<MappingContext<R>> allProcessed = new ArrayList<>(20);
 
                 @Override
-                public void processRow(RS row) {
+                public void processRow(RS row, Dialect dialect) {
                     MappingContext<R> ctx = MappingContext.of(entity, startingPrefix);
-                    Object id = readEntityId(row, ctx);
+                    Object id = readEntityId(row, ctx, dialect);
                     if (id == null) {
                         throw new IllegalStateException("Entity needs to have an ID when JOINs are used!");
                     }
                     MappingContext<R> prevCtx = idEntities.get(id);
                     if (prevCtx != null) {
-                        readChildren(row, prevCtx.entity, null, prevCtx);
+                        readChildren(row, prevCtx.entity, null, prevCtx, dialect);
                     } else {
-                        ctx.entity = readEntity(row, ctx, null, id);
+                        ctx.entity = readEntity(row, ctx, null, id, dialect);
                         idEntities.put(id, ctx);
                         allProcessed.add(ctx);
                     }
@@ -371,9 +372,9 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             final MappingContext<R> ctx = MappingContext.of(entity, startingPrefix);
 
             @Override
-            public void processRow(RS row) {
+            public void processRow(RS row, @Nullable Dialect dialect) {
                 allProcessed.add(
-                    readEntity(row, ctx, null, null)
+                    readEntity(row, ctx, null, null, dialect)
                 );
             }
 
@@ -391,18 +392,18 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         };
     }
 
-    private void readChildren(RS rs, Object instance, Object parent, MappingContext<R> ctx) {
+    private void readChildren(RS rs, Object instance, Object parent, MappingContext<R> ctx, Dialect dialect) {
         if (ctx.manyAssociations != null) {
-            Object id = readEntityId(rs, ctx);
+            Object id = readEntityId(rs, ctx, dialect);
             if (id != null) {
                 MappingContext associatedCtx = ctx.manyAssociations.get(id);
                 if (associatedCtx == null) {
                     associatedCtx = ctx.copy();
-                    R entity = (R) readEntity(rs, associatedCtx, parent, id);
+                    R entity = (R) readEntity(rs, associatedCtx, parent, id, dialect);
                     Objects.requireNonNull(id);
                     ctx.associate(associatedCtx, id, entity);
                 } else {
-                    readChildren(rs, instance, parent, associatedCtx);
+                    readChildren(rs, instance, parent, associatedCtx, dialect);
                 }
             }
             return;
@@ -412,7 +413,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                 MappingContext associationCtx = e.getValue();
                 RuntimeAssociation runtimeAssociation = (RuntimeAssociation) e.getKey();
                 Object in = instance == null || !runtimeAssociation.getKind().isSingleEnded() ? null : runtimeAssociation.getProperty().get(instance);
-                readChildren(rs, in, instance, associationCtx);
+                readChildren(rs, in, instance, associationCtx, dialect);
             }
         }
     }
@@ -467,7 +468,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
     }
 
     @Nullable
-    private <K> K readEntity(RS rs, MappingContext<K> ctx, @Nullable Object parent, @Nullable Object resolveId) {
+    private <K> K readEntity(RS rs, MappingContext<K> ctx, @Nullable Object parent, @Nullable Object resolveId, @Nullable Dialect dialect) {
         RuntimePersistentEntity<K> persistentEntity = ctx.persistentEntity;
         BeanIntrospection<K> introspection = persistentEntity.getIntrospection();
         RuntimePersistentProperty<K>[] constructorArguments = persistentEntity.getConstructorArguments();
@@ -477,7 +478,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             final boolean isEmbedded = ctx.association instanceof Embedded;
             final boolean nullableEmbedded = isEmbedded && ctx.association.isOptional();
 
-            Object id = resolveId == null ? readEntityId(rs, ctx) : resolveId;
+            Object id = resolveId == null ? readEntityId(rs, ctx, dialect) : resolveId;
             if (id == null && !isEmbedded && isAssociation) {
                 return null;
             }
@@ -493,7 +494,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                     if (prop != null) {
                         if (prop instanceof RuntimeAssociation<K> entityAssociation) {
                             if (prop instanceof Embedded embedded) {
-                                args[i] = readEntity(rs, ctx.embedded(embedded), null, null);
+                                args[i] = readEntity(rs, ctx.embedded(embedded), null, null, dialect);
                             } else {
                                 final Relation.Kind kind = entityAssociation.getKind();
                                 final boolean isInverse = parent != null && isAssociation && ctx.association.getOwner() == entityAssociation.getAssociatedEntity();
@@ -503,13 +504,13 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                     MappingContext<K> joinCtx = ctx.join(fetchJoinPaths, entityAssociation);
                                     Object resolvedId = null;
                                     if (!entityAssociation.isForeignKey()) {
-                                        resolvedId = readEntityId(rs, ctx.path(entityAssociation));
+                                        resolvedId = readEntityId(rs, ctx.path(entityAssociation), dialect);
                                     }
                                     if (kind.isSingleEnded()) {
                                         if (joinCtx.jp == null || resolvedId == null && !entityAssociation.isForeignKey()) {
-                                            args[i] = buildIdOnlyEntity(rs, ctx.path(entityAssociation), resolvedId);
+                                            args[i] = buildIdOnlyEntity(rs, ctx.path(entityAssociation), resolvedId, dialect);
                                         } else {
-                                            args[i] = readEntity(rs, joinCtx, null, resolvedId);
+                                            args[i] = readEntity(rs, joinCtx, null, resolvedId, dialect);
                                         }
                                     } else if (entityAssociation.getProperty().isReadOnly()) {
                                         // For constructor-only properties (records) always set empty collection and replace later
@@ -517,11 +518,11 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                         if (joinCtx.jp != null) {
                                             MappingContext<K> associatedCtx = joinCtx.copy();
                                             if (resolvedId == null) {
-                                                resolvedId = readEntityId(rs, associatedCtx);
+                                                resolvedId = readEntityId(rs, associatedCtx, dialect);
                                             }
                                             Object associatedEntity = null;
                                             if (resolvedId != null || entityAssociation.isForeignKey()) {
-                                                associatedEntity = readEntity(rs, associatedCtx, null, resolvedId);
+                                                associatedEntity = readEntity(rs, associatedCtx, null, resolvedId, dialect);
                                             }
                                             if (associatedEntity != null) {
                                                 joinCtx.associate(associatedCtx, resolvedId, associatedEntity);
@@ -531,7 +532,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                 }
                             }
                         } else {
-                            Object v = provideConstructorArgumentValue(rs, ctx, prop, identity, id);
+                            Object v = provideConstructorArgumentValue(rs, ctx, prop, identity, id, dialect);
                             if (v == null) {
                                 if (!prop.isOptional() && !nullableEmbedded) {
                                     AnnotationMetadata entityAnnotationMetadata = ctx.persistentEntity.getAnnotationMetadata();
@@ -571,7 +572,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             }
             RuntimePersistentProperty<K> version = persistentEntity.getVersion();
             if (version != null) {
-                Object v = readProperty(rs, ctx, version);
+                Object v = readProperty(rs, ctx, version, dialect);
                 if (v != null) {
                     entity = convertAndSetWithValue(entity, version, version.getProperty(), v);
                 }
@@ -592,7 +593,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                 BeanProperty<K, Object> property = rpp.getProperty();
                 if (rpp instanceof RuntimeAssociation<K> entityAssociation) {
                     if (rpp instanceof Embedded embedded) {
-                        Object value = readEntity(rs, ctx.embedded(embedded), parent == null ? entity : parent, null);
+                        Object value = readEntity(rs, ctx.embedded(embedded), parent == null ? entity : parent, null, dialect);
                         entity = setProperty(property, entity, value);
                     } else {
                         final boolean isInverse = parent != null && entityAssociation.getKind().isSingleEnded() && isAssociation && ctx.association.getOwner() == entityAssociation.getAssociatedEntity();
@@ -603,21 +604,21 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                             MappingContext<K> joinCtx = ctx.join(fetchJoinPaths, entityAssociation);
                             Object associatedId = null;
                             if (!entityAssociation.isForeignKey()) {
-                                associatedId = readEntityId(rs, ctx.path(entityAssociation));
+                                associatedId = readEntityId(rs, ctx.path(entityAssociation), dialect);
                                 if (associatedId == null) {
                                     continue;
                                 }
                             }
                             if (joinCtx.jp != null) {
                                 if (entityAssociation.getKind().isSingleEnded()) {
-                                    Object associatedEntity = readEntity(rs, joinCtx, entity, associatedId);
+                                    Object associatedEntity = readEntity(rs, joinCtx, entity, associatedId, dialect);
                                     entity = setProperty(property, entity, associatedEntity);
                                 } else {
                                     MappingContext<K> associatedCtx = joinCtx.copy();
                                     if (associatedId == null) {
-                                        associatedId = readEntityId(rs, associatedCtx);
+                                        associatedId = readEntityId(rs, associatedCtx, dialect);
                                     }
-                                    Object associatedEntity = readEntity(rs, associatedCtx, entity, associatedId);
+                                    Object associatedEntity = readEntity(rs, associatedCtx, entity, associatedId, dialect);
                                     if (associatedEntity != null) {
                                         Objects.requireNonNull(associatedId);
                                         joinCtx.associate(associatedCtx, associatedId, associatedEntity);
@@ -626,13 +627,13 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                     }
                                 }
                             } else if (entityAssociation.getKind().isSingleEnded() && !entityAssociation.isForeignKey()) {
-                                Object value = buildIdOnlyEntity(rs, ctx.path(entityAssociation), associatedId);
+                                Object value = buildIdOnlyEntity(rs, ctx.path(entityAssociation), associatedId, dialect);
                                 entity = setProperty(property, entity, value);
                             }
                         }
                     }
                 } else {
-                    Object v = readProperty(rs, ctx, rpp);
+                    Object v = readProperty(rs, ctx, rpp, dialect);
                     if (v != null) {
                         entity = convertAndSetWithValue(entity, rpp, property, v);
                     }
@@ -665,7 +666,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                                        @NonNull MappingContext<K> ctx,
                                                        @NonNull RuntimePersistentProperty<K> property,
                                                        @Nullable RuntimePersistentProperty<K> identity,
-                                                       @Nullable Object idValue) {
+                                                       @Nullable Object idValue,
+                                                       @Nullable Dialect dialect) {
         if (idValue != null) {
             if (identity != null) {
                 if (property.equals(identity)) {
@@ -679,7 +681,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                 }
             }
         }
-        return readProperty(rs, ctx, property);
+        return readProperty(rs, ctx, property, dialect);
     }
 
     private boolean isAllNulls(Object[] args) {
@@ -691,7 +693,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         return true;
     }
 
-    private <K> Object readProperty(RS rs, MappingContext<K> ctx, RuntimePersistentProperty<K> prop) {
+    private <K> Object readProperty(RS rs, MappingContext<K> ctx, RuntimePersistentProperty<K> prop, Dialect dialect) {
         String columnName = ctx.namingStrategy.mappedName(ctx.embeddedPath, prop);
         String columnAlias = prop.getAlias();
         if (StringUtils.isNotEmpty(columnAlias)) {
@@ -701,7 +703,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         }
         DataType dataType = prop.getDataType();
         Object result;
-        AttributeConverter<?, ?> converterForType = prop.getConverter();
+        AttributeConverter<?, ?> converterForType = prop.getConverter(dialect);
         Class<?> persistType = null;
         if (converterForType != null) {
             try {
@@ -716,7 +718,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         } else {
             result = resultReader.readDynamic(rs, columnName, dataType, persistType);
         }
-        AttributeConverter<Object, Object> converter = prop.getConverter();
+        AttributeConverter<Object, Object> converter = prop.getConverter(dialect);
         if (converter != null) {
             return converter.convertToEntityValue(result, ConversionContext.of(prop.getArgument()));
         }
@@ -734,19 +736,19 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
     }
 
     @Nullable
-    private <K> Object readEntityId(RS rs, MappingContext<K> ctx) {
+    private <K> Object readEntityId(RS rs, MappingContext<K> ctx, Dialect dialect) {
         RuntimePersistentProperty<K> identity = ctx.persistentEntity.getIdentity();
         if (identity != null) {
             if (identity instanceof Embedded embedded) {
-                return readEntity(rs, ctx.embedded(embedded), null, null);
+                return readEntity(rs, ctx.embedded(embedded), null, null, dialect);
             }
-            return readProperty(rs, ctx, identity);
+            return readProperty(rs, ctx, identity, dialect);
         }
         List<RuntimePersistentProperty<K>> identityProperties = ctx.persistentEntity.getRuntimeIdentityProperties();
         if (!identityProperties.isEmpty()) {
             Map<String, Object> ids = new HashMap<>();
             for (RuntimePersistentProperty<K> identityProperty : identityProperties) {
-                Object id = readProperty(rs, ctx, identityProperty);
+                Object id = readProperty(rs, ctx, identityProperty, dialect);
                 if (id != null) {
                     ids.put(identityProperty.getName(), id);
                 }
@@ -779,7 +781,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         return resultReader.convertRequired(v, rpp.getArgument());
     }
 
-    private <K> K buildIdOnlyEntity(RS rs, MappingContext<K> ctx, Object resolvedId) {
+    private <K> K buildIdOnlyEntity(RS rs, MappingContext<K> ctx, Object resolvedId, Dialect dialect) {
         RuntimePersistentProperty<K> identity = ctx.persistentEntity.getIdentity();
         if (identity != null) {
             BeanIntrospection<K> associatedIntrospection = ctx.persistentEntity.getIntrospection();
@@ -787,7 +789,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             if (constructorArgs.length == 0) {
                 Object associated = associatedIntrospection.instantiate();
                 if (resolvedId == null) {
-                    resolvedId = readEntityId(rs, ctx);
+                    resolvedId = readEntityId(rs, ctx, dialect);
                 }
                 BeanWrapper.getWrapper(associated).setProperty(identity.getName(), resolvedId);
                 return (K) associated;
@@ -796,7 +798,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                     Argument<?> arg = constructorArgs[0];
                     if (arg.getName().equals(identity.getName()) && arg.getType() == identity.getType()) {
                         if (resolvedId == null) {
-                            resolvedId = readEntityId(rs, ctx);
+                            resolvedId = readEntityId(rs, ctx, dialect);
                         }
                         // instantiate only if id value is resolved
                         if (resolvedId != null) {
@@ -1025,8 +1027,9 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
          * Process row.
          *
          * @param row The row
+         * @param dialect The SQL dialect (nullable).
          */
-        void processRow(@NonNull RS row);
+        void processRow(@NonNull RS row, @Nullable Dialect dialect);
 
         /**
          * The result created by pushed rows.

@@ -59,6 +59,14 @@ public @interface TypeDef {
     String definition() default "";
 
     /**
+     * Used to define the mapping. For example in the case of SQL this would be the column definition. Example: BLOB NOT NULL.
+     *
+     * @return A string-based definition of the property type.
+     */
+    Definition[] definitions() default {};
+
+
+    /**
      * @return The class or parameter names for this data type.
      */
     String[] names() default {};

@@ -42,7 +42,7 @@ final class RuntimePersistentEntityCriteriaInsert<T> extends AbstractPersistentE
                                           StaticMetamodelInitializer staticMetamodelInitializer) {
         this.criteriaBuilder = criteriaBuilder;
         this.staticMetamodelInitializer = staticMetamodelInitializer;
-        from(runtimeEntityRegistry.getEntity(root));
+        from(runtimeEntityRegistry.getEntity(root, null));
     }
 
     private PersistentEntityRoot<T> from(RuntimePersistentEntity<T> runtimePersistentEntity) {
