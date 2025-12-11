@@ -381,10 +381,10 @@ class OracleJdbcJsonViewSpec extends Specification {
         when:
         SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
         PersistentEntity studentViewEntity = getRuntimePersistentEntity(StudentView)
-        builder.buildCreateTableStatements(studentViewEntity)
+        String[] result = builder.buildCreateTableStatements(studentViewEntity)
 
         then:
-        thrown(UnsupportedOperationException)
+        result.length == 0
 
         where:
         dialect << [Dialect.H2, Dialect.ANSI, Dialect.MYSQL, Dialect.POSTGRES, Dialect.SQL_SERVER]
