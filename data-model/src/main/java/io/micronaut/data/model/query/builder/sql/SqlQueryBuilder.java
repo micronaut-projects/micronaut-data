@@ -326,7 +326,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         List<String> createStatements = new ArrayList<>();
         if (entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
             if (dialect != Dialect.ORACLE) {
-                throw new UnsupportedOperationException("JSON View is not supported for dialect " + dialect);
+                LOG.error("JSON View is not supported for dialect " + dialect);
+                return StringUtils.EMPTY_STRING_ARRAY;
             }
             addJsonViewCreateStatement(createStatements, entity);
             return createStatements.toArray(new String[0]);
@@ -365,6 +366,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             String schema = SqlQueryBuilderUtils.getSchemaName(entity);
             boolean escape = shouldEscape(entity);
             if (entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
+                if (dialect != Dialect.ORACLE) {
+                    LOG.error("JSON View is not supported for dialect " + dialect);
+                    continue;
+                }
                 addJsonViewCreateStatement(jsonViewCreateStatements, entity);
                 continue;
             }
