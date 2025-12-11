@@ -486,8 +486,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     private String createJsonSubViewQuery(Association association) {
         PersistentEntity associatedViewEntity = association.getAssociatedEntity();
         Optional<PersistentEntity> associatedEntityOptional = associatedViewEntity.getJsonSubViewEntity();
-
-        PersistentEntity associatedEntity = associatedEntityOptional.orElseThrow(IllegalStateException::new);
+        if (associatedEntityOptional.isEmpty()) {
+            return "";
+        }
+        PersistentEntity associatedEntity = associatedEntityOptional.get();
         StringBuilder sb = new StringBuilder(SELECT_JSON_CLAUSE).append(OPEN_CURLY_BRACKET);
         createJsonViewQuery(sb, associatedViewEntity, associatedEntity);
 

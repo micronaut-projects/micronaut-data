@@ -71,8 +71,6 @@ dependencies {
     testImplementation(libs.managed.jakarta.data.api)
 
     testRuntimeOnly mnSerde.micronaut.serde.oracle.jdbc.json
-    testRuntimeOnly mnFlyway.micronaut.flyway
-    testRuntimeOnly mnFlyway.flyway.oracle
 }
 
 micronaut {
