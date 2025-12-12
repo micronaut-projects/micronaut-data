@@ -45,27 +45,6 @@ class OracleR2dbcVectorEntitySpec extends Specification implements OracleXETestP
     @Shared
     VectorDoubleDocRepository vectorDoubleDocRepository = context.getBean(VectorDoubleDocRepository)
 
-    def setupSpec() {
-        // Create sequence and tables if not exists (ignore errors if they already exist)
-        executeSilently "CREATE SEQUENCE VECTOR_DOC_SEQ"
-        // default FLOAT64 (double[])
-        executeSilently "CREATE TABLE vector_double_doc (id NUMBER PRIMARY KEY, embedding VECTOR(3))"
-        // FLOAT32
-        executeSilently "CREATE TABLE vector_float_doc (id NUMBER PRIMARY KEY, embedding VECTOR(3, FLOAT32))"
-        // INT8 for IntVector
-        executeSilently "CREATE TABLE vector_int_doc (id NUMBER PRIMARY KEY, embedding VECTOR(3, INT8))"
-        // INT8 also used for ByteVector (Oracle maps INT8 vectors to byte[])
-        executeSilently "CREATE TABLE vector_byte_doc (id NUMBER PRIMARY KEY, embedding VECTOR(3, INT8))"
-    }
-
-    def cleanup() {
-        // Clean tables between tests
-        executeSilently "DELETE FROM vector_double_doc"
-        executeSilently "DELETE FROM vector_float_doc"
-        executeSilently "DELETE FROM vector_int_doc"
-        executeSilently "DELETE FROM vector_byte_doc"
-    }
-
     // FLOAT64/default
     void "R2DBC DoubleVector - default CRUD and custom @Query"() {
         given:

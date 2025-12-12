@@ -1116,8 +1116,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
 
         @Override
-        public Object convert(Object value, RuntimePersistentProperty<?> property, Dialect dialect) {
-            AttributeConverter<Object, Object> converter = property.getConverter(dialect);
+        public Object convert(Object value, RuntimePersistentProperty<?> property) {
+            AttributeConverter<Object, Object> converter = property.getConverter(getDialect());
             if (converter != null) {
                 if (converter instanceof OracleVectorAttributeConverterToString<?, Object> olc) {
                     return olc.convertToString(converter.convertToPersistedValue(value,  createTypeConversionContext(property, property.getArgument())));
@@ -1128,17 +1128,12 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
 
         @Override
-        public Object convert(Object value, RuntimePersistentProperty<?> property) {
-            return convert(value, property, null);
-        }
-
-        @Override
-        public Object convert(Class<?> converterClass, Object value, Argument<?> argument, Dialect dialect) {
+        public Object convert(Class<?> converterClass, Object value, Argument<?> argument) {
             if (converterClass == null) {
                 return value;
             }
             @NonNull List<AttributeConverter<Object, Object>> converters = attributeConverterRegistry.getConverters(converterClass);
-            AttributeConverter<Object, Object> converter = converters.stream().filter(x -> x.getDialect() == dialect).findFirst().orElse(converters.stream().filter(x -> x.getDialect() == null).findFirst().orElse(null));
+            AttributeConverter<Object, Object> converter = converters.stream().filter(x -> x.getDialect() == getDialect()).findFirst().orElse(converters.stream().filter(x -> x.getDialect() == null).findFirst().orElse(null));
             if (converter == null) {
                 throw  new DataAccessException("No converter found for " + converterClass.getName());
             }
@@ -1148,11 +1143,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 return olc.convertToString(converter.convertToPersistedValue(value, conversionContext));
             }
             return converter.convertToPersistedValue(value, conversionContext);
-        }
-
-        @Override
-        public Object convert(Class<?> converterClass, Object value, Argument<?> argument) {
-            return convert(converterClass,  value, argument, null);
         }
 
         private ConversionContext createTypeConversionContext(RuntimePersistentProperty<?> property,

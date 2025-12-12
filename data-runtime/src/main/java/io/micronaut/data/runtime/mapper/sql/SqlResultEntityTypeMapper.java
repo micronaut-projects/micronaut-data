@@ -195,18 +195,19 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
     @NonNull
     @Override
     public R map(@NonNull RS rs, @NonNull Class<R> type) throws DataAccessException {
-        return readEntity(rs);
+        return readEntity(rs, null);
     }
 
     /**
      * Read the entity from the result set.
      * @param rs The result set
+     * @param dialect The dialect
      * @return The entity
      * @since 4.2.0
      */
     @NonNull
-    public R readEntity(@NonNull RS rs) {
-        R entityInstance = readEntity(rs, MappingContext.of(entity, startingPrefix), null, null, null);
+    public R readEntity(@NonNull RS rs, Dialect dialect) throws DataAccessException {
+        R entityInstance = readEntity(rs, MappingContext.of(entity, startingPrefix), null, null, dialect);
         if (entityInstance == null) {
             throw new DataAccessException("Unable to map result to entity of type [" + entity.getIntrospection().getBeanType() + "]. Missing result data.");
         }

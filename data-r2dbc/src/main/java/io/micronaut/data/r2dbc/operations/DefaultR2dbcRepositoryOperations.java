@@ -58,6 +58,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import io.micronaut.data.model.runtime.convert.vector.oracle.OracleVectorAttributeConverterToString;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import io.micronaut.data.operations.reactive.BlockingExecutorReactorRepositoryOperations;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
@@ -520,7 +521,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 if (mapper instanceof SqlResultEntityTypeMapper<Row, R> entityTypeMapper) {
                     final boolean hasJoins = !preparedQuery.getJoinPaths().isEmpty();
                     if (!hasJoins) {
-                        return executeAndMapEachRow(statement, entityTypeMapper::readEntity);
+                        return executeAndMapEachRow(statement, row -> entityTypeMapper.readEntity(row, preparedQuery.getDialect()));
                     }
                     SqlResultEntityTypeMapper.PushingMapper<Row, R> rowsMapper = entityTypeMapper.readOneMapper();
                     return executeAndMapEachRow(statement, row -> {
@@ -886,9 +887,13 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             if (property == null) {
                 return value;
             }
-            AttributeConverter<Object, Object> converter = property.getConverter();
+            AttributeConverter<Object, Object> converter = property.getConverter(getDialect());
             if (converter != null) {
-                return converter.convertToPersistedValue(value, createTypeConversionContext(property, property.getArgument()));
+                Object persisted = converter.convertToPersistedValue(value, createTypeConversionContext(property, property.getArgument()));
+                if (converter instanceof OracleVectorAttributeConverterToString<?, Object> olc) {
+                    return olc.convertToString(persisted);
+                }
+                return persisted;
             }
             return value;
         }
@@ -898,8 +903,16 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             if (converterClass == null) {
                 return value;
             }
-            AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
+            @NonNull List<AttributeConverter<Object, Object>> converters = attributeConverterRegistry.getConverters(converterClass);
+            AttributeConverter<Object, Object> converter = converters.stream().filter(x -> x.getDialect() == getDialect()).findFirst().orElse(converters.stream().filter(x -> x.getDialect() == null).findFirst().orElse(null));
+            if (converter == null) {
+                throw  new DataAccessException("No converter found for " + converterClass.getName());
+            }
+
             ConversionContext conversionContext = createTypeConversionContext(null, argument);
+            if (converter instanceof OracleVectorAttributeConverterToString<?, Object> olc) {
+                return olc.convertToString(converter.convertToPersistedValue(value, conversionContext));
+            }
             return converter.convertToPersistedValue(value, conversionContext);
         }
 
@@ -929,12 +942,16 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             for (Object value : values) {
                 bindOne(binding, value);
             }
-
         }
 
         @Override
         public int currentIndex() {
             return index;
+        }
+
+        @Override
+        public Dialect getDialect() {
+            return this.sqlStoredQuery.getDialect();
         }
 
     }
