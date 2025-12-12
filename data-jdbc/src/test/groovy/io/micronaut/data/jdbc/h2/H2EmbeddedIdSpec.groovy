@@ -16,6 +16,8 @@
 package io.micronaut.data.jdbc.h2
 
 import io.micronaut.core.annotation.Introspected
+import io.micronaut.core.annotation.NonNull
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.*
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.CursoredPage
@@ -25,9 +27,15 @@ import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
+import io.micronaut.data.repository.PageableRepository
+import io.micronaut.data.repository.jpa.JpaSpecificationExecutor
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.tck.entities.Shipment
 import io.micronaut.data.tck.entities.ShipmentId
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import jakarta.persistence.criteria.CriteriaBuilder
+import jakarta.persistence.criteria.Predicate
+import jakarta.persistence.criteria.Root
 import spock.lang.Specification
 
 import jakarta.inject.Inject
@@ -43,6 +51,9 @@ class H2EmbeddedIdSpec extends Specification {
 
     @Inject
     ItemGroupRepository groupRepository
+
+    @Inject
+    ConfigurationItemRepository configurationItemRepository
 
     void "test empty one-to-many via embedded-id"() {
         when:
@@ -226,6 +237,37 @@ class H2EmbeddedIdSpec extends Specification {
         cleanup:
         repository.deleteAll()
     }
+
+    void "test pagination"() {
+        when:
+        def id = new ConfigItemEntityId(oheId: "oheid1", id: "id1")
+        def configItem = configurationItemRepository.save(new ConfigItemEntity(id: id, name: "name1", description: "desc1", type: "type1"))
+        def page = configurationItemRepository.findAll(Pageable.from(0, 10))
+        then:
+        page
+        page.content.size() == 1
+        page.content[0].name == "name1"
+        when:
+        def cnt = configurationItemRepository.countByIdOheId(id.oheId)
+        then:
+        cnt == 1
+        when:
+        def idPredicate = new PredicateSpecification<ConfigItemEntity>() {
+            @Override
+            @Nullable Predicate toPredicate(@NonNull Root< ConfigItemEntity > root, @NonNull CriteriaBuilder criteriaBuilder) {
+                return criteriaBuilder.equal(root.get("id").get("oheId"), configItem.id.oheId)
+            }
+        };
+        List<ConfigItemEntity> list = configurationItemRepository.findAll(idPredicate)
+        then:
+        list.size() == 1
+        when:
+        Page<ConfigItemEntity> newPage = configurationItemRepository.findAll(idPredicate, Pageable.from(0, 10))
+        then:
+        newPage.content.size() == 1
+        cleanup:
+        configurationItemRepository.deleteAll()
+    }
 }
 
 @Entity
@@ -318,4 +360,30 @@ interface ItemGroupRepository extends CrudRepository<ItemGroup, Long> {
     @Override
     @Join(value = "items", type = Join.Type.LEFT_FETCH)
     public abstract Optional<ItemGroup> findById(@NotNull Long id);
+}
+
+@Embeddable
+class ConfigItemEntityId {
+    @MappedProperty("ohe_id")
+    String oheId
+    @MappedProperty("id")
+    String id
+}
+
+@MappedEntity("CONFIGURATION_ITEM")
+class ConfigItemEntity {
+    @EmbeddedId
+    ConfigItemEntityId id
+    @Nullable
+    String description
+    String name
+    String type
+}
+
+
+@JdbcRepository(dialect = Dialect.H2)
+interface ConfigurationItemRepository extends PageableRepository<ConfigItemEntity, ConfigItemEntityId>,
+        JpaSpecificationExecutor<ConfigItemEntity> {
+
+    long countByIdOheId(String oheId)
 }
