@@ -41,7 +41,7 @@ graalvmNative {
                     buildArgs.add("-H:+SharedArenaSupport")
                 }
             }
-            buildArgs("--initialize-at-build-time=org.junit.platform.commons.logging.LoggerFactory\$DelegatingLogger")
+            buildArgs("--initialize-at-build-time=org.junit.platform.commons.logging.LoggerFactory\$DelegatingLogger,org.junit.jupiter.engine.config.FilteringConfigurationParameterConverter")
         }
     }
 }
