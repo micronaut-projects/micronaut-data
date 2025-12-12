@@ -7,7 +7,11 @@ import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
-import io.micronaut.data.model.Vector
+import io.micronaut.data.model.vector.Vector
+import io.micronaut.data.model.vector.DoubleVector;
+import io.micronaut.data.model.vector.FloatVector;
+import io.micronaut.data.model.vector.IntVector;
+import io.micronaut.data.model.vector.ByteVector;
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository
 import io.micronaut.data.repository.CrudRepository
@@ -50,7 +54,7 @@ class OracleR2dbcVectorEntitySpec extends Specification implements OracleXETestP
         given:
         def repo = vectorDoubleDocRepository
         double[] dv = [1d, 2.5d, -3.75d] as double[]
-        Vector.DoubleVector v1 = Vector.of(dv)
+        DoubleVector v1 = Vector.of(dv)
 
         when:
         def saved = repo.save(new VectorDoubleDoc(embedding: v1))
@@ -68,7 +72,7 @@ class OracleR2dbcVectorEntitySpec extends Specification implements OracleXETestP
 
         when:
         double[] dv2 = [3d, 0.0d, 7.25d] as double[]
-        Vector.DoubleVector v2 = Vector.of(dv2)
+        DoubleVector v2 = Vector.of(dv2)
         fetched.embedding = v2
         def updated = repo.update(fetched)
 
@@ -79,7 +83,7 @@ class OracleR2dbcVectorEntitySpec extends Specification implements OracleXETestP
 
         when: "custom @Query insert and update"
         double[] dvx = [2d, 4d, 6d] as double[]
-        Vector.DoubleVector vx = Vector.of(dvx)
+        DoubleVector vx = Vector.of(dvx)
         repo.saveCustom(vx)
         def all = repo.findAll()
         def e = all.find { it.embedding?.toDoubleArray()?.toList() == dvx.toList() }
@@ -90,7 +94,7 @@ class OracleR2dbcVectorEntitySpec extends Specification implements OracleXETestP
 
         when:
         double[] dvy = [-1d, 0.5d, 10d] as double[]
-        Vector.DoubleVector vy = Vector.of(dvy)
+        DoubleVector vy = Vector.of(dvy)
         repo.updateCustom(e.id, vy)
         def after = repo.findById(e.id).orElse(null)
 
@@ -104,7 +108,7 @@ class OracleR2dbcVectorEntitySpec extends Specification implements OracleXETestP
     void "R2DBC FloatVector - default CRUD and custom @Query"() {
         given:
         def repo = vectorFloatDocRepository
-        Vector.FloatVector v1 = Vector.of([1f, 2.5f, -3.75f] as float[])
+        FloatVector v1 = Vector.of([1f, 2.5f, -3.75f] as float[])
 
         when:
         def saved = repo.save(new VectorFloatDoc(embedding: v1))
@@ -121,7 +125,7 @@ class OracleR2dbcVectorEntitySpec extends Specification implements OracleXETestP
         fetched.embedding.toFloatArray().toList() == [1f, 2.5f, -3.75f]
 
         when:
-        Vector.FloatVector v2 = Vector.of([3f, 0f, 7.25f] as float[])
+        FloatVector v2 = Vector.of([3f, 0f, 7.25f] as float[])
         fetched.embedding = v2
         def updated = repo.update(fetched)
 
@@ -131,7 +135,7 @@ class OracleR2dbcVectorEntitySpec extends Specification implements OracleXETestP
         updated.embedding.toFloatArray().toList() == [3f, 0f, 7.25f]
 
         when: "custom @Query insert and update"
-        Vector.FloatVector vx = Vector.of([10f, 11f, 12f] as float[])
+        FloatVector vx = Vector.of([10f, 11f, 12f] as float[])
         repo.saveCustom(vx)
         def all = repo.findAll()
         def e = all.find { it.embedding?.toFloatArray()?.toList() == [10f, 11f, 12f] }
@@ -140,7 +144,7 @@ class OracleR2dbcVectorEntitySpec extends Specification implements OracleXETestP
         e != null
 
         when:
-        Vector.FloatVector vy = Vector.of([13f, 14f, 15f] as float[])
+        FloatVector vy = Vector.of([13f, 14f, 15f] as float[])
         repo.updateCustom(e.id, vy)
         def after = repo.findById(e.id).orElse(null)
 
@@ -153,7 +157,7 @@ class OracleR2dbcVectorEntitySpec extends Specification implements OracleXETestP
     void "R2DBC IntVector - default CRUD and custom @Query"() {
         given:
         def repo = vectorIntDocRepository
-        Vector.IntVector v1 = Vector.of([1, -2, 127] as int[])
+        IntVector v1 = Vector.of([1, -2, 127] as int[])
 
         when:
         def saved = repo.save(new VectorIntDoc(embedding: v1))
@@ -170,7 +174,7 @@ class OracleR2dbcVectorEntitySpec extends Specification implements OracleXETestP
         fetched.embedding.toIntegerArray().toList() == [1, -2, 127]
 
         when:
-        Vector.IntVector v2 = Vector.of([0, 5, -7] as int[])
+        IntVector v2 = Vector.of([0, 5, -7] as int[])
         fetched.embedding = v2
         def updated = repo.update(fetched)
 
@@ -180,7 +184,7 @@ class OracleR2dbcVectorEntitySpec extends Specification implements OracleXETestP
         updated.embedding.toIntegerArray().toList() == [0, 5, -7]
 
         when: "custom @Query insert and update"
-        Vector.IntVector vx = Vector.of([10, 11, 12] as int[])
+        IntVector vx = Vector.of([10, 11, 12] as int[])
         repo.saveCustom(vx)
         def all = repo.findAll()
         def e = all.find { it.embedding?.toIntegerArray()?.toList() == [10, 11, 12] }
@@ -189,7 +193,7 @@ class OracleR2dbcVectorEntitySpec extends Specification implements OracleXETestP
         e != null
 
         when:
-        Vector.IntVector vy = Vector.of([13, 14, 15] as int[])
+        IntVector vy = Vector.of([13, 14, 15] as int[])
         repo.updateCustom(e.id, vy)
         def after = repo.findById(e.id).orElse(null)
 
@@ -202,7 +206,7 @@ class OracleR2dbcVectorEntitySpec extends Specification implements OracleXETestP
     void "R2DBC ByteVector - default CRUD and custom @Query"() {
         given:
         def repo = vectorByteDocRepository
-        Vector.ByteVector v1 = Vector.of([1, 2, -3] as byte[])
+        ByteVector v1 = Vector.of([1, 2, -3] as byte[])
 
         when:
         def saved = repo.save(new VectorByteDoc(embedding: v1))
@@ -219,7 +223,7 @@ class OracleR2dbcVectorEntitySpec extends Specification implements OracleXETestP
         fetched.embedding.toByteArray().toList() == [1, 2, -3]
 
         when:
-        Vector.ByteVector v2 = Vector.of([3, 0, 7] as byte[])
+        ByteVector v2 = Vector.of([3, 0, 7] as byte[])
         fetched.embedding = v2
         def updated = repo.update(fetched)
 
@@ -229,7 +233,7 @@ class OracleR2dbcVectorEntitySpec extends Specification implements OracleXETestP
         updated.embedding.toByteArray().toList() == [3, 0, 7]
 
         when: "custom @Query insert and update"
-        Vector.ByteVector vx = Vector.of([10, 11, 12] as byte[])
+        ByteVector vx = Vector.of([10, 11, 12] as byte[])
         repo.saveCustom(vx)
         def all = repo.findAll()
         def e = all.find { it.embedding?.toByteArray()?.toList() == [10, 11, 12] }
@@ -238,7 +242,7 @@ class OracleR2dbcVectorEntitySpec extends Specification implements OracleXETestP
         e != null
 
         when:
-        Vector.ByteVector vy = Vector.of([13, 14, 15] as byte[])
+        ByteVector vy = Vector.of([13, 14, 15] as byte[])
         repo.updateCustom(e.id, vy)
         def after = repo.findById(e.id).orElse(null)
 
@@ -270,13 +274,13 @@ class VectorDoubleDoc {
     @Id
     @GeneratedValue(value = GeneratedValue.Type.SEQUENCE, ref = "VECTOR_DOC_SEQ")
     Long id
-    Vector.DoubleVector embedding
+    DoubleVector embedding
 
     Long getId() { return id }
     void setId(Long id) { this.id = id }
 
-    Vector.DoubleVector getEmbedding() { return embedding }
-    void setEmbedding(Vector.DoubleVector embedding) { this.embedding = embedding }
+    DoubleVector getEmbedding() { return embedding }
+    void setEmbedding(DoubleVector embedding) { this.embedding = embedding }
 }
 
 @MappedEntity("vector_float_doc")
@@ -284,13 +288,13 @@ class VectorFloatDoc {
     @Id
     @GeneratedValue(value = GeneratedValue.Type.SEQUENCE, ref = "VECTOR_DOC_SEQ")
     Long id
-    Vector.FloatVector embedding
+    FloatVector embedding
 
     Long getId() { return id }
     void setId(Long id) { this.id = id }
 
-    Vector.FloatVector getEmbedding() { return embedding }
-    void setEmbedding(Vector.FloatVector embedding) { this.embedding = embedding }
+    FloatVector getEmbedding() { return embedding }
+    void setEmbedding(FloatVector embedding) { this.embedding = embedding }
 }
 
 @MappedEntity("vector_int_doc")
@@ -298,13 +302,13 @@ class VectorIntDoc {
     @Id
     @GeneratedValue(value = GeneratedValue.Type.SEQUENCE, ref = "VECTOR_DOC_SEQ")
     Long id
-    Vector.IntVector embedding
+    IntVector embedding
 
     Long getId() { return id }
     void setId(Long id) { this.id = id }
 
-    Vector.IntVector getEmbedding() { return embedding }
-    void setEmbedding(Vector.IntVector embedding) { this.embedding = embedding }
+    IntVector getEmbedding() { return embedding }
+    void setEmbedding(IntVector embedding) { this.embedding = embedding }
 }
 
 @MappedEntity("vector_byte_doc")
@@ -312,13 +316,13 @@ class VectorByteDoc {
     @Id
     @GeneratedValue(value = GeneratedValue.Type.SEQUENCE, ref = "VECTOR_DOC_SEQ")
     Long id
-    Vector.ByteVector embedding
+    ByteVector embedding
 
     Long getId() { return id }
     void setId(Long id) { this.id = id }
 
-    Vector.ByteVector getEmbedding() { return embedding }
-    void setEmbedding(Vector.ByteVector embedding) { this.embedding = embedding }
+    ByteVector getEmbedding() { return embedding }
+    void setEmbedding(ByteVector embedding) { this.embedding = embedding }
 }
 
 // Repositories (R2DBC, Oracle)
@@ -331,13 +335,13 @@ interface VectorFloatDocRepository extends CrudRepository<VectorFloatDoc, Long> 
     void saveCustom(@Parameter("vec") Vector vec)
 
     @Query("INSERT INTO vector_float_doc(id, embedding) VALUES (VECTOR_DOC_SEQ.nextval, :vec)")
-    void saveCustom(@Parameter("vec") Vector.FloatVector vec)
+    void saveCustom(@Parameter("vec") FloatVector vec)
 
     @Query("UPDATE vector_float_doc SET embedding = :vec WHERE id = :id")
     void updateCustom(Long id, @Parameter("vec") Vector vec)
 
     @Query("UPDATE vector_float_doc SET embedding = :vec WHERE id = :id")
-    void updateCustom(Long id, @Parameter("vec") Vector.FloatVector vec)
+    void updateCustom(Long id, @Parameter("vec") FloatVector vec)
 
     @Query("SELECT * FROM vector_float_doc")
     List<VectorFloatDoc> findAll()
@@ -351,13 +355,13 @@ interface VectorIntDocRepository extends CrudRepository<VectorIntDoc, Long> {
     void saveCustom(@Parameter("vec") Vector vec)
 
     @Query("INSERT INTO vector_int_doc(id, embedding) VALUES (VECTOR_DOC_SEQ.nextval, :vec)")
-    void saveCustom(@Parameter("vec") Vector.IntVector vec)
+    void saveCustom(@Parameter("vec") IntVector vec)
 
     @Query("UPDATE vector_int_doc SET embedding = :vec WHERE id = :id")
     void updateCustom(Long id, @Parameter("vec") Vector vec)
 
     @Query("UPDATE vector_int_doc SET embedding = :vec WHERE id = :id")
-    void updateCustom(Long id, @Parameter("vec") Vector.IntVector vec)
+    void updateCustom(Long id, @Parameter("vec") IntVector vec)
 
     @Query("SELECT * FROM vector_int_doc")
     List<VectorIntDoc> findAll()
@@ -371,13 +375,13 @@ interface VectorByteDocRepository extends CrudRepository<VectorByteDoc, Long> {
     void saveCustom(@Parameter("vec") Vector vec)
 
     @Query("INSERT INTO vector_byte_doc(id, embedding) VALUES (VECTOR_DOC_SEQ.nextval, :vec)")
-    void saveCustom(@Parameter("vec") Vector.ByteVector vec)
+    void saveCustom(@Parameter("vec") ByteVector vec)
 
     @Query("UPDATE vector_byte_doc SET embedding = :vec WHERE id = :id")
     void updateCustom(Long id, @Parameter("vec") Vector vec)
 
     @Query("UPDATE vector_byte_doc SET embedding = :vec WHERE id = :id")
-    void updateCustom(Long id, @Parameter("vec") Vector.ByteVector vec)
+    void updateCustom(Long id, @Parameter("vec") ByteVector vec)
 
     @Query("SELECT * FROM vector_byte_doc")
     List<VectorByteDoc> findAll()
@@ -391,13 +395,13 @@ interface VectorDoubleDocRepository extends CrudRepository<VectorDoubleDoc, Long
     void saveCustom(@Parameter("vec") Vector vec)
 
     @Query("INSERT INTO vector_double_doc(id, embedding) VALUES (VECTOR_DOC_SEQ.nextval, :vec)")
-    void saveCustom(@Parameter("vec") Vector.DoubleVector vec)
+    void saveCustom(@Parameter("vec") DoubleVector vec)
 
     @Query("UPDATE vector_double_doc SET embedding = :vec WHERE id = :id")
     void updateCustom(Long id, @Parameter("vec") Vector vec)
 
     @Query("UPDATE vector_double_doc SET embedding = :vec WHERE id = :id")
-    void updateCustom(Long id, @Parameter("vec") Vector.DoubleVector vec)
+    void updateCustom(Long id, @Parameter("vec") DoubleVector vec)
 
     @Query("SELECT * FROM vector_double_doc")
     List<VectorDoubleDoc> findAll()

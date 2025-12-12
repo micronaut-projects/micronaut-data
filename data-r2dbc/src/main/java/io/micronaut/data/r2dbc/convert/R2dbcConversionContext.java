@@ -16,6 +16,7 @@
 package io.micronaut.data.r2dbc.convert;
 
 import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.data.model.runtime.convert.DialectConversionContext;
 import io.r2dbc.spi.Connection;
 
 /**
@@ -24,7 +25,7 @@ import io.r2dbc.spi.Connection;
  * @author Denis Stepanov
  * @since 3.1
  */
-public interface R2dbcConversionContext extends ConversionContext {
+public interface R2dbcConversionContext extends DialectConversionContext {
 
     /**
      * Provides access to R2DBC connection.

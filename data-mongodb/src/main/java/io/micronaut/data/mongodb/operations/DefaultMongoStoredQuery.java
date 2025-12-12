@@ -377,7 +377,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
 
             @Override
             public Object convert(Object value, RuntimePersistentProperty<?> property) {
-                AttributeConverter<Object, Object> converter = property.getConverter(getDialect());
+                AttributeConverter<Object, Object> converter = property.getConverter();
                 if (converter != null) {
                     return converter.convertToPersistedValue(value, createTypeConversionContext(property, property.getArgument()));
                 }
@@ -412,12 +412,6 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             @Override
             public void bindMany(QueryParameterBinding binding, Collection<Object> values) {
                 bindOne(binding, values);
-            }
-
-            @Override
-            public io.micronaut.data.model.query.builder.sql.Dialect getDialect() {
-                // MongoDB doesn't use SQL dialect; returning null selects default converters
-                return null;
             }
 
         }, invocationContext, entity, null, queryParameterBinding);

@@ -16,8 +16,9 @@
 package io.micronaut.data.model.runtime.convert.vector;
 
 import io.micronaut.core.annotation.Indexed;
-import io.micronaut.data.model.Vector;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import io.micronaut.data.model.runtime.convert.SqlAttributeConverter;
+import io.micronaut.data.model.vector.DoubleVector;
 
 /**
  * The attribute converter is used for converting mapped entity value to the persisted value and back.
@@ -27,5 +28,5 @@ import io.micronaut.data.model.runtime.convert.AttributeConverter;
  * @since 3.1
  */
 @Indexed(DoubleVectorAttributeConverter.class)
-public interface DoubleVectorAttributeConverter<X> extends AttributeConverter<Vector.DoubleVector, X> {
+public interface DoubleVectorAttributeConverter<X> extends SqlAttributeConverter<DoubleVector, X> {
 }

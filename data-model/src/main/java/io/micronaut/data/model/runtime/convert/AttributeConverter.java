@@ -51,18 +51,4 @@ public interface AttributeConverter<X, Y> {
      */
     @Nullable
     X convertToEntityValue(@Nullable Y persistedValue, @NonNull ConversionContext context);
-
-    default Class<?> getPersistedType() {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    /**
-     * Get dialect.
-     *
-     * @return dialect
-     */
-    default Dialect getDialect() {
-        return null;
-    }
-
 }

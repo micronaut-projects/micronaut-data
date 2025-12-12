@@ -55,6 +55,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.operations.HintsCapableRepository;
 import io.micronaut.data.runtime.config.DataSettings;
+import io.micronaut.data.runtime.convert.ConversionContextFactory;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder;
 import io.micronaut.data.runtime.date.DateTimeProvider;
@@ -110,7 +111,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     HintsCapableRepository {
 
     protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
-
     protected final String dataSourceName;
     @SuppressWarnings("WeakerAccess")
     protected final ResultReader<RS, String> columnNameResultSetReader;
@@ -126,6 +126,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     private final Map<QueryKey, SqlStoredQuery> entityInserts = new ConcurrentHashMap<>(10);
     private final Map<QueryKey, SqlStoredQuery> entityUpdates = new ConcurrentHashMap<>(10);
     private final Map<Association, String> associationInserts = new ConcurrentHashMap<>(10);
+    private final ConversionContextFactory conversionContextFactory;
 
     /**
      * Default constructor.
@@ -153,7 +154,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         DataConversionService conversionService,
         AttributeConverterRegistry attributeConverterRegistry,
         JsonMapper jsonMapper,
-        SqlJsonColumnMapperProvider<RS> sqlJsonColumnMapperProvider) {
+        SqlJsonColumnMapperProvider<RS> sqlJsonColumnMapperProvider,
+        ConversionContextFactory conversionContextFactory) {
         super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
         this.dataSourceName = dataSourceName;
         this.columnNameResultSetReader = columnNameResultSetReader;
@@ -161,6 +163,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         this.preparedStatementWriter = preparedStatementWriter;
         this.jsonMapper = jsonMapper;
         this.sqlJsonColumnMapperProvider = sqlJsonColumnMapperProvider;
+        this.conversionContextFactory = conversionContextFactory;
         Collection<BeanDefinition<Object>> beanDefinitions = beanContext
             .getBeanDefinitions(Object.class, Qualifiers.byStereotype(Repository.class));
         for (BeanDefinition<Object> beanDefinition : beanDefinitions) {
@@ -768,7 +771,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 preparedQuery.getJoinPaths(),
                 sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, rsType),
                 loadListener,
-                conversionService);
+                conversionService,
+                conversionContextFactory);
         }
         if (preparedQuery.isDtoProjection()) {
             RuntimePersistentEntity<R> resultPersistentEntity = getEntity(preparedQuery.getResultType());
@@ -808,7 +812,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
                 preparedQuery.getJoinPaths(),
                 sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, rsType),
                 null,
-                conversionService);
+                conversionService,
+                conversionContextFactory);
         }
         return new SqlTypeMapper<>() {
             @Override

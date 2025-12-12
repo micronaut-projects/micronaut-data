@@ -72,11 +72,11 @@ import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
-import io.micronaut.data.model.runtime.convert.vector.oracle.OracleVectorAttributeConverterToString;
 import io.micronaut.data.operations.DeleteReturningRepositoryOperations;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
+import io.micronaut.data.runtime.convert.ConversionContextFactory;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.convert.RuntimePersistentPropertyConversionContext;
 import io.micronaut.data.runtime.date.DateTimeProvider;
@@ -163,7 +163,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @Nullable
     private final SchemaTenantResolver schemaTenantResolver;
     private final JdbcSchemaHandler schemaHandler;
-
     private final ColumnIndexCallableResultReader columnIndexCallableResultReader;
     private final Map<Dialect, List<SqlExceptionMapper>> sqlExceptionMappers = new EnumMap<>(Dialect.class);
 
@@ -205,7 +204,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                     JdbcSchemaHandler schemaHandler,
                                     @Nullable JsonMapper jsonMapper,
                                     SqlJsonColumnMapperProvider<ResultSet> sqlJsonColumnMapperProvider,
-                                    List<SqlExceptionMapper> sqlExceptionMapperList) {
+                                    List<SqlExceptionMapper> sqlExceptionMapperList,
+                                    @Parameter ConversionContextFactory conversionContextFactory) {
+
         super(
             dataSourceName,
             new ColumnNameResultSetReader(conversionService),
@@ -217,7 +218,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             conversionService,
             attributeConverterRegistry,
             jsonMapper,
-            sqlJsonColumnMapperProvider);
+            sqlJsonColumnMapperProvider,
+            conversionContextFactory);
         this.schemaTenantResolver = schemaTenantResolver;
         this.schemaHandler = schemaHandler;
         this.connectionOperations = connectionOperations;
@@ -367,11 +369,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
                     SqlResultEntityTypeMapper.PushingMapper<ResultSet, R> oneMapper = entityTypeMapper.readOneMapper();
                     if (rs.next()) {
-                        oneMapper.processRow(rs, preparedQuery.getDialect());
+                        oneMapper.processRow(rs);
                     }
                     if (hasJoins) {
                         while (rs.next()) {
-                            oneMapper.processRow(rs, preparedQuery.getDialect());
+                            oneMapper.processRow(rs);
                         }
                     } else if (jdbcConfiguration.isUniqueResultOnFindOne() && rs.next()) {
                         throw new NonUniqueResultException("Multiple results found for query: " + preparedQuery.getQuery());
@@ -418,7 +420,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         if (mapper instanceof SqlResultEntityTypeMapper<ResultSet, R> entityTypeMapper) {
             SqlResultEntityTypeMapper.PushingMapper<ResultSet, List<R>> manyMapper = entityTypeMapper.readManyMapper();
             while (rs.next()) {
-                manyMapper.processRow(rs, sqlStoredQuery.getDialect());
+                manyMapper.processRow(rs);
             }
             result = manyMapper.getResult();
             if (result == null) {
@@ -496,7 +498,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     try {
                         SqlResultEntityTypeMapper.PushingMapper<ResultSet, List<R>> manyMapper = entityTypeMapper.readManyMapper();
                         while (rs.next()) {
-                            manyMapper.processRow(rs, preparedQuery.getDialect());
+                            manyMapper.processRow(rs);
                         }
                         return manyMapper.getResult().stream();
                     } finally {
@@ -1117,11 +1119,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
         @Override
         public Object convert(Object value, RuntimePersistentProperty<?> property) {
-            AttributeConverter<Object, Object> converter = property.getConverter(getDialect());
+            AttributeConverter<Object, Object> converter = property.getConverter();
             if (converter != null) {
-                if (converter instanceof OracleVectorAttributeConverterToString<?, Object> olc) {
-                    return olc.convertToString(converter.convertToPersistedValue(value,  createTypeConversionContext(property, property.getArgument())));
-                }
                 return converter.convertToPersistedValue(value, createTypeConversionContext(property, property.getArgument()));
             }
             return value;
@@ -1132,16 +1131,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             if (converterClass == null) {
                 return value;
             }
-            @NonNull List<AttributeConverter<Object, Object>> converters = attributeConverterRegistry.getConverters(converterClass);
-            AttributeConverter<Object, Object> converter = converters.stream().filter(x -> x.getDialect() == getDialect()).findFirst().orElse(converters.stream().filter(x -> x.getDialect() == null).findFirst().orElse(null));
-            if (converter == null) {
-                throw  new DataAccessException("No converter found for " + converterClass.getName());
-            }
-
+            AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
             ConversionContext conversionContext = createTypeConversionContext(null, argument);
-            if (converter instanceof OracleVectorAttributeConverterToString<?, Object> olc) {
-                return olc.convertToString(converter.convertToPersistedValue(value, conversionContext));
-            }
             return converter.convertToPersistedValue(value, conversionContext);
         }
 
@@ -1149,12 +1140,12 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                                               Argument<?> argument) {
             Objects.requireNonNull(connection);
             if (property != null) {
-                return new RuntimePersistentPropertyJdbcCC(connection, property);
+                return new RuntimePersistentPropertyJdbcCC(connection, getDialect(), property);
             }
             if (argument != null) {
-                return new ArgumentJdbcCC(connection, argument);
+                return new ArgumentJdbcCC(connection, getDialect(), argument);
             }
-            return new JdbcConversionContextImpl(connection);
+            return new JdbcConversionContextImpl(connection, getDialect());
         }
 
         @Override
@@ -1429,8 +1420,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
         private final RuntimePersistentProperty<?> property;
 
-        public RuntimePersistentPropertyJdbcCC(Connection connection, RuntimePersistentProperty<?> property) {
-            super(ConversionContext.of(property.getArgument()), connection);
+        public RuntimePersistentPropertyJdbcCC(Connection connection, Dialect dialect, RuntimePersistentProperty<?> property) {
+            super(ConversionContext.of(property.getArgument()), connection, dialect);
             this.property = property;
         }
 
@@ -1440,12 +1431,12 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
     }
 
-    private static final class ArgumentJdbcCC extends JdbcConversionContextImpl implements ArgumentConversionContext<Object> {
+    public static final class ArgumentJdbcCC extends JdbcConversionContextImpl implements ArgumentConversionContext<Object> {
 
         private final Argument argument;
 
-        public ArgumentJdbcCC(Connection connection, Argument argument) {
-            super(ConversionContext.of(argument), connection);
+        public ArgumentJdbcCC(Connection connection, Dialect dialect, Argument argument) {
+            super(ConversionContext.of(argument), connection, dialect);
             this.argument = argument;
         }
 
@@ -1455,18 +1446,20 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
     }
 
-    private static class JdbcConversionContextImpl extends AbstractConversionContext
+    static class JdbcConversionContextImpl extends AbstractConversionContext
         implements JdbcConversionContext {
 
         private final Connection connection;
+        private final Dialect dialect;
 
-        public JdbcConversionContextImpl(Connection connection) {
-            this(ConversionContext.DEFAULT, connection);
+        public JdbcConversionContextImpl(Connection connection, Dialect dialect) {
+            this(ConversionContext.DEFAULT, connection, dialect);
         }
 
-        public JdbcConversionContextImpl(ConversionContext conversionContext, Connection connection) {
+        public JdbcConversionContextImpl(ConversionContext conversionContext, Connection connection, Dialect dialect) {
             super(conversionContext);
             this.connection = connection;
+            this.dialect = dialect;
         }
 
         @Override
@@ -1474,6 +1467,10 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             return connection;
         }
 
+        @Override
+        public Dialect getDialect() {
+            return dialect;
+        }
     }
 
     private static final class ConnectionContext {

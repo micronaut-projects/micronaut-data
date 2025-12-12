@@ -9,8 +9,9 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.oraclexe.OracleTestPropertyProvider
 import io.micronaut.data.model.Sort
-import io.micronaut.data.model.Vector
+import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.model.vector.IntVector
 import io.micronaut.data.repository.PageableRepository
 import io.micronaut.transaction.SynchronousTransactionManager
 import spock.lang.AutoCleanup
@@ -21,7 +22,6 @@ import javax.sql.DataSource
 import java.sql.Connection
 import java.sql.Statement
 import java.util.concurrent.Future
-import java.util.concurrent.TimeUnit
 
 import static java.util.concurrent.TimeUnit.*
 
@@ -60,7 +60,7 @@ class OracleJdbcIntVectorEntitySpec extends Specification implements OracleTestP
     void "test save, find and update single entity (using custom queries with io.micronaut.data.model.Vector)"() {
         given:
         int[] dv = [1, 2, -3] as int[]
-        Vector.IntVector v1 = Vector.of(dv)
+        IntVector v1 = Vector.of(dv)
 
         when: "save via custom @Query using Vector parameter"
         vectorRepository.saveCustom(v1)
@@ -76,7 +76,7 @@ class OracleJdbcIntVectorEntitySpec extends Specification implements OracleTestP
 
         when: "update via custom @Query to a new vector"
         int [] dv2 = [3, 0, 7] as int[]
-        Vector.IntVector v2 = Vector.of(dv2)
+        IntVector v2 = Vector.of(dv2)
         vectorRepository.updateCustom(e.id, v2)
         def updated = vectorRepository.findById(e.id).orElse(null)
 
@@ -89,8 +89,8 @@ class OracleJdbcIntVectorEntitySpec extends Specification implements OracleTestP
 
     void "test save, find and update multiple entities"() {
         given:
-        Vector.IntVector vA = Vector.of([1, 2, 3] as int[])
-        Vector.IntVector vB = Vector.of([4, 5, 6] as int[])
+        IntVector vA = Vector.of([1, 2, 3] as int[])
+        IntVector vB = Vector.of([4, 5, 6] as int[])
 
         when:
         vectorRepository.saveCustom(vA)
@@ -105,8 +105,8 @@ class OracleJdbcIntVectorEntitySpec extends Specification implements OracleTestP
         idA != idB
 
         when: "update both"
-        Vector.IntVector vA2 = Vector.of([7, 8, 9] as int[])
-        Vector.IntVector vB2 = Vector.of([0, -1, -2] as int[])
+        IntVector vA2 = Vector.of([7, 8, 9] as int[])
+        IntVector vB2 = Vector.of([0, -1, -2] as int[])
         vectorRepository.updateCustom(idA, vA2)
         vectorRepository.updateCustom(idB, vB2)
         def rows2 = vectorRepository.findAll(Sort.of(Sort.Order.asc("id")))
@@ -120,7 +120,7 @@ class OracleJdbcIntVectorEntitySpec extends Specification implements OracleTestP
 
     void "test custom and async queries"() {
         given:
-        Vector.IntVector vec = Vector.of([10, 11, 12] as int[])
+        IntVector vec = Vector.of([10, 11, 12] as int[])
 
         when:
         Future<Integer> saveFut = vectorRepository.saveAsync(vec)
@@ -140,7 +140,7 @@ class OracleJdbcIntVectorEntitySpec extends Specification implements OracleTestP
         found.get(0).embedding.toIntegerArray().toList() == [10, 11, 12]
 
         when:
-        Vector.IntVector vec2 = Vector.of([13, 14, 15] as int[])
+        IntVector vec2 = Vector.of([13, 14, 15] as int[])
         Future<Integer> updFut = vectorRepository.updateAsync(last.id, vec2)
 
         then:
@@ -153,8 +153,8 @@ class OracleJdbcIntVectorEntitySpec extends Specification implements OracleTestP
 
     void "test paging over VectorIntDoc"() {
         given:
-        Vector.IntVector v1 = Vector.of([1, 2, 3] as int[])
-        Vector.IntVector v2 = Vector.of([4, 5, 6] as int[])
+        IntVector v1 = Vector.of([1, 2, 3] as int[])
+        IntVector v2 = Vector.of([4, 5, 6] as int[])
         vectorRepository.saveCustom(v1)
         vectorRepository.saveCustom(v2)
 
@@ -191,13 +191,13 @@ class VectorIntDoc {
     @Id
     @GeneratedValue(value = GeneratedValue.Type.SEQUENCE, ref = "VECTOR_DOC_SEQ")
     Long id
-    Vector.IntVector embedding
+    IntVector embedding
 
     Long getId() { return id }
     void setId(Long id) { this.id = id }
 
-    Vector.IntVector getEmbedding() { return embedding }
-    void setEmbedding(Vector.IntVector embedding) { this.embedding = embedding }
+    IntVector getEmbedding() { return embedding }
+    void setEmbedding(IntVector embedding) { this.embedding = embedding }
 }
 
 @JdbcRepository(dialect = Dialect.ORACLE)
@@ -207,7 +207,7 @@ interface VectorIntDocRepository extends PageableRepository<VectorIntDoc, Long> 
     void saveCustom(@Parameter("vec") Vector vec)
 
     @Query("INSERT INTO vector_int_doc(id, embedding) VALUES (VECTOR_DOC_SEQ.nextval, :vec)")
-    void saveCustom(@Parameter("vec") Vector.IntVector vec)
+    void saveCustom(@Parameter("vec") IntVector vec)
 
     @Query("SELECT * FROM vector_int_doc WHERE id = :id")
     Optional<VectorIntDoc> findById(Long id)
@@ -216,13 +216,13 @@ interface VectorIntDocRepository extends PageableRepository<VectorIntDoc, Long> 
     void updateCustom(Long id, @Parameter("vec") Vector vec)
 
     @Query("UPDATE vector_int_doc SET embedding = :vec WHERE id = :id")
-    void updateCustom(Long id, @Parameter("vec") Vector.IntVector vec)
+    void updateCustom(Long id, @Parameter("vec") IntVector vec)
 
     @Query("INSERT INTO vector_int_doc(id, embedding) VALUES (VECTOR_DOC_SEQ.nextval, :vec)")
     Future<Integer> saveAsync(@Parameter("vec") Vector vec)
 
     @Query("INSERT INTO vector_int_doc(id, embedding) VALUES (VECTOR_DOC_SEQ.nextval, :vec)")
-    Future<Integer> saveAsync(@Parameter("vec") Vector.IntVector vec)
+    Future<Integer> saveAsync(@Parameter("vec") IntVector vec)
 
     @Query("SELECT * FROM vector_int_doc WHERE id = :id")
     Future<List<VectorIntDoc>> findAsync(Long id)
@@ -231,6 +231,6 @@ interface VectorIntDocRepository extends PageableRepository<VectorIntDoc, Long> 
     Future<Integer> updateAsync(Long id, @Parameter("vec") Vector vec)
 
     @Query("UPDATE vector_int_doc SET embedding = :vec WHERE id = :id")
-    Future<Integer> updateAsync(Long id, @Parameter("vec") Vector.IntVector vec)
+    Future<Integer> updateAsync(Long id, @Parameter("vec") IntVector vec)
 
 }

@@ -9,8 +9,9 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.oraclexe.OracleTestPropertyProvider
 import io.micronaut.data.model.Sort
-import io.micronaut.data.model.Vector
+import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.model.vector.ByteVector
 import io.micronaut.data.repository.PageableRepository
 import io.micronaut.transaction.SynchronousTransactionManager
 import spock.lang.AutoCleanup
@@ -58,7 +59,7 @@ class OracleJdbcByteVectorEntitySpec extends Specification implements OracleTest
     void "test save, find and update single entity (using custom queries with io.micronaut.data.model.Vector)"() {
         given:
         byte[] dv = [1, 2, -3] as byte[]
-        Vector.ByteVector v1 = Vector.of(dv)
+        ByteVector v1 = Vector.of(dv)
 
         when: "save via custom @Query using Vector parameter"
         vectorRepository.saveCustom(v1)
@@ -74,7 +75,7 @@ class OracleJdbcByteVectorEntitySpec extends Specification implements OracleTest
 
         when: "update via custom @Query to a new vector"
         byte [] dv2 = [3, 0, 7] as byte[]
-        Vector.ByteVector v2 = Vector.of(dv2)
+        ByteVector v2 = Vector.of(dv2)
         vectorRepository.updateCustom(e.id, v2)
         def updated = vectorRepository.findById(e.id).orElse(null)
 
@@ -87,8 +88,8 @@ class OracleJdbcByteVectorEntitySpec extends Specification implements OracleTest
 
     void "test save, find and update multiple entities"() {
         given:
-        Vector.ByteVector vA = Vector.of([1, 2, 3] as byte[])
-        Vector.ByteVector vB = Vector.of([4, 5, 6] as byte[])
+        ByteVector vA = Vector.of([1, 2, 3] as byte[])
+        ByteVector vB = Vector.of([4, 5, 6] as byte[])
 
         when:
         vectorRepository.saveCustom(vA)
@@ -103,8 +104,8 @@ class OracleJdbcByteVectorEntitySpec extends Specification implements OracleTest
         idA != idB
 
         when: "update both"
-        Vector.ByteVector vA2 = Vector.of([7, 8, 9] as byte[])
-        Vector.ByteVector vB2 = Vector.of([0, -1, -2] as byte[])
+        ByteVector vA2 = Vector.of([7, 8, 9] as byte[])
+        ByteVector vB2 = Vector.of([0, -1, -2] as byte[])
         vectorRepository.updateCustom(idA, vA2)
         vectorRepository.updateCustom(idB, vB2)
         def rows2 = vectorRepository.findAll(Sort.of(Sort.Order.asc("id")))
@@ -118,7 +119,7 @@ class OracleJdbcByteVectorEntitySpec extends Specification implements OracleTest
 
     void "test custom and async queries"() {
         given:
-        Vector.ByteVector vec = Vector.of([10, 11, 12] as byte[])
+        ByteVector vec = Vector.of([10, 11, 12] as byte[])
 
         when:
         Future<Integer> saveFut = vectorRepository.saveAsync(vec)
@@ -138,7 +139,7 @@ class OracleJdbcByteVectorEntitySpec extends Specification implements OracleTest
         found.get(0).embedding.toByteArray().toList() == [10, 11, 12]
 
         when:
-        Vector.ByteVector vec2 = Vector.of([13, 14, 15] as byte[])
+        ByteVector vec2 = Vector.of([13, 14, 15] as byte[])
         Future<Integer> updFut = vectorRepository.updateAsync(last.id, vec2)
 
         then:
@@ -151,8 +152,8 @@ class OracleJdbcByteVectorEntitySpec extends Specification implements OracleTest
 
     void "test paging over VectorByteDoc"() {
         given:
-        Vector.ByteVector v1 = Vector.of([1, 2, 3] as byte[])
-        Vector.ByteVector v2 = Vector.of([4, 5, 6] as byte[])
+        ByteVector v1 = Vector.of([1, 2, 3] as byte[])
+        ByteVector v2 = Vector.of([4, 5, 6] as byte[])
         vectorRepository.saveCustom(v1)
         vectorRepository.saveCustom(v2)
 
@@ -189,13 +190,13 @@ class VectorByteDoc {
     @Id
     @GeneratedValue(value = GeneratedValue.Type.SEQUENCE, ref = "VECTOR_DOC_SEQ")
     Long id
-    Vector.ByteVector embedding
+    ByteVector embedding
 
     Long getId() { return id }
     void setId(Long id) { this.id = id }
 
-    Vector.ByteVector getEmbedding() { return embedding }
-    void setEmbedding(Vector.ByteVector embedding) { this.embedding = embedding }
+    ByteVector getEmbedding() { return embedding }
+    void setEmbedding(ByteVector embedding) { this.embedding = embedding }
 }
 
 @JdbcRepository(dialect = Dialect.ORACLE)
@@ -205,7 +206,7 @@ interface VectorByteDocRepository extends PageableRepository<VectorByteDoc, Long
     void saveCustom(@Parameter("vec") Vector vec)
 
     @Query("INSERT INTO vector_byte_doc(id, embedding) VALUES (VECTOR_DOC_SEQ.nextval, :vec)")
-    void saveCustom(@Parameter("vec") Vector.ByteVector vec)
+    void saveCustom(@Parameter("vec") ByteVector vec)
 
     @Query("SELECT * FROM vector_byte_doc WHERE id = :id")
     Optional<VectorByteDoc> findById(Long id)
@@ -214,13 +215,13 @@ interface VectorByteDocRepository extends PageableRepository<VectorByteDoc, Long
     void updateCustom(Long id, @Parameter("vec") Vector vec)
 
     @Query("UPDATE vector_byte_doc SET embedding = :vec WHERE id = :id")
-    void updateCustom(Long id, @Parameter("vec") Vector.ByteVector vec)
+    void updateCustom(Long id, @Parameter("vec") ByteVector vec)
 
     @Query("INSERT INTO vector_byte_doc(id, embedding) VALUES (VECTOR_DOC_SEQ.nextval, :vec)")
     Future<Integer> saveAsync(@Parameter("vec") Vector vec)
 
     @Query("INSERT INTO vector_byte_doc(id, embedding) VALUES (VECTOR_DOC_SEQ.nextval, :vec)")
-    Future<Integer> saveAsync(@Parameter("vec") Vector.ByteVector vec)
+    Future<Integer> saveAsync(@Parameter("vec") ByteVector vec)
 
     @Query("SELECT * FROM vector_byte_doc WHERE id = :id")
     Future<List<VectorByteDoc>> findAsync(Long id)
@@ -229,6 +230,6 @@ interface VectorByteDocRepository extends PageableRepository<VectorByteDoc, Long
     Future<Integer> updateAsync(Long id, @Parameter("vec") Vector vec)
 
     @Query("UPDATE vector_byte_doc SET embedding = :vec WHERE id = :id")
-    Future<Integer> updateAsync(Long id, @Parameter("vec") Vector.ByteVector vec)
+    Future<Integer> updateAsync(Long id, @Parameter("vec") ByteVector vec)
 
 }

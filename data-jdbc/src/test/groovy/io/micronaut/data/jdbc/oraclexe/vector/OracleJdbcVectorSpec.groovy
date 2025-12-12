@@ -4,7 +4,7 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.core.convert.ConversionContext
 import io.micronaut.core.type.Argument
 import io.micronaut.data.jdbc.oraclexe.OracleTestPropertyProvider
-import io.micronaut.data.model.Vector
+import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.runtime.convert.DataTypeConverter
 import io.micronaut.inject.qualifiers.Qualifiers
 import oracle.jdbc.OracleType

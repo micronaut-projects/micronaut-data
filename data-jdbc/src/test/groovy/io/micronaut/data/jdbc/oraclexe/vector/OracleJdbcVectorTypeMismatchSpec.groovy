@@ -1,9 +1,8 @@
 package io.micronaut.data.jdbc.oraclexe.vector
 
 import io.micronaut.context.ApplicationContext
-import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.jdbc.oraclexe.OracleTestPropertyProvider
-import io.micronaut.data.model.Vector
+import io.micronaut.data.model.vector.Vector
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification

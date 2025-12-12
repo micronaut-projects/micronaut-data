@@ -210,7 +210,7 @@ public interface QueryStatement<PS, IDX> {
                     }
                 }
             case OBJECT:
-                default:
+            default:
                 if (dataType.isArray()) {
                     if (value != null && !(value instanceof Array)) {
                         // Always convert primitive arrays to wrappers array. H2 doesn't support primitive arrays.

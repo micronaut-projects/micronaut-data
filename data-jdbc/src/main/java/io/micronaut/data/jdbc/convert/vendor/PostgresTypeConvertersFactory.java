@@ -19,7 +19,11 @@ import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.model.Vector;
+import io.micronaut.data.model.vector.Vector;
+import io.micronaut.data.model.vector.ByteVector;
+import io.micronaut.data.model.vector.DoubleVector;
+import io.micronaut.data.model.vector.FloatVector;
+import io.micronaut.data.model.vector.IntVector;
 import io.micronaut.data.runtime.convert.DataTypeConverter;
 import org.postgresql.util.PGobject;
 
@@ -46,12 +50,12 @@ import java.util.Optional;
 final class PostgresTypeConvertersFactory {
 
     @Prototype
-    DataTypeConverter<Vector.DoubleVector, PGobject> fromDoubleVectorToPgObject() {
+    DataTypeConverter<DoubleVector, PGobject> fromDoubleVectorToPgObject() {
         return (vector, targetType, context) -> Optional.of(toPgVector(vector.toDoubleArray()));
     }
 
     @Prototype
-    DataTypeConverter<Vector.FloatVector, PGobject> fromFloatVectorToPgObject() {
+    DataTypeConverter<FloatVector, PGobject> fromFloatVectorToPgObject() {
         return (vector, targetType, context) -> {
             float[] arr = vector.toFloatArray();
             // Cast to double textual form for pgvector input
@@ -64,7 +68,7 @@ final class PostgresTypeConvertersFactory {
     }
 
     @Prototype
-    DataTypeConverter<Vector.IntVector, PGobject> fromIntVectorToPgObject() {
+    DataTypeConverter<IntVector, PGobject> fromIntVectorToPgObject() {
         return (vector, targetType, context) -> {
             int[] arr = vector.toIntegerArray();
             double[] out = new double[arr.length];
@@ -76,7 +80,7 @@ final class PostgresTypeConvertersFactory {
     }
 
     @Prototype
-    DataTypeConverter<Vector.ByteVector, PGobject> fromByteVectorToPgObject() {
+    DataTypeConverter<ByteVector, PGobject> fromByteVectorToPgObject() {
         return (vector, targetType, context) -> {
             byte[] arr = vector.toByteArray();
             double[] out = new double[arr.length];
@@ -134,17 +138,51 @@ final class PostgresTypeConvertersFactory {
     // ----------------------
 
     @Prototype
-    DataTypeConverter<PGobject, Vector.DoubleVector> fromPgObjectToDoubleVector() {
+    DataTypeConverter<PGobject, DoubleVector> fromPgObjectToDoubleVector() {
         return (pg, targetType, context) -> {
             if (pg == null) {
                 return Optional.empty();
             }
-            if (!"vector".equalsIgnoreCase(pg.getType())) {
+            if (!"vector".equalsIgnoreCase(pg.getType()) && !"halfvec".equalsIgnoreCase(pg.getType())) {
                 return Optional.empty();
             }
             String txt = pg.getValue();
             double[] values = parsePgVectorText(txt);
-            return Optional.of((Vector.DoubleVector) Vector.of(values));
+            return Optional.of((DoubleVector) Vector.of(values));
+        };
+    }
+
+    @Prototype
+    DataTypeConverter<PGobject, FloatVector> fromPgObjectToFloatVector() {
+        return (pg, targetType, context) -> {
+            if (pg == null) {
+                return Optional.empty();
+            }
+            if (!"vector".equalsIgnoreCase(pg.getType()) && !"halfvec".equalsIgnoreCase(pg.getType())) {
+                return Optional.empty();
+            }
+            String txt = pg.getValue();
+            double[] d = parsePgVectorText(txt);
+            float[] arr = new float[d.length];
+            for (int i = 0; i < d.length; i++) {
+                arr[i] = (float) d[i];
+            }
+            return Optional.of((FloatVector) Vector.of(arr));
+        };
+    }
+
+    @Prototype
+    DataTypeConverter<PGobject, Vector> fromPgObjectToVector() {
+        return (pg, targetType, context) -> {
+            if (pg == null) {
+                return Optional.empty();
+            }
+            if (!"vector".equalsIgnoreCase(pg.getType()) && !"halfvec".equalsIgnoreCase(pg.getType())) {
+                return Optional.empty();
+            }
+            String txt = pg.getValue();
+            double[] values = parsePgVectorText(txt);
+            return Optional.of(Vector.of(values));
         };
     }
 

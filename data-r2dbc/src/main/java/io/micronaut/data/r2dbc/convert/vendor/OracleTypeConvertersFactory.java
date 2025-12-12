@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.convert.vendor;
+package io.micronaut.data.r2dbc.convert.vendor;
 
 import io.micronaut.context.annotation.Factory;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.model.vector.ByteVector;
 import io.micronaut.data.model.vector.DoubleVector;
 import io.micronaut.data.model.vector.FloatVector;
 import io.micronaut.data.model.vector.IntVector;
+import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.runtime.convert.DataTypeConverter;
 import oracle.jdbc.OracleType;
 import oracle.sql.DATE;
@@ -35,8 +35,8 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.Optional;
 import java.util.Arrays;
+import java.util.Optional;
 
 /**
  * Oracle DATE converters.
@@ -45,56 +45,8 @@ import java.util.Arrays;
  * @since 3.1.1
  */
 @Factory
-@Requires(classes = DATE.class)
+@Requires(classes = VECTOR.class)
 final class OracleTypeConvertersFactory {
-
-    @Prototype
-    DataTypeConverter<DATE, Timestamp> fromOracleDateToTimestamp() {
-        return (date, targetType, context) -> Optional.of(date.timestampValue());
-    }
-
-    @Prototype
-    DataTypeConverter<DATE, LocalDateTime> fromOracleDateToLocalDateTime() {
-        return (date, targetType, context) -> Optional.of(date.timestampValue().toLocalDateTime());
-    }
-
-    @Prototype
-    DataTypeConverter<DATE, Instant> fromOracleDateToInstant() {
-        return (date, targetType, context) -> Optional.of(date.timestampValue().toInstant());
-    }
-
-    @Prototype
-    DataTypeConverter<TIMESTAMP, Timestamp> fromOracleTimestampToTimestamp() {
-        return (timestamp, targetType, context) -> {
-            try {
-                return Optional.of(timestamp.timestampValue());
-            } catch (SQLException e) {
-                throw new DataAccessException("Cannot extract timestamp from: " + timestamp);
-            }
-        };
-    }
-
-    @Prototype
-    DataTypeConverter<TIMESTAMP, LocalDateTime> fromOracleTimestampToLocalDateTime() {
-        return (timestamp, targetType, context) -> {
-            try {
-                return Optional.of(timestamp.timestampValue().toLocalDateTime());
-            } catch (SQLException e) {
-                throw new DataAccessException("Cannot extract timestamp from: " + timestamp);
-            }
-        };
-    }
-
-    @Prototype
-    DataTypeConverter<TIMESTAMP, Instant> fromOracleTimestampToInstant() {
-        return (timestamp, targetType, context) -> {
-            try {
-                return Optional.of(timestamp.timestampValue().toInstant());
-            } catch (SQLException e) {
-                throw new DataAccessException("Cannot extract timestamp from: " + timestamp);
-            }
-        };
-    }
 
     @Prototype
     DataTypeConverter<VECTOR, Vector> fromOracleVectorToVector() {

@@ -23,7 +23,6 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.event.*;
-import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.PropertyAutoPopulator;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;

@@ -183,8 +183,6 @@ public class SchemaGenerator {
                                  PropertyPlaceholderResolver propertyPlaceholderResolver,
                                  PersistentEntity[] entities) throws SQLException {
         Dialect dialect = configuration.getDialect();
-        // Filter out entities that use unsupported types for the current dialect (e.g. VECTOR on non-Oracle)
-        entities = filterUnsupportedVectorEntities(entities, dialect);
         SqlQueryBuilder builder = new SqlQueryBuilder(dialect);
         if (dialect.allowBatch() && configuration.isBatchGenerate()) {
             switch (configuration.getSchemaGenerate()) {
@@ -265,7 +263,6 @@ public class SchemaGenerator {
                                  Map<Dialect, SqlTableMappingValidator> dialectSqlTableMappingValidatorMap) throws SQLException {
         Dialect dialect = configuration.getDialect();
         // Filter out entities that use unsupported types for the current dialect (e.g. VECTOR on non-Oracle)
-        entities = filterUnsupportedVectorEntities(entities, dialect);
         SqlTableMappingValidator sqlTableMappingValidator = dialectSqlTableMappingValidatorMap.get(dialect);
         if (sqlTableMappingValidator == null) {
             throw new IllegalStateException("There is no supported SqlTableMappingValidator for dialect " + dialect);
@@ -391,25 +388,4 @@ public class SchemaGenerator {
         }
         return sql;
     }
-
-    /**
-     * Filters out entities that contain properties mapped to DataType.VECTOR when the dialect is not ORACLE.
-     * This prevents schema generation errors for dialects that don't support VECTOR columns.
-     */
-    private static PersistentEntity[] filterUnsupportedVectorEntities(PersistentEntity[] entities, Dialect dialect) {
-        if (dialect == Dialect.ORACLE || entities == null || entities.length == 0) {
-            return entities;
-        }
-        java.util.ArrayList<PersistentEntity> filtered = new java.util.ArrayList<>(entities.length);
-        for (PersistentEntity entity : entities) {
-            boolean hasVector = false;
-            if (!hasVector) {
-                filtered.add(entity);
-            } else if (LOG.isDebugEnabled()) {
-                LOG.debug("Skipping entity [{}] for dialect [{}] due to unsupported VECTOR data type", entity.getName(), dialect);
-            }
-        }
-        return filtered.toArray(PersistentEntity[]::new);
-    }
-
 }

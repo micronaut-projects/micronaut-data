@@ -2,7 +2,7 @@ package io.micronaut.data.jdbc.oraclexe.vector
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.exceptions.DataAccessException
-import io.micronaut.data.model.Vector
+import io.micronaut.data.model.vector.Vector
 import spock.lang.Specification
 
 import javax.sql.DataSource

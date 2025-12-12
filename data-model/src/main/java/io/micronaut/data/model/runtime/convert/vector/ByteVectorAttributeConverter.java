@@ -16,8 +16,9 @@
 package io.micronaut.data.model.runtime.convert.vector;
 
 import io.micronaut.core.annotation.Indexed;
-import io.micronaut.data.model.Vector;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import io.micronaut.data.model.runtime.convert.SqlAttributeConverter;
+import io.micronaut.data.model.vector.ByteVector;
 
 /**
  * The attribute converter is used for converting mapped entity value to the persisted value and back.
@@ -27,5 +28,5 @@ import io.micronaut.data.model.runtime.convert.AttributeConverter;
  * @since 3.1
  */
 @Indexed(ByteVectorAttributeConverter.class)
-public interface ByteVectorAttributeConverter<X> extends AttributeConverter<Vector.ByteVector, X> {
+public interface ByteVectorAttributeConverter<X> extends SqlAttributeConverter<ByteVector, X> {
 }

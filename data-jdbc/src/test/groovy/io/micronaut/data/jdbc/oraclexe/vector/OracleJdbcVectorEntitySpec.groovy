@@ -9,7 +9,8 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.oraclexe.OracleTestPropertyProvider
 import io.micronaut.data.model.Sort
-import io.micronaut.data.model.Vector
+import io.micronaut.data.model.vector.DoubleVector
+import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.PageableRepository
 import io.micronaut.transaction.SynchronousTransactionManager
@@ -186,7 +187,7 @@ interface VectorDocRepository extends PageableRepository<VectorDoc, Long> {
     void saveCustom(@Parameter("vec") Vector vec)
 
     @Query("INSERT INTO vector_doc(id, embedding) VALUES (VECTOR_DOC_SEQ.nextval, :vec)")
-    void saveCustom(@Parameter("vec") Vector.DoubleVector vec)
+    void saveCustom(@Parameter("vec") DoubleVector vec)
 
     @Query("SELECT * FROM vector_doc WHERE id = :id")
     Optional<VectorDoubleDoc> findById(Long id)

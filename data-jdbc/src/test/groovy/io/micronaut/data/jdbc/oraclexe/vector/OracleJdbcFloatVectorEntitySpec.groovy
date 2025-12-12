@@ -8,8 +8,9 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.oraclexe.OracleTestPropertyProvider
-import io.micronaut.data.model.Vector
+import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.model.vector.FloatVector
 import io.micronaut.data.repository.PageableRepository
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -52,7 +53,7 @@ class OracleJdbcFloatVectorEntitySpec extends Specification implements OracleTes
     void "test save, find and update single entity (using custom queries with io.micronaut.data.model.Vector)"() {
         given:
         float[] dv = [1f, 2.5f, -3.75f] as float[]
-        Vector.FloatVector v1 = Vector.of(dv)
+        FloatVector v1 = Vector.of(dv)
 
         when: "save via custom @Query using Vector parameter"
         vectorRepository.saveCustom(v1)
@@ -68,7 +69,7 @@ class OracleJdbcFloatVectorEntitySpec extends Specification implements OracleTes
 
         when: "update via custom @Query to a new vector"
         float [] dv2 = [3f, 0.0f, 7.25f] as float[]
-        Vector.FloatVector v2 = Vector.of(dv2)
+        FloatVector v2 = Vector.of(dv2)
         vectorRepository.updateCustom(e.id, v2)
         def updated = vectorRepository.findById(e.id).orElse(null)
 
@@ -81,8 +82,8 @@ class OracleJdbcFloatVectorEntitySpec extends Specification implements OracleTes
 
     void "test save, find and update multiple entities"() {
         given:
-        Vector.FloatVector vA = Vector.of([1f, 2f, 3f] as float[])
-        Vector.FloatVector vB = Vector.of([4f, 5f, 6f] as float[])
+        FloatVector vA = Vector.of([1f, 2f, 3f] as float[])
+        FloatVector vB = Vector.of([4f, 5f, 6f] as float[])
 
         when:
         vectorRepository.saveCustom(vA)
@@ -97,8 +98,8 @@ class OracleJdbcFloatVectorEntitySpec extends Specification implements OracleTes
         idA != idB
 
         when: "update both"
-        Vector.FloatVector vA2 = Vector.of([7f, 8f, 9f] as float[])
-        Vector.FloatVector vB2 = Vector.of([0f, -1f, -2f] as float[])
+        FloatVector vA2 = Vector.of([7f, 8f, 9f] as float[])
+        FloatVector vB2 = Vector.of([0f, -1f, -2f] as float[])
         vectorRepository.updateCustom(idA, vA2)
         vectorRepository.updateCustom(idB, vB2)
         def rows2 = vectorRepository.findAll(io.micronaut.data.model.Sort.of(io.micronaut.data.model.Sort.Order.asc("id")))
@@ -112,7 +113,7 @@ class OracleJdbcFloatVectorEntitySpec extends Specification implements OracleTes
 
     void "test custom and async queries"() {
         given:
-        Vector.FloatVector vec = Vector.of([10f, 11f, 12f] as float[])
+        FloatVector vec = Vector.of([10f, 11f, 12f] as float[])
 
         when:
         java.util.concurrent.Future<Integer> saveFut = vectorRepository.saveAsync(vec)
@@ -132,7 +133,7 @@ class OracleJdbcFloatVectorEntitySpec extends Specification implements OracleTes
         found.get(0).embedding.toFloatArray().toList() == [10f, 11f, 12f]
 
         when:
-        Vector.FloatVector vec2 = Vector.of([13f, 14f, 15f] as float[])
+        FloatVector vec2 = Vector.of([13f, 14f, 15f] as float[])
         java.util.concurrent.Future<Integer> updFut = vectorRepository.updateAsync(last.id, vec2)
 
         then:
@@ -145,8 +146,8 @@ class OracleJdbcFloatVectorEntitySpec extends Specification implements OracleTes
 
     void "test paging over VectorFloatDoc"() {
         given:
-        Vector.FloatVector v1 = Vector.of([1f, 2f, 3f] as float[])
-        Vector.FloatVector v2 = Vector.of([4f, 5f, 6f] as float[])
+        FloatVector v1 = Vector.of([1f, 2f, 3f] as float[])
+        FloatVector v2 = Vector.of([4f, 5f, 6f] as float[])
         vectorRepository.saveCustom(v1)
         vectorRepository.saveCustom(v2)
 
@@ -183,13 +184,13 @@ class VectorFloatDoc {
     @Id
     @GeneratedValue(value = GeneratedValue.Type.SEQUENCE, ref = "VECTOR_DOC_SEQ")
     Long id
-    Vector.FloatVector embedding
+    FloatVector embedding
 
     Long getId() { return id }
     void setId(Long id) { this.id = id }
 
-    Vector.FloatVector getEmbedding() { return embedding }
-    void setEmbedding(Vector.FloatVector embedding) { this.embedding = embedding }
+    FloatVector getEmbedding() { return embedding }
+    void setEmbedding(FloatVector embedding) { this.embedding = embedding }
 }
 
 @JdbcRepository(dialect = Dialect.ORACLE)
@@ -199,7 +200,7 @@ interface VectorFloatDocRepository extends PageableRepository<VectorFloatDoc, Lo
     void saveCustom(@Parameter("vec") Vector vec)
 
     @Query("INSERT INTO vector_float_doc(id, embedding) VALUES (VECTOR_DOC_SEQ.nextval, :vec)")
-    void saveCustom(@Parameter("vec") Vector.FloatVector vec)
+    void saveCustom(@Parameter("vec") FloatVector vec)
 
     @Query("SELECT * FROM vector_float_doc WHERE id = :id")
     Optional<VectorFloatDoc> findById(Long id)
@@ -208,13 +209,13 @@ interface VectorFloatDocRepository extends PageableRepository<VectorFloatDoc, Lo
     void updateCustom(Long id, @Parameter("vec") Vector vec)
 
     @Query("UPDATE vector_float_doc SET embedding = :vec WHERE id = :id")
-    void updateCustom(Long id, @Parameter("vec") Vector.FloatVector vec)
+    void updateCustom(Long id, @Parameter("vec") FloatVector vec)
 
     @Query("INSERT INTO vector_float_doc(id, embedding) VALUES (VECTOR_DOC_SEQ.nextval, :vec)")
     java.util.concurrent.Future<Integer> saveAsync(@Parameter("vec") Vector vec)
 
     @Query("INSERT INTO vector_float_doc(id, embedding) VALUES (VECTOR_DOC_SEQ.nextval, :vec)")
-    java.util.concurrent.Future<Integer> saveAsync(@Parameter("vec") Vector.FloatVector vec)
+    java.util.concurrent.Future<Integer> saveAsync(@Parameter("vec") FloatVector vec)
 
     @Query("SELECT * FROM vector_float_doc WHERE id = :id")
     java.util.concurrent.Future<java.util.List<VectorFloatDoc>> findAsync(Long id)
@@ -223,6 +224,6 @@ interface VectorFloatDocRepository extends PageableRepository<VectorFloatDoc, Lo
     java.util.concurrent.Future<Integer> updateAsync(Long id, @Parameter("vec") Vector vec)
 
     @Query("UPDATE vector_float_doc SET embedding = :vec WHERE id = :id")
-    java.util.concurrent.Future<Integer> updateAsync(Long id, @Parameter("vec") Vector.FloatVector vec)
+    java.util.concurrent.Future<Integer> updateAsync(Long id, @Parameter("vec") FloatVector vec)
 
 }

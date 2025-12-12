@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.model.runtime.convert.vector;
+package io.micronaut.data.model.runtime.convert;
 
 import io.micronaut.core.annotation.Indexed;
-import io.micronaut.data.model.runtime.convert.SqlAttributeConverter;
-import io.micronaut.data.model.vector.IntVector;
-import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import io.micronaut.core.convert.ConversionContext;
 
 /**
  * The attribute converter is used for converting mapped entity value to the persisted value and back.
  *
  * @param <X> The entity value type
+ * @param <Y> The persisted value type
  * @author Denis Stepanov
  * @since 3.1
  */
-@Indexed(IntVectorAttributeConverter.class)
-public interface IntVectorAttributeConverter<X> extends SqlAttributeConverter<IntVector, X> {
+@Indexed(SqlAttributeConverter.class)
+public interface SqlAttributeConverter<X, Y> extends  AttributeConverter<X, Y> {
+    Class<?> getPersistedType(ConversionContext conversionContext);
 }

@@ -7,7 +7,8 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
-import io.micronaut.data.model.Vector
+import io.micronaut.data.model.vector.DoubleVector
+import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -38,7 +39,7 @@ class PostgresJdbcDoubleVectorEntitySpec extends Specification implements Postgr
     void "test save, find and update single entity (using custom queries with io.micronaut.data.model.Vector)"() {
         given:
         double[] dv = [1d, 2.5d, -3.75d] as double[]
-        Vector.DoubleVector v1 = Vector.of(dv)
+        DoubleVector v1 = Vector.of(dv)
 
         when: "save via custom @Query using Vector parameter"
         vectorRepository.saveCustom(v1)
@@ -54,7 +55,7 @@ class PostgresJdbcDoubleVectorEntitySpec extends Specification implements Postgr
 
         when: "update via custom @Query to a new vector"
         double[] dv2 = [3d, 0.0d, 7.25d] as double[]
-        Vector.DoubleVector v2 = Vector.of(dv2)
+        DoubleVector v2 = Vector.of(dv2)
         vectorRepository.updateCustom(e.id, v2)
         def updated = vectorRepository.findById(e.id).orElse(null)
 
@@ -67,7 +68,7 @@ class PostgresJdbcDoubleVectorEntitySpec extends Specification implements Postgr
     void "test save and update via default repository methods (no @Query)"() {
         given:
         double[] dv = [2d, -1.5d, 0.25d] as double[]
-        Vector.DoubleVector v1 = Vector.of(dv)
+        DoubleVector v1 = Vector.of(dv)
 
         when: "persist entity using default repository save (auto-generated SQL, no @Query)"
         def saved = vectorRepository.save(new VectorDoubleDoc(embedding: v1))
@@ -85,7 +86,7 @@ class PostgresJdbcDoubleVectorEntitySpec extends Specification implements Postgr
 
         when: "update entity using default repository update (auto-generated SQL, no @Query)"
         double[] dv2 = [-0.5d, 3d, 4.5d] as double[]
-        Vector.DoubleVector v2 = Vector.of(dv2)
+        DoubleVector v2 = Vector.of(dv2)
         fetched.embedding = v2
         def updated = vectorRepository.update(fetched)
 
@@ -98,8 +99,8 @@ class PostgresJdbcDoubleVectorEntitySpec extends Specification implements Postgr
 
     void "test save, find and update multiple entities"() {
         given:
-        Vector.DoubleVector vA = Vector.of([1d, 2d, 3d] as double[])
-        Vector.DoubleVector vB = Vector.of([4d, 5d, 6d] as double[])
+        DoubleVector vA = Vector.of([1d, 2d, 3d] as double[])
+        DoubleVector vB = Vector.of([4d, 5d, 6d] as double[])
 
         when:
         vectorRepository.saveCustom(vA)
@@ -114,8 +115,8 @@ class PostgresJdbcDoubleVectorEntitySpec extends Specification implements Postgr
         idA != idB
 
         when: "update both"
-        Vector.DoubleVector vA2 = Vector.of([7d, 8d, 9d] as double[])
-        Vector.DoubleVector vB2 = Vector.of([0d, -1d, -2d] as double[])
+        DoubleVector vA2 = Vector.of([7d, 8d, 9d] as double[])
+        DoubleVector vB2 = Vector.of([0d, -1d, -2d] as double[])
         vectorRepository.updateCustom(idA, vA2)
         vectorRepository.updateCustom(idB, vB2)
         def rows2 = vectorRepository.findAll(Sort.of(Sort.Order.asc("id")))
@@ -129,7 +130,7 @@ class PostgresJdbcDoubleVectorEntitySpec extends Specification implements Postgr
 
     void "test custom and async queries"() {
         given:
-        Vector.DoubleVector vec = Vector.of([10d, 11d, 12d] as double[])
+        DoubleVector vec = Vector.of([10d, 11d, 12d] as double[])
 
         when:
         java.util.concurrent.Future<Integer> saveFut = vectorRepository.saveAsync(vec)
@@ -149,7 +150,7 @@ class PostgresJdbcDoubleVectorEntitySpec extends Specification implements Postgr
         found.get(0).embedding.toDoubleArray().toList() == [10d, 11d, 12d]
 
         when:
-        Vector.DoubleVector vec2 = Vector.of([13d, 14d, 15d] as double[])
+        DoubleVector vec2 = Vector.of([13d, 14d, 15d] as double[])
         java.util.concurrent.Future<Integer> updFut = vectorRepository.updateAsync(last.id, vec2)
 
         then:
@@ -162,8 +163,8 @@ class PostgresJdbcDoubleVectorEntitySpec extends Specification implements Postgr
 
     void "test paging over VectorDoubleDoc"() {
         given:
-        Vector.DoubleVector v1 = Vector.of([1d, 2d, 3d] as double[])
-        Vector.DoubleVector v2 = Vector.of([4d, 5d, 6d] as double[])
+        DoubleVector v1 = Vector.of([1d, 2d, 3d] as double[])
+        DoubleVector v2 = Vector.of([4d, 5d, 6d] as double[])
         vectorRepository.saveCustom(v1)
         vectorRepository.saveCustom(v2)
 
@@ -202,13 +203,13 @@ class VectorDoubleDoc {
     @GeneratedValue
     Long id
     @Column(length = 3)
-    Vector.DoubleVector embedding
+    DoubleVector embedding
 
     Long getId() { return id }
     void setId(Long id) { this.id = id }
 
-    Vector.DoubleVector getEmbedding() { return embedding }
-    void setEmbedding(Vector.DoubleVector embedding) { this.embedding = embedding }
+    DoubleVector getEmbedding() { return embedding }
+    void setEmbedding(DoubleVector embedding) { this.embedding = embedding }
 }
 
 @JdbcRepository(dialect = Dialect.POSTGRES)
@@ -218,7 +219,7 @@ interface VectorDoubleDocRepository extends PageableRepository<VectorDoubleDoc, 
     void saveCustom(@Parameter("vec") Vector vec)
 
     @Query("INSERT INTO vector_double_doc(embedding) VALUES (:vec)")
-    void saveCustom(@Parameter("vec") Vector.DoubleVector vec)
+    void saveCustom(@Parameter("vec") DoubleVector vec)
 
     @Query("SELECT * FROM vector_double_doc WHERE id = :id")
     Optional<VectorDoubleDoc> findById(Long id)
@@ -227,13 +228,13 @@ interface VectorDoubleDocRepository extends PageableRepository<VectorDoubleDoc, 
     void updateCustom(Long id, @Parameter("vec") Vector vec)
 
     @Query("UPDATE vector_double_doc SET embedding = :vec WHERE id = :id")
-    void updateCustom(Long id, @Parameter("vec") Vector.DoubleVector vec)
+    void updateCustom(Long id, @Parameter("vec") DoubleVector vec)
 
     @Query("INSERT INTO vector_double_doc(embedding) VALUES (:vec)")
     java.util.concurrent.Future<Integer> saveAsync(@Parameter("vec") Vector vec)
 
     @Query("INSERT INTO vector_double_doc(embedding) VALUES (:vec)")
-    java.util.concurrent.Future<Integer> saveAsync(@Parameter("vec") Vector.DoubleVector vec)
+    java.util.concurrent.Future<Integer> saveAsync(@Parameter("vec") DoubleVector vec)
 
     @Query("SELECT * FROM vector_double_doc WHERE id = :id")
     java.util.concurrent.Future<java.util.List<VectorDoubleDoc>> findAsync(Long id)
@@ -242,6 +243,6 @@ interface VectorDoubleDocRepository extends PageableRepository<VectorDoubleDoc, 
     java.util.concurrent.Future<Integer> updateAsync(Long id, @Parameter("vec") Vector vec)
 
     @Query("UPDATE vector_double_doc SET embedding = :vec WHERE id = :id")
-    java.util.concurrent.Future<Integer> updateAsync(Long id, @Parameter("vec") Vector.DoubleVector vec)
+    java.util.concurrent.Future<Integer> updateAsync(Long id, @Parameter("vec") DoubleVector vec)
 
 }

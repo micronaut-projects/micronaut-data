@@ -58,7 +58,6 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
-import io.micronaut.data.model.runtime.convert.vector.oracle.OracleVectorAttributeConverterToString;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import io.micronaut.data.operations.reactive.BlockingExecutorReactorRepositoryOperations;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
@@ -70,6 +69,7 @@ import io.micronaut.data.r2dbc.mapper.ColumnNameR2dbcResultReader;
 import io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement;
 import io.micronaut.data.r2dbc.mapper.RowTupleMapper;
 import io.micronaut.data.r2dbc.transaction.R2dbcReactorTransactionOperations;
+import io.micronaut.data.runtime.convert.ConversionContextFactory;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.convert.RuntimePersistentPropertyConversionContext;
 import io.micronaut.data.runtime.date.DateTimeProvider;
@@ -196,7 +196,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         SqlJsonColumnMapperProvider<Row> sqlJsonColumnMapperProvider,
         List<R2dbcExceptionMapper> r2dbcExceptionMapperList,
         @Parameter R2dbcReactorTransactionOperations transactionOperations,
-        @Parameter ReactorConnectionOperations<Connection> connectionOperations) {
+        @Parameter ReactorConnectionOperations<Connection> connectionOperations,
+        @Parameter ConversionContextFactory conversionContextFactory) {
         super(
             dataSourceName,
             new ColumnNameR2dbcResultReader(conversionService),
@@ -208,7 +209,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             conversionService,
             attributeConverterRegistry,
             jsonMapper,
-            sqlJsonColumnMapperProvider);
+            sqlJsonColumnMapperProvider,
+            conversionContextFactory);
         this.connectionFactory = connectionFactory;
         this.ioExecutorService = executorService;
         this.schemaTenantResolver = schemaTenantResolver;
@@ -521,11 +523,11 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 if (mapper instanceof SqlResultEntityTypeMapper<Row, R> entityTypeMapper) {
                     final boolean hasJoins = !preparedQuery.getJoinPaths().isEmpty();
                     if (!hasJoins) {
-                        return executeAndMapEachRow(statement, row -> entityTypeMapper.readEntity(row, preparedQuery.getDialect()));
+                        return executeAndMapEachRow(statement, entityTypeMapper::readEntity);
                     }
                     SqlResultEntityTypeMapper.PushingMapper<Row, R> rowsMapper = entityTypeMapper.readOneMapper();
                     return executeAndMapEachRow(statement, row -> {
-                        rowsMapper.processRow(row, preparedQuery.getDialect());
+                        rowsMapper.processRow(row);
                         return "";
                     }).collectList().flatMap(ignore -> Mono.justOrEmpty(rowsMapper.getResult()));
                 }
@@ -545,7 +547,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 if (mapper instanceof SqlResultEntityTypeMapper<Row, R> entityTypeMapper) {
                     SqlResultEntityTypeMapper.PushingMapper<Row, List<R>> rowsMapper = entityTypeMapper.readManyMapper();
                     return executeAndMapEachRow(statement, row -> {
-                        rowsMapper.processRow(row, preparedQuery.getDialect());
+                        rowsMapper.processRow(row);
                         return "";
                     }).collectList().flatMapIterable(ignore -> rowsMapper.getResult());
                 }
@@ -887,13 +889,9 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             if (property == null) {
                 return value;
             }
-            AttributeConverter<Object, Object> converter = property.getConverter(getDialect());
+            AttributeConverter<Object, Object> converter = property.getConverter();
             if (converter != null) {
-                Object persisted = converter.convertToPersistedValue(value, createTypeConversionContext(property, property.getArgument()));
-                if (converter instanceof OracleVectorAttributeConverterToString<?, Object> olc) {
-                    return olc.convertToString(persisted);
-                }
-                return persisted;
+                return converter.convertToPersistedValue(value, createTypeConversionContext(property, property.getArgument()));
             }
             return value;
         }
@@ -903,28 +901,20 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             if (converterClass == null) {
                 return value;
             }
-            @NonNull List<AttributeConverter<Object, Object>> converters = attributeConverterRegistry.getConverters(converterClass);
-            AttributeConverter<Object, Object> converter = converters.stream().filter(x -> x.getDialect() == getDialect()).findFirst().orElse(converters.stream().filter(x -> x.getDialect() == null).findFirst().orElse(null));
-            if (converter == null) {
-                throw  new DataAccessException("No converter found for " + converterClass.getName());
-            }
-
+            AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
             ConversionContext conversionContext = createTypeConversionContext(null, argument);
-            if (converter instanceof OracleVectorAttributeConverterToString<?, Object> olc) {
-                return olc.convertToString(converter.convertToPersistedValue(value, conversionContext));
-            }
             return converter.convertToPersistedValue(value, conversionContext);
         }
 
         private ConversionContext createTypeConversionContext(@Nullable RuntimePersistentProperty<?> property,
                                                               @Nullable Argument<?> argument) {
             if (property != null) {
-                return new RuntimePersistentPropertyR2dbcCC(connection, property);
+                return new RuntimePersistentPropertyR2dbcCC(connection, getDialect(), property);
             }
             if (argument != null) {
-                return new ArgumentR2dbcCC(connection, argument);
+                return new ArgumentR2dbcCC(connection, getDialect(), argument);
             }
-            return new R2dbcConversionContextImpl(connection);
+            return new R2dbcConversionContextImpl(connection, getDialect());
         }
 
         @Override
@@ -942,6 +932,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             for (Object value : values) {
                 bindOne(binding, value);
             }
+
         }
 
         @Override
@@ -1217,8 +1208,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
         private final RuntimePersistentProperty<?> property;
 
-        public RuntimePersistentPropertyR2dbcCC(Connection connection, RuntimePersistentProperty<?> property) {
-            super(ConversionContext.of(property.getArgument()), connection);
+        public RuntimePersistentPropertyR2dbcCC(Connection connection, Dialect dialect, RuntimePersistentProperty<?> property) {
+            super(ConversionContext.of(property.getArgument()), connection, dialect);
             this.property = property;
         }
 
@@ -1228,12 +1219,12 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         }
     }
 
-    private static final class ArgumentR2dbcCC extends R2dbcConversionContextImpl implements ArgumentConversionContext<Object> {
+     static final class ArgumentR2dbcCC extends R2dbcConversionContextImpl implements ArgumentConversionContext<Object> {
 
         private final Argument argument;
 
-        public ArgumentR2dbcCC(Connection connection, Argument argument) {
-            super(ConversionContext.of(argument), connection);
+        public ArgumentR2dbcCC(Connection connection, Dialect dialect, Argument argument) {
+            super(ConversionContext.of(argument), connection, dialect);
             this.argument = argument;
         }
 
@@ -1247,14 +1238,16 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         implements R2dbcConversionContext {
 
         private final Connection connection;
+        private final Dialect dialect;
 
-        public R2dbcConversionContextImpl(Connection connection) {
-            this(ConversionContext.DEFAULT, connection);
+        public R2dbcConversionContextImpl(Connection connection, Dialect dialect) {
+            this(ConversionContext.DEFAULT, connection, dialect);
         }
 
-        public R2dbcConversionContextImpl(ConversionContext conversionContext, Connection connection) {
+        public R2dbcConversionContextImpl(ConversionContext conversionContext, Connection connection, Dialect dialect) {
             super(conversionContext);
             this.connection = connection;
+            this.dialect = dialect;
         }
 
         @Override
@@ -1262,5 +1255,9 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             return connection;
         }
 
+        @Override
+        public Dialect getDialect() {
+            return dialect;
+        }
     }
 }

@@ -34,7 +34,6 @@ import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
-import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
@@ -524,11 +523,6 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
             @Override
             public void bindMany(QueryParameterBinding binding, Collection<Object> values) {
                 bindOne(binding, values);
-            }
-
-            @Override
-            public Dialect getDialect() {
-                return null;
             }
 
         };

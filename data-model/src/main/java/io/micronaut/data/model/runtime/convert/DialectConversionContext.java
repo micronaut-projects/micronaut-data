@@ -13,20 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.model.runtime.convert.vector;
+package io.micronaut.data.model.runtime.convert;
 
-import io.micronaut.core.annotation.Indexed;
-import io.micronaut.data.model.runtime.convert.SqlAttributeConverter;
-import io.micronaut.data.model.vector.IntVector;
-import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 
 /**
- * The attribute converter is used for converting mapped entity value to the persisted value and back.
+ * Conversion context for JDBC implementation.
  *
- * @param <X> The entity value type
  * @author Denis Stepanov
  * @since 3.1
  */
-@Indexed(IntVectorAttributeConverter.class)
-public interface IntVectorAttributeConverter<X> extends SqlAttributeConverter<IntVector, X> {
+public interface DialectConversionContext extends ConversionContext {
+
+    /**
+     * Provides the SQL dialect for the current operation.
+     * Default implementation returns null for backward compatibility.
+     *
+     * @return the dialect or null if not available
+     */
+    @NonNull
+    Dialect getDialect();
+
 }

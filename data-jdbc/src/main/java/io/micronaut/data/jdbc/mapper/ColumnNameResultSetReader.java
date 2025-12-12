@@ -241,7 +241,7 @@ public final class ColumnNameResultSetReader implements ResultReader<ResultSet, 
                 o = resultSet.getBlob(name);
             } else if (Clob.class.isAssignableFrom(type)) {
                 o = resultSet.getClob(name);
-            } else if (type == float[].class || type == double[].class || type == byte[].class || type == int[].class) {
+            } else if (type == String.class) {
                 o = resultSet.getObject(name, type);
             } else {
                 o = resultSet.getObject(name);

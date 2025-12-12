@@ -32,7 +32,9 @@ public class PostgresDbInit implements BeanCreatedEventListener<ConnectionFactor
 
         String url = "jdbc:postgresql://" + host + ":" + port + "/" + database;
 
-        try {
+        int attempts = 30;
+        SQLException last = null;
+        while (attempts-- > 0) {
             try (Connection connection = DriverManager.getConnection(url, info)) {
                 // Ensure pgvector extension and demo table for vector tests
                 try (CallableStatement st = connection.prepareCall("CREATE EXTENSION IF NOT EXISTS vector;")) {
@@ -40,9 +42,20 @@ public class PostgresDbInit implements BeanCreatedEventListener<ConnectionFactor
                 } catch (SQLException e) {
                     // Ignore if not available or already exists
                 }
+                last = null;
+                break;
+            } catch (SQLException e) {
+                last = e;
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException(ie);
+                }
             }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        }
+        if (last != null) {
+            throw new RuntimeException(last);
         }
         return configuration;
     }
