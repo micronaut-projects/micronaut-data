@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.jdbc.convert.JdbcConversionContext;
 import io.micronaut.data.model.Vector;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.convert.vector.VectorAttributeConverter;
@@ -36,6 +37,7 @@ import org.postgresql.util.PGobject;
  */
 @Singleton
 @Requires(classes = PGobject.class)
+@Requires(bean = JdbcConversionContext.class)
 public final class PostgresVectorAttributeConverter implements VectorAttributeConverter<PGobject> {
 
     @Override

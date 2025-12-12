@@ -1,6 +1,7 @@
 package io.micronaut.data.r2dbc.postgres.vector;
 
 import io.micronaut.context.annotation.Context;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
 import io.r2dbc.spi.ConnectionFactoryOptions;
@@ -15,6 +16,7 @@ import java.util.Properties;
 
 @Context
 @Singleton
+@Requires(property = "spec.name", value = "PostgresR2dbcVectorEntitySpec")
 public class PostgresDbInit implements BeanCreatedEventListener<ConnectionFactoryOptions> {
 
     @Override
@@ -32,38 +34,12 @@ public class PostgresDbInit implements BeanCreatedEventListener<ConnectionFactor
 
         try {
             try (Connection connection = DriverManager.getConnection(url, info)) {
-                try (CallableStatement callableStatement = connection.prepareCall("CREATE EXTENSION \"uuid-ossp\";")) {
-                    callableStatement.execute();
-                } catch (SQLException e) {
-                    // Ignore if already exists
-                }
-                try (CallableStatement st = connection.prepareCall("CREATE TYPE happiness AS ENUM ('happy', 'very_happy', 'ecstatic');")) {
-                    st.execute();
-                } catch (SQLException e) {
-                    // Ignore if already exists
-                }
-                try (CallableStatement st = connection.prepareCall("""
-CREATE OR REPLACE PROCEDURE add1(IN myInput integer, OUT myOutput integer)
-LANGUAGE plpgsql
-AS $$
-BEGIN
-myOutput := myInput + 1;
-END;
-$$;
-
-                 """)) {
-                    st.execute();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    // Ignore if already exists
-                }
                 // Ensure pgvector extension and demo table for vector tests
                 try (CallableStatement st = connection.prepareCall("CREATE EXTENSION IF NOT EXISTS vector;")) {
                     st.execute();
                 } catch (SQLException e) {
                     // Ignore if not available or already exists
                 }
-
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

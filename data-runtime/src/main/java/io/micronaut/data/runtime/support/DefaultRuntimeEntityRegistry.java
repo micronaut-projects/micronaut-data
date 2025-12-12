@@ -108,15 +108,15 @@ final class DefaultRuntimeEntityRegistry implements RuntimeEntityRegistry, Appli
 
     @NonNull
     @Override
-    public <T> RuntimePersistentEntity<T> getEntity(@NonNull Class<T> type, Dialect dialect) {
+    public <T> RuntimePersistentEntity<T> getEntity(@NonNull Class<T> type) {
         ArgumentUtils.requireNonNull("type", type);
         // we need atomicity here, since entites are compared by identity (==)
-        return entities.computeIfAbsent(type, x -> this.newEntity(x, null));
+        return entities.computeIfAbsent(type, x -> this.newEntity(x));
     }
 
     @NonNull
     @Override
-    public <T> RuntimePersistentEntity<T> newEntity(@NonNull Class<T> type, Dialect dialect) {
+    public <T> RuntimePersistentEntity<T> newEntity(@NonNull Class<T> type) {
         return new RuntimePersistentEntity<>(type) {
             final boolean hasPrePersistEventListeners = eventRegistry.supports((RuntimePersistentEntity) this, PrePersist.class);
             final boolean hasPreRemoveEventListeners = eventRegistry.supports((RuntimePersistentEntity) this, PreRemove.class);
@@ -138,7 +138,7 @@ final class DefaultRuntimeEntityRegistry implements RuntimeEntityRegistry, Appli
 
             @Override
             protected RuntimePersistentEntity<T> getEntity(Class<T> type) {
-                return DefaultRuntimeEntityRegistry.this.getEntity(type, null);
+                return DefaultRuntimeEntityRegistry.this.getEntity(type);
             }
 
             @Override

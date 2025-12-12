@@ -24,7 +24,6 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaInsert;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractCriteriaBuilder;
-import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
@@ -65,18 +64,18 @@ public final class RuntimeCriteriaBuilder extends AbstractCriteriaBuilder {
             }
 
             @Override
-            public <T> RuntimePersistentEntity<T> getEntity(Class<T> type, Dialect dialect) {
+            public <T> RuntimePersistentEntity<T> getEntity(Class<T> type) {
                 RuntimeEntityRegistry entityRegistry = this;
                 return map.computeIfAbsent(type, t -> new RuntimePersistentEntity<Object>(t) {
                     @Override
                     protected RuntimePersistentEntity<Object> getEntity(Class<Object> type) {
-                        return entityRegistry.getEntity(type, null);
+                        return entityRegistry.getEntity(type);
                     }
                 });
             }
 
             @Override
-            public <T> RuntimePersistentEntity<T> newEntity(Class<T> type, Dialect dialect) {
+            public <T> RuntimePersistentEntity<T> newEntity(Class<T> type) {
                 return new RuntimePersistentEntity<>(type);
             }
 

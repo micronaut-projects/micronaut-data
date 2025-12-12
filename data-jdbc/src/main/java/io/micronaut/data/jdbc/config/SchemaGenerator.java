@@ -137,7 +137,7 @@ public class SchemaGenerator {
                 .filter(i -> !i.getBeanType().getName().contains("$"))
                 .filter(i -> !Modifier.isAbstract(i.getBeanType().getModifiers()))
                 .filter(i -> !i.hasAnnotation(JsonView.class))
-                .map(beanIntrospection -> runtimeEntityRegistry.getEntity(beanIntrospection.getBeanType(), null))
+                .map(beanIntrospection -> runtimeEntityRegistry.getEntity(beanIntrospection.getBeanType()))
                 .toArray(PersistentEntity[]::new);
             if (ArrayUtils.isNotEmpty(entities)) {
                 DataSource dataSource = DelegatingDataSource.unwrapDataSource(beanLocator.getBean(DataSource.class, Qualifiers.byName(name)));

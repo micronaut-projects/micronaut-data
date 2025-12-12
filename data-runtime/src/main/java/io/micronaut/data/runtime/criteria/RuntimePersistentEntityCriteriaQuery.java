@@ -53,7 +53,7 @@ final class RuntimePersistentEntityCriteriaQuery<T> extends AbstractPersistentEn
 
     @Override
     public <X> PersistentEntityRoot<X> from(Class<X> entityClass) {
-        return from(runtimeEntityRegistry.getEntity(entityClass, null));
+        return from(runtimeEntityRegistry.getEntity(entityClass));
     }
 
     @Override
