@@ -43,7 +43,7 @@ import static io.micronaut.data.model.AssociationUtils.CAMEL_CASE_SPLIT_PATTERN;
  * @author Graeme Rocher
  * @since 1.0
  */
-public interface PersistentEntity extends PersistentElement, JsonViewPersistentEntity {
+public interface PersistentEntity extends PersistentElement {
 
     /**
      * The entity name including any package prefix.

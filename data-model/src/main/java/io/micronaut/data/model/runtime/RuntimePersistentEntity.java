@@ -21,12 +21,13 @@ import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
-import io.micronaut.data.annotation.*;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Transient;
 import io.micronaut.data.annotation.Version;
+import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.AbstractPersistentEntity;
@@ -44,7 +45,7 @@ import java.util.stream.Collectors;
  * @since 1.0
  * @param <T> The type
  */
-public class RuntimePersistentEntity<T> extends AbstractPersistentEntity implements PersistentEntity {
+public class RuntimePersistentEntity<T> extends AbstractPersistentEntity {
 
     private static final Logger LOG = LoggerFactory.getLogger(RuntimePersistentEntity.class);
 
@@ -418,48 +419,58 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
      */
     public boolean hasAutoPopulatedProperties() {
         if (this.hasAutoPopulatedProperties == null) {
-            this.hasAutoPopulatedProperties = Arrays.stream(allPersistentProperties)
-                    .filter(Objects::nonNull)
-                    .anyMatch(PersistentProperty::isAutoPopulated);
+            this.hasAutoPopulatedProperties = hasDirectAutoPopulated() || hasAutoPopulatedInEmbeddeds();
         }
         return this.hasAutoPopulatedProperties;
     }
 
-    /**
-     * Get JSON view persistent entity.
-     * @return The persistent entity
-     */
-    @Override
-    public Optional<PersistentEntity> getJsonViewEntity() {
-        return getAnnotationMetadata().classValue(JsonView.class, "entity").map(this::getEntity);
+    private boolean hasDirectAutoPopulated() {
+        return Arrays.stream(allPersistentProperties)
+            .filter(Objects::nonNull)
+            .anyMatch(PersistentProperty::isAutoPopulated);
+    }
+
+    private boolean hasAutoPopulatedInEmbeddeds() {
+        // Avoid RuntimeEntityRegistry lookups, keep track of visited to prevent cycles
+        Set<Class<?>> visited = new HashSet<>();
+        visited.add(getIntrospection().getBeanType());
+
+        return getAssociations().stream()
+            .filter(RuntimeAssociation::isEmbedded)
+            .map(a -> a.getProperty().getType())
+            .filter(visited::add)
+            .anyMatch(type -> {
+                BeanIntrospection<?> embeddedIntrospection = BeanIntrospection.getIntrospection(type);
+                return hasAutoPopulatedInEmbedded(embeddedIntrospection, visited);
+            });
     }
 
     /**
-     * Get JSON subview persistent entity.
-     * @return The persistent entity
+     * Recursively checks if the given embedded bean introspection has any auto-populated properties,
+     * without going through the RuntimeEntityRegistry to avoid recursive map updates.
      */
-    @Override
-    public Optional<PersistentEntity> getJsonSubViewEntity() {
-        return getAnnotationMetadata().classValue(JsonSubView.class, "entity").map(this::getEntity);
-    }
-
-    /**
-     * Get view's sql supported operations.
-     * Possible values: { INSERT, UPDATE, DELETE }
-     * @return The supported operations array
-     */
-    @Override
-    public JsonView.Operation[] getViewSupportedOperations() {
-        JsonView.Operation[] operations;
-        if (getAnnotationMetadata().hasAnnotation(JsonView.class)) {
-            operations = getAnnotationMetadata().enumValues(JsonView.class, "operations", JsonView.Operation.class);
-        } else {
-            operations = getAnnotationMetadata().enumValues(JsonSubView.class, "operations", JsonView.Operation.class);
+    private static boolean hasAutoPopulatedInEmbedded(BeanIntrospection<?> introspection, Set<Class<?>> visited) {
+        for (BeanProperty<?, ?> bp : introspection.getBeanProperties()) {
+            if (bp.hasStereotype(Transient.class)) {
+                continue;
+            }
+            // Check direct auto-populated (but not @GeneratedValue)
+            var am = bp.getAnnotationMetadata();
+            if (!am.hasAnnotation(GeneratedValue.class) && am.hasStereotype(AutoPopulated.class)) {
+                return true;
+            }
+            // Recurse into nested embedded associations
+            Relation.Kind kind = am.enumValue(Relation.class, Relation.Kind.class).orElse(null);
+            if (kind == Relation.Kind.EMBEDDED) {
+                Class<?> type = bp.getType();
+                if (visited.add(type)) {
+                    BeanIntrospection<?> ei = BeanIntrospection.getIntrospection(type);
+                    if (hasAutoPopulatedInEmbedded(ei, visited)) {
+                        return true;
+                    }
+                }
+            }
         }
-        if (operations.length == 0) {
-            return JsonView.Operation.values();
-        }
-        return operations;
+        return false;
     }
-
 }

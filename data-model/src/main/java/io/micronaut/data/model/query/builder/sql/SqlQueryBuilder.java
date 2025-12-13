@@ -25,13 +25,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.JsonView;
-import io.micronaut.data.annotation.MappedProperty;
-import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.annotation.Relation;
-import io.micronaut.data.annotation.GeneratedValue;
-import io.micronaut.data.annotation.EntityRepresentation;
-import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.*;
 import io.micronaut.data.annotation.sql.JoinColumn;
 import io.micronaut.data.annotation.sql.JoinColumns;
 import io.micronaut.data.annotation.sql.SqlMembers;
@@ -393,8 +387,35 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         return createStatements.toArray(new String[0]);
     }
 
+    private Optional<PersistentEntity> getJsonViewEntity(@NonNull PersistentEntity entity) {
+        if (entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
+            return entity.getAnnotationMetadata().classValue(JsonView.class, "entity").map(c -> PersistentEntity.of(c));
+        }
+        return Optional.empty();
+    }
+
+    private Optional<PersistentEntity> getJsonSubViewEntity(@NonNull PersistentEntity entity) {
+        if (entity.getAnnotationMetadata().hasAnnotation(JsonSubView.class)) {
+            return entity.getAnnotationMetadata().classValue(JsonSubView.class, "entity").map(c -> PersistentEntity.of(c));
+        }
+        return Optional.empty();
+    }
+
+    private JsonView.Operation[] getViewSupportedOperations(@NonNull PersistentEntity entity) {
+        JsonView.Operation[] operations;
+        if (entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
+            operations = entity.getAnnotationMetadata().enumValues(JsonView.class, "operations", JsonView.Operation.class);
+        } else {
+            operations = entity.getAnnotationMetadata().enumValues(JsonSubView.class, "operations", JsonView.Operation.class);
+        }
+        if (operations.length == 0) {
+            return JsonView.Operation.values();
+        }
+        return operations;
+    }
+
     private void addJsonViewCreateStatement(List<String> createStatements, PersistentEntity viewEntity) {
-        Optional<PersistentEntity> entityOptional = viewEntity.getJsonViewEntity();
+        Optional<PersistentEntity> entityOptional = getJsonViewEntity(viewEntity);
         if (entityOptional.isEmpty()) {
             return;
         }
@@ -482,7 +503,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             .append(SPACE)
             .append(alias)
             .append(WITH_CLAUSE);
-        JsonView.Operation[] supportedOperations = viewEntity.getViewSupportedOperations();
+        JsonView.Operation[] supportedOperations = getViewSupportedOperations(viewEntity);
         for (JsonView.Operation operation: supportedOperations) {
             sb.append(operation).append(SPACE);
         }
@@ -490,7 +511,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     private String createJsonSubViewQuery(Association association) {
         PersistentEntity associatedViewEntity = association.getAssociatedEntity();
-        Optional<PersistentEntity> associatedEntityOptional = associatedViewEntity.getJsonSubViewEntity();
+        Optional<PersistentEntity> associatedEntityOptional = getJsonSubViewEntity(associatedViewEntity);
         if (associatedEntityOptional.isEmpty()) {
             return "";
         }
@@ -501,12 +522,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         PersistentEntity associationOwner = association.getOwner();
         PersistentEntity associationOwnerEntity = null;
         if (associationOwner.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
-            Optional<PersistentEntity> associationOwnerEntityOptional = associationOwner.getJsonViewEntity();
+            Optional<PersistentEntity> associationOwnerEntityOptional = getJsonViewEntity(associationOwner);
             if (associationOwnerEntityOptional.isPresent()) {
                 associationOwnerEntity = associationOwnerEntityOptional.get();
             }
         } else {
-            Optional<PersistentEntity> associationOwnerEntityOptional = associationOwner.getJsonSubViewEntity();
+            Optional<PersistentEntity> associationOwnerEntityOptional = getJsonSubViewEntity(associationOwner);
             if (associationOwnerEntityOptional.isPresent()) {
                 associationOwnerEntity = associationOwnerEntityOptional.get();
             }

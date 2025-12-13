@@ -36,6 +36,7 @@ import io.micronaut.data.intercept.annotation.DataMethodQuery;
 import io.micronaut.data.model.AssociationUtils;
 import io.micronaut.data.model.CursoredPageable;
 import io.micronaut.data.model.Limit;
+import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.PersistentEntity;
@@ -547,10 +548,12 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                     CriteriaQuery<?> criteriaQuery = queryBuilder.get().build(criteriaBuilder);
                     Root<?> root = criteriaQuery.getRoots().iterator().next();
                     Expression countExpression;
+                    PersistentEntity entity = getPersistentEntity(root);
+                    boolean countOnRoot = entity.hasCompositeIdentity() || (entity.getIdentity() instanceof Embedded);
                     if (!root.getJoins().isEmpty() || !root.getFetches().isEmpty() || !joinPaths.isEmpty()) {
-                        countExpression = criteriaBuilder.countDistinct(getIdExpression(root));
+                        countExpression = criteriaBuilder.countDistinct(countOnRoot ? root : getIdExpression(root));
                     } else {
-                        countExpression = criteriaBuilder.count(getIdExpression(root));
+                        countExpression = criteriaBuilder.count(countOnRoot ? root : getIdExpression(root));
                     }
                     return criteriaQuery.select(countExpression);
                 }
@@ -573,10 +576,12 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
             }
         }
         Expression<Long> countExpression;
+        PersistentEntity entity = getPersistentEntity(root);
+        boolean countOnRoot = entity.hasCompositeIdentity() || (entity.getIdentity() instanceof Embedded);
         if (!root.getJoins().isEmpty() || !root.getFetches().isEmpty() || !joinPaths.isEmpty()) {
-            countExpression = criteriaBuilder.countDistinct(getIdExpression(root));
+            countExpression = criteriaBuilder.countDistinct(countOnRoot ? root : getIdExpression(root));
         } else {
-            countExpression = criteriaBuilder.count(getIdExpression(root));
+            countExpression = criteriaBuilder.count(countOnRoot ? root : getIdExpression(root));
         }
         return criteriaQuery.select(countExpression);
     }
